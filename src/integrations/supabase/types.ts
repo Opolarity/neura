@@ -170,6 +170,7 @@ export type Database = {
       }
       functions: {
         Row: {
+          active: boolean
           capability_id: number
           code: string | null
           created_at: string
@@ -180,6 +181,7 @@ export type Database = {
           parent_function: number | null
         }
         Insert: {
+          active?: boolean
           capability_id: number
           code?: string | null
           created_at?: string
@@ -190,6 +192,7 @@ export type Database = {
           parent_function?: number | null
         }
         Update: {
+          active?: boolean
           capability_id?: number
           code?: string | null
           created_at?: string
@@ -751,16 +754,19 @@ export type Database = {
         Row: {
           description: string | null
           id: number
+          short_description: string
           title: string
         }
         Insert: {
           description?: string | null
           id?: number
+          short_description?: string
           title: string
         }
         Update: {
           description?: string | null
           id?: number
+          short_description?: string
           title?: string
         }
         Relationships: []
