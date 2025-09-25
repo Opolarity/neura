@@ -622,17 +622,17 @@ export type Database = {
       product_images: {
         Row: {
           id: number
-          image_id: number
+          image_url: string
           product_id: number
         }
         Insert: {
           id: number
-          image_id: number
+          image_url: string
           product_id: number
         }
         Update: {
           id?: number
-          image_id?: number
+          image_url?: string
           product_id?: number
         }
         Relationships: [
@@ -651,18 +651,21 @@ export type Database = {
           price: number
           proce_list_id: number
           product_variation_id: number
+          sale_price: number | null
         }
         Insert: {
-          id: number
+          id?: number
           price: number
           proce_list_id: number
           product_variation_id: number
+          sale_price?: number | null
         }
         Update: {
           id?: number
           price?: number
           proce_list_id?: number
           product_variation_id?: number
+          sale_price?: number | null
         }
         Relationships: [
           {
@@ -752,20 +755,26 @@ export type Database = {
       }
       products: {
         Row: {
+          created_at: string
           description: string | null
           id: number
+          is_variable: boolean
           short_description: string
           title: string
         }
         Insert: {
+          created_at?: string
           description?: string | null
           id?: number
+          is_variable: boolean
           short_description?: string
           title: string
         }
         Update: {
+          created_at?: string
           description?: string | null
           id?: number
+          is_variable?: boolean
           short_description?: string
           title?: string
         }
@@ -1163,14 +1172,17 @@ export type Database = {
       }
       variations: {
         Row: {
+          created_at: string
           id: number
           product_id: number
         }
         Insert: {
+          created_at?: string
           id?: number
           product_id: number
         }
         Update: {
+          created_at?: string
           id?: number
           product_id?: number
         }
