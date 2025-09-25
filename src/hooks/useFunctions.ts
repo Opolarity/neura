@@ -81,6 +81,15 @@ const transformToMenuStructure = (functions: Function[]): MenuFunction[] => {
       };
     }
 
-    return parent;
+    // For other menus like products, create direct submenu structure
+    const subItems = [{
+      label: parent.name,
+      items: children
+    }];
+
+    return {
+      ...parent,
+      subItems
+    };
   });
 };

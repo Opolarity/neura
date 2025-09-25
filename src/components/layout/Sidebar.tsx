@@ -10,6 +10,7 @@ import {
   Tag,
   Users,
   Calendar,
+  Plus,
   LucideIcon
 } from 'lucide-react';
 import { useFunctions } from '@/hooks/useFunctions';
@@ -28,7 +29,8 @@ const iconMap: Record<string, LucideIcon> = {
   Store,
   Users,
   Calendar,
-  Settings
+  Settings,
+  Plus
 };
 
 const Sidebar = ({ isOpen }: SidebarProps) => {
@@ -109,6 +111,8 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
           const isActive = location.pathname === item.location;
           const hasSubItems = 'subItems' in item;
           const isSettingsSection = location.pathname.startsWith('/settings');
+          const isProductsSection = location.pathname.startsWith('/products');
+          const isSectionActive = isSettingsSection || isProductsSection;
           
           if (hasSubItems) {
             return (
@@ -116,13 +120,13 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
                 <Link
                   to={item.location || '#'}
                   className={`flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-800 transition-colors ${
-                    isSettingsSection ? 'bg-blue-600 border-r-2 border-blue-400' : ''
+                    isSectionActive ? 'bg-blue-600 border-r-2 border-blue-400' : ''
                   }`}
                 >
                   <Icon className="w-5 h-5" />
                   {isOpen && <span>{item.name}</span>}
                 </Link>
-                {isOpen && isSettingsSection && item.subItems && (
+                {isOpen && isSectionActive && item.subItems && (
                   <div className="ml-4 space-y-1">
                     {item.subItems.map((subGroup) => (
                       <div key={subGroup.label} className="space-y-1">
