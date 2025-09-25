@@ -103,3 +103,40 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Quill WYSIWYG Editor Styles */
+.ql-toolbar {
+  border-top: 1px solid hsl(var(--border));
+  border-left: 1px solid hsl(var(--border));
+  border-right: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+}
+
+.ql-container {
+  border-left: 1px solid hsl(var(--border));
+  border-right: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+}
+
+.ql-editor {
+  color: hsl(var(--foreground));
+  font-family: inherit;
+}
+
+.ql-editor.ql-blank::before {
+  color: hsl(var(--muted-foreground));
+}
+
+.ql-snow .ql-tooltip {
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.ql-snow .ql-tooltip input[type=text] {
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}

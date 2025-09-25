@@ -5,13 +5,13 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { Checkbox } from '../components/ui/checkbox';
-import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Badge } from '../components/ui/badge';
 import { X, Upload, Save, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import WysiwygEditor from '../components/ui/wysiwyg-editor';
 
 interface Category {
   id: number;
@@ -563,27 +563,23 @@ const AddProduct = () => {
               />
             </div>
 
-            <div>
-              <Label htmlFor="shortDescription">Descripción corta</Label>
-              <Textarea
-                id="shortDescription"
-                value={shortDescription}
-                onChange={(e) => setShortDescription(e.target.value)}
-                placeholder="Descripción breve del producto"
-                rows={3}
-              />
-            </div>
+            <WysiwygEditor
+              label="Descripción corta"
+              value={shortDescription}
+              onChange={setShortDescription}
+              placeholder="Descripción breve del producto"
+              height="120px"
+              toolbar="basic"
+            />
 
-            <div>
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descripción detallada del producto"
-                rows={5}
-              />
-            </div>
+            <WysiwygEditor
+              label="Descripción"
+              value={description}
+              onChange={setDescription}
+              placeholder="Descripción detallada del producto"
+              height="200px"
+              toolbar="full"
+            />
 
             <div>
               <Label>Categorías *</Label>
