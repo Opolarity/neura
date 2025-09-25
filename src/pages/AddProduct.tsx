@@ -414,7 +414,7 @@ const AddProduct = () => {
         const { data: imageRecord, error: imageError } = await supabase
           .from('product_images')
           .insert({
-            id: Date.now() + Math.random(),
+            id: Date.now() + Math.floor(Math.random() * 1000),
             product_id: product.id,
             image_url: publicUrl
           })
@@ -503,7 +503,7 @@ const AddProduct = () => {
                 const { error: variationImageError } = await supabase
                   .from('product_variation_images')
                   .insert({
-                    id: Date.now() + Math.random(),
+                    id: Date.now() + Math.floor(Math.random() * 1000),
                     product_variation_id: variationRecord.id,
                     product_image_id: productImageRecord.id
                   });
