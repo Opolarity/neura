@@ -362,171 +362,67 @@ const AddProduct = () => {
     return true;
   };
 
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
     try {
-      // 1. Create product
-      const { data: product, error: productError } = await supabase
-        .from('products')
-        .insert({
-          title: productName,
-          short_description: shortDescription,
-          description: description,
-          is_variable: isVariable
-        })
-        .select()
-        .single();
+      // Convert images to base64 for API transfer
+      const imagesWithBase64 = await Promise.all(
+        productImages.map(async (image) => ({
+          id: image.id,
+          file: image.file,
+          url: await convertFileToBase64(image.file)
+        }))
+      );
 
-      if (productError) throw productError;
+      // Prepare data for edge function
+      const productData = {
+        productName,
+        shortDescription,
+        description,
+        isVariable,
+        selectedCategories,
+        productImages: imagesWithBase64,
+        variations
+      };
 
-      // 2. Create product categories (without id field)
-      if (selectedCategories.length > 0) {
-        const categoryInserts = selectedCategories.map(categoryId => ({
-          product_id: product.id,
-          category_id: categoryId
-        }));
+      // Call edge function
+      const { data, error } = await supabase.functions.invoke('create-product', {
+        body: productData
+      });
 
-        const { error: categoriesError } = await supabase
-          .from('product_categories')
-          .insert(categoryInserts.map((cat, index) => ({ ...cat, id: Date.now() + index })));
-
-        if (categoriesError) throw categoriesError;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Error al crear el producto');
       }
 
-      // 3. Upload images and create product_images records
-      const imageUrls: { id: string; url: string }[] = [];
-      
-      for (const image of productImages) {
-        const fileName = `${product.id}/${Date.now()}-${image.file.name}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('products')
-          .upload(fileName, image.file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('products')
-          .getPublicUrl(fileName);
-
-        const { data: imageRecord, error: imageError } = await supabase
-          .from('product_images')
-          .insert({
-            id: Date.now() + Math.floor(Math.random() * 1000),
-            product_id: product.id,
-            image_url: publicUrl
-          })
-          .select()
-          .single();
-
-        if (imageError) throw imageError;
-
-        if (imageRecord) {
-          imageUrls.push({ id: image.id, url: publicUrl });
-        }
-      }
-
-      // 4. Create variations
-      for (const variation of variations) {
-        // Create variation record
-        const { data: variationRecord, error: variationError } = await supabase
-          .from('variations')
-          .insert({
-            product_id: product.id
-          })
-          .select()
-          .single();
-
-        if (variationError) throw variationError;
-
-        // Create variation terms (without id field)
-        if (variation.attributes.length > 0) {
-          const termInserts = variation.attributes.map(attr => ({
-            product_variation_id: variationRecord.id,
-            term_id: attr.term_id
-          }));
-
-          const { error: termsError } = await supabase
-            .from('variation_terms')
-            .insert(termInserts);
-
-          if (termsError) throw termsError;
-        }
-
-        // Create prices (without id field, check typo proce_list_id -> price_list_id)
-        const priceInserts = variation.prices.filter(p => p.price > 0 || p.sale_price > 0).map(price => ({
-          product_variation_id: variationRecord.id,
-          proce_list_id: price.price_list_id, // Note: keeping original typo from schema
-          price: price.price,
-          sale_price: price.sale_price
-        }));
-
-        if (priceInserts.length > 0) {
-          const { error: pricesError } = await supabase
-            .from('product_price')
-            .insert(priceInserts);
-
-          if (pricesError) throw pricesError;
-        }
-
-        // Create stock (without id field)
-        const stockInserts = variation.stock.filter(s => s.stock > 0).map(stock => ({
-          product_variation_id: variationRecord.id,
-          warehouse_id: stock.warehouse_id,
-          stock: stock.stock
-        }));
-
-        if (stockInserts.length > 0) {
-          const { error: stockError } = await supabase
-            .from('product_stock')
-            .insert(stockInserts.map((stock, index) => ({ ...stock, id: Date.now() + index })));
-
-          if (stockError) throw stockError;
-        }
-
-        // Create variation images (only for variable products, without id field)
-        if (isVariable && variation.selectedImages.length > 0) {
-          // Find corresponding image URLs
-          for (const imageId of variation.selectedImages) {
-            const imageUrl = imageUrls.find(img => img.id === imageId);
-            if (imageUrl) {
-              // Get the product_images.id for this URL
-              const { data: productImageRecord } = await supabase
-                .from('product_images')
-                .select('id')
-                .eq('image_url', imageUrl.url)
-                .single();
-
-              if (productImageRecord) {
-                const { error: variationImageError } = await supabase
-                  .from('product_variation_images')
-                  .insert({
-                    id: Date.now() + Math.floor(Math.random() * 1000),
-                    product_variation_id: variationRecord.id,
-                    product_image_id: productImageRecord.id
-                  });
-
-                if (variationImageError) throw variationImageError;
-              }
-            }
-          }
-        }
+      if (!data.success) {
+        throw new Error(data.error || 'Error al crear el producto');
       }
 
       toast({
         title: "Éxito",
-        description: "Producto creado correctamente"
+        description: data.message || "Producto creado correctamente"
       });
 
       navigate('/products');
 
     } catch (error) {
       console.error('Error creating product:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       toast({
         title: "Error",
-        description: "Error al crear el producto",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
