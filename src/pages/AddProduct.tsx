@@ -442,11 +442,12 @@ const AddProduct = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Basic Product Information */}
-        <Card>
+      {/* Top Grid: General Data + Images + Categories */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Datos Generales - Takes 2 columns */}
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Datos Generales</CardTitle>
+            <CardTitle>DATOS GENERALES</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -477,42 +478,25 @@ const AddProduct = () => {
               toolbar="full"
             />
 
-            <div>
-              <Label>Categorías *</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {categories.map(category => (
-                  <div key={category.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`category-${category.id}`}
-                      checked={selectedCategories.includes(category.id)}
-                      onCheckedChange={() => toggleCategorySelection(category.id)}
-                    />
-                    <Label htmlFor={`category-${category.id}`} className="text-sm">
-                      {category.name}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <div className="flex items-center space-x-2">
               <Switch
                 id="isVariable"
                 checked={isVariable}
                 onCheckedChange={setIsVariable}
               />
-              <Label htmlFor="isVariable">¿Es producto variable?</Label>
+              <Label htmlFor="isVariable">¿Es un producto variable?</Label>
             </div>
           </CardContent>
         </Card>
 
-        {/* Product Images */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Imágenes del Producto</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Images Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>IMÁGENES</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="images">Subir imágenes *</Label>
                 <div className="mt-2">
@@ -537,7 +521,7 @@ const AddProduct = () => {
               </div>
 
               {productImages.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   {productImages.map(image => (
                     <div key={image.id} className="relative group">
                       <img
@@ -557,151 +541,73 @@ const AddProduct = () => {
                   ))}
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
 
-      {/* Variable Product Attributes */}
-      {isVariable && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Atributos del Producto</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Grupos de atributos</Label>
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                {termGroups.map(group => (
-                  <div key={group.id} className="space-y-2">
-                    <div className="flex items-center space-x-2">
+          {/* Categories Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>CATEGORÍAS</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div>
+                <Label>Seleccionar categorías *</Label>
+                <div className="grid grid-cols-1 gap-2 mt-2">
+                  {categories.map(category => (
+                    <div key={category.id} className="flex items-center space-x-2">
                       <Checkbox
-                        id={`group-${group.id}`}
-                        checked={selectedTermGroups.includes(group.id)}
-                        onCheckedChange={() => toggleTermGroupSelection(group.id)}
+                        id={`category-${category.id}`}
+                        checked={selectedCategories.includes(category.id)}
+                        onCheckedChange={() => toggleCategorySelection(category.id)}
                       />
-                      <Label htmlFor={`group-${group.id}`} className="font-medium">
-                        {group.name}
+                      <Label htmlFor={`category-${category.id}`} className="text-sm">
+                        {category.name}
                       </Label>
                     </div>
-                    
-                    {selectedTermGroups.includes(group.id) && (
-                      <div className="ml-6 space-y-1">
-                        {terms.filter(term => term.term_group_id === group.id).map(term => (
-                          <div key={term.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`term-${term.id}`}
-                              checked={selectedTerms[group.id]?.includes(term.id) || false}
-                              onCheckedChange={() => toggleTermSelection(group.id, term.id)}
-                            />
-                            <Label htmlFor={`term-${term.id}`} className="text-sm">
-                              {term.name}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
-      {/* Variations */}
-      {variations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Variaciones del Producto</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {variations.map(variation => (
-                <div key={variation.id} className="border rounded-lg p-4 space-y-4">
-                  <h4 className="font-medium text-lg">
-                    {getVariationLabel(variation)}
-                  </h4>
-
-                  {/* Prices */}
-                  <div>
-                    <Label className="text-sm font-medium">Precios</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                      {priceLists.map(priceList => {
-                        const variationPrice = variation.prices.find(p => p.price_list_id === priceList.id);
-                        return (
-                          <div key={priceList.id} className="space-y-2">
-                            <Label className="text-xs text-gray-600">{priceList.name}</Label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <Input
-                                  type="number"
-                                  placeholder="Precio"
-                                  value={variationPrice?.price || ''}
-                                  onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'price', Number(e.target.value))}
-                                />
-                              </div>
-                              <div>
-                                <Input
-                                  type="number"
-                                  placeholder="Precio oferta"
-                                  value={variationPrice?.sale_price || ''}
-                                  onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'sale_price', Number(e.target.value))}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+      {/* Bottom Section - Variations or Additional Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{isVariable ? 'VARIACIONES' : 'INFORMACIÓN ADICIONAL'}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Attributes Section (moved here) */}
+          <div>
+            <Label>Atributos del producto</Label>
+            <div className="grid grid-cols-2 gap-4 mt-2">
+              {termGroups.map(group => (
+                <div key={group.id} className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`group-${group.id}`}
+                      checked={selectedTermGroups.includes(group.id)}
+                      onCheckedChange={() => toggleTermGroupSelection(group.id)}
+                    />
+                    <Label htmlFor={`group-${group.id}`} className="font-medium">
+                      {group.name}
+                    </Label>
                   </div>
-
-                  {/* Stock */}
-                  <div>
-                    <Label className="text-sm font-medium">Inventario</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                      {warehouses.map(warehouse => {
-                        const variationStock = variation.stock.find(s => s.warehouse_id === warehouse.id);
-                        return (
-                          <div key={warehouse.id} className="space-y-1">
-                            <Label className="text-xs text-gray-600">{warehouse.name}</Label>
-                            <Input
-                              type="number"
-                              placeholder="Stock"
-                              value={variationStock?.stock || ''}
-                              onChange={(e) => updateVariationStock(variation.id, warehouse.id, Number(e.target.value))}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Images (only for variable products) */}
-                  {isVariable && productImages.length > 0 && (
-                    <div>
-                      <Label className="text-sm font-medium">Imágenes de la variación</Label>
-                      <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
-                        {productImages.map(image => (
-                          <div key={image.id} className="relative">
-                            <img
-                              src={image.preview}
-                              alt="Preview"
-                              className={`w-full h-16 object-cover rounded border-2 cursor-pointer transition-all ${
-                                variation.selectedImages.includes(image.id)
-                                  ? 'border-blue-500 ring-2 ring-blue-200'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                              onClick={() => toggleVariationImage(variation.id, image.id)}
-                            />
-                            {variation.selectedImages.includes(image.id) && (
-                              <div className="absolute inset-0 bg-blue-500 bg-opacity-20 rounded flex items-center justify-center">
-                                <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                                  <div className="w-2 h-2 bg-white rounded-full"></div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                  
+                  {selectedTermGroups.includes(group.id) && (
+                    <div className="ml-6 space-y-1">
+                      <Label className="text-xs text-gray-500">Seleccionar {group.name.toLowerCase()}:</Label>
+                      <div className="flex flex-wrap gap-1">
+                        {terms.filter(term => term.term_group_id === group.id).map(term => (
+                          <Badge
+                            key={term.id}
+                            variant={selectedTerms[group.id]?.includes(term.id) ? "default" : "outline"}
+                            className="cursor-pointer text-xs"
+                            onClick={() => toggleTermSelection(group.id, term.id)}
+                          >
+                            {term.name}
+                          </Badge>
                         ))}
                       </div>
                     </div>
@@ -709,9 +615,111 @@ const AddProduct = () => {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+
+          {/* Variations List */}
+          {variations.length > 0 && (
+            <div className="space-y-6 mt-6">
+              <div className="border-t pt-4">
+                <h4 className="font-medium text-lg mb-4">
+                  {isVariable ? 'Configurar variaciones' : 'Configurar producto'}
+                </h4>
+                {variations.map(variation => (
+                  <div key={variation.id} className="border rounded-lg p-4 space-y-4 mb-4">
+                    <h4 className="font-medium text-lg">
+                      {getVariationLabel(variation)}
+                    </h4>
+
+                    {/* Prices */}
+                    <div>
+                      <Label className="text-sm font-medium">Precios</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        {priceLists.map(priceList => {
+                          const variationPrice = variation.prices.find(p => p.price_list_id === priceList.id);
+                          return (
+                            <div key={priceList.id} className="space-y-2">
+                              <Label className="text-xs text-gray-600">{priceList.name}</Label>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <Input
+                                    type="number"
+                                    placeholder="Precio"
+                                    value={variationPrice?.price || ''}
+                                    onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'price', Number(e.target.value))}
+                                  />
+                                </div>
+                                <div>
+                                  <Input
+                                    type="number"
+                                    placeholder="Precio oferta"
+                                    value={variationPrice?.sale_price || ''}
+                                    onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'sale_price', Number(e.target.value))}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Stock */}
+                    <div>
+                      <Label className="text-sm font-medium">Inventario</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        {warehouses.map(warehouse => {
+                          const variationStock = variation.stock.find(s => s.warehouse_id === warehouse.id);
+                          return (
+                            <div key={warehouse.id} className="space-y-1">
+                              <Label className="text-xs text-gray-600">{warehouse.name}</Label>
+                              <Input
+                                type="number"
+                                placeholder="Stock"
+                                value={variationStock?.stock || ''}
+                                onChange={(e) => updateVariationStock(variation.id, warehouse.id, Number(e.target.value))}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Images (only for variable products) */}
+                    {isVariable && productImages.length > 0 && (
+                      <div>
+                        <Label className="text-sm font-medium">Imágenes de la variación</Label>
+                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
+                          {productImages.map(image => (
+                            <div key={image.id} className="relative">
+                              <img
+                                src={image.preview}
+                                alt="Preview"
+                                className={`w-full h-16 object-cover rounded border-2 cursor-pointer transition-all ${
+                                  variation.selectedImages.includes(image.id)
+                                    ? 'border-blue-500 ring-2 ring-blue-200'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                                onClick={() => toggleVariationImage(variation.id, image.id)}
+                              />
+                              {variation.selectedImages.includes(image.id) && (
+                                <div className="absolute inset-0 bg-blue-500 bg-opacity-20 rounded flex items-center justify-center">
+                                  <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-4">
