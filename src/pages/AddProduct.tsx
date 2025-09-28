@@ -447,7 +447,7 @@ const AddProduct = () => {
         {/* Datos Generales - Takes 2 columns */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>DATOS GENERALES</CardTitle>
+            <CardTitle>Datos generales</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -494,7 +494,7 @@ const AddProduct = () => {
           {/* Images Section */}
           <Card>
             <CardHeader>
-              <CardTitle>IMÁGENES</CardTitle>
+              <CardTitle>Imágenes</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -547,7 +547,7 @@ const AddProduct = () => {
           {/* Categories Section */}
           <Card>
             <CardHeader>
-              <CardTitle>CATEGORÍAS</CardTitle>
+              <CardTitle>Categorías</CardTitle>
             </CardHeader>
             <CardContent>
               <div>
@@ -575,47 +575,49 @@ const AddProduct = () => {
       {/* Bottom Section - Variations or Additional Information */}
       <Card>
         <CardHeader>
-          <CardTitle>{isVariable ? 'VARIACIONES' : 'INFORMACIÓN ADICIONAL'}</CardTitle>
+          <CardTitle>{isVariable ? 'Variaciones' : 'Información adicional'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Attributes Section (moved here) */}
-          <div>
-            <Label>Atributos del producto</Label>
-            <div className="grid grid-cols-2 gap-4 mt-2">
-              {termGroups.map(group => (
-                <div key={group.id} className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`group-${group.id}`}
-                      checked={selectedTermGroups.includes(group.id)}
-                      onCheckedChange={() => toggleTermGroupSelection(group.id)}
-                    />
-                    <Label htmlFor={`group-${group.id}`} className="font-medium">
-                      {group.name}
-                    </Label>
-                  </div>
-                  
-                  {selectedTermGroups.includes(group.id) && (
-                    <div className="ml-6 space-y-1">
-                      <Label className="text-xs text-gray-500">Seleccionar {group.name.toLowerCase()}:</Label>
-                      <div className="flex flex-wrap gap-1">
-                        {terms.filter(term => term.term_group_id === group.id).map(term => (
-                          <Badge
-                            key={term.id}
-                            variant={selectedTerms[group.id]?.includes(term.id) ? "default" : "outline"}
-                            className="cursor-pointer text-xs"
-                            onClick={() => toggleTermSelection(group.id, term.id)}
-                          >
-                            {term.name}
-                          </Badge>
-                        ))}
-                      </div>
+          {isVariable && (
+            <div>
+              <Label>Atributos del producto</Label>
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                {termGroups.map(group => (
+                  <div key={group.id} className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`group-${group.id}`}
+                        checked={selectedTermGroups.includes(group.id)}
+                        onCheckedChange={() => toggleTermGroupSelection(group.id)}
+                      />
+                      <Label htmlFor={`group-${group.id}`} className="font-medium">
+                        {group.name}
+                      </Label>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {selectedTermGroups.includes(group.id) && (
+                      <div className="ml-6 space-y-1">
+                        <Label className="text-xs text-gray-500">Seleccionar {group.name.toLowerCase()}:</Label>
+                        <div className="flex flex-wrap gap-1">
+                          {terms.filter(term => term.term_group_id === group.id).map(term => (
+                            <Badge
+                              key={term.id}
+                              variant={selectedTerms[group.id]?.includes(term.id) ? "default" : "outline"}
+                              className="cursor-pointer text-xs"
+                              onClick={() => toggleTermSelection(group.id, term.id)}
+                            >
+                              {term.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Variations List */}
           {variations.length > 0 && (
