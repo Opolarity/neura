@@ -5,13 +5,14 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { Checkbox } from '../components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Badge } from '../components/ui/badge';
-import { X, Upload, Save, ArrowLeft } from 'lucide-react';
+import { X, Upload, Save, ArrowLeft, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import WysiwygEditor from '../components/ui/wysiwyg-editor';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandItem } from '../components/ui/command';
 
 interface Category {
   id: number;
@@ -584,49 +585,45 @@ const AddProduct = () => {
                   return (
                     <div key={group.id} className="space-y-2">
                       <Label className="text-sm font-medium">{group.name}</Label>
-                      <Select
-                        value={selectedGroupTerms.length > 0 ? "selected" : ""}
-                        onValueChange={(value) => {
-                          if (value && !selectedGroupTerms.includes(Number(value))) {
-                            const termId = Number(value);
-                            toggleTermSelection(group.id, termId);
-                            if (!selectedTermGroups.includes(group.id)) {
-                              setSelectedTermGroups(prev => [...prev, group.id]);
-                            }
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={`Seleccionar ${group.name.toLowerCase()}`}>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className="w-full justify-between"
+                          >
                             {selectedGroupTerms.length > 0 
                               ? `${selectedGroupTerms.length} seleccionado${selectedGroupTerms.length > 1 ? 's' : ''}`
                               : `Seleccionar ${group.name.toLowerCase()}`
                             }
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {groupTerms.map(term => (
-                            <SelectItem 
-                              key={term.id} 
-                              value={term.id.toString()}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                toggleTermSelection(group.id, term.id);
-                                if (!selectedTermGroups.includes(group.id)) {
-                                  setSelectedTermGroups(prev => [...prev, group.id]);
-                                }
-                              }}
-                            >
-                              <div className="flex items-center justify-between w-full">
-                                <span>{term.name}</span>
-                                {selectedGroupTerms.includes(term.id) && (
-                                  <span className="ml-2">✓</span>
-                                )}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandEmpty>No se encontraron opciones.</CommandEmpty>
+                            <CommandGroup className="max-h-64 overflow-auto">
+                              {groupTerms.map(term => (
+                                <CommandItem
+                                  key={term.id}
+                                  onSelect={() => {
+                                    toggleTermSelection(group.id, term.id);
+                                    if (!selectedTermGroups.includes(group.id)) {
+                                      setSelectedTermGroups(prev => [...prev, group.id]);
+                                    }
+                                  }}
+                                >
+                                  <Checkbox
+                                    checked={selectedGroupTerms.includes(term.id)}
+                                    className="mr-2"
+                                  />
+                                  {term.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       
                       {/* Selected terms display */}
                       {selectedGroupTerms.length > 0 && (
