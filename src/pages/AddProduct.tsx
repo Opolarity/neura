@@ -710,18 +710,19 @@ const AddProduct = () => {
 
                         {/* Stock */}
                         <div>
-                          <Label className="text-sm font-medium">Inventario</Label>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                          <Label className="text-sm font-medium mb-3">Inventario</Label>
+                          <div className="space-y-3 mt-2">
                             {warehouses.map(warehouse => {
                               const variationStock = variation.stock.find(s => s.warehouse_id === warehouse.id);
                               return (
-                                <div key={warehouse.id} className="space-y-1">
-                                  <Label className="text-xs text-gray-600">{warehouse.name}</Label>
+                                <div key={warehouse.id} className="flex items-center gap-4">
+                                  <Label className="text-sm font-medium min-w-[150px]">{warehouse.name}</Label>
                                   <Input
                                     type="number"
                                     placeholder="Stock"
                                     value={variationStock?.stock || ''}
                                     onChange={(e) => updateVariationStock(variation.id, warehouse.id, Number(e.target.value))}
+                                    className="flex-1"
                                   />
                                 </div>
                               );
