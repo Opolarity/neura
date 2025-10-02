@@ -110,9 +110,7 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
           const Icon = item.icon ? iconMap[item.icon] || Grid : Grid;
           const isActive = location.pathname === item.location;
           const hasSubItems = 'subItems' in item;
-          const isSettingsSection = location.pathname.startsWith('/settings');
-          const isProductsSection = location.pathname.startsWith('/products');
-          const isSectionActive = isSettingsSection || isProductsSection;
+          const isSectionActive = item.location ? location.pathname.startsWith(item.location) : false;
           
           if (hasSubItems) {
             return (
