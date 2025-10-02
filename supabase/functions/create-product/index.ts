@@ -11,6 +11,7 @@ interface ProductImage {
   id: string;
   file: File;
   url: string;
+  order: number;
 }
 
 interface ProductPrice {
@@ -154,7 +155,8 @@ serve(async (req) => {
         .insert({
           id: Date.now() + Math.floor(Math.random() * 1000) + i,
           product_id: product.id,
-          image_url: publicUrl
+          image_url: publicUrl,
+          image_order: image.order
         })
         .select()
         .single();

@@ -47,6 +47,7 @@ interface ProductImage {
   file: File;
   preview: string;
   id: string;
+  order: number;
 }
 
 interface VariationPrice {
@@ -201,23 +202,29 @@ const AddProduct = () => {
     const files = event.target.files;
     if (!files) return;
 
-    const newImages: ProductImage[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const id = Date.now() + '-' + i;
-      newImages.push({
-        file,
-        preview: URL.createObjectURL(file),
-        id
-      });
-    }
+    setProductImages(prev => {
+      const currentMaxOrder = prev.length > 0 ? Math.max(...prev.map(img => img.order)) : -1;
+      const newImages: ProductImage[] = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const id = Date.now() + '-' + i;
+        newImages.push({
+          file,
+          preview: URL.createObjectURL(file),
+          id,
+          order: currentMaxOrder + i + 1
+        });
+      }
 
-    setProductImages(prev => [...prev, ...newImages]);
+      return [...prev, ...newImages];
+    });
   };
 
   const removeImage = (imageId: string) => {
     setProductImages(prev => {
-      const updated = prev.filter(img => img.id !== imageId);
+      const updated = prev.filter(img => img.id !== imageId)
+        .map((img, index) => ({ ...img, order: index })); // Reorder after removal
       // Remove from variations' selected images
       setVariations(prevVariations => 
         prevVariations.map(variation => ({
@@ -226,6 +233,37 @@ const AddProduct = () => {
         }))
       );
       return updated;
+    });
+  };
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, imageId: string) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', imageId);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetImageId: string) => {
+    e.preventDefault();
+    const draggedImageId = e.dataTransfer.getData('text/html');
+    
+    if (draggedImageId === targetImageId) return;
+
+    setProductImages(prev => {
+      const draggedIndex = prev.findIndex(img => img.id === draggedImageId);
+      const targetIndex = prev.findIndex(img => img.id === targetImageId);
+      
+      if (draggedIndex === -1 || targetIndex === -1) return prev;
+
+      const newImages = [...prev];
+      const [draggedImage] = newImages.splice(draggedIndex, 1);
+      newImages.splice(targetIndex, 0, draggedImage);
+      
+      // Update order property
+      return newImages.map((img, index) => ({ ...img, order: index }));
     });
   };
 
@@ -372,12 +410,14 @@ const AddProduct = () => {
 
     setLoading(true);
     try {
-      // Convert images to base64 for API transfer
+      // Convert images to base64 for API transfer and sort by order
+      const sortedImages = [...productImages].sort((a, b) => a.order - b.order);
       const imagesWithBase64 = await Promise.all(
-        productImages.map(async (image) => ({
+        sortedImages.map(async (image) => ({
           id: image.id,
           file: image.file,
-          url: await convertFileToBase64(image.file)
+          url: await convertFileToBase64(image.file),
+          order: image.order
         }))
       );
 
@@ -518,8 +558,17 @@ const AddProduct = () => {
 
               {productImages.length > 0 && (
                 <div className="grid grid-cols-3 gap-4">
-                  {productImages.map(image => (
-                    <div key={image.id} className="relative group">
+                  {productImages
+                    .sort((a, b) => a.order - b.order)
+                    .map(image => (
+                    <div 
+                      key={image.id} 
+                      className="relative group cursor-move"
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, image.id)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, image.id)}
+                    >
                       <img
                         src={image.preview}
                         alt="Preview"
@@ -533,6 +582,9 @@ const AddProduct = () => {
                       >
                         <X className="w-3 h-3" />
                       </Button>
+                      <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+                        {image.order + 1}
+                      </div>
                     </div>
                   ))}
                 </div>
