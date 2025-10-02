@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent } from '../components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table';
 import { Button } from '../components/ui/button';
+import { Checkbox } from '../components/ui/checkbox';
 import { Plus, Edit, Trash, Search, Loader2 } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../hooks/use-toast';
+import placeholderImage from '@/assets/product-placeholder.png';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +27,7 @@ interface ProductData {
   is_variable: boolean;
   created_at: string;
   categories: string[];
+  image?: string;
   variations: {
     id: number;
     prices: { price: number; sale_price?: number }[];
@@ -39,6 +42,7 @@ const Products = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -74,6 +78,16 @@ const Products = () => {
 
           const categories = categoriesData?.map(cat => cat.categories?.name).filter(Boolean) || [];
 
+          // Obtener primera imagen del producto
+          const { data: imagesData } = await supabase
+            .from('product_images')
+            .select('image_url')
+            .eq('product_id', product.id)
+            .order('image_order', { ascending: true })
+            .limit(1);
+
+          const image = imagesData && imagesData.length > 0 ? imagesData[0].image_url : undefined;
+
           // Obtener variaciones
           const { data: variationsData } = await supabase
             .from('variations')
@@ -105,6 +119,7 @@ const Products = () => {
           return {
             ...product,
             categories,
+            image,
             variations
           } as ProductData;
         })
@@ -160,104 +175,128 @@ const Products = () => {
     setDeleteDialogOpen(true);
   };
 
+  const toggleProductSelection = (productId: number) => {
+    setSelectedProducts(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedProducts.length === filteredProducts.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(filteredProducts.map(p => p.id));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedProducts.length === 0) return;
+    setProductToDelete(-1); // Usar -1 para indicar eliminación múltiple
+    setDeleteDialogOpen(true);
+  };
+
   const handleDeleteConfirm = async () => {
-    if (!productToDelete) return;
+    const productsToDelete = productToDelete === -1 ? selectedProducts : [productToDelete!];
+    if (productsToDelete.length === 0) return;
 
     try {
       setDeleting(true);
 
-      // 1. Verificar si el producto está en alguna orden
-      const { data: variationsData } = await supabase
-        .from('variations')
-        .select('id')
-        .eq('product_id', productToDelete);
-
-      if (variationsData && variationsData.length > 0) {
-        const variationIds = variationsData.map(v => v.id);
-
-        const { data: orderProducts } = await supabase
-          .from('order_products')
-          .select('id')
-          .in('product_variation_id', variationIds)
-          .limit(1);
-
-        if (orderProducts && orderProducts.length > 0) {
-          toast({
-            title: "No se puede eliminar",
-            description: "Este producto está vinculado a una o más órdenes",
-            variant: "destructive",
-          });
-          setDeleteDialogOpen(false);
-          setProductToDelete(null);
-          setDeleting(false);
-          return;
-        }
-
-        // 2. Eliminar registros relacionados en orden
-        // Eliminar product_variation_images
-        for (const variation of variationsData) {
-          await supabase
-            .from('product_variation_images')
-            .delete()
-            .eq('product_variation_id', variation.id);
-        }
-
-        // Eliminar product_price
-        for (const variation of variationsData) {
-          await supabase
-            .from('product_price')
-            .delete()
-            .eq('product_variation_id', variation.id);
-        }
-
-        // Eliminar product_stock
-        for (const variation of variationsData) {
-          await supabase
-            .from('product_stock')
-            .delete()
-            .eq('product_variation_id', variation.id);
-        }
-
-        // Eliminar variation_terms
-        for (const variation of variationsData) {
-          await supabase
-            .from('variation_terms')
-            .delete()
-            .eq('product_variation_id', variation.id);
-        }
-
-        // Eliminar variations
-        await supabase
+      // 1. Verificar si los productos están en alguna orden y eliminar cada producto
+      for (const productId of productsToDelete) {
+        const { data: variationsData } = await supabase
           .from('variations')
+          .select('id')
+          .eq('product_id', productId);
+
+        if (variationsData && variationsData.length > 0) {
+          const variationIds = variationsData.map(v => v.id);
+
+          const { data: orderProducts } = await supabase
+            .from('order_products')
+            .select('id')
+            .in('product_variation_id', variationIds)
+            .limit(1);
+
+          if (orderProducts && orderProducts.length > 0) {
+            toast({
+              title: "No se puede eliminar",
+              description: `El producto ID ${productId} está vinculado a una o más órdenes`,
+              variant: "destructive",
+            });
+            continue;
+          }
+
+          // 2. Eliminar registros relacionados en orden
+          // Eliminar product_variation_images
+          for (const variation of variationsData) {
+            await supabase
+              .from('product_variation_images')
+              .delete()
+              .eq('product_variation_id', variation.id);
+          }
+
+          // Eliminar product_price
+          for (const variation of variationsData) {
+            await supabase
+              .from('product_price')
+              .delete()
+              .eq('product_variation_id', variation.id);
+          }
+
+          // Eliminar product_stock
+          for (const variation of variationsData) {
+            await supabase
+              .from('product_stock')
+              .delete()
+              .eq('product_variation_id', variation.id);
+          }
+
+          // Eliminar variation_terms
+          for (const variation of variationsData) {
+            await supabase
+              .from('variation_terms')
+              .delete()
+              .eq('product_variation_id', variation.id);
+          }
+
+          // Eliminar variations
+          await supabase
+            .from('variations')
+            .delete()
+            .eq('product_id', productId);
+        }
+
+        // 3. Eliminar product_categories
+        await supabase
+          .from('product_categories')
           .delete()
-          .eq('product_id', productToDelete);
+          .eq('product_id', productId);
+
+        // 4. Eliminar product_images
+        await supabase
+          .from('product_images')
+          .delete()
+          .eq('product_id', productId);
+
+        // 5. Eliminar el producto
+        const { error: deleteError } = await supabase
+          .from('products')
+          .delete()
+          .eq('id', productId);
+
+        if (deleteError) throw deleteError;
       }
 
-      // 3. Eliminar product_categories
-      await supabase
-        .from('product_categories')
-        .delete()
-        .eq('product_id', productToDelete);
-
-      // 4. Eliminar product_images
-      await supabase
-        .from('product_images')
-        .delete()
-        .eq('product_id', productToDelete);
-
-      // 5. Eliminar el producto
-      const { error: deleteError } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productToDelete);
-
-      if (deleteError) throw deleteError;
-
       toast({
-        title: "Producto eliminado",
-        description: "El producto y todos sus registros relacionados han sido eliminados",
+        title: "Productos eliminados",
+        description: `Se eliminaron ${productsToDelete.length} producto(s) correctamente`,
       });
 
+      // Limpiar selección
+      setSelectedProducts([]);
       // Recargar la lista de productos
       fetchProducts();
     } catch (error) {
@@ -281,10 +320,22 @@ const Products = () => {
           <h1 className="text-2xl font-bold text-gray-900">Gestión de Productos</h1>
           <p className="text-gray-600">Administra tu catálogo de productos</p>
         </div>
-        <Button onClick={handleNewProduct} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Nuevo Producto
-        </Button>
+        <div className="flex gap-2">
+          {selectedProducts.length > 0 && (
+            <Button 
+              variant="destructive" 
+              onClick={handleBulkDelete}
+              className="gap-2"
+            >
+              <Trash className="w-4 h-4" />
+              Eliminar {selectedProducts.length} seleccionados
+            </Button>
+          )}
+          <Button onClick={handleNewProduct} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Nuevo Producto
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -307,6 +358,13 @@ const Products = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox 
+                    checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </TableHead>
+                <TableHead className="w-20">Imagen</TableHead>
                 <TableHead>Producto</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Categoría</TableHead>
@@ -319,7 +377,7 @@ const Products = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Cargando productos...
@@ -328,7 +386,7 @@ const Products = () => {
                 </TableRow>
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                     {searchTerm ? 'No se encontraron productos' : 'No hay productos registrados'}
                   </TableCell>
                 </TableRow>
@@ -340,6 +398,19 @@ const Products = () => {
                   
                   return (
                     <TableRow key={product.id}>
+                      <TableCell>
+                        <Checkbox 
+                          checked={selectedProducts.includes(product.id)}
+                          onCheckedChange={() => toggleProductSelection(product.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <img 
+                          src={product.image || placeholderImage}
+                          alt={product.title}
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{product.title}</TableCell>
                       <TableCell>PROD-{product.id.toString().padStart(3, '0')}</TableCell>
                       <TableCell>
@@ -380,10 +451,14 @@ const Products = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {productToDelete === -1 
+                ? `¿Eliminar ${selectedProducts.length} productos?`
+                : '¿Eliminar producto?'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará el producto y todos sus registros relacionados
-              (variaciones, precios, stock, imágenes, etc.). Solo se puede eliminar si no está vinculado a ninguna orden.
+              Esta acción no se puede deshacer. Se eliminará{productToDelete === -1 ? 'n los productos' : ' el producto'} y todos sus registros relacionados
+              (variaciones, precios, stock, imágenes, etc.). Solo se puede eliminar si no está{productToDelete === -1 ? 'n' : ''} vinculado{productToDelete === -1 ? 's' : ''} a ninguna orden.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
