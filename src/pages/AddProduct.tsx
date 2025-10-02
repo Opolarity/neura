@@ -686,7 +686,7 @@ const AddProduct = () => {
                               return (
                                 <div key={priceList.id} className="flex items-center gap-4">
                                   <Label className="text-sm font-medium min-w-[150px]">{priceList.name}</Label>
-                                  <div className="flex gap-2 flex-1">
+                                  <div className="flex gap-2 w-[60%]">
                                     <Input
                                       type="number"
                                       placeholder="Precio"
