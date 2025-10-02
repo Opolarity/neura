@@ -517,13 +517,13 @@ const AddProduct = () => {
               </div>
 
               {productImages.length > 0 && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   {productImages.map(image => (
                     <div key={image.id} className="relative group">
                       <img
                         src={image.preview}
                         alt="Preview"
-                        className="w-full h-24 object-cover rounded-lg border"
+                        className="w-[150px] h-[150px] object-cover rounded-lg border"
                       />
                       <Button
                         size="sm"
@@ -734,13 +734,13 @@ const AddProduct = () => {
                         {isVariable && productImages.length > 0 && (
                           <div>
                             <Label className="text-sm font-medium">Imágenes de la variación</Label>
-                            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
+                            <div className="flex flex-wrap gap-2 mt-2">
                               {productImages.map(image => (
                                 <div key={image.id} className="relative">
                                   <img
                                     src={image.preview}
                                     alt="Preview"
-                                    className={`w-full h-16 object-cover rounded border-2 cursor-pointer transition-all ${
+                                    className={`w-[150px] h-[150px] object-cover rounded border-2 cursor-pointer transition-all ${
                                       variation.selectedImages.includes(image.id)
                                         ? 'border-blue-500 ring-2 ring-blue-200'
                                         : 'border-gray-200 hover:border-gray-300'
