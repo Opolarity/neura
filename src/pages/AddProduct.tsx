@@ -81,7 +81,8 @@ const AddProduct = () => {
   const [isVariable, setIsVariable] = useState(false);
   
   // Product images
-  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+const [productImages, setProductImages] = useState<ProductImage[]>([]);
+const [draggedId, setDraggedId] = useState<string | null>(null);
   
   // Variations
   const [variations, setVariations] = useState<ProductVariation[]>([]);
@@ -236,36 +237,32 @@ const AddProduct = () => {
     });
   };
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, imageId: string) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', imageId);
-  };
+const handleDragStart = (e: React.DragEvent<HTMLDivElement>, imageId: string) => {
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', imageId);
+  setDraggedId(imageId);
+};
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
+const handleDragOver = (e: React.DragEvent<HTMLDivElement>, targetImageId: string) => {
+  e.preventDefault();
+  if (!draggedId || draggedId === targetImageId) return;
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetImageId: string) => {
-    e.preventDefault();
-    const draggedImageId = e.dataTransfer.getData('text/html');
-    
-    if (draggedImageId === targetImageId) return;
+  setProductImages(prev => {
+    const draggedIndex = prev.findIndex(img => img.id === draggedId);
+    const targetIndex = prev.findIndex(img => img.id === targetImageId);
+    if (draggedIndex === -1 || targetIndex === -1) return prev;
 
-    setProductImages(prev => {
-      const draggedIndex = prev.findIndex(img => img.id === draggedImageId);
-      const targetIndex = prev.findIndex(img => img.id === targetImageId);
-      
-      if (draggedIndex === -1 || targetIndex === -1) return prev;
+    const newImages = [...prev];
+    const [dragged] = newImages.splice(draggedIndex, 1);
+    newImages.splice(targetIndex, 0, dragged);
+    return newImages.map((img, index) => ({ ...img, order: index }));
+  });
+};
 
-      const newImages = [...prev];
-      const [draggedImage] = newImages.splice(draggedIndex, 1);
-      newImages.splice(targetIndex, 0, draggedImage);
-      
-      // Update order property
-      return newImages.map((img, index) => ({ ...img, order: index }));
-    });
-  };
+const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  e.preventDefault();
+  setDraggedId(null);
+};
 
   const toggleCategorySelection = (categoryId: number) => {
     setSelectedCategories(prev => 
@@ -557,28 +554,28 @@ const AddProduct = () => {
               </div>
 
               {productImages.length > 0 && (
-                <div className="grid grid-cols-3 gap-4">
+                <div className="flex flex-wrap gap-4">
                   {productImages
                     .sort((a, b) => a.order - b.order)
                     .map(image => (
                     <div 
                       key={image.id} 
-                      className="relative group cursor-move select-none"
+                      className="relative w-[150px] h-[150px] group cursor-move select-none"
                       draggable
                       onDragStart={(e) => handleDragStart(e, image.id)}
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, image.id)}
+                      onDragOver={(e) => handleDragOver(e, image.id)}
+                      onDragEnd={handleDrop}
                     >
                       <img
                         src={image.preview}
                         alt="Preview"
-                        className="w-[100px] h-[100px] object-cover rounded-lg border pointer-events-none"
+                        className="w-[150px] h-[150px] object-cover rounded-lg border pointer-events-none"
                         draggable={false}
                       />
                       <Button
                         size="sm"
                         variant="destructive"
-                        className="absolute -top-2 -right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                         onClick={(e) => {
                           e.stopPropagation();
                           removeImage(image.id);
