@@ -722,7 +722,7 @@ const AddProduct = () => {
                                     placeholder="Stock"
                                     value={variationStock?.stock || ''}
                                     onChange={(e) => updateVariationStock(variation.id, warehouse.id, Number(e.target.value))}
-                                    className="flex-1"
+                                    className="w-[60%]"
                                   />
                                 </div>
                               );
