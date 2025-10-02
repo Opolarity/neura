@@ -801,7 +801,7 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
                                     onClick={() => toggleVariationImage(variation.id, image.id)}
                                   />
                                   {variation.selectedImages.includes(image.id) && (
-                                    <div className="absolute inset-0 bg-blue-500 bg-opacity-20 rounded flex items-center justify-center">
+                                    <div className="absolute inset-0 bg-blue-500 bg-opacity-20 rounded flex items-center justify-center pointer-events-none">
                                       <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                                         <div className="w-2 h-2 bg-white rounded-full"></div>
                                       </div>
