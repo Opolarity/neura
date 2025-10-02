@@ -563,7 +563,7 @@ const AddProduct = () => {
                     .map(image => (
                     <div 
                       key={image.id} 
-                      className="relative group cursor-move"
+                      className="relative group cursor-move select-none"
                       draggable
                       onDragStart={(e) => handleDragStart(e, image.id)}
                       onDragOver={handleDragOver}
@@ -572,17 +572,21 @@ const AddProduct = () => {
                       <img
                         src={image.preview}
                         alt="Preview"
-                        className="w-[100px] h-[100px] object-cover rounded-lg border"
+                        className="w-[100px] h-[100px] object-cover rounded-lg border pointer-events-none"
+                        draggable={false}
                       />
                       <Button
                         size="sm"
                         variant="destructive"
-                        className="absolute -top-2 -right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => removeImage(image.id)}
+                        className="absolute -top-2 -right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeImage(image.id);
+                        }}
                       >
                         <X className="w-3 h-3" />
                       </Button>
-                      <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+                      <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded pointer-events-none">
                         {image.order + 1}
                       </div>
                     </div>
