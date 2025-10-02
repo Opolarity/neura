@@ -685,7 +685,7 @@ const AddProduct = () => {
                               const variationPrice = variation.prices.find(p => p.price_list_id === priceList.id);
                               return (
                                 <div key={priceList.id} className="flex items-center gap-4">
-                                  <Label className="text-sm font-medium min-w-[150px]">{priceList.name}</Label>
+                                  <Label className="text-sm font-medium w-[40%]">{priceList.name}</Label>
                                   <div className="flex gap-2 w-[60%]">
                                     <Input
                                       type="number"
@@ -716,7 +716,7 @@ const AddProduct = () => {
                               const variationStock = variation.stock.find(s => s.warehouse_id === warehouse.id);
                               return (
                                 <div key={warehouse.id} className="flex items-center gap-4">
-                                  <Label className="text-sm font-medium min-w-[150px]">{warehouse.name}</Label>
+                                  <Label className="text-sm font-medium w-[40%]">{warehouse.name}</Label>
                                   <Input
                                     type="number"
                                     placeholder="Stock"
