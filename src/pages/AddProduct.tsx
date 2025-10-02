@@ -523,7 +523,7 @@ const AddProduct = () => {
                       <img
                         src={image.preview}
                         alt="Preview"
-                        className="w-[150px] h-[150px] object-cover rounded-lg border"
+                        className="w-[100px] h-[100px] object-cover rounded-lg border"
                       />
                       <Button
                         size="sm"
@@ -740,7 +740,7 @@ const AddProduct = () => {
                                   <img
                                     src={image.preview}
                                     alt="Preview"
-                                    className={`w-[150px] h-[150px] object-cover rounded border-2 cursor-pointer transition-all ${
+                                    className={`w-[100px] h-[100px] object-cover rounded border-2 cursor-pointer transition-all ${
                                       variation.selectedImages.includes(image.id)
                                         ? 'border-blue-500 ring-2 ring-blue-200'
                                         : 'border-gray-200 hover:border-gray-300'
