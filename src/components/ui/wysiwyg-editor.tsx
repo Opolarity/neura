@@ -48,7 +48,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          style={{ minHeight: height }}
+          style={{ height: height }}
           modules={{
             toolbar: toolbarOptions[toolbar]
           }}

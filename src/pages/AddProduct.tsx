@@ -461,7 +461,7 @@ const AddProduct = () => {
               value={shortDescription}
               onChange={setShortDescription}
               placeholder="Descripción breve del producto"
-              height="120px"
+              height="150px"
               toolbar="basic"
             />
 
@@ -470,7 +470,7 @@ const AddProduct = () => {
               value={description}
               onChange={setDescription}
               placeholder="Descripción detallada del producto"
-              height="200px"
+              height="250px"
               toolbar="full"
             />
 
