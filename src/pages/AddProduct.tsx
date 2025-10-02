@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import WysiwygEditor from '../components/ui/wysiwyg-editor';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '../components/ui/command';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion';
 
 interface Category {
   id: number;
@@ -658,97 +659,111 @@ const AddProduct = () => {
                 <h4 className="font-medium text-lg mb-4">
                   {isVariable ? 'Configurar variaciones' : 'Configurar producto'}
                 </h4>
-                {variations.map(variation => (
-                  <div key={variation.id} className="border rounded-lg p-4 space-y-4 mb-4">
-                    <h4 className="font-medium text-lg">
-                      {getVariationLabel(variation)}
-                    </h4>
-
-                    {/* Prices */}
-                    <div>
-                      <Label className="text-sm font-medium">Precios</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                        {priceLists.map(priceList => {
-                          const variationPrice = variation.prices.find(p => p.price_list_id === priceList.id);
-                          return (
-                            <div key={priceList.id} className="space-y-2">
-                              <Label className="text-xs text-gray-600">{priceList.name}</Label>
-                              <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                  <Input
-                                    type="number"
-                                    placeholder="Precio"
-                                    value={variationPrice?.price || ''}
-                                    onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'price', Number(e.target.value))}
-                                  />
-                                </div>
-                                <div>
-                                  <Input
-                                    type="number"
-                                    placeholder="Precio oferta"
-                                    value={variationPrice?.sale_price || ''}
-                                    onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'sale_price', Number(e.target.value))}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Stock */}
-                    <div>
-                      <Label className="text-sm font-medium">Inventario</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                        {warehouses.map(warehouse => {
-                          const variationStock = variation.stock.find(s => s.warehouse_id === warehouse.id);
-                          return (
-                            <div key={warehouse.id} className="space-y-1">
-                              <Label className="text-xs text-gray-600">{warehouse.name}</Label>
-                              <Input
-                                type="number"
-                                placeholder="Stock"
-                                value={variationStock?.stock || ''}
-                                onChange={(e) => updateVariationStock(variation.id, warehouse.id, Number(e.target.value))}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Images (only for variable products) */}
-                    {isVariable && productImages.length > 0 && (
-                      <div>
-                        <Label className="text-sm font-medium">Imágenes de la variación</Label>
-                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
-                          {productImages.map(image => (
-                            <div key={image.id} className="relative">
-                              <img
-                                src={image.preview}
-                                alt="Preview"
-                                className={`w-full h-16 object-cover rounded border-2 cursor-pointer transition-all ${
-                                  variation.selectedImages.includes(image.id)
-                                    ? 'border-blue-500 ring-2 ring-blue-200'
-                                    : 'border-gray-200 hover:border-gray-300'
-                                }`}
-                                onClick={() => toggleVariationImage(variation.id, image.id)}
-                              />
-                              {variation.selectedImages.includes(image.id) && (
-                                <div className="absolute inset-0 bg-blue-500 bg-opacity-20 rounded flex items-center justify-center">
-                                  <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                <Accordion 
+                  type="single" 
+                  collapsible 
+                  defaultValue={variations[0]?.id}
+                  className="w-full space-y-4"
+                >
+                  {variations.map(variation => (
+                    <AccordionItem 
+                      key={variation.id} 
+                      value={variation.id}
+                      className="border rounded-lg px-4"
+                    >
+                      <AccordionTrigger className="hover:no-underline">
+                        <h4 className="font-medium text-lg">
+                          {getVariationLabel(variation)}
+                        </h4>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pt-4">
+                        {/* Prices */}
+                        <div>
+                          <Label className="text-sm font-medium">Precios</Label>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                            {priceLists.map(priceList => {
+                              const variationPrice = variation.prices.find(p => p.price_list_id === priceList.id);
+                              return (
+                                <div key={priceList.id} className="space-y-2">
+                                  <Label className="text-xs text-gray-600">{priceList.name}</Label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <Input
+                                        type="number"
+                                        placeholder="Precio"
+                                        value={variationPrice?.price || ''}
+                                        onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'price', Number(e.target.value))}
+                                      />
+                                    </div>
+                                    <div>
+                                      <Input
+                                        type="number"
+                                        placeholder="Precio oferta"
+                                        value={variationPrice?.sale_price || ''}
+                                        onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'sale_price', Number(e.target.value))}
+                                      />
+                                    </div>
                                   </div>
                                 </div>
-                              )}
-                            </div>
-                          ))}
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+
+                        {/* Stock */}
+                        <div>
+                          <Label className="text-sm font-medium">Inventario</Label>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                            {warehouses.map(warehouse => {
+                              const variationStock = variation.stock.find(s => s.warehouse_id === warehouse.id);
+                              return (
+                                <div key={warehouse.id} className="space-y-1">
+                                  <Label className="text-xs text-gray-600">{warehouse.name}</Label>
+                                  <Input
+                                    type="number"
+                                    placeholder="Stock"
+                                    value={variationStock?.stock || ''}
+                                    onChange={(e) => updateVariationStock(variation.id, warehouse.id, Number(e.target.value))}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Images (only for variable products) */}
+                        {isVariable && productImages.length > 0 && (
+                          <div>
+                            <Label className="text-sm font-medium">Imágenes de la variación</Label>
+                            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
+                              {productImages.map(image => (
+                                <div key={image.id} className="relative">
+                                  <img
+                                    src={image.preview}
+                                    alt="Preview"
+                                    className={`w-full h-16 object-cover rounded border-2 cursor-pointer transition-all ${
+                                      variation.selectedImages.includes(image.id)
+                                        ? 'border-blue-500 ring-2 ring-blue-200'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                    onClick={() => toggleVariationImage(variation.id, image.id)}
+                                  />
+                                  {variation.selectedImages.includes(image.id) && (
+                                    <div className="absolute inset-0 bg-blue-500 bg-opacity-20 rounded flex items-center justify-center">
+                                      <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
               </div>
             </div>
           )}
