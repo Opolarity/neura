@@ -101,7 +101,16 @@ const AddProduct = () => {
 
   // Generate variations when attributes change
   useEffect(() => {
-    if (isVariable && selectedTermGroups.length > 0) {
+    // Auto-update selectedTermGroups based on selectedTerms
+    const groupsWithTerms = Object.keys(selectedTerms)
+      .map(Number)
+      .filter(groupId => selectedTerms[groupId]?.length > 0);
+    
+    if (JSON.stringify(groupsWithTerms.sort()) !== JSON.stringify(selectedTermGroups.sort())) {
+      setSelectedTermGroups(groupsWithTerms);
+    }
+
+    if (isVariable && groupsWithTerms.length > 0) {
       generateVariations();
     } else if (!isVariable) {
       // Create single variation for non-variable product
@@ -114,7 +123,7 @@ const AddProduct = () => {
       };
       setVariations([singleVariation]);
     }
-  }, [isVariable, selectedTermGroups, selectedTerms, priceLists, warehouses]);
+  }, [isVariable, selectedTerms, priceLists, warehouses]);
 
   const loadInitialData = async () => {
     try {
@@ -226,22 +235,11 @@ const AddProduct = () => {
     );
   };
 
-  const toggleTermGroupSelection = (termGroupId: number) => {
-    setSelectedTermGroups(prev => {
-      const updated = prev.includes(termGroupId)
-        ? prev.filter(id => id !== termGroupId)
-        : [...prev, termGroupId];
-      
-      // Clear selected terms for removed groups
-      if (!updated.includes(termGroupId)) {
-        setSelectedTerms(prevTerms => {
-          const updatedTerms = { ...prevTerms };
-          delete updatedTerms[termGroupId];
-          return updatedTerms;
-        });
-      }
-      
-      return updated;
+  const clearTermGroup = (termGroupId: number) => {
+    setSelectedTerms(prevTerms => {
+      const updatedTerms = { ...prevTerms };
+      delete updatedTerms[termGroupId];
+      return updatedTerms;
     });
   };
 
@@ -341,22 +339,18 @@ const AddProduct = () => {
       return false;
     }
 
-    if (isVariable && selectedTermGroups.length === 0) {
-      toast({
-        title: "Error",
-        description: "Debe seleccionar al menos un grupo de atributos para productos variables",
-        variant: "destructive"
-      });
-      return false;
-    }
-
-    if (isVariable && selectedTermGroups.some(groupId => !selectedTerms[groupId] || selectedTerms[groupId].length === 0)) {
-      toast({
-        title: "Error",
-        description: "Debe seleccionar al menos un atributo por cada grupo seleccionado",
-        variant: "destructive"
-      });
-      return false;
+    if (isVariable) {
+      const groupsWithTerms = Object.keys(selectedTerms)
+        .filter(groupId => selectedTerms[Number(groupId)]?.length > 0);
+      
+      if (groupsWithTerms.length === 0) {
+        toast({
+          title: "Error",
+          description: "Debe seleccionar al menos un atributo para productos variables",
+          variant: "destructive"
+        });
+        return false;
+      }
     }
 
     return true;
@@ -582,39 +576,80 @@ const AddProduct = () => {
           {isVariable && (
             <div>
               <Label>Atributos del producto</Label>
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                {termGroups.map(group => (
-                  <div key={group.id} className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`group-${group.id}`}
-                        checked={selectedTermGroups.includes(group.id)}
-                        onCheckedChange={() => toggleTermGroupSelection(group.id)}
-                      />
-                      <Label htmlFor={`group-${group.id}`} className="font-medium">
-                        {group.name}
-                      </Label>
-                    </div>
-
-                    {selectedTermGroups.includes(group.id) && (
-                      <div className="ml-6 space-y-1">
-                        <Label className="text-xs text-gray-500">Seleccionar {group.name.toLowerCase()}:</Label>
-                        <div className="flex flex-wrap gap-1">
-                          {terms.filter(term => term.term_group_id === group.id).map(term => (
-                            <Badge
-                              key={term.id}
-                              variant={selectedTerms[group.id]?.includes(term.id) ? "default" : "outline"}
-                              className="cursor-pointer text-xs"
-                              onClick={() => toggleTermSelection(group.id, term.id)}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                {termGroups.map(group => {
+                  const groupTerms = terms.filter(term => term.term_group_id === group.id);
+                  const selectedGroupTerms = selectedTerms[group.id] || [];
+                  
+                  return (
+                    <div key={group.id} className="space-y-2">
+                      <Label className="text-sm font-medium">{group.name}</Label>
+                      <Select
+                        value={selectedGroupTerms.length > 0 ? "selected" : ""}
+                        onValueChange={(value) => {
+                          if (value && !selectedGroupTerms.includes(Number(value))) {
+                            const termId = Number(value);
+                            toggleTermSelection(group.id, termId);
+                            if (!selectedTermGroups.includes(group.id)) {
+                              setSelectedTermGroups(prev => [...prev, group.id]);
+                            }
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={`Seleccionar ${group.name.toLowerCase()}`}>
+                            {selectedGroupTerms.length > 0 
+                              ? `${selectedGroupTerms.length} seleccionado${selectedGroupTerms.length > 1 ? 's' : ''}`
+                              : `Seleccionar ${group.name.toLowerCase()}`
+                            }
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {groupTerms.map(term => (
+                            <SelectItem 
+                              key={term.id} 
+                              value={term.id.toString()}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                toggleTermSelection(group.id, term.id);
+                                if (!selectedTermGroups.includes(group.id)) {
+                                  setSelectedTermGroups(prev => [...prev, group.id]);
+                                }
+                              }}
                             >
-                              {term.name}
-                            </Badge>
+                              <div className="flex items-center justify-between w-full">
+                                <span>{term.name}</span>
+                                {selectedGroupTerms.includes(term.id) && (
+                                  <span className="ml-2">✓</span>
+                                )}
+                              </div>
+                            </SelectItem>
                           ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      {/* Selected terms display */}
+                      {selectedGroupTerms.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {selectedGroupTerms.map(termId => {
+                            const term = terms.find(t => t.id === termId);
+                            return term ? (
+                              <Badge
+                                key={termId}
+                                variant="secondary"
+                                className="cursor-pointer"
+                                onClick={() => toggleTermSelection(group.id, termId)}
+                              >
+                                {term.name}
+                                <X className="w-3 h-3 ml-1" />
+                              </Badge>
+                            ) : null;
+                          })}
                         </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
