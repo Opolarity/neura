@@ -143,7 +143,7 @@ const Products = () => {
   }, []);
 
   const handleNewProduct = () => {
-    navigate('/add-product');
+    navigate('/products/add');
   };
 
   const filteredProducts = products.filter(product =>
@@ -430,7 +430,7 @@ const Products = () => {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => navigate(`/add-product?id=${product.id}`)}
+                            onClick={() => navigate(`/products/add?id=${product.id}`)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
