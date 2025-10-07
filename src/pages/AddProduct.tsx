@@ -101,18 +101,19 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   
   const [loading, setLoading] = useState(false);
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
   // Load initial data
   useEffect(() => {
     loadInitialData();
   }, []);
 
-  // Load product data if in edit mode
+  // Load product data if in edit mode - wait for initial data to be loaded
   useEffect(() => {
-    if (isEditMode && productId) {
+    if (isEditMode && productId && initialDataLoaded) {
       loadProductData(Number(productId));
     }
-  }, [productId, isEditMode]);
+  }, [productId, isEditMode, initialDataLoaded]);
 
   // Generate variations when attributes change
   useEffect(() => {
@@ -161,6 +162,8 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
       setTerms(termsRes.data || []);
       setPriceLists(priceListsRes.data || []);
       setWarehouses(warehousesRes.data?.map(w => ({ id: w.id, name: String(w.name) })) || []);
+      
+      setInitialDataLoaded(true);
     } catch (error) {
       toast({
         title: "Error",
@@ -309,6 +312,7 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
         
         // Set selectedTerms after all variations are loaded
         if (Object.keys(collectedTerms).length > 0) {
+          console.log('Setting selectedTerms:', collectedTerms);
           setSelectedTerms(collectedTerms);
         }
       }
@@ -1029,6 +1033,12 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
                 {termGroups.map(group => {
                   const groupTerms = terms.filter(term => term.term_group_id === group.id);
                   const selectedGroupTerms = selectedTerms[group.id] || [];
+                  
+                  console.log(`Group ${group.name}:`, {
+                    groupId: group.id,
+                    selectedTerms: selectedTerms,
+                    selectedGroupTerms
+                  });
                   
                   return (
                     <div key={group.id} className="space-y-2">
