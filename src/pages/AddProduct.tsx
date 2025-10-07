@@ -102,6 +102,7 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
   
   const [loading, setLoading] = useState(false);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(false);
 
   // Load initial data
   useEffect(() => {
@@ -117,6 +118,9 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
 
   // Generate variations when attributes change
   useEffect(() => {
+    // Don't regenerate variations if we're loading a product from DB
+    if (isLoadingProduct) return;
+    
     // Auto-update selectedTermGroups based on selectedTerms
     const groupsWithTerms = Object.keys(selectedTerms)
       .map(Number)
@@ -176,6 +180,7 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
   const loadProductData = async (id: number) => {
     try {
       setLoading(true);
+      setIsLoadingProduct(true);
       
       // Get product basic data
       const { data: product, error: productError } = await supabase
@@ -312,7 +317,6 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
         
         // Set selectedTerms after all variations are loaded
         if (Object.keys(collectedTerms).length > 0) {
-          console.log('Setting selectedTerms:', collectedTerms);
           setSelectedTerms(collectedTerms);
         }
       }
@@ -332,6 +336,10 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
       navigate('/products');
     } finally {
       setLoading(false);
+      // Delay clearing the flag to ensure variations are set
+      setTimeout(() => {
+        setIsLoadingProduct(false);
+      }, 100);
     }
   };
 
@@ -1033,12 +1041,6 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
                 {termGroups.map(group => {
                   const groupTerms = terms.filter(term => term.term_group_id === group.id);
                   const selectedGroupTerms = selectedTerms[group.id] || [];
-                  
-                  console.log(`Group ${group.name}:`, {
-                    groupId: group.id,
-                    selectedTerms: selectedTerms,
-                    selectedGroupTerms
-                  });
                   
                   return (
                     <div key={group.id} className="space-y-2">
