@@ -9,7 +9,7 @@ import { Badge } from '../components/ui/badge';
 import { X, Upload, Save, ArrowLeft, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import WysiwygEditor from '../components/ui/wysiwyg-editor';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '../components/ui/command';
@@ -72,6 +72,9 @@ interface ProductVariation {
 const AddProduct = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const productId = searchParams.get('id');
+  const isEditMode = !!productId;
   
   // Basic product data
   const [productName, setProductName] = useState('');
@@ -79,6 +82,7 @@ const AddProduct = () => {
   const [description, setDescription] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [isVariable, setIsVariable] = useState(false);
+  const [originalIsVariable, setOriginalIsVariable] = useState(false);
   
   // Product images
 const [productImages, setProductImages] = useState<ProductImage[]>([]);
@@ -102,6 +106,13 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  // Load product data if in edit mode
+  useEffect(() => {
+    if (isEditMode && productId) {
+      loadProductData(Number(productId));
+    }
+  }, [productId, isEditMode]);
 
   // Generate variations when attributes change
   useEffect(() => {
@@ -156,6 +167,157 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
         description: "Error al cargar los datos iniciales",
         variant: "destructive"
       });
+    }
+  };
+
+  const loadProductData = async (id: number) => {
+    try {
+      setLoading(true);
+      
+      // Get product basic data
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (productError) throw productError;
+
+      setProductName(product.title);
+      setShortDescription(product.short_description || '');
+      setDescription(product.description || '');
+      setIsVariable(product.is_variable);
+      setOriginalIsVariable(product.is_variable);
+
+      // Get categories
+      const { data: productCategories } = await supabase
+        .from('product_categories')
+        .select('category_id')
+        .eq('product_id', id);
+      
+      if (productCategories) {
+        setSelectedCategories(productCategories.map(pc => pc.category_id));
+      }
+
+      // Get images
+      const { data: images } = await supabase
+        .from('product_images')
+        .select('*')
+        .eq('product_id', id)
+        .order('image_order');
+
+      if (images && images.length > 0) {
+        const loadedImages: ProductImage[] = await Promise.all(
+          images.map(async (img: any, index) => {
+            const response = await fetch(img.image_url);
+            const blob = await response.blob();
+            const file = new File([blob], `image-${index}.jpg`, { type: blob.type });
+            return {
+              file,
+              preview: img.image_url,
+              id: `existing-${img.id}`,
+              order: img.image_order || index
+            };
+          })
+        );
+        setProductImages(loadedImages);
+      }
+
+      // Get variations
+      const { data: variationsData } = await supabase
+        .from('variations')
+        .select('id')
+        .eq('product_id', id);
+
+      if (variationsData && variationsData.length > 0) {
+        const loadedVariations: ProductVariation[] = await Promise.all(
+          variationsData.map(async (variation) => {
+            // Get variation terms
+            const { data: variationTerms } = await supabase
+              .from('variation_terms')
+              .select('term_id')
+              .eq('product_variation_id', variation.id);
+
+            const attributes = variationTerms?.map(vt => {
+              const term = terms.find(t => t.id === vt.term_id);
+              return {
+                term_group_id: term?.term_group_id || 0,
+                term_id: vt.term_id
+              };
+            }) || [];
+
+            // Update selectedTerms for variable products
+            if (product.is_variable && variationTerms) {
+              variationTerms.forEach(vt => {
+                const term = terms.find(t => t.id === vt.term_id);
+                if (term) {
+                  setSelectedTerms(prev => ({
+                    ...prev,
+                    [term.term_group_id]: [...(prev[term.term_group_id] || []), vt.term_id].filter((v, i, a) => a.indexOf(v) === i)
+                  }));
+                }
+              });
+            }
+
+            // Get prices
+            const { data: pricesData } = await supabase
+              .from('product_price')
+              .select('*')
+              .eq('product_variation_id', variation.id);
+
+            const prices: VariationPrice[] = pricesData?.map(p => ({
+              price_list_id: p.proce_list_id,
+              price: Number(p.price),
+              sale_price: Number(p.sale_price || 0)
+            })) || [];
+
+            // Get stock
+            const { data: stockData } = await supabase
+              .from('product_stock')
+              .select('*')
+              .eq('product_variation_id', variation.id);
+
+            const stock: VariationStock[] = stockData?.map(s => ({
+              warehouse_id: s.warehouse_id,
+              stock: Number(s.stock)
+            })) || [];
+
+            // Get variation images
+            const { data: varImages } = await supabase
+              .from('product_variation_images')
+              .select('product_image_id')
+              .eq('product_variation_id', variation.id);
+
+            const selectedImages = varImages?.map(vi => `existing-${vi.product_image_id}`) || [];
+
+            return {
+              id: `db-${variation.id}`,
+              attributes,
+              prices,
+              stock,
+              selectedImages
+            };
+          })
+        );
+
+        setVariations(loadedVariations);
+      }
+
+      toast({
+        title: "Producto cargado",
+        description: "Los datos del producto se han cargado correctamente"
+      });
+
+    } catch (error) {
+      console.error('Error loading product:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar el producto",
+        variant: "destructive"
+      });
+      navigate('/products');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -405,53 +567,21 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
+    // Check if is_variable changed and validate
+    if (isEditMode && isVariable !== originalIsVariable) {
+      const canChange = await validateVariableTypeChange();
+      if (!canChange) return;
+    }
+
     setLoading(true);
     try {
-      // Convert images to base64 for API transfer and sort by order
-      const sortedImages = [...productImages].sort((a, b) => a.order - b.order);
-      const imagesWithBase64 = await Promise.all(
-        sortedImages.map(async (image) => ({
-          id: image.id,
-          file: image.file,
-          url: await convertFileToBase64(image.file),
-          order: image.order
-        }))
-      );
-
-      // Prepare data for edge function
-      const productData = {
-        productName,
-        shortDescription,
-        description,
-        isVariable,
-        selectedCategories,
-        productImages: imagesWithBase64,
-        variations
-      };
-
-      // Call edge function
-      const { data, error } = await supabase.functions.invoke('create-product', {
-        body: productData
-      });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(error.message || 'Error al crear el producto');
+      if (isEditMode) {
+        await updateProduct();
+      } else {
+        await createProduct();
       }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Error al crear el producto');
-      }
-
-      toast({
-        title: "Éxito",
-        description: data.message || "Producto creado correctamente"
-      });
-
-      navigate('/products');
-
     } catch (error) {
-      console.error('Error creating product:', error);
+      console.error('Error saving product:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       toast({
         title: "Error",
@@ -463,6 +593,256 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     }
   };
 
+  const validateVariableTypeChange = async (): Promise<boolean> => {
+    try {
+      // Check if product has orders
+      const { data: variationsData } = await supabase
+        .from('variations')
+        .select('id')
+        .eq('product_id', Number(productId));
+
+      if (variationsData && variationsData.length > 0) {
+        const variationIds = variationsData.map(v => v.id);
+
+        const { data: orderProducts } = await supabase
+          .from('order_products')
+          .select('id')
+          .in('product_variation_id', variationIds)
+          .limit(1);
+
+        if (orderProducts && orderProducts.length > 0) {
+          toast({
+            title: "No se puede cambiar el tipo",
+            description: "No puedes cambiar el tipo de producto porque tiene órdenes vinculadas",
+            variant: "destructive"
+          });
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error validating variable type change:', error);
+      return false;
+    }
+  };
+
+  const createProduct = async () => {
+    // Convert images to base64 for API transfer and sort by order
+    const sortedImages = [...productImages].sort((a, b) => a.order - b.order);
+    const imagesWithBase64 = await Promise.all(
+      sortedImages.map(async (image) => ({
+        id: image.id,
+        file: image.file,
+        url: await convertFileToBase64(image.file),
+        order: image.order
+      }))
+    );
+
+    // Prepare data for edge function
+    const productData = {
+      productName,
+      shortDescription,
+      description,
+      isVariable,
+      selectedCategories,
+      productImages: imagesWithBase64,
+      variations
+    };
+
+    // Call edge function
+    const { data, error } = await supabase.functions.invoke('create-product', {
+      body: productData
+    });
+
+    if (error) {
+      console.error('Edge function error:', error);
+      throw new Error(error.message || 'Error al crear el producto');
+    }
+
+    if (!data.success) {
+      throw new Error(data.error || 'Error al crear el producto');
+    }
+
+    toast({
+      title: "Éxito",
+      description: data.message || "Producto creado correctamente"
+    });
+
+    navigate('/products');
+  };
+
+  const updateProduct = async () => {
+    const id = Number(productId);
+
+    // Update basic product data
+    const { error: productError } = await supabase
+      .from('products')
+      .update({
+        title: productName,
+        short_description: shortDescription,
+        description: description,
+        is_variable: isVariable
+      })
+      .eq('id', id);
+
+    if (productError) throw productError;
+
+    // Update categories
+    await supabase.from('product_categories').delete().eq('product_id', id);
+    if (selectedCategories.length > 0) {
+      for (const catId of selectedCategories) {
+        await supabase.from('product_categories').insert({
+          product_id: id,
+          category_id: catId
+        });
+      }
+    }
+
+    // Handle variable type change
+    if (isVariable !== originalIsVariable) {
+      // Delete all existing variations and related data
+      const { data: oldVariations } = await supabase
+        .from('variations')
+        .select('id')
+        .eq('product_id', id);
+
+      if (oldVariations && oldVariations.length > 0) {
+        for (const variation of oldVariations) {
+          await supabase.from('product_variation_images').delete().eq('product_variation_id', variation.id);
+          await supabase.from('product_price').delete().eq('product_variation_id', variation.id);
+          await supabase.from('product_stock').delete().eq('product_variation_id', variation.id);
+          await supabase.from('variation_terms').delete().eq('product_variation_id', variation.id);
+        }
+        await supabase.from('variations').delete().eq('product_id', id);
+      }
+    } else {
+      // If type didn't change, delete existing variations to recreate them
+      const { data: oldVariations } = await supabase
+        .from('variations')
+        .select('id')
+        .eq('product_id', id);
+
+      if (oldVariations && oldVariations.length > 0) {
+        for (const variation of oldVariations) {
+          await supabase.from('product_variation_images').delete().eq('product_variation_id', variation.id);
+          await supabase.from('product_price').delete().eq('product_variation_id', variation.id);
+          await supabase.from('product_stock').delete().eq('product_variation_id', variation.id);
+          await supabase.from('variation_terms').delete().eq('product_variation_id', variation.id);
+        }
+        await supabase.from('variations').delete().eq('product_id', id);
+      }
+    }
+
+    // Update images
+    await supabase.from('product_images').delete().eq('product_id', id);
+    
+    for (const image of productImages) {
+      let imageUrl = image.preview;
+      
+      // Upload new images
+      if (!image.id.startsWith('existing-')) {
+        const fileExt = image.file.name.split('.').pop();
+        const fileName = `${id}-${Date.now()}-${Math.random()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('products')
+          .upload(fileName, image.file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('products')
+          .getPublicUrl(fileName);
+        
+        imageUrl = urlData.publicUrl;
+      }
+
+      const { error: imageError } = await supabase
+        .from('product_images')
+        .insert({
+          product_id: id,
+          image_url: imageUrl,
+          image_order: image.order
+        } as any);
+
+      if (imageError) throw imageError;
+    }
+
+    // Create new variations
+    for (const variation of variations) {
+      const { data: newVariation, error: variationError } = await supabase
+        .from('variations')
+        .insert({
+          product_id: id,
+          sku: null
+        })
+        .select()
+        .single();
+
+      if (variationError) throw variationError;
+
+      // Insert variation terms
+      if (variation.attributes.length > 0) {
+        const termsInsert = variation.attributes.map(attr => ({
+          product_variation_id: newVariation.id,
+          term_id: attr.term_id
+        }));
+        await supabase.from('variation_terms').insert(termsInsert);
+      }
+
+      // Insert prices
+      const pricesInsert = variation.prices.map(price => ({
+        product_variation_id: newVariation.id,
+        proce_list_id: price.price_list_id,
+        price: price.price,
+        sale_price: price.sale_price
+      }));
+      await supabase.from('product_price').insert(pricesInsert);
+
+      // Insert stock
+      for (const stock of variation.stock) {
+        await supabase.from('product_stock').insert({
+          product_variation_id: newVariation.id,
+          warehouse_id: stock.warehouse_id,
+          stock: stock.stock
+        });
+      }
+
+      // Insert variation images
+      if (variation.selectedImages.length > 0) {
+        const { data: allImages } = await supabase
+          .from('product_images')
+          .select('id, image_url')
+          .eq('product_id', id);
+
+        if (allImages) {
+          for (const selectedImageId of variation.selectedImages) {
+            const matchingImage = allImages.find(img => 
+              selectedImageId.startsWith('existing-') 
+                ? img.id === Number(selectedImageId.replace('existing-', ''))
+                : productImages.find(pi => pi.id === selectedImageId)?.preview === img.image_url
+            );
+
+            if (matchingImage) {
+              await supabase.from('product_variation_images').insert({
+                product_variation_id: newVariation.id,
+                product_image_id: matchingImage.id
+              } as any);
+            }
+          }
+        }
+      }
+    }
+
+    toast({
+      title: "Éxito",
+      description: "Producto actualizado correctamente"
+    });
+
+    navigate('/products');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -470,8 +850,12 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Añadir Producto</h1>
-          <p className="text-gray-600">Crear un nuevo producto en el catálogo</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isEditMode ? 'Editar Producto' : 'Añadir Producto'}
+          </h1>
+          <p className="text-gray-600">
+            {isEditMode ? 'Actualizar la información del producto' : 'Crear un nuevo producto en el catálogo'}
+          </p>
         </div>
       </div>
 
@@ -829,7 +1213,7 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         </Button>
         <Button onClick={handleSubmit} disabled={loading}>
           <Save className="w-4 h-4 mr-2" />
-          {loading ? 'Guardando...' : 'Guardar Producto'}
+          {loading ? 'Guardando...' : (isEditMode ? 'Actualizar Producto' : 'Guardar Producto')}
         </Button>
       </div>
     </div>

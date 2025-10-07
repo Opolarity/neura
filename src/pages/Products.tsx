@@ -427,7 +427,11 @@ const Products = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => navigate(`/add-product?id=${product.id}`)}
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button 
