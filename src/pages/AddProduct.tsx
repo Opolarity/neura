@@ -230,6 +230,9 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
         .eq('product_id', id);
 
       if (variationsData && variationsData.length > 0) {
+        // Collect all terms from all variations first
+        const collectedTerms: { [termGroupId: number]: number[] } = {};
+        
         const loadedVariations: ProductVariation[] = await Promise.all(
           variationsData.map(async (variation) => {
             // Get variation terms
@@ -246,15 +249,17 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
               };
             }) || [];
 
-            // Update selectedTerms for variable products
+            // Collect terms for variable products
             if (product.is_variable && variationTerms) {
               variationTerms.forEach(vt => {
                 const term = terms.find(t => t.id === vt.term_id);
                 if (term) {
-                  setSelectedTerms(prev => ({
-                    ...prev,
-                    [term.term_group_id]: [...(prev[term.term_group_id] || []), vt.term_id].filter((v, i, a) => a.indexOf(v) === i)
-                  }));
+                  if (!collectedTerms[term.term_group_id]) {
+                    collectedTerms[term.term_group_id] = [];
+                  }
+                  if (!collectedTerms[term.term_group_id].includes(vt.term_id)) {
+                    collectedTerms[term.term_group_id].push(vt.term_id);
+                  }
                 }
               });
             }
@@ -301,6 +306,11 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
         );
 
         setVariations(loadedVariations);
+        
+        // Set selectedTerms after all variations are loaded
+        if (Object.keys(collectedTerms).length > 0) {
+          setSelectedTerms(collectedTerms);
+        }
       }
 
       toast({
