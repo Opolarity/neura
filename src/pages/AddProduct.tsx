@@ -695,7 +695,7 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         await supabase.from('product_categories').insert({
           product_id: id,
           category_id: catId
-        });
+        } as any);
       }
     }
 
@@ -806,7 +806,7 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
           product_variation_id: newVariation.id,
           warehouse_id: stock.warehouse_id,
           stock: stock.stock
-        });
+        } as any);
       }
 
       // Insert variation images
