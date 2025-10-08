@@ -697,163 +697,66 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
   const updateProduct = async () => {
     const id = Number(productId);
 
-    // Update basic product data
-    const { error: productError } = await supabase
-      .from('products')
-      .update({
-        title: productName,
-        short_description: shortDescription,
-        description: description,
-        is_variable: isVariable
+    // Convert images to base64 for new images
+    const imagesForEdgeFunction = await Promise.all(
+      productImages.map(async (img) => {
+        if (!img.id.startsWith('existing-')) {
+          // New image - convert to base64
+          return new Promise<any>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              resolve({
+                id: img.id,
+                url: reader.result as string,
+                preview: img.preview,
+                order: img.order
+              });
+            };
+            reader.readAsDataURL(img.file);
+          });
+        } else {
+          // Existing image - keep preview URL
+          return {
+            id: img.id,
+            preview: img.preview,
+            url: img.preview,
+            order: img.order
+          };
+        }
       })
-      .eq('id', id);
+    );
 
-    if (productError) throw productError;
-
-    // Update categories
-    await supabase.from('product_categories').delete().eq('product_id', id);
-    if (selectedCategories.length > 0) {
-      for (const catId of selectedCategories) {
-        await supabase.from('product_categories').insert({
-          product_id: id,
-          category_id: catId
-        } as any);
+    const { data, error } = await supabase.functions.invoke('update-product', {
+      body: {
+        productId: id,
+        productName,
+        shortDescription,
+        description,
+        isVariable,
+        originalIsVariable,
+        selectedCategories,
+        productImages: imagesForEdgeFunction,
+        variations
       }
+    });
+
+    if (error) {
+      console.error('Error updating product:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Error al actualizar el producto",
+        variant: "destructive"
+      });
+      return;
     }
 
-    // Handle variable type change
-    if (isVariable !== originalIsVariable) {
-      // Delete all existing variations and related data
-      const { data: oldVariations } = await supabase
-        .from('variations')
-        .select('id')
-        .eq('product_id', id);
-
-      if (oldVariations && oldVariations.length > 0) {
-        for (const variation of oldVariations) {
-          await supabase.from('product_variation_images').delete().eq('product_variation_id', variation.id);
-          await supabase.from('product_price').delete().eq('product_variation_id', variation.id);
-          await supabase.from('product_stock').delete().eq('product_variation_id', variation.id);
-          await supabase.from('variation_terms').delete().eq('product_variation_id', variation.id);
-        }
-        await supabase.from('variations').delete().eq('product_id', id);
-      }
-    } else {
-      // If type didn't change, delete existing variations to recreate them
-      const { data: oldVariations } = await supabase
-        .from('variations')
-        .select('id')
-        .eq('product_id', id);
-
-      if (oldVariations && oldVariations.length > 0) {
-        for (const variation of oldVariations) {
-          await supabase.from('product_variation_images').delete().eq('product_variation_id', variation.id);
-          await supabase.from('product_price').delete().eq('product_variation_id', variation.id);
-          await supabase.from('product_stock').delete().eq('product_variation_id', variation.id);
-          await supabase.from('variation_terms').delete().eq('product_variation_id', variation.id);
-        }
-        await supabase.from('variations').delete().eq('product_id', id);
-      }
-    }
-
-    // Update images
-    await supabase.from('product_images').delete().eq('product_id', id);
-    
-    // Map to track old image IDs to new DB IDs
-    const imageIdMap: Record<string, number> = {};
-    
-    for (const image of productImages) {
-      let imageUrl = image.preview;
-      
-      // Upload new images
-      if (!image.id.startsWith('existing-')) {
-        const fileExt = image.file.name.split('.').pop();
-        const fileName = `${id}-${Date.now()}-${Math.random()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('products')
-          .upload(fileName, image.file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: urlData } = supabase.storage
-          .from('products')
-          .getPublicUrl(fileName);
-        
-        imageUrl = urlData.publicUrl;
-      }
-
-      const { data: insertedImage, error: imageError } = await supabase
-        .from('product_images')
-        .insert({
-          product_id: id,
-          image_url: imageUrl,
-          image_order: image.order
-        } as any)
-        .select()
-        .single();
-
-      if (imageError) throw imageError;
-      
-      // Map the temp ID to the new DB ID
-      if (insertedImage) {
-        imageIdMap[image.id] = insertedImage.id;
-      }
-    }
-
-    // Create new variations
-    for (const variation of variations) {
-      const { data: newVariation, error: variationError } = await supabase
-        .from('variations')
-        .insert({
-          product_id: id,
-          sku: null
-        })
-        .select()
-        .single();
-
-      if (variationError) throw variationError;
-
-      // Insert variation terms
-      if (variation.attributes.length > 0) {
-        const termsInsert = variation.attributes.map(attr => ({
-          product_variation_id: newVariation.id,
-          term_id: attr.term_id
-        }));
-        await supabase.from('variation_terms').insert(termsInsert);
-      }
-
-      // Insert prices
-      const pricesInsert = variation.prices.map(price => ({
-        product_variation_id: newVariation.id,
-        proce_list_id: price.price_list_id,
-        price: price.price,
-        sale_price: price.sale_price
-      }));
-      await supabase.from('product_price').insert(pricesInsert);
-
-      // Insert stock
-      for (const stock of variation.stock) {
-        await supabase.from('product_stock').insert({
-          product_variation_id: newVariation.id,
-          warehouse_id: stock.warehouse_id,
-          stock: stock.stock
-        } as any);
-      }
-
-      // Insert variation images
-      if (variation.selectedImages.length > 0) {
-        for (const selectedImageId of variation.selectedImages) {
-          const dbImageId = imageIdMap[selectedImageId];
-          
-          if (dbImageId) {
-            await supabase.from('product_variation_images').insert({
-              product_variation_id: newVariation.id,
-              product_image_id: dbImageId
-            } as any);
-          }
-        }
-      }
+    if (!data.success) {
+      toast({
+        title: "Error",
+        description: data.error || "Error al actualizar el producto",
+        variant: "destructive"
+      });
+      return;
     }
 
     toast({
