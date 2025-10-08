@@ -172,6 +172,24 @@ serve(async (req) => {
 
       console.log('Variation created with ID:', variationRecord.id);
 
+      // Generate and update SKU
+      const brandCode = '100'; // Default brand code
+      const productCode = String(product.id).padStart(5, '0');
+      const variationCode = String(variationRecord.id).padStart(4, '0');
+      const sku = `${brandCode}${productCode}${variationCode}`;
+
+      const { error: skuError } = await supabaseClient
+        .from('variations')
+        .update({ sku })
+        .eq('id', variationRecord.id);
+
+      if (skuError) {
+        console.error('SKU update error:', skuError);
+        throw skuError;
+      }
+
+      console.log('SKU generated:', sku);
+
       // Create variation terms
       if (variation.attributes.length > 0) {
         const termInserts = variation.attributes.map(attr => ({

@@ -47,6 +47,7 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
   
   // Variations
   const [variations, setVariations] = useState<ProductVariation[]>([]);
+  const [variationSkus, setVariationSkus] = useState<Record<string, string>>({});
   const [selectedTermGroups, setSelectedTermGroups] = useState<number[]>([]);
   const [selectedTerms, setSelectedTerms] = useState<{ [termGroupId: number]: number[] }>({});
   
@@ -191,15 +192,24 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
       // Get variations
       const { data: variationsData } = await supabase
         .from('variations')
-        .select('id')
-        .eq('product_id', id);
+        .select('id, sku')
+        .eq('product_id', id) as any;
 
       if (variationsData && variationsData.length > 0) {
+        // Store SKUs
+        const skuMap: Record<string, string> = {};
+        variationsData.forEach((variation: any) => {
+          if (variation.sku) {
+            skuMap[`db-${variation.id}`] = variation.sku;
+          }
+        });
+        setVariationSkus(skuMap);
+
         // Collect all terms from all variations first
         const collectedTerms: { [termGroupId: number]: number[] } = {};
         
         const loadedVariations: ProductVariation[] = await Promise.all(
-          variationsData.map(async (variation) => {
+          variationsData.map(async (variation: any) => {
             // Get variation terms
             const { data: variationTerms } = await supabase
               .from('variation_terms')
@@ -1016,9 +1026,16 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
                       className="border rounded-lg px-4"
                     >
                       <AccordionTrigger className="hover:no-underline">
-                        <h4 className="font-medium text-lg">
-                          {getVariationLabel(variation)}
-                        </h4>
+                        <div className="flex items-center gap-3">
+                          <h4 className="font-medium text-lg">
+                            {getVariationLabel(variation)}
+                          </h4>
+                          {variationSkus[variation.id] && (
+                            <span className="text-sm text-muted-foreground">
+                              SKU: {variationSkus[variation.id]}
+                            </span>
+                          )}
+                        </div>
                       </AccordionTrigger>
                       <AccordionContent className="space-y-4 pt-4">
                         {/* Prices */}

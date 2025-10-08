@@ -203,6 +203,24 @@ serve(async (req) => {
 
       console.log('Variation created with ID:', newVariation.id);
 
+      // Generate and update SKU
+      const brandCode = '100'; // Default brand code
+      const productCode = String(productId).padStart(5, '0');
+      const variationCode = String(newVariation.id).padStart(4, '0');
+      const sku = `${brandCode}${productCode}${variationCode}`;
+
+      const { error: skuError } = await supabaseClient
+        .from('variations')
+        .update({ sku })
+        .eq('id', newVariation.id);
+
+      if (skuError) {
+        console.error('SKU update error:', skuError);
+        throw skuError;
+      }
+
+      console.log('SKU generated:', sku);
+
       // Insert variation terms
       if (variation.attributes.length > 0) {
         const termsInsert = variation.attributes.map(attr => ({
