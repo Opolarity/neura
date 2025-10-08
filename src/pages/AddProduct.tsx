@@ -14,60 +14,17 @@ import WysiwygEditor from '../components/ui/wysiwyg-editor';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '../components/ui/command';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion';
-
-interface Category {
-  id: number;
-  name: string;
-}
-
-interface TermGroup {
-  id: number;
-  name: string;
-  code: string;
-}
-
-interface Term {
-  id: number;
-  name: string;
-  term_group_id: number;
-}
-
-interface PriceList {
-  id: number;
-  name: string;
-  code: string;
-}
-
-interface Warehouse {
-  id: number;
-  name: string;
-}
-
-interface ProductImage {
-  file: File;
-  preview: string;
-  id: string;
-  order: number;
-}
-
-interface VariationPrice {
-  price_list_id: number;
-  price: number;
-  sale_price: number;
-}
-
-interface VariationStock {
-  warehouse_id: number;
-  stock: number;
-}
-
-interface ProductVariation {
-  id: string;
-  attributes: { term_group_id: number; term_id: number }[];
-  prices: VariationPrice[];
-  stock: VariationStock[];
-  selectedImages: string[];
-}
+import type { 
+  Category, 
+  TermGroup, 
+  Term, 
+  PriceList, 
+  Warehouse, 
+  VariationPrice, 
+  VariationStock,
+  ProductImage,
+  ProductVariation
+} from '@/types';
 
 const AddProduct = () => {
   const { toast } = useToast();
