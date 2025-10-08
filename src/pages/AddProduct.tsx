@@ -1040,13 +1040,13 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
                       <AccordionContent className="space-y-4 pt-4">
                         {/* Prices */}
                         <div>
-                          <Label className="text-sm font-medium mb-3">Precios</Label>
+                          
                           <div className="space-y-3 mt-2">
                             {priceLists.map(priceList => {
                               const variationPrice = variation.prices.find(p => p.price_list_id === priceList.id);
                               return (
                                 <div key={priceList.id} className="flex items-center gap-4">
-                                  <Label className="text-sm font-medium w-[40%]">{priceList.name}</Label>
+                                  <Label className="text-sm font-medium w-[40%]">Precio {priceList.name}</Label>
                                   <div className="flex gap-2 w-[60%]">
                                     <Input
                                       type="number"
@@ -1071,13 +1071,13 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
 
                         {/* Stock */}
                         <div>
-                          <Label className="text-sm font-medium mb-3">Inventario</Label>
+                          
                           <div className="space-y-3 mt-2">
                             {warehouses.map(warehouse => {
                               const variationStock = variation.stock.find(s => s.warehouse_id === warehouse.id);
                               return (
                                 <div key={warehouse.id} className="flex items-center gap-4">
-                                  <Label className="text-sm font-medium w-[40%]">{warehouse.name}</Label>
+                                  <Label className="text-sm font-medium w-[40%]">Iventario {warehouse.name}</Label>
                                   <Input
                                     type="number"
                                     placeholder="Stock"
