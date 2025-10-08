@@ -759,6 +759,9 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     // Update images
     await supabase.from('product_images').delete().eq('product_id', id);
     
+    // Map to track old image IDs to new DB IDs
+    const imageIdMap: Record<string, number> = {};
+    
     for (const image of productImages) {
       let imageUrl = image.preview;
       
@@ -780,15 +783,22 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         imageUrl = urlData.publicUrl;
       }
 
-      const { error: imageError } = await supabase
+      const { data: insertedImage, error: imageError } = await supabase
         .from('product_images')
         .insert({
           product_id: id,
           image_url: imageUrl,
           image_order: image.order
-        } as any);
+        } as any)
+        .select()
+        .single();
 
       if (imageError) throw imageError;
+      
+      // Map the temp ID to the new DB ID
+      if (insertedImage) {
+        imageIdMap[image.id] = insertedImage.id;
+      }
     }
 
     // Create new variations
@@ -833,25 +843,14 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
 
       // Insert variation images
       if (variation.selectedImages.length > 0) {
-        const { data: allImages } = await supabase
-          .from('product_images')
-          .select('id, image_url')
-          .eq('product_id', id);
-
-        if (allImages) {
-          for (const selectedImageId of variation.selectedImages) {
-            const matchingImage = allImages.find(img => 
-              selectedImageId.startsWith('existing-') 
-                ? img.id === Number(selectedImageId.replace('existing-', ''))
-                : productImages.find(pi => pi.id === selectedImageId)?.preview === img.image_url
-            );
-
-            if (matchingImage) {
-              await supabase.from('product_variation_images').insert({
-                product_variation_id: newVariation.id,
-                product_image_id: matchingImage.id
-              } as any);
-            }
+        for (const selectedImageId of variation.selectedImages) {
+          const dbImageId = imageIdMap[selectedImageId];
+          
+          if (dbImageId) {
+            await supabase.from('product_variation_images').insert({
+              product_variation_id: newVariation.id,
+              product_image_id: dbImageId
+            } as any);
           }
         }
       }
