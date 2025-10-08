@@ -9,8 +9,7 @@ const corsHeaders = {
 
 interface ProductImage {
   id: string;
-  file: File;
-  url: string;
+  path: string;
   order: number;
 }
 
@@ -120,58 +119,40 @@ serve(async (req) => {
       console.log('Categories created');
     }
 
-    // 3. Upload images and create product_images records
-    const imageUrls: { id: string; url: string }[] = [];
+    // 3. Create product_images records (images already uploaded to storage)
+    const imageMapping: { id: string; dbId: number; path: string }[] = [];
     
     for (let i = 0; i < productImages.length; i++) {
       const image = productImages[i];
-      const fileName = `${product.id}/${Date.now()}-${i}`;
       
-      // Convert base64 to Uint8Array
-      const base64Data = image.url.split(',')[1];
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let j = 0; j < binaryString.length; j++) {
-        bytes[j] = binaryString.charCodeAt(j);
-      }
-      
-      const { error: uploadError } = await supabaseClient.storage
-        .from('products')
-        .upload(fileName, bytes, {
-          contentType: 'image/jpeg'
-        });
-
-      if (uploadError) {
-        console.error('Image upload error:', uploadError);
-        throw uploadError;
-      }
-
+      // Get public URL from storage path
       const { data: { publicUrl } } = supabaseClient.storage
         .from('products')
-        .getPublicUrl(fileName);
+        .getPublicUrl(image.path);
 
-      const { data: imageRecord, error: imageError } = await supabaseClient
+      const imageId = Date.now() + Math.floor(Math.random() * 1000) + i;
+      const { error: imageError } = await supabaseClient
         .from('product_images')
         .insert({
-          id: Date.now() + Math.floor(Math.random() * 1000) + i,
+          id: imageId,
           product_id: product.id,
           image_url: publicUrl,
           image_order: image.order
-        })
-        .select()
-        .single();
+        });
 
       if (imageError) {
         console.error('Image record creation error:', imageError);
         throw imageError;
       }
 
-      if (imageRecord) {
-        imageUrls.push({ id: image.id, url: publicUrl });
-      }
+      imageMapping.push({ 
+        id: image.id, 
+        dbId: imageId,
+        path: image.path 
+      });
     }
 
-    console.log('Images uploaded and records created:', imageUrls.length);
+    console.log('Image records created:', imageMapping.length);
 
     // 4. Create variations
     for (const variation of variations) {
@@ -258,28 +239,19 @@ serve(async (req) => {
       // Create variation images (only for variable products)
       if (isVariable && variation.selectedImages.length > 0) {
         for (const imageId of variation.selectedImages) {
-          const imageUrl = imageUrls.find(img => img.id === imageId);
-          if (imageUrl) {
-            // Get the product_images.id for this URL
-            const { data: productImageRecord } = await supabaseClient
-              .from('product_images')
-              .select('id')
-              .eq('image_url', imageUrl.url)
-              .single();
+          const imageMap = imageMapping.find(img => img.id === imageId);
+          if (imageMap) {
+            const { error: variationImageError } = await supabaseClient
+              .from('product_variation_images')
+              .insert({
+                id: Date.now() + Math.floor(Math.random() * 1000),
+                product_variation_id: variationRecord.id,
+                product_image_id: imageMap.dbId
+              });
 
-            if (productImageRecord) {
-              const { error: variationImageError } = await supabaseClient
-                .from('product_variation_images')
-                .insert({
-                  id: Date.now() + Math.floor(Math.random() * 1000),
-                  product_variation_id: variationRecord.id,
-                  product_image_id: productImageRecord.id
-                });
-
-              if (variationImageError) {
-                console.error('Variation image creation error:', variationImageError);
-                throw variationImageError;
-              }
+            if (variationImageError) {
+              console.error('Variation image creation error:', variationImageError);
+              throw variationImageError;
             }
           }
         }

@@ -172,19 +172,19 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
         .order('image_order');
 
       if (images && images.length > 0) {
-        const loadedImages: ProductImage[] = await Promise.all(
-          images.map(async (img: any, index) => {
-            const response = await fetch(img.image_url);
-            const blob = await response.blob();
-            const file = new File([blob], `image-${index}.jpg`, { type: blob.type });
-            return {
-              file,
-              preview: img.image_url,
-              id: `existing-${img.id}`,
-              order: img.image_order || index
-            };
-          })
-        );
+        const loadedImages: ProductImage[] = images.map((img: any, index) => {
+          // Extract storage path from URL if needed
+          const storagePath = img.image_url.includes('products/') 
+            ? img.image_url.split('products/')[1].split('?')[0]
+            : img.image_url;
+            
+          return {
+            file: new File([], 'existing'), // Dummy file for existing images
+            preview: img.image_url,
+            id: `existing-${img.id}`,
+            order: img.image_order || index
+          };
+        });
         setProductImages(loadedImages);
       }
 
@@ -340,30 +340,67 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
     return combinations;
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
 
-    setProductImages(prev => {
-      const currentMaxOrder = prev.length > 0 ? Math.max(...prev.map(img => img.order)) : -1;
+    setLoading(true);
+    try {
+      const currentMaxOrder = productImages.length > 0 ? Math.max(...productImages.map(img => img.order)) : -1;
       const newImages: ProductImage[] = [];
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const id = Date.now() + '-' + i;
+        
+        // Upload to storage immediately
+        const storagePath = await uploadImageToStorage(file, productId ? Number(productId) : undefined);
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('products')
+          .getPublicUrl(storagePath);
+        
         newImages.push({
           file,
-          preview: URL.createObjectURL(file),
-          id,
+          preview: publicUrl,
+          id: storagePath, // Use storage path as ID
           order: currentMaxOrder + i + 1
         });
       }
 
-      return [...prev, ...newImages];
-    });
+      setProductImages(prev => [...prev, ...newImages]);
+      
+      toast({
+        title: "Imágenes subidas",
+        description: `${newImages.length} imagen${newImages.length > 1 ? 'es' : ''} subida${newImages.length > 1 ? 's' : ''} correctamente`
+      });
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      toast({
+        title: "Error",
+        description: "Error al subir las imágenes",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeImage = (imageId: string) => {
+  const removeImage = async (imageId: string) => {
+    const imageToRemove = productImages.find(img => img.id === imageId);
+    
+    // If it's a newly uploaded image (not existing), delete from storage
+    if (imageToRemove && !imageId.startsWith('existing-')) {
+      try {
+        await supabase.storage
+          .from('products')
+          .remove([imageId]); // imageId is the storage path
+      } catch (error) {
+        console.error('Error deleting image from storage:', error);
+      }
+    }
+    
     setProductImages(prev => {
       const updated = prev.filter(img => img.id !== imageId)
         .map((img, index) => ({ ...img, order: index })); // Reorder after removal
@@ -534,13 +571,24 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     return true;
   };
 
-  const convertFileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+  const uploadImageToStorage = async (file: File, productId?: number): Promise<string> => {
+    const tempId = productId || 'tmp';
+    const fileExtension = file.name.split('.').pop() || 'jpg';
+    const fileName = `${tempId}/${crypto.randomUUID()}.${fileExtension}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('products')
+      .upload(fileName, file, { 
+        upsert: true,
+        contentType: file.type 
+      });
+
+    if (uploadError) {
+      console.error('Image upload error:', uploadError);
+      throw uploadError;
+    }
+
+    return fileName;
   };
 
   const handleSubmit = async () => {
@@ -607,16 +655,15 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
   };
 
   const createProduct = async () => {
-    // Convert images to base64 for API transfer and sort by order
+    // Sort images by order
     const sortedImages = [...productImages].sort((a, b) => a.order - b.order);
-    const imagesWithBase64 = await Promise.all(
-      sortedImages.map(async (image) => ({
-        id: image.id,
-        file: image.file,
-        url: await convertFileToBase64(image.file),
-        order: image.order
-      }))
-    );
+    
+    // Prepare images with path info
+    const imageRefs = sortedImages.map(image => ({
+      id: image.id,
+      path: image.id, // The ID is now the storage path
+      order: image.order
+    }));
 
     // Prepare data for edge function
     const productData = {
@@ -625,7 +672,7 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
       description,
       isVariable,
       selectedCategories,
-      productImages: imagesWithBase64,
+      productImages: imageRefs,
       variations
     };
 
@@ -654,34 +701,13 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
   const updateProduct = async () => {
     const id = Number(productId);
 
-    // Convert images to base64 for new images
-    const imagesForEdgeFunction = await Promise.all(
-      productImages.map(async (img) => {
-        if (!img.id.startsWith('existing-')) {
-          // New image - convert to base64
-          return new Promise<any>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              resolve({
-                id: img.id,
-                url: reader.result as string,
-                preview: img.preview,
-                order: img.order
-              });
-            };
-            reader.readAsDataURL(img.file);
-          });
-        } else {
-          // Existing image - keep preview URL
-          return {
-            id: img.id,
-            preview: img.preview,
-            url: img.preview,
-            order: img.order
-          };
-        }
-      })
-    );
+    // Prepare image references
+    const imageRefs = productImages.map(img => ({
+      id: img.id,
+      path: img.id.startsWith('existing-') ? img.preview : img.id,
+      order: img.order,
+      isExisting: img.id.startsWith('existing-')
+    }));
 
     const { data, error } = await supabase.functions.invoke('update-product', {
       body: {
@@ -692,7 +718,7 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         isVariable,
         originalIsVariable,
         selectedCategories,
-        productImages: imagesForEdgeFunction,
+        productImages: imageRefs,
         variations
       }
     });

@@ -4,7 +4,7 @@ import type { VariationStock } from './warehouse';
 export type ProductImage = {
   file: File;
   preview: string;
-  id: string;
+  id: string; // Storage path or existing-{id}
   order: number;
 };
 

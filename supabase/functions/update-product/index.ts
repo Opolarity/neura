@@ -9,10 +9,9 @@ const corsHeaders = {
 
 interface ProductImage {
   id: string;
-  file?: File;
-  url: string;
-  preview: string;
+  path: string;
   order: number;
+  isExisting: boolean;
 }
 
 interface ProductPrice {
@@ -143,7 +142,7 @@ serve(async (req) => {
       console.log('Old variations deleted');
     }
 
-    // 4. Update images
+    // 4. Update images (delete all and recreate with proper references)
     await supabaseClient.from('product_images').delete().eq('product_id', productId);
     
     // Map to track old image IDs to new DB IDs
@@ -151,48 +150,29 @@ serve(async (req) => {
     
     for (let i = 0; i < productImages.length; i++) {
       const image = productImages[i];
-      let imageUrl = image.preview;
       
-      // Upload new images (those that don't start with 'existing-')
-      if (!image.id.startsWith('existing-')) {
-        const fileName = `${productId}/${Date.now()}-${i}`;
-        
-        // Convert base64 to Uint8Array
-        const base64Data = image.url.split(',')[1];
-        const binaryString = atob(base64Data);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let j = 0; j < binaryString.length; j++) {
-          bytes[j] = binaryString.charCodeAt(j);
-        }
-        
-        const { error: uploadError } = await supabaseClient.storage
-          .from('products')
-          .upload(fileName, bytes, {
-            contentType: 'image/jpeg'
-          });
-
-        if (uploadError) {
-          console.error('Image upload error:', uploadError);
-          throw uploadError;
-        }
-
+      // Get public URL from storage path
+      let imageUrl: string;
+      if (image.isExisting) {
+        // For existing images, use the path (which is the preview URL)
+        imageUrl = image.path;
+      } else {
+        // For new images, path is the storage path
         const { data: { publicUrl } } = supabaseClient.storage
           .from('products')
-          .getPublicUrl(fileName);
-        
+          .getPublicUrl(image.path);
         imageUrl = publicUrl;
       }
 
-      const { data: insertedImage, error: imageError } = await supabaseClient
+      const imageId = Date.now() + Math.floor(Math.random() * 1000) + i;
+      const { error: imageError } = await supabaseClient
         .from('product_images')
         .insert({
-          id: Date.now() + Math.floor(Math.random() * 1000) + i,
+          id: imageId,
           product_id: productId,
           image_url: imageUrl,
           image_order: image.order
-        })
-        .select()
-        .single();
+        });
 
       if (imageError) {
         console.error('Image record creation error:', imageError);
@@ -200,9 +180,7 @@ serve(async (req) => {
       }
       
       // Map the temp ID to the new DB ID
-      if (insertedImage) {
-        imageIdMap[image.id] = insertedImage.id;
-      }
+      imageIdMap[image.id] = imageId;
     }
 
     console.log('Images updated:', productImages.length);
