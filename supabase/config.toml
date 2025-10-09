@@ -1,28 +1,34 @@
 project_id = "wwcdntjnpoaacarmmzir"
 
+[functions.create-order]
+verify_jwt = true
+
 [functions.create-product]
-verify_jwt = true
-
-[functions.update-product]
-verify_jwt = true
-
-[functions.get-product-form-data]
-verify_jwt = true
-
-[functions.get-product-details]
-verify_jwt = true
-
-[functions.get-products-list]
 verify_jwt = true
 
 [functions.delete-product]
 verify_jwt = true
 
-[functions.validate-product-type-change]
-verify_jwt = true
-
 [functions.get-inventory]
 verify_jwt = true
 
+[functions.get-product-details]
+verify_jwt = true
+
+[functions.get-product-form-data]
+verify_jwt = true
+
+[functions.get-products-list]
+verify_jwt = true
+
+[functions.get-sales-form-data]
+verify_jwt = true
+
+[functions.update-product]
+verify_jwt = true
+
 [functions.update-stock]
+verify_jwt = true
+
+[functions.validate-product-type-change]
 verify_jwt = true
