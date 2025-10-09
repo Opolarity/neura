@@ -22,15 +22,14 @@ import {
 interface ProductData {
   id: number;
   title: string;
-  description?: string;
   short_description: string;
   is_variable: boolean;
-  created_at: string;
   categories: string[];
-  image?: string;
+  images: { image_url: string }[];
   variations: {
     id: number;
-    prices: { price: number; sale_price?: number }[];
+    sku: string | null;
+    prices: { price: number; sale_price: number | null }[];
     stock: { stock: number }[];
   }[];
 }
@@ -50,82 +49,16 @@ const Products = () => {
     try {
       setLoading(true);
       
-      // Obtener productos
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.functions.invoke('get-products-list');
 
-      if (productsError) throw productsError;
+      if (error) throw error;
 
-      if (!productsData || productsData.length === 0) {
+      if (!data || !data.products || data.products.length === 0) {
         setProducts([]);
         return;
       }
 
-      // Para cada producto, obtener sus categorías, variaciones, precios y stock
-      const enrichedProducts = await Promise.all(
-        productsData.map(async (product) => {
-          // Obtener categorías
-          const { data: categoriesData } = await supabase
-            .from('product_categories')
-            .select(`
-              categories (
-                name
-              )
-            `)
-            .eq('product_id', product.id);
-
-          const categories = categoriesData?.map(cat => cat.categories?.name).filter(Boolean) || [];
-
-          // Obtener primera imagen del producto
-          const { data: imagesData } = await supabase
-            .from('product_images')
-            .select('image_url')
-            .eq('product_id', product.id)
-            .order('image_order', { ascending: true })
-            .limit(1);
-
-          const image = imagesData && imagesData.length > 0 ? imagesData[0].image_url : undefined;
-
-          // Obtener variaciones
-          const { data: variationsData } = await supabase
-            .from('variations')
-            .select('id')
-            .eq('product_id', product.id);
-
-          const variations = await Promise.all(
-            (variationsData || []).map(async (variation) => {
-              // Obtener precios de la variación
-              const { data: pricesData } = await supabase
-                .from('product_price')
-                .select('price, sale_price')
-                .eq('product_variation_id', variation.id);
-
-              // Obtener stock de la variación
-              const { data: stockData } = await supabase
-                .from('product_stock')
-                .select('stock')
-                .eq('product_variation_id', variation.id);
-
-              return {
-                id: variation.id,
-                prices: pricesData || [],
-                stock: stockData || []
-              };
-            })
-          );
-
-          return {
-            ...product,
-            categories,
-            image,
-            variations
-          } as ProductData;
-        })
-      );
-
-      setProducts(enrichedProducts);
+      setProducts(data.products);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast({
@@ -207,106 +140,28 @@ const Products = () => {
     try {
       setDeleting(true);
 
-      // 1. Verificar si los productos están en alguna orden y eliminar cada producto
-      for (const productId of productsToDelete) {
-        const { data: variationsData } = await supabase
-          .from('variations')
-          .select('id')
-          .eq('product_id', productId);
+      const { data, error } = await supabase.functions.invoke('delete-product', {
+        body: { productIds: productsToDelete }
+      });
 
-        if (variationsData && variationsData.length > 0) {
-          const variationIds = variationsData.map(v => v.id);
+      if (error) throw error;
 
-          const { data: orderProducts } = await supabase
-            .from('order_products')
-            .select('id')
-            .in('product_variation_id', variationIds)
-            .limit(1);
-
-          if (orderProducts && orderProducts.length > 0) {
-            toast({
-              title: "No se puede eliminar",
-              description: `El producto ID ${productId} está vinculado a una o más órdenes`,
-              variant: "destructive",
-            });
-            continue;
-          }
-
-          // 2. Eliminar registros relacionados en orden
-          // Eliminar product_variation_images
-          for (const variation of variationsData) {
-            await supabase
-              .from('product_variation_images')
-              .delete()
-              .eq('product_variation_id', variation.id);
-          }
-
-          // Eliminar product_price
-          for (const variation of variationsData) {
-            await supabase
-              .from('product_price')
-              .delete()
-              .eq('product_variation_id', variation.id);
-          }
-
-          // Eliminar product_stock
-          for (const variation of variationsData) {
-            await supabase
-              .from('product_stock')
-              .delete()
-              .eq('product_variation_id', variation.id);
-          }
-
-          // Eliminar variation_terms
-          for (const variation of variationsData) {
-            await supabase
-              .from('variation_terms')
-              .delete()
-              .eq('product_variation_id', variation.id);
-          }
-
-          // Eliminar variations
-          await supabase
-            .from('variations')
-            .delete()
-            .eq('product_id', productId);
-        }
-
-        // 3. Eliminar product_categories
-        await supabase
-          .from('product_categories')
-          .delete()
-          .eq('product_id', productId);
-
-        // 4. Eliminar product_images
-        await supabase
-          .from('product_images')
-          .delete()
-          .eq('product_id', productId);
-
-        // 5. Eliminar el producto
-        const { error: deleteError } = await supabase
-          .from('products')
-          .delete()
-          .eq('id', productId);
-
-        if (deleteError) throw deleteError;
+      if (!data.success) {
+        throw new Error(data.error || 'Error al eliminar los productos');
       }
 
       toast({
         title: "Productos eliminados",
-        description: `Se eliminaron ${productsToDelete.length} producto(s) correctamente`,
+        description: `Se eliminaron ${data.deletedCount} producto(s) correctamente`,
       });
 
-      // Limpiar selección
       setSelectedProducts([]);
-      // Recargar la lista de productos
       fetchProducts();
-    } catch (error) {
-      console.error('Error deleting product:', error);
+    } catch (error: any) {
+      console.error('Error deleting products:', error);
       toast({
         title: "Error",
-        description: "No se pudo eliminar el producto",
+        description: error.message || "No se pudo eliminar el producto",
         variant: "destructive",
       });
     } finally {
@@ -406,9 +261,9 @@ const Products = () => {
                           onCheckedChange={() => toggleProductSelection(product.id)}
                         />
                       </TableCell>
-                      <TableCell>
+                       <TableCell>
                         <img 
-                          src={product.image || placeholderImage}
+                          src={product.images[0]?.image_url || placeholderImage}
                           alt={product.title}
                           className="w-12 h-12 object-cover rounded"
                         />

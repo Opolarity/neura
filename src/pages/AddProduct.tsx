@@ -105,25 +105,15 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
 
   const loadInitialData = async () => {
     try {
-      const [categoriesRes, termGroupsRes, termsRes, priceListsRes, warehousesRes] = await Promise.all([
-        supabase.from('categories').select('*').order('name'),
-        supabase.from('term_groups').select('*').order('name'),
-        supabase.from('terms').select('*').order('name'),
-        supabase.from('price_list').select('*').order('name'),
-        supabase.from('warehouses').select('id, name').order('name')
-      ]);
+      const { data, error } = await supabase.functions.invoke('get-product-form-data');
 
-      if (categoriesRes.error) throw categoriesRes.error;
-      if (termGroupsRes.error) throw termGroupsRes.error;
-      if (termsRes.error) throw termsRes.error;
-      if (priceListsRes.error) throw priceListsRes.error;
-      if (warehousesRes.error) throw warehousesRes.error;
+      if (error) throw error;
 
-      setCategories(categoriesRes.data || []);
-      setTermGroups(termGroupsRes.data || []);
-      setTerms(termsRes.data || []);
-      setPriceLists(priceListsRes.data || []);
-      setWarehouses(warehousesRes.data?.map(w => ({ id: w.id, name: String(w.name) })) || []);
+      setCategories(data.categories || []);
+      setTermGroups(data.termGroups || []);
+      setTerms(data.terms || []);
+      setPriceLists(data.priceLists || []);
+      setWarehouses(data.warehouses?.map((w: any) => ({ id: w.id, name: String(w.name) })) || []);
       
       setInitialDataLoaded(true);
     } catch (error) {
@@ -139,48 +129,33 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
     try {
       setLoading(true);
       setIsLoadingProduct(true);
-      
-      // Get product basic data
-      const { data: product, error: productError } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single();
 
-      if (productError) throw productError;
+      const { data, error } = await supabase.functions.invoke('get-product-details', {
+        body: { productId: id }
+      });
 
-      setProductName(product.title);
-      setShortDescription(product.short_description || '');
-      setDescription(product.description || '');
-      setIsVariable(product.is_variable);
-      setOriginalIsVariable(product.is_variable);
+      if (error) throw error;
 
-      // Get categories
-      const { data: productCategories } = await supabase
-        .from('product_categories')
-        .select('category_id')
-        .eq('product_id', id);
-      
-      if (productCategories) {
-        setSelectedCategories(productCategories.map(pc => pc.category_id));
+      setProductName(data.product.title);
+      setShortDescription(data.product.short_description || '');
+      setDescription(data.product.description || '');
+      setIsVariable(data.product.is_variable);
+      setOriginalIsVariable(data.product.is_variable);
+
+      // Set categories
+      if (data.categories) {
+        setSelectedCategories(data.categories);
       }
 
-      // Get images
-      const { data: images } = await supabase
-        .from('product_images')
-        .select('*')
-        .eq('product_id', id)
-        .order('image_order');
-
-      if (images && images.length > 0) {
-        const loadedImages: ProductImage[] = images.map((img: any, index) => {
-          // Extract storage path from URL if needed
+      // Set images
+      if (data.images && data.images.length > 0) {
+        const loadedImages: ProductImage[] = data.images.map((img: any, index: number) => {
           const storagePath = img.image_url.includes('products/') 
             ? img.image_url.split('products/')[1].split('?')[0]
             : img.image_url;
             
           return {
-            file: new File([], 'existing'), // Dummy file for existing images
+            file: new File([], 'existing'),
             preview: img.image_url,
             id: `existing-${img.id}`,
             order: img.image_order || index
@@ -189,100 +164,66 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
         setProductImages(loadedImages);
       }
 
-      // Get variations
-      const { data: variationsData } = await supabase
-        .from('variations')
-        .select('id, sku')
-        .eq('product_id', id) as any;
-
-      if (variationsData && variationsData.length > 0) {
-        // Store SKUs
+      // Set variations
+      if (data.variations && data.variations.length > 0) {
         const skuMap: Record<string, string> = {};
-        variationsData.forEach((variation: any) => {
+        const collectedTerms: { [termGroupId: number]: number[] } = {};
+
+        const loadedVariations: ProductVariation[] = data.variations.map((variation: any) => {
+          // Store SKU
           if (variation.sku) {
             skuMap[`db-${variation.id}`] = variation.sku;
           }
-        });
-        setVariationSkus(skuMap);
 
-        // Collect all terms from all variations first
-        const collectedTerms: { [termGroupId: number]: number[] } = {};
-        
-        const loadedVariations: ProductVariation[] = await Promise.all(
-          variationsData.map(async (variation: any) => {
-            // Get variation terms
-            const { data: variationTerms } = await supabase
-              .from('variation_terms')
-              .select('term_id')
-              .eq('product_variation_id', variation.id);
-
-            const attributes = variationTerms?.map(vt => {
-              const term = terms.find(t => t.id === vt.term_id);
-              return {
-                term_group_id: term?.term_group_id || 0,
-                term_id: vt.term_id
-              };
-            }) || [];
-
-            // Collect terms for variable products
-            if (product.is_variable && variationTerms) {
-              variationTerms.forEach(vt => {
-                const term = terms.find(t => t.id === vt.term_id);
-                if (term) {
-                  if (!collectedTerms[term.term_group_id]) {
-                    collectedTerms[term.term_group_id] = [];
-                  }
-                  if (!collectedTerms[term.term_group_id].includes(vt.term_id)) {
-                    collectedTerms[term.term_group_id].push(vt.term_id);
-                  }
-                }
-              });
-            }
-
-            // Get prices
-            const { data: pricesData } = await supabase
-              .from('product_price')
-              .select('*')
-              .eq('product_variation_id', variation.id);
-
-            const prices: VariationPrice[] = pricesData?.map(p => ({
-              price_list_id: p.proce_list_id,
-              price: Number(p.price),
-              sale_price: p.sale_price
-            })) || [];
-
-            // Get stock
-            const { data: stockData } = await supabase
-              .from('product_stock')
-              .select('*')
-              .eq('product_variation_id', variation.id);
-
-            const stock: VariationStock[] = stockData?.map(s => ({
-              warehouse_id: s.warehouse_id,
-              stock: Number(s.stock)
-            })) || [];
-
-            // Get variation images
-            const { data: varImages } = await supabase
-              .from('product_variation_images')
-              .select('product_image_id')
-              .eq('product_variation_id', variation.id);
-
-            const selectedImages = varImages?.map(vi => `existing-${vi.product_image_id}`) || [];
-
+          // Map attributes
+          const attributes = variation.terms?.map((termId: number) => {
+            const term = terms.find(t => t.id === termId);
             return {
-              id: `db-${variation.id}`,
-              attributes,
-              prices,
-              stock,
-              selectedImages
+              term_group_id: term?.term_group_id || 0,
+              term_id: termId
             };
-          })
-        );
+          }) || [];
 
+          // Collect terms for variable products
+          if (data.product.is_variable && variation.terms) {
+            variation.terms.forEach((termId: number) => {
+              const term = terms.find(t => t.id === termId);
+              if (term) {
+                if (!collectedTerms[term.term_group_id]) {
+                  collectedTerms[term.term_group_id] = [];
+                }
+                if (!collectedTerms[term.term_group_id].includes(termId)) {
+                  collectedTerms[term.term_group_id].push(termId);
+                }
+              }
+            });
+          }
+
+          const prices: VariationPrice[] = variation.prices?.map((p: any) => ({
+            price_list_id: p.proce_list_id,
+            price: Number(p.price),
+            sale_price: p.sale_price
+          })) || [];
+
+          const stock: VariationStock[] = variation.stock?.map((s: any) => ({
+            warehouse_id: s.warehouse_id,
+            stock: Number(s.stock)
+          })) || [];
+
+          const selectedImages = variation.images?.map((imgId: number) => `existing-${imgId}`) || [];
+
+          return {
+            id: `db-${variation.id}`,
+            attributes,
+            prices,
+            stock,
+            selectedImages
+          };
+        });
+
+        setVariationSkus(skuMap);
         setVariations(loadedVariations);
         
-        // Set selectedTerms after all variations are loaded
         if (Object.keys(collectedTerms).length > 0) {
           setSelectedTerms(collectedTerms);
         }
@@ -303,7 +244,6 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
       navigate('/products');
     } finally {
       setLoading(false);
-      // Delay clearing the flag to ensure variations are set
       setTimeout(() => {
         setIsLoadingProduct(false);
       }, 100);
@@ -632,29 +572,22 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
 
   const validateVariableTypeChange = async (): Promise<boolean> => {
     try {
-      // Check if product has orders
-      const { data: variationsData } = await supabase
-        .from('variations')
-        .select('id')
-        .eq('product_id', Number(productId));
-
-      if (variationsData && variationsData.length > 0) {
-        const variationIds = variationsData.map(v => v.id);
-
-        const { data: orderProducts } = await supabase
-          .from('order_products')
-          .select('id')
-          .in('product_variation_id', variationIds)
-          .limit(1);
-
-        if (orderProducts && orderProducts.length > 0) {
-          toast({
-            title: "No se puede cambiar el tipo",
-            description: "No puedes cambiar el tipo de producto porque tiene órdenes vinculadas",
-            variant: "destructive"
-          });
-          return false;
+      const { data, error } = await supabase.functions.invoke('validate-product-type-change', {
+        body: { 
+          productId: Number(productId),
+          newIsVariable: isVariable
         }
+      });
+
+      if (error) throw error;
+
+      if (!data.canChange) {
+        toast({
+          title: "No se puede cambiar el tipo",
+          description: data.reason || "No puedes cambiar el tipo de producto",
+          variant: "destructive"
+        });
+        return false;
       }
 
       return true;
