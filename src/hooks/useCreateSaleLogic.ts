@@ -44,7 +44,7 @@ interface SalesFormData {
   paymentMethods: any[];
 }
 
-export const useCreateSale = () => {
+export const useCreateSaleLogic = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -229,6 +229,11 @@ export const useCreateSale = () => {
     paymentAmount,
     confirmationCode,
     handleInputChange,
+    setSelectedProduct,
+    setSelectedVariation,
+    setPaymentMethod,
+    setPaymentAmount,
+    setConfirmationCode,
     addProduct,
     removeProduct,
     updateProduct,
@@ -236,11 +241,6 @@ export const useCreateSale = () => {
     calculateDiscount,
     calculateTotal,
     handleSubmit,
-    setSelectedProduct,
-    setSelectedVariation,
-    setPaymentMethod,
-    setPaymentAmount,
-    setConfirmationCode,
     navigate,
   };
 };

@@ -11,23 +11,25 @@ import WysiwygEditor from '../components/ui/wysiwyg-editor';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '../components/ui/command';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion';
-import { useAddProduct } from '@/hooks/useAddProduct';
+import { useAddProductLogic } from '@/hooks/useAddProductLogic';
 
-/**
- * Componente de presentación para crear/editar productos
- * La lógica está separada en el hook useAddProduct
- */
 const AddProduct = () => {
   const {
-    // State
+    isEditMode,
     productName,
+    setProductName,
     shortDescription,
+    setShortDescription,
     description,
+    setDescription,
     selectedCategories,
     isVariable,
+    setIsVariable,
     productImages,
     variations,
     variationSkus,
+    selectedTermGroups,
+    setSelectedTermGroups,
     selectedTerms,
     categories,
     termGroups,
@@ -35,30 +37,22 @@ const AddProduct = () => {
     priceLists,
     warehouses,
     loading,
-    isEditMode,
-    
-    // Setters
-    setProductName,
-    setShortDescription,
-    setDescription,
-    setIsVariable,
-    setSelectedTermGroups,
-    
-    // Handlers
     handleImageUpload,
     removeImage,
     handleDragStart,
     handleDragOver,
     handleDrop,
     toggleCategorySelection,
+    clearTermGroup,
     toggleTermSelection,
     updateVariationPrice,
     updateVariationStock,
     toggleVariationImage,
     getVariationLabel,
+    getTermName,
     handleSubmit,
-    navigate
-  } = useAddProduct();
+    navigate,
+  } = useAddProductLogic();
 
   return (
     <div className="space-y-6">
@@ -228,7 +222,7 @@ const AddProduct = () => {
           <CardTitle>{isVariable ? 'Variaciones' : 'Información adicional'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Attributes Section */}
+          {/* Attributes Section (moved here) */}
           {isVariable && (
             <div>
               <Label>Atributos del producto</Label>
@@ -263,9 +257,9 @@ const AddProduct = () => {
                                   key={term.id}
                                   onSelect={() => {
                                     toggleTermSelection(group.id, term.id);
-                                    setSelectedTermGroups(prev => 
-                                      prev.includes(group.id) ? prev : [...prev, group.id]
-                                    );
+                                    if (!selectedTermGroups.includes(group.id)) {
+                                      setSelectedTermGroups(prev => [...prev, group.id]);
+                                    }
                                   }}
                                 >
                                   <Checkbox
@@ -352,16 +346,14 @@ const AddProduct = () => {
                                       placeholder="Precio"
                                       value={variationPrice?.price ?? ''}
                                       onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'price', Number(e.target.value))}
-                                      className="flex-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                      onWheel={(e) => e.currentTarget.blur()}
+                                      className="flex-1"
                                     />
                                     <Input
                                       type="number"
                                       placeholder="Precio oferta"
                                       value={variationPrice?.sale_price ?? ''}
                                       onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'sale_price', e.target.valueAsNumber)}
-                                      className="flex-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                      onWheel={(e) => e.currentTarget.blur()}
+                                      className="flex-1"
                                     />
                                   </div>
                                 </div>
@@ -383,8 +375,7 @@ const AddProduct = () => {
                                     placeholder="Stock"
                                     value={variationStock?.stock || ''}
                                     onChange={(e) => updateVariationStock(variation.id, warehouse.id, Number(e.target.value))}
-                                    className="w-[60%] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                    onWheel={(e) => e.currentTarget.blur()}
+                                    className="w-[60%]"
                                   />
                                 </div>
                               );

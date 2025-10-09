@@ -14,18 +14,13 @@ import type {
   ProductVariation
 } from '@/types';
 
-/**
- * Hook personalizado para gestionar la lógica de creación/edición de productos
- * Separa toda la lógica de negocio del componente de presentación
- */
-export const useAddProduct = () => {
+export const useAddProductLogic = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const productId = searchParams.get('id');
   const isEditMode = !!productId;
   
-  // Basic product data
   const [productName, setProductName] = useState('');
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
@@ -33,17 +28,14 @@ export const useAddProduct = () => {
   const [isVariable, setIsVariable] = useState(false);
   const [originalIsVariable, setOriginalIsVariable] = useState(false);
   
-  // Product images
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   
-  // Variations
   const [variations, setVariations] = useState<ProductVariation[]>([]);
   const [variationSkus, setVariationSkus] = useState<Record<string, string>>({});
   const [selectedTermGroups, setSelectedTermGroups] = useState<number[]>([]);
   const [selectedTerms, setSelectedTerms] = useState<{ [termGroupId: number]: number[] }>({});
   
-  // Data from database
   const [categories, setCategories] = useState<Category[]>([]);
   const [termGroups, setTermGroups] = useState<TermGroup[]>([]);
   const [terms, setTerms] = useState<Term[]>([]);
@@ -54,19 +46,16 @@ export const useAddProduct = () => {
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
 
-  // Load initial data
   useEffect(() => {
     loadInitialData();
   }, []);
 
-  // Load product data if in edit mode - wait for initial data to be loaded
   useEffect(() => {
     if (isEditMode && productId && initialDataLoaded) {
       loadProductData(Number(productId));
     }
   }, [productId, isEditMode, initialDataLoaded]);
 
-  // Generate variations when attributes change
   useEffect(() => {
     if (isLoadingProduct) return;
     
@@ -666,16 +655,21 @@ export const useAddProduct = () => {
   };
 
   return {
-    // State
+    isEditMode,
     productName,
+    setProductName,
     shortDescription,
+    setShortDescription,
     description,
+    setDescription,
     selectedCategories,
     isVariable,
+    setIsVariable,
     productImages,
     variations,
     variationSkus,
     selectedTermGroups,
+    setSelectedTermGroups,
     selectedTerms,
     categories,
     termGroups,
@@ -683,17 +677,6 @@ export const useAddProduct = () => {
     priceLists,
     warehouses,
     loading,
-    isEditMode,
-    
-    // Setters
-    setProductName,
-    setShortDescription,
-    setDescription,
-    setIsVariable,
-    setSelectedTermGroups,
-    setVariationSkus,
-    
-    // Handlers
     handleImageUpload,
     removeImage,
     handleDragStart,
@@ -708,6 +691,6 @@ export const useAddProduct = () => {
     getVariationLabel,
     getTermName,
     handleSubmit,
-    navigate
+    navigate,
   };
 };
