@@ -14,6 +14,14 @@ Simply visit the [Lovable Project](https://lovable.dev/projects/8252ea40-417e-4b
 
 Changes made via Lovable will be committed automatically to this repo.
 
+### Prompt para separar lógica y bloques en páginas complejas
+
+Si deseas que Lovable mantenga una convención similar a Angular, donde las páginas con lógica compleja separan su lógica de negocio de los bloques JSX, puedes usar el siguiente prompt al trabajar dentro de la plataforma:
+
+> "Cuando una página de React tenga lógica compleja, crea dos archivos: uno que contenga únicamente el componente con los bloques JSX/TSX y otro que agrupe toda la lógica (funciones, hooks personalizados, handlers). No dividas los bloques JSX entre múltiples archivos; simplemente importa la lógica desde el archivo dedicado y deja la presentación limpia. Sigue esta convención de forma consistente y documenta cualquier decisión relevante en comentarios breves."
+
+Este mensaje pide explícitamente que la lógica viva en un archivo separado y que el componente principal se mantenga enfocado en el renderizado, replicando el estilo de separación que ofrece Angular.
+
 **Use your preferred IDE**
 
 If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.

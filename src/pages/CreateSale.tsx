@@ -9,47 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Trash2, ArrowLeft } from 'lucide-react';
-
-interface FormData {
-  date: string;
-  document_type: string;
-  document_number: string;
-  customer_name: string;
-  customer_lastname: string;
-  email: string;
-  phone: string;
-  sale_type: string;
-  shipping_method: string;
-  country_id: string;
-  state_id: string;
-  city_id: string;
-  neighborhood_id: string;
-  address: string;
-  address_reference: string;
-  reception_person: string;
-  reception_phone: string;
-}
-
-interface Product {
-  variation_id: number;
-  product_name: string;
-  variation_name: string;
-  quantity: number;
-  price: number;
-  discount: number;
-}
-
-interface SalesFormData {
-  documentTypes: any[];
-  saleTypes: any[];
-  shippingMethods: any[];
-  countries: any[];
-  states: any[];
-  cities: any[];
-  neighborhoods: any[];
-  products: any[];
-  paymentMethods: any[];
-}
+import { useCreateSaleLogic } from './CreateSale.logic';
 
 const CreateSale = () => {
   const navigate = useNavigate();

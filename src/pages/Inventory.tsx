@@ -6,25 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Save, Loader2 } from 'lucide-react';
-
-type StockByWarehouse = {
-  warehouse_id: number;
-  warehouse_name: string;
-  stock: number;
-};
-
-type InventoryItem = {
-  variation_id: number;
-  sku: string;
-  product_name: string;
-  variation_name: string;
-  stock_by_warehouse: StockByWarehouse[];
-};
-
-type Warehouse = {
-  id: number;
-  name: string;
-};
+import { useInventoryLogic } from './Inventory.logic';
 
 const Inventory = () => {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);

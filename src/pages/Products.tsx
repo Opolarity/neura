@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardHeader, CardContent } from '../components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table';
 import { Button } from '../components/ui/button';
 import { Checkbox } from '../components/ui/checkbox';
 import { Plus, Edit, Trash, Search, Loader2 } from 'lucide-react';
-import { supabase } from '../integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '../hooks/use-toast';
 import placeholderImage from '@/assets/product-placeholder.png';
 import {
   AlertDialog,
@@ -18,158 +15,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../components/ui/alert-dialog';
-
-interface ProductData {
-  id: number;
-  title: string;
-  short_description: string;
-  is_variable: boolean;
-  categories: string[];
-  images: { image_url: string }[];
-  variations: {
-    id: number;
-    sku: string | null;
-    prices: { price: number; sale_price: number | null }[];
-    stock: { stock: number }[];
-  }[];
-}
+import { useProductsLogic } from './Products.logic';
 
 const Products = () => {
-  const [products, setProducts] = useState<ProductData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<number | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      
-      const { data, error } = await supabase.functions.invoke('get-products-list');
-
-      if (error) throw error;
-
-      if (!data || !data.products || data.products.length === 0) {
-        setProducts([]);
-        return;
-      }
-
-      setProducts(data.products);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los productos",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const handleNewProduct = () => {
-    navigate('/products/add');
-  };
-
-  const filteredProducts = products.filter(product =>
-    product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
-  const getProductPrice = (product: ProductData) => {
-    const vals = product.variations.flatMap(v =>
-      (v.prices ?? []).map(({ price, sale_price }) => sale_price ?? price)
-    );
-
-    const price = Math.min(...vals) != Math.max(...vals) ? Math.min(...vals) + ' - ' + Math.max(...vals) : Math.min(...vals)
-
-    return vals.length ? price : 0;
-  }
-
-  const getProductStock = (product: ProductData) => {
-    return product.variations.reduce((total, variation) => {
-      return total + variation.stock.reduce((varTotal, s) => varTotal + (s.stock || 0), 0);
-    }, 0);
-  };
-
-  const getProductStatus = (stock: number) => {
-    if (stock === 0) return { text: 'Sin Stock', class: 'bg-red-100 text-red-800' };
-    if (stock <= 10) return { text: 'Stock Bajo', class: 'bg-yellow-100 text-yellow-800' };
-    return { text: 'Activo', class: 'bg-green-100 text-green-800' };
-  };
-
-  const handleDeleteClick = (productId: number) => {
-    setProductToDelete(productId);
-    setDeleteDialogOpen(true);
-  };
-
-  const toggleProductSelection = (productId: number) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedProducts.length === filteredProducts.length) {
-      setSelectedProducts([]);
-    } else {
-      setSelectedProducts(filteredProducts.map(p => p.id));
-    }
-  };
-
-  const handleBulkDelete = () => {
-    if (selectedProducts.length === 0) return;
-    setProductToDelete(-1); // Usar -1 para indicar eliminación múltiple
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    const productsToDelete = productToDelete === -1 ? selectedProducts : [productToDelete!];
-    if (productsToDelete.length === 0) return;
-
-    try {
-      setDeleting(true);
-
-      const { data, error } = await supabase.functions.invoke('delete-product', {
-        body: { productIds: productsToDelete }
-      });
-
-      if (error) throw error;
-
-      if (!data.success) {
-        throw new Error(data.error || 'Error al eliminar los productos');
-      }
-
-      toast({
-        title: "Productos eliminados",
-        description: `Se eliminaron ${data.deletedCount} producto(s) correctamente`,
-      });
-
-      setSelectedProducts([]);
-      fetchProducts();
-    } catch (error: any) {
-      console.error('Error deleting products:', error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo eliminar el producto",
-        variant: "destructive",
-      });
-    } finally {
-      setDeleting(false);
-      setDeleteDialogOpen(false);
-      setProductToDelete(null);
-    }
-  };
+  const {
+    loading,
+    searchTerm,
+    setSearchTerm,
+    filteredProducts,
+    selectedProducts,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    productToDelete,
+    deleting,
+    handleNewProduct,
+    toggleSelectAll,
+    toggleProductSelection,
+    handleBulkDelete,
+    handleDeleteClick,
+    handleDeleteConfirm,
+    handleEditProduct,
+    getProductPrice,
+    getProductStock,
+    getProductStatus,
+  } = useProductsLogic();
 
   return (
     <div className="space-y-6">
@@ -180,8 +49,8 @@ const Products = () => {
         </div>
         <div className="flex gap-2">
           {selectedProducts.length > 0 && (
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleBulkDelete}
               className="gap-2"
             >
@@ -217,9 +86,9 @@ const Products = () => {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">
-                  <Checkbox 
+                  <Checkbox
                     checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
-                    onCheckedChange={toggleSelectAll}
+                    onCheckedChange={() => toggleSelectAll()}
                   />
                 </TableHead>
                 <TableHead className="w-20">Imagen</TableHead>
@@ -252,17 +121,17 @@ const Products = () => {
                   const price = getProductPrice(product);
                   const stock = getProductStock(product);
                   const status = getProductStatus(stock);
-                  
+
                   return (
                     <TableRow key={product.id}>
                       <TableCell>
-                        <Checkbox 
+                        <Checkbox
                           checked={selectedProducts.includes(product.id)}
                           onCheckedChange={() => toggleProductSelection(product.id)}
                         />
                       </TableCell>
-                       <TableCell>
-                        <img 
+                      <TableCell>
+                        <img
                           src={product.images[0]?.image_url || placeholderImage}
                           alt={product.title}
                           className="w-12 h-12 object-cover rounded"
@@ -270,8 +139,8 @@ const Products = () => {
                       </TableCell>
                       <TableCell className="font-medium">{product.title}</TableCell>
                       <TableCell>
-                        {product.categories.length > 0 
-                          ? product.categories.join(', ') 
+                        {product.categories.length > 0
+                          ? product.categories.join(', ')
                           : 'Sin categoría'}
                       </TableCell>
                       <TableCell>${price}</TableCell>
@@ -283,15 +152,15 @@ const Products = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/products/add?id=${product.id}`)}
+                            onClick={() => handleEditProduct(product.id)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            variant="destructive" 
+                          <Button
+                            variant="destructive"
                             size="sm"
                             onClick={() => handleDeleteClick(product.id)}
                           >
@@ -312,7 +181,7 @@ const Products = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {productToDelete === -1 
+              {productToDelete === -1
                 ? `¿Eliminar ${selectedProducts.length} productos?`
                 : '¿Eliminar producto?'}
             </AlertDialogTitle>

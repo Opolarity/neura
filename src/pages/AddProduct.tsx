@@ -14,17 +14,7 @@ import WysiwygEditor from '../components/ui/wysiwyg-editor';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '../components/ui/command';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion';
-import type { 
-  Category, 
-  TermGroup, 
-  Term, 
-  PriceList, 
-  Warehouse, 
-  VariationPrice, 
-  VariationStock,
-  ProductImage,
-  ProductVariation
-} from '@/types';
+import { useAddProductLogic } from './AddProduct.logic';
 
 const AddProduct = () => {
   const { toast } = useToast();
