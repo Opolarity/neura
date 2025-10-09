@@ -62,11 +62,7 @@ Deno.serve(async (req) => {
       ]);
 
       // Delete variations
-      const { error: variationsError } = await supabase
-        .from('variations')
-        .delete()
-        .in('id', allVariationIds);
-
+      const { error: variationsError } = await supabase.from('variations').delete().in('id', allVariationIds);
       if (variationsError) throw variationsError;
     }
 
@@ -77,11 +73,7 @@ Deno.serve(async (req) => {
     ]);
 
     // Finally, delete the products
-    const { error: productsError } = await supabase
-      .from('products')
-      .delete()
-      .in('id', productIds);
-
+    const { error: productsError } = await supabase.from('products').delete().in('id', productIds);
     if (productsError) throw productsError;
 
     console.log('Products deleted successfully');
