@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, Plus, Trash2, ArrowLeft } from 'lucide-react';
-import { useCreateSaleLogic } from '@/hooks/useCreateSaleLogic';
+import { useCreateSaleLogic } from './CreateSale.logic';
 
 const CreateSale = () => {
   const {
