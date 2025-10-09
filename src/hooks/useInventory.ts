@@ -21,7 +21,7 @@ type Warehouse = {
   name: string;
 };
 
-export const useInventoryLogic = () => {
+export const useInventory = () => {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);

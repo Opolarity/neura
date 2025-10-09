@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Edit, Save, Loader2 } from 'lucide-react';
-import { useInventoryLogic } from '@/hooks/useInventoryLogic';
+import { useInventory } from '@/hooks/useInventory';
 
 const Inventory = () => {
   const {
@@ -19,7 +19,7 @@ const Inventory = () => {
     handleEdit,
     handleCancel,
     handleSave,
-  } = useInventoryLogic();
+  } = useInventory();
 
   if (loading) {
     return (
