@@ -23,4 +23,23 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  {
+    files: ["supabase/functions/**/*.ts"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: {
+        Deno: "readonly",
+        Request: "readonly",
+        Response: "readonly",
+        Headers: "readonly",
+        fetch: "readonly",
+        crypto: "readonly",
+        console: "readonly",
+      },
+    },
+    rules: {
+      // (opcional) apaga reglas de React aquí; no aplican en Deno
+      "react-refresh/only-export-components": "off",
+    },
+  },
 );
