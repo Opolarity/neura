@@ -216,8 +216,9 @@ const Inventory = () => {
                             onChange={(e) =>
                               handleStockChange(item.variation_id, stock.warehouse_id, e.target.value)
                             }
+                            onWheel={(e) => e.currentTarget.blur()}
                             disabled={!isEditing}
-                            className="w-24"
+                            className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </TableCell>
                       ))}
