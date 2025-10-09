@@ -7,5 +7,5 @@ export type PriceList = {
 export type VariationPrice = {
   price_list_id: number;
   price: number;
-  sale_price: number;
+  sale_price: number | null;
 };

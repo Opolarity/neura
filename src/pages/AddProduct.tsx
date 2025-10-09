@@ -248,7 +248,7 @@ const [draggedId, setDraggedId] = useState<string | null>(null);
             const prices: VariationPrice[] = pricesData?.map(p => ({
               price_list_id: p.proce_list_id,
               price: Number(p.price),
-              sale_price: Number(p.sale_price || 0)
+              sale_price: p.sale_price
             })) || [];
 
             // Get stock
@@ -479,7 +479,7 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     });
   };
 
-  const updateVariationPrice = (variationId: string, priceListId: number, field: 'price' | 'sale_price', value: number) => {
+  const updateVariationPrice = (variationId: string, priceListId: number, field: 'price' | 'sale_price', value: number | null) => {
     setVariations(prev => prev.map(variation => {
       if (variation.id === variationId) {
         return {
@@ -1051,15 +1051,15 @@ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
                                     <Input
                                       type="number"
                                       placeholder="Precio"
-                                      value={variationPrice?.price || ''}
+                                      value={variationPrice?.price ?? ''}
                                       onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'price', Number(e.target.value))}
                                       className="flex-1"
                                     />
                                     <Input
                                       type="number"
                                       placeholder="Precio oferta"
-                                      value={variationPrice?.sale_price || ''}
-                                      onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'sale_price', Number(e.target.value))}
+                                      value={variationPrice?.sale_price ?? ''}
+                                      onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'sale_price', e.target.valueAsNumber)}
                                       className="flex-1"
                                     />
                                   </div>

@@ -152,11 +152,14 @@ const Products = () => {
   );
 
   const getProductPrice = (product: ProductData) => {
-    if (product.variations.length === 0) return 0;
-    const firstVariation = product.variations[0];
-    if (firstVariation.prices.length === 0) return 0;
-    return firstVariation.prices[0].price || 0;
-  };
+    const vals = product.variations.flatMap(v =>
+      (v.prices ?? []).map(({ price, sale_price }) => sale_price ?? price)
+    );
+
+    const price = Math.min(...vals) != Math.max(...vals) ? Math.min(...vals) + ' - ' + Math.max(...vals) : Math.min(...vals)
+
+    return vals.length ? price : 0;
+  }
 
   const getProductStock = (product: ProductData) => {
     return product.variations.reduce((total, variation) => {
@@ -366,7 +369,6 @@ const Products = () => {
                 </TableHead>
                 <TableHead className="w-20">Imagen</TableHead>
                 <TableHead>Producto</TableHead>
-                <TableHead>SKU</TableHead>
                 <TableHead>Categoría</TableHead>
                 <TableHead>Precio</TableHead>
                 <TableHead>Stock</TableHead>
@@ -412,13 +414,12 @@ const Products = () => {
                         />
                       </TableCell>
                       <TableCell className="font-medium">{product.title}</TableCell>
-                      <TableCell>PROD-{product.id.toString().padStart(3, '0')}</TableCell>
                       <TableCell>
                         {product.categories.length > 0 
                           ? product.categories.join(', ') 
                           : 'Sin categoría'}
                       </TableCell>
-                      <TableCell>${price.toFixed(2)}</TableCell>
+                      <TableCell>${price}</TableCell>
                       <TableCell>{stock}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${status.class}`}>
