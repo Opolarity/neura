@@ -9,6 +9,7 @@ interface FormData {
   document_number: string;
   customer_name: string;
   customer_lastname: string;
+  customer_lastname2: string;
   email: string;
   phone: string;
   sale_type: string;
@@ -55,6 +56,7 @@ export const useCreateSaleLogic = () => {
     document_number: '',
     customer_name: '',
     customer_lastname: '',
+    customer_lastname2: '',
     email: '',
     phone: '',
     sale_type: '',
@@ -75,6 +77,8 @@ export const useCreateSaleLogic = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [paymentAmount, setPaymentAmount] = useState<string>('');
   const [confirmationCode, setConfirmationCode] = useState<string>('');
+  const [clientFound, setClientFound] = useState<boolean | null>(null);
+  const [searchingClient, setSearchingClient] = useState(false);
 
   useEffect(() => {
     loadFormData();
@@ -99,6 +103,51 @@ export const useCreateSaleLogic = () => {
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const searchClient = async () => {
+    if (!formData.document_type || !formData.document_number) {
+      return;
+    }
+
+    setSearchingClient(true);
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('document_type_id', parseInt(formData.document_type))
+        .eq('document_number', formData.document_number)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setClientFound(true);
+        setFormData((prev) => ({
+          ...prev,
+          customer_name: data.name,
+          customer_lastname: data.last_name,
+          customer_lastname2: data.last_name2 || '',
+        }));
+      } else {
+        setClientFound(false);
+        setFormData((prev) => ({
+          ...prev,
+          customer_name: '',
+          customer_lastname: '',
+          customer_lastname2: '',
+        }));
+      }
+    } catch (error) {
+      console.error('Error searching client:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo buscar el cliente',
+        variant: 'destructive',
+      });
+    } finally {
+      setSearchingClient(false);
+    }
   };
 
   const addProduct = () => {
@@ -174,6 +223,7 @@ export const useCreateSaleLogic = () => {
     try {
       const orderData = {
         ...formData,
+        customer_lastname: `${formData.customer_lastname}${formData.customer_lastname2 ? ' ' + formData.customer_lastname2 : ''}`,
         subtotal: calculateSubtotal(),
         discount: calculateDiscount(),
         total: calculateTotal(),
@@ -228,12 +278,15 @@ export const useCreateSaleLogic = () => {
     paymentMethod,
     paymentAmount,
     confirmationCode,
+    clientFound,
+    searchingClient,
     handleInputChange,
     setSelectedProduct,
     setSelectedVariation,
     setPaymentMethod,
     setPaymentAmount,
     setConfirmationCode,
+    searchClient,
     addProduct,
     removeProduct,
     updateProduct,

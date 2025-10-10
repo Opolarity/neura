@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     ] = await Promise.all([
       supabase.from('document_types').select('*').order('name'),
       supabase.from('sale_types').select('*').order('name'),
-      supabase.from('shipping_methods').select('*, shipping_types(name, local)').order('name'),
+      supabase.from('shipping_methods').select('*').order('name'),
       supabase.from('countries').select('*').order('name'),
       supabase.from('states').select('*').order('name'),
       supabase.from('cities').select('*').order('name'),

@@ -20,12 +20,15 @@ const CreateSale = () => {
     paymentMethod,
     paymentAmount,
     confirmationCode,
+    clientFound,
+    searchingClient,
     handleInputChange,
     setSelectedProduct,
     setSelectedVariation,
     setPaymentMethod,
     setPaymentAmount,
     setConfirmationCode,
+    searchClient,
     addProduct,
     removeProduct,
     updateProduct,
@@ -88,28 +91,58 @@ const CreateSale = () => {
             </div>
             <div>
               <Label>Número de Documento</Label>
-              <Input
-                value={formData.document_number}
-                onChange={(e) => handleInputChange('document_number', e.target.value)}
-                required
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={formData.document_number}
+                  onChange={(e) => handleInputChange('document_number', e.target.value)}
+                  onBlur={searchClient}
+                  required
+                  disabled={!formData.document_type}
+                />
+                {searchingClient && <Loader2 className="w-5 h-5 animate-spin" />}
+              </div>
             </div>
-            <div>
-              <Label>Nombre</Label>
-              <Input
-                value={formData.customer_name}
-                onChange={(e) => handleInputChange('customer_name', e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label>Apellido</Label>
-              <Input
-                value={formData.customer_lastname}
-                onChange={(e) => handleInputChange('customer_lastname', e.target.value)}
-                required
-              />
-            </div>
+            
+            {clientFound !== null && (
+              <>
+                {clientFound ? (
+                  <div className="md:col-span-2">
+                    <Label>Nombre Completo</Label>
+                    <Input
+                      value={`${formData.customer_name} ${formData.customer_lastname}${formData.customer_lastname2 ? ' ' + formData.customer_lastname2 : ''}`}
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <Label>Nombre</Label>
+                      <Input
+                        value={formData.customer_name}
+                        onChange={(e) => handleInputChange('customer_name', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Apellido Paterno</Label>
+                      <Input
+                        value={formData.customer_lastname}
+                        onChange={(e) => handleInputChange('customer_lastname', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Apellido Materno</Label>
+                      <Input
+                        value={formData.customer_lastname2}
+                        onChange={(e) => handleInputChange('customer_lastname2', e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+              </>
+            )}
             <div>
               <Label>Email</Label>
               <Input
