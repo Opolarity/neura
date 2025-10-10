@@ -66,15 +66,6 @@ const CreateSale = () => {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Fecha</Label>
-              <Input
-                type="date"
-                value={formData.date}
-                onChange={(e) => handleInputChange('date', e.target.value)}
-                required
-              />
-            </div>
-            <div>
               <Label>Tipo de Documento</Label>
               <Select value={formData.document_type} onValueChange={(v) => handleInputChange('document_type', v)} required>
                 <SelectTrigger>

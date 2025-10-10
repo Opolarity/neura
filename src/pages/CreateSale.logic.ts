@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface FormData {
-  date: string;
   document_type: string;
   document_number: string;
   customer_name: string;
@@ -51,7 +50,6 @@ export const useCreateSaleLogic = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    date: new Date().toISOString().split('T')[0],
     document_type: '',
     document_number: '',
     customer_name: '',
