@@ -67,7 +67,7 @@ const CreateSale = () => {
             <CardTitle>Información de la Venta</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
               <div className="md:col-span-2">
                 <Label>Tipo de Venta</Label>
                 <Select value={formData.sale_type} onValueChange={(v) => handleInputChange('sale_type', v)} required>
@@ -83,15 +83,13 @@ const CreateSale = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center md:col-span-2 space-x-2">
                 <Checkbox
                   id="with_shipping"
                   checked={formData.with_shipping}
                   onCheckedChange={(checked) => handleInputChange('with_shipping', checked as boolean)}
                 />
                 <Label htmlFor="with_shipping" className="cursor-pointer">Con envío</Label>
-              </div>
-              <div className="flex items-center space-x-2">
                 <Checkbox
                   id="employee_sale"
                   checked={formData.employee_sale}
@@ -108,92 +106,99 @@ const CreateSale = () => {
           <CardHeader>
             <CardTitle>Información del Cliente</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>Tipo de Documento</Label>
-              <Select value={formData.document_type} onValueChange={(v) => handleInputChange('document_type', v)} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {salesData?.documentTypes.map((dt) => (
-                    <SelectItem key={dt.id} value={dt.id.toString()}>
-                      {dt.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Número de Documento</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={formData.document_number}
-                  onChange={(e) => handleInputChange('document_number', e.target.value)}
-                  onBlur={searchClient}
-                  required
-                  disabled={!formData.document_type}
-                />
-                {searchingClient && <Loader2 className="w-5 h-5 animate-spin" />}
+          <CardContent className='space-y-1'>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Tipo de Documento</Label>
+                <Select value={formData.document_type} onValueChange={(v) => handleInputChange('document_type', v)} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {salesData?.documentTypes.map((dt) => (
+                      <SelectItem key={dt.id} value={dt.id.toString()}>
+                        {dt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Número de Documento</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={formData.document_number}
+                    onChange={(e) => handleInputChange('document_number', e.target.value)}
+                    onBlur={searchClient}
+                    required
+                    disabled={!formData.document_type}
+                  />
+                  {searchingClient && <Loader2 className="w-5 h-5 animate-spin" />}
+                </div>
               </div>
             </div>
-            
-            {clientFound !== null && (
-              <>
-                {clientFound ? (
-                  <div className="md:col-span-2">
-                    <Label>Nombre Completo</Label>
-                    <Input
-                      value={`${formData.customer_name} ${formData.customer_lastname}${formData.customer_lastname2 ? ' ' + formData.customer_lastname2 : ''}`}
-                      disabled
-                      className="bg-muted"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <div>
-                      <Label>Nombre</Label>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {clientFound !== null && (
+                <>
+                  {clientFound ? (
+                    <div className="md:col-span-3">
+                      <Label>Nombre Completo</Label>
                       <Input
-                        value={formData.customer_name}
-                        onChange={(e) => handleInputChange('customer_name', e.target.value)}
-                        required
+                        value={`${formData.customer_name} ${formData.customer_lastname}${formData.customer_lastname2 ? ' ' + formData.customer_lastname2 : ''}`}
+                        disabled
+                        className="bg-muted"
                       />
                     </div>
-                    <div>
-                      <Label>Apellido Paterno</Label>
-                      <Input
-                        value={formData.customer_lastname}
-                        onChange={(e) => handleInputChange('customer_lastname', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label>Apellido Materno</Label>
-                      <Input
-                        value={formData.customer_lastname2}
-                        onChange={(e) => handleInputChange('customer_lastname2', e.target.value)}
-                      />
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-            <div>
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-              />
+                  ) : (
+                    <>
+                      <div>
+                        <Label>Nombre</Label>
+                        <Input
+                          value={formData.customer_name}
+                          onChange={(e) => handleInputChange('customer_name', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label>Apellido Paterno</Label>
+                        <Input
+                          value={formData.customer_lastname}
+                          onChange={(e) => handleInputChange('customer_lastname', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label>Apellido Materno</Label>
+                        <Input
+                          value={formData.customer_lastname2}
+                          onChange={(e) => handleInputChange('customer_lastname2', e.target.value)}
+                        />
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
             </div>
-            <div>
-              <Label>Teléfono</Label>
-              <Input
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Teléfono</Label>
+                <Input
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              </div>
             </div>
+
           </CardContent>
         </Card>
 
