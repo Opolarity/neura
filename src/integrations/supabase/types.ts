@@ -622,16 +622,19 @@ export type Database = {
       product_images: {
         Row: {
           id: number
+          image_order: number
           image_url: string
           product_id: number
         }
         Insert: {
           id: number
+          image_order?: number
           image_url: string
           product_id: number
         }
         Update: {
           id?: number
+          image_order?: number
           image_url?: string
           product_id?: number
         }
@@ -951,49 +954,17 @@ export type Database = {
           created_at: string
           id: number
           name: string
-          shipping_type: number
         }
         Insert: {
           cost: number
           created_at?: string
           id?: number
           name: string
-          shipping_type: number
         }
         Update: {
           cost?: number
           created_at?: string
           id?: number
-          name?: string
-          shipping_type?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "shipping_methods_shipping_type_fkey"
-            columns: ["shipping_type"]
-            isOneToOne: false
-            referencedRelation: "shipping_types"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      shipping_types: {
-        Row: {
-          created_at: string
-          id: number
-          local: boolean
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          local?: boolean
-          name: string
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          local?: boolean
           name?: string
         }
         Relationships: []
@@ -1175,16 +1146,19 @@ export type Database = {
           created_at: string
           id: number
           product_id: number
+          sku: string | null
         }
         Insert: {
           created_at?: string
           id?: number
           product_id: number
+          sku?: string | null
         }
         Update: {
           created_at?: string
           id?: number
           product_id?: number
+          sku?: string | null
         }
         Relationships: [
           {
@@ -1201,28 +1175,28 @@ export type Database = {
           city_id: number
           country_id: number
           id: number
-          name: number | null
+          name: string
           neighborhood_id: number
           state_id: number
-          street: number | null
+          street: string
         }
         Insert: {
           city_id: number
           country_id: number
-          id: number
-          name?: number | null
+          id?: number
+          name: string
           neighborhood_id: number
           state_id: number
-          street?: number | null
+          street: string
         }
         Update: {
           city_id?: number
           country_id?: number
           id?: number
-          name?: number | null
+          name?: string
           neighborhood_id?: number
           state_id?: number
-          street?: number | null
+          street?: string
         }
         Relationships: []
       }
