@@ -59,6 +59,31 @@ const CreateSale = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+
+        {/* Sale Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Información de la Venta</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-1 gap-4">
+            <div>
+              <Label>Tipo de Venta</Label>
+              <Select value={formData.sale_type} onValueChange={(v) => handleInputChange('sale_type', v)} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {salesData?.saleTypes.map((st) => (
+                    <SelectItem key={st.id} value={st.id.toString()}>
+                      {st.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Customer Information */}
         <Card>
           <CardHeader>
@@ -149,45 +174,6 @@ const CreateSale = () => {
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Sale Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Información de la Venta</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>Tipo de Venta</Label>
-              <Select value={formData.sale_type} onValueChange={(v) => handleInputChange('sale_type', v)} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {salesData?.saleTypes.map((st) => (
-                    <SelectItem key={st.id} value={st.id.toString()}>
-                      {st.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Método de Envío</Label>
-              <Select value={formData.shipping_method} onValueChange={(v) => handleInputChange('shipping_method', v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {salesData?.shippingMethods.map((sm) => (
-                    <SelectItem key={sm.id} value={sm.id.toString()}>
-                      {sm.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>

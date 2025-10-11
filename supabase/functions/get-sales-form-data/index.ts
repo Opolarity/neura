@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       paymentMethodsResult,
     ] = await Promise.all([
       supabase.from('document_types').select('*').order('name'),
-      supabase.from('sale_types').select('*').order('name'),
+      supabase.from('sale_types').select('*').eq('is_manual', true).order('name'),
       supabase.from('shipping_methods').select('*').order('name'),
       supabase.from('countries').select('*').order('name'),
       supabase.from('states').select('*').order('name'),
