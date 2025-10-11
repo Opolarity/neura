@@ -21,6 +21,8 @@ interface FormData {
   address_reference: string;
   reception_person: string;
   reception_phone: string;
+  with_shipping: boolean;
+  employee_sale: boolean;
 }
 
 interface Product {
@@ -67,6 +69,8 @@ export const useCreateSaleLogic = () => {
     address_reference: '',
     reception_person: '',
     reception_phone: '',
+    with_shipping: false,
+    employee_sale: false,
   });
   const [products, setProducts] = useState<Product[]>([]);
   const [salesData, setSalesData] = useState<SalesFormData | null>(null);
@@ -99,7 +103,7 @@ export const useCreateSaleLogic = () => {
     }
   };
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+  const handleInputChange = (field: keyof FormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

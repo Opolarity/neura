@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { useCreateSaleLogic } from './CreateSale.logic';
 
@@ -65,21 +66,39 @@ const CreateSale = () => {
           <CardHeader>
             <CardTitle>Información de la Venta</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-1 gap-4">
-            <div>
-              <Label>Tipo de Venta</Label>
-              <Select value={formData.sale_type} onValueChange={(v) => handleInputChange('sale_type', v)} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {salesData?.saleTypes.map((st) => (
-                    <SelectItem key={st.id} value={st.id.toString()}>
-                      {st.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+              <div className="md:col-span-2">
+                <Label>Tipo de Venta</Label>
+                <Select value={formData.sale_type} onValueChange={(v) => handleInputChange('sale_type', v)} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {salesData?.saleTypes.map((st) => (
+                      <SelectItem key={st.id} value={st.id.toString()}>
+                        {st.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="with_shipping"
+                  checked={formData.with_shipping}
+                  onCheckedChange={(checked) => handleInputChange('with_shipping', checked as boolean)}
+                />
+                <Label htmlFor="with_shipping" className="cursor-pointer">Con envío</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="employee_sale"
+                  checked={formData.employee_sale}
+                  onCheckedChange={(checked) => handleInputChange('employee_sale', checked as boolean)}
+                />
+                <Label htmlFor="employee_sale" className="cursor-pointer">Venta a empleado</Label>
+              </div>
             </div>
           </CardContent>
         </Card>
