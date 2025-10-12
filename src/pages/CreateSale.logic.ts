@@ -74,8 +74,8 @@ export const useCreateSaleLogic = () => {
   });
   const [products, setProducts] = useState<Product[]>([]);
   const [salesData, setSalesData] = useState<SalesFormData | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<string>('');
-  const [selectedVariation, setSelectedVariation] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedVariation, setSelectedVariation] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [paymentAmount, setPaymentAmount] = useState<string>('');
   const [confirmationCode, setConfirmationCode] = useState<string>('');
@@ -153,37 +153,32 @@ export const useCreateSaleLogic = () => {
   };
 
   const addProduct = () => {
-    if (!selectedProduct || !selectedVariation) {
+    if (!selectedVariation) {
       toast({
         title: 'Error',
-        description: 'Seleccione un producto y una variación',
+        description: 'Seleccione una variación',
         variant: 'destructive',
       });
       return;
     }
 
-    const product = salesData?.products.find((p) => p.id.toString() === selectedProduct);
-    const variation = product?.variations.find((v: any) => v.id.toString() === selectedVariation);
-
-    if (!variation) return;
-
-    const price = variation.prices[0]?.sale_price || variation.prices[0]?.price || 0;
-    const termsNames = variation.terms.map((t: any) => t.terms.name).join(' / ');
+    const price = selectedVariation.prices[0]?.sale_price || selectedVariation.prices[0]?.price || 0;
+    const termsNames = selectedVariation.terms.map((t: any) => t.terms.name).join(' / ');
 
     setProducts([
       ...products,
       {
-        variation_id: variation.id,
-        product_name: product.title,
-        variation_name: termsNames || variation.sku,
+        variation_id: selectedVariation.id,
+        product_name: selectedVariation.product_title,
+        variation_name: termsNames || selectedVariation.sku,
         quantity: 1,
         price,
         discount: 0,
       },
     ]);
 
-    setSelectedProduct('');
-    setSelectedVariation('');
+    setSearchQuery('');
+    setSelectedVariation(null);
   };
 
   const removeProduct = (index: number) => {
@@ -275,7 +270,7 @@ export const useCreateSaleLogic = () => {
     formData,
     products,
     salesData,
-    selectedProduct,
+    searchQuery,
     selectedVariation,
     paymentMethod,
     paymentAmount,
@@ -283,7 +278,7 @@ export const useCreateSaleLogic = () => {
     clientFound,
     searchingClient,
     handleInputChange,
-    setSelectedProduct,
+    setSearchQuery,
     setSelectedVariation,
     setPaymentMethod,
     setPaymentAmount,

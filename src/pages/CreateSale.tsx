@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,8 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Loader2, Plus, Trash2, ArrowLeft, Check } from 'lucide-react';
 import { useCreateSaleLogic } from './CreateSale.logic';
+import { cn } from '@/lib/utils';
 
 const CreateSale = () => {
   const {
@@ -16,7 +19,7 @@ const CreateSale = () => {
     formData,
     products,
     salesData,
-    selectedProduct,
+    searchQuery,
     selectedVariation,
     paymentMethod,
     paymentAmount,
@@ -24,7 +27,7 @@ const CreateSale = () => {
     clientFound,
     searchingClient,
     handleInputChange,
-    setSelectedProduct,
+    setSearchQuery,
     setSelectedVariation,
     setPaymentMethod,
     setPaymentAmount,
@@ -48,7 +51,34 @@ const CreateSale = () => {
     );
   }
 
-  const selectedProductData = salesData?.products.find((p) => p.id.toString() === selectedProduct);
+  const [open, setOpen] = React.useState(false);
+
+  // Flatten all variations with product info for search
+  const allVariations = useMemo(() => {
+    if (!salesData?.products) return [];
+    
+    return salesData.products.flatMap((product) =>
+      product.variations.map((variation: any) => ({
+        ...variation,
+        product_id: product.id,
+        product_title: product.title,
+      }))
+    );
+  }, [salesData?.products]);
+
+  // Filter variations by search query (product name or SKU)
+  const filteredVariations = useMemo(() => {
+    if (!searchQuery) return allVariations;
+    
+    const query = searchQuery.toLowerCase();
+    return allVariations.filter((variation) => {
+      const productTitle = variation.product_title.toLowerCase();
+      const sku = variation.sku?.toLowerCase() || '';
+      const termsNames = variation.terms.map((t: any) => t.terms.name.toLowerCase()).join(' ');
+      
+      return productTitle.includes(query) || sku.includes(query) || termsNames.includes(query);
+    });
+  }, [allVariations, searchQuery]);
 
   return (
     <div className="p-6 space-y-6">
@@ -294,46 +324,70 @@ const CreateSale = () => {
             <CardTitle>Productos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Producto</Label>
-                <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione producto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {salesData?.products.map((p) => (
-                      <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Variación</Label>
-                <Select
-                  value={selectedVariation}
-                  onValueChange={setSelectedVariation}
-                  disabled={!selectedProduct}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione variación" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedProductData?.variations.map((v: any) => {
-                      const termsNames = v.terms.map((t: any) => t.terms.name).join(' / ');
-                      return (
-                        <SelectItem key={v.id} value={v.id.toString()}>
-                          {termsNames || v.sku}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                <Label>Buscar Producto o Variación</Label>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open}
+                      className="w-full justify-between"
+                    >
+                      {selectedVariation
+                        ? `${selectedVariation.product_title} - ${
+                            selectedVariation.terms.map((t: any) => t.terms.name).join(' / ') || selectedVariation.sku
+                          }`
+                        : 'Buscar por nombre o SKU...'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0">
+                    <Command>
+                      <CommandInput
+                        placeholder="Buscar producto o SKU..."
+                        value={searchQuery}
+                        onValueChange={setSearchQuery}
+                      />
+                      <CommandList>
+                        <CommandEmpty>No se encontraron productos.</CommandEmpty>
+                        <CommandGroup>
+                          {filteredVariations.map((variation) => {
+                            const termsNames = variation.terms.map((t: any) => t.terms.name).join(' / ');
+                            const displayName = termsNames || variation.sku;
+                            
+                            return (
+                              <CommandItem
+                                key={variation.id}
+                                value={`${variation.product_title} ${variation.sku} ${termsNames}`}
+                                onSelect={() => {
+                                  setSelectedVariation(variation);
+                                  setOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    selectedVariation?.id === variation.id ? 'opacity-100' : 'opacity-0'
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{variation.product_title}</span>
+                                  <span className="text-sm text-muted-foreground">
+                                    {displayName} {variation.sku && `(${variation.sku})`}
+                                  </span>
+                                </div>
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="flex items-end">
-                <Button type="button" onClick={addProduct} className="w-full">
+                <Button type="button" onClick={addProduct} className="w-full" disabled={!selectedVariation}>
                   <Plus className="w-4 h-4 mr-2" />
                   Agregar
                 </Button>
