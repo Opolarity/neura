@@ -45,14 +45,6 @@ const CreateSale = () => {
 
   const [open, setOpen] = React.useState(false);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
-  }
-
   // Flatten all variations with product info for search
   const allVariations = useMemo(() => {
     if (!salesData?.products) return [];
@@ -79,6 +71,14 @@ const CreateSale = () => {
       return productTitle.includes(query) || sku.includes(query) || termsNames.includes(query);
     });
   }, [allVariations, searchQuery]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
