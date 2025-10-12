@@ -43,6 +43,8 @@ const CreateSale = () => {
     navigate,
   } = useCreateSaleLogic();
 
+  const [open, setOpen] = React.useState(false);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -50,8 +52,6 @@ const CreateSale = () => {
       </div>
     );
   }
-
-  const [open, setOpen] = React.useState(false);
 
   // Flatten all variations with product info for search
   const allVariations = useMemo(() => {
