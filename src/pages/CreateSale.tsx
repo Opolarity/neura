@@ -180,128 +180,113 @@ const CreateSale = () => {
                 </>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>Teléfono</Label>
-                <Input
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-              </div>
-            </div>
-
           </CardContent>
         </Card>
 
-        {/* Shipping Address */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Dirección de Envío</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>País</Label>
-              <Select value={formData.country_id} onValueChange={(v) => handleInputChange('country_id', v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {salesData?.countries.map((c) => (
-                    <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Estado/Provincia</Label>
-              <Select value={formData.state_id} onValueChange={(v) => handleInputChange('state_id', v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {salesData?.states
-                    .filter((s) => !formData.country_id || s.country_id.toString() === formData.country_id)
-                    .map((s) => (
-                      <SelectItem key={s.id} value={s.id.toString()}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Ciudad</Label>
-              <Select value={formData.city_id} onValueChange={(v) => handleInputChange('city_id', v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {salesData?.cities
-                    .filter((c) => !formData.state_id || c.state_id.toString() === formData.state_id)
-                    .map((c) => (
-                      <SelectItem key={c.id} value={c.id.toString()}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Barrio</Label>
-              <Select value={formData.neighborhood_id} onValueChange={(v) => handleInputChange('neighborhood_id', v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {salesData?.neighborhoods
-                    .filter((n) => !formData.city_id || n.city_id.toString() === formData.city_id)
-                    .map((n) => (
-                      <SelectItem key={n.id} value={n.id.toString()}>
-                        {n.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="md:col-span-2">
-              <Label>Dirección</Label>
-              <Input value={formData.address} onChange={(e) => handleInputChange('address', e.target.value)} />
-            </div>
-            <div className="md:col-span-2">
-              <Label>Referencia</Label>
-              <Input
-                value={formData.address_reference}
-                onChange={(e) => handleInputChange('address_reference', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Persona que Recibe</Label>
-              <Input
-                value={formData.reception_person}
-                onChange={(e) => handleInputChange('reception_person', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Teléfono de Recepción</Label>
-              <Input
-                value={formData.reception_phone}
-                onChange={(e) => handleInputChange('reception_phone', e.target.value)}
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        {formData.with_shipping && (
+          <>
+            {/* Shipping Address */}
+            <Card>
+              <CardHeader>
+              <CardTitle>Dirección de Envío</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>País</Label>
+                  <Select value={formData.country_id} onValueChange={(v) => handleInputChange('country_id', v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {salesData?.countries.map((c) => (
+                        <SelectItem key={c.id} value={c.id.toString()}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Estado/Provincia</Label>
+                  <Select value={formData.state_id} onValueChange={(v) => handleInputChange('state_id', v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {salesData?.states
+                        .filter((s) => !formData.country_id || s.country_id.toString() === formData.country_id)
+                        .map((s) => (
+                          <SelectItem key={s.id} value={s.id.toString()}>
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Ciudad</Label>
+                  <Select value={formData.city_id} onValueChange={(v) => handleInputChange('city_id', v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {salesData?.cities
+                        .filter((c) => !formData.state_id || c.state_id.toString() === formData.state_id)
+                        .map((c) => (
+                          <SelectItem key={c.id} value={c.id.toString()}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Barrio</Label>
+                  <Select value={formData.neighborhood_id} onValueChange={(v) => handleInputChange('neighborhood_id', v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {salesData?.neighborhoods
+                        .filter((n) => !formData.city_id || n.city_id.toString() === formData.city_id)
+                        .map((n) => (
+                          <SelectItem key={n.id} value={n.id.toString()}>
+                            {n.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Dirección</Label>
+                  <Input value={formData.address} onChange={(e) => handleInputChange('address', e.target.value)} />
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Referencia</Label>
+                  <Input
+                    value={formData.address_reference}
+                    onChange={(e) => handleInputChange('address_reference', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Persona que Recibe</Label>
+                  <Input
+                    value={formData.reception_person}
+                    onChange={(e) => handleInputChange('reception_person', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Teléfono de Recepción</Label>
+                  <Input
+                    value={formData.reception_phone}
+                    onChange={(e) => handleInputChange('reception_phone', e.target.value)}
+                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
 
         {/* Products */}
         <Card>
