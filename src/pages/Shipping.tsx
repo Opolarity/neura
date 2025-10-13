@@ -31,8 +31,17 @@ interface ShippingMethod {
   shipping_costs: ShippingCost[];
 }
 
+interface locationData {
+  countries: any[];
+  states: any[];
+  cities: any[];
+  neighborhoods: any[];
+}
+
+
 const Shipping = () => {
   const [methods, setMethods] = useState<ShippingMethod[]>([]);
+  const [locationData, setLocationData] = useState<locationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -59,13 +68,55 @@ const Shipping = () => {
 
   useEffect(() => {
     loadShippingMethods();
-    loadCountries();
   }, []);
+
+  useEffect(() => {
+    if (dialogOpen) {
+      loadLocations();
+    }
+  }, [dialogOpen]);
+
+  const loadLocations = async (params?: {
+    country_id?: number;
+    state_id?: number;
+    city_id?: number;
+  }) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-locations', {
+        body: params || {},
+      });
+      if (error) throw error;
+
+      console.log("📦 Datos recibidos:", data);
+
+      if (!params) {
+        // Nivel 1: países
+        setCountries(data.countries || []);
+      } else if (params.country_id && !params.state_id && !params.city_id) {
+        // Nivel 2: departamentos
+        setStates(data.states || []);
+        setCities([]);
+        setNeighborhoods([]);
+      } else if (params.country_id && params.state_id && !params.city_id) {
+        // Nivel 3: provincias
+        setCities(data.cities || []);
+        setNeighborhoods([]);
+      } else if (params.country_id && params.state_id && params.city_id) {
+        // Nivel 4: distritos
+        setNeighborhoods(data.neighborhoods || []);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudieron cargar las ubicaciones.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const loadShippingMethods = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('get-shipping-methods');
-      
       if (error) throw error;
       
       setMethods(data.methods || []);
@@ -77,60 +128,6 @@ const Shipping = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadCountries = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('get-shipping-zones');
-      
-      if (error) throw error;
-      
-      setCountries(data.countries || []);
-    } catch (error: any) {
-      console.error('Error loading countries:', error);
-    }
-  };
-
-  const loadStates = async (countryId: number) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('get-shipping-zones', {
-        body: { country_id: countryId },
-      });
-      
-      if (error) throw error;
-      
-      setStates(data.states || []);
-    } catch (error: any) {
-      console.error('Error loading states:', error);
-    }
-  };
-
-  const loadCities = async (countryId: number, stateId: number) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('get-shipping-zones', {
-        body: { country_id: countryId, state_id: stateId },
-      });
-      
-      if (error) throw error;
-      
-      setCities(data.cities || []);
-    } catch (error: any) {
-      console.error('Error loading cities:', error);
-    }
-  };
-
-  const loadNeighborhoods = async (countryId: number, stateId: number, cityId: number) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('get-shipping-zones', {
-        body: { country_id: countryId, state_id: stateId, city_id: cityId },
-      });
-      
-      if (error) throw error;
-      
-      setNeighborhoods(data.neighborhoods || []);
-    } catch (error: any) {
-      console.error('Error loading neighborhoods:', error);
     }
   };
 
@@ -148,29 +145,33 @@ const Shipping = () => {
     const newCosts = [...costs];
     newCosts[index] = { ...newCosts[index], [field]: value };
     
-    // Load dependent zones
     if (field === 'country_id' && value) {
-      loadStates(value);
-      // Reset dependent fields
+      loadLocations({ country_id: value });
       newCosts[index].state_id = undefined;
       newCosts[index].city_id = undefined;
       newCosts[index].neighborhood_id = undefined;
     } else if (field === 'state_id' && value) {
-      loadCities(newCosts[index].country_id!, value);
-      // Reset dependent fields
+      loadLocations({
+        country_id: newCosts[index].country_id!,
+        state_id: value,
+      });
       newCosts[index].city_id = undefined;
       newCosts[index].neighborhood_id = undefined;
     } else if (field === 'city_id' && value) {
-      loadNeighborhoods(newCosts[index].country_id!, newCosts[index].state_id!, value);
-      // Reset dependent field
+      loadLocations({
+        country_id: newCosts[index].country_id!,
+        state_id: newCosts[index].state_id!,
+        city_id: value,
+      });
       newCosts[index].neighborhood_id = undefined;
     }
+
     
     setCosts(newCosts);
   };
 
   const handleSubmit = async () => {
-    if (!methodName || costs.some(c => !c.name || c.cost <= 0)) {
+    if (!methodName.trim() || !costName.trim() || costValue === null || costValue <= 0) {
       toast({
         title: "Error",
         description: "Por favor complete todos los campos requeridos",
@@ -182,11 +183,18 @@ const Shipping = () => {
     setSaving(true);
 
     try {
+      // Make Cost name and value general for all shipping cost
+      const formattedCosts = costs.map(cost => ({
+        ...cost,
+        name: costName,
+        cost: costValue,
+      }));
+
       const { data, error } = await supabase.functions.invoke('create-shipping-method', {
         body: {
           name: methodName,
           code: methodCode,
-          costs: costs,
+          costs: formattedCosts,
         },
       });
 
@@ -351,7 +359,7 @@ const Shipping = () => {
                             step="0.01"
                             min="0"
                             value={costValue ?? 0}
-                            onChange={(e) => setCostValue(e.target.value ? Number(e.target.value) : null)}
+                            onChange={(e) => setCostValue(e.target.value ? Number(e.target.value) : 0)}
                             placeholder="0.00"
                           />
                         </div>
@@ -361,8 +369,6 @@ const Shipping = () => {
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 grid grid-cols-2 gap-4">
-                        <Input type="hidden" value={costName} readOnly />
-                        <Input type="hidden" value={costValue} readOnly />
                         <div className="space-y-2">
                           <Label>País</Label>
                           <Select

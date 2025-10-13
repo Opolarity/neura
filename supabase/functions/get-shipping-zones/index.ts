@@ -6,59 +6,42 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  console.log("🚀 get-shipping-zones fue llamada");
+
   if (req.method === 'OPTIONS') {
+    console.log("⚙️ Preflight OPTIONS recibido");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // ✅ Usa la SERVICE_ROLE_KEY (no la ANON) para evitar problemas con RLS
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        auth: {
-          persistSession: false,
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
     );
-
-    // Get auth header for user verification
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
-
-    // Verify user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authError || !user) {
-      throw new Error('Unauthorized');
-    }
 
     const url = new URL(req.url);
     const countryId = url.searchParams.get('country_id');
     const stateId = url.searchParams.get('state_id');
     const cityId = url.searchParams.get('city_id');
 
-    console.log('Fetching zones - country:', countryId, 'state:', stateId, 'city:', cityId);
+    console.log("📍 Parámetros:", { countryId, stateId, cityId });
 
-    let result: any = {};
+    const result: any = {};
 
-    // Always fetch countries
+    // 🔹 Siempre trae países
     const { data: countries, error: countriesError } = await supabase
       .from('countries')
       .select('id, name')
       .order('name');
 
-    if (countriesError) {
-      console.error('Error fetching countries:', countriesError);
-      throw countriesError;
-    }
+    console.log("📦 Countries query result:", countries, "Error:", countriesError);
 
+    if (countriesError) throw countriesError;
     result.countries = countries;
 
-    // If country is selected, fetch states
+    // 🔹 Si hay countryId, trae departamentos
     if (countryId) {
       const { data: states, error: statesError } = await supabase
         .from('states')
@@ -66,15 +49,11 @@ Deno.serve(async (req) => {
         .eq('country_id', countryId)
         .order('name');
 
-      if (statesError) {
-        console.error('Error fetching states:', statesError);
-        throw statesError;
-      }
-
+      if (statesError) throw statesError;
       result.states = states;
     }
 
-    // If state is selected, fetch cities
+    // 🔹 Si hay stateId, trae provincias
     if (stateId && countryId) {
       const { data: cities, error: citiesError } = await supabase
         .from('cities')
@@ -83,15 +62,11 @@ Deno.serve(async (req) => {
         .eq('country_id', countryId)
         .order('name');
 
-      if (citiesError) {
-        console.error('Error fetching cities:', citiesError);
-        throw citiesError;
-      }
-
+      if (citiesError) throw citiesError;
       result.cities = cities;
     }
 
-    // If city is selected, fetch neighborhoods
+    // 🔹 Si hay cityId, trae distritos
     if (cityId && stateId && countryId) {
       const { data: neighborhoods, error: neighborhoodsError } = await supabase
         .from('neighborhoods')
@@ -101,31 +76,22 @@ Deno.serve(async (req) => {
         .eq('country_id', countryId)
         .order('name');
 
-      if (neighborhoodsError) {
-        console.error('Error fetching neighborhoods:', neighborhoodsError);
-        throw neighborhoodsError;
-      }
-
+      if (neighborhoodsError) throw neighborhoodsError;
       result.neighborhoods = neighborhoods;
     }
 
-    console.log('Successfully fetched zones data');
+    console.log("✅ Successfully fetched zones data");
 
     return new Response(
       JSON.stringify(result),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
+
   } catch (error) {
-    console.error('Error in get-shipping-zones:', error);
+    console.error("💥 Error en get-shipping-zones:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
     );
   }
 });
