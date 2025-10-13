@@ -38,6 +38,11 @@ const Shipping = () => {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
+  // Names nad costs
+  const [costName, setCostName] = useState('');
+  const [costValue, setCostValue] = useState<number | null>(null);
+
+
   // Form states
   const [methodName, setMethodName] = useState('');
   const [methodCode, setMethodCode] = useState('');
@@ -329,21 +334,35 @@ const Shipping = () => {
                   Agregar Zona
                 </Button>
               </div>
+              <div className="flex-1 grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Nombre *</Label>
+                          <Input
+                            value={costName}
+                            onChange={(e) => setCostName(e.target.value)}
+                            placeholder="Ej: Envío a Lima"
+                          />
+                        </div>
 
+                         <div className="space-y-2">
+                          <Label>Costo (S/) *</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={costValue ?? 0}
+                            onChange={(e) => setCostValue(e.target.value ? Number(e.target.value) : null)}
+                            placeholder="0.00"
+                          />
+                        </div>
+              </div>
               {costs.map((cost, index) => (
                 <Card key={index}>
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 grid grid-cols-2 gap-4">
-                        <div className="space-y-2 col-span-2">
-                          <Label>Nombre *</Label>
-                          <Input
-                            value={cost.name}
-                            onChange={(e) => handleCostChange(index, 'name', e.target.value)}
-                            placeholder="Ej: Envío a Lima"
-                          />
-                        </div>
-
+                        <Input type="hidden" value={costName} readOnly />
+                        <Input type="hidden" value={costValue} readOnly />
                         <div className="space-y-2">
                           <Label>País</Label>
                           <Select
@@ -421,18 +440,6 @@ const Shipping = () => {
                               ))}
                             </SelectContent>
                           </Select>
-                        </div>
-
-                        <div className="space-y-2 col-span-2">
-                          <Label>Costo (S/) *</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={cost.cost}
-                            onChange={(e) => handleCostChange(index, 'cost', parseFloat(e.target.value))}
-                            placeholder="0.00"
-                          />
                         </div>
                       </div>
 
