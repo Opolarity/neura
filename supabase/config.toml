@@ -32,3 +32,12 @@ verify_jwt = true
 
 [functions.validate-product-type-change]
 verify_jwt = true
+
+[functions.get-shipping-methods]
+verify_jwt = true
+
+[functions.create-shipping-method]
+verify_jwt = true
+
+[functions.get-shipping-zones]
+verify_jwt = true

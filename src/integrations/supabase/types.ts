@@ -551,7 +551,7 @@ export type Database = {
         Insert: {
           active: boolean
           company?: number | null
-          id: number
+          id?: number
           name: string
         }
         Update: {
@@ -934,35 +934,110 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          is_manual: boolean
           name: string
         }
         Insert: {
           created_at?: string
           id?: number
+          is_manual?: boolean
           name: string
         }
         Update: {
           created_at?: string
           id?: number
+          is_manual?: boolean
           name?: string
         }
         Relationships: []
       }
+      shipping_costs: {
+        Row: {
+          city_id: number | null
+          cost: number
+          country_id: number | null
+          created_at: string
+          id: number
+          name: string
+          neighborhood_id: number | null
+          shipping_method_id: number
+          state_id: number | null
+        }
+        Insert: {
+          city_id?: number | null
+          cost: number
+          country_id?: number | null
+          created_at?: string
+          id?: number
+          name: string
+          neighborhood_id?: number | null
+          shipping_method_id: number
+          state_id?: number | null
+        }
+        Update: {
+          city_id?: number | null
+          cost?: number
+          country_id?: number | null
+          created_at?: string
+          id?: number
+          name?: string
+          neighborhood_id?: number | null
+          shipping_method_id?: number
+          state_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipping_costs_city_id_state_id_country_id_fkey"
+            columns: ["city_id", "state_id", "country_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id", "state_id", "country_id"]
+          },
+          {
+            foreignKeyName: "shipping_costs_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_costs_neighborhood_id_city_id_state_id_country_id_fkey"
+            columns: ["neighborhood_id", "city_id", "state_id", "country_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id", "city_id", "state_id", "country_id"]
+          },
+          {
+            foreignKeyName: "shipping_costs_shipping_method_id_fkey"
+            columns: ["shipping_method_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_costs_state_id_country_id_fkey"
+            columns: ["state_id", "country_id"]
+            isOneToOne: false
+            referencedRelation: "states"
+            referencedColumns: ["id", "country_id"]
+          },
+        ]
+      }
       shipping_methods: {
         Row: {
-          cost: number
+          code: string | null
           created_at: string
           id: number
           name: string
         }
         Insert: {
-          cost: number
+          code?: string | null
           created_at?: string
           id?: number
           name: string
         }
         Update: {
-          cost?: number
+          code?: string | null
           created_at?: string
           id?: number
           name?: string
