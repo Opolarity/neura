@@ -372,12 +372,21 @@ const Shipping = () => {
 
     setDeleting(true);
     try {
-      const { error } = await supabase
+      // Primero eliminar todos los shipping_costs asociados
+      const { error: costsError } = await supabase
+        .from('shipping_costs')
+        .delete()
+        .eq('shipping_method_id', methodToDelete);
+
+      if (costsError) throw costsError;
+
+      // Luego eliminar el método de envío
+      const { error: methodError } = await supabase
         .from('shipping_methods')
         .delete()
         .eq('id', methodToDelete);
 
-      if (error) throw error;
+      if (methodError) throw methodError;
 
       toast({
         title: "Éxito",
