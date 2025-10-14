@@ -47,8 +47,16 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Ensure subsequent DB operations run under the authenticated user context
-    supabase.auth.setAuth(authHeader.replace('Bearer ', ''));
+    // Recreate client to run queries as the authenticated user (RLS)
+    const token = authHeader.replace('Bearer ', '');
+    const db = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        auth: { persistSession: false },
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      }
+    );
 
     const { name, code, costs } = await req.json();
     if (!name || !costs || !Array.isArray(costs) || costs.length === 0) {
@@ -58,7 +66,7 @@ serve(async (req) => {
     console.log('Creating shipping method:', name, 'for user:', user.id);
 
     // Create the shipping method
-    const { data: method, error: methodError } = await supabase
+    const { data: method, error: methodError } = await db
       .from('shipping_methods')
       .insert([{ name, code }])
       .select()
@@ -77,7 +85,7 @@ serve(async (req) => {
       shipping_method_id: method.id,
     }));
 
-    const { data: createdCosts, error: costsError } = await supabase
+    const { data: createdCosts, error: costsError } = await db
       .from('shipping_costs')
       .insert(costsToInsert)
       .select();
@@ -85,7 +93,7 @@ serve(async (req) => {
     if (costsError) {
       console.error('Error creating shipping costs:', costsError);
       // Try to rollback the method creation
-      await supabase.from('shipping_methods').delete().eq('id', method.id);
+      await db.from('shipping_methods').delete().eq('id', method.id);
       throw costsError;
     }
 
