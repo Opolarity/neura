@@ -177,7 +177,7 @@ const Shipping = () => {
   };
 
   const handleSubmit = async () => {
-    if (!methodName.trim() || !costName.trim() || costValue === null || costValue <= 0) {
+    if (!methodName.trim() || !costName.trim() || costValue === null || costValue < 0) {
       toast({
         title: "Error",
         description: "Por favor complete todos los campos requeridos",
