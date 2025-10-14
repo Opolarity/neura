@@ -100,6 +100,28 @@ Deno.serve(async (req) => {
     const cityMap = new Map((citiesRes.data || []).map((r: any) => [r.id, r.name]));
     const neighborhoodMap = new Map((neighborhoodsRes.data || []).map((r: any) => [r.id, r.name]));
 
+    // Debug maps sizes
+    console.log('Location lookups:', {
+      countryIds, stateIds, cityIds, neighborhoodIds,
+      countriesFound: countryMap.size,
+      statesFound: stateMap.size,
+      citiesFound: cityMap.size,
+      neighborhoodsFound: neighborhoodMap.size,
+    });
+
+    const buildZonePath = (c: any) => {
+      const cn = c.country_id != null ? countryMap.get(c.country_id) : null;
+      const st = c.state_id != null ? stateMap.get(c.state_id) : null;
+      const ci = c.city_id != null ? cityMap.get(c.city_id) : null;
+      const nb = c.neighborhood_id != null ? neighborhoodMap.get(c.neighborhood_id) : null;
+      const parts: string[] = [];
+      if (nb) { if (cn) parts.push(cn); if (st) parts.push(st); if (ci) parts.push(ci); parts.push(nb); }
+      else if (ci) { if (cn) parts.push(cn); if (st) parts.push(st); parts.push(ci); }
+      else if (st) { if (cn) parts.push(cn); parts.push(st); }
+      else if (cn) { parts.push(cn); }
+      return parts.length ? parts.join(' > ') : 'Global';
+    };
+
     const enrichedMethods = (methods ?? []).map((m: any) => ({
       ...m,
       shipping_costs: (m.shipping_costs ?? []).map((c: any) => ({
@@ -108,6 +130,7 @@ Deno.serve(async (req) => {
         states: c.state_id != null ? { id: c.state_id, name: stateMap.get(c.state_id) || null } : null,
         cities: c.city_id != null ? { id: c.city_id, name: cityMap.get(c.city_id) || null } : null,
         neighborhoods: c.neighborhood_id != null ? { id: c.neighborhood_id, name: neighborhoodMap.get(c.neighborhood_id) || null } : null,
+        zone_path: buildZonePath(c),
       })),
     }));
 

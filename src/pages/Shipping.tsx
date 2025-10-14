@@ -239,36 +239,33 @@ const Shipping = () => {
     console.log('🗺️ Procesando zonas para método:', method.name, method.shipping_costs);
     
     return method.shipping_costs.map(cost => {
-      const parts = [];
-      
-      // Verificar si existen los datos anidados
+      const zp = (cost as any).zone_path;
+      if (zp) return zp;
+
+      const parts = [] as string[];
       const country = (cost as any).countries;
       const state = (cost as any).states;
       const city = (cost as any).cities;
       const neighborhood = (cost as any).neighborhoods;
-      
+
       console.log('📍 Costo individual:', { cost, country, state, city, neighborhood });
-      
+
       if (neighborhood?.name) {
-        // Si hay barrio, mostrar toda la jerarquía
         if (country?.name) parts.push(country.name);
         if (state?.name) parts.push(state.name);
         if (city?.name) parts.push(city.name);
         parts.push(neighborhood.name);
       } else if (city?.name) {
-        // Si hay ciudad pero no barrio
         if (country?.name) parts.push(country.name);
         if (state?.name) parts.push(state.name);
         parts.push(city.name);
       } else if (state?.name) {
-        // Si hay estado pero no ciudad
         if (country?.name) parts.push(country.name);
         parts.push(state.name);
       } else if (country?.name) {
-        // Solo país
         parts.push(country.name);
       }
-      
+
       return parts.length > 0 ? parts.join(' > ') : 'Global';
     }).join(' | ');
   };
