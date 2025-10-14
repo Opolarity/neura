@@ -219,8 +219,25 @@ export const useCreateSaleLogic = () => {
 
     try {
       const orderData = {
-        ...formData,
-        customer_lastname: `${formData.customer_lastname}${formData.customer_lastname2 ? ' ' + formData.customer_lastname2 : ''}`,
+        document_type: formData.document_type,
+        document_number: formData.document_number,
+        customer_name: formData.customer_name,
+        customer_lastname: formData.customer_lastname,
+        customer_lastname2: formData.customer_lastname2 || null,
+        email: formData.email || null,
+        phone: formData.phone || null,
+        sale_type: formData.sale_type,
+        shipping_method: formData.shipping_method || null,
+        country_id: formData.country_id || null,
+        state_id: formData.state_id || null,
+        city_id: formData.city_id || null,
+        neighborhood_id: formData.neighborhood_id || null,
+        address: formData.address || null,
+        address_reference: formData.address_reference || null,
+        reception_person: formData.reception_person || null,
+        reception_phone: formData.reception_phone || null,
+        with_shipping: formData.with_shipping,
+        employee_sale: formData.employee_sale,
         subtotal: calculateSubtotal(),
         discount: calculateDiscount(),
         total: calculateTotal(),
@@ -235,7 +252,7 @@ export const useCreateSaleLogic = () => {
               payment_method_id: parseInt(paymentMethod),
               amount: parseFloat(paymentAmount) || calculateTotal(),
               date: new Date().toISOString(),
-              confirmation_code: confirmationCode,
+              confirmation_code: confirmationCode || null,
             }
           : null,
       };
