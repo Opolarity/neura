@@ -184,18 +184,18 @@ const Shipping = () => {
 
     try {
       // Make Cost name and value general for all shipping cost
-      const formattedCosts = costs.map(cost => ({
+      const formattedCosts =    costs.map(cost => ({
         ...cost,
         name: costName,
         cost: costValue,
       }));
 
       const { data, error } = await supabase.functions.invoke('create-shipping-method', {
-        body: {
+        body: JSON.stringify({
           name: methodName,
           code: methodCode,
           costs: formattedCosts,
-        },
+        }),
       });
 
       if (error) throw error;
