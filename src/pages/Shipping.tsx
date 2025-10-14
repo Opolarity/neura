@@ -259,36 +259,38 @@ const Shipping = () => {
       </div>
 
       <div className="grid gap-6">
-        {methods.map((method) => (
-          <Card key={method.id}>
-            <CardHeader>
-              <CardTitle>{method.name}</CardTitle>
-              <CardDescription>
-                {method.code && `Código: ${method.code}`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
+        
+              <Table >
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nombre</TableHead>
+                    <TableHead>Descripción</TableHead>
                     <TableHead>Zona</TableHead>
                     <TableHead>Costo</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {method.shipping_costs.map((cost) => (
-                    <TableRow key={cost.id}>
-                      <TableCell>{cost.name}</TableCell>
-                      <TableCell>{getZoneDescription(cost)}</TableCell>
-                      <TableCell>S/ {cost.cost}</TableCell>
-                    </TableRow>
-                  ))}
+                  {methods.map((method) => {
+                    const firstCost = method.shipping_costs?.[0];
+                    const allNeighborhoods = method.shipping_costs
+                      ?.map(c => c.neighborhoods?.name)
+                      .filter(Boolean)
+                      .join(', ');
+
+                    return (
+                    
+                      <TableRow key={method.id}>
+                        <TableCell>{method.name}</TableCell>
+                        <TableCell>{firstCost?.name ?? '—'}</TableCell>
+                        <TableCell>{allNeighborhoods || '—'}</TableCell>
+                        <TableCell> {firstCost?.cost == null  ? 'Gratis' : ('S/ ' + firstCost?.cost)}</TableCell>
+                      </TableRow>
+                    
+                    );
+                  })}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        ))}
+        
 
         {methods.length === 0 && (
           <Card>
