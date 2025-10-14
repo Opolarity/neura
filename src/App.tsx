@@ -10,6 +10,7 @@ import Products from './pages/Products';
 import AddProduct from './pages/AddProduct';
 import Inventory from './pages/Inventory';
 import Sales from './pages/Sales';
+import SalesList from './pages/SalesList';
 import CreateSale from './pages/CreateSale';
 import Invoices from './pages/Invoices';
 import POS from './pages/POS';
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="products/add" element={<AddProduct />} />
               <Route path="inventory" element={<Inventory />} />
               <Route path="sales" element={<Sales />} />
+              <Route path="sales/list" element={<SalesList />} />
               <Route path="sales/create" element={<CreateSale />} />
               <Route path="shipping" element={<Shipping />} />
               <Route path="invoices" element={<Invoices />} />
