@@ -47,6 +47,9 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
+    // Ensure subsequent DB operations run under the authenticated user context
+    supabase.auth.setAuth(authHeader.replace('Bearer ', ''));
+
     const { name, code, costs } = await req.json();
     if (!name || !costs || !Array.isArray(costs) || costs.length === 0) {
       throw new Error('Name and at least one cost configuration are required');
