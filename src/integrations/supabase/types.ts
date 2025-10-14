@@ -356,7 +356,7 @@ export type Database = {
           amount: number
           date: string
           gateway_confirmation_code?: string | null
-          id: number
+          id?: number
           order_id: number
           payment_method_id: number
         }
@@ -395,7 +395,7 @@ export type Database = {
           quantity: number
         }
         Insert: {
-          id: number
+          id?: number
           order_id: number
           product_discount?: number
           product_price: number
@@ -466,7 +466,7 @@ export type Database = {
           document_number: string
           document_type: number
           email?: string | null
-          id: number
+          id?: number
           neighborhood_id?: number | null
           phone?: number | null
           reception_person?: string | null
