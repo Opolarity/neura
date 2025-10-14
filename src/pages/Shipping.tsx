@@ -49,6 +49,7 @@ const Shipping = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [methodToDelete, setMethodToDelete] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editingMethod, setEditingMethod] = useState<ShippingMethod | null>(null);
   const { toast } = useToast();
 
   // Names nad costs
@@ -189,26 +190,70 @@ const Shipping = () => {
 
     try {
       // Make Cost name and value general for all shipping cost
-      const formattedCosts =    costs.map(cost => ({
+      const formattedCosts = costs.map(cost => ({
         ...cost,
         name: costName,
         cost: costValue,
       }));
 
-      const { data, error } = await supabase.functions.invoke('create-shipping-method', {
-        body: JSON.stringify({
-          name: methodName,
-          code: methodCode,
-          costs: formattedCosts,
-        }),
-      });
+      if (editingMethod) {
+        // Modo edición: eliminar costos viejos y crear nuevos
+        const { error: deleteError } = await supabase
+          .from('shipping_costs')
+          .delete()
+          .eq('shipping_method_id', editingMethod.id);
 
-      if (error) throw error;
+        if (deleteError) throw deleteError;
 
-      toast({
-        title: "Éxito",
-        description: "Método de envío creado correctamente",
-      });
+        // Actualizar método
+        const { error: updateError } = await supabase
+          .from('shipping_methods')
+          .update({
+            name: methodName,
+            code: methodCode || null,
+          })
+          .eq('id', editingMethod.id);
+
+        if (updateError) throw updateError;
+
+        // Insertar nuevos costos
+        const costsToInsert = formattedCosts.map(cost => ({
+          shipping_method_id: editingMethod.id,
+          name: cost.name,
+          cost: cost.cost,
+          country_id: cost.country_id || null,
+          state_id: cost.state_id || null,
+          city_id: cost.city_id || null,
+          neighborhood_id: cost.neighborhood_id || null,
+        }));
+
+        const { error: costsError } = await supabase
+          .from('shipping_costs')
+          .insert(costsToInsert);
+
+        if (costsError) throw costsError;
+
+        toast({
+          title: "Éxito",
+          description: "Método de envío actualizado correctamente",
+        });
+      } else {
+        // Modo creación
+        const { data, error } = await supabase.functions.invoke('create-shipping-method', {
+          body: JSON.stringify({
+            name: methodName,
+            code: methodCode,
+            costs: formattedCosts,
+          }),
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Éxito",
+          description: "Método de envío creado correctamente",
+        });
+      }
 
       setDialogOpen(false);
       resetForm();
@@ -216,7 +261,7 @@ const Shipping = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "No se pudo crear el método de envío",
+        description: error.message || `No se pudo ${editingMethod ? 'actualizar' : 'crear'} el método de envío`,
         variant: "destructive",
       });
     } finally {
@@ -227,10 +272,57 @@ const Shipping = () => {
   const resetForm = () => {
     setMethodName('');
     setMethodCode('');
+    setCostName('');
+    setCostValue(null);
     setCosts([{ name: '', cost: 0 }]);
     setStates([]);
     setCities([]);
     setNeighborhoods([]);
+    setEditingMethod(null);
+  };
+
+  const handleEditClick = async (method: ShippingMethod) => {
+    setEditingMethod(method);
+    setMethodName(method.name);
+    setMethodCode(method.code || '');
+    
+    // Obtener el primer costo para rellenar el nombre y valor general
+    const firstCost = method.shipping_costs?.[0];
+    if (firstCost) {
+      setCostName(firstCost.name);
+      setCostValue(firstCost.cost);
+    }
+    
+    // Cargar los costos con sus zonas
+    const costsData = method.shipping_costs.map(cost => ({
+      id: cost.id,
+      name: cost.name,
+      cost: cost.cost,
+      country_id: cost.country_id,
+      state_id: cost.state_id,
+      city_id: cost.city_id,
+      neighborhood_id: cost.neighborhood_id,
+    }));
+    
+    setCosts(costsData);
+    
+    // Cargar las ubicaciones para el primer costo si tiene
+    if (firstCost?.country_id) {
+      await loadLocations();
+      await loadLocations({ country_id: firstCost.country_id });
+      if (firstCost.state_id) {
+        await loadLocations({ country_id: firstCost.country_id, state_id: firstCost.state_id });
+        if (firstCost.city_id) {
+          await loadLocations({ 
+            country_id: firstCost.country_id, 
+            state_id: firstCost.state_id, 
+            city_id: firstCost.city_id 
+          });
+        }
+      }
+    }
+    
+    setDialogOpen(true);
   };
 
   const getAllZones = (method: ShippingMethod) => {
@@ -375,13 +467,7 @@ const Shipping = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              // TODO: Implementar edición
-                              toast({
-                                title: "Próximamente",
-                                description: "La función de editar estará disponible pronto",
-                              });
-                            }}
+                            onClick={() => handleEditClick(method)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -403,10 +489,15 @@ const Shipping = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open);
+        if (!open) resetForm();
+      }}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nuevo Método de Envío</DialogTitle>
+            <DialogTitle>
+              {editingMethod ? 'Editar Método de Envío' : 'Nuevo Método de Envío'}
+            </DialogTitle>
             <DialogDescription>
               Configure el método de envío y sus costos por zona
             </DialogDescription>
@@ -567,12 +658,15 @@ const Shipping = () => {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setDialogOpen(false);
+              resetForm();
+            }}>
               Cancelar
             </Button>
             <Button onClick={handleSubmit} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Crear Método
+              {editingMethod ? 'Actualizar Método' : 'Crear Método'}
             </Button>
           </DialogFooter>
         </DialogContent>
