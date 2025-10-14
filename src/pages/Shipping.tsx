@@ -452,7 +452,7 @@ const Shipping = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
-                  <TableHead>Código</TableHead>
+                  <TableHead>Descripción</TableHead>
                   <TableHead>Zonas</TableHead>
                   <TableHead>Costo</TableHead>
                   <TableHead>Acciones</TableHead>
@@ -466,10 +466,10 @@ const Shipping = () => {
                   return (
                     <TableRow key={method.id}>
                       <TableCell className="font-medium">{method.name}</TableCell>
-                      <TableCell>{method.code || '—'}</TableCell>
+                      <TableCell>{firstCost?.name || '—'}</TableCell>
                       <TableCell>{allZones}</TableCell>
                       <TableCell>
-                        {firstCost?.cost == null ? 'Gratis' : `S/ ${firstCost.cost}`}
+                        {firstCost?.cost === 0 || firstCost?.cost == null ? 'Gratis' : `S/ ${firstCost.cost}`}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
