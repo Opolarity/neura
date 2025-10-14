@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Trash2, Edit } from 'lucide-react';
 
 interface ShippingCost {
   id?: number;
@@ -45,6 +46,9 @@ const Shipping = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [methodToDelete, setMethodToDelete] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   // Names nad costs
@@ -228,13 +232,53 @@ const Shipping = () => {
     setNeighborhoods([]);
   };
 
-  const getZoneDescription = (cost: ShippingCost) => {
-    const parts = [];
-    if (cost.countries?.name) parts.push(cost.countries.name);
-    if (cost.states?.name) parts.push(cost.states.name);
-    if (cost.cities?.name) parts.push(cost.cities.name);
-    if (cost.neighborhoods?.name) parts.push(cost.neighborhoods.name);
-    return parts.length > 0 ? parts.join(' > ') : 'Global';
+  const getAllZones = (method: ShippingMethod) => {
+    if (!method.shipping_costs || method.shipping_costs.length === 0) return 'Global';
+    
+    return method.shipping_costs.map(cost => {
+      const parts = [];
+      if (cost.countries?.name) parts.push(cost.countries.name);
+      if (cost.states?.name) parts.push(cost.states.name);
+      if (cost.cities?.name) parts.push(cost.cities.name);
+      if (cost.neighborhoods?.name) parts.push(cost.neighborhoods.name);
+      return parts.length > 0 ? parts.join(' > ') : 'Global';
+    }).join(', ');
+  };
+
+  const handleDeleteClick = (methodId: number) => {
+    setMethodToDelete(methodId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!methodToDelete) return;
+
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('shipping_methods')
+        .delete()
+        .eq('id', methodToDelete);
+
+      if (error) throw error;
+
+      toast({
+        title: "Éxito",
+        description: "Método de envío eliminado correctamente",
+      });
+
+      loadShippingMethods();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar el método de envío",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+      setMethodToDelete(null);
+    }
   };
 
   if (loading) {
@@ -258,52 +302,81 @@ const Shipping = () => {
         </Button>
       </div>
 
-      <div className="grid gap-6">
-        
-              <Table >
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Descripción</TableHead>
-                    <TableHead>Zona</TableHead>
-                    <TableHead>Costo</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {methods.map((method) => {
-                    const firstCost = method.shipping_costs?.[0];
-                    const allNeighborhoods = method.shipping_costs
-                      ?.map(c => c.neighborhoods?.name)
-                      .filter(Boolean)
-                      .join(', ');
-
-                    return (
-                    
-                      <TableRow key={method.id}>
-                        <TableCell>{method.name}</TableCell>
-                        <TableCell>{firstCost?.name ?? '—'}</TableCell>
-                        <TableCell>{allNeighborhoods || '—'}</TableCell>
-                        <TableCell> {firstCost?.cost == null  ? 'Gratis' : ('S/ ' + firstCost?.cost)}</TableCell>
-                      </TableRow>
-                    
-                    );
-                  })}
-                </TableBody>
-              </Table>
-        
-
-        {methods.length === 0 && (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Lista de Métodos de Envío</h3>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin" />
+            </div>
+          ) : methods.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
               <p className="text-muted-foreground mb-4">No hay métodos de envío configurados</p>
               <Button onClick={() => setDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Crear Primer Método
               </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Zonas</TableHead>
+                  <TableHead>Costo</TableHead>
+                  <TableHead>Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {methods.map((method) => {
+                  const firstCost = method.shipping_costs?.[0];
+                  const allZones = getAllZones(method);
+
+                  return (
+                    <TableRow key={method.id}>
+                      <TableCell className="font-medium">{method.name}</TableCell>
+                      <TableCell>{method.code || '—'}</TableCell>
+                      <TableCell>{allZones}</TableCell>
+                      <TableCell>
+                        {firstCost?.cost == null ? 'Gratis' : `S/ ${firstCost.cost}`}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // TODO: Implementar edición
+                              toast({
+                                title: "Próximamente",
+                                description: "La función de editar estará disponible pronto",
+                              });
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteClick(method.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -479,6 +552,34 @@ const Shipping = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar método de envío?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará el método de envío y todos sus costos asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                'Eliminar'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
