@@ -123,6 +123,7 @@ const Shipping = () => {
       const { data, error } = await supabase.functions.invoke('get-shipping-methods');
       if (error) throw error;
       
+      console.log('📦 Métodos de envío recibidos:', data.methods);
       setMethods(data.methods || []);
     } catch (error: any) {
       toast({
@@ -235,14 +236,41 @@ const Shipping = () => {
   const getAllZones = (method: ShippingMethod) => {
     if (!method.shipping_costs || method.shipping_costs.length === 0) return 'Global';
     
+    console.log('🗺️ Procesando zonas para método:', method.name, method.shipping_costs);
+    
     return method.shipping_costs.map(cost => {
       const parts = [];
-      if (cost.countries?.name) parts.push(cost.countries.name);
-      if (cost.states?.name) parts.push(cost.states.name);
-      if (cost.cities?.name) parts.push(cost.cities.name);
-      if (cost.neighborhoods?.name) parts.push(cost.neighborhoods.name);
+      
+      // Verificar si existen los datos anidados
+      const country = (cost as any).countries;
+      const state = (cost as any).states;
+      const city = (cost as any).cities;
+      const neighborhood = (cost as any).neighborhoods;
+      
+      console.log('📍 Costo individual:', { cost, country, state, city, neighborhood });
+      
+      if (neighborhood?.name) {
+        // Si hay barrio, mostrar toda la jerarquía
+        if (country?.name) parts.push(country.name);
+        if (state?.name) parts.push(state.name);
+        if (city?.name) parts.push(city.name);
+        parts.push(neighborhood.name);
+      } else if (city?.name) {
+        // Si hay ciudad pero no barrio
+        if (country?.name) parts.push(country.name);
+        if (state?.name) parts.push(state.name);
+        parts.push(city.name);
+      } else if (state?.name) {
+        // Si hay estado pero no ciudad
+        if (country?.name) parts.push(country.name);
+        parts.push(state.name);
+      } else if (country?.name) {
+        // Solo país
+        parts.push(country.name);
+      }
+      
       return parts.length > 0 ? parts.join(' > ') : 'Global';
-    }).join(', ');
+    }).join(' | ');
   };
 
   const handleDeleteClick = (methodId: number) => {
