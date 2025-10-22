@@ -16,6 +16,9 @@ import Invoices from './pages/Invoices';
 import POS from './pages/POS';
 import Settings from './pages/Settings';
 import Shipping from './pages/Shipping';
+import Customers from './pages/Customers';
+import ClientsList from './pages/customers/ClientsList';
+import CreateClient from './pages/customers/CreateClient';
 import UsersList from './pages/settings/UsersList';
 import CreateUser from './pages/settings/CreateUser';
 import UserFunctions from './pages/settings/UserFunctions';
@@ -51,7 +54,10 @@ const App = () => (
               <Route path="shipping" element={<Shipping />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="pos" element={<POS />} />
-              <Route path="customers" element={<div className="p-6"><h1 className="text-2xl font-bold">Módulo de Clientes</h1><p className="text-gray-600">Funcionalidad en desarrollo</p></div>} />
+              <Route path="customers" element={<Customers />}>
+                <Route path="list" element={<ClientsList />} />
+                <Route path="create" element={<CreateClient />} />
+              </Route>
               <Route path="reports" element={<div className="p-6"><h1 className="text-2xl font-bold">Reportes</h1><p className="text-gray-600">Funcionalidad en desarrollo</p></div>} />
               <Route path="settings" element={<Settings />}>
                 <Route path="users" element={<UsersList />} />
