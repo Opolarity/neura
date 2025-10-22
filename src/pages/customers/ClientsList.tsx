@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plus, Pencil } from 'lucide-react';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -70,10 +71,8 @@ const ClientsList = () => {
         </Button>
       </div>
 
-      {loading ? (
-        <p>Cargando clientes...</p>
-      ) : (
-        <div className="border rounded-lg">
+      <Card>
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -85,7 +84,13 @@ const ClientsList = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clients.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    Cargando clientes...
+                  </TableCell>
+                </TableRow>
+              ) : clients.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     No hay clientes registrados
@@ -114,8 +119,8 @@ const ClientsList = () => {
               )}
             </TableBody>
           </Table>
-        </div>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
