@@ -23,6 +23,7 @@ interface Client {
   document_number: string;
   document_type_id: number;
   created_at: string;
+  purchase_count?: number;
 }
 
 const ClientsList = () => {
@@ -37,13 +38,41 @@ const ClientsList = () => {
   const fetchClients = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setClients(data || []);
+      if (clientsError) throw clientsError;
+
+      // Fetch order counts for each client
+      if (clientsData && clientsData.length > 0) {
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('document_type, document_number');
+
+        if (ordersError) throw ordersError;
+
+        // Count orders by document
+        const orderCounts = new Map<string, number>();
+        ordersData?.forEach((order) => {
+          const key = `${order.document_type}-${order.document_number}`;
+          orderCounts.set(key, (orderCounts.get(key) || 0) + 1);
+        });
+
+        // Add purchase counts to clients
+        const clientsWithCounts = clientsData.map((client) => {
+          const key = `${client.document_type_id}-${client.document_number}`;
+          return {
+            ...client,
+            purchase_count: orderCounts.get(key) || 0,
+          };
+        });
+
+        setClients(clientsWithCounts);
+      } else {
+        setClients([]);
+      }
     } catch (error: any) {
       toast.error('Error al cargar clientes: ' + error.message);
     } finally {
@@ -79,6 +108,7 @@ const ClientsList = () => {
                 <TableHead>ID</TableHead>
                 <TableHead>Nombre Completo</TableHead>
                 <TableHead>Documento</TableHead>
+                <TableHead>Compras</TableHead>
                 <TableHead>Fecha de Creación</TableHead>
                 <TableHead>Acciones</TableHead>
               </TableRow>
@@ -86,13 +116,13 @@ const ClientsList = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
+                  <TableCell colSpan={6} className="text-center py-8">
                     Cargando clientes...
                   </TableCell>
                 </TableRow>
               ) : clients.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     No hay clientes registrados
                   </TableCell>
                 </TableRow>
@@ -102,6 +132,7 @@ const ClientsList = () => {
                     <TableCell>{client.id}</TableCell>
                     <TableCell>{getFullName(client)}</TableCell>
                     <TableCell>{client.document_number}</TableCell>
+                    <TableCell>{client.purchase_count || 0}</TableCell>
                     <TableCell>
                       {new Date(client.created_at).toLocaleDateString()}
                     </TableCell>
