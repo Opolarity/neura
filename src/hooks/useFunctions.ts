@@ -9,6 +9,7 @@ interface Function {
   location: string | null;
   parent_function: number | null;
   active: boolean;
+  order: number | null;
 }
 
 interface MenuFunction extends Function {
@@ -30,7 +31,7 @@ export const useFunctions = () => {
           .from('functions')
           .select('*')
           .eq('active', true)
-          .order('id');
+          .order('order', { ascending: true, nullsFirst: false });
 
         if (error) throw error;
 
@@ -51,12 +52,16 @@ export const useFunctions = () => {
 };
 
 const transformToMenuStructure = (functions: Function[]): MenuFunction[] => {
-  // Get all parent functions (those without parent_function)
-  const parentFunctions = functions.filter(f => f.parent_function === null);
+  // Get all parent functions (those without parent_function) and sort by order
+  const parentFunctions = functions
+    .filter(f => f.parent_function === null)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
   
   return parentFunctions.map(parent => {
     // Check if this parent has children
-    const children = functions.filter(f => f.parent_function === parent.id);
+    const children = functions
+      .filter(f => f.parent_function === parent.id)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
     
     if (children.length === 0) {
       return parent;
@@ -72,7 +77,9 @@ const transformToMenuStructure = (functions: Function[]): MenuFunction[] => {
 
       const subItems = groups.map(group => ({
         label: group.name,
-        items: functions.filter(f => f.parent_function === group.id)
+        items: functions
+          .filter(f => f.parent_function === group.id)
+          .sort((a, b) => (a.order || 0) - (b.order || 0))
       }));
 
       return {
