@@ -27,6 +27,7 @@ const CreateSale = () => {
     confirmationCode,
     clientFound,
     searchingClient,
+    orderId,
     handleInputChange,
     setSearchQuery,
     setSelectedVariation,
@@ -87,7 +88,7 @@ const CreateSale = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate('/sales')}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-3xl font-bold">Crear Venta</h1>
+        <h1 className="text-3xl font-bold">{orderId ? 'Editar Venta' : 'Crear Venta'}</h1>
       </div>
 
       <div className="flex gap-6 items-start">

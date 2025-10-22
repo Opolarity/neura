@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -48,6 +48,7 @@ interface SalesFormData {
 
 export const useCreateSaleLogic = () => {
   const navigate = useNavigate();
+  const { id: orderId } = useParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -86,6 +87,12 @@ export const useCreateSaleLogic = () => {
     loadFormData();
   }, []);
 
+  useEffect(() => {
+    if (orderId && salesData) {
+      loadOrderData(parseInt(orderId));
+    }
+  }, [orderId, salesData]);
+
   const loadFormData = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('get-sales-form-data');
@@ -96,6 +103,76 @@ export const useCreateSaleLogic = () => {
       toast({
         title: 'Error',
         description: 'No se pudieron cargar los datos del formulario',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadOrderData = async (id: number) => {
+    try {
+      setLoading(true);
+      const { data: order, error } = await supabase
+        .from('orders')
+        .select('*, order_products(*)')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      // Load form data
+      setFormData({
+        document_type: order.document_type?.toString() || '',
+        document_number: order.document_number || '',
+        customer_name: order.customer_name || '',
+        customer_lastname: order.customer_lastname || '',
+        customer_lastname2: '',
+        email: order.email || '',
+        phone: order.phone?.toString() || '',
+        sale_type: order.sale_type?.toString() || '',
+        shipping_method: order.shipping_method?.toString() || '',
+        country_id: order.country_id?.toString() || '',
+        state_id: order.state_id?.toString() || '',
+        city_id: order.city_id?.toString() || '',
+        neighborhood_id: order.neighborhood_id?.toString() || '',
+        address: order.address || '',
+        address_reference: order.address_reference || '',
+        reception_person: order.reception_person || '',
+        reception_phone: order.reception_phone?.toString() || '',
+        with_shipping: !!order.shipping_method,
+        employee_sale: false,
+      });
+
+      // Load products
+      const loadedProducts = await Promise.all(
+        order.order_products.map(async (op: any) => {
+          const { data: variation } = await supabase
+            .from('variations')
+            .select('*, products(title), variation_terms(terms(name))')
+            .eq('id', op.product_variation_id)
+            .single();
+
+          const termsNames = variation?.variation_terms?.map((vt: any) => vt.terms.name).join(' / ') || '';
+
+          return {
+            variation_id: op.product_variation_id,
+            product_name: variation?.products?.title || '',
+            variation_name: termsNames || variation?.sku || '',
+            quantity: op.quantity,
+            price: parseFloat(op.product_price),
+            discount: parseFloat(op.product_discount),
+          };
+        })
+      );
+
+      setProducts(loadedProducts);
+      setClientFound(true);
+    } catch (error) {
+      console.error('Error loading order:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo cargar la venta',
         variant: 'destructive',
       });
     } finally {
@@ -294,6 +371,7 @@ export const useCreateSaleLogic = () => {
     confirmationCode,
     clientFound,
     searchingClient,
+    orderId,
     handleInputChange,
     setSearchQuery,
     setSelectedVariation,
