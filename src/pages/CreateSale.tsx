@@ -90,7 +90,7 @@ const CreateSale = () => {
         <h1 className="text-3xl font-bold">Crear Venta</h1>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex gap-6 items-start">
         <form onSubmit={handleSubmit} className="flex-1 space-y-6" style={{ width: '75%' }}>
 
         {/* Sale Information */}
@@ -528,8 +528,8 @@ const CreateSale = () => {
         </div>
       </form>
 
-      {/* Sidebar */}
-      <aside className="flex-shrink-0" style={{ width: '25%' }}>
+      {/* Sidebar - Fixed */}
+      <aside className="flex-shrink-0 sticky top-6" style={{ width: '25%', height: 'calc(100vh - 8rem)' }}>
         <SaleSidebar />
       </aside>
     </div>
