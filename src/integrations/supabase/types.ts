@@ -178,6 +178,7 @@ export type Database = {
           id: number
           location: string | null
           name: string
+          order: number | null
           parent_function: number | null
         }
         Insert: {
@@ -189,6 +190,7 @@ export type Database = {
           id?: number
           location?: string | null
           name: string
+          order?: number | null
           parent_function?: number | null
         }
         Update: {
@@ -200,6 +202,7 @@ export type Database = {
           id?: number
           location?: string | null
           name?: string
+          order?: number | null
           parent_function?: number | null
         }
         Relationships: [
@@ -305,6 +308,71 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          created_at: string
+          id: number
+          image_url: string | null
+          message: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          image_url?: string | null
+          message?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          image_url?: string | null
+          message?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+        ]
+      }
+      oder_notes: {
+        Row: {
+          id: number
+          note_id: number
+          order_id: number
+        }
+        Insert: {
+          id?: number
+          note_id: number
+          order_id: number
+        }
+        Update: {
+          id?: number
+          note_id?: number
+          order_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oder_notes_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oder_notes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_history: {
         Row: {
           created_at: string
@@ -393,6 +461,7 @@ export type Database = {
           product_price: number
           product_variation_id: number
           quantity: number
+          warehouses_id: number
         }
         Insert: {
           id?: number
@@ -401,6 +470,7 @@ export type Database = {
           product_price: number
           product_variation_id: number
           quantity: number
+          warehouses_id?: number
         }
         Update: {
           id?: number
@@ -409,6 +479,7 @@ export type Database = {
           product_price?: number
           product_variation_id?: number
           quantity?: number
+          warehouses_id?: number
         }
         Relationships: [
           {
@@ -423,6 +494,49 @@ export type Database = {
             columns: ["product_variation_id"]
             isOneToOne: false
             referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_products_warehouses_id_fkey"
+            columns: ["warehouses_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_status: {
+        Row: {
+          created_at: string
+          id: number
+          order_id: number
+          status_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          order_id: number
+          status_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          order_id?: number
+          status_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_status_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
             referencedColumns: ["id"]
           },
         ]
@@ -801,6 +915,7 @@ export type Database = {
           neighborhood_id: number | null
           state_id: number | null
           UID: string
+          warehouse_id: number
         }
         Insert: {
           active: boolean
@@ -819,6 +934,7 @@ export type Database = {
           neighborhood_id?: number | null
           state_id?: number | null
           UID: string
+          warehouse_id?: number
         }
         Update: {
           active?: boolean
@@ -837,6 +953,7 @@ export type Database = {
           neighborhood_id?: number | null
           state_id?: number | null
           UID?: string
+          warehouse_id?: number
         }
         Relationships: [
           {
@@ -844,6 +961,13 @@ export type Database = {
             columns: ["document_type"]
             isOneToOne: false
             referencedRelation: "document_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
             referencedColumns: ["id"]
           },
           {
@@ -1072,6 +1196,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      statuses: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
       }
       term_groups: {
         Row: {
