@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Loader2, Plus, Trash2, ArrowLeft, Check } from 'lucide-react';
 import { useCreateSaleLogic } from './CreateSale.logic';
 import { cn } from '@/lib/utils';
+import { SaleSidebar } from '@/components/sales/SaleSidebar';
 
 const CreateSale = () => {
   const {
@@ -89,7 +90,8 @@ const CreateSale = () => {
         <h1 className="text-3xl font-bold">Crear Venta</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="flex gap-6">
+        <form onSubmit={handleSubmit} className="flex-1 space-y-6" style={{ width: '75%' }}>
 
         {/* Sale Information */}
         <Card>
@@ -525,6 +527,12 @@ const CreateSale = () => {
           </Button>
         </div>
       </form>
+
+      {/* Sidebar */}
+      <aside className="flex-shrink-0" style={{ width: '25%' }}>
+        <SaleSidebar />
+      </aside>
+    </div>
     </div>
   );
 };
