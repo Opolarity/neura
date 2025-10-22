@@ -19,6 +19,7 @@ import Shipping from './pages/Shipping';
 import Customers from './pages/Customers';
 import ClientsList from './pages/customers/ClientsList';
 import CreateClient from './pages/customers/CreateClient';
+import EditClient from './pages/customers/EditClient';
 import UsersList from './pages/settings/UsersList';
 import CreateUser from './pages/settings/CreateUser';
 import UserFunctions from './pages/settings/UserFunctions';
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="customers" element={<Customers />}>
                 <Route path="list" element={<ClientsList />} />
                 <Route path="create" element={<CreateClient />} />
+                <Route path="edit/:id" element={<EditClient />} />
               </Route>
               <Route path="reports" element={<div className="p-6"><h1 className="text-2xl font-bold">Reportes</h1><p className="text-gray-600">Funcionalidad en desarrollo</p></div>} />
               <Route path="settings" element={<Settings />}>
