@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Store, 
@@ -36,6 +36,14 @@ const iconMap: Record<string, LucideIcon> = {
 const Sidebar = ({ isOpen }: SidebarProps) => {
   const location = useLocation();
   const { functions: menuItems, loading, error } = useFunctions();
+  const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
+
+  const toggleSection = (itemId: number) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  };
 
   if (loading) {
     return (
@@ -110,21 +118,21 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
           const Icon = item.icon ? iconMap[item.icon] || Grid : Grid;
           const isActive = location.pathname === item.location;
           const hasSubItems = 'subItems' in item;
-          const isSectionActive = item.location ? location.pathname.startsWith(item.location) : false;
+          const isExpanded = expandedSections[item.id];
           
           if (hasSubItems) {
             return (
-              <div key={item.location || item.id} className="space-y-1">
-                <Link
-                  to={item.location || '#'}
-                  className={`flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-800 transition-colors ${
-                    isSectionActive ? 'bg-blue-600 border-r-2 border-blue-400' : ''
+              <div key={item.id} className="space-y-1">
+                <button
+                  onClick={() => toggleSection(item.id)}
+                  className={`flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-800 transition-colors w-full text-left ${
+                    isExpanded ? 'bg-slate-800' : ''
                   }`}
                 >
                   <Icon className="w-5 h-5" />
                   {isOpen && <span>{item.name}</span>}
-                </Link>
-                {isOpen && isSectionActive && item.subItems && (
+                </button>
+                {isOpen && isExpanded && item.subItems && (
                   <div className="ml-4 space-y-1">
                     {item.subItems.map((subGroup) => (
                       <div key={subGroup.label} className="space-y-1">
