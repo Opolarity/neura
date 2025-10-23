@@ -145,30 +145,64 @@ export const useCreateSaleLogic = () => {
         employee_sale: false,
       });
 
-      // Load products
-      const loadedProducts = await Promise.all(
-        order.order_products.map(async (op: any) => {
-          const { data: variation } = await supabase
-            .from('variations')
-            .select('*, products(title), variation_terms(terms(name))')
-            .eq('id', op.product_variation_id)
-            .single();
+      // Load products - without relying on FK relationships
+      const variationIds = (order.order_products || []).map((op: any) => op.product_variation_id);
 
-          const termsNames = variation?.variation_terms?.map((vt: any) => vt.terms.name).join(' / ') || '';
+      let loadedProducts: Product[] = [];
+      if (variationIds.length > 0) {
+        const { data: variationsData } = await supabase
+          .from('variations')
+          .select('id, sku, product_id')
+          .in('id', variationIds);
+
+        const productIds = Array.from(new Set((variationsData || []).map((v: any) => v.product_id)));
+        const { data: productsData } = await supabase
+          .from('products')
+          .select('id, title')
+          .in('id', productIds.length ? productIds : [-1]);
+
+        const { data: vtData } = await supabase
+          .from('variation_terms')
+          .select('product_variation_id, term_id')
+          .in('product_variation_id', variationIds);
+
+        const termIds = Array.from(new Set((vtData || []).map((vt: any) => vt.term_id)));
+        const { data: termsData } = await supabase
+          .from('terms')
+          .select('id, name')
+          .in('id', termIds.length ? termIds : [-1]);
+
+        const productMap = new Map((productsData || []).map((p: any) => [p.id, p.title]));
+        const termsMap = new Map((termsData || []).map((t: any) => [t.id, t.name]));
+        const termsByVariation = new Map<number, string[]>();
+        (vtData || []).forEach((vt: any) => {
+          const name = termsMap.get(vt.term_id);
+          if (!name) return;
+          const arr = termsByVariation.get(vt.product_variation_id) || [];
+          arr.push(name);
+          termsByVariation.set(vt.product_variation_id, arr);
+        });
+
+        loadedProducts = (order.order_products || []).map((op: any) => {
+          const v = (variationsData || []).find((vv: any) => vv.id === op.product_variation_id);
+          const productTitle = v ? (productMap.get(v.product_id) || '') : '';
+          const termsNames = termsByVariation.get(op.product_variation_id)?.join(' / ') || '';
 
           return {
             variation_id: op.product_variation_id,
-            product_name: variation?.products?.title || '',
-            variation_name: termsNames || variation?.sku || '',
+            product_name: productTitle,
+            variation_name: termsNames || (v?.sku || ''),
             quantity: op.quantity,
             price: parseFloat(op.product_price),
             discount: parseFloat(op.product_discount),
           };
-        })
-      );
+        });
+      }
 
       setProducts(loadedProducts);
       setClientFound(true);
+      
+      console.log('Loaded products:', loadedProducts);
       
       console.log('Loaded products:', loadedProducts);
       
