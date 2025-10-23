@@ -415,7 +415,6 @@ const CreateSale = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Producto</TableHead>
-                    <TableHead>Variación</TableHead>
                     <TableHead className="w-24">Cantidad</TableHead>
                     <TableHead className="w-32">Precio</TableHead>
                     <TableHead className="w-32">Descuento</TableHead>
@@ -426,8 +425,7 @@ const CreateSale = () => {
                 <TableBody>
                   {products.map((product, index) => (
                     <TableRow key={index}>
-                      <TableCell>{product.product_name}</TableCell>
-                      <TableCell>{product.variation_name}</TableCell>
+                      <TableCell>{product.product_name} - {product.variation_name}</TableCell>
                       <TableCell>
                         <Input
                           type="number"
