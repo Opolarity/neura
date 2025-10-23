@@ -13,6 +13,8 @@ interface Note {
   message: string;
   created_at: string;
   user_id: string;
+  user_name?: string;
+  user_last_name?: string;
 }
 
 interface SaleSidebarProps {
@@ -94,12 +96,26 @@ export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusC
         const noteIds = orderNotes.map(on => on.note_id);
         const { data: notesData, error: notesError } = await supabase
           .from('notes')
-          .select('*')
+          .select(`
+            *,
+            profiles:user_id (
+              name,
+              last_name
+            )
+          `)
           .in('id', noteIds)
           .order('created_at', { ascending: true });
 
         if (notesError) throw notesError;
-        setNotes(notesData || []);
+        
+        // Transform data to include user info
+        const notesWithUserInfo = notesData?.map(note => ({
+          ...note,
+          user_name: note.profiles?.name,
+          user_last_name: note.profiles?.last_name
+        })) || [];
+        
+        setNotes(notesWithUserInfo);
       }
     } catch (error) {
       console.error('Error loading notes:', error);
@@ -215,9 +231,16 @@ export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusC
                 notes.map((note) => (
                   <div key={note.id} className="bg-muted p-3 rounded-lg space-y-1">
                     <p className="text-sm">{note.message}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(note.created_at)}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        {note.user_name && note.user_last_name 
+                          ? `${note.user_name} ${note.user_last_name}` 
+                          : 'Usuario desconocido'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(note.created_at)}
+                      </p>
+                    </div>
                   </div>
                 ))
               )}
