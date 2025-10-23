@@ -12,6 +12,7 @@ import Inventory from './pages/Inventory';
 import Sales from './pages/Sales';
 import SalesList from './pages/SalesList';
 import CreateSale from './pages/CreateSale';
+import ViewSale from './pages/ViewSale';
 import Invoices from './pages/Invoices';
 import POS from './pages/POS';
 import Settings from './pages/Settings';
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="sales/list" element={<SalesList />} />
               <Route path="sales/create" element={<CreateSale />} />
               <Route path="sales/edit/:id" element={<CreateSale />} />
+              <Route path="sales/:id" element={<ViewSale />} />
               <Route path="shipping" element={<Shipping />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="pos" element={<POS />} />

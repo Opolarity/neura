@@ -389,3 +389,110 @@ export const useCreateSaleLogic = () => {
     navigate,
   };
 };
+
+export const useViewSale = (orderId?: string) => {
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState<any>({});
+  const [products, setProducts] = useState<any[]>([]);
+  const [documentTypes, setDocumentTypes] = useState<any[]>([]);
+  const [saleTypes, setSaleTypes] = useState<any[]>([]);
+  const [shippingMethods, setShippingMethods] = useState<any[]>([]);
+  const [countries, setCountries] = useState<any[]>([]);
+  const [states, setStates] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
+  const [neighborhoods, setNeighborhoods] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (orderId) {
+      loadOrderData();
+    }
+  }, [orderId]);
+
+  const loadOrderData = async () => {
+    try {
+      setLoading(true);
+
+      // Load form data
+      const { data: formDataResponse, error: formError } = await supabase.functions.invoke('get-sales-form-data');
+      if (formError) throw formError;
+
+      setDocumentTypes(formDataResponse.documentTypes || []);
+      setSaleTypes(formDataResponse.saleTypes || []);
+      setShippingMethods(formDataResponse.shippingMethods || []);
+      setCountries(formDataResponse.countries || []);
+      setStates(formDataResponse.states || []);
+      setCities(formDataResponse.cities || []);
+      setNeighborhoods(formDataResponse.neighborhoods || []);
+
+      // Load order data
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .select('*, order_products(*)')
+        .eq('id', parseInt(orderId!))
+        .single();
+
+      if (orderError) throw orderError;
+
+      setFormData({
+        documentType: order.document_type,
+        documentNumber: order.document_number,
+        customerName: order.customer_name,
+        customerLastname: order.customer_lastname,
+        email: order.email,
+        phone: order.phone,
+        saleType: order.sale_type,
+        shippingMethod: order.shipping_method,
+        countryId: order.country_id,
+        stateId: order.state_id,
+        cityId: order.city_id,
+        neighborhoodId: order.neighborhood_id,
+        address: order.address,
+        addressReference: order.address_reference,
+        receptionPerson: order.reception_person,
+        receptionPhone: order.reception_phone,
+        subtotal: order.subtotal,
+        discount: order.discount,
+        total: order.total,
+      });
+
+      // Load products with details
+      const loadedProducts = await Promise.all(
+        order.order_products.map(async (op: any) => {
+          const { data: variation } = await supabase
+            .from('variations')
+            .select('*, products(title), variation_terms(terms(name))')
+            .eq('id', op.product_variation_id)
+            .single();
+
+          const termsNames = variation?.variation_terms?.map((vt: any) => vt.terms.name).join(' / ') || '';
+
+          return {
+            name: `${variation?.products?.title || ''} ${termsNames ? '- ' + termsNames : ''}`,
+            quantity: op.quantity,
+            price: parseFloat(op.product_price),
+            discount: parseFloat(op.product_discount),
+          };
+        })
+      );
+
+      setProducts(loadedProducts);
+    } catch (error) {
+      console.error('Error loading order:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    loading,
+    formData,
+    products,
+    documentTypes,
+    saleTypes,
+    shippingMethods,
+    countries,
+    states,
+    cities,
+    neighborhoods,
+  };
+};
