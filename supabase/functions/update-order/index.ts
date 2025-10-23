@@ -71,6 +71,15 @@ Deno.serve(async (req) => {
 
     console.log('Order updated:', order.id);
 
+    // Get user's warehouse_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('warehouse_id')
+      .eq('UID', user.id)
+      .single();
+
+    const warehouseId = profile?.warehouse_id || 1; // Default to 1 if not found
+
     // Delete existing order products
     const { error: deleteProductsError } = await supabase
       .from('order_products')
@@ -89,6 +98,7 @@ Deno.serve(async (req) => {
       quantity: product.quantity,
       product_price: product.price,
       product_discount: product.discount || 0,
+      warehouses_id: warehouseId,
     }));
 
     const { error: productsError } = await supabase

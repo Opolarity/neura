@@ -356,6 +356,15 @@ export const useCreateSaleLogic = () => {
       return;
     }
 
+    if (!orderStatus) {
+      toast({
+        title: 'Error',
+        description: 'Seleccione un estado para el pedido',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {
