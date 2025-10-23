@@ -29,6 +29,7 @@ const CreateSale = () => {
     searchingClient,
     orderId,
     orderStatus,
+    availableShippingCosts,
     setOrderStatus,
     handleInputChange,
     setSearchQuery,
@@ -329,6 +330,39 @@ const CreateSale = () => {
                     className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </div>
+                <div>
+                  <Label>Método de Envío</Label>
+                  {availableShippingCosts.length > 0 ? (
+                    <Select value={formData.shipping_method} onValueChange={(v) => handleInputChange('shipping_method', v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione método de envío" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableShippingCosts.map((sc) => (
+                          <SelectItem key={sc.id} value={sc.id.toString()}>
+                            {sc.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="text-sm text-muted-foreground p-2 border rounded">
+                      Aún no hay método de envío para esta zona
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Label>Costo de Envío</Label>
+                  <Input
+                    type="number"
+                    value={formData.shipping_cost}
+                    onChange={(e) => handleInputChange('shipping_cost', e.target.value)}
+                    placeholder="0.00"
+                    step="0.01"
+                    disabled={!formData.shipping_method}
+                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                </div>
               </CardContent>
             </Card>
           </>
@@ -480,6 +514,12 @@ const CreateSale = () => {
                   <span>Descuento:</span>
                   <span className="font-semibold">-${calculateDiscount().toFixed(2)}</span>
                 </div>
+                {formData.with_shipping && formData.shipping_cost && (
+                  <div className="flex justify-between">
+                    <span>Envío:</span>
+                    <span className="font-semibold">${parseFloat(formData.shipping_cost).toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total:</span>
                   <span>${calculateTotal().toFixed(2)}</span>

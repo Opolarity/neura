@@ -13,6 +13,7 @@ interface FormData {
   phone: string;
   sale_type: string;
   shipping_method: string;
+  shipping_cost: string;
   country_id: string;
   state_id: string;
   city_id: string;
@@ -62,6 +63,7 @@ export const useCreateSaleLogic = () => {
     phone: '',
     sale_type: '',
     shipping_method: '',
+    shipping_cost: '',
     country_id: '',
     state_id: '',
     city_id: '',
@@ -83,6 +85,7 @@ export const useCreateSaleLogic = () => {
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [searchingClient, setSearchingClient] = useState(false);
   const [orderStatus, setOrderStatus] = useState<string>('');
+  const [availableShippingCosts, setAvailableShippingCosts] = useState<any[]>([]);
 
   useEffect(() => {
     loadFormData();
@@ -93,6 +96,12 @@ export const useCreateSaleLogic = () => {
       loadOrderData(parseInt(orderId));
     }
   }, [orderId, salesData]);
+
+  useEffect(() => {
+    if (formData.with_shipping && (formData.country_id || formData.state_id || formData.city_id || formData.neighborhood_id)) {
+      loadShippingCosts();
+    }
+  }, [formData.country_id, formData.state_id, formData.city_id, formData.neighborhood_id, formData.with_shipping]);
 
   const loadFormData = async () => {
     try {
@@ -133,6 +142,7 @@ export const useCreateSaleLogic = () => {
         phone: order.phone?.toString() || '',
         sale_type: order.sale_type?.toString() || '',
         shipping_method: order.shipping_method?.toString() || '',
+        shipping_cost: '',
         country_id: order.country_id?.toString() || '',
         state_id: order.state_id?.toString() || '',
         city_id: order.city_id?.toString() || '',
@@ -244,8 +254,40 @@ export const useCreateSaleLogic = () => {
     }
   };
 
+  const loadShippingCosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('shipping_costs')
+        .select('*')
+        .or(
+          [
+            formData.neighborhood_id && `neighborhood_id.eq.${formData.neighborhood_id}`,
+            formData.city_id && `city_id.eq.${formData.city_id}`,
+            formData.state_id && `state_id.eq.${formData.state_id}`,
+            formData.country_id && `country_id.eq.${formData.country_id}`,
+          ]
+            .filter(Boolean)
+            .join(',')
+        );
+
+      if (error) throw error;
+      setAvailableShippingCosts(data || []);
+    } catch (error) {
+      console.error('Error loading shipping costs:', error);
+      setAvailableShippingCosts([]);
+    }
+  };
+
   const handleInputChange = (field: keyof FormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    
+    // When shipping method changes, update the cost
+    if (field === 'shipping_method' && value) {
+      const selectedCost = availableShippingCosts.find(sc => sc.id.toString() === value);
+      if (selectedCost) {
+        setFormData((prev) => ({ ...prev, shipping_cost: selectedCost.cost.toString() }));
+      }
+    }
   };
 
   const searchClient = async () => {
@@ -341,7 +383,9 @@ export const useCreateSaleLogic = () => {
   };
 
   const calculateTotal = () => {
-    return calculateSubtotal() - calculateDiscount();
+    const productTotal = calculateSubtotal() - calculateDiscount();
+    const shippingCost = formData.shipping_cost ? parseFloat(formData.shipping_cost) : 0;
+    return productTotal + shippingCost;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -476,6 +520,7 @@ export const useCreateSaleLogic = () => {
     searchingClient,
     orderId,
     orderStatus,
+    availableShippingCosts,
     setOrderStatus,
     handleInputChange,
     setSearchQuery,
