@@ -258,22 +258,42 @@ export const useCreateSaleLogic = () => {
 
   const loadShippingCosts = async () => {
     try {
+      // Fetch all shipping costs and filter them client-side for exact hierarchical matching
       const { data, error } = await supabase
         .from('shipping_costs')
-        .select('*')
-        .or(
-          [
-            formData.neighborhood_id && `neighborhood_id.eq.${formData.neighborhood_id}`,
-            formData.city_id && `city_id.eq.${formData.city_id}`,
-            formData.state_id && `state_id.eq.${formData.state_id}`,
-            formData.country_id && `country_id.eq.${formData.country_id}`,
-          ]
-            .filter(Boolean)
-            .join(',')
-        );
+        .select('*');
 
       if (error) throw error;
-      setAvailableShippingCosts(data || []);
+
+      // Filter shipping costs that match the selected location hierarchically
+      const filtered = (data || []).filter((cost: any) => {
+        // Match by neighborhood (most specific)
+        if (cost.neighborhood_id) {
+          return cost.neighborhood_id === formData.neighborhood_id &&
+                 cost.city_id === formData.city_id &&
+                 cost.state_id === formData.state_id &&
+                 cost.country_id === formData.country_id;
+        }
+        // Match by city (no neighborhood specified in shipping cost)
+        if (cost.city_id) {
+          return cost.city_id === formData.city_id &&
+                 cost.state_id === formData.state_id &&
+                 cost.country_id === formData.country_id;
+        }
+        // Match by state (no city or neighborhood specified)
+        if (cost.state_id) {
+          return cost.state_id === formData.state_id &&
+                 cost.country_id === formData.country_id;
+        }
+        // Match by country only
+        if (cost.country_id) {
+          return cost.country_id === formData.country_id;
+        }
+        // Global shipping (no location specified)
+        return false;
+      });
+
+      setAvailableShippingCosts(filtered);
     } catch (error) {
       console.error('Error loading shipping costs:', error);
       setAvailableShippingCosts([]);
