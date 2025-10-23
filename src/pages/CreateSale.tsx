@@ -524,14 +524,14 @@ const CreateSale = () => {
           </Button>
           <Button type="submit" disabled={saving}>
             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Crear Venta
+            {orderId ? 'Actualizar Venta' : 'Crear Venta'}
           </Button>
         </div>
       </form>
 
       {/* Sidebar - Fixed */}
       <aside className="flex-shrink-0 sticky top-6" style={{ width: '25%', height: 'calc(100vh - 8rem)' }}>
-        <SaleSidebar />
+        <SaleSidebar orderId={orderId ? parseInt(orderId) : undefined} />
       </aside>
     </div>
     </div>

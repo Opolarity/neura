@@ -334,23 +334,35 @@ export const useCreateSaleLogic = () => {
           : null,
       };
 
-      const { error } = await supabase.functions.invoke('create-order', {
-        body: orderData,
-      });
+      let error;
+      
+      if (orderId) {
+        // Update existing order
+        const response = await supabase.functions.invoke('update-order', {
+          body: { orderId: parseInt(orderId), ...orderData },
+        });
+        error = response.error;
+      } else {
+        // Create new order
+        const response = await supabase.functions.invoke('create-order', {
+          body: orderData,
+        });
+        error = response.error;
+      }
 
       if (error) throw error;
 
       toast({
         title: 'Éxito',
-        description: 'Venta creada correctamente',
+        description: orderId ? 'Venta actualizada correctamente' : 'Venta creada correctamente',
       });
 
-      navigate('/sales');
+      navigate('/sales/list');
     } catch (error) {
-      console.error('Error creating sale:', error);
+      console.error('Error saving sale:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo crear la venta',
+        description: orderId ? 'No se pudo actualizar la venta' : 'No se pudo crear la venta',
         variant: 'destructive',
       });
     } finally {
