@@ -98,8 +98,10 @@ export const useCreateSaleLogic = () => {
   }, [orderId, salesData]);
 
   useEffect(() => {
-    if (formData.with_shipping && (formData.country_id || formData.state_id || formData.city_id || formData.neighborhood_id)) {
+    if (formData.with_shipping && formData.country_id && formData.state_id && formData.city_id && formData.neighborhood_id) {
       loadShippingCosts();
+    } else {
+      setAvailableShippingCosts([]);
     }
   }, [formData.country_id, formData.state_id, formData.city_id, formData.neighborhood_id, formData.with_shipping]);
 

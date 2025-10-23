@@ -330,39 +330,43 @@ const CreateSale = () => {
                     className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </div>
-                <div>
-                  <Label>Método de Envío</Label>
-                  {availableShippingCosts.length > 0 ? (
-                    <Select value={formData.shipping_method} onValueChange={(v) => handleInputChange('shipping_method', v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione método de envío" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableShippingCosts.map((sc) => (
-                          <SelectItem key={sc.id} value={sc.id.toString()}>
-                            {sc.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="text-sm text-muted-foreground p-2 border rounded">
-                      Aún no hay método de envío para esta zona
+                {formData.country_id && formData.state_id && formData.city_id && formData.neighborhood_id && (
+                  <>
+                    <div>
+                      <Label>Método de Envío</Label>
+                      {availableShippingCosts.length > 0 ? (
+                        <Select value={formData.shipping_method} onValueChange={(v) => handleInputChange('shipping_method', v)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccione método de envío" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableShippingCosts.map((sc) => (
+                              <SelectItem key={sc.id} value={sc.id.toString()}>
+                                {sc.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="text-sm text-muted-foreground p-2 border rounded">
+                          Aún no hay método de envío para esta zona
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div>
-                  <Label>Costo de Envío</Label>
-                  <Input
-                    type="number"
-                    value={formData.shipping_cost}
-                    onChange={(e) => handleInputChange('shipping_cost', e.target.value)}
-                    placeholder="0.00"
-                    step="0.01"
-                    disabled={!formData.shipping_method}
-                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                </div>
+                    <div>
+                      <Label>Costo de Envío</Label>
+                      <Input
+                        type="number"
+                        value={formData.shipping_cost}
+                        onChange={(e) => handleInputChange('shipping_cost', e.target.value)}
+                        placeholder="0.00"
+                        step="0.01"
+                        disabled={!formData.shipping_method}
+                        className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </>
