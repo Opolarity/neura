@@ -258,6 +258,12 @@ export const useCreateSaleLogic = () => {
 
   const loadShippingCosts = async () => {
     try {
+      // Convert formData location IDs to numbers for comparison
+      const selectedCountry = formData.country_id ? Number(formData.country_id) : null;
+      const selectedState = formData.state_id ? Number(formData.state_id) : null;
+      const selectedCity = formData.city_id ? Number(formData.city_id) : null;
+      const selectedNeighborhood = formData.neighborhood_id ? Number(formData.neighborhood_id) : null;
+
       // Fetch all shipping costs and filter them client-side for exact hierarchical matching
       const { data, error } = await supabase
         .from('shipping_costs')
@@ -269,25 +275,25 @@ export const useCreateSaleLogic = () => {
       const filtered = (data || []).filter((cost: any) => {
         // Match by neighborhood (most specific)
         if (cost.neighborhood_id) {
-          return cost.neighborhood_id === formData.neighborhood_id &&
-                 cost.city_id === formData.city_id &&
-                 cost.state_id === formData.state_id &&
-                 cost.country_id === formData.country_id;
+          return cost.neighborhood_id === selectedNeighborhood &&
+                 cost.city_id === selectedCity &&
+                 cost.state_id === selectedState &&
+                 cost.country_id === selectedCountry;
         }
         // Match by city (no neighborhood specified in shipping cost)
         if (cost.city_id) {
-          return cost.city_id === formData.city_id &&
-                 cost.state_id === formData.state_id &&
-                 cost.country_id === formData.country_id;
+          return cost.city_id === selectedCity &&
+                 cost.state_id === selectedState &&
+                 cost.country_id === selectedCountry;
         }
         // Match by state (no city or neighborhood specified)
         if (cost.state_id) {
-          return cost.state_id === formData.state_id &&
-                 cost.country_id === formData.country_id;
+          return cost.state_id === selectedState &&
+                 cost.country_id === selectedCountry;
         }
         // Match by country only
         if (cost.country_id) {
-          return cost.country_id === formData.country_id;
+          return cost.country_id === selectedCountry;
         }
         // Global shipping (no location specified)
         return false;
