@@ -105,7 +105,7 @@ const CreateSale = () => {
       </div>
 
       <div className="flex gap-6 items-start">
-        <form id="sale-form" onSubmit={handleSubmit} className="flex-1 space-y-6" style={{ width: '75%' }}>
+        <form id="sale-form" onSubmit={handleSubmit} className="flex-1 space-y-6" style={{ width: '70%' }}>
 
         {/* Sale Information */}
         <Card>
@@ -533,7 +533,7 @@ const CreateSale = () => {
       </form>
 
       {/* Sidebar - Fixed */}
-      <aside className="flex-shrink-0 sticky top-6" style={{ width: '25%', height: 'calc(100vh - 8rem)' }}>
+      <aside className="flex-shrink-0 sticky top-6" style={{ width: '30%', height: 'calc(100vh - 8rem)' }}>
         <SaleSidebar 
           orderId={orderId ? parseInt(orderId) : undefined} 
           selectedStatus={orderStatus}
