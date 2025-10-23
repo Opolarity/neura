@@ -170,6 +170,22 @@ export const useCreateSaleLogic = () => {
       setProducts(loadedProducts);
       setClientFound(true);
       
+      console.log('Loaded products:', loadedProducts);
+      
+      // Load payment information
+      const { data: paymentData } = await supabase
+        .from('order_payment')
+        .select('*')
+        .eq('order_id', id)
+        .maybeSingle();
+      
+      if (paymentData) {
+        setPaymentMethod(paymentData.payment_method_id?.toString() || '');
+        setPaymentAmount(paymentData.amount?.toString() || '');
+        setConfirmationCode(paymentData.gateway_confirmation_code || '');
+        console.log('Loaded payment:', paymentData);
+      }
+      
       // Load order status
       const { data: statusData } = await supabase
         .from('order_status')
