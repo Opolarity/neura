@@ -1362,18 +1362,21 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          product_cost: number | null
           product_id: number
           sku: string | null
         }
         Insert: {
           created_at?: string
           id?: number
+          product_cost?: number | null
           product_id: number
           sku?: string | null
         }
         Update: {
           created_at?: string
           id?: number
+          product_cost?: number | null
           product_id?: number
           sku?: string | null
         }
