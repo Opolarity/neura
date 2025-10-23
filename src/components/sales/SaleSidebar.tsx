@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send } from 'lucide-react';
+import { Send, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,6 +15,7 @@ interface Note {
   user_id: string;
   user_name?: string;
   user_last_name?: string;
+  image_url?: string;
 }
 
 interface SaleSidebarProps {
@@ -30,6 +31,9 @@ export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusC
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState('');
   const [loadingNotes, setLoadingNotes] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadStatuses();
@@ -131,8 +135,54 @@ export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusC
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: 'Archivo no válido',
+          description: 'Solo se permiten imágenes (JPG, PNG, GIF, WEBP) y archivos PDF',
+          variant: 'destructive',
+        });
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadFile = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `notes/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('products')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      return null;
+    }
+  };
+
   const handleSendNote = async () => {
-    if (!newNote.trim()) return;
+    if (!newNote.trim() && !selectedFile) return;
 
     if (!orderId) {
       toast({
@@ -142,12 +192,24 @@ export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusC
       return;
     }
 
+    setUploading(true);
     try {
+      let imageUrl: string | null = null;
+
+      // Upload file if selected
+      if (selectedFile) {
+        imageUrl = await uploadFile(selectedFile);
+        if (!imageUrl) {
+          throw new Error('Failed to upload file');
+        }
+      }
+
       // Insert note
       const { data: noteData, error: noteError } = await supabase
         .from('notes')
         .insert({
-          message: newNote,
+          message: newNote.trim() || 'Archivo adjunto',
+          image_url: imageUrl,
         })
         .select()
         .single();
@@ -165,6 +227,10 @@ export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusC
       if (orderNoteError) throw orderNoteError;
 
       setNewNote('');
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       loadNotes();
       
       toast({
@@ -178,6 +244,8 @@ export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusC
         description: 'No se pudo guardar la nota',
         variant: 'destructive',
       });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -229,8 +297,32 @@ export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusC
                 <p className="text-sm text-muted-foreground text-center">No hay notas</p>
               ) : (
                 notes.map((note) => (
-                  <div key={note.id} className="bg-muted p-3 rounded-lg space-y-1">
-                    <p className="text-sm">{note.message}</p>
+                  <div key={note.id} className="bg-muted p-3 rounded-lg space-y-2">
+                    {note.message && <p className="text-sm">{note.message}</p>}
+                    {note.image_url && (
+                      <div className="mt-2">
+                        {note.image_url.endsWith('.pdf') ? (
+                          <a
+                            href={note.image_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm text-primary hover:underline"
+                          >
+                            <FileText className="w-4 h-4" />
+                            Ver PDF
+                          </a>
+                        ) : (
+                          <a href={note.image_url} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={note.image_url}
+                              alt="Adjunto"
+                              className="max-w-full h-auto rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                              style={{ maxHeight: '200px' }}
+                            />
+                          </a>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
                         {note.user_name && note.user_last_name 
@@ -247,21 +339,63 @@ export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusC
             </div>
           </ScrollArea>
           
-          <div className="flex gap-2">
-            <Input
-              placeholder="Escribir una nota..."
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendNote();
-                }
-              }}
-            />
-            <Button size="icon" onClick={handleSendNote} disabled={!newNote.trim()}>
-              <Send className="w-4 h-4" />
-            </Button>
+          <div className="space-y-2">
+            {selectedFile && (
+              <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                {selectedFile.type.startsWith('image/') ? (
+                  <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                )}
+                <span className="text-sm flex-1 truncate">{selectedFile.name}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={removeSelectedFile}
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,application/pdf"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <Paperclip className="w-4 h-4" />
+              </Button>
+              <Input
+                placeholder="Escribir una nota..."
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendNote();
+                  }
+                }}
+                disabled={uploading}
+              />
+              <Button
+                size="icon"
+                onClick={handleSendNote}
+                disabled={(!newNote.trim() && !selectedFile) || uploading}
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
