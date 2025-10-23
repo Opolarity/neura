@@ -28,6 +28,8 @@ const CreateSale = () => {
     clientFound,
     searchingClient,
     orderId,
+    orderStatus,
+    setOrderStatus,
     handleInputChange,
     setSearchQuery,
     setSelectedVariation,
@@ -84,15 +86,26 @@ const CreateSale = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/sales')}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="text-3xl font-bold">{orderId ? 'Editar Venta' : 'Crear Venta'}</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/sales')}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-3xl font-bold">{orderId ? 'Editar Venta' : 'Crear Venta'}</h1>
+        </div>
+        <div className="flex gap-4">
+          <Button type="button" variant="outline" onClick={() => navigate('/sales')}>
+            Cancelar
+          </Button>
+          <Button type="submit" form="sale-form" disabled={saving}>
+            {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {orderId ? 'Actualizar Venta' : 'Crear Venta'}
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-6 items-start">
-        <form onSubmit={handleSubmit} className="flex-1 space-y-6" style={{ width: '75%' }}>
+        <form id="sale-form" onSubmit={handleSubmit} className="flex-1 space-y-6" style={{ width: '75%' }}>
 
         {/* Sale Information */}
         <Card>
@@ -517,21 +530,15 @@ const CreateSale = () => {
             </div>
           </CardContent>
         </Card>
-
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={() => navigate('/sales')}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={saving}>
-            {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {orderId ? 'Actualizar Venta' : 'Crear Venta'}
-          </Button>
-        </div>
       </form>
 
       {/* Sidebar - Fixed */}
       <aside className="flex-shrink-0 sticky top-6" style={{ width: '25%', height: 'calc(100vh - 8rem)' }}>
-        <SaleSidebar orderId={orderId ? parseInt(orderId) : undefined} />
+        <SaleSidebar 
+          orderId={orderId ? parseInt(orderId) : undefined} 
+          selectedStatus={orderStatus}
+          onStatusChange={setOrderStatus}
+        />
       </aside>
     </div>
     </div>

@@ -17,12 +17,14 @@ interface Note {
 
 interface SaleSidebarProps {
   orderId?: number;
+  selectedStatus?: string;
+  onStatusChange?: (statusId: string) => void;
 }
 
-export const SaleSidebar = ({ orderId }: SaleSidebarProps) => {
+export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusChange }: SaleSidebarProps) => {
   const { toast } = useToast();
   const [statuses, setStatuses] = useState<any[]>([]);
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>(externalStatus || '');
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState('');
   const [loadingNotes, setLoadingNotes] = useState(false);
@@ -34,6 +36,12 @@ export const SaleSidebar = ({ orderId }: SaleSidebarProps) => {
       loadNotes();
     }
   }, [orderId]);
+
+  useEffect(() => {
+    if (externalStatus) {
+      setSelectedStatus(externalStatus);
+    }
+  }, [externalStatus]);
 
   const loadStatuses = async () => {
     try {
@@ -100,34 +108,10 @@ export const SaleSidebar = ({ orderId }: SaleSidebarProps) => {
     }
   };
 
-  const handleStatusChange = async (statusId: string) => {
-    if (!orderId) {
-      setSelectedStatus(statusId);
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('order_status')
-        .insert({
-          order_id: orderId,
-          status_id: parseInt(statusId),
-        });
-
-      if (error) throw error;
-
-      setSelectedStatus(statusId);
-      toast({
-        title: 'Estado actualizado',
-        description: 'El estado del pedido se ha actualizado correctamente',
-      });
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo actualizar el estado',
-        variant: 'destructive',
-      });
+  const handleStatusChange = (statusId: string) => {
+    setSelectedStatus(statusId);
+    if (onStatusChange) {
+      onStatusChange(statusId);
     }
   };
 

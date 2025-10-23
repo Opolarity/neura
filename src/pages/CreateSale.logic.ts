@@ -82,6 +82,7 @@ export const useCreateSaleLogic = () => {
   const [confirmationCode, setConfirmationCode] = useState<string>('');
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [searchingClient, setSearchingClient] = useState(false);
+  const [orderStatus, setOrderStatus] = useState<string>('');
 
   useEffect(() => {
     loadFormData();
@@ -168,6 +169,19 @@ export const useCreateSaleLogic = () => {
 
       setProducts(loadedProducts);
       setClientFound(true);
+      
+      // Load order status
+      const { data: statusData } = await supabase
+        .from('order_status')
+        .select('status_id')
+        .eq('order_id', id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (statusData) {
+        setOrderStatus(statusData.status_id.toString());
+      }
     } catch (error) {
       console.error('Error loading order:', error);
       toast({
@@ -335,6 +349,7 @@ export const useCreateSaleLogic = () => {
       };
 
       let error;
+      let createdOrderId = orderId ? parseInt(orderId) : null;
       
       if (orderId) {
         // Update existing order
@@ -348,9 +363,26 @@ export const useCreateSaleLogic = () => {
           body: orderData,
         });
         error = response.error;
+        if (response.data?.order?.id) {
+          createdOrderId = response.data.order.id;
+        }
       }
 
       if (error) throw error;
+
+      // Save order status if selected
+      if (orderStatus && createdOrderId) {
+        const { error: statusError } = await supabase
+          .from('order_status')
+          .insert({
+            order_id: createdOrderId,
+            status_id: parseInt(orderStatus),
+          });
+
+        if (statusError) {
+          console.error('Error saving order status:', statusError);
+        }
+      }
 
       toast({
         title: 'Éxito',
@@ -384,6 +416,8 @@ export const useCreateSaleLogic = () => {
     clientFound,
     searchingClient,
     orderId,
+    orderStatus,
+    setOrderStatus,
     handleInputChange,
     setSearchQuery,
     setSelectedVariation,
