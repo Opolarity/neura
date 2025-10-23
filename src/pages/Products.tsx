@@ -143,7 +143,7 @@ const Products = () => {
                           ? product.categories.join(', ')
                           : 'Sin categoría'}
                       </TableCell>
-                      <TableCell>${price}</TableCell>
+                      <TableCell>S/ {price}</TableCell>
                       <TableCell>{stock}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${status.class}`}>

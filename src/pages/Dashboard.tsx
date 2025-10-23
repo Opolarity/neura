@@ -13,7 +13,7 @@ const Dashboard = () => {
   const stats = [
     {
       title: 'Ventas del Mes',
-      value: '$45,230',
+      value: 'S/ 45,230',
       change: '+12.5%',
       trend: 'up',
       icon: DollarSign,
@@ -91,9 +91,9 @@ const Dashboard = () => {
           <CardContent>
             <div className="space-y-4">
               {[
-                { id: '#001', customer: 'María García', amount: '$125.00', time: '2 min ago' },
-                { id: '#002', customer: 'Carlos López', amount: '$89.50', time: '15 min ago' },
-                { id: '#003', customer: 'Ana Martínez', amount: '$234.00', time: '1 hora ago' },
+                { id: '#001', customer: 'María García', amount: 'S/ 125.00', time: '2 min ago' },
+                { id: '#002', customer: 'Carlos López', amount: 'S/ 89.50', time: '15 min ago' },
+                { id: '#003', customer: 'Ana Martínez', amount: 'S/ 234.00', time: '1 hora ago' },
               ].map((sale) => (
                 <div key={sale.id} className="flex items-center justify-between py-2">
                   <div>

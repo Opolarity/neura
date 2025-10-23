@@ -496,7 +496,7 @@ const CreateSale = () => {
                           onWheel={(e) => e.currentTarget.blur()}
                         />
                       </TableCell>
-                      <TableCell>${(product.quantity * (product.price - product.discount)).toFixed(2)}</TableCell>
+                      <TableCell>S/ {(product.quantity * (product.price - product.discount)).toFixed(2)}</TableCell>
                       <TableCell>
                         <Button type="button" variant="ghost" size="icon" onClick={() => removeProduct(index)}>
                           <Trash2 className="w-4 h-4" />
@@ -512,21 +512,21 @@ const CreateSale = () => {
               <div className="w-64 space-y-2">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span className="font-semibold">${calculateSubtotal().toFixed(2)}</span>
+                  <span className="font-semibold">S/ {calculateSubtotal().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Descuento:</span>
-                  <span className="font-semibold">-${calculateDiscount().toFixed(2)}</span>
+                  <span className="font-semibold">-S/ {calculateDiscount().toFixed(2)}</span>
                 </div>
                 {formData.with_shipping && formData.shipping_cost && (
                   <div className="flex justify-between">
                     <span>Envío:</span>
-                    <span className="font-semibold">${parseFloat(formData.shipping_cost).toFixed(2)}</span>
+                    <span className="font-semibold">S/ {parseFloat(formData.shipping_cost).toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total:</span>
-                  <span>${calculateTotal().toFixed(2)}</span>
+                  <span>S/ {calculateTotal().toFixed(2)}</span>
                 </div>
               </div>
             </div>
