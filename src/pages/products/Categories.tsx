@@ -19,9 +19,13 @@ const Categories = () => {
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>('');
     const [saving, setSaving] = useState(false);
+    const [productCounts, setProductCounts] = useState<Record<number, number>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => { fetchCategories(); }, []);
+    useEffect(() => { 
+        fetchCategories();
+        fetchProductCounts();
+    }, []);
 
     const fetchCategories = async () => {
         try{
@@ -33,6 +37,23 @@ const Categories = () => {
             toast.error('Error al cargar categorías: ' + error.message);
         } finally {
             setLoading(false);
+        }
+    }
+
+    const fetchProductCounts = async () => {
+        try {
+            const { data, error } = await supabase.functions.invoke('get-categories-product-count');
+            
+            if (error) throw error;
+
+            const countsMap: Record<number, number> = {};
+            data.forEach((item: { category_id: number; product_count: number }) => {
+                countsMap[item.category_id] = item.product_count;
+            });
+            
+            setProductCounts(countsMap);
+        } catch (error: any) {
+            console.error('Error al cargar conteo de productos:', error);
         }
     }
 
@@ -108,6 +129,7 @@ const Categories = () => {
             setSelectedImage(null);
             setImagePreview('');
             fetchCategories();
+            fetchProductCounts();
         } catch (error: any) {
             toast.error('Error al crear categoría: ' + error.message);
         } finally {
@@ -159,7 +181,7 @@ const Categories = () => {
                         </TableCell>
                         <TableCell>{category.name}</TableCell>
                         <TableCell>{category.description || '-'}</TableCell>
-                        <TableCell>-</TableCell>
+                        <TableCell>{productCounts[category.id] || 0}</TableCell>
                     </TableRow>
                 ))}
             </TableBody>
