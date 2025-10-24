@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import productPlaceholder from "@/assets/product-placeholder.png";
 
 const Categories = () => {
     const [categories, setCategories] = useState<any[]>([]);
@@ -147,11 +148,18 @@ const Categories = () => {
                             No hay categorias registradas.
                         </TableCell>
                     </TableRow>
-                ) : categories.map((categories) => (
-                    <TableRow key={categories.id}>
-                        <TableCell>{categories.name}</TableCell>
-                        <TableCell>{categories.name}</TableCell>
-                        <TableCell>{categories.description}</TableCell>
+                ) : categories.map((category) => (
+                    <TableRow key={category.id}>
+                        <TableCell>
+                            <img 
+                                src={category.image_url || productPlaceholder} 
+                                alt={category.name}
+                                className="w-16 h-16 object-cover rounded-md"
+                            />
+                        </TableCell>
+                        <TableCell>{category.name}</TableCell>
+                        <TableCell>{category.description || '-'}</TableCell>
+                        <TableCell>-</TableCell>
                     </TableRow>
                 ))}
             </TableBody>
