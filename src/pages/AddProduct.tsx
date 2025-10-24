@@ -56,17 +56,28 @@ const AddProduct = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="sm" onClick={() => navigate('/products')}>
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {isEditMode ? 'Editar Producto' : 'Añadir Producto'}
-          </h1>
-          <p className="text-gray-600">
-            {isEditMode ? 'Actualizar la información del producto' : 'Crear un nuevo producto en el catálogo'}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" onClick={() => navigate('/products')}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isEditMode ? 'Editar Producto' : 'Añadir Producto'}
+            </h1>
+            <p className="text-gray-600">
+              {isEditMode ? 'Actualizar la información del producto' : 'Crear un nuevo producto en el catálogo'}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => navigate('/products')}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            <Save className="w-4 h-4 mr-2" />
+            {loading ? 'Guardando...' : (isEditMode ? 'Actualizar Producto' : 'Guardar Producto')}
+          </Button>
         </div>
       </div>
 
@@ -424,16 +435,6 @@ const AddProduct = () => {
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={() => navigate('/products')}>
-          Cancelar
-        </Button>
-        <Button onClick={handleSubmit} disabled={loading}>
-          <Save className="w-4 h-4 mr-2" />
-          {loading ? 'Guardando...' : (isEditMode ? 'Actualizar Producto' : 'Guardar Producto')}
-        </Button>
-      </div>
     </div>
   );
 };
