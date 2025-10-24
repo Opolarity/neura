@@ -34,15 +34,19 @@ serve(async (req) => {
     // Get product count for each category
     const categoryProductCounts = await Promise.all(
       categories.map(async (category) => {
-        const { count, error } = await supabase
+        console.log(`Counting products for category ${category.id}`);
+        
+        const { count, error, data } = await supabase
           .from('product_categories')
-          .select('*', { count: 'exact', head: true })
+          .select('*', { count: 'exact' })
           .eq('category_id', category.id);
 
         if (error) {
           console.error(`Error counting products for category ${category.id}:`, error);
           return { category_id: category.id, product_count: 0 };
         }
+
+        console.log(`Category ${category.id} has ${count} products. Data:`, data);
 
         return { category_id: category.id, product_count: count || 0 };
       })
