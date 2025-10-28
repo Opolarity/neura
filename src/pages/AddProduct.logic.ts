@@ -47,6 +47,7 @@ export const useAddProductLogic = () => {
   const [loading, setLoading] = useState(false);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
+  const [productDataLoaded, setProductDataLoaded] = useState(false);
 
   useEffect(() => {
     loadInitialData();
@@ -59,9 +60,10 @@ export const useAddProductLogic = () => {
   }, [productId, isEditMode, initialDataLoaded]);
 
   useEffect(() => {
-    // Don't regenerate variations when loading product data or in edit mode with existing variations
+    // Don't regenerate variations when loading product data
     if (isLoadingProduct) return;
-    if (isEditMode && variations.length > 0) return;
+    // Don't regenerate variations in edit mode after product data has been loaded
+    if (isEditMode && productDataLoaded) return;
     
     const groupsWithTerms = Object.keys(selectedTerms)
       .map(Number)
@@ -73,7 +75,7 @@ export const useAddProductLogic = () => {
 
     if (isVariable && groupsWithTerms.length > 0) {
       generateVariations();
-    } else if (!isVariable) {
+    } else if (!isVariable && priceLists.length > 0 && warehouses.length > 0) {
       const singleVariation: ProductVariation = {
         id: 'single',
         attributes: [],
@@ -83,7 +85,7 @@ export const useAddProductLogic = () => {
       };
       setVariations([singleVariation]);
     }
-  }, [isVariable, selectedTerms, priceLists, warehouses]);
+  }, [isVariable, selectedTerms, priceLists, warehouses, isEditMode, productDataLoaded]);
 
   const loadInitialData = async () => {
     try {
@@ -207,6 +209,8 @@ export const useAddProductLogic = () => {
         }
       }
 
+      setProductDataLoaded(true);
+
       toast({
         title: "Producto cargado",
         description: "Los datos del producto se han cargado correctamente"
@@ -222,9 +226,7 @@ export const useAddProductLogic = () => {
       navigate('/products');
     } finally {
       setLoading(false);
-      setTimeout(() => {
-        setIsLoadingProduct(false);
-      }, 100);
+      setIsLoadingProduct(false);
     }
   };
 
