@@ -24,7 +24,11 @@ const AddProduct = () => {
     setDescription,
     selectedCategories,
     isVariable,
+    isActive,
+    isWeb,
     setIsVariable,
+    setIsActive,
+    setIsWeb,
     productImages,
     variations,
     variationSkus,
@@ -130,6 +134,29 @@ const AddProduct = () => {
 
         {/* Right Column */}
         <div className="space-y-6">
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Ubicaciones</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                id="isActive"
+                checked={isActive}
+                onCheckedChange={setIsActive}
+                />
+                <Label htmlFor="isActive">Activo</Label>
+                <Switch
+                id="isWeb"
+                checked={isWeb}
+                onCheckedChange={setIsWeb}
+                />
+                <Label htmlFor="isWeb">Web</Label>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Images Section */}
           <Card>
             <CardHeader>

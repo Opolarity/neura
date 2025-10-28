@@ -41,6 +41,8 @@ interface CreateProductRequest {
   shortDescription: string;
   description: string;
   isVariable: boolean;
+  isActive: boolean;
+  isWeb: boolean;
   selectedCategories: number[];
   productImages: ProductImage[];
   variations: ProductVariation[];
@@ -72,6 +74,8 @@ serve(async (req) => {
       shortDescription,
       description,
       isVariable,
+      isActive,
+      isWeb,
       selectedCategories,
       productImages,
       variations
@@ -86,7 +90,9 @@ serve(async (req) => {
         title: productName,
         short_description: shortDescription,
         description: description,
-        is_variable: isVariable
+        is_variable: isVariable,
+        active: isActive,
+        web: isWeb
       })
       .select()
       .single();

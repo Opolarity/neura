@@ -43,6 +43,8 @@ interface UpdateProductRequest {
   shortDescription: string;
   description: string;
   isVariable: boolean;
+  isActive: boolean;
+  isWeb: boolean;
   originalIsVariable: boolean;
   selectedCategories: number[];
   productImages: ProductImage[];
@@ -76,6 +78,8 @@ serve(async (req) => {
       shortDescription,
       description,
       isVariable,
+      isActive,
+      isWeb,
       originalIsVariable,
       selectedCategories,
       productImages,
@@ -91,7 +95,9 @@ serve(async (req) => {
         title: productName,
         short_description: shortDescription,
         description: description,
-        is_variable: isVariable
+        is_variable: isVariable,
+        active: isActive,
+        web: isWeb
       })
       .eq('id', productId);
 

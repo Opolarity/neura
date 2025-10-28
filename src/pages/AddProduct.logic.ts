@@ -26,6 +26,8 @@ export const useAddProductLogic = () => {
   const [description, setDescription] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [isVariable, setIsVariable] = useState(false);
+  const [isActive, setIsActive] = useState(true);
+  const [isWeb, setIsWeb] = useState(false);
   const [originalIsVariable, setOriginalIsVariable] = useState(false);
   
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
@@ -118,6 +120,8 @@ export const useAddProductLogic = () => {
       setShortDescription(data.product.short_description || '');
       setDescription(data.product.description || '');
       setIsVariable(data.product.is_variable);
+      setIsActive(data.product.active);
+      setIsWeb(data.product.web);
       setOriginalIsVariable(data.product.is_variable);
 
       if (data.categories) {
@@ -126,7 +130,7 @@ export const useAddProductLogic = () => {
 
       if (data.images && data.images.length > 0) {
         const loadedImages: ProductImage[] = data.images.map((img: any, index: number) => {
-          const storagePath = img.image_url.includes('products/') 
+          const storagePath = img.image_url.includes('products/')
             ? img.image_url.split('products/')[1].split('?')[0]
             : img.image_url;
             
@@ -172,7 +176,7 @@ export const useAddProductLogic = () => {
           }
 
           const prices: VariationPrice[] = variation.prices?.map((p: any) => ({
-            price_list_id: p.proce_list_id,
+            price_list_id: p.price_list_id,
             price: Number(p.price),
             sale_price: p.sale_price
           })) || [];
@@ -577,6 +581,8 @@ export const useAddProductLogic = () => {
       shortDescription,
       description,
       isVariable,
+      isActive,
+      isWeb,
       selectedCategories,
       productImages: imageRefs,
       variations
@@ -620,6 +626,8 @@ export const useAddProductLogic = () => {
         shortDescription,
         description,
         isVariable,
+        isActive,
+        isWeb,
         originalIsVariable,
         selectedCategories,
         productImages: imageRefs,
@@ -664,7 +672,11 @@ export const useAddProductLogic = () => {
     setDescription,
     selectedCategories,
     isVariable,
+    isActive,
+    isWeb,
     setIsVariable,
+    setIsActive,
+    setIsWeb,
     productImages,
     variations,
     variationSkus,
