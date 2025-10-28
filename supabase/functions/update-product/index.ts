@@ -153,24 +153,16 @@ serve(async (req) => {
       console.log('Categories updated successfully');
     }
 
-    // 3. Handle variable type change - delete all existing variations
-    console.log('Fetching old variations...');
-    const { data: oldVariations } = await supabaseAdmin
+    // 3. Fetch existing variations with their terms
+    console.log('Fetching existing variations with terms...');
+    const { data: existingVariations } = await supabaseAdmin
       .from('variations')
-      .select('id')
+      .select(`
+        id,
+        sku,
+        variation_terms(term_id)
+      `)
       .eq('product_id', productId);
-
-    if (oldVariations && oldVariations.length > 0) {
-      console.log('Deleting old variation data...');
-      for (const variation of oldVariations) {
-        await supabaseAdmin.from('product_variation_images').delete().eq('product_variation_id', variation.id);
-        await supabaseAdmin.from('product_price').delete().eq('product_variation_id', variation.id);
-        await supabaseAdmin.from('product_stock').delete().eq('product_variation_id', variation.id);
-        await supabaseAdmin.from('variation_terms').delete().eq('product_variation_id', variation.id);
-      }
-      await supabaseAdmin.from('variations').delete().eq('product_id', productId);
-      console.log('Old variations deleted successfully');
-    }
 
     // 4. Update images (delete all and recreate with proper references)
     console.log('Deleting old product images...');
@@ -216,92 +208,128 @@ serve(async (req) => {
 
     console.log('Images updated:', productImages.length);
 
-    // 5. Create new variations
-    console.log('Creating new variations...');
-    for (const variation of variations) {
-      const { data: newVariation, error: variationError } = await supabaseAdmin
-        .from('variations')
-        .insert({
-          product_id: productId,
-          sku: null
-        })
-        .select()
-        .single();
+    // 5. Categorize variations: update, create, delete
+    console.log('Analyzing variation changes...');
+    
+    // Helper function to create a key from term IDs
+    const createTermKey = (termIds: number[]): string => {
+      return termIds.sort((a, b) => a - b).join(',');
+    };
 
-      if (variationError) {
-        console.error('Variation creation error:', variationError);
-        throw variationError;
+    // Map existing variations by their term combination
+    const existingMap = new Map<string, any>();
+    if (existingVariations && existingVariations.length > 0) {
+      existingVariations.forEach(v => {
+        const termIds = v.variation_terms?.map((t: any) => t.term_id) || [];
+        const key = createTermKey(termIds);
+        existingMap.set(key, v);
+      });
+    }
+
+    // Map incoming variations by their term combination
+    const incomingMap = new Map<string, ProductVariation>();
+    variations.forEach(v => {
+      const termIds = v.attributes.map(a => a.term_id);
+      const key = createTermKey(termIds);
+      incomingMap.set(key, v);
+    });
+
+    // Categorize operations
+    const toUpdate: Array<{ existing: any; incoming: ProductVariation }> = [];
+    const toDelete: any[] = [];
+    const toCreate: ProductVariation[] = [];
+
+    // Check existing variations
+    existingMap.forEach((existingVar, key) => {
+      if (incomingMap.has(key)) {
+        toUpdate.push({ existing: existingVar, incoming: incomingMap.get(key)! });
+      } else {
+        toDelete.push(existingVar);
       }
+    });
 
-      console.log('Variation created with ID:', newVariation.id);
-
-      // Generate and update SKU
-      const brandCode = '100'; // Default brand code
-      const productCode = String(productId).padStart(5, '0');
-      const variationCode = String(newVariation.id).padStart(4, '0');
-      const sku = `${brandCode}${productCode}${variationCode}`;
-
-      const { error: skuError } = await supabaseAdmin
-        .from('variations')
-        .update({ sku })
-        .eq('id', newVariation.id);
-
-      if (skuError) {
-        console.error('SKU update error:', skuError);
-        throw skuError;
+    // Check for new variations
+    incomingMap.forEach((incomingVar, key) => {
+      if (!existingMap.has(key)) {
+        toCreate.push(incomingVar);
       }
+    });
 
-      console.log('SKU generated:', sku);
+    console.log(`Variations to update: ${toUpdate.length}`);
+    console.log(`Variations to create: ${toCreate.length}`);
+    console.log(`Variations to delete: ${toDelete.length}`);
 
-      // Insert variation terms
-      if (variation.attributes.length > 0) {
-        const termsInsert = variation.attributes.map(attr => ({
-          product_variation_id: newVariation.id,
-          term_id: attr.term_id
-        }));
+    // 6. Validate deletions - check if any are linked to orders
+    if (toDelete.length > 0) {
+      const idsToDelete = toDelete.map(v => v.id);
+      
+      console.log('Checking if variations to delete are linked to orders...');
+      const { data: linkedOrders, error: orderCheckError } = await supabaseAdmin
+        .from('order_products')
+        .select('product_variation_id')
+        .in('product_variation_id', idsToDelete)
+        .limit(1);
 
-        const { error: termsError } = await supabaseAdmin
-          .from('variation_terms')
-          .insert(termsInsert);
-
-        if (termsError) {
-          console.error('Terms creation error:', termsError);
-          throw termsError;
-        }
-        console.log('Variation terms created');
+      if (orderCheckError) {
+        console.error('Error checking order links:', orderCheckError);
+        throw new Error('Error al verificar vínculos con pedidos');
       }
+        
+      if (linkedOrders && linkedOrders.length > 0) {
+        throw new Error(
+          'No se pueden eliminar variaciones vinculadas a pedidos existentes. ' +
+          'Las variaciones que está intentando eliminar están asociadas a uno o más pedidos. ' +
+          'Por favor, conserve los términos actuales o agregue nuevos sin eliminar los existentes.'
+        );
+      }
+      
+      console.log('Safe to delete - no order links found');
+    }
 
-      // Insert prices
-      const priceInserts = variation.prices
+    // 7. Update existing variations (only prices, stock, and images)
+    console.log('Updating existing variations...');
+    for (const { existing, incoming } of toUpdate) {
+      console.log(`Updating variation ID: ${existing.id}`);
+      
+      // Update prices: delete old, insert new
+      await supabaseAdmin
+        .from('product_price')
+        .delete()
+        .eq('product_variation_id', existing.id);
+        
+      const priceInserts = incoming.prices
         .filter(p => p.price > 0 || p.sale_price > 0)
         .map(price => ({
-          product_variation_id: newVariation.id,
+          product_variation_id: existing.id,
           price_list_id: price.price_list_id,
           price: price.price,
           sale_price: price.sale_price
         }));
-
+        
       if (priceInserts.length > 0) {
         const { error: pricesError } = await supabaseAdmin
           .from('product_price')
           .insert(priceInserts);
-
         if (pricesError) {
-          console.error('Prices creation error:', pricesError);
+          console.error('Error updating prices:', pricesError);
           throw pricesError;
         }
-        console.log('Prices created');
       }
-
-      // Insert stock
-      const stockInserts = variation.stock
+      
+      // Update stock: delete old, insert new
+      await supabaseAdmin
+        .from('product_stock')
+        .delete()
+        .eq('product_variation_id', existing.id);
+        
+      const stockInserts = incoming.stock
         .filter(s => s.stock > 0)
         .map(stock => ({
-          product_variation_id: newVariation.id,
+          product_variation_id: existing.id,
           warehouse_id: stock.warehouse_id,
           stock: stock.stock
         }));
-
+        
       if (stockInserts.length > 0) {
         const { error: stockError } = await supabaseAdmin
           .from('product_stock')
@@ -309,35 +337,152 @@ serve(async (req) => {
             ...stock, 
             id: Date.now() + index + Math.floor(Math.random() * 1000)
           })));
-
         if (stockError) {
-          console.error('Stock creation error:', stockError);
+          console.error('Error updating stock:', stockError);
           throw stockError;
         }
-        console.log('Stock created');
       }
-
-      // Insert variation images
-      if (variation.selectedImages.length > 0) {
-        for (const selectedImageId of variation.selectedImages) {
+      
+      // Update variation images: delete old, insert new
+      await supabaseAdmin
+        .from('product_variation_images')
+        .delete()
+        .eq('product_variation_id', existing.id);
+        
+      if (incoming.selectedImages.length > 0) {
+        for (const selectedImageId of incoming.selectedImages) {
           const dbImageId = imageIdMap[selectedImageId];
-          
           if (dbImageId) {
-            const { error: variationImageError } = await supabaseAdmin
+            await supabaseAdmin
               .from('product_variation_images')
               .insert({
                 id: Date.now() + Math.floor(Math.random() * 1000),
-                product_variation_id: newVariation.id,
+                product_variation_id: existing.id,
                 product_image_id: dbImageId
               });
+          }
+        }
+      }
+      
+      console.log(`Variation ${existing.id} updated successfully`);
+    }
 
-            if (variationImageError) {
-              console.error('Variation image creation error:', variationImageError);
-              throw variationImageError;
+    // 8. Create new variations
+    if (toCreate.length > 0) {
+      console.log('Creating new variations...');
+      for (const variation of toCreate) {
+        const { data: newVariation, error: variationError } = await supabaseAdmin
+          .from('variations')
+          .insert({
+            product_id: productId,
+            sku: null
+          })
+          .select()
+          .single();
+
+        if (variationError) {
+          console.error('Variation creation error:', variationError);
+          throw variationError;
+        }
+
+        console.log('Variation created with ID:', newVariation.id);
+
+        // Generate and update SKU
+        const brandCode = '100'; // Default brand code
+        const productCode = String(productId).padStart(5, '0');
+        const variationCode = String(newVariation.id).padStart(4, '0');
+        const sku = `${brandCode}${productCode}${variationCode}`;
+
+        await supabaseAdmin
+          .from('variations')
+          .update({ sku })
+          .eq('id', newVariation.id);
+
+        console.log('SKU generated:', sku);
+
+        // Insert variation terms
+        if (variation.attributes.length > 0) {
+          const termsInsert = variation.attributes.map(attr => ({
+            product_variation_id: newVariation.id,
+            term_id: attr.term_id
+          }));
+
+          const { error: termsError } = await supabaseAdmin
+            .from('variation_terms')
+            .insert(termsInsert);
+
+          if (termsError) {
+            console.error('Terms creation error:', termsError);
+            throw termsError;
+          }
+        }
+
+        // Insert prices
+        const priceInserts = variation.prices
+          .filter(p => p.price > 0 || p.sale_price > 0)
+          .map(price => ({
+            product_variation_id: newVariation.id,
+            price_list_id: price.price_list_id,
+            price: price.price,
+            sale_price: price.sale_price
+          }));
+
+        if (priceInserts.length > 0) {
+          await supabaseAdmin.from('product_price').insert(priceInserts);
+        }
+
+        // Insert stock
+        const stockInserts = variation.stock
+          .filter(s => s.stock > 0)
+          .map(stock => ({
+            product_variation_id: newVariation.id,
+            warehouse_id: stock.warehouse_id,
+            stock: stock.stock
+          }));
+
+        if (stockInserts.length > 0) {
+          await supabaseAdmin
+            .from('product_stock')
+            .insert(stockInserts.map((stock, index) => ({ 
+              ...stock, 
+              id: Date.now() + index + Math.floor(Math.random() * 1000)
+            })));
+        }
+
+        // Insert variation images
+        if (variation.selectedImages.length > 0) {
+          for (const selectedImageId of variation.selectedImages) {
+            const dbImageId = imageIdMap[selectedImageId];
+            if (dbImageId) {
+              await supabaseAdmin
+                .from('product_variation_images')
+                .insert({
+                  id: Date.now() + Math.floor(Math.random() * 1000),
+                  product_variation_id: newVariation.id,
+                  product_image_id: dbImageId
+                });
             }
           }
         }
-        console.log('Variation images created');
+        
+        console.log(`New variation ${newVariation.id} created successfully`);
+      }
+    }
+
+    // 9. Delete safe variations (not linked to orders)
+    if (toDelete.length > 0) {
+      console.log('Deleting safe variations...');
+      for (const variation of toDelete) {
+        console.log(`Deleting variation ID: ${variation.id}`);
+        
+        // Delete in proper order to avoid FK constraints
+        await supabaseAdmin.from('product_variation_images').delete().eq('product_variation_id', variation.id);
+        await supabaseAdmin.from('product_price').delete().eq('product_variation_id', variation.id);
+        await supabaseAdmin.from('product_stock').delete().eq('product_variation_id', variation.id);
+        await supabaseAdmin.from('variation_terms').delete().eq('product_variation_id', variation.id);
+        await supabaseAdmin.from('variations').delete().eq('id', variation.id);
+        
+        console.log(`Variation ${variation.id} deleted successfully`);
       }
     }
 
