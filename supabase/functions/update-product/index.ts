@@ -276,7 +276,7 @@ serve(async (req) => {
         .filter(p => p.price > 0 || p.sale_price > 0)
         .map(price => ({
           product_variation_id: newVariation.id,
-          proce_list_id: price.price_list_id,
+          price_list_id: price.price_list_id,
           price: price.price,
           sale_price: price.sale_price
         }));
