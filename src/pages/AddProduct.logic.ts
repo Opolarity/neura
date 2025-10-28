@@ -59,7 +59,9 @@ export const useAddProductLogic = () => {
   }, [productId, isEditMode, initialDataLoaded]);
 
   useEffect(() => {
+    // Don't regenerate variations when loading product data or in edit mode with existing variations
     if (isLoadingProduct) return;
+    if (isEditMode && variations.length > 0) return;
     
     const groupsWithTerms = Object.keys(selectedTerms)
       .map(Number)
