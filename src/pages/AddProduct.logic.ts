@@ -392,14 +392,14 @@ export const useAddProductLogic = () => {
     });
   };
 
-  const updateVariationPrice = (variationId: string, priceListId: number, field: 'price' | 'sale_price', value: number | null) => {
+  const updateVariationPrice = (variationId: string, priceListId: number, field: 'price' | 'sale_price', value: string) => {
     setVariations(prev => prev.map(variation => {
       if (variation.id === variationId) {
         return {
           ...variation,
           prices: variation.prices.map(price => 
             price.price_list_id === priceListId
-              ? { ...price, [field]: value }
+              ? { ...price, [field]: value === '' ? 0 : Number(value) }
               : price
           )
         };

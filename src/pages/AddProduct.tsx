@@ -383,15 +383,15 @@ const AddProduct = () => {
                                     <Input
                                       type="number"
                                       placeholder="Precio"
-                                      value={variationPrice?.price ?? ''}
-                                      onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'price', Number(e.target.value))}
+                                      value={variationPrice?.price || ''}
+                                      onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'price', e.target.value)}
                                       className="flex-1"
                                     />
                                     <Input
                                       type="number"
                                       placeholder="Precio oferta"
-                                      value={variationPrice?.sale_price ?? ''}
-                                      onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'sale_price', e.target.valueAsNumber)}
+                                      value={variationPrice?.sale_price || ''}
+                                      onChange={(e) => updateVariationPrice(variation.id, priceList.id, 'sale_price', e.target.value)}
                                       className="flex-1"
                                     />
                                   </div>
