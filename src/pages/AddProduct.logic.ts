@@ -580,6 +580,30 @@ export const useAddProductLogic = () => {
       order: image.order
     }));
 
+    // Sanitize variations to avoid sending placeholder "single" or duplicates
+    const seen = new Set<string>();
+    const normalize = (v: ProductVariation) => v.attributes
+      .map(a => `${a.term_group_id}:${a.term_id}`)
+      .sort()
+      .join('|');
+    const sanitizedVariations: ProductVariation[] = (isVariable
+      ? variations.filter(v => v.attributes.length > 0)
+      : variations.slice(0, 1)
+    ).filter(v => {
+      const key = normalize(v);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).map(v => ({
+      ...v,
+      prices: v.prices.map(p => ({
+        ...p,
+        price: Number(p.price) || 0,
+        sale_price: Number(p.sale_price) || 0,
+      })),
+      stock: v.stock.map(s => ({ ...s, stock: Number(s.stock) || 0 })),
+    }));
+
     const productData = {
       productName,
       shortDescription,
@@ -589,7 +613,7 @@ export const useAddProductLogic = () => {
       isWeb,
       selectedCategories,
       productImages: imageRefs,
-      variations
+      variations: sanitizedVariations,
     };
 
     const { data, error } = await supabase.functions.invoke('create-product', {
@@ -642,7 +666,28 @@ export const useAddProductLogic = () => {
         originalIsVariable,
         selectedCategories,
         productImages: imageRefs,
-        variations
+        variations: (function sanitize() {
+          const seen = new Set<string>();
+          const normalize = (v: ProductVariation) => v.attributes
+            .map(a => `${a.term_group_id}:${a.term_id}`)
+            .sort()
+            .join('|');
+          const base = isVariable ? variations.filter(v => v.attributes.length > 0) : variations.slice(0, 1);
+          return base.filter(v => {
+            const key = normalize(v);
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          }).map(v => ({
+            ...v,
+            prices: v.prices.map(p => ({
+              ...p,
+              price: Number(p.price) || 0,
+              sale_price: Number(p.sale_price) || 0,
+            })),
+            stock: v.stock.map(s => ({ ...s, stock: Number(s.stock) || 0 })),
+          }));
+        })()
       }
     });
 
