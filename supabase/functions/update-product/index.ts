@@ -62,7 +62,8 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
-    const supabaseClient = createClient(
+    // Auth client to validate user
+    const supabaseAuth = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
@@ -70,6 +71,24 @@ serve(async (req) => {
           headers: { Authorization: authHeader },
         },
       }
+    );
+
+    // Validate user authentication
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication error:', authError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'No autorizado' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('User authenticated:', user.id);
+
+    // Admin client for database operations (bypasses RLS)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     const {
@@ -89,7 +108,8 @@ serve(async (req) => {
     console.log('Updating product:', productId, productName);
 
     // 1. Update basic product data
-    const { error: productError } = await supabaseClient
+    console.log('Updating product basic data...');
+    const { error: productError } = await supabaseAdmin
       .from('products')
       .update({
         title: productName,
@@ -103,21 +123,23 @@ serve(async (req) => {
 
     if (productError) {
       console.error('Product update error:', productError);
-      throw productError;
+      throw new Error(`Error al actualizar producto: ${productError.message}`);
     }
 
-    console.log('Product updated');
+    console.log('Product updated successfully');
 
     // 2. Update categories
-    await supabaseClient.from('product_categories').delete().eq('product_id', productId);
+    console.log('Deleting old categories...');
+    await supabaseAdmin.from('product_categories').delete().eq('product_id', productId);
     
     if (selectedCategories.length > 0) {
+      console.log('Inserting new categories...');
       const categoryInserts = selectedCategories.map(categoryId => ({
         product_id: productId,
         category_id: categoryId
       }));
 
-      const { error: categoriesError } = await supabaseClient
+      const { error: categoriesError } = await supabaseAdmin
         .from('product_categories')
         .insert(categoryInserts.map((cat, index) => ({ 
           ...cat, 
@@ -126,30 +148,33 @@ serve(async (req) => {
 
       if (categoriesError) {
         console.error('Categories update error:', categoriesError);
-        throw categoriesError;
+        throw new Error(`Error al actualizar categorías: ${categoriesError.message}`);
       }
-      console.log('Categories updated');
+      console.log('Categories updated successfully');
     }
 
     // 3. Handle variable type change - delete all existing variations
-    const { data: oldVariations } = await supabaseClient
+    console.log('Fetching old variations...');
+    const { data: oldVariations } = await supabaseAdmin
       .from('variations')
       .select('id')
       .eq('product_id', productId);
 
     if (oldVariations && oldVariations.length > 0) {
+      console.log('Deleting old variation data...');
       for (const variation of oldVariations) {
-        await supabaseClient.from('product_variation_images').delete().eq('product_variation_id', variation.id);
-        await supabaseClient.from('product_price').delete().eq('product_variation_id', variation.id);
-        await supabaseClient.from('product_stock').delete().eq('product_variation_id', variation.id);
-        await supabaseClient.from('variation_terms').delete().eq('product_variation_id', variation.id);
+        await supabaseAdmin.from('product_variation_images').delete().eq('product_variation_id', variation.id);
+        await supabaseAdmin.from('product_price').delete().eq('product_variation_id', variation.id);
+        await supabaseAdmin.from('product_stock').delete().eq('product_variation_id', variation.id);
+        await supabaseAdmin.from('variation_terms').delete().eq('product_variation_id', variation.id);
       }
-      await supabaseClient.from('variations').delete().eq('product_id', productId);
-      console.log('Old variations deleted');
+      await supabaseAdmin.from('variations').delete().eq('product_id', productId);
+      console.log('Old variations deleted successfully');
     }
 
     // 4. Update images (delete all and recreate with proper references)
-    await supabaseClient.from('product_images').delete().eq('product_id', productId);
+    console.log('Deleting old product images...');
+    await supabaseAdmin.from('product_images').delete().eq('product_id', productId);
     
     // Map to track old image IDs to new DB IDs
     const imageIdMap: Record<string, number> = {};
@@ -164,14 +189,14 @@ serve(async (req) => {
         imageUrl = image.path;
       } else {
         // For new images, path is the storage path
-        const { data: { publicUrl } } = supabaseClient.storage
+        const { data: { publicUrl } } = supabaseAdmin.storage
           .from('products')
           .getPublicUrl(image.path);
         imageUrl = publicUrl;
       }
 
       const imageId = Date.now() + Math.floor(Math.random() * 1000) + i;
-      const { error: imageError } = await supabaseClient
+      const { error: imageError } = await supabaseAdmin
         .from('product_images')
         .insert({
           id: imageId,
@@ -192,8 +217,9 @@ serve(async (req) => {
     console.log('Images updated:', productImages.length);
 
     // 5. Create new variations
+    console.log('Creating new variations...');
     for (const variation of variations) {
-      const { data: newVariation, error: variationError } = await supabaseClient
+      const { data: newVariation, error: variationError } = await supabaseAdmin
         .from('variations')
         .insert({
           product_id: productId,
@@ -215,7 +241,7 @@ serve(async (req) => {
       const variationCode = String(newVariation.id).padStart(4, '0');
       const sku = `${brandCode}${productCode}${variationCode}`;
 
-      const { error: skuError } = await supabaseClient
+      const { error: skuError } = await supabaseAdmin
         .from('variations')
         .update({ sku })
         .eq('id', newVariation.id);
@@ -234,7 +260,7 @@ serve(async (req) => {
           term_id: attr.term_id
         }));
 
-        const { error: termsError } = await supabaseClient
+        const { error: termsError } = await supabaseAdmin
           .from('variation_terms')
           .insert(termsInsert);
 
@@ -256,7 +282,7 @@ serve(async (req) => {
         }));
 
       if (priceInserts.length > 0) {
-        const { error: pricesError } = await supabaseClient
+        const { error: pricesError } = await supabaseAdmin
           .from('product_price')
           .insert(priceInserts);
 
@@ -277,7 +303,7 @@ serve(async (req) => {
         }));
 
       if (stockInserts.length > 0) {
-        const { error: stockError } = await supabaseClient
+        const { error: stockError } = await supabaseAdmin
           .from('product_stock')
           .insert(stockInserts.map((stock, index) => ({ 
             ...stock, 
@@ -297,7 +323,7 @@ serve(async (req) => {
           const dbImageId = imageIdMap[selectedImageId];
           
           if (dbImageId) {
-            const { error: variationImageError } = await supabaseClient
+            const { error: variationImageError } = await supabaseAdmin
               .from('product_variation_images')
               .insert({
                 id: Date.now() + Math.floor(Math.random() * 1000),

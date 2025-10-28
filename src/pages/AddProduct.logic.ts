@@ -594,7 +594,14 @@ export const useAddProductLogic = () => {
 
     if (error) {
       console.error('Edge function error:', error);
-      throw new Error(error.message || 'Error al crear el producto');
+      // Try to extract server error message
+      const serverBody = (error as any)?.context?.body;
+      let errorMessage = error.message || 'Error al crear el producto';
+      try {
+        const parsed = typeof serverBody === 'string' ? JSON.parse(serverBody) : serverBody;
+        errorMessage = parsed?.error || parsed?.message || errorMessage;
+      } catch {}
+      throw new Error(errorMessage);
     }
 
     if (!data.success) {
@@ -637,9 +644,17 @@ export const useAddProductLogic = () => {
 
     if (error) {
       console.error('Error updating product:', error);
+      // Try to extract server error message
+      const serverBody = (error as any)?.context?.body;
+      let errorMessage = error.message || "Error al actualizar el producto";
+      try {
+        const parsed = typeof serverBody === 'string' ? JSON.parse(serverBody) : serverBody;
+        errorMessage = parsed?.error || parsed?.message || errorMessage;
+      } catch {}
+      
       toast({
         title: "Error",
-        description: error.message || "Error al actualizar el producto",
+        description: errorMessage,
         variant: "destructive"
       });
       return;
