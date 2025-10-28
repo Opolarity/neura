@@ -399,7 +399,7 @@ export const useAddProductLogic = () => {
           ...variation,
           prices: variation.prices.map(price => 
             price.price_list_id === priceListId
-              ? { ...price, [field]: value === '' ? 0 : Number(value) }
+              ? { ...price, [field]: value === '' ? 0 : parseFloat(value) || 0 }
               : price
           )
         };
