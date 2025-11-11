@@ -32,39 +32,37 @@ Deno.serve(async (req) => {
     // Update or insert stock for each variation/warehouse combination
     if (hasStockUpdates) {
       for (const update of stockUpdates) {
-      const { variation_id, warehouse_id, stock } = update;
+        const { variation_id, warehouse_id, stock } = update;
 
-      // Check if stock record exists
-      const { data: existingStock } = await supabase
-        .from('product_stock')
-        .select('id')
-        .eq('product_variation_id', variation_id)
-        .eq('warehouse_id', warehouse_id)
-        .single();
-
-      if (existingStock) {
-        // Update existing stock
-        const { error: updateError } = await supabase
+        // Check if stock record exists
+        const { data: existingStock } = await supabase
           .from('product_stock')
-          .update({ stock: parseInt(stock) })
+          .select('id')
           .eq('product_variation_id', variation_id)
-          .eq('warehouse_id', warehouse_id);
+          .eq('warehouse_id', warehouse_id)
+          .single();
 
-        if (updateError) throw updateError;
-      } else {
-        // Insert new stock record
-        const { error: insertError } = await supabase
-          .from('product_stock')
-          .insert({
-            product_variation_id: variation_id,
-            warehouse_id: warehouse_id,
-            stock: parseInt(stock),
-          });
+        if (existingStock) {
+          // Update existing stock
+          const { error: updateError } = await supabase
+            .from('product_stock')
+            .update({ stock: parseInt(stock) })
+            .eq('product_variation_id', variation_id)
+            .eq('warehouse_id', warehouse_id);
 
-        if (insertError) throw insertError;
-      }
-    }
+          if (updateError) throw updateError;
+        } else {
+          // Insert new stock record
+          const { error: insertError } = await supabase
+            .from('product_stock')
+            .insert({
+              product_variation_id: variation_id,
+              warehouse_id: warehouse_id,
+              stock: parseInt(stock),
+            });
 
+          if (insertError) throw insertError;
+        }
       }
       console.log('Stock updated successfully');
     }
