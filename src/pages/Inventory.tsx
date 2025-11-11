@@ -79,10 +79,10 @@ const Inventory = () => {
                   <TableHead>SKU</TableHead>
                   <TableHead>Producto</TableHead>
                   <TableHead>Variación</TableHead>
+                  <TableHead className="bg-destructive/10 text-destructive">Fallidos</TableHead>
                   {warehouses.map((warehouse) => (
                     <TableHead key={warehouse.id}>{warehouse.name}</TableHead>
                   ))}
-                  <TableHead>Fallidos</TableHead>
                   <TableHead>Total</TableHead>
                 </TableRow>
               </TableHeader>
@@ -98,6 +98,23 @@ const Inventory = () => {
                       <TableCell className="font-mono text-sm">{item.sku}</TableCell>
                       <TableCell className="font-medium">{item.product_name}</TableCell>
                       <TableCell className="text-muted-foreground">{item.variation_name}</TableCell>
+                      <TableCell className="bg-destructive/5">
+                        {(() => {
+                          const warehouse1Stock = item.stock_by_warehouse.find(s => s.warehouse_id === 1);
+                          const defects = warehouse1Stock?.defects || 0;
+                          return (
+                            <Input
+                              type="number"
+                              min="0"
+                              value={getDefectsValue(item.variation_id, defects)}
+                              onChange={(e) => handleDefectsChange(item.variation_id, e.target.value)}
+                              onWheel={(e) => e.currentTarget.blur()}
+                              disabled={!isEditing}
+                              className="w-24 bg-destructive/10 border-destructive/20 focus-visible:ring-destructive/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                          );
+                        })()}
+                      </TableCell>
                       {item.stock_by_warehouse.map((stock) => (
                         <TableCell key={stock.warehouse_id}>
                           <Input
@@ -113,23 +130,6 @@ const Inventory = () => {
                           />
                         </TableCell>
                       ))}
-                      <TableCell>
-                        {(() => {
-                          const warehouse1Stock = item.stock_by_warehouse.find(s => s.warehouse_id === 1);
-                          const defects = warehouse1Stock?.defects || 0;
-                          return (
-                            <Input
-                              type="number"
-                              min="0"
-                              value={getDefectsValue(item.variation_id, defects)}
-                              onChange={(e) => handleDefectsChange(item.variation_id, e.target.value)}
-                              onWheel={(e) => e.currentTarget.blur()}
-                              disabled={!isEditing}
-                              className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
-                          );
-                        })()}
-                      </TableCell>
                       <TableCell className="font-semibold">{total}</TableCell>
                     </TableRow>
                   );
