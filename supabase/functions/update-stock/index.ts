@@ -21,12 +21,17 @@ Deno.serve(async (req) => {
     console.log('Updating stock:', stockUpdates);
     console.log('Updating defects:', defectsUpdates);
 
-    if (!stockUpdates || !Array.isArray(stockUpdates) || stockUpdates.length === 0) {
-      throw new Error('Invalid stock updates data');
+    // Validate that at least one update type is provided
+    const hasStockUpdates = stockUpdates && Array.isArray(stockUpdates) && stockUpdates.length > 0;
+    const hasDefectsUpdates = defectsUpdates && Array.isArray(defectsUpdates) && defectsUpdates.length > 0;
+
+    if (!hasStockUpdates && !hasDefectsUpdates) {
+      throw new Error('No stock or defects updates provided');
     }
 
     // Update or insert stock for each variation/warehouse combination
-    for (const update of stockUpdates) {
+    if (hasStockUpdates) {
+      for (const update of stockUpdates) {
       const { variation_id, warehouse_id, stock } = update;
 
       // Check if stock record exists
@@ -60,10 +65,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log('Stock updated successfully');
+      }
+      console.log('Stock updated successfully');
+    }
 
     // Update defects for warehouse_id 1 if provided
-    if (defectsUpdates && Array.isArray(defectsUpdates) && defectsUpdates.length > 0) {
+    if (hasDefectsUpdates) {
       for (const update of defectsUpdates) {
         const { variation_id, warehouse_id, defects } = update;
 
