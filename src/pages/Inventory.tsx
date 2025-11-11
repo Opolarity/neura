@@ -15,7 +15,9 @@ const Inventory = () => {
     isSaving,
     hasChanges,
     handleStockChange,
+    handleDefectsChange,
     getStockValue,
+    getDefectsValue,
     handleEdit,
     handleCancel,
     handleSave,
@@ -80,6 +82,7 @@ const Inventory = () => {
                   {warehouses.map((warehouse) => (
                     <TableHead key={warehouse.id}>{warehouse.name}</TableHead>
                   ))}
+                  <TableHead>Fallidos</TableHead>
                   <TableHead>Total</TableHead>
                 </TableRow>
               </TableHeader>
@@ -110,6 +113,23 @@ const Inventory = () => {
                           />
                         </TableCell>
                       ))}
+                      <TableCell>
+                        {(() => {
+                          const warehouse1Stock = item.stock_by_warehouse.find(s => s.warehouse_id === 1);
+                          const defects = warehouse1Stock?.defects || 0;
+                          return (
+                            <Input
+                              type="number"
+                              min="0"
+                              value={getDefectsValue(item.variation_id, defects)}
+                              onChange={(e) => handleDefectsChange(item.variation_id, e.target.value)}
+                              onWheel={(e) => e.currentTarget.blur()}
+                              disabled={!isEditing}
+                              className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                          );
+                        })()}
+                      </TableCell>
                       <TableCell className="font-semibold">{total}</TableCell>
                     </TableRow>
                   );

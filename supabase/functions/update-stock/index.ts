@@ -16,9 +16,10 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { stockUpdates } = await req.json();
+    const { stockUpdates, defectsUpdates } = await req.json();
 
     console.log('Updating stock:', stockUpdates);
+    console.log('Updating defects:', defectsUpdates);
 
     if (!stockUpdates || !Array.isArray(stockUpdates) || stockUpdates.length === 0) {
       throw new Error('Invalid stock updates data');
@@ -60,6 +61,25 @@ Deno.serve(async (req) => {
     }
 
     console.log('Stock updated successfully');
+
+    // Update defects for warehouse_id 1 if provided
+    if (defectsUpdates && Array.isArray(defectsUpdates) && defectsUpdates.length > 0) {
+      for (const update of defectsUpdates) {
+        const { variation_id, warehouse_id, defects } = update;
+
+        // Only update defects for warehouse_id 1
+        if (warehouse_id === 1) {
+          const { error: defectsError } = await supabase
+            .from('product_stock')
+            .update({ defects: parseInt(defects) })
+            .eq('product_variation_id', variation_id)
+            .eq('warehouse_id', 1);
+
+          if (defectsError) throw defectsError;
+        }
+      }
+      console.log('Defects updated successfully');
+    }
 
     return new Response(JSON.stringify({ success: true, message: 'Stock actualizado correctamente' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

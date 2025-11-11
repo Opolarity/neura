@@ -40,10 +40,10 @@ Deno.serve(async (req) => {
 
     if (warehousesError) throw warehousesError;
 
-    // Get all stock data
+    // Get all stock data including defects
     const { data: stock, error: stockError } = await supabase
       .from('product_stock')
-      .select('product_variation_id, warehouse_id, stock');
+      .select('product_variation_id, warehouse_id, stock, defects');
 
     if (stockError) throw stockError;
 
@@ -84,6 +84,7 @@ Deno.serve(async (req) => {
           warehouse_id: warehouse.id,
           warehouse_name: warehouse.name,
           stock: stockData?.stock || 0,
+          defects: warehouse.id === 1 ? (stockData?.defects || 0) : undefined,
         };
       });
 

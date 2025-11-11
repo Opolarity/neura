@@ -6,6 +6,7 @@ type StockByWarehouse = {
   warehouse_id: number;
   warehouse_name: string;
   stock: number;
+  defects?: number;
 };
 
 type InventoryItem = {
@@ -29,6 +30,7 @@ export const useInventoryLogic = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [editedStock, setEditedStock] = useState<Record<string, number>>({});
+  const [editedDefects, setEditedDefects] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -68,20 +70,39 @@ export const useInventoryLogic = () => {
     setHasChanges(true);
   };
 
+  const handleDefectsChange = (variationId: number, value: string) => {
+    const key = `${variationId}-1`;
+    const numValue = parseInt(value) || 0;
+    
+    setEditedDefects(prev => ({
+      ...prev,
+      [key]: numValue,
+    }));
+    
+    setHasChanges(true);
+  };
+
   const getStockValue = (variationId: number, warehouseId: number, originalStock: number) => {
     const key = `${variationId}-${warehouseId}`;
     return editedStock[key] !== undefined ? editedStock[key] : originalStock;
   };
 
+  const getDefectsValue = (variationId: number, originalDefects: number) => {
+    const key = `${variationId}-1`;
+    return editedDefects[key] !== undefined ? editedDefects[key] : originalDefects;
+  };
+
   const handleEdit = () => {
     setIsEditing(true);
     setEditedStock({});
+    setEditedDefects({});
     setHasChanges(false);
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setEditedStock({});
+    setEditedDefects({});
     setHasChanges(false);
   };
 
@@ -98,8 +119,17 @@ export const useInventoryLogic = () => {
         };
       });
 
+      const defectsUpdates = Object.entries(editedDefects).map(([key, defects]) => {
+        const [variationId] = key.split('-').map(Number);
+        return {
+          variation_id: variationId,
+          warehouse_id: 1,
+          defects,
+        };
+      });
+
       const { error } = await supabase.functions.invoke('update-stock', {
-        body: { stockUpdates },
+        body: { stockUpdates, defectsUpdates },
       });
 
       if (error) throw error;
@@ -111,6 +141,7 @@ export const useInventoryLogic = () => {
 
       setIsEditing(false);
       setEditedStock({});
+      setEditedDefects({});
       setHasChanges(false);
       
       await loadInventory();
@@ -134,7 +165,9 @@ export const useInventoryLogic = () => {
     isSaving,
     hasChanges,
     handleStockChange,
+    handleDefectsChange,
     getStockValue,
+    getDefectsValue,
     handleEdit,
     handleCancel,
     handleSave,
