@@ -160,9 +160,13 @@ export default function AddExpense() {
         .from('movement_types')
         .select('id')
         .eq('code', 'egreso')
-        .single();
+        .maybeSingle();
 
       if (movementTypeError) throw movementTypeError;
+
+      if (!movementTypeData) {
+        throw new Error('No se encontró el tipo de movimiento "egreso". Por favor, contacta al administrador.');
+      }
 
       const selectedPaymentMethod = paymentMethods.find(
         pm => pm.id.toString() === data.payment_method_id
