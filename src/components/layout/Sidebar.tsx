@@ -11,6 +11,7 @@ import {
   Users,
   Calendar,
   Plus,
+  ArrowUpDown,
   LucideIcon
 } from 'lucide-react';
 import { useFunctions } from '@/hooks/useFunctions';
@@ -30,7 +31,8 @@ const iconMap: Record<string, LucideIcon> = {
   Users,
   Calendar,
   Settings,
-  Plus
+  Plus,
+  ArrowUpDown
 };
 
 const Sidebar = ({ isOpen }: SidebarProps) => {
