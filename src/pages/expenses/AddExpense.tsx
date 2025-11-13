@@ -79,9 +79,13 @@ export default function AddExpense() {
   useEffect(() => {
     if (selectedPaymentMethodId) {
       const selected = paymentMethods.find(pm => pm.id.toString() === selectedPaymentMethodId);
-      if (selected) {
+      if (selected && selected.business_accounts) {
         setSelectedBusinessAccount(selected.business_accounts.name);
+      } else {
+        setSelectedBusinessAccount('');
       }
+    } else {
+      setSelectedBusinessAccount('');
     }
   }, [selectedPaymentMethodId, paymentMethods]);
 
