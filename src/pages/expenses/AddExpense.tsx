@@ -316,7 +316,6 @@ export default function AddExpense() {
                     <SelectValue placeholder="Sin asignar" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sin asignar</SelectItem>
                     {profiles.map((profile) => (
                       <SelectItem key={profile.UID} value={profile.UID}>
                         {profile.name} {profile.last_name}
