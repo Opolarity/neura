@@ -155,11 +155,11 @@ export default function AddExpense() {
     setLoading(true);
 
     try {
-      // Get movement type for "egreso"
+      // Get movement type for "Egreso"
       const { data: movementTypeData, error: movementTypeError } = await (supabase as any)
         .from('movement_types')
         .select('id')
-        .eq('code', 'egreso')
+        .eq('name', 'Egreso')
         .maybeSingle();
 
       if (movementTypeError) throw movementTypeError;
