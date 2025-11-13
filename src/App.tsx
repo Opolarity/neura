@@ -71,7 +71,7 @@ const App = () => (
                 <Route path="edit/:id" element={<EditClient />} />
               </Route>
               <Route path="reports" element={<div className="p-6"><h1 className="text-2xl font-bold">Reportes</h1><p className="text-gray-600">Funcionalidad en desarrollo</p></div>} />
-              <Route path="expenses/add" element={<AddExpense />} />
+              <Route path="movements/add/expenses" element={<AddExpense />} />
               <Route path="settings" element={<Settings />}>
                 <Route path="users" element={<UsersList />} />
                 <Route path="users/create" element={<CreateUser />} />

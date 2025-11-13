@@ -198,7 +198,7 @@ export default function AddExpense() {
         description: 'Gasto registrado correctamente',
       });
 
-      navigate('/expenses');
+      navigate('/movements');
     } catch (error: any) {
       console.error('Error creating expense:', error);
       toast({
