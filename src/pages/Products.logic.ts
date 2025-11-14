@@ -72,22 +72,27 @@ export const useProductsLogic = () => {
   }, [products, searchTerm]);
 
   const getProductPrice = (product: ProductData) => {
+    // Get all effective prices (sale_price if available and > 0, otherwise normal price)
     const values = product.variations.flatMap((variation) =>
-      (variation.prices ?? []).map(({ price, sale_price }) => sale_price ?? price)
-    );
+      (variation.prices ?? []).map(({ price, sale_price }) => {
+        // Use sale_price if it exists and is not null, otherwise use price
+        const effectivePrice = (sale_price !== null && sale_price !== undefined) ? sale_price : price;
+        return Number(effectivePrice) || 0;
+      })
+    ).filter(price => price > 0);
 
     if (values.length === 0) {
-      return 0;
+      return '$0.00';
     }
 
     const minPrice = Math.min(...values);
     const maxPrice = Math.max(...values);
 
     if (minPrice !== maxPrice) {
-      return `${minPrice} - ${maxPrice}`;
+      return `$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}`;
     }
 
-    return minPrice;
+    return `$${minPrice.toFixed(2)}`;
   };
 
   const getProductStock = (product: ProductData) => {
