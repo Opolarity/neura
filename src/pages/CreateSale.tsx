@@ -28,9 +28,9 @@ const CreateSale = () => {
     clientFound,
     searchingClient,
     orderId,
-    orderStatus,
+    orderSituation,
     availableShippingCosts,
-    setOrderStatus,
+    setOrderSituation,
     handleInputChange,
     setSearchQuery,
     setSelectedVariation,
@@ -577,9 +577,10 @@ const CreateSale = () => {
       {/* Sidebar - Fixed */}
       <aside className="flex-shrink-0 sticky top-6" style={{ width: '30%', height: 'calc(100vh - 8rem)' }}>
         <SaleSidebar 
-          orderId={orderId ? parseInt(orderId) : undefined} 
-          selectedStatus={orderStatus}
-          onStatusChange={setOrderStatus}
+          orderId={orderId ? parseInt(orderId) : undefined}
+          selectedSituation={orderSituation}
+          onSituationChange={setOrderSituation}
+          situations={salesData?.situations || []}
         />
       </aside>
     </div>

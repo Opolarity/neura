@@ -18,6 +18,15 @@ Deno.serve(async (req) => {
     console.log('Fetching sales form data...');
 
     // Fetch all required data in parallel
+    // Get module ID for orders
+    const { data: orderModule } = await supabase
+      .from('modules')
+      .select('id')
+      .eq('code', 'ORD')
+      .single();
+
+    const orderModuleId = orderModule?.id || 1;
+
     const [
       documentTypesResult,
       saleTypesResult,
@@ -28,6 +37,7 @@ Deno.serve(async (req) => {
       neighborhoodsResult,
       productsResult,
       paymentMethodsResult,
+      situationsResult,
     ] = await Promise.all([
       supabase.from('document_types').select('*').order('name'),
       supabase.from('sale_types').select('*').eq('is_manual', true).order('name'),
@@ -38,6 +48,7 @@ Deno.serve(async (req) => {
       supabase.from('neighborhoods').select('*').order('name'),
       supabase.from('products').select('id, title, is_variable').order('title'),
       supabase.from('payment_methods').select('*').eq('active', true).order('name'),
+      supabase.from('situations').select('*, statuses(code, name)').eq('module_id', orderModuleId).order('id'),
     ]);
 
     // Check for errors
@@ -50,6 +61,7 @@ Deno.serve(async (req) => {
     if (neighborhoodsResult.error) throw neighborhoodsResult.error;
     if (productsResult.error) throw productsResult.error;
     if (paymentMethodsResult.error) throw paymentMethodsResult.error;
+    if (situationsResult.error) throw situationsResult.error;
 
     // For each product, get variations with prices and stock
     const productsWithVariations = await Promise.all(
@@ -111,6 +123,7 @@ Deno.serve(async (req) => {
         neighborhoods: neighborhoodsResult.data,
         products: productsWithVariations,
         paymentMethods: paymentMethodsResult.data,
+        situations: situationsResult.data,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
