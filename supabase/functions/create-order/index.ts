@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
 
     const warehouseId = profile?.warehouse_id || 1; // Default to 1 if not found
 
-    // Create order products
+    // Create order products with reservation = true
     const orderProducts = orderData.products.map((product: any) => ({
       order_id: order.id,
       product_variation_id: product.variation_id,
@@ -83,6 +83,7 @@ Deno.serve(async (req) => {
       product_price: product.price,
       product_discount: product.discount || 0,
       warehouses_id: warehouseId,
+      reservation: true, // Marcar como reserva inicialmente
     }));
 
     const { error: productsError } = await supabase
@@ -133,6 +134,54 @@ Deno.serve(async (req) => {
     }
 
     console.log('Order history created');
+
+    // Get movement type for income (assuming code 'INC' or similar)
+    const { data: movementType } = await supabase
+      .from('movement_types')
+      .select('id')
+      .eq('code', 'INC')
+      .maybeSingle();
+
+    // Get payment method from order data
+    const paymentMethodId = orderData.payment?.payment_method_id || null;
+
+    // Get business account from payment method if exists
+    let businessAccountId = 1; // Default
+    if (paymentMethodId) {
+      const { data: paymentMethod } = await supabase
+        .from('payment_methods')
+        .select('business_account_id')
+        .eq('id', paymentMethodId)
+        .maybeSingle();
+      
+      if (paymentMethod?.business_account_id) {
+        businessAccountId = paymentMethod.business_account_id;
+      }
+    }
+
+    // Create movement record (income from sale)
+    if (movementType) {
+      const { error: movementError } = await supabase
+        .from('movements')
+        .insert({
+          movement_date: orderData.date || new Date().toISOString(),
+          movement_type_id: movementType.id,
+          movement_category_id: 1, // Default category, adjust as needed
+          amount: orderData.total,
+          business_account_id: businessAccountId,
+          payment_method_id: paymentMethodId,
+          warehouse_id: warehouseId,
+          user_id: user.id,
+          description: `Venta - Orden #${order.id} - ${orderData.customer_name} ${orderData.customer_lastname || ''}`.trim(),
+        });
+
+      if (movementError) {
+        console.error('Error creating movement:', movementError);
+        // Don't throw, just log the error
+      } else {
+        console.log('Movement created for order:', order.id);
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: true, order }),
