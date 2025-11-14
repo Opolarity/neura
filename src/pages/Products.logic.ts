@@ -82,17 +82,17 @@ export const useProductsLogic = () => {
     ).filter(price => price > 0);
 
     if (values.length === 0) {
-      return 'S/0.00';
+      return '0.00';
     }
 
     const minPrice = Math.min(...values);
     const maxPrice = Math.max(...values);
 
     if (minPrice !== maxPrice) {
-      return `S/${minPrice.toFixed(2)} - S/${maxPrice.toFixed(2)}`;
+      return `${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}`;
     }
 
-    return `S/${minPrice.toFixed(2)}`;
+    return `${minPrice.toFixed(2)}`;
   };
 
   const getProductStock = (product: ProductData) => {
