@@ -421,7 +421,7 @@ export const useAddProductLogic = () => {
                   ...price, 
                   [field]: value === '' 
                     ? (field === 'sale_price' ? null : 0) 
-                    : parseFloat(value) || 0 
+                    : (isNaN(parseFloat(value)) ? (field === 'sale_price' ? null : 0) : parseFloat(value))
                 }
               : price
           )
