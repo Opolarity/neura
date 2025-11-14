@@ -181,8 +181,8 @@ export const useAddProductLogic = () => {
 
           const prices: VariationPrice[] = variation.prices?.map((p: any) => ({
             price_list_id: p.price_list_id,
-            price: p.price && Number(p.price) > 0 ? Number(p.price) : undefined,
-            sale_price: p.sale_price && Number(p.sale_price) > 0 ? Number(p.sale_price) : undefined
+            price: p.price !== null && p.price !== undefined ? Number(p.price) : undefined,
+            sale_price: p.sale_price !== null && p.sale_price !== undefined ? Number(p.sale_price) : undefined
           })) || [];
 
           // Ensure all price lists are represented
