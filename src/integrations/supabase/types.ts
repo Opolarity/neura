@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_accounts: {
+        Row: {
+          account_number: number | null
+          bank: string
+          created_at: string
+          id: number
+          name: string
+        }
+        Insert: {
+          account_number?: number | null
+          bank: string
+          created_at?: string
+          id?: number
+          name: string
+        }
+        Update: {
+          account_number?: number | null
+          bank?: string
+          created_at?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       capabilities: {
         Row: {
           code: string | null
@@ -279,6 +303,151 @@ export type Database = {
         }
         Relationships: []
       }
+      modules: {
+        Row: {
+          code: string
+          created_at: string
+          id: number
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: number
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      movement_categories: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: number
+          name: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: number
+          name: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      movement_types: {
+        Row: {
+          code: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          code?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          code?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      movements: {
+        Row: {
+          amount: number
+          business_account_id: number
+          created_at: string
+          description: string | null
+          id: number
+          movement_category_id: number
+          movement_date: string
+          movement_type_id: number
+          payment_method_id: number
+          user_id: string | null
+          warehouse_id: number
+        }
+        Insert: {
+          amount: number
+          business_account_id: number
+          created_at?: string
+          description?: string | null
+          id?: number
+          movement_category_id: number
+          movement_date: string
+          movement_type_id: number
+          payment_method_id: number
+          user_id?: string | null
+          warehouse_id: number
+        }
+        Update: {
+          amount?: number
+          business_account_id?: number
+          created_at?: string
+          description?: string | null
+          id?: number
+          movement_category_id?: number
+          movement_date?: string
+          movement_type_id?: number
+          payment_method_id?: number
+          user_id?: string | null
+          warehouse_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movements_business_account_id_fkey"
+            columns: ["business_account_id"]
+            isOneToOne: false
+            referencedRelation: "business_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movements_movement_category_id_fkey"
+            columns: ["movement_category_id"]
+            isOneToOne: false
+            referencedRelation: "movement_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movements_movement_type_id_fkey"
+            columns: ["movement_type_id"]
+            isOneToOne: false
+            referencedRelation: "movement_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movements_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "movements_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       neighborhoods: {
         Row: {
           city_id: number
@@ -379,44 +548,6 @@ export type Database = {
           },
         ]
       }
-      order_history: {
-        Row: {
-          created_at: string
-          id: number
-          last_row: boolean
-          module_id: number
-          order_id: number
-          situation_id: number
-          status_id: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          last_row: boolean
-          module_id: number
-          order_id: number
-          situation_id: number
-          status_id: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          last_row?: boolean
-          module_id?: number
-          order_id?: number
-          situation_id?: number
-          status_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "order_history_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       order_payment: {
         Row: {
           amount: number
@@ -467,6 +598,7 @@ export type Database = {
           product_price: number
           product_variation_id: number
           quantity: number
+          reservation: boolean
           warehouses_id: number
         }
         Insert: {
@@ -476,6 +608,7 @@ export type Database = {
           product_price: number
           product_variation_id: number
           quantity: number
+          reservation?: boolean
           warehouses_id?: number
         }
         Update: {
@@ -485,6 +618,7 @@ export type Database = {
           product_price?: number
           product_variation_id?: number
           quantity?: number
+          reservation?: boolean
           warehouses_id?: number
         }
         Relationships: [
@@ -511,35 +645,48 @@ export type Database = {
           },
         ]
       }
-      order_status: {
+      order_situations: {
         Row: {
           created_at: string
           id: number
+          last_row: boolean
           order_id: number
+          situation_id: number
           status_id: number
         }
         Insert: {
           created_at?: string
           id?: number
+          last_row: boolean
           order_id: number
+          situation_id: number
           status_id: number
         }
         Update: {
           created_at?: string
           id?: number
+          last_row?: boolean
           order_id?: number
+          situation_id?: number
           status_id?: number
         }
         Relationships: [
           {
-            foreignKeyName: "order_status_order_id_fkey"
+            foreignKeyName: "order_history_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "order_status_status_id_fkey"
+            foreignKeyName: "order_situations_situation_id_fkey"
+            columns: ["situation_id"]
+            isOneToOne: false
+            referencedRelation: "situations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_situations_status_id_fkey"
             columns: ["status_id"]
             isOneToOne: false
             referencedRelation: "statuses"
@@ -664,23 +811,31 @@ export type Database = {
       payment_methods: {
         Row: {
           active: boolean
-          company: number | null
+          business_account_id: number | null
           id: number
           name: string
         }
         Insert: {
           active: boolean
-          company?: number | null
+          business_account_id?: number | null
           id?: number
           name: string
         }
         Update: {
           active?: boolean
-          company?: number | null
+          business_account_id?: number | null
           id?: number
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_business_account_id_fkey"
+            columns: ["business_account_id"]
+            isOneToOne: false
+            referencedRelation: "business_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       price_list: {
         Row: {
@@ -772,32 +927,25 @@ export type Database = {
         Row: {
           id: number
           price: number
-          proce_list_id: number
+          price_list_id: number
           product_variation_id: number
           sale_price: number | null
         }
         Insert: {
           id?: number
           price: number
-          proce_list_id: number
+          price_list_id: number
           product_variation_id: number
           sale_price?: number | null
         }
         Update: {
           id?: number
           price?: number
-          proce_list_id?: number
+          price_list_id?: number
           product_variation_id?: number
           sale_price?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_product_price_proce_list_id_price_list_id"
-            columns: ["proce_list_id"]
-            isOneToOne: false
-            referencedRelation: "price_list"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "fk_product_price_product_variation_id_product_variations_id"
             columns: ["product_variation_id"]
@@ -805,22 +953,32 @@ export type Database = {
             referencedRelation: "variations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "product_price_price_list_id_fkey"
+            columns: ["price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
         ]
       }
       product_stock: {
         Row: {
+          defects: number
           id: number
           product_variation_id: number
           stock: number
           warehouse_id: number
         }
         Insert: {
-          id: number
+          defects?: number
+          id?: number
           product_variation_id: number
           stock: number
           warehouse_id: number
         }
         Update: {
+          defects?: number
           id?: number
           product_variation_id?: number
           stock?: number
@@ -878,28 +1036,34 @@ export type Database = {
       }
       products: {
         Row: {
+          active: boolean
           created_at: string
           description: string | null
           id: number
           is_variable: boolean
           short_description: string
           title: string
+          web: boolean
         }
         Insert: {
+          active?: boolean
           created_at?: string
           description?: string | null
           id?: number
           is_variable: boolean
           short_description?: string
           title: string
+          web?: boolean
         }
         Update: {
+          active?: boolean
           created_at?: string
           description?: string | null
           id?: number
           is_variable?: boolean
           short_description?: string
           title?: string
+          web?: boolean
         }
         Relationships: []
       }
@@ -1174,6 +1338,45 @@ export type Database = {
         }
         Relationships: []
       }
+      situations: {
+        Row: {
+          created_at: string
+          id: number
+          module_id: number
+          name: string
+          status_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          module_id: number
+          name: string
+          status_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          module_id?: number
+          name?: string
+          status_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "situations_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "situations_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       states: {
         Row: {
           country_id: number
@@ -1205,21 +1408,35 @@ export type Database = {
       }
       statuses: {
         Row: {
+          code: string
           created_at: string
           id: number
+          module_id: number
           name: string
         }
         Insert: {
+          code: string
           created_at?: string
           id?: number
+          module_id: number
           name: string
         }
         Update: {
+          code?: string
           created_at?: string
           id?: number
+          module_id?: number
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "statuses_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       term_groups: {
         Row: {
