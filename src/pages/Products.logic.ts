@@ -72,21 +72,31 @@ export const useProductsLogic = () => {
   }, [products, searchTerm]);
 
   const getProductPrice = (product: ProductData) => {
-    // Get all effective prices (sale_price if available and > 0, otherwise normal price)
-    const values = product.variations.flatMap((variation) =>
-      (variation.prices ?? []).map(({ price, sale_price }) => {
-        // Use sale_price if it exists and is not null, otherwise use price
-        const effectivePrice = (sale_price !== null && sale_price !== undefined) ? sale_price : price;
-        return Number(effectivePrice) || 0;
-      })
-    ).filter(price => price > 0);
+    // Collect all prices (both normal and sale prices, ignoring nulls)
+    const allPrices: number[] = [];
+    
+    product.variations.forEach((variation) => {
+      (variation.prices ?? []).forEach(({ price, sale_price }) => {
+        // Add normal price if not null
+        if (price !== null && price !== undefined) {
+          allPrices.push(Number(price));
+        }
+        // Add sale price if not null
+        if (sale_price !== null && sale_price !== undefined) {
+          allPrices.push(Number(sale_price));
+        }
+      });
+    });
 
-    if (values.length === 0) {
+    // Filter out invalid prices
+    const validPrices = allPrices.filter(p => p > 0);
+
+    if (validPrices.length === 0) {
       return '0.00';
     }
 
-    const minPrice = Math.min(...values);
-    const maxPrice = Math.max(...values);
+    const minPrice = Math.min(...validPrices);
+    const maxPrice = Math.max(...validPrices);
 
     if (minPrice !== maxPrice) {
       return `${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}`;
