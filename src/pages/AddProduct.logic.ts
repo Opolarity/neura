@@ -181,22 +181,38 @@ export const useAddProductLogic = () => {
 
           const prices: VariationPrice[] = variation.prices?.map((p: any) => ({
             price_list_id: p.price_list_id,
-            price: Number(p.price),
-            sale_price: p.sale_price
+            price: p.price && Number(p.price) > 0 ? Number(p.price) : undefined,
+            sale_price: p.sale_price && Number(p.sale_price) > 0 ? Number(p.sale_price) : undefined
           })) || [];
+
+          // Ensure all price lists are represented
+          const allPrices: VariationPrice[] = priceLists.map(pl => {
+            const existingPrice = prices.find(p => p.price_list_id === pl.id);
+            return existingPrice || { 
+              price_list_id: pl.id, 
+              price: undefined, 
+              sale_price: undefined 
+            };
+          });
 
           const stock: VariationStock[] = variation.stock?.map((s: any) => ({
             warehouse_id: s.warehouse_id,
             stock: Number(s.stock)
           })) || [];
 
+          // Ensure all warehouses are represented
+          const allStock: VariationStock[] = warehouses.map(w => {
+            const existingStock = stock.find(s => s.warehouse_id === w.id);
+            return existingStock || { warehouse_id: w.id, stock: 0 };
+          });
+
           const selectedImages = variation.images?.map((imgId: number) => `existing-${imgId}`) || [];
 
           return {
             id: `db-${variation.id}`,
             attributes,
-            prices,
-            stock,
+            prices: allPrices,
+            stock: allStock,
             selectedImages
           };
         });
