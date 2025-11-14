@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
       throw deleteProductsError;
     }
 
-    // Create new order products
+    // Create new order products with reservation = true
     const orderProducts = orderData.products.map((product: any) => ({
       order_id: orderId,
       product_variation_id: product.variation_id,
@@ -99,6 +99,7 @@ Deno.serve(async (req) => {
       product_price: product.price,
       product_discount: product.discount || 0,
       warehouses_id: warehouseId,
+      reservation: true, // Marcar como reserva
     }));
 
     const { error: productsError } = await supabase
