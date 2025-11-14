@@ -45,6 +45,7 @@ interface SalesFormData {
   neighborhoods: any[];
   products: any[];
   paymentMethods: any[];
+  situations: any[];
 }
 
 export const useCreateSaleLogic = () => {
@@ -84,7 +85,7 @@ export const useCreateSaleLogic = () => {
   const [confirmationCode, setConfirmationCode] = useState<string>('');
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [searchingClient, setSearchingClient] = useState(false);
-  const [orderStatus, setOrderStatus] = useState<string>('');
+  const [orderSituation, setOrderSituation] = useState<string>('');
   const [availableShippingCosts, setAvailableShippingCosts] = useState<any[]>([]);
 
   useEffect(() => {
@@ -232,17 +233,16 @@ export const useCreateSaleLogic = () => {
         console.log('Loaded payment:', paymentData);
       }
       
-      // Load order status
-      const { data: statusData } = await supabase
-        .from('order_status')
-        .select('status_id')
+      // Load order situation
+      const { data: situationData } = await supabase
+        .from('order_situations')
+        .select('situation_id')
         .eq('order_id', id)
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .eq('last_row', true)
         .maybeSingle();
       
-      if (statusData) {
-        setOrderStatus(statusData.status_id.toString());
+      if (situationData) {
+        setOrderSituation(situationData.situation_id.toString());
       }
     } catch (error) {
       console.error('Error loading order:', error);
@@ -428,7 +428,7 @@ export const useCreateSaleLogic = () => {
       return;
     }
 
-    if (!orderStatus) {
+    if (!orderSituation) {
       toast({
         title: 'Error',
         description: 'Seleccione un estado para el pedido',
@@ -501,17 +501,17 @@ export const useCreateSaleLogic = () => {
 
       if (error) throw error;
 
-      // Save order status if selected
-      if (orderStatus && createdOrderId) {
-        const { error: statusError } = await supabase
-          .from('order_status')
-          .insert({
-            order_id: createdOrderId,
-            status_id: parseInt(orderStatus),
-          });
+      // Save order situation if selected
+      if (orderSituation && createdOrderId) {
+        const { error: situationError } = await supabase.functions.invoke('update-order-situation', {
+          body: {
+            orderId: createdOrderId,
+            situationId: parseInt(orderSituation),
+          },
+        });
 
-        if (statusError) {
-          console.error('Error saving order status:', statusError);
+        if (situationError) {
+          console.error('Error saving order situation:', situationError);
         }
       }
 
@@ -547,9 +547,9 @@ export const useCreateSaleLogic = () => {
     clientFound,
     searchingClient,
     orderId,
-    orderStatus,
+    orderSituation,
     availableShippingCosts,
-    setOrderStatus,
+    setOrderSituation,
     handleInputChange,
     setSearchQuery,
     setSelectedVariation,

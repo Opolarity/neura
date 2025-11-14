@@ -20,14 +20,14 @@ interface Note {
 
 interface SaleSidebarProps {
   orderId?: number;
-  selectedStatus?: string;
-  onStatusChange?: (statusId: string) => void;
+  selectedSituation?: string;
+  onSituationChange?: (situationId: string) => void;
+  situations?: any[];
 }
 
-export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusChange }: SaleSidebarProps) => {
+export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onSituationChange, situations }: SaleSidebarProps) => {
   const { toast } = useToast();
-  const [statuses, setStatuses] = useState<any[]>([]);
-  const [selectedStatus, setSelectedStatus] = useState<string>(externalStatus || '');
+  const [selectedSituation, setSelectedSituation] = useState<string>(externalSituation || '');
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState('');
   const [loadingNotes, setLoadingNotes] = useState(false);
@@ -36,51 +36,35 @@ export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusC
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    loadStatuses();
     if (orderId) {
-      loadOrderStatus();
+      loadOrderSituation();
       loadNotes();
     }
   }, [orderId]);
 
   useEffect(() => {
-    if (externalStatus) {
-      setSelectedStatus(externalStatus);
+    if (externalSituation) {
+      setSelectedSituation(externalSituation);
     }
-  }, [externalStatus]);
+  }, [externalSituation]);
 
-  const loadStatuses = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('statuses')
-        .select('*')
-        .order('id');
-
-      if (error) throw error;
-      setStatuses(data || []);
-    } catch (error) {
-      console.error('Error loading statuses:', error);
-    }
-  };
-
-  const loadOrderStatus = async () => {
+  const loadOrderSituation = async () => {
     if (!orderId) return;
 
     try {
       const { data, error } = await supabase
-        .from('order_status')
-        .select('status_id')
+        .from('order_situations')
+        .select('situation_id')
         .eq('order_id', orderId)
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .eq('last_row', true)
         .maybeSingle();
 
       if (error) throw error;
       if (data) {
-        setSelectedStatus(data.status_id.toString());
+        setSelectedSituation(data.situation_id.toString());
       }
     } catch (error) {
-      console.error('Error loading order status:', error);
+      console.error('Error loading order situation:', error);
     }
   };
 
@@ -128,10 +112,36 @@ export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusC
     }
   };
 
-  const handleStatusChange = (statusId: string) => {
-    setSelectedStatus(statusId);
-    if (onStatusChange) {
-      onStatusChange(statusId);
+  const handleSituationChange = async (situationId: string) => {
+    setSelectedSituation(situationId);
+    
+    if (onSituationChange) {
+      onSituationChange(situationId);
+    }
+
+    if (!orderId) return;
+
+    try {
+      const { error } = await supabase.functions.invoke('update-order-situation', {
+        body: {
+          orderId: orderId,
+          situationId: parseInt(situationId),
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Estado actualizado',
+        description: 'El estado del pedido se ha actualizado correctamente',
+      });
+    } catch (error) {
+      console.error('Error updating order situation:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar el estado del pedido',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -268,14 +278,14 @@ export const SaleSidebar = ({ orderId, selectedStatus: externalStatus, onStatusC
           <CardTitle className="text-lg">Estado del Pedido</CardTitle>
         </CardHeader>
         <CardContent>
-          <Select value={selectedStatus} onValueChange={handleStatusChange}>
+          <Select value={selectedSituation} onValueChange={handleSituationChange}>
             <SelectTrigger>
               <SelectValue placeholder="Seleccionar estado" />
             </SelectTrigger>
             <SelectContent>
-              {statuses.map((status) => (
-                <SelectItem key={status.id} value={status.id.toString()}>
-                  {status.name}
+              {situations?.map((situation) => (
+                <SelectItem key={situation.id} value={situation.id.toString()}>
+                  {situation.name}
                 </SelectItem>
               ))}
             </SelectContent>
