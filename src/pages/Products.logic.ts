@@ -81,15 +81,15 @@ export const useProductsLogic = () => {
         if (price !== null && price !== undefined) {
           allPrices.push(Number(price));
         }
-        // Add sale price if not null
+        // Add sale price if not null (0 is valid)
         if (sale_price !== null && sale_price !== undefined) {
           allPrices.push(Number(sale_price));
         }
       });
     });
 
-    // Filter out invalid prices
-    const validPrices = allPrices.filter(p => p > 0);
+    // Filter out only NaN values, keep 0 as valid
+    const validPrices = allPrices.filter(p => !isNaN(p) && p >= 0);
 
     if (validPrices.length === 0) {
       return '0.00';
