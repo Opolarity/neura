@@ -808,6 +808,27 @@ export type Database = {
           },
         ]
       }
+      parameters: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+          value?: string
+        }
+        Relationships: []
+      }
       payment_methods: {
         Row: {
           active: boolean
