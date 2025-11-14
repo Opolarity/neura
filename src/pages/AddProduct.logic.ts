@@ -620,11 +620,10 @@ export const useAddProductLogic = () => {
       prices: v.prices.map(p => ({
         ...p,
         price: Number(p.price) || 0,
-        sale_price: Number(p.sale_price) || 0,
+        sale_price: (p.sale_price === null || p.sale_price === undefined) ? null : Number(p.sale_price),
       })),
       stock: v.stock.map(s => ({ ...s, stock: Number(s.stock) || 0 })),
     }));
-
     const productData = {
       productName,
       shortDescription,
@@ -704,7 +703,7 @@ export const useAddProductLogic = () => {
             prices: v.prices.map(p => ({
               ...p,
               price: Number(p.price) || 0,
-              sale_price: Number(p.sale_price) || 0,
+              sale_price: (p.sale_price === null || p.sale_price === undefined) ? null : Number(p.sale_price),
             })),
             stock: v.stock.map(s => ({ ...s, stock: Number(s.stock) || 0 })),
           }));
