@@ -17,9 +17,25 @@ Deno.serve(async (req) => {
 
     console.log('Starting expired reservations cancellation process...');
 
-    // Calculate 3 hours ago
-    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
-    console.log('Looking for reservations older than:', threeHoursAgo);
+    // Get the dynamic time value from parameters table
+    const { data: paramData, error: paramError } = await supabase
+      .from('parameters')
+      .select('value')
+      .eq('name', 'TimeToCancelPendingOrder')
+      .single();
+
+    if (paramError) {
+      console.error('Error fetching TimeToCancelPendingOrder parameter:', paramError);
+      console.log('Using default value of 3 hours');
+    }
+
+    // Use the parameter value or default to 3 hours
+    const hoursToCancel = paramData?.value ? parseInt(paramData.value) : 3;
+    console.log(`Using ${hoursToCancel} hours as cancellation threshold`);
+
+    // Calculate the cutoff time
+    const cutoffTime = new Date(Date.now() - hoursToCancel * 60 * 60 * 1000).toISOString();
+    console.log('Looking for reservations older than:', cutoffTime);
 
     // Find all order_situations with status RES (status_id=1) that are last_row and older than 3 hours
     const { data: expiredReservations, error: fetchError } = await supabase
@@ -27,7 +43,7 @@ Deno.serve(async (req) => {
       .select('id, order_id, situation_id, created_at')
       .eq('status_id', 1) // RES status
       .eq('last_row', true)
-      .lt('created_at', threeHoursAgo);
+      .lt('created_at', cutoffTime);
 
     if (fetchError) {
       console.error('Error fetching expired reservations:', fetchError);
