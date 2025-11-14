@@ -79,7 +79,7 @@ export const useAddProductLogic = () => {
       const singleVariation: ProductVariation = {
         id: 'single',
         attributes: [],
-        prices: priceLists.map(pl => ({ price_list_id: pl.id, price: 0, sale_price: 0 })),
+        prices: priceLists.map(pl => ({ price_list_id: pl.id, price: undefined, sale_price: undefined })),
         stock: warehouses.map(w => ({ warehouse_id: w.id, stock: 0 })),
         selectedImages: []
       };
@@ -241,7 +241,7 @@ export const useAddProductLogic = () => {
     const newVariations: ProductVariation[] = combinations.map((combination, index) => ({
       id: `variation-${index}`,
       attributes: combination,
-      prices: priceLists.map(pl => ({ price_list_id: pl.id, price: 0, sale_price: 0 })),
+      prices: priceLists.map(pl => ({ price_list_id: pl.id, price: undefined, sale_price: undefined })),
       stock: warehouses.map(w => ({ warehouse_id: w.id, stock: 0 })),
       selectedImages: []
     }));
@@ -401,7 +401,12 @@ export const useAddProductLogic = () => {
           ...variation,
           prices: variation.prices.map(price => 
             price.price_list_id === priceListId
-              ? { ...price, [field]: value === '' ? 0 : parseFloat(value) || 0 }
+              ? { 
+                  ...price, 
+                  [field]: value === '' 
+                    ? (field === 'sale_price' ? null : 0) 
+                    : parseFloat(value) || 0 
+                }
               : price
           )
         };
