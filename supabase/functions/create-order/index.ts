@@ -117,70 +117,118 @@ Deno.serve(async (req) => {
       console.log('Payment created');
     }
 
-    // Create initial order history entry
-    const { error: historyError } = await supabase
-      .from('order_history')
+    // Get the initial situation to check status
+    const initialSituationId = orderData.initial_situation_id || 1; // Default to 1 if not provided
+    
+    const { data: initialSituation } = await supabase
+      .from('situations')
+      .select('status_id, statuses(code)')
+      .eq('id', initialSituationId)
+      .single();
+
+    const statusCode = initialSituation?.statuses?.code;
+
+    // Create initial order situation entry
+    const { error: situationError } = await supabase
+      .from('order_situations')
       .insert({
         order_id: order.id,
-        module_id: 1, // Default module
-        status_id: 1, // Default status
-        situation_id: 1, // Default situation
+        status_id: initialSituation?.status_id || 1,
+        situation_id: initialSituationId,
         last_row: true,
       });
 
-    if (historyError) {
-      console.error('Error creating order history:', historyError);
-      throw historyError;
+    if (situationError) {
+      console.error('Error creating order situation:', situationError);
+      throw situationError;
     }
 
-    console.log('Order history created');
+    console.log('Order situation created');
 
-    // Get movement type for income (assuming code 'INC' or similar)
-    const { data: movementType } = await supabase
-      .from('movement_types')
-      .select('id')
-      .eq('code', 'INC')
-      .maybeSingle();
-
-    // Get payment method from order data
-    const paymentMethodId = orderData.payment?.payment_method_id || null;
-
-    // Get business account from payment method if exists
-    let businessAccountId = 1; // Default
-    if (paymentMethodId) {
-      const { data: paymentMethod } = await supabase
-        .from('payment_methods')
-        .select('business_account_id')
-        .eq('id', paymentMethodId)
-        .maybeSingle();
+    // Only create movement if status is CFM (confirmed)
+    if (statusCode === 'CFM') {
+      console.log('Status is CFM, creating movement and updating stock');
       
-      if (paymentMethod?.business_account_id) {
-        businessAccountId = paymentMethod.business_account_id;
-      }
-    }
+      // Get movement type for income
+      const { data: movementType } = await supabase
+        .from('movement_types')
+        .select('id')
+        .eq('code', 'INC')
+        .maybeSingle();
 
-    // Create movement record (income from sale)
-    if (movementType) {
-      const { error: movementError } = await supabase
-        .from('movements')
-        .insert({
-          movement_date: orderData.date || new Date().toISOString(),
-          movement_type_id: movementType.id,
-          movement_category_id: 1, // Default category, adjust as needed
-          amount: orderData.total,
-          business_account_id: businessAccountId,
-          payment_method_id: paymentMethodId,
-          warehouse_id: warehouseId,
-          user_id: user.id,
-          description: `Venta - Orden #${order.id} - ${orderData.customer_name} ${orderData.customer_lastname || ''}`.trim(),
-        });
+      // Get payment method from order data
+      const paymentMethodId = orderData.payment?.payment_method_id || null;
 
-      if (movementError) {
-        console.error('Error creating movement:', movementError);
-        // Don't throw, just log the error
-      } else {
-        console.log('Movement created for order:', order.id);
+      // Get business account from payment method if exists
+      let businessAccountId = 1; // Default
+      if (paymentMethodId) {
+        const { data: paymentMethod } = await supabase
+          .from('payment_methods')
+          .select('business_account_id')
+          .eq('id', paymentMethodId)
+          .maybeSingle();
+        
+        if (paymentMethod?.business_account_id) {
+          businessAccountId = paymentMethod.business_account_id;
+        }
       }
+
+      // Create movement record (income from sale)
+      if (movementType) {
+        const { error: movementError } = await supabase
+          .from('movements')
+          .insert({
+            movement_date: orderData.date || new Date().toISOString(),
+            movement_type_id: movementType.id,
+            movement_category_id: 1, // Default category
+            amount: orderData.total,
+            business_account_id: businessAccountId,
+            payment_method_id: paymentMethodId,
+            warehouse_id: warehouseId,
+            user_id: user.id,
+            description: `Venta - Orden #${order.id} - ${orderData.customer_name} ${orderData.customer_lastname || ''}`.trim(),
+          });
+
+        if (movementError) {
+          console.error('Error creating movement:', movementError);
+        } else {
+          console.log('Movement created for order:', order.id);
+        }
+      }
+
+      // Update order_products to set reservation = false since it's confirmed
+      const { error: updateProductsError } = await supabase
+        .from('order_products')
+        .update({ reservation: false })
+        .eq('order_id', order.id);
+
+      if (updateProductsError) {
+        console.error('Error updating order_products reservation:', updateProductsError);
+      }
+
+      // Reduce stock for confirmed orders
+      const { data: orderProducts } = await supabase
+        .from('order_products')
+        .select('product_variation_id, quantity, warehouses_id')
+        .eq('order_id', order.id);
+
+      if (orderProducts) {
+        for (const product of orderProducts) {
+          const { error: stockError } = await supabase
+            .from('product_stock')
+            .update({ 
+              stock: supabase.raw(`stock - ${product.quantity}`)
+            })
+            .eq('product_variation_id', product.product_variation_id)
+            .eq('warehouse_id', product.warehouses_id);
+
+          if (stockError) {
+            console.error('Error updating stock:', stockError);
+          }
+        }
+      }
+    } else {
+      console.log(`Status is ${statusCode}, movement will be created when status changes to CFM`);
     }
 
     return new Response(

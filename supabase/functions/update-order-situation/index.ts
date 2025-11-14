@@ -118,35 +118,87 @@ Deno.serve(async (req) => {
     } else if (statusCode === 'CFM') {
       // Confirmation status: Mark as reservation = false, reduce stock
       console.log('Setting reservation = false and reducing stock');
-      
       for (const product of orderProducts) {
-        // Update order_products to mark as not reserved
         await supabase
           .from('order_products')
           .update({ reservation: false })
           .eq('id', product.id);
 
-        // Only reduce stock if it was previously reserved (to avoid double reduction)
-        if (product.reservation) {
-          console.log(`Reducing stock for variation ${product.product_variation_id}: ${product.quantity}`);
-          
-          // Reduce stock
-          const { error: stockError } = await supabase.rpc('update_stock_quantity', {
-            p_variation_id: product.product_variation_id,
-            p_warehouse_id: product.warehouses_id || warehouseId,
-            p_quantity: -product.quantity, // Negative to reduce
+        // Reduce stock
+        const { error: stockError } = await supabase
+          .from('product_stock')
+          .update({ 
+            stock: supabase.raw(`stock - ${product.quantity}`)
+          })
+          .eq('product_variation_id', product.product_variation_id)
+          .eq('warehouse_id', product.warehouses_id);
+
+        if (stockError) {
+          console.error('Error updating stock:', stockError);
+          throw stockError;
+        }
+      }
+
+      // Create income movement when confirming order
+      console.log('Creating income movement for confirmed order');
+
+      // Get order details
+      const { data: order } = await supabase
+        .from('orders')
+        .select('total, customer_name, customer_lastname, date')
+        .eq('id', orderId)
+        .single();
+
+      // Get movement type for income
+      const { data: movementType } = await supabase
+        .from('movement_types')
+        .select('id')
+        .eq('code', 'INC')
+        .maybeSingle();
+
+      // Get payment method from order payment
+      const { data: orderPayment } = await supabase
+        .from('order_payment')
+        .select('payment_method_id')
+        .eq('order_id', orderId)
+        .maybeSingle();
+
+      const paymentMethodId = orderPayment?.payment_method_id || null;
+
+      // Get business account from payment method
+      let businessAccountId = 1; // Default
+      if (paymentMethodId) {
+        const { data: paymentMethod } = await supabase
+          .from('payment_methods')
+          .select('business_account_id')
+          .eq('id', paymentMethodId)
+          .maybeSingle();
+        
+        if (paymentMethod?.business_account_id) {
+          businessAccountId = paymentMethod.business_account_id;
+        }
+      }
+
+      // Create movement
+      if (movementType && order) {
+        const { error: movementError } = await supabase
+          .from('movements')
+          .insert({
+            movement_date: order.date || new Date().toISOString(),
+            movement_type_id: movementType.id,
+            movement_category_id: 1, // Default category
+            amount: order.total,
+            business_account_id: businessAccountId,
+            payment_method_id: paymentMethodId,
+            warehouse_id: warehouseId,
+            user_id: user.id,
+            description: `Venta - Orden #${orderId} - ${order.customer_name} ${order.customer_lastname || ''}`.trim(),
           });
 
-          if (stockError) {
-            // If RPC doesn't exist, use direct update
-            await supabase
-              .from('product_stock')
-              .update({ 
-                stock: supabase.sql`stock - ${product.quantity}` 
-              })
-              .eq('product_variation_id', product.product_variation_id)
-              .eq('warehouse_id', product.warehouses_id || warehouseId);
-          }
+        if (movementError) {
+          console.error('Error creating movement:', movementError);
+        } else {
+          console.log('Movement created for order:', orderId);
         }
       }
     }
