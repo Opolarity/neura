@@ -216,12 +216,12 @@ serve(async (req) => {
 
       // Create prices
       const priceInserts = variation.prices
-        .filter(p => p.price > 0 || p.sale_price > 0)
+        .filter(p => (p.price !== undefined && p.price > 0) || (p.sale_price !== undefined && p.sale_price !== null && p.sale_price > 0))
         .map(price => ({
           product_variation_id: variationRecord.id,
           price_list_id: price.price_list_id,
-          price: price.price,
-          sale_price: price.sale_price
+          price: price.price !== undefined ? price.price : 0,
+          sale_price: price.sale_price !== undefined && price.sale_price !== null ? price.sale_price : null
         }));
 
       if (priceInserts.length > 0) {
