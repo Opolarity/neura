@@ -214,16 +214,29 @@ Deno.serve(async (req) => {
 
       if (orderProducts) {
         for (const product of orderProducts) {
+          // Get current stock
+          const { data: currentStock, error: fetchError } = await supabase
+            .from('product_stock')
+            .select('stock')
+            .eq('product_variation_id', product.product_variation_id)
+            .eq('warehouse_id', product.warehouses_id)
+            .single();
+
+          if (fetchError) {
+            console.error('Error fetching current stock:', fetchError);
+            continue; // Skip this product but continue with others
+          }
+
+          const newStock = (currentStock?.stock || 0) - product.quantity;
+
           const { error: stockError } = await supabase
             .from('product_stock')
-            .update({ 
-              stock: supabase.raw(`stock - ${product.quantity}`)
-            })
+            .update({ stock: newStock })
             .eq('product_variation_id', product.product_variation_id)
             .eq('warehouse_id', product.warehouses_id);
 
           if (stockError) {
-            console.error('Error updating stock:', stockError);
+            console.error('Error reducing stock:', stockError);
           }
         }
       }
