@@ -115,9 +115,10 @@ Deno.serve(async (req) => {
           .update({ reservation: true })
           .eq('id', product.id);
       }
-    } else if (statusCode === 'CFM') {
+    } else if (statusCode === 'CFM' && previousStatusCode !== 'CFM') {
       // Confirmation status: Mark as reservation = false, reduce stock
-      console.log('Setting reservation = false and reducing stock');
+      // Only execute if transitioning TO CFM (not if already CFM)
+      console.log('Transitioning to CFM status - Setting reservation = false and reducing stock');
       for (const product of orderProducts) {
         await supabase
           .from('order_products')
