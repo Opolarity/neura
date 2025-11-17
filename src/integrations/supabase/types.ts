@@ -56,6 +56,90 @@ export type Database = {
         }
         Relationships: []
       }
+      cart_products: {
+        Row: {
+          bought: boolean
+          cart_id: number
+          id: number
+          product_discount: number | null
+          product_price: number
+          product_variation_id: number
+          quantity: number
+          warehouse_id: number | null
+        }
+        Insert: {
+          bought?: boolean
+          cart_id: number
+          id?: number
+          product_discount?: number | null
+          product_price: number
+          product_variation_id: number
+          quantity: number
+          warehouse_id?: number | null
+        }
+        Update: {
+          bought?: boolean
+          cart_id?: number
+          id?: number
+          product_discount?: number | null
+          product_price?: number
+          product_variation_id?: number
+          quantity?: number
+          warehouse_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_products_cart_id_fkey"
+            columns: ["cart_id"]
+            isOneToOne: false
+            referencedRelation: "carts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_products_product_variation_id_fkey"
+            columns: ["product_variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_products_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carts: {
+        Row: {
+          created_at: string
+          id: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+        ]
+      }
       categories: {
         Row: {
           description: string | null
@@ -1669,7 +1753,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_product_attribute_groups: {
+        Args: { p_product_id: number }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
