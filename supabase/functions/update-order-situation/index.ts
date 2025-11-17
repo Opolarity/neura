@@ -162,11 +162,24 @@ Deno.serve(async (req) => {
         .single();
 
       // Get movement type for income
-      const { data: movementType } = await supabase
-        .from('movement_types')
-        .select('id')
-        .eq('code', 'INC')
-        .maybeSingle();
+       // Get movement type for income (support 'INC' and '+')
+       let movementType = null as { id: number } | null;
+       {
+         const { data } = await supabase
+           .from('movement_types')
+           .select('id')
+           .eq('code', 'INC')
+           .maybeSingle();
+         movementType = data ?? null;
+       }
+       if (!movementType) {
+         const { data } = await supabase
+           .from('movement_types')
+           .select('id')
+           .eq('code', '+')
+           .maybeSingle();
+         movementType = data ?? null;
+       }
 
       // Get payment method from order payment
       const { data: orderPayment } = await supabase
