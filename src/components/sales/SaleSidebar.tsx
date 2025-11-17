@@ -112,36 +112,11 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
     }
   };
 
-  const handleSituationChange = async (situationId: string) => {
+  const handleSituationChange = (situationId: string) => {
     setSelectedSituation(situationId);
     
     if (onSituationChange) {
       onSituationChange(situationId);
-    }
-
-    if (!orderId) return;
-
-    try {
-      const { error } = await supabase.functions.invoke('update-order-situation', {
-        body: {
-          orderId: orderId,
-          situationId: parseInt(situationId),
-        },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Estado actualizado',
-        description: 'El estado del pedido se ha actualizado correctamente',
-      });
-    } catch (error) {
-      console.error('Error updating order situation:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo actualizar el estado del pedido',
-        variant: 'destructive',
-      });
     }
   };
 
