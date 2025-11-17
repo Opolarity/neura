@@ -491,7 +491,10 @@ export const useCreateSaleLogic = () => {
       } else {
         // Create new order
         const response = await supabase.functions.invoke('create-order', {
-          body: orderData,
+          body: {
+            ...orderData,
+            initial_situation_id: orderSituation ? parseInt(orderSituation) : 1,
+          },
         });
         error = response.error;
         if (response.data?.order?.id) {
