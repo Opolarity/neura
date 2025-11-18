@@ -1308,6 +1308,145 @@ export type Database = {
           },
         ]
       }
+      returns: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          customer_document_number: string
+          customer_document_type_id: number | null
+          id: number
+          order_id: number
+          reason: string | null
+          return_type_id: number
+          shipping_return: boolean
+          situation_id: number
+          status_id: number
+          total_exchange_difference: number | null
+          total_refund_amount: number | null
+          total_return: boolean
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          customer_document_number: string
+          customer_document_type_id?: number | null
+          id?: never
+          order_id: number
+          reason?: string | null
+          return_type_id: number
+          shipping_return?: boolean
+          situation_id: number
+          status_id: number
+          total_exchange_difference?: number | null
+          total_refund_amount?: number | null
+          total_return?: boolean
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          customer_document_number?: string
+          customer_document_type_id?: number | null
+          id?: never
+          order_id?: number
+          reason?: string | null
+          return_type_id?: number
+          shipping_return?: boolean
+          situation_id?: number
+          status_id?: number
+          total_exchange_difference?: number | null
+          total_refund_amount?: number | null
+          total_return?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "returns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "returns_customer_document_type_id_fkey"
+            columns: ["customer_document_type_id"]
+            isOneToOne: false
+            referencedRelation: "document_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_return_type_id_fkey"
+            columns: ["return_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_situation_id_fkey"
+            columns: ["situation_id"]
+            isOneToOne: false
+            referencedRelation: "situations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      returns_products: {
+        Row: {
+          created_at: string | null
+          id: number
+          output: boolean
+          product_amount: number | null
+          product_variation_id: number
+          quantity: number
+          return_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: never
+          output?: boolean
+          product_amount?: number | null
+          product_variation_id: number
+          quantity: number
+          return_id: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: never
+          output?: boolean
+          product_amount?: number | null
+          product_variation_id?: number
+          quantity?: number
+          return_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "returns_products_product_variation_id_fkey"
+            columns: ["product_variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_products_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "returns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_functions: {
         Row: {
           function_id: number
@@ -1572,6 +1711,58 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movements: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: number
+          manual_movement: boolean
+          order_id: number | null
+          product_variation_id: number
+          quantity: number
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: never
+          manual_movement: boolean
+          order_id?: number | null
+          product_variation_id: number
+          quantity: number
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: never
+          manual_movement?: boolean
+          order_id?: number | null
+          product_variation_id?: number
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "stock_movements_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_product_variation_id_fkey"
+            columns: ["product_variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations"
             referencedColumns: ["id"]
           },
         ]
