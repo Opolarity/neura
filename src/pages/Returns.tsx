@@ -19,7 +19,6 @@ interface Return {
   order_id: number;
   customer_document_number: string;
   reason: string | null;
-  total_return: boolean;
   shipping_return: boolean;
   total_refund_amount: number | null;
   total_exchange_difference: number | null;
@@ -101,7 +100,7 @@ const Returns = () => {
             Gestiona las devoluciones y cambios de productos
           </p>
         </div>
-        <Button onClick={() => navigate('/returns/create')}>
+        <Button onClick={() => navigate('/returns/add')}>
           <Plus className="w-4 h-4 mr-2" />
           Nueva Devolución
         </Button>
