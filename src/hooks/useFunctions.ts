@@ -67,14 +67,20 @@ const transformToMenuStructure = (functions: Function[]): MenuFunction[] => {
       return parent;
     }
 
-    // For settings, we need to group by the immediate children (like "Usuarios", "Roles")
-    if (parent.code === 'settings') {
-      const groups = children.filter(child => {
-        // Get grandchildren for this child
-        const grandchildren = functions.filter(f => f.parent_function === child.id);
-        return grandchildren.length > 0;
-      });
+    // Find children that have their own children (Level 2 items with grandchildren)
+    const groups = children.filter(child => {
+      const grandchildren = functions.filter(f => f.parent_function === child.id);
+      return grandchildren.length > 0;
+    });
 
+    // Find children without children (direct items with location)
+    const directItems = children.filter(child => {
+      const grandchildren = functions.filter(f => f.parent_function === child.id);
+      return grandchildren.length === 0;
+    });
+
+    // If we have groups (children with grandchildren), create hierarchical structure
+    if (groups.length > 0) {
       const subItems = groups.map(group => ({
         label: group.name,
         items: functions
@@ -82,16 +88,24 @@ const transformToMenuStructure = (functions: Function[]): MenuFunction[] => {
           .sort((a, b) => (a.order || 0) - (b.order || 0))
       }));
 
+      // If there are also direct items, add them as a group with the parent name
+      if (directItems.length > 0) {
+        subItems.unshift({
+          label: parent.name,
+          items: directItems
+        });
+      }
+
       return {
         ...parent,
         subItems
       };
     }
 
-    // For other menus like products, create direct submenu structure
+    // If no groups, create simple structure with parent name as label
     const subItems = [{
       label: parent.name,
-      items: children
+      items: directItems
     }];
 
     return {
