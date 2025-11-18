@@ -1106,6 +1106,39 @@ export type Database = {
           },
         ]
       }
+      product_tags: {
+        Row: {
+          id: number
+          product_id: number
+          tag_id: number
+        }
+        Insert: {
+          id?: number
+          product_id: number
+          tag_id: number
+        }
+        Update: {
+          id?: number
+          product_id?: number
+          tag_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_tags_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variation_images: {
         Row: {
           id: number
@@ -1543,6 +1576,27 @@ export type Database = {
           },
         ]
       }
+      tags: {
+        Row: {
+          code: string
+          created_at: string
+          id: number
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: number
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       term_groups: {
         Row: {
           code: string
@@ -1583,6 +1637,38 @@ export type Database = {
             columns: ["term_group_id"]
             isOneToOne: false
             referencedRelation: "term_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      types: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: number
+          module_id: number
+          name: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: number
+          module_id: number
+          name: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: number
+          module_id?: number
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "types_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
             referencedColumns: ["id"]
           },
         ]
