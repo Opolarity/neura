@@ -1323,7 +1323,6 @@ export type Database = {
           status_id: number
           total_exchange_difference: number | null
           total_refund_amount: number | null
-          total_return: boolean
         }
         Insert: {
           created_at?: string | null
@@ -1339,7 +1338,6 @@ export type Database = {
           status_id: number
           total_exchange_difference?: number | null
           total_refund_amount?: number | null
-          total_return?: boolean
         }
         Update: {
           created_at?: string | null
@@ -1355,7 +1353,6 @@ export type Database = {
           status_id?: number
           total_exchange_difference?: number | null
           total_refund_amount?: number | null
-          total_return?: boolean
         }
         Relationships: [
           {
@@ -2032,6 +2029,10 @@ export type Database = {
     Functions: {
       get_product_attribute_groups: {
         Args: { p_product_id: number }
+        Returns: Json
+      }
+      get_variation_by_terms: {
+        Args: { p_product_id: number; terms_id: number[] }
         Returns: Json
       }
     }

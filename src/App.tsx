@@ -34,6 +34,7 @@ import ProductCosts from "./pages/ProductCosts";
 import AddExpense from "./pages/expenses/AddExpense";
 import Movements from "./pages/Movements";
 import Returns from "./pages/Returns";
+import CreateReturn from "./pages/CreateReturn";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="movements" element={<Movements />} />
               <Route path="movements/add/expenses" element={<AddExpense />} />
               <Route path="returns" element={<Returns />} />
+              <Route path="returns/add" element={<CreateReturn />} />
               <Route path="settings" element={<Settings />}>
                 <Route path="users" element={<UsersList />} />
                 <Route path="users/create" element={<CreateUser />} />
