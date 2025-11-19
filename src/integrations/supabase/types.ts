@@ -2001,6 +2001,7 @@ export type Database = {
           neighborhood_id: number
           state_id: number
           street: string
+          web: boolean
         }
         Insert: {
           city_id: number
@@ -2010,6 +2011,7 @@ export type Database = {
           neighborhood_id: number
           state_id: number
           street: string
+          web?: boolean
         }
         Update: {
           city_id?: number
@@ -2019,6 +2021,7 @@ export type Database = {
           neighborhood_id?: number
           state_id?: number
           street?: string
+          web?: boolean
         }
         Relationships: []
       }
