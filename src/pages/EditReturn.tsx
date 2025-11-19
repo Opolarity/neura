@@ -400,7 +400,7 @@ const EditReturn = () => {
           reason: reason || null,
           shipping_return: shippingReturn,
           situation_id: Number(situationId),
-          status_id: 1,
+          status_id: situations.find(s => s.id === Number(situationId))?.status_id,
           total_refund_amount: (returnTypeCode === 'DVT' || returnTypeCode === 'DVP') ? totals.returnTotal : null,
           total_exchange_difference: returnTypeCode === 'CAM' ? totals.difference : null,
         })
