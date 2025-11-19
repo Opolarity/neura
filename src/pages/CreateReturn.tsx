@@ -86,6 +86,11 @@ const CreateReturn = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedVariation, setSelectedVariation] = useState<any>(null);
   const [open, setOpen] = useState(false);
+  
+  // Order search and pagination
+  const [orderSearch, setOrderSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   useEffect(() => {
     loadInitialData();
@@ -197,6 +202,26 @@ const CreateReturn = () => {
     setDocumentNumber(selectedOrder.document_number);
     setShowOrderModal(false);
   };
+
+  // Filter and paginate orders
+  const filteredOrders = useMemo(() => {
+    return orders.filter(order => {
+      const searchTerm = orderSearch.toLowerCase();
+      return (
+        order.document_number.toLowerCase().includes(searchTerm) ||
+        order.customer_name?.toLowerCase().includes(searchTerm) ||
+        order.customer_lastname?.toLowerCase().includes(searchTerm)
+      );
+    });
+  }, [orders, orderSearch]);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = useMemo(() => {
+    return filteredOrders.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [filteredOrders, currentPage, itemsPerPage]);
 
   const allVariations = useMemo(() => {
     if (!products) return [];
@@ -468,61 +493,97 @@ const CreateReturn = () => {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div>
-              <Label>Tipo de Devolución/Cambio</Label>
-              <Select value={selectedReturnType} onValueChange={setSelectedReturnType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione el tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {returnTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id.toString()}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="returnType">Tipo de Devolución/Cambio *</Label>
+                <Select value={selectedReturnType} onValueChange={setSelectedReturnType}>
+                  <SelectTrigger id="returnType">
+                    <SelectValue placeholder="Seleccione el tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {returnTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.id.toString()}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="orderSearch">Buscar Orden</Label>
+                <Input
+                  id="orderSearch"
+                  placeholder="Buscar por número o cliente..."
+                  value={orderSearch}
+                  onChange={(e) => {
+                    setOrderSearch(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                />
+              </div>
             </div>
 
             <div>
               <Label>Órdenes Disponibles</Label>
-              <div className="border rounded-lg mt-2 max-h-96 overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Documento</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead className="text-right">Acción</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orders.map((order) => (
-                      <TableRow 
-                        key={order.id}
-                        className={selectedOrder?.id === order.id ? 'bg-accent' : ''}
-                      >
-                        <TableCell>#{order.id}</TableCell>
-                        <TableCell>{order.customer_name} {order.customer_lastname}</TableCell>
-                        <TableCell>{order.document_number}</TableCell>
-                        <TableCell>${order.total.toFixed(2)}</TableCell>
-                        <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant={selectedOrder?.id === order.id ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedOrder(order)}
-                          >
-                            {selectedOrder?.id === order.id ? <Check className="w-4 h-4" /> : 'Seleccionar'}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="grid gap-2 mt-2">
+                {paginatedOrders.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">
+                    {orderSearch ? 'No se encontraron órdenes' : 'No hay órdenes disponibles para devolución'}
+                  </p>
+                ) : (
+                  paginatedOrders.map((order) => (
+                    <Card
+                      key={order.id}
+                      className={`cursor-pointer transition-colors ${
+                        selectedOrder?.id === order.id ? 'border-primary bg-primary/5' : 'hover:bg-accent'
+                      }`}
+                      onClick={() => setSelectedOrder(order)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-sm">Orden #{order.document_number}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {order.customer_name} {order.customer_lastname}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-sm">${order.total.toFixed(2)}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(order.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
+
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Anterior
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Siguiente
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -530,7 +591,20 @@ const CreateReturn = () => {
             <Button variant="outline" onClick={() => navigate('/returns')}>
               Cancelar
             </Button>
-            <Button onClick={handleOrderSelect} disabled={!selectedOrder || !selectedReturnType}>
+            <Button 
+              onClick={() => {
+                if (!selectedReturnType) {
+                  toast.error('Debe seleccionar un tipo de devolución/cambio');
+                  return;
+                }
+                if (!selectedOrder) {
+                  toast.error('Debe seleccionar una orden');
+                  return;
+                }
+                handleOrderSelect();
+              }} 
+              disabled={!selectedOrder || !selectedReturnType}
+            >
               Continuar
             </Button>
           </DialogFooter>
