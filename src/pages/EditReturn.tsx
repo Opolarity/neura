@@ -181,16 +181,30 @@ const EditReturn = () => {
       setDocumentTypes(docTypesData || []);
       setReturnTypes(typesData || []);
 
-      // Set return products
-      const formattedReturnProducts = returnProductsData?.map(rp => ({
-        product_variation_id: rp.product_variation_id,
-        quantity: rp.quantity,
-        product_name: rp.variations.products.title,
-        sku: rp.variations.sku,
-        price: rp.product_amount || 0,
-        output: rp.output
-      })) || [];
-      setReturnProducts(formattedReturnProducts);
+      // Set return products based on return type
+      if (returnData.types?.code === 'DVT') {
+        // For total return, all order products are automatically returned
+        const allOrderProducts = orderProductsData?.map(op => ({
+          product_variation_id: op.product_variation_id,
+          quantity: op.quantity,
+          product_name: op.variations.products.title,
+          sku: op.variations.sku,
+          price: op.product_price,
+          output: true
+        })) || [];
+        setReturnProducts(allOrderProducts);
+      } else {
+        // For partial return or exchange, load the selected products
+        const formattedReturnProducts = returnProductsData?.filter(rp => rp.output).map(rp => ({
+          product_variation_id: rp.product_variation_id,
+          quantity: rp.quantity,
+          product_name: rp.variations.products.title,
+          sku: rp.variations.sku,
+          price: rp.product_amount || 0,
+          output: rp.output
+        })) || [];
+        setReturnProducts(formattedReturnProducts);
+      }
 
       // If it's an exchange, load the new products (they would be returns_products with output=false)
       if (returnData.types?.code === 'CAM') {
@@ -323,9 +337,19 @@ const EditReturn = () => {
   };
 
   const calculateTotals = () => {
-    const returnTotal = returnProducts.reduce((sum, product) => {
-      return sum + (product.price * product.quantity);
-    }, 0);
+    let returnTotal = 0;
+
+    if (returnTypeCode === 'DVT') {
+      // For total return, sum all order products
+      returnTotal = orderProducts.reduce((sum, product) => {
+        return sum + (product.product_price * product.quantity);
+      }, 0);
+    } else {
+      // For partial return or exchange, sum selected products
+      returnTotal = returnProducts.reduce((sum, product) => {
+        return sum + (product.price * product.quantity);
+      }, 0);
+    }
 
     const newTotal = newProducts.reduce((sum, product) => {
       return sum + ((product.price - product.discount) * product.quantity);
@@ -339,7 +363,8 @@ const EditReturn = () => {
   };
 
   const handleSave = async () => {
-    if (returnProducts.length === 0) {
+    // Validation based on return type
+    if (returnTypeCode === 'DVP' && returnProducts.length === 0) {
       toast.error('Debe agregar al menos un producto a devolver');
       return;
     }
@@ -349,9 +374,15 @@ const EditReturn = () => {
       return;
     }
 
-    if (returnTypeCode === 'CAM' && newProducts.length === 0) {
-      toast.error('Debe agregar productos de cambio');
-      return;
+    if (returnTypeCode === 'CAM') {
+      if (returnProducts.length === 0) {
+        toast.error('Debe seleccionar productos a devolver');
+        return;
+      }
+      if (newProducts.length === 0) {
+        toast.error('Debe agregar productos de cambio');
+        return;
+      }
     }
 
     setSaving(true);
@@ -370,7 +401,7 @@ const EditReturn = () => {
           shipping_return: shippingReturn,
           situation_id: Number(situationId),
           status_id: 1,
-          total_refund_amount: returnTypeCode === 'DEV' ? totals.returnTotal : null,
+          total_refund_amount: (returnTypeCode === 'DVT' || returnTypeCode === 'DVP') ? totals.returnTotal : null,
           total_exchange_difference: returnTypeCode === 'CAM' ? totals.difference : null,
         })
         .eq('id', Number(id));
@@ -385,14 +416,28 @@ const EditReturn = () => {
 
       if (deleteError) throw deleteError;
 
-      // Insert return products (output = true)
-      const returnProductsToInsert = returnProducts.map(product => ({
-        return_id: Number(id),
-        product_variation_id: product.product_variation_id,
-        quantity: product.quantity,
-        product_amount: product.price,
-        output: true
-      }));
+      // Prepare return products based on type
+      let returnProductsToInsert = [];
+      
+      if (returnTypeCode === 'DVT') {
+        // For total return, insert all order products
+        returnProductsToInsert = orderProducts.map(p => ({
+          return_id: Number(id),
+          product_variation_id: p.product_variation_id,
+          quantity: p.quantity,
+          product_amount: p.product_price,
+          output: true
+        }));
+      } else {
+        // For partial return or exchange, insert selected products
+        returnProductsToInsert = returnProducts.map(product => ({
+          return_id: Number(id),
+          product_variation_id: product.product_variation_id,
+          quantity: product.quantity,
+          product_amount: product.price,
+          output: true
+        }));
+      }
 
       const { error: insertReturnError } = await supabase
         .from('returns_products')
@@ -544,51 +589,16 @@ const EditReturn = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Productos a Devolver</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label>Productos de la Orden</Label>
-                <div className="border rounded-lg mt-2">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Producto</TableHead>
-                        <TableHead>SKU</TableHead>
-                        <TableHead>Cantidad</TableHead>
-                        <TableHead>Precio</TableHead>
-                        <TableHead className="text-right">Acción</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orderProducts.map((product) => (
-                        <TableRow key={product.id}>
-                          <TableCell>{product.variations.products.title}</TableCell>
-                          <TableCell>{product.variations.sku}</TableCell>
-                          <TableCell>{product.quantity}</TableCell>
-                          <TableCell>${product.product_price.toFixed(2)}</TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addReturnProduct(product)}
-                            >
-                              <Plus className="w-4 h-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {returnProducts.length > 0 && (
+        {/* Products to Return - Only for DVP and CAM */}
+        {(returnTypeCode === 'DVP' || returnTypeCode === 'CAM') && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Productos a Devolver</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
                 <div>
-                  <Label>Productos a Devolver</Label>
+                  <Label>Productos de la Orden</Label>
                   <div className="border rounded-lg mt-2">
                     <Table>
                       <TableHeader>
@@ -596,34 +606,24 @@ const EditReturn = () => {
                           <TableHead>Producto</TableHead>
                           <TableHead>SKU</TableHead>
                           <TableHead>Cantidad</TableHead>
-                          <TableHead>Precio Unitario</TableHead>
-                          <TableHead>Total</TableHead>
+                          <TableHead>Precio</TableHead>
                           <TableHead className="text-right">Acción</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {returnProducts.map((product, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{product.product_name}</TableCell>
-                            <TableCell>{product.sku}</TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                min="1"
-                                value={product.quantity}
-                                onChange={(e) => updateReturnProductQuantity(index, Number(e.target.value))}
-                                className="w-20"
-                              />
-                            </TableCell>
-                            <TableCell>${product.price.toFixed(2)}</TableCell>
-                            <TableCell>${(product.price * product.quantity).toFixed(2)}</TableCell>
+                        {orderProducts.map((product) => (
+                          <TableRow key={product.id}>
+                            <TableCell>{product.variations.products.title}</TableCell>
+                            <TableCell>{product.variations.sku}</TableCell>
+                            <TableCell>{product.quantity}</TableCell>
+                            <TableCell>${product.product_price.toFixed(2)}</TableCell>
                             <TableCell className="text-right">
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                onClick={() => removeReturnProduct(index)}
+                                onClick={() => addReturnProduct(product)}
                               >
-                                <Trash2 className="w-4 h-4 text-destructive" />
+                                <Plus className="w-4 h-4" />
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -632,10 +632,58 @@ const EditReturn = () => {
                     </Table>
                   </div>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
+                {returnProducts.length > 0 && (
+                  <div>
+                    <Label>Productos a Devolver</Label>
+                    <div className="border rounded-lg mt-2">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Producto</TableHead>
+                            <TableHead>SKU</TableHead>
+                            <TableHead>Cantidad</TableHead>
+                            <TableHead>Precio Unitario</TableHead>
+                            <TableHead>Total</TableHead>
+                            <TableHead className="text-right">Acción</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {returnProducts.map((product, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{product.product_name}</TableCell>
+                              <TableCell>{product.sku}</TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={product.quantity}
+                                  onChange={(e) => updateReturnProductQuantity(index, Number(e.target.value))}
+                                  className="w-20"
+                                />
+                              </TableCell>
+                              <TableCell>${product.price.toFixed(2)}</TableCell>
+                              <TableCell>${(product.price * product.quantity).toFixed(2)}</TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeReturnProduct(index)}
+                                >
+                                  <Trash2 className="w-4 h-4 text-destructive" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {returnTypeCode === 'CAM' && (
           <Card>
