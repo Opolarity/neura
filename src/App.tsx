@@ -36,6 +36,7 @@ import Movements from "./pages/Movements";
 import Returns from "./pages/Returns";
 import CreateReturn from "./pages/CreateReturn";
 import EditReturn from "./pages/EditReturn";
+import Reports from "./pages/Reports";
 
 const queryClient = new QueryClient();
 
@@ -74,7 +75,7 @@ const App = () => (
                 <Route path="create" element={<CreateClient />} />
                 <Route path="edit/:id" element={<EditClient />} />
               </Route>
-              <Route path="reports" element={<div className="p-6"><h1 className="text-2xl font-bold">Reportes</h1><p className="text-gray-600">Funcionalidad en desarrollo</p></div>} />
+              <Route path="reports" element={<Reports />} />
               <Route path="movements" element={<Movements />} />
               <Route path="movements/add/expenses" element={<AddExpense />} />
               <Route path="returns" element={<Returns />} />
