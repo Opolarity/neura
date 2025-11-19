@@ -59,7 +59,7 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
             </div>
             {isOpen && (
               <div>
-                <h1 className="font-bold text-lg">OVERTAKE</h1>
+                <h1 className="font-bold text-lg">FUSE</h1>
                 <p className="text-xs text-slate-400">ERP System</p>
               </div>
             )}
@@ -84,7 +84,7 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
             </div>
             {isOpen && (
               <div>
-                <h1 className="font-bold text-lg">OVERTAKE</h1>
+                <h1 className="font-bold text-lg">FUSE</h1>
                 <p className="text-xs text-slate-400">ERP System</p>
               </div>
             )}
@@ -108,7 +108,7 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
           </div>
           {isOpen && (
             <div>
-              <h1 className="font-bold text-lg">OVERTAKE</h1>
+              <h1 className="font-bold text-lg">FUSE</h1>
               <p className="text-xs text-slate-400">ERP System</p>
             </div>
           )}
