@@ -387,6 +387,9 @@ const EditReturn = () => {
 
     setSaving(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuario no autenticado');
+
       const totals = calculateTotals();
       
       // Update return
@@ -460,6 +463,84 @@ const EditReturn = () => {
           .insert(newProductsToInsert);
 
         if (insertNewError) throw insertNewError;
+      }
+
+      // Check if situation has status "CFM" to update stock
+      const selectedSituation = situations.find(s => s.id === Number(situationId));
+      if (selectedSituation) {
+        const { data: statusData } = await supabase
+          .from('statuses')
+          .select('code')
+          .eq('id', selectedSituation.status_id)
+          .single();
+
+        if (statusData?.code === 'CFM') {
+          // Prepare all products for stock movements
+          let allReturnProducts = [];
+          
+          if (returnTypeCode === 'DVT') {
+            // For total return, use all order products
+            allReturnProducts = orderProducts.map(p => ({
+              product_variation_id: p.product_variation_id,
+              quantity: p.quantity,
+              output: false
+            }));
+          } else {
+            // For partial return or exchange, use selected products
+            allReturnProducts = returnProducts.map(p => ({
+              product_variation_id: p.product_variation_id,
+              quantity: p.quantity,
+              output: false
+            }));
+          }
+
+          // Add new products for exchanges
+          if (returnTypeCode === 'CAM' && newProducts.length > 0) {
+            allReturnProducts = [
+              ...allReturnProducts,
+              ...newProducts.map(p => ({
+                product_variation_id: p.variation_id,
+                quantity: p.quantity,
+                output: true
+              }))
+            ];
+          }
+
+          // Create stock movements and update stock
+          for (const product of allReturnProducts) {
+            // Create stock movement
+            const { error: movementError } = await supabase
+              .from('stock_movements')
+              .insert({
+                product_variation_id: product.product_variation_id,
+                quantity: product.output ? -product.quantity : product.quantity,
+                created_by: user.id,
+                manual_movement: false,
+                order_id: orderId
+              });
+
+            if (movementError) {
+              console.error('Error creating stock movement:', movementError);
+            }
+
+            // Update stock - get current stock for warehouse 1
+            const { data: currentStock } = await supabase
+              .from('product_stock')
+              .select('stock')
+              .eq('product_variation_id', product.product_variation_id)
+              .eq('warehouse_id', 1)
+              .single();
+
+            if (currentStock) {
+              const newStock = currentStock.stock + (product.output ? -product.quantity : product.quantity);
+              await supabase
+                .from('product_stock')
+                .update({ stock: newStock })
+                .eq('product_variation_id', product.product_variation_id)
+                .eq('warehouse_id', 1);
+            }
+          }
+        }
       }
 
       toast.success('Devolución actualizada exitosamente');
