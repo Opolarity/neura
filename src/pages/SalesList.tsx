@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Plus, Eye, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -28,6 +29,9 @@ interface Order {
   order_situations: Array<{
     situations: {
       name: string;
+      statuses: {
+        code: string;
+      };
     };
   }>;
 }
@@ -56,7 +60,10 @@ const SalesList = () => {
           created_at,
           sale_types(name),
           order_situations!inner(
-            situations(name)
+            situations(
+              name,
+              statuses(code)
+            )
           )
         `)
         .eq('order_situations.last_row', true)
@@ -132,7 +139,26 @@ const SalesList = () => {
                       {order.sale_types?.name || '-'}
                     </TableCell>
                     <TableCell>
-                      {order.order_situations?.[0]?.situations?.name || '-'}
+                      {order.order_situations?.[0]?.situations ? (
+                        <Badge
+                          variant={
+                            order.order_situations[0].situations.statuses.code === 'CFM'
+                              ? 'default'
+                              : order.order_situations[0].situations.statuses.code === 'CAN'
+                              ? 'destructive'
+                              : 'secondary'
+                          }
+                          className={
+                            order.order_situations[0].situations.statuses.code === 'RES'
+                              ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                              : ''
+                          }
+                        >
+                          {order.order_situations[0].situations.name}
+                        </Badge>
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       S/ {Number(order.total).toFixed(2)}
