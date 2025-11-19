@@ -93,14 +93,27 @@ const CreateReturn = () => {
 
   const loadInitialData = async () => {
     try {
-      // Get orders without returns
+      // Get all orders for the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuario no autenticado');
+
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('id, document_number, customer_name, customer_lastname, total, created_at, document_type')
-        .not('id', 'in', supabase.from('returns').select('order_id'))
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (ordersError) throw ordersError;
+
+      // Get returns to exclude orders that already have a return/exchange
+      const { data: returnsData, error: returnsError } = await supabase
+        .from('returns')
+        .select('order_id');
+
+      if (returnsError) throw returnsError;
+
+      const returnedOrderIds = new Set((returnsData || []).map((r: any) => r.order_id));
+      const availableOrders = (ordersData || []).filter((order) => !returnedOrderIds.has(order.id));
 
       // Get return types from module "CAM"
       const { data: moduleData, error: moduleError } = await supabase
@@ -137,7 +150,7 @@ const CreateReturn = () => {
       const { data: productsData, error: productsError } = await supabase.functions.invoke('get-products-list');
       if (productsError) throw productsError;
 
-      setOrders(ordersData || []);
+      setOrders(availableOrders);
       setReturnTypes(typesData || []);
       setSituations(situationsData || []);
       setDocumentTypes(docTypesData || []);
