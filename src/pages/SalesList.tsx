@@ -22,6 +22,14 @@ interface Order {
   customer_lastname: string;
   total: number;
   created_at: string;
+  sale_types: {
+    name: string;
+  };
+  order_situations: Array<{
+    situations: {
+      name: string;
+    };
+  }>;
 }
 
 const SalesList = () => {
@@ -38,7 +46,20 @@ const SalesList = () => {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('id, date, document_number, customer_name, customer_lastname, total, created_at')
+        .select(`
+          id, 
+          date, 
+          document_number, 
+          customer_name, 
+          customer_lastname, 
+          total, 
+          created_at,
+          sale_types(name),
+          order_situations!inner(
+            situations(name)
+          )
+        `)
+        .eq('order_situations.last_row', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -81,6 +102,8 @@ const SalesList = () => {
                 <TableHead>Fecha</TableHead>
                 <TableHead>Documento</TableHead>
                 <TableHead>Cliente</TableHead>
+                <TableHead>Canal</TableHead>
+                <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead className="text-center">Acciones</TableHead>
               </TableRow>
@@ -88,7 +111,7 @@ const SalesList = () => {
             <TableBody>
               {orders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                     No hay ventas registradas
                   </TableCell>
                 </TableRow>
@@ -104,6 +127,12 @@ const SalesList = () => {
                     <TableCell>{order.document_number}</TableCell>
                     <TableCell>
                       {order.customer_name} {order.customer_lastname}
+                    </TableCell>
+                    <TableCell>
+                      {order.sale_types?.name || '-'}
+                    </TableCell>
+                    <TableCell>
+                      {order.order_situations?.[0]?.situations?.name || '-'}
                     </TableCell>
                     <TableCell className="text-right">
                       S/ {Number(order.total).toFixed(2)}
