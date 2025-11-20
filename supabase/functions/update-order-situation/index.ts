@@ -150,6 +150,25 @@ Deno.serve(async (req) => {
           console.error('Error updating stock:', stockError);
           throw stockError;
         }
+
+        console.log(`Stock reduced for variation ${product.product_variation_id}: ${currentStock?.stock || 0} -> ${newStock}`);
+
+        // Create stock movement record
+        const { error: stockMovementError } = await supabase
+          .from('stock_movements')
+          .insert({
+            product_variation_id: product.product_variation_id,
+            quantity: product.quantity,
+            order_id: parseInt(orderId),
+            created_by: user.id,
+            manual_movement: false,
+          });
+
+        if (stockMovementError) {
+          console.error('Error creating stock movement:', stockMovementError);
+        } else {
+          console.log(`Stock movement created for variation ${product.product_variation_id}, quantity: ${product.quantity}`);
+        }
       }
 
       // Create income movement when confirming order
