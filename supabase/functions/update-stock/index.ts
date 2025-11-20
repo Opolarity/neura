@@ -11,10 +11,23 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authError || !user) {
+      throw new Error('Unauthorized');
+    }
 
     const { stockUpdates, defectsUpdates } = await req.json();
 
@@ -29,24 +42,40 @@ Deno.serve(async (req) => {
       throw new Error('No stock or defects updates provided');
     }
 
+    // Get the movement type for manual adjustments
+    const { data: movementType } = await supabase
+      .from('types')
+      .select('id')
+      .eq('code', 'AJUSTE')
+      .eq('module_id', 3)
+      .single();
+
+    if (!movementType) {
+      throw new Error('Movement type AJUSTE not found');
+    }
+
     // Update or insert stock for each variation/warehouse combination
     if (hasStockUpdates) {
       for (const update of stockUpdates) {
         const { variation_id, warehouse_id, stock } = update;
 
-        // Check if stock record exists
+        // Check if stock record exists and get current stock
         const { data: existingStock } = await supabase
           .from('product_stock')
-          .select('id')
+          .select('id, stock')
           .eq('product_variation_id', variation_id)
           .eq('warehouse_id', warehouse_id)
           .single();
+
+        const newStock = parseInt(stock);
+        const oldStock = existingStock ? existingStock.stock : 0;
+        const difference = newStock - oldStock;
 
         if (existingStock) {
           // Update existing stock
           const { error: updateError } = await supabase
             .from('product_stock')
-            .update({ stock: parseInt(stock) })
+            .update({ stock: newStock })
             .eq('product_variation_id', variation_id)
             .eq('warehouse_id', warehouse_id);
 
@@ -58,10 +87,24 @@ Deno.serve(async (req) => {
             .insert({
               product_variation_id: variation_id,
               warehouse_id: warehouse_id,
-              stock: parseInt(stock),
+              stock: newStock,
             });
 
           if (insertError) throw insertError;
+        }
+
+        // Create stock movement record if there's a difference
+        if (difference !== 0) {
+          const { error: movementError } = await supabase
+            .from('stock_movements')
+            .insert({
+              product_variation_id: variation_id,
+              quantity: difference,
+              movement_type: movementType.id,
+              created_by: user.id,
+            });
+
+          if (movementError) throw movementError;
         }
       }
       console.log('Stock updated successfully');
