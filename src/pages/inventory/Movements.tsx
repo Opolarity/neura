@@ -15,6 +15,7 @@ interface StockMovement {
   created_at: string;
   movement_type: number;
   order_id: number | null;
+  return_id?: number | null;
   product_variation_id: number;
   created_by: string;
   variations: {
@@ -283,8 +284,7 @@ const Movements: React.FC = () => {
                     <TableHead>Producto</TableHead>
                     <TableHead>Variación</TableHead>
                     <TableHead>Cantidad</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Orden</TableHead>
+                    <TableHead>Origen</TableHead>
                     <TableHead>Usuario</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -315,16 +315,12 @@ const Movements: React.FC = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={movement.order_id ? "default" : "secondary"}>
+                        <span className="text-sm">
                           {movement.types.name}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {movement.orders ? (
-                          <span className="text-sm">#{movement.orders.document_number}</span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
+                          {(movement.order_id || movement.return_id) && (
+                            <>#{movement.order_id || movement.return_id}</>
+                          )}
+                        </span>
                       </TableCell>
                       <TableCell className="text-sm">
                         {movement.profiles.name} {movement.profiles.last_name}
