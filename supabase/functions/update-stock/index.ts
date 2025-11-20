@@ -42,12 +42,23 @@ Deno.serve(async (req) => {
       throw new Error('No stock or defects updates provided');
     }
 
+    // Get the module for stock movements
+    const { data: module } = await supabase
+      .from('modules')
+      .select('id')
+      .eq('code', 'STM')
+      .single();
+
+    if (!module) {
+      throw new Error('Module STM not found');
+    }
+
     // Get the movement type for manual adjustments
     const { data: movementType } = await supabase
       .from('types')
       .select('id')
       .eq('code', 'MAN')
-      .eq('module_id', 3)
+      .eq('module_id', module.id)
       .single();
 
     if (!movementType) {
