@@ -318,7 +318,7 @@ const Movements: React.FC = () => {
                         <span className="text-sm">
                           {movement.types.name}
                           {(movement.order_id || movement.return_id) && (
-                            <>#{movement.order_id || movement.return_id}</>
+                            <> #{movement.order_id || movement.return_id}</>
                           )}
                         </span>
                       </TableCell>
