@@ -261,7 +261,6 @@ const Movements: React.FC = () => {
                   <TableRow>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Producto</TableHead>
-                    <TableHead>SKU</TableHead>
                     <TableHead>Cantidad</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Orden</TableHead>
@@ -276,9 +275,6 @@ const Movements: React.FC = () => {
                       </TableCell>
                       <TableCell className="font-medium">
                         {movement.variations.products.title}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {movement.variations.sku || '-'}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-mono">
