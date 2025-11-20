@@ -436,12 +436,20 @@ const CreateReturn = () => {
           ];
 
           for (const product of allReturnProducts) {
+            // Get movement type for returns
+            const { data: returnMovementType } = await supabase
+              .from('types')
+              .select('id')
+              .eq('module_id', 3) // Stock movements module
+              .limit(1)
+              .single();
+
             // Create stock movement
             await supabase.from('stock_movements').insert({
               product_variation_id: product.product_variation_id,
               quantity: product.output ? -product.quantity : product.quantity,
               created_by: user.id,
-              manual_movement: false,
+              movement_type: returnMovementType?.id || 1,
               order_id: selectedOrder.id
             });
 
