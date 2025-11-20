@@ -24,6 +24,12 @@ interface StockMovement {
       id: number;
       title: string;
     };
+    variation_terms: {
+      terms: {
+        id: number;
+        name: string;
+      };
+    }[];
   };
   types: {
     id: number;
@@ -71,6 +77,12 @@ const Movements: React.FC = () => {
             products!inner (
               id,
               title
+            ),
+            variation_terms (
+              terms (
+                id,
+                name
+              )
             )
           ),
           types!stock_movements_movement_type_fkey (
@@ -269,6 +281,7 @@ const Movements: React.FC = () => {
                   <TableRow>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Producto</TableHead>
+                    <TableHead>Variación</TableHead>
                     <TableHead>Cantidad</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Orden</TableHead>
@@ -283,6 +296,18 @@ const Movements: React.FC = () => {
                       </TableCell>
                       <TableCell className="font-medium">
                         {movement.variations.products.title}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {movement.variations.variation_terms.map((vt) => (
+                            <Badge key={vt.terms.id} variant="outline" className="text-xs">
+                              {vt.terms.name}
+                            </Badge>
+                          ))}
+                          {movement.variations.variation_terms.length === 0 && (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-mono">
