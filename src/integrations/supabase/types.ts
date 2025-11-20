@@ -1717,7 +1717,7 @@ export type Database = {
           created_at: string | null
           created_by: string
           id: number
-          manual_movement: boolean
+          movement_type: number
           order_id: number | null
           product_variation_id: number
           quantity: number
@@ -1726,7 +1726,7 @@ export type Database = {
           created_at?: string | null
           created_by: string
           id?: never
-          manual_movement: boolean
+          movement_type: number
           order_id?: number | null
           product_variation_id: number
           quantity: number
@@ -1735,7 +1735,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string
           id?: never
-          manual_movement?: boolean
+          movement_type?: number
           order_id?: number | null
           product_variation_id?: number
           quantity?: number
@@ -1747,6 +1747,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "stock_movements_movement_type_fkey"
+            columns: ["movement_type"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "stock_movements_order_id_fkey"
