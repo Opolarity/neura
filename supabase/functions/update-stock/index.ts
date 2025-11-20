@@ -46,12 +46,12 @@ Deno.serve(async (req) => {
     const { data: movementType } = await supabase
       .from('types')
       .select('id')
-      .eq('code', 'AJUSTE')
+      .eq('code', 'MAN')
       .eq('module_id', 3)
       .single();
 
     if (!movementType) {
-      throw new Error('Movement type AJUSTE not found');
+      throw new Error('Movement type MAN not found');
     }
 
     // Update or insert stock for each variation/warehouse combination
