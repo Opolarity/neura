@@ -254,16 +254,45 @@ Deno.serve(async (req) => {
             console.log(`Stock reduced for variation ${product.product_variation_id}: ${currentStock?.stock || 0} -> ${newStock}`);
           }
 
+          // Get movement type for sales (code 'OUT' or '-')
+          let saleMovementType = null as { id: number } | null;
+          {
+            const { data } = await supabase
+              .from('types')
+              .select('id')
+              .eq('code', 'OUT')
+              .eq('module_id', 3)
+              .maybeSingle();
+            saleMovementType = data ?? null;
+          }
+          if (!saleMovementType) {
+            const { data } = await supabase
+              .from('types')
+              .select('id')
+              .eq('code', '-')
+              .eq('module_id', 3)
+              .maybeSingle();
+            saleMovementType = data ?? null;
+          }
+
           // Create stock movement record
-          const { error: stockMovementError } = await supabase
-            .from('stock_movements')
-            .insert({
-              product_variation_id: product.product_variation_id,
-              quantity: product.quantity,
-              order_id: order.id,
-              created_by: user.id,
-              manual_movement: false,
-            });
+          if (saleMovementType) {
+            const { error: stockMovementError } = await supabase
+              .from('stock_movements')
+              .insert({
+                product_variation_id: product.product_variation_id,
+                quantity: product.quantity,
+                order_id: order.id,
+                created_by: user.id,
+                movement_type: saleMovementType.id,
+              });
+
+            if (stockMovementError) {
+              console.error('Error creating stock movement:', stockMovementError);
+            } else {
+              console.log(`Stock movement created for variation ${product.product_variation_id}, quantity: ${product.quantity}`);
+            }
+          }
 
           if (stockMovementError) {
             console.error('Error creating stock movement:', stockMovementError);

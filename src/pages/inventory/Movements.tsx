@@ -13,7 +13,7 @@ interface StockMovement {
   id: number;
   quantity: number;
   created_at: string;
-  manual_movement: boolean;
+  movement_type: number;
   order_id: number | null;
   product_variation_id: number;
   created_by: string;
@@ -24,6 +24,10 @@ interface StockMovement {
       id: number;
       title: string;
     };
+  };
+  types: {
+    id: number;
+    name: string;
   };
   orders: {
     id: number;
@@ -68,6 +72,10 @@ const Movements: React.FC = () => {
               id,
               title
             )
+          ),
+          types!stock_movements_movement_type_fkey (
+            id,
+            name
           ),
           orders (
             id,
@@ -125,12 +133,12 @@ const Movements: React.FC = () => {
 
   const getTotalOutflow = () => {
     return filteredMovements
-      .filter((m) => !m.manual_movement || m.order_id)
+      .filter((m) => m.order_id)
       .reduce((sum, m) => sum + m.quantity, 0);
   };
 
   const getTotalManualMovements = () => {
-    return filteredMovements.filter((m) => m.manual_movement && !m.order_id).length;
+    return filteredMovements.filter((m) => !m.order_id).length;
   };
 
   if (loading) {
@@ -282,11 +290,9 @@ const Movements: React.FC = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {movement.manual_movement && !movement.order_id ? (
-                          <Badge variant="secondary">Manual</Badge>
-                        ) : (
-                          <Badge variant="default">Venta</Badge>
-                        )}
+                        <Badge variant={movement.order_id ? "default" : "secondary"}>
+                          {movement.types.name}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         {movement.orders ? (
