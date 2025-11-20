@@ -37,6 +37,7 @@ import Returns from "./pages/Returns";
 import CreateReturn from "./pages/CreateReturn";
 import EditReturn from "./pages/EditReturn";
 import Reports from "./pages/Reports";
+import InventoryMovements from "./pages/inventory/Movements";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="products/add" element={<AddProduct />} />
               <Route path="products/costs" element={<ProductCosts />} />
               <Route path="inventory" element={<Inventory />} />
+              <Route path="inventory/movements" element={<InventoryMovements />} />
               <Route path="sales" element={<Sales />} />
               <Route path="sales/list" element={<SalesList />} />
               <Route path="sales/create" element={<CreateSale />} />
