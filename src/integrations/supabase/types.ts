@@ -1716,27 +1716,36 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string
+          defect_stock: boolean
           id: number
+          in_warehouse_id: number
           movement_type: number
           order_id: number | null
+          out_warehouse_id: number
           product_variation_id: number
           quantity: number
         }
         Insert: {
           created_at?: string | null
           created_by: string
+          defect_stock?: boolean
           id?: never
+          in_warehouse_id: number
           movement_type: number
           order_id?: number | null
+          out_warehouse_id: number
           product_variation_id: number
           quantity: number
         }
         Update: {
           created_at?: string | null
           created_by?: string
+          defect_stock?: boolean
           id?: never
+          in_warehouse_id?: number
           movement_type?: number
           order_id?: number | null
+          out_warehouse_id?: number
           product_variation_id?: number
           quantity?: number
         }
@@ -1747,6 +1756,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "stock_movements_in_warehouse_id_fkey"
+            columns: ["in_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "stock_movements_movement_type_fkey"
@@ -1760,6 +1776,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_out_warehouse_id_fkey"
+            columns: ["out_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
             referencedColumns: ["id"]
           },
           {

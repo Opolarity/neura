@@ -450,7 +450,10 @@ const CreateReturn = () => {
               quantity: product.output ? -product.quantity : product.quantity,
               created_by: user.id,
               movement_type: returnMovementType?.id || 1,
-              order_id: selectedOrder.id
+              order_id: selectedOrder.id,
+              out_warehouse_id: 1,
+              in_warehouse_id: 1,
+              defect_stock: false,
             });
 
             // Update stock - get current stock for warehouse 1
