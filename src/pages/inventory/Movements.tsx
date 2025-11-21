@@ -18,6 +18,9 @@ interface StockMovement {
   return_id?: number | null;
   product_variation_id: number;
   created_by: string;
+  out_warehouse_id: number;
+  in_warehouse_id: number;
+  defect_stock: boolean;
   variations: {
     id: number;
     sku: string | null;
@@ -43,6 +46,14 @@ interface StockMovement {
   profiles: {
     name: string;
     last_name: string;
+  };
+  out_warehouse: {
+    id: number;
+    name: string;
+  };
+  in_warehouse: {
+    id: number;
+    name: string;
   };
 }
 
@@ -97,6 +108,14 @@ const Movements: React.FC = () => {
           profiles!stock_movements_created_by_fkey (
             name,
             last_name
+          ),
+          out_warehouse:warehouses!stock_movements_out_warehouse_id_fkey (
+            id,
+            name
+          ),
+          in_warehouse:warehouses!stock_movements_in_warehouse_id_fkey (
+            id,
+            name
           )
         `)
         .order('created_at', { ascending: false });
@@ -284,6 +303,7 @@ const Movements: React.FC = () => {
                     <TableHead>Producto</TableHead>
                     <TableHead>Variación</TableHead>
                     <TableHead>Cantidad</TableHead>
+                    <TableHead>Almacén</TableHead>
                     <TableHead>Origen</TableHead>
                     <TableHead>Usuario</TableHead>
                   </TableRow>
@@ -313,6 +333,17 @@ const Movements: React.FC = () => {
                         <Badge variant="outline" className="font-mono">
                           {movement.quantity}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">
+                          {movement.out_warehouse_id === movement.in_warehouse_id ? (
+                            movement.out_warehouse.name
+                          ) : (
+                            <>
+                              {movement.out_warehouse.name} → {movement.in_warehouse.name}
+                            </>
+                          )}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">
