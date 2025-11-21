@@ -113,6 +113,9 @@ Deno.serve(async (req) => {
               quantity: difference,
               movement_type: movementType.id,
               created_by: user.id,
+              out_warehouse_id: warehouse_id,
+              in_warehouse_id: warehouse_id,
+              defect_stock: false,
             });
 
           if (movementError) throw movementError;
