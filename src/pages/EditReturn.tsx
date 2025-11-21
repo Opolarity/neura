@@ -524,7 +524,10 @@ const EditReturn = () => {
                 quantity: product.output ? -product.quantity : product.quantity,
                 created_by: user.id,
                 movement_type: returnMovementType?.id || 1,
-                order_id: orderId
+                order_id: orderId,
+                out_warehouse_id: 1,
+                in_warehouse_id: 1,
+                defect_stock: false,
               });
 
             if (movementError) {

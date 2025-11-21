@@ -131,13 +131,43 @@ Deno.serve(async (req) => {
 
         // Only update defects for warehouse_id 1
         if (warehouse_id === 1) {
+          // Get current defects value
+          const { data: existingStock } = await supabase
+            .from('product_stock')
+            .select('defects')
+            .eq('product_variation_id', variation_id)
+            .eq('warehouse_id', 1)
+            .single();
+
+          const newDefects = parseInt(defects);
+          const oldDefects = existingStock ? existingStock.defects : 0;
+          const difference = newDefects - oldDefects;
+
+          // Update defects
           const { error: defectsError } = await supabase
             .from('product_stock')
-            .update({ defects: parseInt(defects) })
+            .update({ defects: newDefects })
             .eq('product_variation_id', variation_id)
             .eq('warehouse_id', 1);
 
           if (defectsError) throw defectsError;
+
+          // Create stock movement record if there's a difference
+          if (difference !== 0) {
+            const { error: movementError } = await supabase
+              .from('stock_movements')
+              .insert({
+                product_variation_id: variation_id,
+                quantity: difference,
+                movement_type: movementType.id,
+                created_by: user.id,
+                out_warehouse_id: 1,
+                in_warehouse_id: 1,
+                defect_stock: true,
+              });
+
+            if (movementError) throw movementError;
+          }
         }
       }
       console.log('Defects updated successfully');
