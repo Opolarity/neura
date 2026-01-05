@@ -40,7 +40,7 @@ const Header = ({ toggleSidebar, onSignOut }: HeaderProps) => {
               <User className="w-5 h-5 text-white" />
             </div>
             <div className="text-sm">
-              <p className="font-medium">Admin</p>
+              <p className="font-medium">Admin </p>
               <p className="text-gray-500">Administrador</p>
             </div>
             <Button
