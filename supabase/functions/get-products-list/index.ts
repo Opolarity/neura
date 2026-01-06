@@ -26,23 +26,27 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    // Validar el token
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+
+    if (claimsError || !claimsData?.claims) {
+      console.error('Auth error:', claimsError);
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { "Content-Type": "application/json" },
+        headers: corsHeaders
       });
     }
-    console.log('USERDATA:', userData);
 
-    const userId = userData.user.id;
+    const userId = claimsData.claims.sub;
+    console.log('Authenticated user:', userId);
 
     const { data: profile, error: profileError } = await supabase
-      .from('profile')
-      .select('warhouse_id')
+      .from('profiles')
+      .select('warehouse_id')
       .eq('UID', userId)
 
-
+    console.log('Profile:', profile);
 
 
     console.log('Fetching products list...');
