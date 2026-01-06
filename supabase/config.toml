@@ -10,7 +10,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.get-inventory]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-product-details]
 verify_jwt = true
