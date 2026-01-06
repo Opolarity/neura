@@ -4,40 +4,56 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/modules/auth";
-import DashboardLayout from "./layouts/DashboardLayout";
-import Dashboard from "./pages/Dashboard";
-import Products from "./pages/Products";
-import AddProduct from "./pages/AddProduct";
-import Inventory from "./pages/Inventory";
-import Sales from "./pages/Sales";
-import SalesList from "./pages/SalesList";
-import CreateSale from "./pages/CreateSale";
-import ViewSale from "./pages/ViewSale";
-import Invoices from "./pages/Invoices";
-import POS from "./pages/POS";
-import Settings from "./pages/Settings";
-import Shipping from "./pages/Shipping";
-import Customers from "./pages/Customers";
-import ClientsList from "./pages/customers/ClientsList";
-import CreateClient from "./pages/customers/CreateClient";
-import EditClient from "./pages/customers/EditClient";
-import UsersList from "./pages/settings/UsersList";
-import CreateUser from "./pages/settings/CreateUser";
-import UserFunctions from "./pages/settings/UserFunctions";
-import RolesList from "./pages/settings/RolesList";
-import CreateRole from "./pages/settings/CreateRole";
+import DashboardLayout from "@/app/layouts/DashboardLayout";
+import ProtectedRoute from "@/shared/components/ProtectedRoute";
+import NotFound from "@/shared/components/NotFound";
 import Login from "@/modules/auth/pages/Login";
-import ProtectedRoute from "./components/ProtectedRoute";
-import NotFound from "./pages/NotFound";
-import Categories from "./pages/products/Categories";
-import ProductCosts from "./pages/ProductCosts";
-import AddExpense from "./pages/expenses/AddExpense";
-import Movements from "./pages/Movements";
-import Returns from "./pages/Returns";
-import CreateReturn from "./pages/CreateReturn";
-import EditReturn from "./pages/EditReturn";
-import Reports from "./pages/Reports";
-import InventoryMovements from "./pages/inventory/Movements";
+
+// Dashboard
+import Dashboard from "@/modules/dashboard/pages/Dashboard";
+
+// Products
+import Products from "@/modules/products/pages/Products";
+import AddProduct from "@/modules/products/pages/AddProduct";
+import ProductCosts from "@/modules/products/pages/ProductCosts";
+import Categories from "@/modules/products/pages/Categories";
+
+// Inventory
+import Inventory from "@/modules/inventory/pages/Inventory";
+import InventoryMovements from "@/modules/inventory/pages/Movements";
+
+// Sales
+import Sales from "@/modules/sales/pages/Sales";
+import SalesList from "@/modules/sales/pages/SalesList";
+import CreateSale from "@/modules/sales/pages/CreateSale";
+import ViewSale from "@/modules/sales/pages/ViewSale";
+
+// Customers
+import Customers from "@/modules/customers/pages/Customers";
+import ClientsList from "@/modules/customers/pages/ClientsList";
+import CreateClient from "@/modules/customers/pages/CreateClient";
+import EditClient from "@/modules/customers/pages/EditClient";
+
+// Returns
+import Returns from "@/modules/returns/pages/Returns";
+import CreateReturn from "@/modules/returns/pages/CreateReturn";
+import EditReturn from "@/modules/returns/pages/EditReturn";
+
+// Other modules
+import Shipping from "@/modules/shipping/pages/Shipping";
+import Invoices from "@/modules/invoices/pages/Invoices";
+import POS from "@/modules/pos/pages/POS";
+import Movements from "@/modules/movements/pages/Movements";
+import AddExpense from "@/modules/expenses/pages/AddExpense";
+import Reports from "@/modules/reports/pages/Reports";
+
+// Settings
+import Settings from "@/modules/settings/pages/Settings";
+import UsersList from "@/modules/settings/pages/UsersList";
+import CreateUser from "@/modules/settings/pages/CreateUser";
+import UserFunctions from "@/modules/settings/pages/UserFunctions";
+import RolesList from "@/modules/settings/pages/RolesList";
+import CreateRole from "@/modules/settings/pages/CreateRole";
 
 const queryClient = new QueryClient();
 
@@ -59,15 +75,12 @@ const App = () => (
               }
             >
               <Route index element={<Dashboard />} />
-              <Route path="products" element={<Products />}></Route>
+              <Route path="products" element={<Products />} />
               <Route path="categories" element={<Categories />} />
               <Route path="products/add" element={<AddProduct />} />
               <Route path="products/costs" element={<ProductCosts />} />
               <Route path="inventory" element={<Inventory />} />
-              <Route
-                path="inventory/movements"
-                element={<InventoryMovements />}
-              />
+              <Route path="inventory/movements" element={<InventoryMovements />} />
               <Route path="sales" element={<Sales />} />
               <Route path="sales/list" element={<SalesList />} />
               <Route path="sales/create" element={<CreateSale />} />
