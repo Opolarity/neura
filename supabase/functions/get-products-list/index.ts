@@ -45,8 +45,9 @@ Deno.serve(async (req) => {
       .from('profiles')
       .select('warehouse_id')
       .eq('UID', userId)
+      .single();
 
-    console.log('Profile:', profile);
+    console.log('Profile:', profile, profile.warehouse_id);
 
 
     console.log('Fetching products list...');
@@ -98,7 +99,8 @@ Deno.serve(async (req) => {
                 .from('product_stock')
                 .select('stock')
                 .eq('product_variation_id', variation.id)
-                .eq('warehouse_id', profile.warhouse_id),
+                .eq('warehouse_id', profile.warehouse_id),
+
 
               supabase
                 .from('variation_terms')

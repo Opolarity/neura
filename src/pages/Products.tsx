@@ -68,8 +68,9 @@ const Products = () => {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <h3 className="text-lg font-semibold">Lista de Productos</h3>
             <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Buscar productos..."
