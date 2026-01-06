@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
+import AuthContext from "./AuthContext";
 import { User, Session } from "@supabase/supabase-js";
-import { AuthContext } from "./AuthContext";
-import { authService } from "./api/auth.service";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -11,15 +11,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Set up auth state listener
     const {
       data: { subscription },
-    } = authService.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    authService.getSession().then(({ data: { session } }) => {
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -29,12 +31,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await authService.signIn(email, password);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     return { error };
   };
 
   const signOut = async () => {
-    await authService.signOut();
+    await supabase.auth.signOut();
   };
 
   const value = {

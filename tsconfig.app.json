@@ -24,6 +24,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
+      //MEJORAR EL ARROBA PARA QUE APUNTE POR MODULOS, COMPONENTES DENTRO DE SHARED Y OTROS A REUTILIZAR
     }
   },
   "include": ["src"]
