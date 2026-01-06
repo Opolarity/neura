@@ -1,17 +1,23 @@
 import React, { createContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
-import { authService } from "@/auth/services/auth.service";
+import { authService } from "@/auth/api/auth.service";
 import { AuthContextType } from "@/auth/types";
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = authService.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = authService.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);

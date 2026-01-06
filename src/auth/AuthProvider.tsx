@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { AuthContext } from "./AuthContext";
-import { authService } from "./services/auth.service";
+import { authService } from "./api/auth.service";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
