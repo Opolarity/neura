@@ -454,6 +454,7 @@ const CreateReturn = () => {
               out_warehouse_id: 1,
               in_warehouse_id: 1,
               defect_stock: false,
+              completed: true,
             });
 
             // Update stock - get current stock for warehouse 1

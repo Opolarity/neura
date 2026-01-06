@@ -528,6 +528,7 @@ const EditReturn = () => {
                 out_warehouse_id: 1,
                 in_warehouse_id: 1,
                 defect_stock: false,
+                completed: true,
               });
 
             if (movementError) {
