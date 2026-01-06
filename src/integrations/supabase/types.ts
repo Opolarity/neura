@@ -1714,6 +1714,7 @@ export type Database = {
       }
       stock_movements: {
         Row: {
+          completed: boolean
           created_at: string | null
           created_by: string
           defect_stock: boolean
@@ -1726,6 +1727,7 @@ export type Database = {
           quantity: number
         }
         Insert: {
+          completed: boolean
           created_at?: string | null
           created_by: string
           defect_stock?: boolean
@@ -1738,6 +1740,7 @@ export type Database = {
           quantity: number
         }
         Update: {
+          completed?: boolean
           created_at?: string | null
           created_by?: string
           defect_stock?: boolean
