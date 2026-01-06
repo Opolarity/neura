@@ -1,12 +1,10 @@
-import React from "react";
+import { PropsWithChildren } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/auth";
+import { useAuth } from "@/modules/auth";
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
+interface ProtectedRouteProps extends PropsWithChildren {}
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -24,7 +22,5 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
-};
-
-export default ProtectedRoute;
+  return children;
+}

@@ -27,7 +27,7 @@ import UserFunctions from "@/modules/settings/pages/UserFunctions";
 import RolesList from "@/modules/settings/pages/RolesList";
 import CreateRole from "@/modules/settings/pages/CreateRole";
 import Login from "@/modules/auth/pages/Login";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import ProtectedRoute from "@/app/routes/ProtectedRoute";
 import NotFound from "@/shared/components/NotFound";
 import Categories from "@/modules/products/pages/Categories";
 import ProductCosts from "@/modules/products/pages/ProductCosts";
