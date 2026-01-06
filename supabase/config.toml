@@ -1,46 +1,46 @@
 project_id = "wwcdntjnpoaacarmmzir"
 
 [functions.create-order]
-verify_jwt = true
+verify_jwt = false
 
 [functions.create-product]
-verify_jwt = true
+verify_jwt = false
 
 [functions.delete-product]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-inventory]
 verify_jwt = false
 
 [functions.get-product-details]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-product-form-data]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-products-list]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-sales-form-data]
-verify_jwt = true
+verify_jwt = false
 
 [functions.update-product]
-verify_jwt = true
+verify_jwt = false
 
 [functions.update-stock]
-verify_jwt = true
+verify_jwt = false
 
 [functions.validate-product-type-change]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-shipping-methods]
-verify_jwt = true
+verify_jwt = false
 
 [functions.create-shipping-method]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-shipping-zones]
-verify_jwt = true
+verify_jwt = false
 
 [functions.cancel-expired-reservations]
 verify_jwt = false
