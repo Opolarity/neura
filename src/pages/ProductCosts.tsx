@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Edit, Save, Loader2 } from 'lucide-react';
 import { useProductCostsLogic } from './ProductCosts.logic';
+import { Search } from 'lucide-react';
 
 const ProductCosts = () => {
   const {
@@ -65,6 +66,7 @@ const ProductCosts = () => {
       </div>
 
       <Card>
+        <Search />
         <CardHeader>
           <h3 className="text-lg font-semibold">Costo por Variación</h3>
         </CardHeader>
