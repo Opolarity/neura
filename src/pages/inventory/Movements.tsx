@@ -330,7 +330,7 @@ const Movements: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="font-mono">
+                        <Badge variant="outline" color="indigo">
                           {movement.quantity}
                         </Badge>
                       </TableCell>

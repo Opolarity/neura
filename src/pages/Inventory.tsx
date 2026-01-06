@@ -98,7 +98,7 @@ const Inventory = () => {
                       <TableCell className="font-mono text-sm">{item.sku}</TableCell>
                       <TableCell className="font-medium">{item.product_name}</TableCell>
                       <TableCell className="text-muted-foreground">{item.variation_name}</TableCell>
-                      <TableCell className="bg-destructive/5">
+                      <TableCell >
                         {(() => {
                           const warehouse1Stock = item.stock_by_warehouse.find(s => s.warehouse_id === 1);
                           const defects = warehouse1Stock?.defects || 0;

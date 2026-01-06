@@ -11,11 +11,43 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    console.log('Authorization header:', authHeader);
+
+    const supabase = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    console.log('USERDATA:', userData);
+
+    const userId = userData.user.id;
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profile')
+      .select('warhouse_id')
+      .eq('UID', userId)
+
+
+
 
     console.log('Fetching products list...');
+
+
 
     // Get all products
     const { data: products, error: productsError } = await supabase
@@ -53,7 +85,7 @@ Deno.serve(async (req) => {
         // For each variation, get prices and stock
         const variationsWithDetails = await Promise.all(
           (variations || []).map(async (variation) => {
-            const [pricesResult, stockResult] = await Promise.all([
+            const [pricesResult, stockResult, termResult] = await Promise.all([
               supabase
                 .from('product_price')
                 .select('price, sale_price')
@@ -62,13 +94,23 @@ Deno.serve(async (req) => {
                 .from('product_stock')
                 .select('stock')
                 .eq('product_variation_id', variation.id)
+                .eq('warehouse_id', profile.warhouse_id),
+
+              supabase
+                .from('variation_terms')
+                .select('term_id , terms(name)')
+                .eq('product_variation_id', variation.id)
+
+
             ]);
 
             return {
               id: variation.id,
               sku: variation.sku,
               prices: pricesResult.data || [],
-              stock: stockResult.data || []
+              stock: stockResult.data || [],
+              terms: termResult.data || [],
+
             };
           })
         );

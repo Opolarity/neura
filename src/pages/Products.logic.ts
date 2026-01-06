@@ -74,7 +74,7 @@ export const useProductsLogic = () => {
   const getProductPrice = (product: ProductData) => {
     // Collect all prices (both normal and sale prices, ignoring nulls)
     const allPrices: number[] = [];
-    
+
     product.variations.forEach((variation) => {
       (variation.prices ?? []).forEach(({ price, sale_price }) => {
         // Add normal price if not null
