@@ -1,3 +1,8 @@
+// Routes
 export { authRoutes } from './routes';
-export { useAuth } from './hooks/useAuth';
-export { AuthProvider } from './providers/AuthProvider';
+
+// Store
+export { useAuth, AuthProvider } from './store';
+
+// Types
+export type { AuthContextType } from './types';
