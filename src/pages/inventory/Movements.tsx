@@ -1,13 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Package, TrendingDown, TrendingUp, Search, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import React, { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth/useAuth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Package,
+  TrendingDown,
+  TrendingUp,
+  Search,
+  Calendar,
+} from "lucide-react";
+import { format } from "date-fns";
 
 interface StockMovement {
   id: number;
@@ -60,11 +73,13 @@ interface StockMovement {
 const Movements: React.FC = () => {
   const { user } = useAuth();
   const [movements, setMovements] = useState<StockMovement[]>([]);
-  const [filteredMovements, setFilteredMovements] = useState<StockMovement[]>([]);
+  const [filteredMovements, setFilteredMovements] = useState<StockMovement[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -80,8 +95,9 @@ const Movements: React.FC = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('stock_movements')
-        .select(`
+        .from("stock_movements")
+        .select(
+          `
           *,
           variations!inner (
             id,
@@ -117,17 +133,18 @@ const Movements: React.FC = () => {
             id,
             name
           )
-        `)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .order("created_at", { ascending: false });
 
       if (error) {
-        console.error('Error fetching stock movements:', error);
+        console.error("Error fetching stock movements:", error);
         return;
       }
 
       setMovements(data || []);
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -140,8 +157,12 @@ const Movements: React.FC = () => {
     if (searchTerm) {
       filtered = filtered.filter(
         (movement) =>
-          movement.variations.products.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          movement.variations.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+          movement.variations.products.title
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          movement.variations.sku
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase())
       );
     }
 
@@ -154,7 +175,8 @@ const Movements: React.FC = () => {
 
     if (endDate) {
       filtered = filtered.filter(
-        (movement) => new Date(movement.created_at) <= new Date(endDate + 'T23:59:59')
+        (movement) =>
+          new Date(movement.created_at) <= new Date(endDate + "T23:59:59")
       );
     }
 
@@ -188,25 +210,33 @@ const Movements: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Movimientos de Inventario</h1>
-        <p className="text-muted-foreground">Historial completo de movimientos de stock</p>
+        <p className="text-muted-foreground">
+          Historial completo de movimientos de stock
+        </p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Movimientos</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Movimientos
+            </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{getTotalMovements()}</div>
-            <p className="text-xs text-muted-foreground">Registros en el periodo</p>
+            <p className="text-xs text-muted-foreground">
+              Registros en el periodo
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Salidas por Ventas</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Salidas por Ventas
+            </CardTitle>
             <TrendingDown className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
@@ -217,11 +247,15 @@ const Movements: React.FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Movimientos Manuales</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Movimientos Manuales
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{getTotalManualMovements()}</div>
+            <div className="text-2xl font-bold">
+              {getTotalManualMovements()}
+            </div>
             <p className="text-xs text-muted-foreground">Ajustes manuales</p>
           </CardContent>
         </Card>
@@ -273,9 +307,9 @@ const Movements: React.FC = () => {
               size="sm"
               className="mt-4"
               onClick={() => {
-                setSearchTerm('');
-                setStartDate('');
-                setEndDate('');
+                setSearchTerm("");
+                setStartDate("");
+                setEndDate("");
               }}
             >
               Limpiar filtros
@@ -312,7 +346,10 @@ const Movements: React.FC = () => {
                   {filteredMovements.map((movement) => (
                     <TableRow key={movement.id}>
                       <TableCell className="whitespace-nowrap">
-                        {format(new Date(movement.created_at), 'dd/MM/yyyy HH:mm')}
+                        {format(
+                          new Date(movement.created_at),
+                          "dd/MM/yyyy HH:mm"
+                        )}
                       </TableCell>
                       <TableCell className="font-medium">
                         {movement.variations.products.title}
@@ -320,12 +357,18 @@ const Movements: React.FC = () => {
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {movement.variations.variation_terms.map((vt) => (
-                            <Badge key={vt.terms.id} variant="outline" className="text-xs">
+                            <Badge
+                              key={vt.terms.id}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {vt.terms.name}
                             </Badge>
                           ))}
                           {movement.variations.variation_terms.length === 0 && (
-                            <span className="text-muted-foreground text-sm">-</span>
+                            <span className="text-muted-foreground text-sm">
+                              -
+                            </span>
                           )}
                         </div>
                       </TableCell>
@@ -336,11 +379,13 @@ const Movements: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">
-                          {movement.out_warehouse_id === movement.in_warehouse_id ? (
+                          {movement.out_warehouse_id ===
+                          movement.in_warehouse_id ? (
                             movement.out_warehouse.name
                           ) : (
                             <>
-                              {movement.out_warehouse.name} → {movement.in_warehouse.name}
+                              {movement.out_warehouse.name} →{" "}
+                              {movement.in_warehouse.name}
                             </>
                           )}
                         </span>

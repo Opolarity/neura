@@ -1,17 +1,30 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { toast } from '@/hooks/use-toast';
-import { Plus, Search, Filter, TrendingUp, TrendingDown } from 'lucide-react';
-import { format } from 'date-fns';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth/useAuth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
+import { Plus, Search, Filter, TrendingUp, TrendingDown } from "lucide-react";
+import { format } from "date-fns";
 
 interface Movement {
   id: number;
@@ -54,13 +67,13 @@ export default function Movements() {
   const [filteredMovements, setFilteredMovements] = useState<Movement[]>([]);
   const [movementTypes, setMovementTypes] = useState<MovementType[]>([]);
   const [categories, setCategories] = useState<MovementCategory[]>([]);
-  
+
   // Filters
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState<string>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedType, setSelectedType] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -70,16 +83,26 @@ export default function Movements() {
 
   useEffect(() => {
     applyFilters();
-  }, [movements, searchTerm, selectedType, selectedCategory, startDate, endDate]);
+  }, [
+    movements,
+    searchTerm,
+    selectedType,
+    selectedCategory,
+    startDate,
+    endDate,
+  ]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
 
       // Fetch movements
-      const { data: movementsData, error: movementsError } = await (supabase as any)
-        .from('movements')
-        .select(`
+      const { data: movementsData, error: movementsError } = await (
+        supabase as any
+      )
+        .from("movements")
+        .select(
+          `
           id,
           amount,
           movement_date,
@@ -89,37 +112,39 @@ export default function Movements() {
           payment_methods(name),
           business_accounts(name),
           profiles(name, last_name)
-        `)
-        .order('movement_date', { ascending: false })
-        .order('id', { ascending: false });
+        `
+        )
+        .order("movement_date", { ascending: false })
+        .order("id", { ascending: false });
 
       if (movementsError) throw movementsError;
       setMovements(movementsData || []);
 
       // Fetch movement types
       const { data: typesData, error: typesError } = await (supabase as any)
-        .from('movement_types')
-        .select('id, name')
-        .order('name');
+        .from("movement_types")
+        .select("id, name")
+        .order("name");
 
       if (typesError) throw typesError;
       setMovementTypes(typesData || []);
 
       // Fetch categories
-      const { data: categoriesData, error: categoriesError } = await (supabase as any)
-        .from('movement_categories')
-        .select('id, name')
-        .order('name');
+      const { data: categoriesData, error: categoriesError } = await (
+        supabase as any
+      )
+        .from("movement_categories")
+        .select("id, name")
+        .order("name");
 
       if (categoriesError) throw categoriesError;
       setCategories(categoriesData || []);
-
     } catch (error: any) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
       toast({
-        title: 'Error',
-        description: 'No se pudieron cargar los movimientos',
-        variant: 'destructive',
+        title: "Error",
+        description: "No se pudieron cargar los movimientos",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -131,29 +156,40 @@ export default function Movements() {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(m => 
-        m.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.movement_categories.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.payment_methods.name.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (m) =>
+          m.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          m.movement_categories.name
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          m.payment_methods.name
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
       );
     }
 
     // Type filter
-    if (selectedType !== 'all') {
-      filtered = filtered.filter(m => m.movement_types.name === selectedType);
+    if (selectedType !== "all") {
+      filtered = filtered.filter((m) => m.movement_types.name === selectedType);
     }
 
     // Category filter
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(m => m.movement_categories.name === selectedCategory);
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter(
+        (m) => m.movement_categories.name === selectedCategory
+      );
     }
 
     // Date range filter
     if (startDate) {
-      filtered = filtered.filter(m => new Date(m.movement_date) >= new Date(startDate));
+      filtered = filtered.filter(
+        (m) => new Date(m.movement_date) >= new Date(startDate)
+      );
     }
     if (endDate) {
-      filtered = filtered.filter(m => new Date(m.movement_date) <= new Date(endDate));
+      filtered = filtered.filter(
+        (m) => new Date(m.movement_date) <= new Date(endDate)
+      );
     }
 
     setFilteredMovements(filtered);
@@ -161,20 +197,20 @@ export default function Movements() {
 
   const getTotalAmount = () => {
     return filteredMovements.reduce((sum, m) => {
-      const amount = m.movement_types.name === 'Ingreso' ? m.amount : -m.amount;
+      const amount = m.movement_types.name === "Ingreso" ? m.amount : -m.amount;
       return sum + amount;
     }, 0);
   };
 
   const getIncomeTotal = () => {
     return filteredMovements
-      .filter(m => m.movement_types.name === 'Ingreso')
+      .filter((m) => m.movement_types.name === "Ingreso")
       .reduce((sum, m) => sum + m.amount, 0);
   };
 
   const getExpenseTotal = () => {
     return filteredMovements
-      .filter(m => m.movement_types.name === 'Egreso')
+      .filter((m) => m.movement_types.name === "Egreso")
       .reduce((sum, m) => sum + m.amount, 0);
   };
 
@@ -183,9 +219,11 @@ export default function Movements() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Movimientos</h1>
-          <p className="text-muted-foreground">Gestiona todos los ingresos y gastos</p>
+          <p className="text-muted-foreground">
+            Gestiona todos los ingresos y gastos
+          </p>
         </div>
-        <Button onClick={() => navigate('/movements/add/expenses')}>
+        <Button onClick={() => navigate("/movements/add/expenses")}>
           <Plus className="mr-2 h-4 w-4" />
           Añadir Gasto
         </Button>
@@ -195,12 +233,17 @@ export default function Movements() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Ingresos</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Ingresos
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              ${getIncomeTotal().toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+              $
+              {getIncomeTotal().toLocaleString("es-CO", {
+                minimumFractionDigits: 2,
+              })}
             </div>
           </CardContent>
         </Card>
@@ -212,7 +255,10 @@ export default function Movements() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              ${getExpenseTotal().toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+              $
+              {getExpenseTotal().toLocaleString("es-CO", {
+                minimumFractionDigits: 2,
+              })}
             </div>
           </CardContent>
         </Card>
@@ -222,8 +268,15 @@ export default function Movements() {
             <CardTitle className="text-sm font-medium">Balance</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${getTotalAmount() >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              ${getTotalAmount().toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+            <div
+              className={`text-2xl font-bold ${
+                getTotalAmount() >= 0 ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              $
+              {getTotalAmount().toLocaleString("es-CO", {
+                minimumFractionDigits: 2,
+              })}
             </div>
           </CardContent>
         </Card>
@@ -272,7 +325,10 @@ export default function Movements() {
 
             <div className="space-y-2">
               <Label htmlFor="category">Categoría</Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select
+                value={selectedCategory}
+                onValueChange={setSelectedCategory}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
@@ -320,14 +376,18 @@ export default function Movements() {
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Cargando movimientos...</div>
+              <div className="text-muted-foreground">
+                Cargando movimientos...
+              </div>
             </div>
           ) : filteredMovements.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <p className="text-muted-foreground">No se encontraron movimientos</p>
+              <p className="text-muted-foreground">
+                No se encontraron movimientos
+              </p>
               <Button
                 variant="link"
-                onClick={() => navigate('/movements/add/expenses')}
+                onClick={() => navigate("/movements/add/expenses")}
                 className="mt-2"
               >
                 Registrar primer movimiento
@@ -352,13 +412,17 @@ export default function Movements() {
                   {filteredMovements.map((movement) => (
                     <TableRow key={movement.id}>
                       <TableCell className="font-medium">
-                        {format(new Date(movement.movement_date), 'dd/MM/yyyy')}
+                        {format(new Date(movement.movement_date), "dd/MM/yyyy")}
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={movement.movement_types.name === 'Ingreso' ? 'default' : 'destructive'}
+                          variant={
+                            movement.movement_types.name === "Ingreso"
+                              ? "default"
+                              : "destructive"
+                          }
                         >
-                          {movement.movement_types.name === 'Ingreso' ? (
+                          {movement.movement_types.name === "Ingreso" ? (
                             <TrendingUp className="mr-1 h-3 w-3" />
                           ) : (
                             <TrendingDown className="mr-1 h-3 w-3" />
@@ -368,24 +432,27 @@ export default function Movements() {
                       </TableCell>
                       <TableCell>{movement.movement_categories.name}</TableCell>
                       <TableCell className="max-w-xs truncate">
-                        {movement.description || '-'}
+                        {movement.description || "-"}
                       </TableCell>
                       <TableCell>{movement.payment_methods.name}</TableCell>
                       <TableCell>{movement.business_accounts.name}</TableCell>
                       <TableCell>
                         {movement.profiles
                           ? `${movement.profiles.name} ${movement.profiles.last_name}`
-                          : '-'}
+                          : "-"}
                       </TableCell>
                       <TableCell
                         className={`text-right font-semibold ${
-                          movement.movement_types.name === 'Ingreso'
-                            ? 'text-green-600'
-                            : 'text-red-600'
+                          movement.movement_types.name === "Ingreso"
+                            ? "text-green-600"
+                            : "text-red-600"
                         }`}
                       >
-                        {movement.movement_types.name === 'Ingreso' ? '+' : '-'}
-                        ${movement.amount.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+                        {movement.movement_types.name === "Ingreso" ? "+" : "-"}
+                        $
+                        {movement.amount.toLocaleString("es-CO", {
+                          minimumFractionDigits: 2,
+                        })}
                       </TableCell>
                     </TableRow>
                   ))}

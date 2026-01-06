@@ -1,28 +1,37 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth/useAuth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
 const expenseSchema = z.object({
-  amount: z.string().min(1, 'El monto es requerido').refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
-    message: 'El monto debe ser mayor a 0',
-  }),
-  payment_method_id: z.string().min(1, 'El método de pago es requerido'),
-  movement_category_id: z.string().min(1, 'La categoría es requerida'),
+  amount: z
+    .string()
+    .min(1, "El monto es requerido")
+    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+      message: "El monto debe ser mayor a 0",
+    }),
+  payment_method_id: z.string().min(1, "El método de pago es requerido"),
+  movement_category_id: z.string().min(1, "La categoría es requerida"),
   user_id: z.string().optional(),
   description: z.string().optional(),
-  movement_date: z.string().min(1, 'La fecha es requerida'),
+  movement_date: z.string().min(1, "La fecha es requerida"),
 });
 
 type ExpenseFormData = z.infer<typeof expenseSchema>;
@@ -54,7 +63,8 @@ export default function AddExpense() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [categories, setCategories] = useState<MovementCategory[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [selectedBusinessAccount, setSelectedBusinessAccount] = useState<string>('');
+  const [selectedBusinessAccount, setSelectedBusinessAccount] =
+    useState<string>("");
   const [userWarehouseId, setUserWarehouseId] = useState<number | null>(null);
 
   const {
@@ -66,11 +76,11 @@ export default function AddExpense() {
   } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
-      movement_date: new Date().toISOString().split('T')[0],
+      movement_date: new Date().toISOString().split("T")[0],
     },
   });
 
-  const selectedPaymentMethodId = watch('payment_method_id');
+  const selectedPaymentMethodId = watch("payment_method_id");
 
   useEffect(() => {
     fetchData();
@@ -78,14 +88,16 @@ export default function AddExpense() {
 
   useEffect(() => {
     if (selectedPaymentMethodId) {
-      const selected = paymentMethods.find(pm => pm.id.toString() === selectedPaymentMethodId);
+      const selected = paymentMethods.find(
+        (pm) => pm.id.toString() === selectedPaymentMethodId
+      );
       if (selected && selected.business_accounts) {
         setSelectedBusinessAccount(selected.business_accounts.name);
       } else {
-        setSelectedBusinessAccount('');
+        setSelectedBusinessAccount("");
       }
     } else {
-      setSelectedBusinessAccount('');
+      setSelectedBusinessAccount("");
     }
   }, [selectedPaymentMethodId, paymentMethods]);
 
@@ -95,49 +107,48 @@ export default function AddExpense() {
     try {
       // Fetch payment methods with business accounts
       const { data: pmData, error: pmError } = await (supabase as any)
-        .from('payment_methods')
-        .select('id, name, business_account_id, business_accounts(name)')
-        .eq('active', true)
-        .order('name');
+        .from("payment_methods")
+        .select("id, name, business_account_id, business_accounts(name)")
+        .eq("active", true)
+        .order("name");
 
       if (pmError) throw pmError;
       setPaymentMethods(pmData || []);
 
       // Fetch movement categories
       const { data: catData, error: catError } = await (supabase as any)
-        .from('movement_categories')
-        .select('id, name')
-        .order('name');
+        .from("movement_categories")
+        .select("id, name")
+        .order("name");
 
       if (catError) throw catError;
       setCategories(catData || []);
 
       // Fetch all profiles (users)
       const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('UID, name, last_name')
-        .eq('active', true)
-        .order('name');
+        .from("profiles")
+        .select("UID, name, last_name")
+        .eq("active", true)
+        .order("name");
 
       if (profilesError) throw profilesError;
       setProfiles(profilesData || []);
 
       // Fetch current user's warehouse
       const { data: userProfile, error: userProfileError } = await supabase
-        .from('profiles')
-        .select('warehouse_id')
-        .eq('UID', user.id)
+        .from("profiles")
+        .select("warehouse_id")
+        .eq("UID", user.id)
         .single();
 
       if (userProfileError) throw userProfileError;
       setUserWarehouseId(userProfile?.warehouse_id || null);
-
     } catch (error: any) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
       toast({
-        title: 'Error',
-        description: 'No se pudieron cargar los datos',
-        variant: 'destructive',
+        title: "Error",
+        description: "No se pudieron cargar los datos",
+        variant: "destructive",
       });
     }
   };
@@ -145,9 +156,9 @@ export default function AddExpense() {
   const onSubmit = async (data: ExpenseFormData) => {
     if (!user || !userWarehouseId) {
       toast({
-        title: 'Error',
-        description: 'No se pudo determinar el almacén del usuario',
-        variant: 'destructive',
+        title: "Error",
+        description: "No se pudo determinar el almacén del usuario",
+        variant: "destructive",
       });
       return;
     }
@@ -156,29 +167,33 @@ export default function AddExpense() {
 
     try {
       // Get movement type for "Egreso"
-      const { data: movementTypeData, error: movementTypeError } = await (supabase as any)
-        .from('movement_types')
-        .select('id')
-        .eq('name', 'Egreso')
+      const { data: movementTypeData, error: movementTypeError } = await (
+        supabase as any
+      )
+        .from("movement_types")
+        .select("id")
+        .eq("name", "Egreso")
         .maybeSingle();
 
       if (movementTypeError) throw movementTypeError;
 
       if (!movementTypeData) {
-        throw new Error('No se encontró el tipo de movimiento "egreso". Por favor, contacta al administrador.');
+        throw new Error(
+          'No se encontró el tipo de movimiento "egreso". Por favor, contacta al administrador.'
+        );
       }
 
       const selectedPaymentMethod = paymentMethods.find(
-        pm => pm.id.toString() === data.payment_method_id
+        (pm) => pm.id.toString() === data.payment_method_id
       );
 
       if (!selectedPaymentMethod) {
-        throw new Error('Método de pago no encontrado');
+        throw new Error("Método de pago no encontrado");
       }
 
       // Insert movement
       const { error: insertError } = await (supabase as any)
-        .from('movements')
+        .from("movements")
         .insert({
           amount: Number(data.amount),
           payment_method_id: Number(data.payment_method_id),
@@ -194,17 +209,17 @@ export default function AddExpense() {
       if (insertError) throw insertError;
 
       toast({
-        title: 'Éxito',
-        description: 'Gasto registrado correctamente',
+        title: "Éxito",
+        description: "Gasto registrado correctamente",
       });
 
-      navigate('/movements');
+      navigate("/movements");
     } catch (error: any) {
-      console.error('Error creating expense:', error);
+      console.error("Error creating expense:", error);
       toast({
-        title: 'Error',
-        description: error.message || 'No se pudo registrar el gasto',
-        variant: 'destructive',
+        title: "Error",
+        description: error.message || "No se pudo registrar el gasto",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -219,7 +234,9 @@ export default function AddExpense() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold">Añadir Gasto</h1>
-          <p className="text-muted-foreground">Registra un nuevo gasto en el sistema</p>
+          <p className="text-muted-foreground">
+            Registra un nuevo gasto en el sistema
+          </p>
         </div>
       </div>
 
@@ -238,10 +255,12 @@ export default function AddExpense() {
                   type="number"
                   step="0.01"
                   placeholder="0.00"
-                  {...register('amount')}
+                  {...register("amount")}
                 />
                 {errors.amount && (
-                  <p className="text-sm text-destructive">{errors.amount.message}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.amount.message}
+                  </p>
                 )}
               </div>
 
@@ -251,10 +270,12 @@ export default function AddExpense() {
                 <Input
                   id="movement_date"
                   type="date"
-                  {...register('movement_date')}
+                  {...register("movement_date")}
                 />
                 {errors.movement_date && (
-                  <p className="text-sm text-destructive">{errors.movement_date.message}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.movement_date.message}
+                  </p>
                 )}
               </div>
 
@@ -262,7 +283,9 @@ export default function AddExpense() {
               <div className="space-y-2">
                 <Label htmlFor="payment_method_id">Método de Pago *</Label>
                 <Select
-                  onValueChange={(value) => setValue('payment_method_id', value)}
+                  onValueChange={(value) =>
+                    setValue("payment_method_id", value)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar método de pago" />
@@ -276,7 +299,9 @@ export default function AddExpense() {
                   </SelectContent>
                 </Select>
                 {errors.payment_method_id && (
-                  <p className="text-sm text-destructive">{errors.payment_method_id.message}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.payment_method_id.message}
+                  </p>
                 )}
               </div>
 
@@ -296,30 +321,35 @@ export default function AddExpense() {
               <div className="space-y-2">
                 <Label htmlFor="movement_category_id">Categoría *</Label>
                 <Select
-                  onValueChange={(value) => setValue('movement_category_id', value)}
+                  onValueChange={(value) =>
+                    setValue("movement_category_id", value)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar categoría" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
+                      <SelectItem
+                        key={category.id}
+                        value={category.id.toString()}
+                      >
                         {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {errors.movement_category_id && (
-                  <p className="text-sm text-destructive">{errors.movement_category_id.message}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.movement_category_id.message}
+                  </p>
                 )}
               </div>
 
               {/* Usuario (Opcional) */}
               <div className="space-y-2">
                 <Label htmlFor="user_id">Usuario (Opcional)</Label>
-                <Select
-                  onValueChange={(value) => setValue('user_id', value)}
-                >
+                <Select onValueChange={(value) => setValue("user_id", value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sin asignar" />
                   </SelectTrigger>
@@ -341,7 +371,7 @@ export default function AddExpense() {
                 id="description"
                 placeholder="Ingresa una descripción del gasto..."
                 rows={4}
-                {...register('description')}
+                {...register("description")}
               />
             </div>
 
