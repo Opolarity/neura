@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useProductsLogic } from "../store/Products.logic";
-import RowsPerPageSelector from "../components/RowsPerPageSelector";
+import PageSizeSelector from "../components/PageSizeSelector";
 import Pagination from "../components/Pagination";
 
 const Products = () => {
@@ -214,8 +214,8 @@ const Products = () => {
           </Table>
         </CardContent>
 
-        <div className="w-full flex flex-row justify-center gap-2">
-          <RowsPerPageSelector />
+        <div className="w-full flex flex-row justify-center gap-2 p-6">
+          <PageSizeSelector />
           <Pagination />
         </div>
       </Card>

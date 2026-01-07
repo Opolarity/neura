@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { get } from "../services/index";
+import { getProducts } from "../services/index";
 import { ProductData } from "../types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,7 +12,7 @@ export const useProducts = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      setProducts(await get());
+      setProducts(await getProducts());
     } catch {
       toast({
         title: "Error",

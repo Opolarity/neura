@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export const get = async () => {
+export const getProducts = async () => {
   const { data, error } = await supabase.functions.invoke("get-products-list");
   if (error) throw error;
   return data?.products ?? [];

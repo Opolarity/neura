@@ -8,13 +8,13 @@ import {
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
-function RowsPerPageSelector() {
+function PageSizeSelector() {
   const [value, setValue] = useState(20);
   const values = [20, 50, 100, 200];
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="">
+      <DropdownMenuTrigger>
         <Button
           variant="outline"
           className="w-20 h-10 flex flex-row items-center gap-1"
@@ -39,4 +39,4 @@ function RowsPerPageSelector() {
   );
 }
 
-export default RowsPerPageSelector;
+export default PageSizeSelector;
