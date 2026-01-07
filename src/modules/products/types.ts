@@ -12,3 +12,16 @@ export interface ProductData {
     stock: { stock: number }[];
   }[];
 }
+
+// Categories
+export interface Category {
+  id: number;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+}
+
+export interface CategoryFormData {
+  name: string;
+  description: string;
+}

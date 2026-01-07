@@ -1,15 +1,11 @@
-interface ProductHeaderProps{
-    search:string,
-        onSearch:()=>void,
-        onNew:()=>void,
+interface ProductHeaderProps {
+  search: string;
+  onSearch: (value: string) => void;
+  onNew: () => void;
 }
 
-const ProductHeader = ({
-    search={search},
-    onSearch={setSearch},
-    onNew={() => navigate("/products/add")}
-}) => {
-    return ();
-}
+const ProductHeader = ({ search, onSearch, onNew }: ProductHeaderProps) => {
+  return null;
+};
 
 export default ProductHeader;
