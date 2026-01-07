@@ -8,8 +8,6 @@
 - [x] DataTable (Componente reutilizable)
   - Props: Paginación, Filas, Filas por Páginas
 */
-
-import React from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -34,6 +32,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useProductsLogic } from "../store/Products.logic";
+import RowsPerPageSelector from "../components/RowsPerPageSelector";
+import Pagination from "../components/Pagination";
 
 const Products = () => {
   const {
@@ -213,6 +213,11 @@ const Products = () => {
             </TableBody>
           </Table>
         </CardContent>
+
+        <div className="w-full flex flex-row justify-center gap-2">
+          <RowsPerPageSelector />
+          <Pagination />
+        </div>
       </Card>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
