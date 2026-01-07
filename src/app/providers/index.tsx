@@ -3,7 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryProvider } from "./QueryProvider";
-import { AuthProvider } from "@/auth/AuthProvider";
+import { AuthProvider } from "@/modules/auth/context/AuthProvider";
 
 interface AppProvidersProps {
   children: React.ReactNode;
