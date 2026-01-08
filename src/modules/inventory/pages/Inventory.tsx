@@ -1,10 +1,16 @@
-import React from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Edit, Save, Loader2 } from 'lucide-react';
-import { useInventoryLogic } from '../store/Inventory.logic';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Edit, Save, Loader2 } from "lucide-react";
+import { useInventoryLogic } from "../store/Inventory.logic";
 
 const Inventory = () => {
   const {
@@ -35,8 +41,12 @@ const Inventory = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Inventario por Almacén</h1>
-          <p className="text-muted-foreground">Gestiona el stock de todas las variaciones</p>
+          <h1 className="text-2xl font-bold text-foreground">
+            Inventario por Almacén
+          </h1>
+          <p className="text-muted-foreground">
+            Gestiona el stock de todas las variaciones
+          </p>
         </div>
         <div className="flex gap-2">
           {!isEditing ? (
@@ -79,7 +89,9 @@ const Inventory = () => {
                   <TableHead>SKU</TableHead>
                   <TableHead>Producto</TableHead>
                   <TableHead>Variación</TableHead>
-                  <TableHead className="bg-destructive/10 text-destructive">Fallidos</TableHead>
+                  <TableHead className="bg-destructive/10 text-destructive">
+                    Fallidos
+                  </TableHead>
                   {warehouses.map((warehouse) => (
                     <TableHead key={warehouse.id}>{warehouse.name}</TableHead>
                   ))}
@@ -89,25 +101,45 @@ const Inventory = () => {
               <TableBody>
                 {inventory.map((item) => {
                   const total = item.stock_by_warehouse.reduce((sum, stock) => {
-                    const value = getStockValue(item.variation_id, stock.warehouse_id, stock.stock);
+                    const value = getStockValue(
+                      item.variation_id,
+                      stock.warehouse_id,
+                      stock.stock
+                    );
                     return sum + value;
                   }, 0);
 
                   return (
                     <TableRow key={item.variation_id}>
-                      <TableCell className="font-mono text-sm">{item.sku}</TableCell>
-                      <TableCell className="font-medium">{item.product_name}</TableCell>
-                      <TableCell className="text-muted-foreground">{item.variation_name}</TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {item.sku}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {item.product_name}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.variation_name}
+                      </TableCell>
                       <TableCell className="bg-destructive/5">
                         {(() => {
-                          const warehouse1Stock = item.stock_by_warehouse.find(s => s.warehouse_id === 1);
+                          const warehouse1Stock = item.stock_by_warehouse.find(
+                            (s) => s.warehouse_id === 1
+                          );
                           const defects = warehouse1Stock?.defects || 0;
                           return (
                             <Input
                               type="number"
                               min="0"
-                              value={getDefectsValue(item.variation_id, defects)}
-                              onChange={(e) => handleDefectsChange(item.variation_id, e.target.value)}
+                              value={getDefectsValue(
+                                item.variation_id,
+                                defects
+                              )}
+                              onChange={(e) =>
+                                handleDefectsChange(
+                                  item.variation_id,
+                                  e.target.value
+                                )
+                              }
                               onWheel={(e) => e.currentTarget.blur()}
                               disabled={!isEditing}
                               className="w-24 bg-destructive/10 border-destructive/20 focus-visible:ring-destructive/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -120,9 +152,17 @@ const Inventory = () => {
                           <Input
                             type="number"
                             min="0"
-                            value={getStockValue(item.variation_id, stock.warehouse_id, stock.stock)}
+                            value={getStockValue(
+                              item.variation_id,
+                              stock.warehouse_id,
+                              stock.stock
+                            )}
                             onChange={(e) =>
-                              handleStockChange(item.variation_id, stock.warehouse_id, e.target.value)
+                              handleStockChange(
+                                item.variation_id,
+                                stock.warehouse_id,
+                                e.target.value
+                              )
                             }
                             onWheel={(e) => e.currentTarget.blur()}
                             disabled={!isEditing}

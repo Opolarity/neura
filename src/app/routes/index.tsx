@@ -1,12 +1,9 @@
 //NO SE ESTA USANDO, PERO SE PUEDE USAR DE GUÍA - BORRAR
-import { RouteObject } from "react-router-dom";
-import DashboardLayout from "../layouts/DashboardLayout";
-import ProtectedRoute from "./ProtectedRoute";
-import NotFound from "@/shared/components/NotFound";
-import LoginPage from "@/modules/auth/pages/Login";
-import { dashboardRoutes } from "@/modules/dashboard";
-import { productRoutes } from "@/modules/products";
-import { inventoryRoutes } from "@/modules/inventory";
+import { useRoutes } from "react-router-dom";
+import { authRoutes } from "@/modules/auth/routes";
+import { dashboardRoutes } from "@/modules/dashboard/routes";
+import { productsRoutes } from "@/modules/products/routes";
+import { inventoryRoutes } from "@/modules/inventory/routes";
 import { salesRoutes } from "@/modules/sales";
 import { customersRoutes } from "@/modules/customers";
 import { returnsRoutes } from "@/modules/returns";
@@ -17,31 +14,36 @@ import { movementsRoutes } from "@/modules/movements";
 import { expensesRoutes } from "@/modules/expenses";
 import { reportsRoutes } from "@/modules/reports";
 import { settingsRoutes } from "@/modules/settings";
+import NotFound from "@/shared/components/NotFound";
+import Login from "@/modules/auth/pages/Login";
+import { protectedLayout } from "./ProtectedLayout";
 
-export const routes: RouteObject[] = [
-  { path: "/login", element: <LoginPage /> },
-  {
-    path: "/",
-    element: (
-      <ProtectedRoute>
-        <DashboardLayout />
-      </ProtectedRoute>
-    ),
-    children: [
-      ...dashboardRoutes,
-      ...productRoutes,
-      ...inventoryRoutes,
-      ...salesRoutes,
-      ...customersRoutes,
-      ...returnsRoutes,
-      ...shippingRoutes,
-      ...invoicesRoutes,
-      ...posRoutes,
-      ...movementsRoutes,
-      ...expensesRoutes,
-      ...reportsRoutes,
-      ...settingsRoutes,
-    ],
-  },
-  { path: "*", element: <NotFound /> },
-];
+const AppRouter = () => {
+  return useRoutes([
+    ...authRoutes,
+    {
+      path: "/",
+      ...protectedLayout,
+      children: [
+        ...dashboardRoutes,
+        ...productsRoutes,
+        ...inventoryRoutes,
+        ...salesRoutes,
+        ...customersRoutes,
+        ...returnsRoutes,
+        ...shippingRoutes,
+        ...invoicesRoutes,
+        ...posRoutes,
+        ...movementsRoutes,
+        ...expensesRoutes,
+        ...reportsRoutes,
+        ...settingsRoutes,
+      ],
+    },
+
+    { path: "/login", element: <Login /> },
+    { path: "*", element: <NotFound /> },
+  ]);
+};
+
+export default AppRouter;

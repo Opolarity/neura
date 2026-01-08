@@ -12,3 +12,7 @@ export interface ProductData {
     stock: { stock: number }[];
   }[];
 }
+
+export interface ProductsContextState {
+  //FALTA PASAR ACÁ LOS ESTADOS
+}
