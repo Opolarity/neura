@@ -21,10 +21,8 @@ Deno.serve(async (req) => {
     const minstock = Number(url.searchParams.get('minstock')) ?? null
     const maxstock = Number(url.searchParams.get('maxstock')) ?? null
     const order = url.searchParams.get('order') ?? null
-    const page = Number(url.searchParams.get('page')) || 1;
-    const size = Number(url.searchParams.get('size')) || 20;
-
-    const offset = (page - 1) * size;
+    const page = Number(url.searchParams.get('page')) ?? 1;
+    const size = Number(url.searchParams.get('size')) ?? 20;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -70,7 +68,7 @@ Deno.serve(async (req) => {
     if (productserror) throw productserror;
 
     return new Response(
-      JSON.stringify({ page, size, products: productsdata }),
+      JSON.stringify({ userId, page, size, products: productsdata }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
