@@ -9,8 +9,22 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-
   try {
+
+    const url = new URL(req.url)
+
+    const minprice = Number(url.searchParams.get('minprice')) ?? null
+    const maxprice = Number(url.searchParams.get('maxprice')) ?? null
+    const category = url.searchParams.get('category') ?? null
+    const status = Boolean(url.searchParams.get('status')) ?? null
+    const web = Boolean(url.searchParams.get('web')) ?? null
+    const minstock = Number(url.searchParams.get('minstock')) ?? null
+    const maxstock = Number(url.searchParams.get('maxstock')) ?? null
+    const order = url.searchParams.get('order') ?? null
+    const page = Number(url.searchParams.get('page')) || 1;
+    const size = Number(url.searchParams.get('size')) || 20;
+
+    const offset = (page - 1) * size;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -41,102 +55,22 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub;
     console.log('Authenticated user:', userId);
 
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('warehouse_id')
-      .eq('UID', userId)
-      .single();
 
-    console.log('Profile:', profile, profile.warehouse_id);
+    const { data: productsdata, error: productserror } = await supabase.rpc('get_products_list', {
+      p_min_price: minprice,
+      p_max_price: maxprice,
+      p_category: category,
+      p_status: status,
+      p_web: web,
+      p_minstock: minstock,
+      p_maxstock: maxstock,
+      p_order: order,
+    })
 
-
-    console.log('Fetching products list...');
-
-
-
-    // Get all products
-    const { data: products, error: productsError } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (productsError) throw productsError;
-
-    // For each product, get categories, images, and variations with prices/stock
-    const productsWithDetails = await Promise.all(
-      (products || []).map(async (product) => {
-        // Get categories
-        const { data: productCategories } = await supabase
-          .from('product_categories')
-          .select('category_id, categories(name)')
-          .eq('product_id', product.id);
-
-        const categories = productCategories?.map(pc => (pc as any).categories?.name).filter(Boolean) || [];
-
-        // Get first image
-        const { data: images } = await supabase
-          .from('product_images')
-          .select('image_url')
-          .eq('product_id', product.id)
-          .order('image_order')
-          .limit(1);
-
-        // Get variations
-        const { data: variations } = await supabase
-          .from('variations')
-          .select('id, sku')
-          .eq('product_id', product.id);
-
-        // For each variation, get prices and stock
-        const variationsWithDetails = await Promise.all(
-          (variations || []).map(async (variation) => {
-            const [pricesResult, stockResult, termResult] = await Promise.all([
-              supabase
-                .from('product_price')
-                .select('price, sale_price')
-                .eq('product_variation_id', variation.id),
-              supabase
-                .from('product_stock')
-                .select('stock')
-                .eq('product_variation_id', variation.id)
-                .eq('warehouse_id', profile.warehouse_id),
-
-
-              supabase
-                .from('variation_terms')
-                .select('term_id , terms(name)')
-                .eq('product_variation_id', variation.id)
-
-
-            ]);
-
-            return {
-              id: variation.id,
-              sku: variation.sku,
-              prices: pricesResult.data || [],
-              stock: stockResult.data || [],
-              terms: termResult.data || [],
-
-            };
-          })
-        );
-
-        return {
-          id: product.id,
-          title: product.title,
-          short_description: product.short_description,
-          is_variable: product.is_variable,
-          categories,
-          images: images || [],
-          variations: variationsWithDetails
-        };
-      })
-    );
-
-    console.log(`Fetched ${productsWithDetails.length} products`);
+    if (productserror) throw productserror;
 
     return new Response(
-      JSON.stringify({ products: productsWithDetails }),
+      JSON.stringify({ page, size, products: productsdata }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
