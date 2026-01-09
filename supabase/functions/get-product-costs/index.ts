@@ -5,6 +5,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+
 };
 
 /*Creamos el servidor*/
@@ -13,6 +15,15 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
   try {
+
+
+    const page = Number(req.url.searchParams.get('page') || 1);
+    const size = Number(req.url.searchParams.get('size') || 20);
+    const search = req.url.searchParams.get('search') || null;
+    const mincost = req.url.searchParams.get('mincost') || null;
+    const maxcost = req.url.searchParams.get('maxcost') || null;
+    const order = req.url.searchParams.get('order') || null;
+    const variation = req.url.searchParams.get('variation') || null;
 
     /*Pedimos los datos a la Base de Datos*/
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -26,7 +37,6 @@ Deno.serve(async (req) => {
 
     /*Validamos el token */
     console.log('Authorization header:', authHeader);
-
 
     const supabase = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -49,6 +59,16 @@ Deno.serve(async (req) => {
     console.log('Authenticated user:', userId);
 
 
+
+    //Mandamos los parametros a la funcion
+
+    const { data: products, error: productserror } = await supabase.rpc('get_products_costs', {
+      p_search: search,
+      p_mincost: mincost,
+      p_maxcost: maxcost,
+      p_order: order,
+      p_variation: variation,
+    })
 
 
     return new Response(JSON.stringify({ products }), {
