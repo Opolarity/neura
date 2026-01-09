@@ -1,4 +1,4 @@
-import { ProductData } from "../products.types";
+import { ProductData } from "../types";
 
 export const getProductPrice = (product: ProductData): string => {
   const prices: number[] = [];

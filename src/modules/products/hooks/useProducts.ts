@@ -1,46 +1,51 @@
-import { useEffect, useMemo, useState } from "react";
-import { getProducts } from "../services/index";
-import { ProductData } from "../types";
-import { useToast } from "@/hooks/use-toast";
+// modules/products/hooks/useProducts.ts
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { getProducts } from "../store/products";
+import { Product, Pagination } from "../products.types";
 
 export const useProducts = () => {
-  const { toast } = useToast();
-  const [products, setProducts] = useState<ProductData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const loadProducts = async () => {
+  const navigate = useNavigate();
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setProducts(await getProducts());
+      const { products, pagination } = await getProducts();
+      setProducts(products);
+      setPagination(pagination);
     } catch {
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar productos",
-        variant: "destructive",
-      });
+      setError("Ocurrió un error al cargar");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadProducts();
+    loadData();
   }, []);
 
-  const filteredProducts = useMemo(() => {
-    return products.filter(
-      (p) =>
-        p.title.toLowerCase().includes(search.toLowerCase()) ||
-        p.categories.some((c) => c.toLowerCase().includes(search.toLowerCase()))
-    );
-  }, [products, search]);
+  const goToProductDetail = (id: number) => {
+    navigate(`/producto/${id}`);
+  };
+
+  const onSearchChange = (value: string) => {
+    setSearch(value);
+  };
 
   return {
+    products,
+    pagination,
     loading,
+    error,
     search,
-    setSearch,
-    products: filteredProducts,
-    reload: loadProducts,
+    goToProductDetail,
+    onSearchChange,
   };
 };

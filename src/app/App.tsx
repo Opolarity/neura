@@ -30,7 +30,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/modules/auth/context/AuthProvider";
 import DashboardLayout from "../layouts/DashboardLayout";
 import Dashboard from "@/modules/dashboard/pages/Dashboard";
-import Products from "@/modules/products/pages/Products"; //ORIGINAL
+import Products from "@/modules/products/pages/ProductsPage"; //ORIGINAL
 //import Products from "../modules/products/pages/ProductsA"; //PRUEBA
 import AddProduct from "@/modules/products/pages/AddProduct";
 import Inventory from "@/modules/inventory/pages/Inventory";

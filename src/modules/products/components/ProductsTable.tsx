@@ -21,50 +21,36 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useProductsLogic } from "../store/Products.logic";
+
 import PageSizeSelector from "../components/PageSizeSelector";
 import Pagination from "../components/Pagination";
+import { Product } from "../products.types";
+import ProductFilterInput from "./ProductSearchInput";
 
-const ProductsTable = () => {
-  const {
-    loading,
-    searchTerm,
-    setSearchTerm,
-    filteredProducts,
-    selectedProducts,
-    deleteDialogOpen,
-    setDeleteDialogOpen,
-    productToDelete,
-    deleting,
-    handleNewProduct,
-    toggleSelectAll,
-    toggleProductSelection,
-    handleBulkDelete,
-    handleDeleteClick,
-    handleDeleteConfirm,
-    handleEditProduct,
-    getProductPrice,
-    getProductStock,
-    getProductStatus,
-  } = useProductsLogic();
+interface ProductsTableProps {
+  products: Product[];
+  loading: boolean;
+  search: string;
+  onSearchChange: (value: string) => void;
+}
 
+const ProductsTable = ({
+  products,
+  loading,
+  search,
+  onSearchChange,
+}: ProductsTableProps) => {
   return (
     <>
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar productos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+            <ProductFilterInput
+              value={search}
+              onChange={(e) => onSearchChange(e)}
+            />
 
-            <Button onClick={handleNewProduct} className="gap-2">
+            <Button className="gap-2">
               <ListFilter className="w-4 h-4" />
               Filtrar
             </Button>
@@ -75,13 +61,7 @@ const ProductsTable = () => {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">
-                  <Checkbox
-                    checked={
-                      selectedProducts.length === filteredProducts.length &&
-                      filteredProducts.length > 0
-                    }
-                    onCheckedChange={() => toggleSelectAll()}
-                  />
+                  <Checkbox />
                 </TableHead>
                 <TableHead className="w-20">Imagen</TableHead>
                 <TableHead>Producto</TableHead>
@@ -102,78 +82,66 @@ const ProductsTable = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : filteredProducts.length === 0 ? (
+              ) : products.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={9}
                     className="text-center py-8 text-gray-500"
                   >
-                    {searchTerm
+                    {search
                       ? "No se encontraron productos"
                       : "No hay productos registrados"}
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredProducts.map((product) => {
-                  const price = getProductPrice(product);
-                  const stock = getProductStock(product);
-                  const status = getProductStatus(stock);
-
-                  return (
-                    <TableRow key={product.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedProducts.includes(product.id)}
-                          onCheckedChange={() =>
-                            toggleProductSelection(product.id)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <img
-                          src={product.images[0]?.image_url || placeholderImage}
-                          alt={product.title}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {product.title}
-                      </TableCell>
-                      <TableCell>
-                        {product.categories.length > 0
-                          ? product.categories.join(", ")
-                          : "Sin categoría"}
-                      </TableCell>
-                      <TableCell>S/ {price}</TableCell>
-                      <TableCell>{stock}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${status.class}`}
+                products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
+                      <Checkbox
+                      /*checked={selectedProducts.includes(product.id)}
+                        onCheckedChange={() =>
+                          toggleProductSelection(product.id)
+                        }*/
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <img
+                        src={product.image || placeholderImage}
+                        alt={product.name}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {product.name}
+                    </TableCell>
+                    <TableCell>{product.categories}</TableCell>
+                    <TableCell>S/ {product.price}</TableCell>
+                    <TableCell>{product.stock}</TableCell>
+                    <TableCell>
+                      <span className="px-2 py-1 rounded-full text-xs">
+                        {"Acá va un swicth"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          //onClick={() => handleEditProduct(product.id)}
                         >
-                          {status.text}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditProduct(product.id)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteClick(product.id)}
-                          >
-                            <Trash className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          //onClick={() => handleDeleteClick(product.id)}
+                        >
+                          <Trash className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
@@ -185,39 +153,17 @@ const ProductsTable = () => {
         </div>
       </Card>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {productToDelete === -1
-                ? `¿Eliminar ${selectedProducts.length} productos?`
-                : "¿Eliminar producto?"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Titulo</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Se eliminará
-              {productToDelete === -1 ? "n los productos" : " el producto"} y
-              todos sus registros relacionados (variaciones, precios, stock,
-              imágenes, etc.). Solo se puede eliminar si no está
-              {productToDelete === -1 ? "n" : ""} vinculado
-              {productToDelete === -1 ? "s" : ""} a ninguna orden.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Eliminando...
-                </>
-              ) : (
-                "Eliminar"
-              )}
-            </AlertDialogAction>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction>Eliminar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

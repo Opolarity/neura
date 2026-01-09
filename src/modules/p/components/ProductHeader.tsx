@@ -1,17 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Plus, Trash } from "lucide-react";
+import { useProductsLogic } from "../store/Products.logic";
 
-interface ProductsHeaderProps {
-  selectedProducts?: number[] | [];
-  handleBulkDelete?: () => void;
-  handleNewProduct?: () => void;
-}
+const ProductHeader = () => {
+  const { selectedProducts, handleNewProduct, handleBulkDelete } =
+    useProductsLogic();
 
-const ProductHeader = ({
-  selectedProducts = [],
-  handleBulkDelete,
-  handleNewProduct,
-}: ProductsHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
       <div>

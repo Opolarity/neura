@@ -2,7 +2,7 @@
 import { useRoutes } from "react-router-dom";
 import { authRoutes } from "@/modules/auth/routes";
 import { dashboardRoutes } from "@/modules/dashboard/routes";
-import { productsRoutes } from "@/modules/products/routes";
+import { productsRoutes } from "@/modules/products/products.routes";
 import { inventoryRoutes } from "@/modules/inventory/routes";
 import { salesRoutes } from "@/modules/sales";
 import { customersRoutes } from "@/modules/customers";

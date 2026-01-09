@@ -10,11 +10,11 @@ import { useState } from "react";
 
 function PageSizeSelector() {
   const [value, setValue] = useState(20);
-  const values = [20, 50, 100];
+  const values = [20, 50, 100, 200];
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger>
         <Button
           variant="outline"
           className="w-20 h-10 flex flex-row items-center gap-1"
@@ -26,7 +26,6 @@ function PageSizeSelector() {
       <DropdownMenuContent>
         {values.map((v) => (
           <DropdownMenuItem
-            key={v}
             onSelect={() => {
               setValue(v);
               console.log("Opción seleccionada: " + v);

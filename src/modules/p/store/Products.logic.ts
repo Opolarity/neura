@@ -49,8 +49,6 @@ export const useProductsLogic = () => {
         return;
       }
 
-      console.log("data");
-
       console.log(data);
 
       setProducts(data.products);
@@ -212,7 +210,6 @@ export const useProductsLogic = () => {
   };
 
   return {
-    fetchProducts,
     loading,
     searchTerm,
     setSearchTerm,
