@@ -32,6 +32,14 @@ interface ProductsTableProps {
   loading: boolean;
   search: string;
   onSearchChange: (value: string) => void;
+  onOpenFilter?: () => void;
+  pagination: {
+    total: number;
+    page: number;
+    pageSize: number;
+  };
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const ProductsTable = ({
@@ -39,6 +47,10 @@ const ProductsTable = ({
   loading,
   search,
   onSearchChange,
+  onOpenFilter,
+  pagination,
+  onPageChange,
+  onPageSizeChange,
 }: ProductsTableProps) => {
   return (
     <>
@@ -50,7 +62,7 @@ const ProductsTable = ({
               onChange={(e) => onSearchChange(e)}
             />
 
-            <Button className="gap-2">
+            <Button className="gap-2" onClick={onOpenFilter}>
               <ListFilter className="w-4 h-4" />
               Filtrar
             </Button>
@@ -127,14 +139,14 @@ const ProductsTable = ({
                         <Button
                           variant="outline"
                           size="sm"
-                          //onClick={() => handleEditProduct(product.id)}
+                        //onClick={() => handleEditProduct(product.id)}
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="destructive"
                           size="sm"
-                          //onClick={() => handleDeleteClick(product.id)}
+                        //onClick={() => handleDeleteClick(product.id)}
                         >
                           <Trash className="w-4 h-4" />
                         </Button>
@@ -148,8 +160,16 @@ const ProductsTable = ({
         </CardContent>
 
         <div className="w-full flex flex-row justify-center gap-2 p-6">
-          <PageSizeSelector />
-          <Pagination />
+          <PageSizeSelector
+            pageSize={pagination.pageSize}
+            onPageSizeChange={onPageSizeChange}
+          />
+          <Pagination
+            total={pagination.total}
+            page={pagination.page}
+            pageSize={pagination.pageSize}
+            onPageChange={onPageChange}
+          />
         </div>
       </Card>
 

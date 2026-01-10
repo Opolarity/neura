@@ -32,3 +32,17 @@ export interface Product {
 export interface Pagination {
   total_items: number;
 }
+
+export interface ProductFilters {
+  minprice?: number;
+  maxprice?: number;
+  category?: number;
+  status?: boolean;
+  web?: boolean;
+  minstock?: number;
+  maxstock?: number;
+  order?: string;
+  search?: string;
+  page?: number;
+  size?: number;
+}
