@@ -32,3 +32,18 @@ export interface Pagination {
   p_size: number;
   total: number;
 }
+
+export interface ProductData {
+  id: number;
+  title: string;
+  categories: string[];
+  estado: boolean;
+  web: boolean;
+  image_url: string;
+  price: string;
+  terminos: string;
+  variations: {
+    prices: { price: number | null; sale_price: number | null }[];
+    stock: { stock: number | null }[];
+  }[];
+}

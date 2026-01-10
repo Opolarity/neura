@@ -2,7 +2,7 @@
 import LoginPage from "@/modules/auth/pages/Login";
 import { RouteObject } from "react-router-dom";
 import { dashboardRoutes } from "@/modules/dashboard";
-import { productRoutes } from "@/modules/products";
+import { productsRoutes as productRoutes } from "@/modules/products";
 import { inventoryRoutes } from "@/modules/inventory";
 import { salesRoutes } from "@/modules/sales";
 import { customersRoutes } from "@/modules/customers";
