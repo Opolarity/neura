@@ -1,3 +1,4 @@
+//prueba
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
 const corsHeaders = {
@@ -54,10 +55,10 @@ Deno.serve(async (req) => {
 
     if (!expiredReservations || expiredReservations.length === 0) {
       return new Response(
-        JSON.stringify({ 
-          success: true, 
+        JSON.stringify({
+          success: true,
           message: 'No expired reservations found',
-          cancelledCount: 0 
+          cancelledCount: 0
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -137,9 +138,9 @@ Deno.serve(async (req) => {
     console.error('Error in cancel-expired-reservations function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
