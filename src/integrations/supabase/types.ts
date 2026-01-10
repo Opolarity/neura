@@ -146,20 +146,31 @@ export type Database = {
           id: number
           image_url: string | null
           name: string
+          parent_category: number | null
         }
         Insert: {
           description?: string | null
           id?: number
           image_url?: string | null
           name: string
+          parent_category?: number | null
         }
         Update: {
           description?: string | null
           id?: number
           image_url?: string | null
           name?: string
+          parent_category?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_category_fkey"
+            columns: ["parent_category"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cities: {
         Row: {
@@ -2067,8 +2078,52 @@ export type Database = {
         Args: { p_product_id: number }
         Returns: Json
       }
+      get_products_list: {
+        Args: {
+          p_category?: number
+          p_max_price?: number
+          p_maxstock?: number
+          p_min_price?: number
+          p_minstock?: number
+          p_order?: string
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_status?: boolean
+          p_web?: boolean
+        }
+        Returns: Json
+      }
       get_variation_by_terms: {
         Args: { p_product_id: number; terms_id: number[] }
+        Returns: Json
+      }
+      prueba1: {
+        Args: {
+          p_category?: number
+          p_max_price?: number
+          p_maxstock?: number
+          p_min_price?: number
+          p_minstock?: number
+          p_order?: string
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_status?: boolean
+          p_web?: boolean
+        }
+        Returns: Json
+      }
+      sp_get_products_costs: {
+        Args: {
+          p_max_cost?: number
+          p_min_cost?: number
+          p_order?: string
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_variation?: number
+        }
         Returns: Json
       }
     }
