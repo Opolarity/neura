@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
     const order = url.searchParams.get('order') || null;
     const variation = url.searchParams.get('variation') || null;
 
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -27,9 +28,7 @@ Deno.serve(async (req) => {
 
     console.log('Fetching product costs data...');
 
-
     //Mandamos los parametros a la funcion
-
     const { data: productsdata, error: productserror } = await supabase.rpc('sp_get_products_costs', {
       p_search: search,
       p_min_cost: mincost,
@@ -40,7 +39,10 @@ Deno.serve(async (req) => {
       p_size: size,
     })
 
+    //Validamos si hubo error
+    if (productserror) throw productserror;
 
+    //Retornamos la respuesta
     return new Response(JSON.stringify({ products: productsdata }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
