@@ -2074,6 +2074,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_clients_list: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_max_amount?: number
+          p_max_purchases?: number
+          p_min_amount?: number
+          p_min_purchases?: number
+          p_order?: string
+          p_page?: number
+          p_search?: string
+          p_size?: number
+        }
+        Returns: Json
+      }
       get_product_attribute_groups: {
         Args: { p_product_id: number }
         Returns: Json

@@ -10,11 +10,7 @@ const ProductsPage = () => {
 
   return (
     <>
-      <ProductHeader
-        search={search}
-        onSearch={setSearch}
-        onNew={() => navigate("/products/add")}
-      />
+      <ProductHeader />
     </>
   );
 };
