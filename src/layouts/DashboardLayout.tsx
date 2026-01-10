@@ -16,9 +16,8 @@ const DashboardLayout = () => {
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar isOpen={sidebarOpen} />
       <div
-        className={`flex-1 transition-all duration-300 ${
-          sidebarOpen ? "ml-64" : "ml-16"
-        }`}
+        className={`flex-1 transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-16"
+          }`}
       >
         <Header
           toggleSidebar={() => setSidebarOpen(!sidebarOpen)}

@@ -17,11 +17,12 @@ export const useProducts = () => {
     setLoading(true);
     setError(null);
     try {
-      const { products, pagination } = await getProducts();
-      setProducts(products);
-      setPagination(pagination);
-    } catch {
-      setError("Ocurrió un error al cargar");
+      const response = await getProducts();
+      setProducts(response.products);
+      setPagination(response.pagination);
+    } catch (err: any) {
+      console.error("Error detallado:", err);
+      setError(err.message || "Ocurrió un error al cargar");
     } finally {
       setLoading(false);
     }

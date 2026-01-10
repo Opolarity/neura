@@ -140,3 +140,48 @@ All colors MUST be HSL.
   border: 1px solid hsl(var(--border));
   color: hsl(var(--foreground));
 }
+
+/* Barra de Scroll Refinada - Estilo Minimalista */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #04387c;
+  /* slate-200 para armonizar con el header */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #01070f;
+  /* slate-300 */
+}
+
+
+
+/* Lógica de colapso (Necesaria para mantener el layout sin editar DashboardLayout.tsx) */
+body.sidebar-collapsed div.flex-1 {
+  margin-left: 4rem !important;
+  transition: margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.sidebar-collapsed header {
+  transition: margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+    overflow: -moz-scrollbars-none !important;
+  }
+}

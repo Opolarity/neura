@@ -17,10 +17,10 @@ function PageSizeSelector() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="w-20 h-10 flex flex-row items-center gap-1"
+          className="w-16 h-9 flex flex-row items-center justify-between gap-1 border-gray-100 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all rounded-lg shadow-sm font-medium text-xs px-2.5"
         >
           {value}
-          <ChevronDown className="w-4 h-4" />
+          <ChevronDown className="w-3.5 h-3.5 opacity-60" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>

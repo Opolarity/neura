@@ -1,7 +1,12 @@
 import { Product, Pagination, ProductApiResponse } from "../products.types";
 
 export const productAdapter = (response: ProductApiResponse) => {
-  const formattedProducts: Product[] = response.products.data.map((item) => ({
+  if (!response || !response.data) {
+    console.error("Respuesta de API inválida:", response);
+    throw new Error("La respuesta del servidor no contiene datos de productos.");
+  }
+
+  const formattedProducts: Product[] = response.data.map((item) => ({
     id: item.product_id,
     categories: item.categories,
     estatus: item.estado,
@@ -14,7 +19,7 @@ export const productAdapter = (response: ProductApiResponse) => {
   }));
 
   const pagination: Pagination = {
-    total_items: response.products.page.total,
+    total_items: response.page?.total || 0,
   };
 
   return { products: formattedProducts, pagination };
