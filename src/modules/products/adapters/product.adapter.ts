@@ -1,4 +1,4 @@
-import { Product, Pagination, ProductApiResponse } from "../products.types";
+import { Product, Pagination, ProductApiResponse, Variation } from "../products.types";
 
 export const productAdapter = (response: any) => {
   // Defensive check: Try to locate the data in several possible structures
@@ -31,17 +31,56 @@ export const productAdapter = (response: any) => {
     }
   }
 
-  const formattedProducts: Product[] = rawData.map((item: any) => ({
-    id: item.product_id,
-    categories: item.categories,
-    estatus: item.estado,
-    web: item.web,
-    image: item.image_url,
-    name: item.name,
-    price: item.price,
-    terms: item.terminos,
-    stock: item.stock,
-  }));
+  const formattedProducts: Product[] = rawData.map((item: any) => {
+    // Process categories: could be string or array
+    let categories: string[] = [];
+    if (typeof item.categories === 'string') {
+      categories = item.categories.split(',').map((c: string) => c.trim()).filter(Boolean);
+    } else if (Array.isArray(item.categories)) {
+      categories = item.categories;
+    }
+
+    // Map variations if present
+    const variations: Variation[] = (item.variations || []).map((v: any) => {
+      // Logic to get price from prices array if it's in that format
+      let price = v.price || v.precios || "0";
+      let salePrice = v.sale_price || null;
+
+      if (Array.isArray(v.prices) && v.prices.length > 0) {
+        price = String(v.prices[0].price || v.prices[0].precio || price);
+        salePrice = v.prices[0].sale_price !== undefined ? String(v.prices[0].sale_price) : salePrice;
+      }
+
+      // Logic to get stock from stock array if it's in that format
+      let stock = v.stock || 0;
+      if (Array.isArray(v.stock)) {
+        stock = v.stock.reduce((total: number, s: any) => total + (s.stock || 0), 0);
+      }
+
+      return {
+        id: v.id || v.variation_id,
+        sku: v.sku,
+        price: String(price),
+        sale_price: salePrice ? String(salePrice) : null,
+        stock: Number(stock),
+        attributes: v.attributes || {}
+      };
+    });
+
+    return {
+      id: item.product_id || item.id,
+      categories,
+      estatus: item.estado ?? item.active ?? true,
+      web: item.web ?? false,
+      image: item.image_url || item.image || "",
+      name: item.name || item.title || "",
+      price: String(item.price || "0"),
+      terms: item.terminos || "",
+      stock: item.stock !== undefined ? Number(item.stock) : 0,
+      is_variable: item.is_variable || variations.length > 0,
+      variations: variations.length > 0 ? variations : undefined,
+    };
+  });
 
   const pagination: Pagination = {
     total_items: totalCount,

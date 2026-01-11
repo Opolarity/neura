@@ -110,6 +110,12 @@ const Sidebar = ({ isOpen: initialOpen }: SidebarProps) => {
     );
   }
 
+  const isPathActive = (path: string | null) => {
+    if (!path || path === '#') return false;
+    if (path === '/') return location.pathname === '/';
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
   return (
     <div className={`fixed left-0 top-0 h-full bg-[#0f172a] text-white transition-all duration-300 z-30 flex flex-col border-r border-white/5 overflow-x-hidden ${isCollapsed ? 'w-16' : 'w-64'
       }`}>
@@ -118,7 +124,19 @@ const Sidebar = ({ isOpen: initialOpen }: SidebarProps) => {
       <nav className="mt-4 flex-1 overflow-y-auto overflow-x-hidden px-2 space-y-1 py-4 scrollbar-hide">
         {menuItems.map((item) => {
           const Icon = item.icon ? iconMap[item.icon] || Grid : Grid;
-          const isActive = location.pathname === item.location;
+
+          // Find the most specific subitem match (longest matching path)
+          const allSubItems = 'subItems' in item ? item.subItems?.flatMap(group => group.items) || [] : [];
+          const matchingSubLocations = allSubItems
+            .map(si => si.location)
+            .filter(loc => isPathActive(loc)) as string[];
+
+          const bestSubMatch = matchingSubLocations.length > 0
+            ? matchingSubLocations.sort((a, b) => b.length - a.length)[0]
+            : null;
+
+          const isAnySubItemActive = !!bestSubMatch;
+          const isActive = isPathActive(item.location) || isAnySubItemActive;
           const hasSubItems = 'subItems' in item;
           const isExpanded = expandedSections[item.id];
 
@@ -127,18 +145,25 @@ const Sidebar = ({ isOpen: initialOpen }: SidebarProps) => {
               <div key={item.id} className="space-y-1">
                 <button
                   onClick={() => toggleSection(item.id)}
-                  className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg w-full text-left group overflow-hidden ${isExpanded && !isCollapsed ? 'bg-white/5 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg w-full text-left group relative overflow-hidden transition-all duration-200 ${isActive
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                    : isExpanded && !isCollapsed
+                      ? 'bg-white/5 text-white'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
                     }`}
                 >
-                  <div className={`flex items-center justify-center w-5 h-5 shrink-0 transition-colors ${isExpanded && !isCollapsed ? 'text-blue-400' : 'group-hover:text-blue-400'
+                  <div className={`flex items-center justify-center w-5 h-5 shrink-0 transition-colors ${isActive ? 'text-white' : isExpanded && !isCollapsed ? 'text-blue-400' : 'group-hover:text-blue-400'
                     }`}>
                     <Icon className="w-5 h-5" />
                   </div>
                   {!isCollapsed && (
                     <div className="flex items-center justify-between flex-1 truncate">
                       <span className="font-medium truncate whitespace-nowrap">{item.name}</span>
-                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform duration-300 ${isExpanded ? 'rotate-90 text-blue-400' : 'text-slate-600'}`} />
+                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform duration-300 ${isActive ? 'text-white' : isExpanded ? 'rotate-90 text-blue-400' : 'text-slate-600'}`} />
                     </div>
+                  )}
+                  {isCollapsed && isActive && (
+                    <div className="absolute left-0 w-1 h-6 bg-white rounded-full translate-x-[-2px] animate-in fade-in" />
                   )}
                 </button>
                 {!isCollapsed && isExpanded && item.subItems && (
@@ -149,7 +174,7 @@ const Sidebar = ({ isOpen: initialOpen }: SidebarProps) => {
                           {subGroup.label}
                         </div>
                         {subGroup.items.map((subItem) => {
-                          const isSubActive = location.pathname === subItem.location;
+                          const isSubActive = subItem.location === bestSubMatch;
                           return (
                             <Link
                               key={subItem.location || subItem.id}
@@ -176,7 +201,7 @@ const Sidebar = ({ isOpen: initialOpen }: SidebarProps) => {
             <Link
               key={item.location || item.id}
               to={item.location || '#'}
-              className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg group relative overflow-hidden ${isActive
+              className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg group relative overflow-hidden transition-all duration-200 ${isActive
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}

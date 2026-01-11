@@ -17,9 +17,18 @@ export interface ProductApiResponse {
   };
 }
 
+export interface Variation {
+  id: number;
+  sku: string | null;
+  price: string;
+  sale_price: string | null;
+  stock: number;
+  attributes?: Record<string, string>;
+}
+
 export interface Product {
   id: number;
-  categories: string;
+  categories: string[];
   estatus: boolean;
   web: boolean;
   image: string;
@@ -27,6 +36,8 @@ export interface Product {
   price: string;
   terms: string;
   stock: number;
+  is_variable?: boolean;
+  variations?: Variation[];
 }
 
 export interface Pagination {
@@ -45,4 +56,18 @@ export interface ProductFilters {
   search?: string;
   page?: number;
   size?: number;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  parent_id: number | null;
+  created_at?: string;
+}
+
+export interface CategoryProductCount {
+  category_id: number;
+  product_count: number;
 }

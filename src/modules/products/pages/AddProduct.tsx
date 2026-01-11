@@ -142,15 +142,15 @@ const AddProduct = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-2">
                 <Switch
-                id="isActive"
-                checked={isActive}
-                onCheckedChange={setIsActive}
+                  id="isActive"
+                  checked={isActive}
+                  onCheckedChange={setIsActive}
                 />
                 <Label htmlFor="isActive">Activo</Label>
                 <Switch
-                id="isWeb"
-                checked={isWeb}
-                onCheckedChange={setIsWeb}
+                  id="isWeb"
+                  checked={isWeb}
+                  onCheckedChange={setIsWeb}
                 />
                 <Label htmlFor="isWeb">Web</Label>
               </div>
@@ -191,36 +191,36 @@ const AddProduct = () => {
                   {productImages
                     .sort((a, b) => a.order - b.order)
                     .map(image => (
-                    <div 
-                      key={image.id} 
-                      className="relative w-[150px] h-[150px] group cursor-move select-none"
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, image.id)}
-                      onDragOver={(e) => handleDragOver(e, image.id)}
-                      onDragEnd={handleDrop}
-                    >
-                      <img
-                        src={image.preview}
-                        alt="Preview"
-                        className="w-[150px] h-[150px] object-cover rounded-lg border pointer-events-none"
-                        draggable={false}
-                      />
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeImage(image.id);
-                        }}
+                      <div
+                        key={image.id}
+                        className="relative w-[150px] h-[150px] group cursor-move select-none"
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, image.id)}
+                        onDragOver={(e) => handleDragOver(e, image.id)}
+                        onDragEnd={handleDrop}
                       >
-                        <X className="w-3 h-3" />
-                      </Button>
-                      <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded pointer-events-none">
-                        {image.order + 1}
+                        <img
+                          src={image.preview}
+                          alt="Preview"
+                          className="w-[150px] h-[150px] object-cover rounded-lg border pointer-events-none"
+                          draggable={false}
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeImage(image.id);
+                          }}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                        <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded pointer-events-none">
+                          {image.order + 1}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               )}
             </CardContent>
@@ -235,18 +235,28 @@ const AddProduct = () => {
               <div>
                 <Label>Seleccionar categorías *</Label>
                 <div className="grid grid-cols-1 gap-2 mt-2">
-                  {categories.map(category => (
-                    <div key={category.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`category-${category.id}`}
-                        checked={selectedCategories.includes(category.id)}
-                        onCheckedChange={() => toggleCategorySelection(category.id)}
-                      />
-                      <Label htmlFor={`category-${category.id}`} className="text-sm">
-                        {category.name}
-                      </Label>
-                    </div>
-                  ))}
+                  {categories.map(category => {
+                    const parentCategory = categories.find(c => c.id === category.parent_id);
+                    return (
+                      <div key={category.id} className="flex items-center justify-between space-x-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`category-${category.id}`}
+                            checked={selectedCategories.includes(category.id)}
+                            onCheckedChange={() => toggleCategorySelection(category.id)}
+                          />
+                          <Label htmlFor={`category-${category.id}`} className="text-sm">
+                            {category.name}
+                          </Label>
+                        </div>
+                        {parentCategory && (
+                          <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                            Padre: {parentCategory.name}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </CardContent>
@@ -268,7 +278,7 @@ const AddProduct = () => {
                 {termGroups.map(group => {
                   const groupTerms = terms.filter(term => term.term_group_id === group.id);
                   const selectedGroupTerms = selectedTerms[group.id] || [];
-                  
+
                   return (
                     <div key={group.id} className="space-y-2">
                       <Label className="text-sm font-medium">{group.name}</Label>
@@ -279,7 +289,7 @@ const AddProduct = () => {
                             role="combobox"
                             className="w-full justify-between"
                           >
-                            {selectedGroupTerms.length > 0 
+                            {selectedGroupTerms.length > 0
                               ? `${selectedGroupTerms.length} seleccionado${selectedGroupTerms.length > 1 ? 's' : ''}`
                               : `Seleccionar ${group.name.toLowerCase()}`
                             }
@@ -311,7 +321,7 @@ const AddProduct = () => {
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      
+
                       {/* Selected terms display */}
                       {selectedGroupTerms.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
@@ -345,15 +355,15 @@ const AddProduct = () => {
                 <h4 className="font-medium text-lg mb-4">
                   {isVariable ? 'Configurar variaciones' : 'Configurar producto'}
                 </h4>
-                <Accordion 
-                  type="single" 
-                  collapsible 
+                <Accordion
+                  type="single"
+                  collapsible
                   defaultValue={variations[0]?.id}
                   className="w-full space-y-4"
                 >
                   {variations.map(variation => (
-                    <AccordionItem 
-                      key={variation.id} 
+                    <AccordionItem
+                      key={variation.id}
                       value={variation.id}
                       className="border rounded-lg px-4"
                     >
@@ -372,7 +382,7 @@ const AddProduct = () => {
                       <AccordionContent className="space-y-4 pt-4">
                         {/* Prices */}
                         <div>
-                          
+
                           <div className="space-y-3 mt-2">
                             {priceLists.map(priceList => {
                               const variationPrice = variation.prices.find(p => p.price_list_id === priceList.id);
@@ -403,7 +413,7 @@ const AddProduct = () => {
 
                         {/* Stock */}
                         <div>
-                          
+
                           <div className="space-y-3 mt-2">
                             {warehouses.map(warehouse => {
                               const variationStock = variation.stock.find(s => s.warehouse_id === warehouse.id);
@@ -433,11 +443,10 @@ const AddProduct = () => {
                                   <img
                                     src={image.preview}
                                     alt="Preview"
-                                    className={`w-[100px] h-[100px] object-cover rounded border-2 cursor-pointer transition-all ${
-                                      variation.selectedImages.includes(image.id)
+                                    className={`w-[100px] h-[100px] object-cover rounded border-2 cursor-pointer transition-all ${variation.selectedImages.includes(image.id)
                                         ? 'border-blue-500 ring-2 ring-blue-200'
                                         : 'border-gray-200 hover:border-gray-300'
-                                    }`}
+                                      }`}
                                     onClick={() => toggleVariationImage(variation.id, image.id)}
                                   />
                                   {variation.selectedImages.includes(image.id) && (
