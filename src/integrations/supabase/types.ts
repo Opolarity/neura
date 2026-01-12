@@ -2182,36 +2182,21 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_get_stock_movements:
-        | {
-            Args: {
-              p_datetime_end?: string
-              p_datetime_start?: string
-              p_input?: number
-              p_origin?: number
-              p_output?: number
-              p_page?: number
-              p_search?: string
-              p_size?: number
-              p_user?: number
-              p_warehouse?: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_fecha?: string
-              p_input?: number
-              p_origin?: number
-              p_output?: number
-              p_page?: number
-              p_search?: string
-              p_size?: number
-              p_user?: number
-              p_warehouse?: number
-            }
-            Returns: Json
-          }
+      sp_get_stock_movements: {
+        Args: {
+          p_datetime_end?: string
+          p_datetime_start?: string
+          p_input?: number
+          p_origin?: number
+          p_output?: number
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_user?: number
+          p_warehouse?: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
