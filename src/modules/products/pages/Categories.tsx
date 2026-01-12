@@ -1,5 +1,4 @@
-import React, { useRef, useState } from 'react';
-import { toast } from 'sonner';
+import React from 'react';
 import { Plus, Upload, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,15 +25,9 @@ import {
   CategoriesPagination,
   CategoriesFilterModal,
 } from '../components/categories';
-import {
-  createCategory,
-  updateCategory,
-  deleteCategory,
-  uploadCategoryImage,
-} from '../services/Categories.service';
 
 const Categories = () => {
-  // Hook for data fetching
+  // Data hook
   const {
     categories,
     pagination,
@@ -50,18 +43,18 @@ const Categories = () => {
     handleFiltersChange,
     handlePageChange,
     handlePageSizeChange,
-    clearFilters,
     hasActiveFilters,
     reload,
   } = useCategories();
 
-  // Logic for modals and UI state
+  // UI logic hook
   const {
     isFilterModalOpen,
     tempFilters,
     openFilterModal,
     closeFilterModal,
     updateTempFilters,
+    clearTempFilters,
     isCategoryModalOpen,
     editingCategory,
     openCreateModal,
@@ -71,146 +64,33 @@ const Categories = () => {
     categoryToDelete,
     openDeleteDialog,
     closeDeleteDialog,
-  } = useCategoriesPageLogic();
+    formData,
+    updateFormData,
+    imagePreview,
+    saving,
+    deleting,
+    fileInputRef,
+    handleImageSelect,
+    clearImage,
+    handleSave,
+    handleDeleteConfirm,
+  } = useCategoriesPageLogic(reload);
 
-  // Form state
-  const [formData, setFormData] = useState({ name: '', description: '' });
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Handle opening edit modal with data
-  const handleEdit = (category: typeof categories[0]) => {
-    setFormData({
-      name: category.name,
-      description: category.description === 'sin descripción' ? '' : category.description,
-    });
-    setImagePreview(category.imageUrl || '');
-    openEditModal(category);
-  };
-
-  // Handle opening create modal
-  const handleCreate = () => {
-    setFormData({ name: '', description: '' });
-    setSelectedImage(null);
-    setImagePreview('');
-    openCreateModal();
-  };
-
-  // Handle image selection
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast.error('Por favor selecciona un archivo de imagen');
-        return;
-      }
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Handle save category
-  const handleSave = async () => {
-    if (!formData.name.trim()) {
-      toast.error('El nombre es obligatorio');
-      return;
-    }
-
-    try {
-      setSaving(true);
-      let imageUrl = editingCategory?.imageUrl || null;
-
-      if (selectedImage) {
-        imageUrl = await uploadCategoryImage(selectedImage);
-      }
-
-      if (editingCategory) {
-        await updateCategory(editingCategory.id, {
-          name: formData.name,
-          description: formData.description || null,
-          image_url: imageUrl,
-        });
-        toast.success('Categoría actualizada exitosamente');
-      } else {
-        await createCategory({
-          name: formData.name,
-          description: formData.description || null,
-          image_url: imageUrl,
-        });
-        toast.success('Categoría creada exitosamente');
-      }
-
-      closeCategoryModal();
-      setFormData({ name: '', description: '' });
-      setSelectedImage(null);
-      setImagePreview('');
-      reload();
-    } catch (error: any) {
-      toast.error('Error al guardar categoría: ' + error.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Handle delete confirmation
-  const handleDeleteConfirm = async () => {
-    if (!categoryToDelete) return;
-
-    try {
-      setDeleting(true);
-      await deleteCategory(categoryToDelete.id);
-      toast.success('Categoría eliminada exitosamente');
-      closeDeleteDialog();
-      reload();
-    } catch (error: any) {
-      toast.error('Error al eliminar categoría: ' + error.message);
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  // Handle modal close with cleanup
-  const handleModalClose = () => {
-    closeCategoryModal();
-    setFormData({ name: '', description: '' });
-    setSelectedImage(null);
-    setImagePreview('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  // Handle apply filters
   const handleApplyFilters = () => {
     handleFiltersChange(tempFilters);
     closeFilterModal();
-  };
-
-  // Handle clear filters in modal
-  const handleClearFiltersInModal = () => {
-    updateTempFilters({
-      minProducts: null,
-      maxProducts: null,
-      hasDescription: null,
-      hasImage: null,
-      isParent: null,
-    });
   };
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Listado de categorías</h1>
-        <Button onClick={handleCreate}>
+        <Button onClick={openCreateModal}>
           <Plus className="mr-2 h-4 w-4" />
           Añadir categoría
         </Button>
       </div>
 
-      {/* Search and filters bar */}
       <CategoriesSearchBar
         search={search}
         order={order}
@@ -220,19 +100,17 @@ const Categories = () => {
         onFilterClick={() => openFilterModal(filters)}
       />
 
-      {/* Table */}
       <Card>
         <CardContent className="p-0">
           <CategoriesTable
             categories={categories}
             loading={loading}
-            onEdit={handleEdit}
+            onEdit={openEditModal}
             onDelete={openDeleteDialog}
           />
         </CardContent>
       </Card>
 
-      {/* Pagination */}
       <CategoriesPagination
         pagination={pagination}
         pageSize={pageSize}
@@ -240,7 +118,6 @@ const Categories = () => {
         onPageSizeChange={handlePageSizeChange}
       />
 
-      {/* Filter Modal */}
       <CategoriesFilterModal
         open={isFilterModalOpen}
         filters={tempFilters}
@@ -249,11 +126,10 @@ const Categories = () => {
         onClose={closeFilterModal}
         onFiltersChange={updateTempFilters}
         onApply={handleApplyFilters}
-        onClear={handleClearFiltersInModal}
+        onClear={clearTempFilters}
       />
 
-      {/* Create/Edit Modal */}
-      <Dialog open={isCategoryModalOpen} onOpenChange={handleModalClose}>
+      <Dialog open={isCategoryModalOpen} onOpenChange={closeCategoryModal}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
@@ -267,7 +143,7 @@ const Categories = () => {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => updateFormData({ name: e.target.value })}
                 placeholder="Nombre de la categoría"
                 disabled={saving}
               />
@@ -278,7 +154,7 @@ const Categories = () => {
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) => updateFormData({ description: e.target.value })}
                 placeholder="Descripción de la categoría"
                 disabled={saving}
                 rows={3}
@@ -308,11 +184,7 @@ const Categories = () => {
                     variant="destructive"
                     size="icon"
                     className="absolute top-2 right-2"
-                    onClick={() => {
-                      setSelectedImage(null);
-                      setImagePreview('');
-                      if (fileInputRef.current) fileInputRef.current.value = '';
-                    }}
+                    onClick={clearImage}
                     disabled={saving}
                   >
                     <X className="h-4 w-4" />
@@ -334,7 +206,7 @@ const Categories = () => {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleModalClose} disabled={saving}>
+            <Button variant="outline" onClick={closeCategoryModal} disabled={saving}>
               Cancelar
             </Button>
             <Button onClick={handleSave} disabled={saving}>
@@ -353,7 +225,6 @@ const Categories = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={closeDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
