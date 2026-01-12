@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 import { useClients } from '../hooks/useClients';
-import { useClientsPageLogic } from '../store/ClientsList.logic';
+import { useClientsPage } from '../hooks/useClientsPage';
 import { ClientsSearchBar } from '../components/ClientsSearchBar';
 import { ClientsTable } from '../components/ClientsTable';
 import { ClientsPaginationBar } from '../components/ClientsPagination';
@@ -29,7 +29,7 @@ const ClientsList = () => {
     clearFilters,
   } = useClients();
 
-  const logic = useClientsPageLogic({
+  const logic = useClientsPage({
     filters,
     order,
     hasActiveFilters,

@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Edit, Save, Loader2 } from 'lucide-react';
-import { useProductCostsLogic } from '../store/ProductCosts.logic';
+import { useProductCosts } from '../hooks/useProductCosts';
 
 const ProductCosts = () => {
   const {
@@ -18,7 +18,7 @@ const ProductCosts = () => {
     handleEdit,
     handleCancel,
     handleSave,
-  } = useProductCostsLogic();
+  } = useProductCosts();
 
   if (loading) {
     return (

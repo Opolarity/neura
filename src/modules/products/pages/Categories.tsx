@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
 import { useCategories } from '../hooks/useCategories';
-import { useCategoriesPageLogic } from '../store/CategoriesList.logic';
+import { useCategoriesPage } from '../hooks/useCategoriesPage';
 import {
   CategoriesSearchBar,
   CategoriesTable,
@@ -72,7 +72,7 @@ const Categories = () => {
     clearImage,
     handleSave,
     handleDeleteConfirm,
-  } = useCategoriesPageLogic(reload);
+  } = useCategoriesPage(reload);
 
   const handleApplyFilters = () => {
     handleFiltersChange(tempFilters);

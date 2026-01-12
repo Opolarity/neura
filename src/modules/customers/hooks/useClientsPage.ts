@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ClientsFilters, ClientsOrderBy } from '../types';
 
-interface UseClientsPageLogicProps {
+interface UseClientsPageProps {
   filters: ClientsFilters;
   order: ClientsOrderBy;
   hasActiveFilters: boolean;
@@ -10,7 +10,7 @@ interface UseClientsPageLogicProps {
   clearFilters: () => void;
 }
 
-export const useClientsPageLogic = (props: UseClientsPageLogicProps) => {
+export const useClientsPage = (props: UseClientsPageProps) => {
   const { filters, onFiltersChange, clearFilters } = props;
   
   // Estado del modal de filtros

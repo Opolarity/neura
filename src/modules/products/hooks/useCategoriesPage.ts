@@ -17,7 +17,7 @@ interface FormData {
   description: string;
 }
 
-export const useCategoriesPageLogic = (reload: () => void) => {
+export const useCategoriesPage = (reload: () => void) => {
   // Filter modal state
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [tempFilters, setTempFilters] = useState<CategoriesFilters>(defaultCategoriesFilters);
