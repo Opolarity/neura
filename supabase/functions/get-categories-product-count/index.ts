@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -7,6 +6,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface CategoriesParams {
+  search?: string;
+  page?: number;
+  size?: number;
+  order?: string;
+  parentCategory?: boolean | null;
+  hasDescription?: boolean | null;
+  hasImage?: boolean | null;
+  minProducts?: number;
+  maxProducts?: number;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -14,48 +25,47 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Fetching categories product count...');
+    console.log('Fetching categories with stored procedure...');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get all categories
-    const { data: categories, error: categoriesError } = await supabase
-      .from('categories')
-      .select('id')
-      .neq('id', 0);
-
-    if (categoriesError) {
-      console.error('Error fetching categories:', categoriesError);
-      throw categoriesError;
+    // Get parameters from request body
+    let params: CategoriesParams = {};
+    
+    if (req.method === 'POST') {
+      try {
+        params = await req.json();
+      } catch {
+        // If no body, use defaults
+      }
     }
 
-    // Get product count for each category
-    const categoryProductCounts = await Promise.all(
-      categories.map(async (category) => {
-        console.log(`Counting products for category ${category.id}`);
-        
-        const { count, error, data } = await supabase
-          .from('product_categories')
-          .select('*', { count: 'exact' })
-          .eq('category_id', category.id);
+    console.log('Request params:', params);
 
-        if (error) {
-          console.error(`Error counting products for category ${category.id}:`, error);
-          return { category_id: category.id, product_count: 0 };
-        }
+    // Call the stored procedure
+    const { data, error } = await supabase.rpc('sp_get_categories_product_count', {
+      p_search: params.search || null,
+      p_page: params.page || 1,
+      p_size: params.size || 20,
+      p_order: params.order || null,
+      p_parentcategory: params.parentCategory ?? null,
+      p_description: params.hasDescription ?? null,
+      p_image: params.hasImage ?? null,
+      p_min_products: params.minProducts || 0,
+      p_max_products: params.maxProducts || 0,
+    });
 
-        console.log(`Category ${category.id} has ${count} products. Data:`, data);
+    if (error) {
+      console.error('Error calling stored procedure:', error);
+      throw error;
+    }
 
-        return { category_id: category.id, product_count: count || 0 };
-      })
-    );
-
-    console.log(`Product counts calculated for ${categoryProductCounts.length} categories`);
+    console.log(`Categories fetched successfully. Total: ${data?.page?.total || 0}`);
 
     return new Response(
-      JSON.stringify(categoryProductCounts),
+      JSON.stringify(data),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
