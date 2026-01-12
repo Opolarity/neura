@@ -10,6 +10,10 @@ export const useProducts = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [startRecord, setStartRecord] = useState(0);
+  const [endRecord, setEndRecord] = useState(0);
 
   const navigate = useNavigate();
 
@@ -39,12 +43,19 @@ export const useProducts = () => {
     setSearch(value);
   };
 
+  const onPageChange = () => {};
+
   return {
     products,
     pagination,
     loading,
     error,
     search,
+    page,
+    totalPages,
+    startRecord,
+    endRecord,
+    onPageChange,
     goToProductDetail,
     onSearchChange,
   };

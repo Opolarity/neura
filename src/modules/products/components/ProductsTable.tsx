@@ -31,6 +31,11 @@ interface ProductsTableProps {
   products: Product[];
   loading: boolean;
   search: string;
+  page: number;
+  totalPages: number;
+  startRecord: number;
+  endRecord: number;
+  onPageChange: (page: number) => void;
   onSearchChange: (value: string) => void;
 }
 
@@ -38,6 +43,11 @@ const ProductsTable = ({
   products,
   loading,
   search,
+  page,
+  totalPages,
+  startRecord,
+  endRecord,
+  onPageChange,
   onSearchChange,
 }: ProductsTableProps) => {
   return (
@@ -149,7 +159,13 @@ const ProductsTable = ({
 
         <div className="w-full flex flex-row justify-center gap-2 p-6">
           <PageSizeSelector />
-          <Pagination />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            startRecord={startRecord}
+            endRecord={endRecord}
+            onPageChange={onPageChange}
+          />
         </div>
       </Card>
 
