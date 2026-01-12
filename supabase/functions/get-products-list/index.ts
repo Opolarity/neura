@@ -24,8 +24,8 @@ Deno.serve(async (req) => {
     const minstock = Number(url.searchParams.get('minstock')) || null;
     const maxstock = Number(url.searchParams.get('maxstock')) || null;
     const order = url.searchParams.get('order') || null;
-    const p_page = Number(url.searchParams.get('page')) || 1;
-    const p_size = Number(url.searchParams.get('size')) || 20;
+    const page = Number(url.searchParams.get('page')) || 1;
+    const size = Number(url.searchParams.get('size')) || 20;
     const search = url.searchParams.get('search') || null;
 
     /*Pedimos los datos a la Base de Datos*/
@@ -73,6 +73,8 @@ Deno.serve(async (req) => {
       p_maxstock: maxstock,
       p_order: order,
       p_search: search,
+      p_page: page,
+      p_size: size,
     })
 
     //Validamos si hubo error
@@ -80,7 +82,7 @@ Deno.serve(async (req) => {
 
     //Retornamos la respuesta
     return new Response(
-      JSON.stringify({ products: productsdata }),
+      JSON.stringify({ productsdata }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
