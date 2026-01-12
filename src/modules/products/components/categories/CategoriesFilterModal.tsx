@@ -21,8 +21,6 @@ import { CategoriesFilters } from '../../types/Categories.type';
 interface CategoriesFilterModalProps {
   open: boolean;
   filters: CategoriesFilters;
-  minProductsRange: number;
-  maxProductsRange: number;
   onClose: () => void;
   onFiltersChange: (updates: Partial<CategoriesFilters>) => void;
   onApply: () => void;
@@ -38,8 +36,6 @@ const booleanOptions = [
 export const CategoriesFilterModal = ({
   open,
   filters,
-  minProductsRange,
-  maxProductsRange,
   onClose,
   onFiltersChange,
   onApply,
@@ -65,7 +61,7 @@ export const CategoriesFilterModal = ({
         <div className="space-y-4 py-4">
           {/* Products range */}
           <div className="space-y-2">
-            <Label>Rango de productos ({minProductsRange} - {maxProductsRange})</Label>
+            <Label>Rango de productos</Label>
             <div className="flex gap-3">
               <div className="flex-1">
                 <Input

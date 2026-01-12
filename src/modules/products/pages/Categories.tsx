@@ -31,8 +31,6 @@ const Categories = () => {
   const {
     categories,
     pagination,
-    minProducts,
-    maxProducts,
     loading,
     search,
     order,
@@ -123,8 +121,6 @@ const Categories = () => {
       <CategoriesFilterModal
         open={isFilterModalOpen}
         filters={tempFilters}
-        minProductsRange={minProducts}
-        maxProductsRange={maxProducts}
         onClose={closeFilterModal}
         onFiltersChange={updateTempFilters}
         onApply={handleApplyFilters}
