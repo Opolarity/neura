@@ -32,11 +32,12 @@ const Categories = () => {
     categories,
     pagination,
     loading,
-    search,
+    searchInput,
     order,
     filters,
     pageSize,
-    handleSearchChange,
+    handleSearchInputChange,
+    executeSearch,
     handleOrderChange,
     handleFiltersChange,
     handlePageChange,
@@ -93,10 +94,11 @@ const Categories = () => {
         <CardContent className="p-0">
           {/* Buscador, orden y filtros dentro del Card */}
           <CategoriesSearchBar
-            search={search}
+            searchInput={searchInput}
             order={order}
             hasActiveFilters={hasActiveFilters()}
-            onSearchChange={handleSearchChange}
+            onSearchInputChange={handleSearchInputChange}
+            onSearch={executeSearch}
             onOrderChange={handleOrderChange}
             onFilterClick={() => openFilterModal(filters)}
           />

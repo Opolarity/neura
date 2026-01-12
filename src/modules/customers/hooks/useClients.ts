@@ -21,7 +21,8 @@ export const useClients = () => {
     total: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState(''); // Valor del input
+  const [search, setSearch] = useState(''); // Valor que dispara el fetch
   const [filters, setFilters] = useState<ClientsFilters>(initialFilters);
   const [order, setOrder] = useState<ClientsOrderBy>('date-desc');
 
@@ -50,8 +51,12 @@ export const useClients = () => {
     fetchClients();
   }, [fetchClients]);
 
-  const handleSearch = (value: string) => {
-    setSearch(value);
+  const handleSearchInputChange = (value: string) => {
+    setSearchInput(value);
+  };
+
+  const executeSearch = () => {
+    setSearch(searchInput);
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
@@ -90,11 +95,12 @@ export const useClients = () => {
     clients,
     pagination,
     loading,
-    search,
+    searchInput,
     filters,
     order,
     hasActiveFilters,
-    handleSearch,
+    handleSearchInputChange,
+    executeSearch,
     handleFiltersChange,
     handleOrderChange,
     handlePageChange,

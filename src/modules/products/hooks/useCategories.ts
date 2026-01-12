@@ -20,6 +20,9 @@ export const useCategories = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Search input state (separado del query)
+  const [searchInput, setSearchInput] = useState('');
+
   // Query params state
   const [queryParams, setQueryParams] = useState<CategoriesQueryParams>(
     defaultCategoriesQueryParams
@@ -50,9 +53,13 @@ export const useCategories = () => {
   }, [fetchCategories]);
 
   // Handlers
-  const handleSearchChange = useCallback((search: string) => {
-    setQueryParams((prev) => ({ ...prev, search, page: 1 }));
+  const handleSearchInputChange = useCallback((value: string) => {
+    setSearchInput(value);
   }, []);
+
+  const executeSearch = useCallback(() => {
+    setQueryParams((prev) => ({ ...prev, search: searchInput, page: 1 }));
+  }, [searchInput]);
 
   const handleOrderChange = useCallback((order: CategoriesOrderBy) => {
     setQueryParams((prev) => ({ ...prev, order }));
@@ -93,14 +100,15 @@ export const useCategories = () => {
     error,
     
     // Query params
-    search: queryParams.search,
+    searchInput,
     order: queryParams.order,
     filters: queryParams.filters,
     page: queryParams.page,
     pageSize: queryParams.size,
     
     // Handlers
-    handleSearchChange,
+    handleSearchInputChange,
+    executeSearch,
     handleOrderChange,
     handleFiltersChange,
     handlePageChange,
