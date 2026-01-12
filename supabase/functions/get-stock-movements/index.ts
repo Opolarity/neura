@@ -17,7 +17,6 @@ Deno.serve(async (req) => {
         /*Pedimos los parametros de la URL*/
         const url = new URL(req.url)
         const origin = Number(url.searchParams.get('origin')) || null;
-        const destination = Number(url.searchParams.get('destination')) || null;
         const user = Number(url.searchParams.get('user')) || null;
         const warehouse = Number(url.searchParams.get('warehouse')) || null;
         const input = Number(url.searchParams.get('input')) || null;
@@ -39,7 +38,6 @@ Deno.serve(async (req) => {
 
         const { data: movementsstock, error: productserror } = await supabase.rpc('sp_get_stock_movements', {
             p_origin: origin,
-            p_destination: destination,
             p_user: user,
             p_warehouse: warehouse,
             p_input: input,

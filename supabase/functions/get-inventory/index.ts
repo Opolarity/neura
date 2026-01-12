@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     console.log('Fetching inventory data...');
 
 
-    const { data: inventory, error: inventoryError } = await supabase.rpc('get_inventory', {
+    const { data: inventory, error: inventoryError } = await supabase.rpc('sp_get_inventory', {
       p_page: page,
       p_size: size,
       p_search: search,
