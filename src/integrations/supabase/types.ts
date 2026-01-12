@@ -690,30 +690,30 @@ export type Database = {
           id: number
           order_id: number
           product_discount: number
+          product_name: string | null
           product_price: number
           product_variation_id: number
           quantity: number
-          reservation: boolean
           warehouses_id: number
         }
         Insert: {
           id?: number
           order_id: number
           product_discount?: number
+          product_name?: string | null
           product_price: number
           product_variation_id: number
           quantity: number
-          reservation?: boolean
           warehouses_id?: number
         }
         Update: {
           id?: number
           order_id?: number
           product_discount?: number
+          product_name?: string | null
           product_price?: number
           product_variation_id?: number
           quantity?: number
-          reservation?: boolean
           warehouses_id?: number
         }
         Relationships: [
@@ -1080,24 +1080,24 @@ export type Database = {
       }
       product_stock: {
         Row: {
-          defects: number
           id: number
           product_variation_id: number
           stock: number
+          stock_type_id: number
           warehouse_id: number
         }
         Insert: {
-          defects?: number
           id?: number
           product_variation_id: number
           stock: number
+          stock_type_id?: number
           warehouse_id: number
         }
         Update: {
-          defects?: number
           id?: number
           product_variation_id?: number
           stock?: number
+          stock_type_id?: number
           warehouse_id?: number
         }
         Relationships: [
@@ -1113,6 +1113,13 @@ export type Database = {
             columns: ["warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_stock_stock_type_id_fkey"
+            columns: ["stock_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
             referencedColumns: ["id"]
           },
         ]
@@ -1728,40 +1735,40 @@ export type Database = {
           completed: boolean
           created_at: string | null
           created_by: string
-          defect_stock: boolean
           id: number
-          in_warehouse_id: number
           movement_type: number
           order_id: number | null
-          out_warehouse_id: number
           product_variation_id: number
           quantity: number
+          stock_type_id: number | null
+          vinculated_movement_id: number | null
+          warehouse_id: number
         }
         Insert: {
           completed: boolean
           created_at?: string | null
           created_by: string
-          defect_stock?: boolean
           id?: never
-          in_warehouse_id: number
           movement_type: number
           order_id?: number | null
-          out_warehouse_id: number
           product_variation_id: number
           quantity: number
+          stock_type_id?: number | null
+          vinculated_movement_id?: number | null
+          warehouse_id: number
         }
         Update: {
           completed?: boolean
           created_at?: string | null
           created_by?: string
-          defect_stock?: boolean
           id?: never
-          in_warehouse_id?: number
           movement_type?: number
           order_id?: number | null
-          out_warehouse_id?: number
           product_variation_id?: number
           quantity?: number
+          stock_type_id?: number | null
+          vinculated_movement_id?: number | null
+          warehouse_id?: number
         }
         Relationships: [
           {
@@ -1770,13 +1777,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["UID"]
-          },
-          {
-            foreignKeyName: "stock_movements_in_warehouse_id_fkey"
-            columns: ["in_warehouse_id"]
-            isOneToOne: false
-            referencedRelation: "warehouses"
-            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "stock_movements_movement_type_fkey"
@@ -1793,17 +1793,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "stock_movements_out_warehouse_id_fkey"
-            columns: ["out_warehouse_id"]
-            isOneToOne: false
-            referencedRelation: "warehouses"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "stock_movements_product_variation_id_fkey"
             columns: ["product_variation_id"]
             isOneToOne: false
             referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_stock_type_id_fkey"
+            columns: ["stock_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_vinculated_movement_id_fkey"
+            columns: ["vinculated_movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
             referencedColumns: ["id"]
           },
         ]
@@ -2089,6 +2103,19 @@ export type Database = {
         }
         Returns: Json
       }
+      get_inventory: {
+        Args: {
+          p_max_stock?: number
+          p_min_stock?: number
+          p_order?: string
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_types?: number
+          p_warehouse?: number
+        }
+        Returns: Json
+      }
       get_product_attribute_groups: {
         Args: { p_product_id: number }
         Returns: Json
@@ -2129,6 +2156,20 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_categories_product_count: {
+        Args: {
+          p_description?: boolean
+          p_image?: boolean
+          p_max_products?: number
+          p_min_products?: number
+          p_order?: string
+          p_page?: number
+          p_parentcategory?: boolean
+          p_search?: string
+          p_size?: number
+        }
+        Returns: Json
+      }
       sp_get_products_costs: {
         Args: {
           p_max_cost?: number
@@ -2138,6 +2179,20 @@ export type Database = {
           p_search?: string
           p_size?: number
           p_variation?: number
+        }
+        Returns: Json
+      }
+      sp_get_stock_movements: {
+        Args: {
+          p_fecha?: string
+          p_input?: number
+          p_origin?: number
+          p_output?: number
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_user?: number
+          p_warehouse?: number
         }
         Returns: Json
       }
