@@ -1,8 +1,9 @@
 // modules/products/hooks/useProducts.ts
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getProducts } from "../store/products";
 import { Product, Pagination } from "../products.types";
+import { productsApi } from "../services/products.service";
+import { productAdapter } from "../adapters/product.adapter";
 
 export const useProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -17,7 +18,8 @@ export const useProducts = () => {
     setLoading(true);
     setError(null);
     try {
-      const { products, pagination } = await getProducts();
+      const data = await productsApi();
+      const { products, pagination } = productAdapter(data);
       setProducts(products);
       setPagination(pagination);
     } catch {

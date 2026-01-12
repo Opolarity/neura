@@ -14,7 +14,7 @@ import type {
   ProductVariation
 } from '@/types';
 
-export const useAddProductLogic = () => {
+export const useAddProduct = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();

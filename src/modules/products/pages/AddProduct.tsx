@@ -11,7 +11,7 @@ import WysiwygEditor from '@/components/ui/wysiwyg-editor';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { useAddProductLogic } from '../store/AddProduct.logic';
+import { useAddProduct } from '../hooks/useAddProduct';
 
 const AddProduct = () => {
   const {
@@ -56,7 +56,7 @@ const AddProduct = () => {
     getTermName,
     handleSubmit,
     navigate,
-  } = useAddProductLogic();
+  } = useAddProduct();
 
   return (
     <div className="space-y-6">

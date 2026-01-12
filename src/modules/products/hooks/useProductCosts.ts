@@ -10,7 +10,7 @@ type ProductCostItem = {
   product_cost: number | null;
 };
 
-export const useProductCostsLogic = () => {
+export const useProductCosts = () => {
   const [products, setProducts] = useState<ProductCostItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);

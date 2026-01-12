@@ -18,7 +18,7 @@ interface ProductData {
   }[];
 }
 
-export const useProductsLogic = () => {
+export const useProductsList = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 

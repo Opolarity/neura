@@ -2022,6 +2022,7 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          is_active: boolean | null
           product_cost: number | null
           product_id: number
           sku: string | null
@@ -2029,6 +2030,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: number
+          is_active?: boolean | null
           product_cost?: number | null
           product_id: number
           sku?: string | null
@@ -2036,6 +2038,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: number
+          is_active?: boolean | null
           product_cost?: number | null
           product_id?: number
           sku?: string | null
@@ -2103,19 +2106,6 @@ export type Database = {
         }
         Returns: Json
       }
-      get_inventory: {
-        Args: {
-          p_max_stock?: number
-          p_min_stock?: number
-          p_order?: string
-          p_page?: number
-          p_search?: string
-          p_size?: number
-          p_types?: number
-          p_warehouse?: number
-        }
-        Returns: Json
-      }
       get_product_attribute_groups: {
         Args: { p_product_id: number }
         Returns: Json
@@ -2167,6 +2157,19 @@ export type Database = {
           p_parentcategory?: boolean
           p_search?: string
           p_size?: number
+        }
+        Returns: Json
+      }
+      sp_get_inventory: {
+        Args: {
+          p_max_stock?: number
+          p_min_stock?: number
+          p_order?: string
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_types?: number
+          p_warehouse?: number
         }
         Returns: Json
       }
