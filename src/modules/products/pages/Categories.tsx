@@ -108,15 +108,16 @@ const Categories = () => {
             onEdit={openEditModal}
             onDelete={openDeleteDialog}
           />
+          
+          {/* Paginación dentro de la tabla */}
+          <CategoriesPagination
+            pagination={pagination}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
         </CardContent>
       </Card>
-
-      <CategoriesPagination
-        pagination={pagination}
-        pageSize={pageSize}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
-      />
 
       <CategoriesFilterModal
         open={isFilterModalOpen}
