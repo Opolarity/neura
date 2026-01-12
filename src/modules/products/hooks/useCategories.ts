@@ -16,8 +16,6 @@ export const useCategories = () => {
   const [result, setResult] = useState<CategoriesListResult>({
     categories: [],
     pagination: { page: 1, size: 20, total: 0 },
-    minProducts: 0,
-    maxProducts: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,8 +89,6 @@ export const useCategories = () => {
     // Data
     categories: result.categories,
     pagination: result.pagination,
-    minProducts: result.minProducts,
-    maxProducts: result.maxProducts,
     loading,
     error,
     

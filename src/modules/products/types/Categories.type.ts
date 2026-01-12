@@ -18,8 +18,6 @@ export interface CategoryApiData {
   categoria_padre: string | null;
   descripcion: string;
   productos: number;
-  min_productos: number;
-  max_productos: number;
 }
 
 // ===== UI Types (camelCase for frontend) =====
@@ -60,8 +58,6 @@ export interface CategoriesQueryParams {
 export interface CategoriesListResult {
   categories: Category[];
   pagination: CategoriesPagination;
-  minProducts: number;
-  maxProducts: number;
 }
 
 // ===== Default values =====

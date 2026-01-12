@@ -25,14 +25,8 @@ export const adaptCategoriesList = (response: CategoriesApiResponse): Categories
     total: response.page.total,
   };
 
-  // Get min/max products from first item (all items have the same values)
-  const minProducts = response.data[0]?.min_productos ?? 0;
-  const maxProducts = response.data[0]?.max_productos ?? 0;
-
   return {
     categories,
     pagination,
-    minProducts,
-    maxProducts,
   };
 };
