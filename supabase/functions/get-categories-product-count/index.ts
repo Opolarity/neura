@@ -25,6 +25,7 @@ serve(async (req) => {
     const parentcategory = url.searchParams.get('parentcategory') === 'true' ? true : (url.searchParams.get('parentcategory') === 'false' ? false : null);
     const minproducts = Number(url.searchParams.get('minproducts')) || 0;
     const maxproducts = Number(url.searchParams.get('maxproducts')) || 0;
+    const order = url.searchParams.get('order') || null;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -39,6 +40,7 @@ serve(async (req) => {
       p_parentcategory: parentcategory,
       p_min_products: minproducts,
       p_max_products: maxproducts,
+      p_order: order,
     })
 
     if (categoryProductCountsError) {
