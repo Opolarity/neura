@@ -91,17 +91,18 @@ const Categories = () => {
         </Button>
       </div>
 
-      <CategoriesSearchBar
-        search={search}
-        order={order}
-        hasActiveFilters={hasActiveFilters()}
-        onSearchChange={handleSearchChange}
-        onOrderChange={handleOrderChange}
-        onFilterClick={() => openFilterModal(filters)}
-      />
-
       <Card>
         <CardContent className="p-0">
+          {/* Buscador, orden y filtros dentro del Card */}
+          <CategoriesSearchBar
+            search={search}
+            order={order}
+            hasActiveFilters={hasActiveFilters()}
+            onSearchChange={handleSearchChange}
+            onOrderChange={handleOrderChange}
+            onFilterClick={() => openFilterModal(filters)}
+          />
+          
           <CategoriesTable
             categories={categories}
             loading={loading}
@@ -109,7 +110,7 @@ const Categories = () => {
             onDelete={openDeleteDialog}
           />
           
-          {/* Paginación dentro de la tabla */}
+          {/* Paginación dentro del Card */}
           <CategoriesPagination
             pagination={pagination}
             pageSize={pageSize}
