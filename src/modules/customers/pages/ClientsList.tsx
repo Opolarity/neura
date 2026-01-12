@@ -17,11 +17,12 @@ const ClientsList = () => {
     clients,
     pagination,
     loading,
-    search,
+    searchInput,
     filters,
     order,
     hasActiveFilters,
-    handleSearch,
+    handleSearchInputChange,
+    executeSearch,
     handleFiltersChange,
     handleOrderChange,
     handlePageChange,
@@ -63,8 +64,9 @@ const ClientsList = () => {
 
       {/* Barra de búsqueda, orden y filtros */}
       <ClientsSearchBar
-        search={search}
-        onSearchChange={handleSearch}
+        searchInput={searchInput}
+        onSearchInputChange={handleSearchInputChange}
+        onSearch={executeSearch}
         order={order}
         onOrderChange={handleOrderChange}
         onFilterClick={logic.openFilterModal}

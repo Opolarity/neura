@@ -11,10 +11,11 @@ import {
 import { CategoriesOrderBy } from '../../types/Categories.type';
 
 interface CategoriesSearchBarProps {
-  search: string;
+  searchInput: string;
   order: CategoriesOrderBy;
   hasActiveFilters: boolean;
-  onSearchChange: (value: string) => void;
+  onSearchInputChange: (value: string) => void;
+  onSearch: () => void;
   onOrderChange: (value: CategoriesOrderBy) => void;
   onFilterClick: () => void;
 }
@@ -27,13 +28,20 @@ const orderOptions: { value: CategoriesOrderBy; label: string }[] = [
 ];
 
 export const CategoriesSearchBar = ({
-  search,
+  searchInput,
   order,
   hasActiveFilters,
-  onSearchChange,
+  onSearchInputChange,
+  onSearch,
   onOrderChange,
   onFilterClick,
 }: CategoriesSearchBarProps) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      onSearch();
+    }
+  };
+
   return (
     <div className="flex flex-col sm:flex-row gap-3 p-4">
       {/* Search Input */}
@@ -41,8 +49,9 @@ export const CategoriesSearchBar = ({
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Buscar categorías..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
+          value={searchInput}
+          onChange={(e) => onSearchInputChange(e.target.value)}
+          onKeyDown={handleKeyDown}
           className="pl-9"
         />
       </div>

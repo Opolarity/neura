@@ -11,8 +11,9 @@ import {
 import { ClientsOrderBy } from '../types';
 
 interface ClientsSearchBarProps {
-  search: string;
-  onSearchChange: (value: string) => void;
+  searchInput: string;
+  onSearchInputChange: (value: string) => void;
+  onSearch: () => void;
   order: ClientsOrderBy;
   onOrderChange: (order: ClientsOrderBy) => void;
   onFilterClick: () => void;
@@ -29,13 +30,20 @@ const orderOptions: { value: ClientsOrderBy; label: string }[] = [
 ];
 
 export const ClientsSearchBar = ({
-  search,
-  onSearchChange,
+  searchInput,
+  onSearchInputChange,
+  onSearch,
   order,
   onOrderChange,
   onFilterClick,
   hasActiveFilters,
 }: ClientsSearchBarProps) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      onSearch();
+    }
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-4 mb-6">
       {/* Buscador */}
@@ -43,8 +51,9 @@ export const ClientsSearchBar = ({
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Buscar por nombre o documento..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
+          value={searchInput}
+          onChange={(e) => onSearchInputChange(e.target.value)}
+          onKeyDown={handleKeyDown}
           className="pl-10"
         />
       </div>
