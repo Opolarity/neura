@@ -58,6 +58,31 @@ export interface ProductFilters {
   size?: number;
 }
 
+export interface CategoryApiResponse {
+  data: CategoryWithCount[];
+  page: {
+    page: number;
+    size: number;
+    total: number;
+  };
+}
+
+export interface CategoryWithCount {
+  imagen: string | null;
+  nombre: string;
+  "cat.padre": string | null;
+  productos: number;
+  descripcion: string;
+  max_productos: number;
+  min_productos: number;
+}
+
+export interface CategoryFilters {
+  search?: string;
+  page?: number;
+  size?: number;
+}
+
 export interface Category {
   id: number;
   name: string;

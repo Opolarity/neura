@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Category, CategoryProductCount } from "../products.types";
+import { Category, CategoryApiResponse, CategoryFilters } from "../products.types";
 
 export const categoryService = {
     async fetchCategories(): Promise<Category[]> {
@@ -10,13 +10,19 @@ export const categoryService = {
             .order('name');
 
         if (error) throw error;
-        return data || [];
+        return (data || []) as Category[];
     },
 
-    async fetchProductCounts(): Promise<CategoryProductCount[]> {
-        const { data, error } = await supabase.functions.invoke('get-categories-product-count');
+    async fetchProductCounts(filters: CategoryFilters): Promise<CategoryApiResponse> {
+        const { data, error } = await supabase.functions.invoke('get-categories-product-count', {
+            body: {
+                search: filters.search || '',
+                page: filters.page || 1,
+                size: filters.size || 20
+            }
+        });
         if (error) throw error;
-        return data || [];
+        return data;
     },
 
     async saveCategory(category: Partial<Category>, image?: File | null): Promise<void> {

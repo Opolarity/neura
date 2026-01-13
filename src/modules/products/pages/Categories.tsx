@@ -1,6 +1,5 @@
 import React from "react";
-import { Button } from '@/components/ui/button';
-import { Plus } from "lucide-react";
+import ProductHeader from "../components/ProductHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCategories } from "../hooks/useCategories";
 import CategoryTable from "../components/categories/CategoryTable";
@@ -11,7 +10,12 @@ const Categories = () => {
   const {
     categories,
     loading,
-    productCounts,
+    allCategories,
+    filters,
+    pagination,
+    handleSearchChange,
+    handlePageChange,
+    handlePageSizeChange,
     isModalOpen,
     editingCategory,
     saving,
@@ -32,21 +36,26 @@ const Categories = () => {
   } = useCategories();
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Listado de categorías</h1>
-        <Button onClick={() => handleOpenModal()}>
-          <Plus className="mr-2 h-4 w-4" />
-          Añadir categoría
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <ProductHeader
+        title="Listado de categorías"
+        onAddClick={() => handleOpenModal()}
+      />
 
       <Card>
         <CardContent className="p-0">
           <CategoryTable
             categories={categories}
             loading={loading}
-            productCounts={productCounts}
+            search={filters.search || ""}
+            onSearchChange={handleSearchChange}
+            pagination={{
+              total: pagination.total,
+              page: pagination.page,
+              pageSize: pagination.size
+            }}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
             onEdit={handleOpenModal}
             onDelete={handleDeleteClick}
           />
@@ -58,7 +67,7 @@ const Categories = () => {
         onClose={handleCloseModal}
         onSave={handleSave}
         category={editingCategory}
-        categories={categories}
+        categories={allCategories}
         saving={saving}
         formData={formData}
         setFormData={setFormData}
@@ -72,7 +81,7 @@ const Categories = () => {
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleDeleteConfirm}
         categoryName={categoryToDelete?.name || ''}
-        productCount={categoryToDelete ? productCounts[categoryToDelete.id] || 0 : 0}
+        productCount={categoryToDelete ? categories.find(c => c.name === categoryToDelete.name)?.product_count || 0 : 0}
         deleting={deleting}
       />
     </div>

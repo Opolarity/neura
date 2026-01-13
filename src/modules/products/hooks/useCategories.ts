@@ -1,17 +1,29 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Category, CategoryProductCount } from '../products.types';
 import {
     getCategoriesStore,
-    getProductCountsStore,
+    getPaginatedCategoriesStore,
     saveCategoryStore,
     deleteCategoryStore
 } from '../store/categories';
+import { Category, CategoryFilters } from '../products.types';
 
 export const useCategories = () => {
-    const [categories, setCategories] = useState<Category[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [productCounts, setProductCounts] = useState<Record<number, number>>({});
+    const [allCategories, setAllCategories] = useState<Category[]>([]);
+
+    // Pagination & Filters
+    const [filters, setFilters] = useState<CategoryFilters>({
+        search: '',
+        page: 1,
+        size: 20
+    });
+    const [pagination, setPagination] = useState({
+        total: 0,
+        page: 1,
+        size: 20
+    });
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,18 +43,18 @@ export const useCategories = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [categoriesData, countsData] = await Promise.all([
+            const [categoriesList, paginatedData] = await Promise.all([
                 getCategoriesStore(),
-                getProductCountsStore()
+                getPaginatedCategoriesStore(filters)
             ]);
 
-            setCategories(categoriesData);
-
-            const countsMap: Record<number, number> = {};
-            countsData.forEach((item: CategoryProductCount) => {
-                countsMap[item.category_id] = item.product_count;
+            setAllCategories(categoriesList);
+            setCategories(paginatedData.data);
+            setPagination({
+                total: paginatedData.page.total,
+                page: paginatedData.page.page,
+                size: paginatedData.page.size
             });
-            setProductCounts(countsMap);
         } catch (error: any) {
             toast.error('Error al cargar datos: ' + error.message);
         } finally {
@@ -52,7 +64,7 @@ export const useCategories = () => {
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [filters]);
 
     const handleOpenModal = (category?: Category) => {
         if (category) {
@@ -130,10 +142,28 @@ export const useCategories = () => {
         }
     };
 
+    const handleSearchChange = (search: string) => {
+        setFilters(prev => ({ ...prev, search, page: 1 }));
+    };
+
+    const handlePageChange = (page: number) => {
+        setFilters(prev => ({ ...prev, page }));
+    };
+
+    const handlePageSizeChange = (size: number) => {
+        setFilters(prev => ({ ...prev, size, page: 1 }));
+    };
+
     return {
         categories,
         loading,
-        productCounts,
+        allCategories,
+        filters,
+        pagination,
+        // Handlers
+        handleSearchChange,
+        handlePageChange,
+        handlePageSizeChange,
         // Modal & Form
         isModalOpen,
         editingCategory,

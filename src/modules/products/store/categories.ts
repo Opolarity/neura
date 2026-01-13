@@ -1,6 +1,6 @@
 import { categoryService } from "../services/category.service";
-import { categoryAdapter } from "../adapters/category.adapter";
-import { Category, CategoryProductCount } from "../products.types";
+import { categoryAdapter, categoryWithCountAdapter } from "../adapters/category.adapter";
+import { Category, CategoryApiResponse, CategoryFilters } from "../products.types";
 
 export const getCategoriesStore = async (): Promise<Category[]> => {
     try {
@@ -12,11 +12,15 @@ export const getCategoriesStore = async (): Promise<Category[]> => {
     }
 };
 
-export const getProductCountsStore = async (): Promise<CategoryProductCount[]> => {
+export const getPaginatedCategoriesStore = async (filters: CategoryFilters): Promise<CategoryApiResponse> => {
     try {
-        return await categoryService.fetchProductCounts();
+        const response = await categoryService.fetchProductCounts(filters);
+        return {
+            ...response,
+            data: categoryWithCountAdapter(response.data) as any[]
+        };
     } catch (error) {
-        console.error("Error in getProductCountsStore:", error);
+        console.error("Error in getPaginatedCategoriesStore:", error);
         throw error;
     }
 };
