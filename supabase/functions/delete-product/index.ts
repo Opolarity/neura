@@ -15,19 +15,19 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { productIds } = await req.json();
+    const { productId } = await req.json();
 
-    if (!productIds || typeof productIds !== 'number') {
-      throw new Error('Product IDs array is required');
+    if (!productId || typeof productId !== 'number' || isNaN(productId)) {
+      throw new Error('Product ID must be a valid number');
     }
 
-    console.log(`Soft deleting products: ${productIds.join(', ')}`);
+    console.log(`Soft deleting product: ${productId}`);
 
     /* Obtener variaciones del producto */
     const { data: variations } = await supabase
       .from('variations')
       .select('id')
-      .eq('product_id', productIds);
+      .eq('product_id', productId);
 
     const variationIds = variations?.map(v => v.id) || [];
 
@@ -41,11 +41,11 @@ Deno.serve(async (req) => {
       if (variationsError) throw variationsError;
     }
 
-    /* Desactivar los productos */
+    /* Desactivar el producto */
     const { error: productsError } = await supabase
       .from('products')
       .update({ is_active: false })
-      .eq('id', productIds);
+      .eq('id', productId);
 
     if (productsError) throw productsError;
 
@@ -53,8 +53,8 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'Producto eliminado correctamente',
-        affectedProducts: productIds,
-        affectedVariations: variationIds.length
+        affectedVariations: variationIds.length,
+        productId: productId
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
