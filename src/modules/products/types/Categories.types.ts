@@ -9,3 +9,4 @@ export interface Category {
 
 export type Categories = Category[];
 export type CategoriesApiResponse = CategoryApiResponse[];
+//
