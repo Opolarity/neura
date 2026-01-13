@@ -1,5 +1,5 @@
 export interface ProductApiResponse {
-  products: {
+  productsdata: {
     data: Array<{
       categories: string;
       estado: boolean;
@@ -30,6 +30,33 @@ export interface Product {
   terms: string;
   stock: number;
 }
+
+export interface ProductFilters {
+  minprice?: number;
+  maxprice?: number;
+  category?: number;
+  status?: boolean;
+  web?: boolean;
+  minstock?: number;
+  maxstock?: number;
+  order?: string;
+  search?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface CategoryApiResponse {
+  id: number;
+  name: string;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+}
+
+export type Categories = Category[];
+export type CategoriesApiResponse = CategoryApiResponse[];
 
 export interface Pagination {
   total_items: number;

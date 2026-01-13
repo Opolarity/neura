@@ -24,8 +24,10 @@ import {
 
 import PageSizeSelector from "../components/PageSizeSelector";
 import Pagination from "../components/Pagination";
-import { Product } from "../products.types";
+import { Product, ProductFilters } from "../types/Products.types";
 import ProductFilterInput from "./ProductSearchInput";
+import { Category } from "@/types";
+import FilterModal from "./modals/FilterModal";
 
 interface ProductsTableProps {
   products: Product[];
@@ -35,6 +37,7 @@ interface ProductsTableProps {
   totalPages: number;
   startRecord: number;
   endRecord: number;
+  onOpen: () => void;
   onPageChange: (page: number) => void;
   onSearchChange: (value: string) => void;
 }
@@ -47,6 +50,7 @@ const ProductsTable = ({
   totalPages,
   startRecord,
   endRecord,
+  onOpen,
   onPageChange,
   onSearchChange,
 }: ProductsTableProps) => {
@@ -59,8 +63,7 @@ const ProductsTable = ({
               value={search}
               onChange={(e) => onSearchChange(e)}
             />
-
-            <Button className="gap-2">
+            <Button onClick={onOpen} className="gap-2">
               <ListFilter className="w-4 h-4" />
               Filtrar
             </Button>
