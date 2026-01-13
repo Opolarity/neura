@@ -22,38 +22,38 @@ import { ProductFilters } from "../../types/Products.types";
 
 interface FilterModalProps {
   categories: Category[];
-  initialFilters?: ProductFilters;
+  filters: ProductFilters;
   isOpen: boolean;
+  onFilterChange: <K extends keyof ProductFilters>(key: K, value: ProductFilters[K]) => void;
   onClose?: () => void;
-  onApply?: (newFilters: ProductFilters) => void;
+  onApply?: () => void;
   onClear?: () => void;
 }
 
 const FilterModal = ({
   categories,
-  initialFilters,
+  filters,
   isOpen,
+  onFilterChange,
   onClose,
   onApply,
   onClear,
 }: FilterModalProps) => {
-  const [filters, setFilters] = useState<ProductFilters>(initialFilters);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Filtrar Productos</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="category" className="text-right">
-              Categoría
-            </Label>
-            <div className="col-span-3">
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Categorías</Label>
+                <div className="flex gap-2">
               <Select
-                value={String(filters?.category || "none")}
-                onValueChange={(value) => {}}
+                value={filters?.category ? String(filters.category) : "none"}
+                onValueChange={(value) => onFilterChange('category', value === "none" ? null : Number(value))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Todas las categorías" />
@@ -67,49 +67,72 @@ const FilterModal = ({
                   ))}
                 </SelectContent>
               </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Precio</Label>
+                <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="Mínimo"
+                  value={filters.minprice ?? ''}
+                  onChange={(e) => onFilterChange('minprice', e.target.value ? Number(e.target.value) : null)}
+                />
+                <Input
+                  type="number"
+                  placeholder="Máximo"
+                  value={filters.maxprice ?? ''}
+                  onChange={(e) => onFilterChange('maxprice', e.target.value ? Number(e.target.value) : null)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Inventario</Label>
+                <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="Mínimo"
+                  value={filters.minstock ?? ''}
+                  onChange={(e) => onFilterChange('minstock', e.target.value ? Number(e.target.value) : null)}
+                />
+                <Input
+                  type="number"
+                  placeholder="Máximo"
+                  value={filters.maxstock ?? ''}
+                  onChange={(e) => onFilterChange('maxstock', e.target.value ? Number(e.target.value) : null)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Estado</Label>
+                <div className="flex gap-2">
+              <Select
+                value={filters.status == null ? "none" : String(filters.status)}
+                onValueChange={(value) => onFilterChange("status", value === "none" ? null : value === "true")}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas los estados" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Todos los estados</SelectItem>
+                    <SelectItem value="true">
+                      Activo
+                    </SelectItem>
+                    <SelectItem value="false">
+                      Inactivo
+                    </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="min_price" className="text-right">
-              Precio Min
-            </Label>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="max_price" className="text-right">
-              Precio Max
-            </Label>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="minstock" className="text-right">
-              Stock Min
-            </Label>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="maxstock" className="text-right">
-              Stock Max
-            </Label>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Estado</Label>
-            <div className="flex items-center space-x-2 col-span-3"></div>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Web</Label>
-            <div className="flex items-center space-x-2 col-span-3"></div>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="order" className="text-right">
-              Ordenar por
-            </Label>
-            <div className="col-span-3"></div>
-          </div>
         </div>
-        <DialogFooter className="flex justify-between sm:justify-between">
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={onClose}>
-              Cancelar
-            </Button>
-          </div>
+        <DialogFooter className="flex gap-2">
+          <Button variant="outline" onClick={onClear}>
+            Limpiar
+          </Button>
+          <Button onClick={onApply}>
+            Aplicar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

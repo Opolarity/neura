@@ -21,9 +21,12 @@ export const productAdapter = (response: ProductApiResponse) => {
     })
   );
 
-  const pagination: Pagination = {
-    total_items: response.productsdata.page.total,
-  };
+const pagination = {
+  page: response.productsdata.page.p_page,
+  size: response.productsdata.page.p_size,
+  total: response.productsdata.page.total,
+};
+
 
   return { products: formattedProducts, pagination };
 };

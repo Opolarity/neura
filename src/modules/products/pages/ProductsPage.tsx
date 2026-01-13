@@ -17,17 +17,20 @@ const Products = () => {
     categories,
     loading,
     search,
-    page,
+    pagination,
     totalPages,
     startRecord,
     endRecord,
     isOpenFilterModal,
     filters,
+    tempFilters,
+    updateTempFilter,
     onOpenFilterModal,
     onCloseFilterModal,
     onApplyFilter,
     onPageChange,
     onSearchChange,
+    handlePageSizeChange,
   } = useProducts();
 
   return (
@@ -38,10 +41,8 @@ const Products = () => {
         products={products}
         loading={loading}
         search={search}
-        page={page}
-        totalPages={totalPages}
-        startRecord={startRecord}
-        endRecord={endRecord}
+        page={pagination}
+        PageSizeChange={handlePageSizeChange}
         onOpen={onOpenFilterModal}
         onPageChange={onPageChange}
         onSearchChange={onSearchChange}
@@ -50,9 +51,10 @@ const Products = () => {
       <FilterModal
         isOpen={isOpenFilterModal}
         categories={categories}
-        initialFilters={filters}
+        filters={tempFilters}
+        onFilterChange={updateTempFilter}
         onClose={onCloseFilterModal}
-        onApply={onApplyFilter}
+        onApply={() => onApplyFilter(tempFilters)}
       />
     </div>
   );

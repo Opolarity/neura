@@ -23,20 +23,18 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import PageSizeSelector from "../components/PageSizeSelector";
-import Pagination from "../components/Pagination";
+import Pagination from "../../../components/Pagination.tsx";
 import { Product, ProductFilters } from "../types/Products.types";
 import ProductFilterInput from "./ProductSearchInput";
-import { Category } from "@/types";
+import { Category, PaginationType } from "@/types";
 import FilterModal from "./modals/FilterModal";
 
 interface ProductsTableProps {
   products: Product[];
   loading: boolean;
   search: string;
-  page: number;
-  totalPages: number;
-  startRecord: number;
-  endRecord: number;
+  page: PaginationType;
+  PageSizeChange: (size: number) => void;
   onOpen: () => void;
   onPageChange: (page: number) => void;
   onSearchChange: (value: string) => void;
@@ -47,9 +45,7 @@ const ProductsTable = ({
   loading,
   search,
   page,
-  totalPages,
-  startRecord,
-  endRecord,
+  PageSizeChange,
   onOpen,
   onPageChange,
   onSearchChange,
@@ -58,12 +54,12 @@ const ProductsTable = ({
     <>
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex  items-center">
             <ProductFilterInput
               value={search}
               onChange={(e) => onSearchChange(e)}
             />
-            <Button onClick={onOpen} className="gap-2">
+            <Button onClick={onOpen} >
               <ListFilter className="w-4 h-4" />
               Filtrar
             </Button>
@@ -161,12 +157,9 @@ const ProductsTable = ({
         </CardContent>
 
         <div className="w-full flex flex-row justify-center gap-2 p-6">
-          <PageSizeSelector />
           <Pagination
-            page={page}
-            totalPages={totalPages}
-            startRecord={startRecord}
-            endRecord={endRecord}
+            pagination={page}
+            onPageSizeChange={PageSizeChange}
             onPageChange={onPageChange}
           />
         </div>

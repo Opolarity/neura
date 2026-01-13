@@ -32,17 +32,17 @@ export interface Product {
 }
 
 export interface ProductFilters {
-  minprice?: number;
-  maxprice?: number;
-  category?: number;
-  status?: boolean;
-  web?: boolean;
-  minstock?: number;
-  maxstock?: number;
-  order?: string;
-  search?: string;
-  page?: number;
-  size?: number;
+  minprice: number | null;
+  maxprice: number | null;
+  category: number | null;
+  status: boolean | null;
+  web: boolean | null;
+  minstock: number | null;
+  maxstock: number | null;
+  order: string | null;
+  search: string | null;
+  page: number | null;
+  size: number | null;
 }
 
 export interface CategoryApiResponse {

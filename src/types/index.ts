@@ -4,3 +4,9 @@ export * from './term';
 export * from './price';
 export * from './warehouse';
 export * from './product';
+
+export interface PaginationType {
+  page: number;
+  size: number;
+  total: number;
+}
