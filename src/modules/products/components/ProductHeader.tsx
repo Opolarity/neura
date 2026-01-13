@@ -2,13 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash } from "lucide-react";
 
 interface ProductsHeaderProps {
-  selectedProducts?: number[] | [];
-  handleBulkDelete?: () => void;
-  handleNewProduct?: () => void;
+  selectedProducts: number[];
+  handleBulkDelete: (productIds: number[]) => void;
+  handleNewProduct: () => void;
 }
 
 const ProductHeader = ({
-  selectedProducts = [],
+  selectedProducts,
   handleBulkDelete,
   handleNewProduct,
 }: ProductsHeaderProps) => {
@@ -21,10 +21,10 @@ const ProductHeader = ({
         <p className="text-gray-600">Administra tu catálogo de productos</p>
       </div>
       <div className="flex gap-2">
-        {selectedProducts.length > 0 && (
+        {selectedProducts.length > 1 && (
           <Button
             variant="destructive"
-            onClick={handleBulkDelete}
+            onClick={() => handleBulkDelete(selectedProducts)}
             className="gap-2"
           >
             <Trash className="w-4 h-4" />

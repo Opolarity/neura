@@ -58,8 +58,10 @@ export interface Category {
 export type Categories = Category[];
 export type CategoriesApiResponse = CategoryApiResponse[];
 
-export interface Pagination {
-  total_items: number;
+export interface PaginationState {
+  p_page: number | null;
+  p_size: number | null;
+  total: number | null;
 }
 
 export interface ProductData {

@@ -39,10 +39,25 @@ export const productsApi = async (
   );
 };
 
-export const deleteProducts = async (productIds: number[]) => {
+export const deleteProductApi = async (productId: number) => {
   const { data, error } = await supabase.functions.invoke("delete-product", {
-    body: { productIds },
+    body: { productId },
   });
+
+  console.log(data);
+
+  if (error || !data.success) {
+    throw new Error(data?.error || "Error al eliminar producto");
+  }
+};
+
+export const deleteProductsApi = async (productIds: number[]) => {
+  const { data, error } = await supabase.functions.invoke(
+    "delete-massive-products",
+    {
+      body: { productIds },
+    }
+  );
 
   if (error || !data.success) {
     throw new Error(data?.error || "Error al eliminar productos");

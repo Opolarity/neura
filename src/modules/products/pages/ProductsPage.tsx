@@ -1,7 +1,15 @@
-import FilterModal from "../components/modals/FilterModal";
 import ProductHeader from "../components/ProductHeader";
 import ProductsTable from "../components/ProductsTable";
+import ProductsFilterModal from "../components/ProductsFilterModal";
 import { useProducts } from "../hooks/useProducts";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import ProductsFilterBar from "../components/ProductsFilterBar";
+import ProductsPagination from "../components/ProductsPagination";
 
 const Products = () => {
   const {
@@ -9,42 +17,70 @@ const Products = () => {
     categories,
     loading,
     search,
-    page,
-    totalPages,
-    startRecord,
-    endRecord,
+    pagination,
     isOpenFilterModal,
-    filters,
+    tempFilters,
+    selectedProducts,
+    handlePageSizeChange,
+    toggleSelectAll,
+    toggleProductSelection,
+    deleteSelectedsProduct,
+    deleteSelectedProduct,
     onOpenFilterModal,
     onCloseFilterModal,
     onApplyFilter,
+    goToNewProduct,
+    goToProductDetail,
     onPageChange,
     onSearchChange,
+    updateTempFilter,
   } = useProducts();
 
   return (
     <div className="space-y-6">
-      <ProductHeader />
-
-      <ProductsTable
-        products={products}
-        loading={loading}
-        search={search}
-        page={page}
-        totalPages={totalPages}
-        startRecord={startRecord}
-        endRecord={endRecord}
-        onOpen={onOpenFilterModal}
-        onPageChange={onPageChange}
-        onSearchChange={onSearchChange}
+      <ProductHeader
+        selectedProducts={selectedProducts}
+        handleBulkDelete={deleteSelectedsProduct}
+        handleNewProduct={goToNewProduct}
       />
 
-      <FilterModal
+      <Card>
+        <CardHeader>
+          <ProductsFilterBar
+            search={search}
+            onSearchChange={onSearchChange}
+            onOpen={onOpenFilterModal}
+          />
+        </CardHeader>
+        <CardContent className="p-0">
+          <ProductsTable
+            search={search}
+            products={products}
+            loading={loading}
+            selectedProducts={selectedProducts}
+            onDeleteSelectedProduct={deleteSelectedProduct}
+            onGoToProductDetail={goToProductDetail}
+            onToggleAllProductsSelection={toggleSelectAll}
+            onToggleProductSelection={toggleProductSelection}
+          />
+        </CardContent>
+
+        <CardFooter>
+          <ProductsPagination
+            pagination={pagination}
+            onPageChange={onPageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        </CardFooter>
+      </Card>
+
+      <ProductsFilterModal
         isOpen={isOpenFilterModal}
         categories={categories}
-        initialFilters={filters}
+        filters={tempFilters}
+        onFilterChange={updateTempFilter}
         onClose={onCloseFilterModal}
-        onApply={onApplyFilter}
+        onApply={() => onApplyFilter(tempFilters)}
       />
     </div>
   );
