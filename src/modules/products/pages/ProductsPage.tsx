@@ -1,7 +1,15 @@
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import FilterModal from "../components/modals/FilterModal";
 import ProductHeader from "../components/ProductHeader";
 import ProductsTable from "../components/ProductsTable";
 import { useProducts } from "../hooks/useProducts";
+import { useState } from "react";
 
 const Products = () => {
   const {

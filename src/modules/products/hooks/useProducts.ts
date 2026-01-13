@@ -23,27 +23,33 @@ export const useProducts = () => {
   const [endRecord, setEndRecord] = useState(0);
   const [isOpenFilterModal, setIsOpenFilterModal] = useState(false);
   const [filters, setFilters] = useState<ProductFilters>({
-    minprice: undefined,
-    maxprice: undefined,
-    category: undefined,
-    status: undefined,
-    web: undefined,
-    minstock: undefined,
-    maxstock: undefined,
-    order: undefined,
-    search: undefined,
-    page: undefined,
-    size: undefined,
+    minprice: null,
+    maxprice: null,
+    category: null,
+    status: null,
+    web: null,
+    minstock: null,
+    maxstock: null,
+    order: null,
+    search: null,
+    page: 1,
+    size: 20,
   });
 
   const navigate = useNavigate();
 
-  const loadData = async () => {
+  const loadData = async (filters?: ProductFilters) => {
     setLoading(true);
     setError(null);
+
     try {
-      const dataProducts = await productsApi();
-      const { products, pagination } = productAdapter(dataProducts);
+      if (!filters) {
+        const dataProducts = await productsApi();
+        const { products, pagination } = productAdapter(dataProducts);
+      } else {
+        const dataProducts = await productsApi(filters);
+        const { products, pagination } = productAdapter(dataProducts);
+      }
 
       const dataCategories = await categoriesApi();
       const categoriesResponse = categoryAdapter(dataCategories);
