@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
 
     const { productIds } = await req.json();
 
-    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+    if (!productIds || typeof productIds !== 'number') {
       throw new Error('Product IDs array is required');
     }
 
@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     const { data: variations } = await supabase
       .from('variations')
       .select('id')
-      .in('product_id', productIds);
+      .eq('product_id', productIds);
 
     const variationIds = variations?.map(v => v.id) || [];
 
@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const { error: productsError } = await supabase
       .from('products')
       .update({ is_active: false })
-      .in('id', productIds);
+      .eq('id', productIds);
 
     if (productsError) throw productsError;
 
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'Producto eliminado correctamente',
-        affectedProducts: productIds.length,
+        affectedProducts: productIds,
         affectedVariations: variationIds.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
