@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { PrimeReactProvider } from 'primereact/api';
 import { AuthProvider } from './contexts/AuthContext';
 import DashboardLayout from './layouts/DashboardLayout';
 import Dashboard from './pages/Dashboard';
@@ -42,62 +43,64 @@ import InventoryMovements from "./pages/inventory/Movements";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Dashboard />} />
-              <Route path="products" element={<Products />} >
-                
+  <PrimeReactProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Dashboard />} />
+                <Route path="products" element={<Products />} >
+
+                </Route>
+                <Route path="categories" element={<Categories />} />
+                <Route path="products/add" element={<AddProduct />} />
+                <Route path="products/costs" element={<ProductCosts />} />
+                <Route path="inventory" element={<Inventory />} />
+                <Route path="inventory/movements" element={<InventoryMovements />} />
+                <Route path="sales" element={<Sales />} />
+                <Route path="sales/list" element={<SalesList />} />
+                <Route path="sales/create" element={<CreateSale />} />
+                <Route path="sales/edit/:id" element={<CreateSale />} />
+                <Route path="sales/:id" element={<ViewSale />} />
+                <Route path="shipping" element={<Shipping />} />
+                <Route path="invoices" element={<Invoices />} />
+                <Route path="pos" element={<POS />} />
+                <Route path="customers" element={<Customers />}>
+                  <Route path="list" element={<ClientsList />} />
+                  <Route path="create" element={<CreateClient />} />
+                  <Route path="edit/:id" element={<EditClient />} />
+                </Route>
+                <Route path="reports" element={<Reports />} />
+                <Route path="movements" element={<Movements />} />
+                <Route path="movements/add/expenses" element={<AddExpense />} />
+                <Route path="returns" element={<Returns />} />
+                <Route path="returns/add" element={<CreateReturn />} />
+                <Route path="returns/edit/:id" element={<EditReturn />} />
+                <Route path="settings" element={<Settings />}>
+                  <Route path="users" element={<UsersList />} />
+                  <Route path="users/create" element={<CreateUser />} />
+                  <Route path="users/functions" element={<UserFunctions />} />
+                  <Route path="roles" element={<RolesList />} />
+                  <Route path="roles/create" element={<CreateRole />} />
+                  <Route path="roles/edit/:id" element={<CreateRole />} />
+                </Route>
               </Route>
-              <Route path="categories" element={<Categories />} />
-              <Route path="products/add" element={<AddProduct />} />
-              <Route path="products/costs" element={<ProductCosts />} />
-              <Route path="inventory" element={<Inventory />} />
-              <Route path="inventory/movements" element={<InventoryMovements />} />
-              <Route path="sales" element={<Sales />} />
-              <Route path="sales/list" element={<SalesList />} />
-              <Route path="sales/create" element={<CreateSale />} />
-              <Route path="sales/edit/:id" element={<CreateSale />} />
-              <Route path="sales/:id" element={<ViewSale />} />
-              <Route path="shipping" element={<Shipping />} />
-              <Route path="invoices" element={<Invoices />} />
-              <Route path="pos" element={<POS />} />
-              <Route path="customers" element={<Customers />}>
-                <Route path="list" element={<ClientsList />} />
-                <Route path="create" element={<CreateClient />} />
-                <Route path="edit/:id" element={<EditClient />} />
-              </Route>
-              <Route path="reports" element={<Reports />} />
-              <Route path="movements" element={<Movements />} />
-              <Route path="movements/add/expenses" element={<AddExpense />} />
-              <Route path="returns" element={<Returns />} />
-              <Route path="returns/add" element={<CreateReturn />} />
-              <Route path="returns/edit/:id" element={<EditReturn />} />
-              <Route path="settings" element={<Settings />}>
-                <Route path="users" element={<UsersList />} />
-                <Route path="users/create" element={<CreateUser />} />
-                <Route path="users/functions" element={<UserFunctions />} />
-                <Route path="roles" element={<RolesList />} />
-                <Route path="roles/create" element={<CreateRole />} />
-                <Route path="roles/edit/:id" element={<CreateRole />} />
-              </Route>
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </PrimeReactProvider>
 );
 
 export default App;

@@ -1,17 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Plus, Pencil } from 'lucide-react';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Button } from 'primereact/button';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { InputText } from 'primereact/inputtext';
+import { IconField } from 'primereact/iconfield';
+import { InputIcon } from 'primereact/inputicon';
+import { Card } from 'primereact/card';
 import { toast } from 'sonner';
 
 interface Client {
@@ -29,6 +25,7 @@ interface Client {
 const ClientsList = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [globalFilter, setGlobalFilter] = useState<string>('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,67 +87,60 @@ const ClientsList = () => {
     return parts.join(' ');
   };
 
+  const fullNameBodyTemplate = (rowData: Client) => {
+    return getFullName(rowData);
+  };
+
+  const dateBodyTemplate = (rowData: Client) => {
+    return new Date(rowData.created_at).toLocaleDateString();
+  };
+
+  const actionBodyTemplate = (rowData: Client) => {
+    return (
+      <Button
+        icon="pi pi-pencil"
+        rounded
+        text
+        severity="info"
+        onClick={() => navigate(`/customers/edit/${rowData.id}`)}
+      />
+    );
+  };
+
+  const header = (
+    <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
+      <h2 className="m-0 text-xl font-bold">Listado de Clientes</h2>
+      <div className="flex gap-2">
+        <IconField iconPosition="left">
+          <InputIcon className="pi pi-search" />
+          <InputText type="search" onInput={(e: React.ChangeEvent<HTMLInputElement>) => setGlobalFilter(e.target.value)} placeholder="Buscar..." />
+        </IconField>
+        <Button label="Añadir Cliente" icon="pi pi-plus" onClick={() => navigate('/customers/create')} />
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Listado de Clientes</h1>
-        <Button onClick={() => navigate('/customers/create')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Añadir Cliente
-        </Button>
-      </div>
-
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Nombre Completo</TableHead>
-                <TableHead>Documento</TableHead>
-                <TableHead>Compras</TableHead>
-                <TableHead>Fecha de Creación</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    Cargando clientes...
-                  </TableCell>
-                </TableRow>
-              ) : clients.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    No hay clientes registrados
-                  </TableCell>
-                </TableRow>
-              ) : (
-                clients.map((client) => (
-                  <TableRow key={client.id}>
-                    <TableCell>{client.id}</TableCell>
-                    <TableCell>{getFullName(client)}</TableCell>
-                    <TableCell>{client.document_number}</TableCell>
-                    <TableCell>{client.purchase_count || 0}</TableCell>
-                    <TableCell>
-                      {new Date(client.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/customers/edit/${client.id}`)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
+      <Card className="shadow-sm">
+        <DataTable
+          value={clients}
+          loading={loading}
+          paginator
+          rows={10}
+          rowsPerPageOptions={[5, 10, 25]}
+          header={header}
+          globalFilter={globalFilter}
+          emptyMessage="No se encontraron clientes"
+          className="p-datatable-sm"
+        >
+          <Column field="id" header="ID" sortable></Column>
+          <Column header="Nombre Completo" body={fullNameBodyTemplate} sortable field="name"></Column>
+          <Column field="document_number" header="Documento" sortable></Column>
+          <Column field="purchase_count" header="Compras" sortable></Column>
+          <Column header="Fecha de Creación" body={dateBodyTemplate} sortable field="created_at"></Column>
+          <Column header="Acciones" body={actionBodyTemplate} style={{ width: '5rem', textAlign: 'center' }}></Column>
+        </DataTable>
       </Card>
     </div>
   );

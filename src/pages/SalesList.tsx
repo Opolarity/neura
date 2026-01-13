@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Eye, Edit } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast'; // We can keep using this hook or switch to PrimeReact toast if we add a Toast component.
+import { Button } from 'primereact/button';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { Tag } from 'primereact/tag';
+import { InputText } from 'primereact/inputtext';
+import { IconField } from 'primereact/iconfield';
+import { InputIcon } from 'primereact/inputicon';
+import { Toolbar } from 'primereact/toolbar';
 import { format } from 'date-fns';
 
 interface Order {
@@ -41,6 +38,7 @@ const SalesList = () => {
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [globalFilter, setGlobalFilter] = useState<string>('');
 
   useEffect(() => {
     loadOrders();
@@ -83,111 +81,100 @@ const SalesList = () => {
     }
   };
 
+  const dateBodyTemplate = (rowData: Order) => {
+    return rowData.date
+      ? format(new Date(rowData.date), 'dd/MM/yyyy')
+      : format(new Date(rowData.created_at), 'dd/MM/yyyy');
+  };
+
+  const clientBodyTemplate = (rowData: Order) => {
+    return `${rowData.customer_name} ${rowData.customer_lastname}`;
+  };
+
+  const channelBodyTemplate = (rowData: Order) => {
+    return rowData.sale_types?.name || '-';
+  };
+
+  const statusBodyTemplate = (rowData: Order) => {
+    const situation = rowData.order_situations?.[0]?.situations;
+    if (!situation) return '-';
+
+    const code = situation.statuses.code;
+    let severity: "success" | "info" | "warning" | "danger" | null = null;
+
+    if (code === 'CFM') severity = 'success'; // Confirmado
+    else if (code === 'CAN') severity = 'danger'; // Cancelado
+    else if (code === 'RES') severity = 'warning'; // Reservado
+    else severity = 'info';
+
+    return <Tag value={situation.name} severity={severity} rounded />;
+  };
+
+  const totalBodyTemplate = (rowData: Order) => {
+    return `S/ ${Number(rowData.total).toFixed(2)}`;
+  };
+
+  const actionBodyTemplate = (rowData: Order) => {
+    return (
+      <div className="flex gap-2 justify-content-center">
+        <Button icon="pi pi-pencil" rounded text severity="info" onClick={() => navigate(`/sales/edit/${rowData.id}`)} />
+        <Button icon="pi pi-eye" rounded text severity="secondary" onClick={() => navigate(`/sales/${rowData.id}`)} />
+      </div>
+    );
+  };
+
+  const leftToolbarTemplate = () => {
+    return (
+      <div className="flex flex-wrap gap-2">
+        <h1 className="text-3xl font-bold font-gray-900 mr-4">Listado de Ventas</h1>
+      </div>
+    );
+  };
+
+  const rightToolbarTemplate = () => {
+    return (
+      <Button label="Nueva Venta" icon="pi pi-plus" onClick={() => navigate('/sales/create')} />
+    );
+  };
+
+  const header = (
+    <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
+      <h4 className="m-0">Ventas</h4>
+      <IconField iconPosition="left">
+        <InputIcon className="pi pi-search" />
+        <InputText type="search" onInput={(e: React.ChangeEvent<HTMLInputElement>) => setGlobalFilter(e.target.value)} placeholder="Buscar ventas..." />
+      </IconField>
+    </div>
+  );
+
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Listado de Ventas</h1>
-          <p className="text-gray-600 mt-1">Gestiona todas las ventas realizadas</p>
-        </div>
-        <Button onClick={() => navigate('/sales/create')}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nueva Venta
-        </Button>
-      </div>
+      <Toolbar className="mb-4 bg-white border-none shadow-sm" start={leftToolbarTemplate} end={rightToolbarTemplate}></Toolbar>
 
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Cargando ventas...</div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Documento</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Canal</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-center">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                    No hay ventas registradas
-                  </TableCell>
-                </TableRow>
-              ) : (
-                orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">#{order.id}</TableCell>
-                    <TableCell>
-                      {order.date 
-                        ? format(new Date(order.date), 'dd/MM/yyyy')
-                        : format(new Date(order.created_at), 'dd/MM/yyyy')}
-                    </TableCell>
-                    <TableCell>{order.document_number}</TableCell>
-                    <TableCell>
-                      {order.customer_name} {order.customer_lastname}
-                    </TableCell>
-                    <TableCell>
-                      {order.sale_types?.name || '-'}
-                    </TableCell>
-                    <TableCell>
-                      {order.order_situations?.[0]?.situations ? (
-                        <Badge
-                          variant={
-                            order.order_situations[0].situations.statuses.code === 'CFM'
-                              ? 'default'
-                              : order.order_situations[0].situations.statuses.code === 'CAN'
-                              ? 'destructive'
-                              : 'secondary'
-                          }
-                          className={
-                            order.order_situations[0].situations.statuses.code === 'RES'
-                              ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                              : ''
-                          }
-                        >
-                          {order.order_situations[0].situations.name}
-                        </Badge>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      S/ {Number(order.total).toFixed(2)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex gap-2 justify-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/sales/edit/${order.id}`)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/sales/${order.id}`)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <div className="card shadow-sm rounded-lg overflow-hidden bg-white">
+        <DataTable
+          value={orders}
+          loading={loading}
+          paginator
+          rows={10}
+          rowsPerPageOptions={[5, 10, 25]}
+          header={header}
+          globalFilter={globalFilter}
+          emptyMessage="No hay ventas registradas"
+          className="p-datatable-sm"
+          sortField="created_at"
+          sortOrder={-1}
+        >
+          <Column field="id" header="ID" sortable className="font-medium"></Column>
+          <Column header="Fecha" body={dateBodyTemplate} sortable field="created_at"></Column>
+          <Column field="document_number" header="Documento" sortable></Column>
+          <Column header="Cliente" body={clientBodyTemplate} sortable field="customer_name"></Column>
+          <Column header="Canal" body={channelBodyTemplate} sortable field="sale_types.name"></Column>
+          <Column header="Estado" body={statusBodyTemplate} sortable></Column>
+          <Column header="Total" body={totalBodyTemplate} sortable field="total" className="text-right"></Column>
+          <Column header="Acciones" body={actionBodyTemplate} style={{ width: '8rem', textAlign: 'center' }}></Column>
+        </DataTable>
+      </div>
     </div>
   );
 };

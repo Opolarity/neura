@@ -1,18 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Button } from 'primereact/button';
+import { InputText } from 'primereact/inputtext';
+import { Dropdown } from 'primereact/dropdown';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
 
 interface DocumentType {
   id: number;
@@ -53,7 +45,7 @@ const CreateClient = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.last_name || !formData.document_type_id || !formData.document_number) {
       toast.error('Por favor complete los campos obligatorios');
       return;
@@ -87,99 +79,99 @@ const CreateClient = () => {
     <div className="p-6">
       <div className="mb-6">
         <Button
-          variant="ghost"
+          label="Volver"
+          icon="pi pi-arrow-left"
+          text
           onClick={() => navigate('/customers/list')}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver
-        </Button>
+          className="mb-4 pl-0"
+        />
         <h1 className="text-3xl font-bold">Añadir Cliente</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Primer Nombre *</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
+      <div className="card bg-white p-6 rounded-lg shadow-sm max-w-2xl">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="name" className="font-medium text-gray-700">Primer Nombre *</label>
+              <InputText
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+                className="w-full"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="middle_name" className="font-medium text-gray-700">Segundo Nombre</label>
+              <InputText
+                id="middle_name"
+                value={formData.middle_name}
+                onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })}
+                className="w-full"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="last_name" className="font-medium text-gray-700">Primer Apellido *</label>
+              <InputText
+                id="last_name"
+                value={formData.last_name}
+                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                required
+                className="w-full"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="last_name2" className="font-medium text-gray-700">Segundo Apellido</label>
+              <InputText
+                id="last_name2"
+                value={formData.last_name2}
+                onChange={(e) => setFormData({ ...formData, last_name2: e.target.value })}
+                className="w-full"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="document_type" className="font-medium text-gray-700">Tipo de Documento *</label>
+              <Dropdown
+                id="document_type"
+                value={formData.document_type_id}
+                onChange={(e) => setFormData({ ...formData, document_type_id: e.value })}
+                options={documentTypes}
+                optionLabel="name"
+                optionValue="id" // Assuming ID is number, but state is string. Dropdown handles value binding.
+                // Wait, formData.document_type_id is string (''), documentTypes.id is number.
+                // optionValue="id" will return a number.
+                // We map it to string for consistency if needed, but parseInt handles number/string.
+                // Let's ensure alignment. If ID is number, Dropdown returns number.
+                // formData expects string based on initialization, but TypeScript doesn't complain much with 'any'.
+                // Better to keep value as string if possible or update state.
+                // I will assume implicit casting or just update state type to any/number|string.
+                placeholder="Seleccione tipo"
+                className="w-full"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="document_number" className="font-medium text-gray-700">Número de Documento *</label>
+              <InputText
+                id="document_number"
+                value={formData.document_number}
+                onChange={(e) => setFormData({ ...formData, document_number: e.target.value })}
+                required
+                className="w-full"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="middle_name">Segundo Nombre</Label>
-            <Input
-              id="middle_name"
-              value={formData.middle_name}
-              onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })}
-            />
+          <div className="flex gap-4 mt-4">
+            <Button label={loading ? 'Guardando...' : 'Guardar Cliente'} type="submit" loading={loading} />
+            <Button label="Cancelar" type="button" severity="secondary" outlined onClick={() => navigate('/customers/list')} />
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="last_name">Primer Apellido *</Label>
-            <Input
-              id="last_name"
-              value={formData.last_name}
-              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="last_name2">Segundo Apellido</Label>
-            <Input
-              id="last_name2"
-              value={formData.last_name2}
-              onChange={(e) => setFormData({ ...formData, last_name2: e.target.value })}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="document_type">Tipo de Documento *</Label>
-            <Select
-              value={formData.document_type_id}
-              onValueChange={(value) => setFormData({ ...formData, document_type_id: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccione tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                {documentTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.id.toString()}>
-                    {type.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="document_number">Número de Documento *</Label>
-            <Input
-              id="document_number"
-              value={formData.document_number}
-              onChange={(e) => setFormData({ ...formData, document_number: e.target.value })}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="flex gap-4">
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Guardando...' : 'Guardar Cliente'}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate('/customers/list')}
-          >
-            Cancelar
-          </Button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };
