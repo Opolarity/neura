@@ -21,69 +21,46 @@ Deno.serve(async (req) => {
       throw new Error('Product IDs array is required');
     }
 
-    console.log(`Deleting ${productIds.length} product(s): ${productIds.join(', ')}`);
+    console.log(`Soft deleting products: ${productIds.join(', ')}`);
 
-    // Check if any product has associated orders
+    /* Obtener variaciones del producto */
     const { data: variations } = await supabase
       .from('variations')
       .select('id')
       .in('product_id', productIds);
 
-    if (variations && variations.length > 0) {
-      const variationIds = variations.map(v => v.id);
-      
-      const { data: orderProducts } = await supabase
-        .from('order_products')
-        .select('id')
-        .in('product_variation_id', variationIds)
-        .limit(1);
+    const variationIds = variations?.map(v => v.id) || [];
 
-      if (orderProducts && orderProducts.length > 0) {
-        throw new Error('Cannot delete products that have associated orders');
-      }
-    }
+    /* Desactivar variaciones */
+    if (variationIds.length > 0) {
+      const { error: variationsError } = await supabase
+        .from('variations')
+        .update({ is_active: false })
+        .in('id', variationIds);
 
-    // Get all variation IDs for these products
-    const { data: allVariations } = await supabase
-      .from('variations')
-      .select('id')
-      .in('product_id', productIds);
-
-    const allVariationIds = allVariations?.map(v => v.id) || [];
-
-    // Delete in correct order (respecting foreign keys)
-    if (allVariationIds.length > 0) {
-      // Delete variation-related data
-      await Promise.all([
-        supabase.from('product_variation_images').delete().in('product_variation_id', allVariationIds),
-        supabase.from('variation_terms').delete().in('product_variation_id', allVariationIds),
-        supabase.from('product_price').delete().in('product_variation_id', allVariationIds),
-        supabase.from('product_stock').delete().in('product_variation_id', allVariationIds)
-      ]);
-
-      // Delete variations
-      const { error: variationsError } = await supabase.from('variations').delete().in('id', allVariationIds);
       if (variationsError) throw variationsError;
     }
 
-    // Delete product-related data
-    await Promise.all([
-      supabase.from('product_categories').delete().in('product_id', productIds),
-      supabase.from('product_images').delete().in('product_id', productIds)
-    ]);
+    /* Desactivar los productos */
+    const { error: productsError } = await supabase
+      .from('products')
+      .update({ is_active: false })
+      .in('id', productIds);
 
-    // Finally, delete the products
-    const { error: productsError } = await supabase.from('products').delete().in('id', productIds);
     if (productsError) throw productsError;
 
-    console.log('Products deleted successfully');
-
     return new Response(
-      JSON.stringify({ success: true, deletedCount: productIds.length }),
+      JSON.stringify({
+        success: true,
+        message: 'Producto eliminado correctamente',
+        affectedProducts: productIds.length,
+        affectedVariations: variationIds.length
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
-    console.error('Error deleting products:', error);
+    console.error('Soft delete error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
