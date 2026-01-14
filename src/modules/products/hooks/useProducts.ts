@@ -14,6 +14,7 @@ import {
   productsApi,
 } from "../services/products.service";
 import { categoryAdapter, productAdapter } from "../adapters/product.adapter";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 
 export const useProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -40,7 +41,6 @@ export const useProducts = () => {
     page: 1,
     size: 20,
   });
-  const [tempFilters, setTempFilters] = useState<ProductFilters>(filters);
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
 
   const navigate = useNavigate();
@@ -50,28 +50,30 @@ export const useProducts = () => {
     setError(null);
 
     try {
-      if (!filters) {
-        const dataProducts = await productsApi();
-        const { products, pagination } = productAdapter(dataProducts);
-        setProducts(products);
-        setPagination(pagination);
-      } else {
-        const dataProducts = await productsApi(filters);
-        const { products, pagination } = productAdapter(dataProducts);
-        setProducts(products);
-        setPagination(pagination);
-      }
-
-      const dataCategories = await categoriesApi();
-      const categoriesResponse = categoryAdapter(dataCategories);
-
-      setCategories(categoriesResponse);
-    } catch {
+      const dataProducts = await productsApi(filters);
+      const { products, pagination } = productAdapter(dataProducts);
+      setProducts(products);
+      setPagination(pagination);
+    } catch (error) {
+      console.error(error);
       setError("Ocurrió un error al cargar datos de productos");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const dataCategories = await categoriesApi();
+        const categoriesResponse = categoryAdapter(dataCategories);
+        setCategories(categoriesResponse);
+      } catch (error) {
+        console.error("Error loading categories:", error);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const deleteSelectedsProduct = async (productIds: number[]) => {
     setLoading(true);
@@ -103,13 +105,10 @@ export const useProducts = () => {
     }
   };
 
-  useEffect(() => {
-    loadData(filters);
-  }, [filters]);
-
   const goToProductDetail = (id: number) => {
     navigate(`/products/add?id=${id}`);
   };
+
   const goToNewProduct = () => {
     navigate("/products/add");
   };
@@ -117,19 +116,33 @@ export const useProducts = () => {
   const onSearchChange = (value: string) => {
     setSearch(value);
   };
-  const updateTempFilter = <K extends keyof ProductFilters>(
-    key: K,
-    value: ProductFilters[K]
-  ) => {
-    setTempFilters((prev) => ({ ...prev, [key]: value }));
-  };
+
+  const debouncedSearch = useDebounce(search, 500);
+
+  useEffect(() => {
+    if (debouncedSearch !== filters.search) {
+      const newFilters = { ...filters, search: debouncedSearch, page: 1 };
+      setFilters(newFilters);
+      loadData(newFilters);
+    }
+  }, [debouncedSearch]);
 
   const onPageChange = (page: number) => {
-    setFilters((prev) => ({ ...prev, page }));
+    const newFilters = { ...filters, page };
+    setFilters(newFilters);
+    loadData(newFilters);
+  };
+
+  const onOrderChange = (order: string) => {
+    const newFilters = { ...filters, order };
+    setFilters(newFilters);
+    loadData(newFilters);
   };
 
   const handlePageSizeChange = (size: number) => {
-    setFilters((prev) => ({ ...prev, size, page: 1 }));
+    const newFilters = { ...filters, size, page: 1 };
+    setFilters(newFilters);
+    loadData(newFilters);
   };
 
   const toggleSelectAll = () => {
@@ -138,7 +151,6 @@ export const useProducts = () => {
     } else {
       setSelectedProducts(products.map((product) => product.id));
     }
-    console.log(selectedProducts);
   };
 
   const toggleProductSelection = (productId: number) => {
@@ -157,7 +169,9 @@ export const useProducts = () => {
   };
 
   const onApplyFilter = (newFilters: ProductFilters) => {
-    setFilters({ ...newFilters, page: 1, size: filters.size });
+    const updatedFilters = { ...newFilters, page: 1, size: filters.size };
+    setFilters(updatedFilters);
+    loadData(updatedFilters);
     setIsOpenFilterModal(false);
   };
 
@@ -170,7 +184,6 @@ export const useProducts = () => {
     search,
     isOpenFilterModal,
     filters,
-    tempFilters,
     selectedProducts,
     toggleSelectAll,
     toggleProductSelection,
@@ -184,6 +197,6 @@ export const useProducts = () => {
     onOpenFilterModal,
     onCloseFilterModal,
     onApplyFilter,
-    updateTempFilter,
+    onOrderChange,
   };
 };

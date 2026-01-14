@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ListFilter, Search } from "lucide-react";
 import React from "react";
 
@@ -6,12 +7,16 @@ interface ProductFilterBarProps {
   search: string;
   onSearchChange: (text: string) => void;
   onOpen: () => void;
+  order?: string | null;
+  onOrderChange: (value: string) => void;
 }
 
 export default function ProductsFilterBar({
   search,
   onSearchChange,
   onOpen,
+  order,
+  onOrderChange,
 }: ProductFilterBarProps) {
   return (
     <div className="flex items-center gap-2">
@@ -30,6 +35,26 @@ export default function ProductsFilterBar({
         <ListFilter className="w-4 h-4" />
         Filtrar
       </Button>
+
+      <Select
+        value={order || "none"}
+        onValueChange={(value) =>
+          onOrderChange(value === "none" ? "none" : value)
+        }
+      >
+        <SelectTrigger className="w-auto">
+          <SelectValue placeholder="Ordenar por" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="none">Sin orden</SelectItem>
+          <SelectItem value="alp-asc">Nombre (A-Z)</SelectItem>
+          <SelectItem value="alp-dsc">Nombre (Z-A)</SelectItem>
+          <SelectItem value="pri-asc">Precio más bajo</SelectItem>
+          <SelectItem value="pri-dec">Precio más alto</SelectItem>
+          <SelectItem value="sto-asc">Stock más bajo</SelectItem>
+          <SelectItem value="sto-dsc">Stock más alto</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 }

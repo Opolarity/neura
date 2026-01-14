@@ -6,6 +6,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Edit, Trash, Loader2 } from "lucide-react";
@@ -94,9 +95,23 @@ const ProductsTable = ({
               <TableCell>S/ {product.price}</TableCell>
               <TableCell>{product.stock}</TableCell>
               <TableCell>
-                <span className="px-2 py-1 rounded-full text-xs">
-                  {"Acá va un swicth"}
-                </span>
+                <div className="flex gap-2">
+                  {product.estatus === true && (
+                    <Badge className="bg-green-500 hover:bg-green-600">
+                      Activo
+                    </Badge>
+                  )}
+                  {product.estatus === false && (
+                    <Badge className="bg-red-500 hover:bg-red-600">
+                      Inactivo
+                    </Badge>
+                  )}
+                  {product.web === true && (
+                    <Badge className="bg-green-500 hover:bg-green-600">
+                      Web
+                    </Badge>
+                  )}
+                </div>
               </TableCell>
               <TableCell>
                 <div className="flex gap-2">

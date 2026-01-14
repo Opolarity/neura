@@ -17,29 +17,82 @@ import {
 } from "@/components/ui/select";
 import { Category } from "../types/Products.types";
 import { ProductFilters } from "../types/Products.types";
+import { useEffect, useState } from "react";
 
 interface ProductsFilterModalProps {
   categories: Category[];
   filters: ProductFilters;
   isOpen: boolean;
-  onFilterChange: <K extends keyof ProductFilters>(
-    key: K,
-    value: ProductFilters[K]
-  ) => void;
   onClose?: () => void;
-  onApply?: () => void;
-  onClear?: () => void;
+  onApply?: (filters: ProductFilters) => void;
 }
 
 const ProductsFilterModal = ({
   categories,
   filters,
   isOpen,
-  onFilterChange,
   onClose,
   onApply,
-  onClear,
 }: ProductsFilterModalProps) => {
+  const [internalFilters, setInternalFilters] =
+    useState<ProductFilters>(filters);
+
+  useEffect(() => {
+    if (isOpen) {
+      setInternalFilters(filters);
+    }
+  }, [isOpen, filters]);
+
+  const handleCategoryChange = (value: string) => {
+    setInternalFilters((prev) => ({
+      ...prev,
+      category: value === "none" ? null : Number(value),
+    }));
+  };
+
+  const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value ? Number(e.target.value) : null;
+    setInternalFilters((prev) => ({ ...prev, minprice: value }));
+  };
+
+  const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value ? Number(e.target.value) : null;
+    setInternalFilters((prev) => ({ ...prev, maxprice: value }));
+  };
+
+  const handleMinStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value ? Number(e.target.value) : null;
+    setInternalFilters((prev) => ({ ...prev, minstock: value }));
+  };
+
+  const handleMaxStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value ? Number(e.target.value) : null;
+    setInternalFilters((prev) => ({ ...prev, maxstock: value }));
+  };
+
+  const handleStatusChange = (value: string) => {
+    setInternalFilters((prev) => ({
+      ...prev,
+      status: value === "none" ? null : value === "true",
+    }));
+  };
+
+  const handleClear = () => {
+    setInternalFilters({
+      page: 1,
+      size: filters.size,
+      search: null,
+      minprice: null,
+      maxprice: null,
+      category: null,
+      status: null,
+      web: null,
+      minstock: null,
+      maxstock: null,
+      order: null,
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -52,13 +105,12 @@ const ProductsFilterModal = ({
             <Label className="text-sm font-medium">Categorías</Label>
             <div className="flex gap-2">
               <Select
-                value={filters?.category ? String(filters.category) : "none"}
-                onValueChange={(value) =>
-                  onFilterChange(
-                    "category",
-                    value === "none" ? null : Number(value)
-                  )
+                value={
+                  internalFilters?.category
+                    ? String(internalFilters.category)
+                    : "none"
                 }
+                onValueChange={handleCategoryChange}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Todas las categorías" />
@@ -80,24 +132,14 @@ const ProductsFilterModal = ({
               <Input
                 type="number"
                 placeholder="Mínimo"
-                value={filters.minprice ?? ""}
-                onChange={(e) =>
-                  onFilterChange(
-                    "minprice",
-                    e.target.value ? Number(e.target.value) : null
-                  )
-                }
+                value={internalFilters.minprice ?? ""}
+                onChange={handleMinPriceChange}
               />
               <Input
                 type="number"
                 placeholder="Máximo"
-                value={filters.maxprice ?? ""}
-                onChange={(e) =>
-                  onFilterChange(
-                    "maxprice",
-                    e.target.value ? Number(e.target.value) : null
-                  )
-                }
+                value={internalFilters.maxprice ?? ""}
+                onChange={handleMaxPriceChange}
               />
             </div>
           </div>
@@ -107,24 +149,14 @@ const ProductsFilterModal = ({
               <Input
                 type="number"
                 placeholder="Mínimo"
-                value={filters.minstock ?? ""}
-                onChange={(e) =>
-                  onFilterChange(
-                    "minstock",
-                    e.target.value ? Number(e.target.value) : null
-                  )
-                }
+                value={internalFilters.minstock ?? ""}
+                onChange={handleMinStockChange}
               />
               <Input
                 type="number"
                 placeholder="Máximo"
-                value={filters.maxstock ?? ""}
-                onChange={(e) =>
-                  onFilterChange(
-                    "maxstock",
-                    e.target.value ? Number(e.target.value) : null
-                  )
-                }
+                value={internalFilters.maxstock ?? ""}
+                onChange={handleMaxStockChange}
               />
             </div>
           </div>
@@ -132,13 +164,12 @@ const ProductsFilterModal = ({
             <Label className="text-sm font-medium">Estado</Label>
             <div className="flex gap-2">
               <Select
-                value={filters.status == null ? "none" : String(filters.status)}
-                onValueChange={(value) =>
-                  onFilterChange(
-                    "status",
-                    value === "none" ? null : value === "true"
-                  )
+                value={
+                  internalFilters.status == null
+                    ? "none"
+                    : String(internalFilters.status)
                 }
+                onValueChange={handleStatusChange}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Todas los estados" />
@@ -153,10 +184,12 @@ const ProductsFilterModal = ({
           </div>
         </div>
         <DialogFooter className="flex gap-2">
-          <Button variant="outline" onClick={onClear}>
+          <Button variant="outline" onClick={handleClear}>
             Limpiar
           </Button>
-          <Button onClick={onApply}>Aplicar</Button>
+          <Button onClick={() => onApply && onApply(internalFilters)}>
+            Aplicar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

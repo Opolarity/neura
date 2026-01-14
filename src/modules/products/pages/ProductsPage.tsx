@@ -19,7 +19,7 @@ const Products = () => {
     search,
     pagination,
     isOpenFilterModal,
-    tempFilters,
+    filters,
     selectedProducts,
     handlePageSizeChange,
     toggleSelectAll,
@@ -33,7 +33,7 @@ const Products = () => {
     goToProductDetail,
     onPageChange,
     onSearchChange,
-    updateTempFilter,
+    onOrderChange,
   } = useProducts();
 
   return (
@@ -50,6 +50,8 @@ const Products = () => {
             search={search}
             onSearchChange={onSearchChange}
             onOpen={onOpenFilterModal}
+            order={filters.order}
+            onOrderChange={onOrderChange}
           />
         </CardHeader>
         <CardContent className="p-0">
@@ -77,10 +79,9 @@ const Products = () => {
       <ProductsFilterModal
         isOpen={isOpenFilterModal}
         categories={categories}
-        filters={tempFilters}
-        onFilterChange={updateTempFilter}
+        filters={filters}
         onClose={onCloseFilterModal}
-        onApply={() => onApplyFilter(tempFilters)}
+        onApply={onApplyFilter}
       />
     </div>
   );
