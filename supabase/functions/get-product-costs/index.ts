@@ -17,8 +17,9 @@ Deno.serve(async (req) => {
     const search = url.searchParams.get('search') || null;
     const mincost = Number(url.searchParams.get('mincost')) || null;
     const maxcost = Number(url.searchParams.get('maxcost')) || null;
+    const cost = url.searchParams.get('cost') || null;
     const order = url.searchParams.get('order') || null;
-    const variation = url.searchParams.get('variation') || null;
+    const variation = Number(url.searchParams.get('variation')) || null;
 
 
     const supabase = createClient(
@@ -33,6 +34,7 @@ Deno.serve(async (req) => {
       p_search: search,
       p_min_cost: mincost,
       p_max_cost: maxcost,
+      p_cost: cost,
       p_order: order,
       p_variation: variation,
       p_page: page,

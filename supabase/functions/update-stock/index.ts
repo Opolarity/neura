@@ -29,31 +29,24 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { stockUpdates, defectsUpdates } = await req.json();
+    // Recibimos solo stockUpdates, cada uno con su stock_type_id
+    const { stockUpdates } = await req.json();
 
-    console.log('Updating stock:', stockUpdates);
-    console.log('Updating defects:', defectsUpdates);
-
-    // Validate that at least one update type is provided
-    const hasStockUpdates = stockUpdates && Array.isArray(stockUpdates) && stockUpdates.length > 0;
-    const hasDefectsUpdates = defectsUpdates && Array.isArray(defectsUpdates) && defectsUpdates.length > 0;
-
-    if (!hasStockUpdates && !hasDefectsUpdates) {
-      throw new Error('No stock or defects updates provided');
+    if (!stockUpdates || !Array.isArray(stockUpdates) || stockUpdates.length === 0) {
+      throw new Error('No stock updates provided');
     }
 
-    // Get the module for stock movements
+    console.log('Processing dynamic stock updates:', stockUpdates);
+
+    // Obtener información del módulo y tipo para la auditoría (Ajuste Manual)
     const { data: module } = await supabase
       .from('modules')
       .select('id')
       .eq('code', 'STM')
       .single();
 
-    if (!module) {
-      throw new Error('Module STM not found');
-    }
+    if (!module) throw new Error('Module STM not found');
 
-    // Get the movement type for manual adjustments
     const { data: movementType } = await supabase
       .from('types')
       .select('id')
@@ -61,121 +54,75 @@ Deno.serve(async (req) => {
       .eq('module_id', module.id)
       .single();
 
-    if (!movementType) {
-      throw new Error('Movement type MAN not found');
-    }
+    if (!movementType) throw new Error('Movement type MAN not found');
 
-    // Update or insert stock for each variation/warehouse combination
-    if (hasStockUpdates) {
-      for (const update of stockUpdates) {
-        const { variation_id, warehouse_id, stock } = update;
+    // Procesar cada actualización
+    for (const update of stockUpdates) {
+      const { variation_id, warehouse_id, stock, stock_type_id } = update;
 
-        // Check if stock record exists and get current stock
-        const { data: existingStock } = await supabase
+      if (!variation_id || !warehouse_id || !stock_type_id) {
+        console.warn('Missing required fields in update:', update);
+        continue;
+      }
+
+      // 1. Buscar stock existente para este tipo específico en este almacén
+      const { data: existingRecord } = await supabase
+        .from('product_stock')
+        .select('id, stock')
+        .eq('product_variation_id', variation_id)
+        .eq('warehouse_id', warehouse_id)
+        .eq('stock_type_id', stock_type_id)
+        .single();
+
+      const newStockValue = parseInt(stock);
+      const oldStockValue = existingRecord ? existingRecord.stock : 0;
+      const difference = newStockValue - oldStockValue;
+
+      // 2. Upsert del registro de stock
+      if (existingRecord) {
+        const { error: updateError } = await supabase
           .from('product_stock')
-          .select('id, stock')
-          .eq('product_variation_id', variation_id)
-          .eq('warehouse_id', warehouse_id)
-          .single();
+          .update({ stock: newStockValue })
+          .eq('id', existingRecord.id);
 
-        const newStock = parseInt(stock);
-        const oldStock = existingStock ? existingStock.stock : 0;
-        const difference = newStock - oldStock;
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('product_stock')
+          .insert({
+            product_variation_id: variation_id,
+            warehouse_id: warehouse_id,
+            stock_type_id: stock_type_id,
+            stock: newStockValue,
+          });
 
-        if (existingStock) {
-          // Update existing stock
-          const { error: updateError } = await supabase
-            .from('product_stock')
-            .update({ stock: newStock })
-            .eq('product_variation_id', variation_id)
-            .eq('warehouse_id', warehouse_id);
-
-          if (updateError) throw updateError;
-        } else {
-          // Insert new stock record
-          const { error: insertError } = await supabase
-            .from('product_stock')
-            .insert({
-              product_variation_id: variation_id,
-              warehouse_id: warehouse_id,
-              stock: newStock,
-            });
-
-          if (insertError) throw insertError;
-        }
-
-        // Create stock movement record if there's a difference
-        if (difference !== 0) {
-          const { error: movementError } = await supabase
-            .from('stock_movements')
-            .insert({
-              product_variation_id: variation_id,
-              quantity: difference,
-              movement_type: movementType.id,
-              created_by: user.id,
-              out_warehouse_id: warehouse_id,
-              in_warehouse_id: warehouse_id,
-              defect_stock: false,
-            });
-
-          if (movementError) throw movementError;
-        }
+        if (insertError) throw insertError;
       }
-      console.log('Stock updated successfully');
+
+      // 3. Registrar el movimiento si hubo cambio
+      if (difference !== 0) {
+        const { error: movementError } = await supabase
+          .from('stock_movements')
+          .insert({
+            product_variation_id: variation_id,
+            quantity: difference,
+            movement_type: movementType.id,
+            created_by: user.id,
+            out_warehouse_id: warehouse_id,
+            in_warehouse_id: warehouse_id,
+            stock_type_id: stock_type_id
+          });
+
+        if (movementError) throw movementError;
+      }
     }
 
-    // Update defects for warehouse_id 1 if provided
-    if (hasDefectsUpdates) {
-      for (const update of defectsUpdates) {
-        const { variation_id, warehouse_id, defects } = update;
-
-        // Only update defects for warehouse_id 1
-        if (warehouse_id === 1) {
-          // Get current defects value
-          const { data: existingStock } = await supabase
-            .from('product_stock')
-            .select('defects')
-            .eq('product_variation_id', variation_id)
-            .eq('warehouse_id', 1)
-            .single();
-
-          const newDefects = parseInt(defects);
-          const oldDefects = existingStock ? existingStock.defects : 0;
-          const difference = newDefects - oldDefects;
-
-          // Update defects
-          const { error: defectsError } = await supabase
-            .from('product_stock')
-            .update({ defects: newDefects })
-            .eq('product_variation_id', variation_id)
-            .eq('warehouse_id', 1);
-
-          if (defectsError) throw defectsError;
-
-          // Create stock movement record if there's a difference
-          if (difference !== 0) {
-            const { error: movementError } = await supabase
-              .from('stock_movements')
-              .insert({
-                product_variation_id: variation_id,
-                quantity: difference,
-                movement_type: movementType.id,
-                created_by: user.id,
-                out_warehouse_id: 1,
-                in_warehouse_id: 1,
-                defect_stock: true,
-              });
-
-            if (movementError) throw movementError;
-          }
-        }
-      }
-      console.log('Defects updated successfully');
-    }
+    console.log('Dynamic stock updates completed successfully');
 
     return new Response(JSON.stringify({ success: true, message: 'Stock actualizado correctamente' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+
   } catch (error) {
     console.error('Error updating stock:', error);
     return new Response(JSON.stringify({ error: error.message }), {
