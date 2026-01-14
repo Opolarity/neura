@@ -29,7 +29,6 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Recibimos solo stockUpdates, cada uno con su stock_type_id
     const { stockUpdates } = await req.json();
 
     if (!stockUpdates || !Array.isArray(stockUpdates) || stockUpdates.length === 0) {
@@ -65,7 +64,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // 1. Buscar stock existente para este tipo específico en este almacén
+      // Buscar stock existente para este tipo específico en este almacén
       const { data: existingRecord } = await supabase
         .from('product_stock')
         .select('id, stock')
@@ -78,7 +77,7 @@ Deno.serve(async (req) => {
       const oldStockValue = existingRecord ? existingRecord.stock : 0;
       const difference = newStockValue - oldStockValue;
 
-      // 2. Upsert del registro de stock
+      // Upsert del registro de stock
       if (existingRecord) {
         const { error: updateError } = await supabase
           .from('product_stock')
@@ -99,7 +98,6 @@ Deno.serve(async (req) => {
         if (insertError) throw insertError;
       }
 
-      // 3. Registrar el movimiento si hubo cambio
       if (difference !== 0) {
         const { error: movementError } = await supabase
           .from('stock_movements')
@@ -107,9 +105,9 @@ Deno.serve(async (req) => {
             product_variation_id: variation_id,
             quantity: difference,
             movement_type: movementType.id,
+            completed: true,
             created_by: user.id,
-            out_warehouse_id: warehouse_id,
-            in_warehouse_id: warehouse_id,
+            warehouse_id: warehouse_id,
             stock_type_id: stock_type_id
           });
 

@@ -3,7 +3,23 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Edit, Save, Loader2 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { Edit, Save, Loader2, Search, Filter } from 'lucide-react';
 import { useInventoryLogic } from './Inventory.logic';
 
 const Inventory = () => {
@@ -21,6 +37,24 @@ const Inventory = () => {
     handleEdit,
     handleCancel,
     handleSave,
+    // Filter controls
+    page,
+    setPage,
+    size,
+    setSize,
+    search,
+    setSearch,
+    warehouse,
+    setWarehouse,
+    types,
+    setTypes,
+    order,
+    setOrder,
+    minstock,
+    setMinstock,
+    maxstock,
+    setMaxstock,
+    total,
   } = useInventoryLogic();
 
   if (loading) {
@@ -66,6 +100,66 @@ const Inventory = () => {
           )}
         </div>
       </div>
+
+      <Card className="bg-card/50 backdrop-blur-sm border-primary/10">
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="search">Buscar</Label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="search"
+                  placeholder="SKU o nombre..."
+                  className="pl-9"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Almacén</Label>
+              <Select
+                value={warehouse?.toString() || "all"}
+                onValueChange={(v) => setWarehouse(v === "all" ? null : parseInt(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los almacenes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los almacenes</SelectItem>
+                  {warehouses.map((w) => (
+                    <SelectItem key={w.id} value={w.id.toString()}>
+                      {w.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Stock Mínimo</Label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={minstock || ''}
+                onChange={(e) => setMinstock(e.target.value ? parseInt(e.target.value) : null)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Stock Máximo</Label>
+              <Input
+                type="number"
+                placeholder="Ej: 100"
+                value={maxstock || ''}
+                onChange={(e) => setMaxstock(e.target.value ? parseInt(e.target.value) : null)}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -139,7 +233,32 @@ const Inventory = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Mostrando página {page} {total > 0 && `de ${Math.ceil(total / size)}`} ({total} resultados)
+        </p>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setPage(Math.max(1, page - 1))}
+                className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink>{page}</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setPage(page + 1)}
+                className={page >= Math.ceil(total / size) ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    </div >
   );
 };
 

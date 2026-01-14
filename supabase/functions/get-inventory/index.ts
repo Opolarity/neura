@@ -11,6 +11,20 @@ Deno.serve(async (req) => {
   }
 
   try {
+
+
+    const url = new URL(req.url)
+    const page = Number(url.searchParams.get('page')) || 1;
+    const size = Number(url.searchParams.get('size')) || 20;
+    const search = url.searchParams.get('search') || null;
+    const warehouse = Number(url.searchParams.get('warehouse')) || null;
+    const types = Number(url.searchParams.get('types')) || 9;
+    const order = url.searchParams.get('order') || null;
+    const minstock = Number(url.searchParams.get('minstock')) || null;
+    const maxstock = Number(url.searchParams.get('maxstock')) || null;
+
+
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -18,88 +32,18 @@ Deno.serve(async (req) => {
 
     console.log('Fetching inventory data...');
 
-    // Get all variations with product info
-    const { data: variations, error: variationsError } = await supabase
-      .from('variations')
-      .select(`
-        id,
-        sku,
-        product_id,
-        products (
-          id,
-          title
-        )
-      `);
 
-    if (variationsError) throw variationsError;
-
-    // Get all warehouses
-    const { data: warehouses, error: warehousesError } = await supabase
-      .from('warehouses')
-      .select('id, name');
-
-    if (warehousesError) throw warehousesError;
-
-    // Get all stock data including defects
-    const { data: stock, error: stockError } = await supabase
-      .from('product_stock')
-      .select('product_variation_id, warehouse_id, stock, defects');
-
-    if (stockError) throw stockError;
-
-    // Get variation terms to build variation name
-    const { data: variationTerms, error: termsError } = await supabase
-      .from('variation_terms')
-      .select(`
-        product_variation_id,
-        term_id,
-        terms (
-          name,
-          term_group_id,
-          term_groups (
-            name
-          )
-        )
-      `);
-
-    if (termsError) throw termsError;
-
-    // Build inventory data structure
-    const inventory = variations.map((variation: any) => {
-      // Build variation name from terms
-      const terms = variationTerms
-        .filter((vt: any) => vt.product_variation_id === variation.id)
-        .map((vt: any) => vt.terms.name)
-        .join(' - ');
-
-      const variationName = terms || 'Sin variación';
-
-      // Get stock for each warehouse
-      const stockByWarehouse = warehouses.map((warehouse: any) => {
-        const stockData = stock.find(
-          (s: any) => s.product_variation_id === variation.id && s.warehouse_id === warehouse.id
-        );
-
-        return {
-          warehouse_id: warehouse.id,
-          warehouse_name: warehouse.name,
-          stock: stockData?.stock || 0,
-          defects: warehouse.id === 1 ? (stockData?.defects || 0) : undefined,
-        };
-      });
-
-      return {
-        variation_id: variation.id,
-        sku: variation.sku || 'N/A',
-        product_name: variation.products?.title || 'Sin nombre',
-        variation_name: variationName,
-        stock_by_warehouse: stockByWarehouse,
-      };
-    });
-
-    console.log(`Inventory data fetched: ${inventory.length} variations`);
-
-    return new Response(JSON.stringify({ inventory, warehouses }), {
+    const { data: inventory, error: inventoryError } = await supabase.rpc('sp_get_inventory', {
+      p_page: page,
+      p_size: size,
+      p_search: search,
+      p_warehouse: warehouse,
+      p_types: types,
+      p_order: order,
+      p_min_stock: minstock,
+      p_max_stock: maxstock,
+    })
+    return new Response(JSON.stringify({ inventory }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
