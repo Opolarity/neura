@@ -45,12 +45,12 @@ export const useProductCostsLogic = () => {
 
   const handleCostChange = (variationId: number, value: string) => {
     const numValue = parseFloat(value) || 0;
-    
+
     setEditedCosts(prev => ({
       ...prev,
       [variationId]: numValue,
     }));
-    
+
     setHasChanges(true);
   };
 
@@ -93,7 +93,7 @@ export const useProductCostsLogic = () => {
       setIsEditing(false);
       setEditedCosts({});
       setHasChanges(false);
-      
+
       await loadProductCosts();
     } catch (error: any) {
       console.error('Error saving costs:', error);
