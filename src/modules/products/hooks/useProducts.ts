@@ -13,7 +13,7 @@ import {
   deleteProductsApi,
   productsApi,
 } from "../services/products.service";
-import { categoryAdapter, productAdapter } from "../adapters/product.adapter";
+import { categoryAdapter, productAdapter } from "../adapters/Product.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 
 export const useProducts = () => {

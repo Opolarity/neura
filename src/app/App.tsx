@@ -55,7 +55,7 @@ import Login from "@/modules/auth/pages/Login";
 import ProtectedRoute from "@/app/routes/ProtectedRoute";
 import NotFound from "@/shared/components/NotFound";
 import Categories from "@/modules/products/pages/Categories";
-import ProductCosts from "@/modules/products/pages/ProductCosts";
+import ProductCosts from "@/modules/products/pages/ProductCostsPage";
 import AddExpense from "@/modules/expenses/pages/AddExpense";
 import Movements from "@/modules/movements/pages/Movements";
 import Returns from "@/modules/returns/pages/Returns";

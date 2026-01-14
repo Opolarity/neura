@@ -24,13 +24,14 @@ export interface ProductCost {
 }
 
 export interface ProductCostsFilters {
-  p_variation?: number | null;
-  min_cost?: number | null;
-  max_cost?: number | null;
+  variation?: number | null;
+  mincost?: number | null;
+  maxcost?: number | null;
   order?: string | null;
   search?: string | null;
   page?: number;
   size?: number;
+  cost?: boolean | null;
 }
 
 //PaginationState, se usa el de products

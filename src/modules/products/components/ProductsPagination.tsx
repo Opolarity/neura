@@ -1,6 +1,6 @@
 import PageSizeSelector from "./PageSizeSelector";
 import { PaginationState } from "../types/Products.types";
-import Pagination from "./Pagination";
+import Pagination from "@/shared/components/pagination/Pagination";
 
 interface ProductsPaginationProps {
   pagination: PaginationState;

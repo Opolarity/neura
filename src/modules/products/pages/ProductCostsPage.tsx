@@ -10,7 +10,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Edit, Save, Loader2, Search, ListFilter } from "lucide-react";
-import { useProductCostsLogic } from "../store/ProductCosts.logic";
+import { useProductCosts } from "../hooks/useProductCosts";
+import ProdutCostsFilterModal from "../components/ProdutCostsFilterModal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Pagination from "@/shared/components/pagination/Pagination";
+import PageSizeSelector from "../components/PageSizeSelector";
 
 const ProductCosts = () => {
   const {
@@ -20,16 +24,24 @@ const ProductCosts = () => {
     isSaving,
     hasChanges,
     search,
+    isOpenFilterModal,
+    filters,
+    pagination,
+    onPageChange,
+    handlePageSizeChange,
+    onOrderChange,
     onSearchChange,
     handleCostChange,
     getCostValue,
     handleEdit,
     handleCancel,
     handleSave,
-    onOpen,
-  } = useProductCostsLogic();
+    onOpenFilterModal,
+    onCloseFilterModal,
+    onApplyFilter,
+  } = useProductCosts();
 
-  if (loading) {
+  if (loading && !products.length) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -80,7 +92,6 @@ const ProductCosts = () => {
 
       <Card>
         <CardHeader>
-          {/* ProductCostsFilterBar */}
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -89,17 +100,34 @@ const ProductCosts = () => {
                 onChange={(e) => onSearchChange(e.target.value)}
                 type="text"
                 placeholder="Buscar productos..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-1 w-full sm:w-[300px]"
               />
             </div>
-            <Button onClick={onOpen} className="gap-2">
+            <Button onClick={onOpenFilterModal} className="gap-2">
               <ListFilter className="w-4 h-4" />
               Filtrar
             </Button>
+
+            <Select
+              value={filters.order || "none"}
+              onValueChange={(value) =>
+                onOrderChange(value === "none" ? "none" : value)
+              }
+            >
+              <SelectTrigger className="w-auto">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin orden</SelectItem>
+                <SelectItem value="alp-asc">Nombre (A-Z)</SelectItem>
+                <SelectItem value="alp-dsc">Nombre (Z-A)</SelectItem>
+                <SelectItem value="cost-asc">Costo más bajo</SelectItem>
+                <SelectItem value="cost-dsc">Costo más alto</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {/* ProductCostsTable */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -122,7 +150,6 @@ const ProductCosts = () => {
                   <TableCell>
                     <Input
                       type="number"
-                      min="0"
                       step="0.01"
                       value={getCostValue(item.variation_id, item.cost)}
                       onChange={(e) =>
@@ -138,7 +165,23 @@ const ProductCosts = () => {
             </TableBody>
           </Table>
         </CardContent>
+
+        <div className="w-full flex flex-row justify-center gap-2 p-6">
+          <PageSizeSelector
+            size={pagination.p_size}
+            onPageSizeChange={handlePageSizeChange}
+          />
+
+          <Pagination pagination={pagination} onPageChange={onPageChange} />
+        </div>
       </Card>
+
+      <ProdutCostsFilterModal
+        isOpen={isOpenFilterModal}
+        filters={filters}
+        onClose={onCloseFilterModal}
+        onApply={onApplyFilter}
+      />
     </div>
   );
 };

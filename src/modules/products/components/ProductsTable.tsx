@@ -97,17 +97,17 @@ const ProductsTable = ({
               <TableCell>
                 <div className="flex gap-2">
                   {product.estatus === true && (
-                    <Badge className="bg-green-500 hover:bg-green-600">
+                    <Badge className="bg-green-300 hover:bg-green-400">
                       Activo
                     </Badge>
                   )}
                   {product.estatus === false && (
-                    <Badge className="bg-red-500 hover:bg-red-600">
+                    <Badge className="bg-red-300 hover:bg-red-400">
                       Inactivo
                     </Badge>
                   )}
                   {product.web === true && (
-                    <Badge className="bg-green-500 hover:bg-green-600">
+                    <Badge className="bg-green-300 hover:bg-green-400">
                       Web
                     </Badge>
                   )}

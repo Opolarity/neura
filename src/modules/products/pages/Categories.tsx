@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import React, {useEffect, useState, useRef} from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { Plus, Upload, X, Edit, Trash, Loader2 } from "lucide-react";
@@ -22,202 +22,203 @@ import { Label } from "@/components/ui/label";
 import productPlaceholder from "@/assets/product-placeholder.png";
 
 const Categories = () => {
-    const [categories, setCategories] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newCategory, setNewCategory] = useState({ name: '', description: '' });
-    const [selectedImage, setSelectedImage] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string>('');
-    const [saving, setSaving] = useState(false);
-    const [productCounts, setProductCounts] = useState<Record<number, number>>({});
-    const [editingCategory, setEditingCategory] = useState<any | null>(null);
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [categoryToDelete, setCategoryToDelete] = useState<any | null>(null);
-    const [deleting, setDeleting] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+  const [productCounts, setProductCounts] = useState<Record<number, number>>({});
+  const [editingCategory, setEditingCategory] = useState<any | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => { 
-        fetchCategories();
-        fetchProductCounts();
-    }, []);
+  useEffect(() => {
+    fetchCategories();
+    fetchProductCounts();
+  }, []);
 
-    const fetchCategories = async () => {
-        try{
-            setLoading(true);
-            const { data: categoriesData, error: categoriesError} = await supabase.from('categories').select('*').neq('id',0);
-            if (categoriesError) throw categoriesError;
-            setCategories(categoriesData);
-        } catch (error: any) {
-            toast.error('Error al cargar categorías: ' + error.message);
-        } finally {
-            setLoading(false);
-        }
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const { data: categoriesData, error: categoriesError } = await supabase.from('categories').select('*').neq('id', 0);
+      if (categoriesError) throw categoriesError;
+      setCategories(categoriesData);
+    } catch (error: any) {
+      toast.error('Error al cargar categorías: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const fetchProductCounts = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-categories-product-count');
+      console.log(data);
+
+      if (error) throw error;
+
+      const countsMap: Record<number, number> = {};
+      data.forEach((item: { category_id: number; product_count: number }) => {
+        countsMap[item.category_id] = item.product_count;
+      });
+
+      setProductCounts(countsMap);
+    } catch (error: any) {
+      console.error('Error al cargar conteo de productos:', error);
+    }
+  }
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Por favor selecciona un archivo de imagen');
+        return;
+      }
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    setImagePreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('products')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('products')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
+  const handleSaveCategory = async () => {
+    if (!newCategory.name.trim()) {
+      toast.error('El nombre es obligatorio');
+      return;
     }
 
-    const fetchProductCounts = async () => {
-        try {
-            const { data, error } = await supabase.functions.invoke('get-categories-product-count');
-            
-            if (error) throw error;
+    try {
+      setSaving(true);
 
-            const countsMap: Record<number, number> = {};
-            data.forEach((item: { category_id: number; product_count: number }) => {
-                countsMap[item.category_id] = item.product_count;
-            });
-            
-            setProductCounts(countsMap);
-        } catch (error: any) {
-            console.error('Error al cargar conteo de productos:', error);
-        }
+      let imageUrl = editingCategory?.image_url || null;
+      if (selectedImage) {
+        imageUrl = await uploadImage(selectedImage);
+      }
+
+      if (editingCategory) {
+        // Actualizar categoría existente
+        const { error } = await supabase
+          .from('categories')
+          .update({
+            name: newCategory.name,
+            description: newCategory.description || null,
+            image_url: imageUrl
+          })
+          .eq('id', editingCategory.id);
+
+        if (error) throw error;
+        toast.success('Categoría actualizada exitosamente');
+      } else {
+        // Crear nueva categoría
+        const { error } = await supabase
+          .from('categories')
+          .insert([{
+            name: newCategory.name,
+            description: newCategory.description || null,
+            image_url: imageUrl
+          }]);
+
+        if (error) throw error;
+        toast.success('Categoría creada exitosamente');
+      }
+
+      setIsModalOpen(false);
+      setEditingCategory(null);
+      setNewCategory({ name: '', description: '' });
+      setSelectedImage(null);
+      setImagePreview('');
+      fetchCategories();
+      fetchProductCounts();
+    } catch (error: any) {
+      toast.error('Error al guardar categoría: ' + error.message);
+    } finally {
+      setSaving(false);
     }
+  };
 
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            if (!file.type.startsWith('image/')) {
-                toast.error('Por favor selecciona un archivo de imagen');
-                return;
-            }
-            setSelectedImage(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+  const handleEditCategory = (category: any) => {
+    setEditingCategory(category);
+    setNewCategory({
+      name: category.name,
+      description: category.description || '',
+    });
+    setImagePreview(category.image_url || '');
+    setIsModalOpen(true);
+  };
 
-    const removeImage = () => {
-        setSelectedImage(null);
-        setImagePreview('');
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-    };
+  const handleDeleteClick = (category: any) => {
+    setCategoryToDelete(category);
+    setDeleteDialogOpen(true);
+  };
 
-    const uploadImage = async (file: File): Promise<string> => {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${fileName}`;
+  const handleDeleteConfirm = async () => {
+    if (!categoryToDelete) return;
 
-        const { error: uploadError } = await supabase.storage
-            .from('products')
-            .upload(filePath, file);
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-category', {
+        body: { categoryId: categoryToDelete.id },
+      });
 
-        if (uploadError) throw uploadError;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-        const { data: { publicUrl } } = supabase.storage
-            .from('products')
-            .getPublicUrl(filePath);
+      toast.success('Categoría eliminada exitosamente');
+      setDeleteDialogOpen(false);
+      setCategoryToDelete(null);
+      fetchCategories();
+      fetchProductCounts();
+    } catch (error: any) {
+      console.error('Error deleting category:', error);
+      toast.error('Error al eliminar categoría: ' + error.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
-        return publicUrl;
-    };
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setEditingCategory(null);
+    setNewCategory({ name: '', description: '' });
+    setSelectedImage(null);
+    setImagePreview('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
-    const handleSaveCategory = async () => {
-        if (!newCategory.name.trim()) {
-            toast.error('El nombre es obligatorio');
-            return;
-        }
-
-        try {
-            setSaving(true);
-            
-            let imageUrl = editingCategory?.image_url || null;
-            if (selectedImage) {
-                imageUrl = await uploadImage(selectedImage);
-            }
-
-            if (editingCategory) {
-                // Actualizar categoría existente
-                const { error } = await supabase
-                    .from('categories')
-                    .update({
-                        name: newCategory.name,
-                        description: newCategory.description || null,
-                        image_url: imageUrl
-                    })
-                    .eq('id', editingCategory.id);
-
-                if (error) throw error;
-                toast.success('Categoría actualizada exitosamente');
-            } else {
-                // Crear nueva categoría
-                const { error } = await supabase
-                    .from('categories')
-                    .insert([{
-                        name: newCategory.name,
-                        description: newCategory.description || null,
-                        image_url: imageUrl
-                    }]);
-
-                if (error) throw error;
-                toast.success('Categoría creada exitosamente');
-            }
-
-            setIsModalOpen(false);
-            setEditingCategory(null);
-            setNewCategory({ name: '', description: '' });
-            setSelectedImage(null);
-            setImagePreview('');
-            fetchCategories();
-            fetchProductCounts();
-        } catch (error: any) {
-            toast.error('Error al guardar categoría: ' + error.message);
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleEditCategory = (category: any) => {
-        setEditingCategory(category);
-        setNewCategory({
-            name: category.name,
-            description: category.description || '',
-        });
-        setImagePreview(category.image_url || '');
-        setIsModalOpen(true);
-    };
-
-    const handleDeleteClick = (category: any) => {
-        setCategoryToDelete(category);
-        setDeleteDialogOpen(true);
-    };
-
-    const handleDeleteConfirm = async () => {
-        if (!categoryToDelete) return;
-
-        setDeleting(true);
-        try {
-            const { data, error } = await supabase.functions.invoke('delete-category', {
-                body: { categoryId: categoryToDelete.id },
-            });
-
-            if (error) throw error;
-            if (data?.error) throw new Error(data.error);
-
-            toast.success('Categoría eliminada exitosamente');
-            setDeleteDialogOpen(false);
-            setCategoryToDelete(null);
-            fetchCategories();
-            fetchProductCounts();
-        } catch (error: any) {
-            console.error('Error deleting category:', error);
-            toast.error('Error al eliminar categoría: ' + error.message);
-        } finally {
-            setDeleting(false);
-        }
-    };
-
-    const handleModalClose = () => {
-        setIsModalOpen(false);
-        setEditingCategory(null);
-        setNewCategory({ name: '', description: '' });
-        setSelectedImage(null);
-        setImagePreview('');
-        if (fileInputRef.current) fileInputRef.current.value = '';
-    };
-
-    return (
+  return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Listado de categorías</h1>
@@ -226,74 +227,76 @@ const Categories = () => {
           Añadir categoría
         </Button>
       </div>
-        <Card>
+      <Card>
         <CardContent className="p-0">
-        <Table>
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Imagen</TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Descripción</TableHead>
+                <TableHead>Padre</TableHead>
                 <TableHead>Productos</TableHead>
                 <TableHead>Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-                {loading ? (
-                     <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
-                            Cargando categorias...
-                        </TableCell>
-                    </TableRow>
-                ) : categories.length === 0 ? (
-                    <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                            No hay categorias registradas.
-                        </TableCell>
-                    </TableRow>
-                ) : categories.map((category) => (
-                    <TableRow key={category.id}>
-                        <TableCell>
-                            <img 
-                                src={category.image_url || productPlaceholder} 
-                                alt={category.name}
-                                className="w-16 h-16 object-cover rounded-md"
-                            />
-                        </TableCell>
-                        <TableCell>{category.name}</TableCell>
-                        <TableCell>{category.description || '-'}</TableCell>
-                        <TableCell>{productCounts[category.id] || 0}</TableCell>
-                        <TableCell>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleEditCategory(category)}
-                                >
-                                    <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => handleDeleteClick(category)}
-                                >
-                                    <Trash className="w-4 h-4" />
-                                </Button>
-                            </div>
-                        </TableCell>
-                    </TableRow>
-                ))}
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    Cargando categorias...
+                  </TableCell>
+                </TableRow>
+              ) : categories.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    No hay categorias registradas.
+                  </TableCell>
+                </TableRow>
+              ) : categories.map((category) => (
+                <TableRow key={category.id}>
+                  <TableCell>
+                    <img
+                      src={category.image_url || productPlaceholder}
+                      alt={category.name}
+                      className="w-16 h-16 object-cover rounded-md"
+                    />
+                  </TableCell>
+                  <TableCell>{category.name}</TableCell>
+                  <TableCell>{category.description || '-'}</TableCell>
+                  <TableCell>{category.name}</TableCell>
+                  <TableCell>{productCounts[category.id] || 0}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditCategory(category)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteClick(category)}
+                      >
+                        <Trash className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
-        </Table>
+          </Table>
         </CardContent>
-        </Card>
+      </Card>
 
       <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{editingCategory ? 'Editar categoría' : 'Añadir Categoría'}</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nombre *</Label>
@@ -328,12 +331,12 @@ const Categories = () => {
                 className="hidden"
                 disabled={saving}
               />
-              
+
               {imagePreview ? (
                 <div className="relative">
-                  <img 
-                    src={imagePreview} 
-                    alt="Preview" 
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
                     className="w-full h-48 object-cover rounded-md"
                   />
                   <Button
@@ -391,8 +394,8 @@ const Categories = () => {
             <AlertDialogDescription>
               {categoryToDelete && productCounts[categoryToDelete.id] > 0 ? (
                 <>
-                  Esta categoría cuenta con {productCounts[categoryToDelete.id]} producto(s) vinculado(s). 
-                  ¿Aún así deseas borrarla? Esta acción no se puede deshacer y se eliminarán todos los 
+                  Esta categoría cuenta con {productCounts[categoryToDelete.id]} producto(s) vinculado(s).
+                  ¿Aún así deseas borrarla? Esta acción no se puede deshacer y se eliminarán todos los
                   vínculos con productos.
                 </>
               ) : (
@@ -420,7 +423,7 @@ const Categories = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-    );
+  );
 };
 
 export default Categories
