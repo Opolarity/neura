@@ -20,11 +20,11 @@ serve(async (req) => {
     const page = Number(url.searchParams.get('page')) || 1;
     const size = Number(url.searchParams.get('size')) || 20;
     const search = url.searchParams.get('search') || null;
-    const description = url.searchParams.get('description') === 'true' ? true : (url.searchParams.get('description') === 'false' ? false : null);
-    const image = url.searchParams.get('image') === 'true' ? true : (url.searchParams.get('image') === 'false' ? false : null);
-    const parentcategory = url.searchParams.get('parentcategory') === 'true' ? true : (url.searchParams.get('parentcategory') === 'false' ? false : null);
-    const minproducts = Number(url.searchParams.get('minproducts')) || 0;
-    const maxproducts = Number(url.searchParams.get('maxproducts')) || 0;
+    const description = url.searchParams.get('description') || null;
+    const image = url.searchParams.get('image') || null;
+    const parentcategory = url.searchParams.get('parentcategory') || null;
+    const minproducts = Number(url.searchParams.get('minproducts')) || null;
+    const maxproducts = Number(url.searchParams.get('maxproducts')) || null;
     const order = url.searchParams.get('order') || null;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
