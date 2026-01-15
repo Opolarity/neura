@@ -8,6 +8,7 @@ import {
 export const productsApi = async (
   filters: ProductFilters = {}
 ): Promise<ProductApiResponse> => {
+
   const queryParams = new URLSearchParams(
     Object.entries(filters)
       .filter(
@@ -23,6 +24,7 @@ export const productsApi = async (
   const { data, error } = await supabase.functions.invoke(endpoint, {
     method: "GET",
   });
+
 
   if (error) {
     console.error("Invoke error:", error);

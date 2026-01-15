@@ -1,26 +1,100 @@
-import { PaginationState } from "@/shared/components/pagination/Pagination";
-import {
-    Category,
-    CategoryApiResponse,
-} from "../types/Categories.types";
+import { supabase } from "@/integrations/supabase/client"
+import { CategoryApiResponse, CategoryFilters, CategoryPayload, SimpleCategory } from "../types/Categories.types"
 
-export const categoryAdapter = (response: CategoryApiResponse) => {
-    const formattedCategories = response.data.map(
-        (item) => ({
-            id: item.id_category,
-            name: item.nombre,
-            description: item.descripcion,
-            image: item.imagen,
-            products: item.productos,
-            parent_category: item.categoria_padre,
-        })
+export const categoriesListApi = async (): Promise<SimpleCategory[]> => {
+    const { data, error } = await supabase
+        .from("categories")
+        .select("id, name")
+        .order("name");
+    if (error) throw error;
+    return data ?? [];
+};
+
+
+export const categoryApi = async (
+    filters: CategoryFilters = {}
+): Promise<CategoryApiResponse> => {
+    const queryParams = new URLSearchParams(
+        Object.entries(filters)
+            .filter(
+                ([, value]) => value !== undefined && value !== null && value !== ""
+            )
+            .map(([key, value]) => [key, String(value)])
     );
 
-    const pagination: PaginationState = {
-        p_page: response.page.page,
-        p_size: response.page.size,
-        total: response.page.total,
-    };
+    const endpoint = queryParams.toString()
+        ? `get-categories-product-count?${queryParams.toString()}`
+        : "get-categories-product-count";
 
-    return { formattedCategories, pagination };
+    const { data, error } = await supabase.functions.invoke(
+        endpoint,
+        {
+            method: "GET",
+        }
+    );
+
+    if (error) {
+        console.error("Invoke error:", error);
+        throw error;
+    }
+
+    return (
+        data ?? {
+            data: [],
+            page: { page: 1, size: 20, total: 0 },
+        }
+    );
 };
+
+export const createCategoryApi = async (newCategory: CategoryPayload) => {
+    const { data, error } = await supabase.functions.invoke("create-category", {
+        method: "POST",
+        body: newCategory
+    });
+
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+}
+
+export const updateCategoryApi = async (updateCategory: CategoryPayload) => {
+    const { data, error } = await supabase.functions.invoke("update-category", {
+        body: updateCategory
+    });
+
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+}
+
+/*
+export const categoryApi = async (
+    filters: CategoryFilters
+): Promise<CategoryApiResponse> => {
+    const queryParams = new URLSearchParams(
+        Object.entries(filters)
+            .filter(
+                ([, value]) => value !== undefined && value !== null && value !== ""
+            )
+            .map(([key, value]) => [key, String(value)])
+    );
+
+    const endpoint = queryParams.toString()
+        ? `get-categories-product-count?${queryParams.toString()}`
+        : "get-categories-product-count";
+
+    const { data, error } = await supabase.functions.invoke(endpoint, {
+        method: "GET",
+    });
+
+    if (error) {
+        console.error("Invoke error:", error);
+        throw error;
+    }
+
+    return (
+        data ?? {
+            data: [],
+            page: { page: 1, size: 20, total: 0 },
+        }
+    );
+};
+*/
