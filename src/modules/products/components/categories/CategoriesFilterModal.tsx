@@ -16,7 +16,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
-import { CategoryFilters } from "../types/Categories.types";
+import { CategoryFilters } from "../../types/Categories.types";
 
 interface CategoriesFilterModalProps {
     filters: CategoryFilters;

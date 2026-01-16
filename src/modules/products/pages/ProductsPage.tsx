@@ -1,6 +1,6 @@
-import ProductHeader from "../components/ProductHeader";
-import ProductsTable from "../components/ProductsTable";
-import ProductsFilterModal from "../components/ProductsFilterModal";
+import ProductHeader from "../components/products/ProductHeader";
+import ProductsTable from "../components/products/ProductsTable";
+import ProductsFilterModal from "../components/products/ProductsFilterModal";
 import { useProducts } from "../hooks/useProducts";
 import {
   Card,
@@ -8,8 +8,8 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import ProductsFilterBar from "../components/ProductsFilterBar";
-import ProductsPagination from "../components/ProductsPagination";
+import ProductsFilterBar from "../components/products/ProductsFilterBar";
+import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 
 const Products = () => {
   const {
@@ -68,8 +68,7 @@ const Products = () => {
         </CardContent>
 
         <CardFooter>
-          <ProductsPagination
-            pagination={pagination}
+          <PaginationBar pagination={pagination}
             onPageChange={onPageChange}
             onPageSizeChange={handlePageSizeChange}
           />

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -13,8 +13,7 @@ import { Edit, Save, Loader2, Search, ListFilter } from "lucide-react";
 import { useProductCosts } from "../hooks/useProductCosts";
 import ProdutCostsFilterModal from "../components/ProdutCostsFilterModal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import Pagination from "@/shared/components/pagination/Pagination";
-import PageSizeSelector from "../components/PageSizeSelector";
+import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 
 const ProductCosts = () => {
   const {
@@ -165,15 +164,12 @@ const ProductCosts = () => {
             </TableBody>
           </Table>
         </CardContent>
-
-        <div className="w-full flex flex-row justify-center gap-2 p-6">
-          <PageSizeSelector
-            size={pagination.p_size}
+        <CardFooter>
+          <PaginationBar pagination={pagination}
+            onPageChange={onPageChange}
             onPageSizeChange={handlePageSizeChange}
           />
-
-          <Pagination pagination={pagination} onPageChange={onPageChange} />
-        </div>
+        </CardFooter>
       </Card>
 
       <ProdutCostsFilterModal

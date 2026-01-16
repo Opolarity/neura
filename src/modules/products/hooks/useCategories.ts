@@ -44,17 +44,13 @@ export const useCategories = () => {
 
     try {
       const activeFilters = filtersObj || filters;
-      // Load both table data and categories list in parallel
-      const [dataCategory] = await Promise.all([
-        categoryApi(activeFilters),
-        loadCategoriesList()
-      ]);
+      // Fetch table data only
+      const dataCategory = await categoryApi(activeFilters);
 
       const { data, pagination: newPagination } = categoryAdapter(dataCategory);
 
       setCategories(data);
       setPagination(newPagination);
-      console.log(newPagination);
     } catch (error) {
       console.error(error);
       setError("Ocurrió un error al cargar datos de categorías");
@@ -63,7 +59,9 @@ export const useCategories = () => {
     }
   };
 
+  // Initial load: fetch both list (for dropdowns) and table data
   useEffect(() => {
+    loadCategoriesList();
     loadData();
   }, []);
 
@@ -106,7 +104,6 @@ export const useCategories = () => {
     setFilters((prev) => {
       const newFilters = { ...prev, order: orderValue, page: 1 };
       loadData(newFilters);
-      console.log(newFilters);
       return newFilters;
     });
   };
@@ -136,16 +133,19 @@ export const useCategories = () => {
   const createCategory = async (payload: CategoryPayload) => {
     await createCategoryApi(payload);
     await loadData();
+    await loadCategoriesList(); // Reload list for parent dropdown
   };
 
   const updateCategory = async (payload: CategoryPayload) => {
     await updateCategoryApi(payload);
     await loadData();
+    await loadCategoriesList(); // Reload list for parent dropdown
   };
 
   const deleteCategory = async (id: number) => {
     await deleteCategoryApi(id);
     await loadData();
+    await loadCategoriesList(); // Reload list for parent dropdown
   };
 
   return {

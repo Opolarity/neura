@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Edit, Trash, Loader2 } from "lucide-react";
 import placeholderImage from "@/assets/product-placeholder.png";
-import { Product } from "../types/Products.types";
+import { Product } from "../../types/Products.types";
 
 interface ProductsTableProps {
   products: Product[];
