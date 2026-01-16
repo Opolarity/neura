@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       p_min_stock: minstock,
       p_max_stock: maxstock,
     })
-    return new Response(JSON.stringify({ inventory }), {
+    return new Response(JSON.stringify(inventory), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

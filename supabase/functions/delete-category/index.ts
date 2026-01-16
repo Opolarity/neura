@@ -42,20 +42,6 @@ serve(async (req) => {
     }
 
 
-    if (children && children.length > 0 && !confirmed) {
-      return new Response(
-        JSON.stringify({
-          warning: 'Esta categoría tiene subcategorías que también serán eliminadas.',
-          children: children,
-          requiresConfirmation: true
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
-      );
-    }
-
 
     const allCategoryIds = await getAllDescendantIds(supabase, categoryId);
     console.log('Total categories and descendants to process:', allCategoryIds);
