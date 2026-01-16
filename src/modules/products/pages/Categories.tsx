@@ -1,32 +1,24 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { Plus, Upload, X, Edit, Trash, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import productPlaceholder from "@/assets/product-placeholder.png";
-import { Category, CategoryPayload } from "../types/Categories.types";
+import { Category, CategoryPayload, SimpleCategory } from "../types/Categories.types";
 import CategoriesHeader from "../components/CategoriesHeader";
 import CategoriesFilterBar from "../components/CategoriesFilterBar";
 import CategoriesFilterModal from "../components/CategoriesFilterModal";
 import { useCategories } from "../hooks/useCategories";
 import ProductsPagination from "../components/ProductsPagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 const Categories = () => {
   const {
@@ -46,7 +38,9 @@ const Categories = () => {
     onApplyFilter,
     loadData,
     createCategory,
+
     updateCategory,
+    deleteCategory,
   } = useCategories();
 
   // Component local states for UI management
@@ -55,12 +49,25 @@ const Categories = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [saving, setSaving] = useState(false);
-  const [productCounts, setProductCounts] = useState<Record<number, number>>({});
+
+
+  interface DeleteContext {
+    category: Category;
+    isParent: boolean;
+    childCount: number;
+    hasProducts: boolean;
+  }
+
   const [editingCategory, setEditingCategory] = useState<CategoryPayload | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  // Replaced simple categoryToDelete with deleteContext to freeze state during async operations
+  const [deleteContext, setDeleteContext] = useState<DeleteContext | null>(null);
   const [deleting, setDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const filteredParentCategories = useMemo(() => {
+    return categoriesList.filter((category) => category.id !== editingCategory?.id);
+  }, [categoriesList, editingCategory]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -182,26 +189,28 @@ const Categories = () => {
   };
 
   const handleDeleteClick = (category: Category) => {
-    setCategoryToDelete(category);
+    // Calculate derived values immediately to "freeze" them
+    const childCount = categoriesList.filter(c => c.parent_category === category.id).length;
+    const isParent = childCount > 0;
+    const hasProducts = category.products > 0;
+
+    setDeleteContext({
+      category,
+      isParent,
+      childCount,
+      hasProducts
+    });
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!categoryToDelete) return;
+    if (!deleteContext) return;
 
     setDeleting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('delete-category', {
-        body: { categoryId: categoryToDelete.id },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      await deleteCategory(deleteContext.category.id);
 
       toast.success('Categoría eliminada exitosamente');
-      setDeleteDialogOpen(false);
-      setCategoryToDelete(null);
-      await loadData(filters);
     } catch (error: any) {
       console.error('Error deleting category:', error);
       toast.error('Error al eliminar categoría: ' + error.message);
@@ -222,6 +231,8 @@ const Categories = () => {
   const onOpenModal = () => {
     setIsModalOpen(true);
   };
+
+
 
   return (
     <div className="p-6">
@@ -327,8 +338,8 @@ const Categories = () => {
             <DialogTitle>{editingCategory ? 'Editar categoría' : 'Añadir Categoría'}</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-2">
+            <div className="space-y-1">
               <Label htmlFor="name">Nombre *</Label>
               <Input
                 id="name"
@@ -339,7 +350,7 @@ const Categories = () => {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="description">Descripción</Label>
               <Textarea
                 id="description"
@@ -351,7 +362,7 @@ const Categories = () => {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="description">Categoría Padre</Label>
               <Select
                 value={newCategory.parent_category ? newCategory.parent_category.toString() : "none"}
@@ -362,7 +373,7 @@ const Categories = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Todas las categorías</SelectItem>
-                  {categoriesList.map((c) => (
+                  {filteredParentCategories.map((c) => (
                     <SelectItem key={c.id} value={String(c.id)}>
                       {c.name}
                     </SelectItem>
@@ -371,7 +382,7 @@ const Categories = () => {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Imagen</Label>
               <input
                 ref={fileInputRef}
@@ -387,7 +398,7 @@ const Categories = () => {
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="w-full h-48 object-contain rounded-md"
+                    className="w-full h-44 object-contain rounded-md"
                   />
                   <Button
                     type="button"
@@ -437,28 +448,44 @@ const Categories = () => {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar categoría?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {categoryToDelete && productCounts[categoryToDelete.id] > 0 ? (
-                <>
-                  Esta categoría cuenta con {productCounts[categoryToDelete.id]} producto(s) vinculado(s).
-                  ¿Aún así deseas borrarla? Esta acción no se puede deshacer y se eliminarán todos los
-                  vínculos con productos.
-                </>
-              ) : (
-                'Esta acción no se puede deshacer. Se eliminará la categoría de forma permanente.'
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>¿Eliminar categoría?</DialogTitle>
+
+            {deleteContext && deleteContext.isParent ? (
+              <div className="flex flex-col gap-2 text-left text-sm text-muted-foreground pt-4">
+                <p>No se puede eliminar esta categoría inmediatamente:</p>
+
+                <p>
+                  Tiene <strong>{deleteContext.childCount}</strong> subcategoría(s) vinculada(s).
+                </p>
+
+                <p className="text-destructive font-medium pt-2">
+                  ¿Aún así deseas borrarla? Se eliminarán los vínculos y las subcategorías podrían quedar huérfanas.
+                </p>
+              </div>
+            ) : (
+              <DialogDescription className="pt-4">
+                Esta acción no se puede deshacer. Se eliminará la categoría de forma permanente.
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
               disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                await handleDeleteConfirm()
+                setDeleteDialogOpen(false)
+              }}
+              disabled={deleting}
             >
               {deleting ? (
                 <>
@@ -468,10 +495,10 @@ const Categories = () => {
               ) : (
                 'Eliminar'
               )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

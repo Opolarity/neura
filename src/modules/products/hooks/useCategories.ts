@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Category, CategoryFilters, CategoryPayload, SimpleCategory } from "../types/Categories.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
-import { categoryApi, categoriesListApi, createCategoryApi, updateCategoryApi } from "../services/Categories.service";
+import { categoryApi, categoriesListApi, createCategoryApi, updateCategoryApi, deleteCategoryApi } from "../services/Categories.service";
 import { categoryAdapter } from "../adapters/Category.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 
@@ -29,13 +29,27 @@ export const useCategories = () => {
     image: null,
   });
 
+  const loadCategoriesList = async () => {
+    try {
+      const data = await categoriesListApi();
+      setCategoriesList(data);
+    } catch (error) {
+      console.error("Error loading categories list:", error);
+    }
+  };
+
   const loadData = async (filtersObj?: CategoryFilters) => {
     setLoading(true);
     setError(null);
 
     try {
       const activeFilters = filtersObj || filters;
-      const dataCategory = await categoryApi(activeFilters);
+      // Load both table data and categories list in parallel
+      const [dataCategory] = await Promise.all([
+        categoryApi(activeFilters),
+        loadCategoriesList()
+      ]);
+
       const { data, pagination: newPagination } = categoryAdapter(dataCategory);
 
       setCategories(data);
@@ -49,18 +63,8 @@ export const useCategories = () => {
     }
   };
 
-  const loadCategoriesList = async () => {
-    try {
-      const data = await categoriesListApi();
-      setCategoriesList(data);
-    } catch (error) {
-      console.error("Error loading categories list:", error);
-    }
-  };
-
   useEffect(() => {
     loadData();
-    loadCategoriesList();
   }, []);
 
   const debouncedSearch = useDebounce(search, 500);
@@ -131,12 +135,17 @@ export const useCategories = () => {
 
   const createCategory = async (payload: CategoryPayload) => {
     await createCategoryApi(payload);
-    await Promise.all([loadData(), loadCategoriesList()]);
+    await loadData();
   };
 
   const updateCategory = async (payload: CategoryPayload) => {
     await updateCategoryApi(payload);
-    await Promise.all([loadData(), loadCategoriesList()]);
+    await loadData();
+  };
+
+  const deleteCategory = async (id: number) => {
+    await deleteCategoryApi(id);
+    await loadData();
   };
 
   return {
@@ -159,5 +168,6 @@ export const useCategories = () => {
     setCategories,
     createCategory,
     updateCategory,
+    deleteCategory,
   };
 };

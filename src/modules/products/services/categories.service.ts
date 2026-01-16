@@ -4,7 +4,7 @@ import { CategoryApiResponse, CategoryFilters, CategoryPayload, SimpleCategory }
 export const categoriesListApi = async (): Promise<SimpleCategory[]> => {
     const { data, error } = await supabase
         .from("categories")
-        .select("id, name")
+        .select("id, name, parent_category")
         .order("name");
     if (error) throw error;
     return data ?? [];
@@ -65,6 +65,14 @@ export const updateCategoryApi = async (updateCategory: CategoryPayload) => {
     if (data?.error) throw new Error(data.error);
 }
 
+export const deleteCategoryApi = async (categoryId: number) => {
+    const { data, error } = await supabase.functions.invoke("delete-category", {
+        body: { categoryId: categoryId },
+    });
+
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+}
 /*
 export const categoryApi = async (
     filters: CategoryFilters

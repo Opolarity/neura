@@ -28,6 +28,8 @@ export interface Category {
 export interface SimpleCategory {
     id: number;
     name: string;
+    parent_category: number | null;
+
 }
 
 export type CategoryPayload = {
