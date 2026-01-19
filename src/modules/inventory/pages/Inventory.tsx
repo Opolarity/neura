@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,7 +10,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Edit, Save, Loader2 } from "lucide-react";
-import { useInventoryLogic } from "../store/Inventory.logic";
+import { useInventory } from "../hooks/useInventory";
+import InventoryTable from "../components/inventory/InventoryTable";
+import InventoryHeader from "../components/inventory/InventoryHeader";
+import InventoryFilterBar from "../components/inventory/InventoryFilterBar";
+import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
+import InventoryFilterModal from "../components/inventory/InventoryFilterModal";
 
 const Inventory = () => {
   const {
@@ -21,13 +26,23 @@ const Inventory = () => {
     isSaving,
     hasChanges,
     handleStockChange,
-    handleDefectsChange,
     getStockValue,
-    getDefectsValue,
     handleEdit,
     handleCancel,
     handleSave,
-  } = useInventoryLogic();
+    // Filter & Pagination props
+    search,
+    pagination,
+    isOpenFilterModal, // Available if we need it
+    filters, // Available if we need it
+    onSearchChange,
+    onPageChange,
+    handlePageSizeChange,
+    onOrderChange,
+    onOpenFilterModal,
+    onCloseFilterModal, // Available if we need it
+    onApplyFilter, // Available if we need it
+  } = useInventory();
 
   if (loading) {
     return (
@@ -39,146 +54,49 @@ const Inventory = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Inventario por Almacén
-          </h1>
-          <p className="text-muted-foreground">
-            Gestiona el stock de todas las variaciones
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {!isEditing ? (
-            <Button onClick={handleEdit}>
-              <Edit className="w-4 h-4 mr-2" />
-              Editar
-            </Button>
-          ) : (
-            <>
-              <Button variant="outline" onClick={handleCancel}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave} disabled={!hasChanges || isSaving}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Guardando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Actualizar
-                  </>
-                )}
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
+      <InventoryHeader
+        handleEdit={handleEdit}
+        isEditing={isEditing}
+        handleCancel={handleCancel}
+        handleSave={handleSave}
+        hasChanges={hasChanges}
+        isSaving={isSaving}
+      />
 
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold">Stock por Variación</h3>
+          <InventoryFilterBar
+            search={search}
+            onSearchChange={onSearchChange}
+            onOpen={onOpenFilterModal}
+            order={filters.order} // Use filters.order
+            onOrderChange={onOrderChange}
+          />
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Producto</TableHead>
-                  <TableHead>Variación</TableHead>
-                  <TableHead className="bg-destructive/10 text-destructive">
-                    Fallidos
-                  </TableHead>
-                  {warehouses.map((warehouse) => (
-                    <TableHead key={warehouse.id}>{warehouse.name}</TableHead>
-                  ))}
-                  <TableHead>Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {inventory.map((item) => {
-                  const total = item.stock_by_warehouse.reduce((sum, stock) => {
-                    const value = getStockValue(
-                      item.variation_id,
-                      stock.warehouse_id,
-                      stock.stock
-                    );
-                    return sum + value;
-                  }, 0);
-
-                  return (
-                    <TableRow key={item.variation_id}>
-                      <TableCell className="font-mono text-sm">
-                        {item.sku}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {item.product_name}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {item.variation_name}
-                      </TableCell>
-                      <TableCell className="bg-destructive/5">
-                        {(() => {
-                          const warehouse1Stock = item.stock_by_warehouse.find(
-                            (s) => s.warehouse_id === 1
-                          );
-                          const defects = warehouse1Stock?.defects || 0;
-                          return (
-                            <Input
-                              type="number"
-                              min="0"
-                              value={getDefectsValue(
-                                item.variation_id,
-                                defects
-                              )}
-                              onChange={(e) =>
-                                handleDefectsChange(
-                                  item.variation_id,
-                                  e.target.value
-                                )
-                              }
-                              onWheel={(e) => e.currentTarget.blur()}
-                              disabled={!isEditing}
-                              className="w-24 bg-destructive/10 border-destructive/20 focus-visible:ring-destructive/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
-                          );
-                        })()}
-                      </TableCell>
-                      {item.stock_by_warehouse.map((stock) => (
-                        <TableCell key={stock.warehouse_id}>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={getStockValue(
-                              item.variation_id,
-                              stock.warehouse_id,
-                              stock.stock
-                            )}
-                            onChange={(e) =>
-                              handleStockChange(
-                                item.variation_id,
-                                stock.warehouse_id,
-                                e.target.value
-                              )
-                            }
-                            onWheel={(e) => e.currentTarget.blur()}
-                            disabled={!isEditing}
-                            className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                        </TableCell>
-                      ))}
-                      <TableCell className="font-semibold">{total}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+          <InventoryTable
+            inventory={inventory}
+            warehouses={warehouses}
+            isEditing={isEditing}
+            getStockValue={getStockValue}
+            handleStockChange={handleStockChange}
+          />
         </CardContent>
+
+        <CardFooter>
+          <PaginationBar
+            pagination={pagination}
+            onPageChange={onPageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        </CardFooter>
       </Card>
+      <InventoryFilterModal
+        filters={filters}
+        isOpen={isOpenFilterModal}
+        onClose={onCloseFilterModal}
+        onApply={onApplyFilter}
+      />
     </div>
   );
 };

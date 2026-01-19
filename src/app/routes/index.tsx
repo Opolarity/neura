@@ -1,4 +1,3 @@
-//NO SE ESTA USANDO, PERO SE PUEDE USAR DE GUÍA - BORRAR
 import { useRoutes } from "react-router-dom";
 import { authRoutes } from "@/modules/auth/routes";
 import { dashboardRoutes } from "@/modules/dashboard/routes";
@@ -15,15 +14,14 @@ import { expensesRoutes } from "@/modules/expenses";
 import { reportsRoutes } from "@/modules/reports";
 import { settingsRoutes } from "@/modules/settings";
 import NotFound from "@/shared/components/NotFound";
-import Login from "@/modules/auth/pages/Login";
-import { protectedLayout } from "./ProtectedLayout";
+import { ProtectedLayout } from "./ProtectedLayout";
 
 const AppRouter = () => {
   return useRoutes([
     ...authRoutes,
     {
       path: "/",
-      ...protectedLayout,
+      ...ProtectedLayout,
       children: [
         ...dashboardRoutes,
         ...productsRoutes,
@@ -40,8 +38,6 @@ const AppRouter = () => {
         ...settingsRoutes,
       ],
     },
-
-    { path: "/login", element: <Login /> },
     { path: "*", element: <NotFound /> },
   ]);
 };

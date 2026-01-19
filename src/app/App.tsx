@@ -1,4 +1,3 @@
-/*
 import { BrowserRouter } from "react-router-dom";
 import AppRouter from "./routes";
 import { AuthProvider } from "@/modules/auth";
@@ -21,8 +20,8 @@ const App = () => {
 };
 
 export default App;
-*/
 
+/*
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -126,3 +125,4 @@ const App = () => (
 );
 
 export default App;
+*/
