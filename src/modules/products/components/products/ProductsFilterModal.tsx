@@ -15,8 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Category } from "../types/Products.types";
-import { ProductFilters } from "../types/Products.types";
+import { Category } from "../../types/Products.types";
+import { ProductFilters } from "../../types/Products.types";
 import { useEffect, useState } from "react";
 
 interface ProductsFilterModalProps {

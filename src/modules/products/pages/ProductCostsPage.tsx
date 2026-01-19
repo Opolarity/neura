@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Edit, Save, Loader2, Search, ListFilter } from "lucide-react";
 import { useProductCosts } from "../hooks/useProductCosts";
-import ProdutCostsFilterModal from "../components/ProdutCostsFilterModal";
+import ProdutCostsFilterModal from "../components/product-costs/ProdutCostsFilterModal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 

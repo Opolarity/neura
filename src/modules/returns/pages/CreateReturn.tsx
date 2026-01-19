@@ -1,20 +1,50 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Loader2, ArrowLeft, Plus, Trash2, Check } from 'lucide-react';
-import { toast } from 'sonner';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Loader2, ArrowLeft, Plus, Trash2, Check } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/shared/utils/utils";
 
 interface Order {
   id: number;
@@ -68,27 +98,27 @@ const CreateReturn = () => {
   const [situations, setSituations] = useState<any[]>([]);
   const [documentTypes, setDocumentTypes] = useState<any[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [selectedReturnType, setSelectedReturnType] = useState<string>('');
-  const [returnTypeCode, setReturnTypeCode] = useState<string>('');
+  const [selectedReturnType, setSelectedReturnType] = useState<string>("");
+  const [returnTypeCode, setReturnTypeCode] = useState<string>("");
   const [orderProducts, setOrderProducts] = useState<OrderProduct[]>([]);
   const [products, setProducts] = useState<any[]>([]);
-  
+
   // Form fields
-  const [reason, setReason] = useState('');
-  const [documentType, setDocumentType] = useState('');
-  const [documentNumber, setDocumentNumber] = useState('');
+  const [reason, setReason] = useState("");
+  const [documentType, setDocumentType] = useState("");
+  const [documentNumber, setDocumentNumber] = useState("");
   const [shippingReturn, setShippingReturn] = useState(false);
-  const [situationId, setSituationId] = useState('');
+  const [situationId, setSituationId] = useState("");
   const [returnProducts, setReturnProducts] = useState<ReturnProduct[]>([]);
   const [newProducts, setNewProducts] = useState<NewProduct[]>([]);
-  
+
   // Product search
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedVariation, setSelectedVariation] = useState<any>(null);
   const [open, setOpen] = useState(false);
-  
+
   // Order search and pagination
-  const [orderSearch, setOrderSearch] = useState('');
+  const [orderSearch, setOrderSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
@@ -99,60 +129,69 @@ const CreateReturn = () => {
   const loadInitialData = async () => {
     try {
       // Get all orders for the current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuario no autenticado');
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
 
       const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select('id, document_number, customer_name, customer_lastname, total, created_at, document_type')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .from("orders")
+        .select(
+          "id, document_number, customer_name, customer_lastname, total, created_at, document_type"
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (ordersError) throw ordersError;
 
       // Get returns to exclude orders that already have a return/exchange
       const { data: returnsData, error: returnsError } = await supabase
-        .from('returns')
-        .select('order_id');
+        .from("returns")
+        .select("order_id");
 
       if (returnsError) throw returnsError;
 
-      const returnedOrderIds = new Set((returnsData || []).map((r: any) => r.order_id));
-      const availableOrders = (ordersData || []).filter((order) => !returnedOrderIds.has(order.id));
+      const returnedOrderIds = new Set(
+        (returnsData || []).map((r: any) => r.order_id)
+      );
+      const availableOrders = (ordersData || []).filter(
+        (order) => !returnedOrderIds.has(order.id)
+      );
 
       // Get return types from module "CAM"
       const { data: moduleData, error: moduleError } = await supabase
-        .from('modules')
-        .select('id')
-        .eq('code', 'CAM')
+        .from("modules")
+        .select("id")
+        .eq("code", "CAM")
         .single();
 
       if (moduleError) throw moduleError;
 
       const { data: typesData, error: typesError } = await supabase
-        .from('types')
-        .select('*')
-        .eq('module_id', moduleData.id);
+        .from("types")
+        .select("*")
+        .eq("module_id", moduleData.id);
 
       if (typesError) throw typesError;
 
       // Get situations from module "CAM"
       const { data: situationsData, error: situationsError } = await supabase
-        .from('situations')
-        .select('*')
-        .eq('module_id', moduleData.id);
+        .from("situations")
+        .select("*")
+        .eq("module_id", moduleData.id);
 
       if (situationsError) throw situationsError;
 
       // Get document types
       const { data: docTypesData, error: docTypesError } = await supabase
-        .from('document_types')
-        .select('*');
+        .from("document_types")
+        .select("*");
 
       if (docTypesError) throw docTypesError;
 
       // Get products for new products section
-      const { data: productsData, error: productsError } = await supabase.functions.invoke('get-products-list');
+      const { data: productsData, error: productsError } =
+        await supabase.functions.invoke("get-products-list");
       if (productsError) throw productsError;
 
       setOrders(availableOrders);
@@ -161,8 +200,8 @@ const CreateReturn = () => {
       setDocumentTypes(docTypesData || []);
       setProducts(productsData?.products || []);
     } catch (error: any) {
-      console.error('Error loading data:', error);
-      toast.error('Error al cargar los datos');
+      console.error("Error loading data:", error);
+      toast.error("Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -170,17 +209,20 @@ const CreateReturn = () => {
 
   const handleOrderSelect = async () => {
     if (!selectedOrder || !selectedReturnType) {
-      toast.error('Debe seleccionar una orden y un tipo de devolución');
+      toast.error("Debe seleccionar una orden y un tipo de devolución");
       return;
     }
 
-    const selectedType = returnTypes.find(t => t.id === parseInt(selectedReturnType));
-    setReturnTypeCode(selectedType?.code || '');
+    const selectedType = returnTypes.find(
+      (t) => t.id === parseInt(selectedReturnType)
+    );
+    setReturnTypeCode(selectedType?.code || "");
 
     // Load order products
     const { data: orderProductsData, error } = await supabase
-      .from('order_products')
-      .select(`
+      .from("order_products")
+      .select(
+        `
         *,
         variations (
           sku,
@@ -188,12 +230,13 @@ const CreateReturn = () => {
             title
           )
         )
-      `)
-      .eq('order_id', selectedOrder.id);
+      `
+      )
+      .eq("order_id", selectedOrder.id);
 
     if (error) {
-      console.error('Error loading order products:', error);
-      toast.error('Error al cargar los productos de la orden');
+      console.error("Error loading order products:", error);
+      toast.error("Error al cargar los productos de la orden");
       return;
     }
 
@@ -205,7 +248,7 @@ const CreateReturn = () => {
 
   // Filter and paginate orders
   const filteredOrders = useMemo(() => {
-    return orders.filter(order => {
+    return orders.filter((order) => {
       const searchTerm = orderSearch.toLowerCase();
       return (
         order.document_number.toLowerCase().includes(searchTerm) ||
@@ -225,7 +268,7 @@ const CreateReturn = () => {
 
   const allVariations = useMemo(() => {
     if (!products) return [];
-    
+
     return products.flatMap((product) =>
       product.variations.map((variation: any) => ({
         ...variation,
@@ -237,22 +280,34 @@ const CreateReturn = () => {
 
   const filteredVariations = useMemo(() => {
     if (!searchQuery) return allVariations;
-    
+
     const query = searchQuery.toLowerCase();
     return allVariations.filter((variation) => {
       const productTitle = variation.product_title.toLowerCase();
-      const sku = variation.sku?.toLowerCase() || '';
-      const termsNames = variation.terms.map((t: any) => t.terms.name.toLowerCase()).join(' ');
-      
-      return productTitle.includes(query) || sku.includes(query) || termsNames.includes(query);
+      const sku = variation.sku?.toLowerCase() || "";
+      const termsNames = variation.terms
+        .map((t: any) => t.terms.name.toLowerCase())
+        .join(" ");
+
+      return (
+        productTitle.includes(query) ||
+        sku.includes(query) ||
+        termsNames.includes(query)
+      );
     });
   }, [allVariations, searchQuery]);
 
   const toggleReturnProduct = (product: OrderProduct, quantity: number) => {
-    const existing = returnProducts.find(p => p.product_variation_id === product.product_variation_id);
-    
+    const existing = returnProducts.find(
+      (p) => p.product_variation_id === product.product_variation_id
+    );
+
     if (quantity === 0 && existing) {
-      setReturnProducts(returnProducts.filter(p => p.product_variation_id !== product.product_variation_id));
+      setReturnProducts(
+        returnProducts.filter(
+          (p) => p.product_variation_id !== product.product_variation_id
+        )
+      );
     } else if (quantity > 0) {
       const newProduct: ReturnProduct = {
         product_variation_id: product.product_variation_id,
@@ -260,13 +315,17 @@ const CreateReturn = () => {
         product_name: product.variations.products.title,
         sku: product.variations.sku,
         price: product.product_price * (1 - product.product_discount / 100),
-        output: false
+        output: false,
       };
 
       if (existing) {
-        setReturnProducts(returnProducts.map(p => 
-          p.product_variation_id === product.product_variation_id ? newProduct : p
-        ));
+        setReturnProducts(
+          returnProducts.map((p) =>
+            p.product_variation_id === product.product_variation_id
+              ? newProduct
+              : p
+          )
+        );
       } else {
         setReturnProducts([...returnProducts, newProduct]);
       }
@@ -275,23 +334,25 @@ const CreateReturn = () => {
 
   const addNewProduct = () => {
     if (!selectedVariation) {
-      toast.error('Debe seleccionar un producto');
+      toast.error("Debe seleccionar un producto");
       return;
     }
 
-    const termsNames = selectedVariation.terms.map((t: any) => t.terms.name).join(' - ');
+    const termsNames = selectedVariation.terms
+      .map((t: any) => t.terms.name)
+      .join(" - ");
     const newProduct: NewProduct = {
       variation_id: selectedVariation.id,
       product_name: selectedVariation.product_title,
       variation_name: termsNames,
       quantity: 1,
       price: selectedVariation.prices[0]?.price || 0,
-      discount: 0
+      discount: 0,
     };
 
     setNewProducts([...newProducts, newProduct]);
     setSelectedVariation(null);
-    setSearchQuery('');
+    setSearchQuery("");
     setOpen(false);
   };
 
@@ -300,51 +361,57 @@ const CreateReturn = () => {
   };
 
   const updateNewProduct = (index: number, field: string, value: any) => {
-    setNewProducts(newProducts.map((p, i) => 
-      i === index ? { ...p, [field]: value } : p
-    ));
+    setNewProducts(
+      newProducts.map((p, i) => (i === index ? { ...p, [field]: value } : p))
+    );
   };
 
   const calculateReturnTotal = () => {
-    return returnProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+    return returnProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
   };
 
   const calculateNewProductsTotal = () => {
     return newProducts.reduce((sum, p) => {
       const discountedPrice = p.price * (1 - p.discount / 100);
-      return sum + (discountedPrice * p.quantity);
+      return sum + discountedPrice * p.quantity;
     }, 0);
   };
 
-  const calculateSubtotal = (price: number, quantity: number, discount: number) => {
+  const calculateSubtotal = (
+    price: number,
+    quantity: number,
+    discount: number
+  ) => {
     const discountedPrice = price * (1 - discount / 100);
     return discountedPrice * quantity;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedOrder || !selectedReturnType || !situationId) {
-      toast.error('Complete todos los campos requeridos');
+      toast.error("Complete todos los campos requeridos");
       return;
     }
 
     setSaving(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuario no autenticado');
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
 
       let totalRefundAmount = 0;
       let totalExchangeDifference = 0;
 
-      if (returnTypeCode === 'DVT') {
+      if (returnTypeCode === "DVT") {
         // Total return - refund full order amount
         totalRefundAmount = selectedOrder.total;
-      } else if (returnTypeCode === 'DVP') {
+      } else if (returnTypeCode === "DVP") {
         // Partial return - refund selected products
         totalRefundAmount = calculateReturnTotal();
-      } else if (returnTypeCode === 'CAM') {
+      } else if (returnTypeCode === "CAM") {
         // Exchange - calculate difference
         const returnTotal = calculateReturnTotal();
         const newTotal = calculateNewProductsTotal();
@@ -362,7 +429,7 @@ const CreateReturn = () => {
 
       // Insert return
       const { data: returnData, error: returnError } = await supabase
-        .from('returns')
+        .from("returns")
         .insert({
           order_id: selectedOrder.id,
           return_type_id: parseInt(selectedReturnType),
@@ -371,10 +438,11 @@ const CreateReturn = () => {
           reason,
           shipping_return: shippingReturn,
           situation_id: parseInt(situationId),
-          status_id: situations.find(s => s.id === parseInt(situationId))?.status_id,
+          status_id: situations.find((s) => s.id === parseInt(situationId))
+            ?.status_id,
           created_by: user.id,
           total_refund_amount: totalRefundAmount,
-          total_exchange_difference: totalExchangeDifference
+          total_exchange_difference: totalExchangeDifference,
         })
         .select()
         .single();
@@ -383,69 +451,71 @@ const CreateReturn = () => {
 
       // Insert return products (incoming)
       if (returnProducts.length > 0) {
-        const returnProductsData = returnProducts.map(p => ({
+        const returnProductsData = returnProducts.map((p) => ({
           return_id: returnData.id,
           product_variation_id: p.product_variation_id,
           quantity: p.quantity,
           product_amount: p.price,
-          output: false
+          output: false,
         }));
 
         const { error: productsError } = await supabase
-          .from('returns_products')
+          .from("returns_products")
           .insert(returnProductsData);
 
         if (productsError) throw productsError;
       }
 
       // Insert new products (outgoing) for exchanges
-      if (newProducts.length > 0 && returnTypeCode === 'CAM') {
-        const newProductsData = newProducts.map(p => ({
+      if (newProducts.length > 0 && returnTypeCode === "CAM") {
+        const newProductsData = newProducts.map((p) => ({
           return_id: returnData.id,
           product_variation_id: p.variation_id,
           quantity: p.quantity,
           product_amount: calculateSubtotal(p.price, 1, p.discount),
-          output: true
+          output: true,
         }));
 
         const { error: newProductsError } = await supabase
-          .from('returns_products')
+          .from("returns_products")
           .insert(newProductsData);
 
         if (newProductsError) throw newProductsError;
       }
 
       // Check if situation has status "CFM" to update stock
-      const selectedSituation = situations.find(s => s.id === parseInt(situationId));
+      const selectedSituation = situations.find(
+        (s) => s.id === parseInt(situationId)
+      );
       if (selectedSituation) {
         const { data: statusData } = await supabase
-          .from('statuses')
-          .select('code')
-          .eq('id', selectedSituation.status_id)
+          .from("statuses")
+          .select("code")
+          .eq("id", selectedSituation.status_id)
           .single();
 
-        if (statusData?.code === 'CFM') {
+        if (statusData?.code === "CFM") {
           // Create stock movements
           const allReturnProducts = [
-            ...returnProducts.map(p => ({ ...p, output: false })),
-            ...newProducts.map(p => ({
+            ...returnProducts.map((p) => ({ ...p, output: false })),
+            ...newProducts.map((p) => ({
               product_variation_id: p.variation_id,
               quantity: p.quantity,
-              output: true
-            }))
+              output: true,
+            })),
           ];
 
           for (const product of allReturnProducts) {
             // Get movement type for returns
             const { data: returnMovementType } = await supabase
-              .from('types')
-              .select('id')
-              .eq('module_id', 3) // Stock movements module
+              .from("types")
+              .select("id")
+              .eq("module_id", 3) // Stock movements module
               .limit(1)
               .single();
 
             // Create stock movement
-            await supabase.from('stock_movements').insert({
+            await supabase.from("stock_movements").insert({
               product_variation_id: product.product_variation_id,
               quantity: product.output ? -product.quantity : product.quantity,
               created_by: user.id,
@@ -459,29 +529,31 @@ const CreateReturn = () => {
 
             // Update stock - get current stock for warehouse 1
             const { data: currentStock } = await supabase
-              .from('product_stock')
-              .select('stock')
-              .eq('product_variation_id', product.product_variation_id)
-              .eq('warehouse_id', 1)
+              .from("product_stock")
+              .select("stock")
+              .eq("product_variation_id", product.product_variation_id)
+              .eq("warehouse_id", 1)
               .single();
 
             if (currentStock) {
-              const newStock = currentStock.stock + (product.output ? -product.quantity : product.quantity);
+              const newStock =
+                currentStock.stock +
+                (product.output ? -product.quantity : product.quantity);
               await supabase
-                .from('product_stock')
+                .from("product_stock")
                 .update({ stock: newStock })
-                .eq('product_variation_id', product.product_variation_id)
-                .eq('warehouse_id', 1);
+                .eq("product_variation_id", product.product_variation_id)
+                .eq("warehouse_id", 1);
             }
           }
         }
       }
 
-      toast.success('Devolución/Cambio creado exitosamente');
-      navigate('/returns');
+      toast.success("Devolución/Cambio creado exitosamente");
+      navigate("/returns");
     } catch (error: any) {
-      console.error('Error creating return:', error);
-      toast.error('Error al crear la devolución/cambio');
+      console.error("Error creating return:", error);
+      toast.error("Error al crear la devolución/cambio");
     } finally {
       setSaving(false);
     }
@@ -508,7 +580,10 @@ const CreateReturn = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="returnType">Tipo de Devolución/Cambio *</Label>
-                <Select value={selectedReturnType} onValueChange={setSelectedReturnType}>
+                <Select
+                  value={selectedReturnType}
+                  onValueChange={setSelectedReturnType}
+                >
                   <SelectTrigger id="returnType">
                     <SelectValue placeholder="Seleccione el tipo" />
                   </SelectTrigger>
@@ -541,27 +616,35 @@ const CreateReturn = () => {
               <div className="grid gap-2 mt-2">
                 {paginatedOrders.length === 0 ? (
                   <p className="text-center text-muted-foreground py-4">
-                    {orderSearch ? 'No se encontraron órdenes' : 'No hay órdenes disponibles para devolución'}
+                    {orderSearch
+                      ? "No se encontraron órdenes"
+                      : "No hay órdenes disponibles para devolución"}
                   </p>
                 ) : (
                   paginatedOrders.map((order) => (
                     <Card
                       key={order.id}
                       className={`cursor-pointer transition-colors ${
-                        selectedOrder?.id === order.id ? 'border-primary bg-primary/5' : 'hover:bg-accent'
+                        selectedOrder?.id === order.id
+                          ? "border-primary bg-primary/5"
+                          : "hover:bg-accent"
                       }`}
                       onClick={() => setSelectedOrder(order)}
                     >
                       <CardContent className="p-3">
                         <div className="flex justify-between items-center">
                           <div>
-                            <p className="font-medium text-sm">Orden #{order.document_number}</p>
+                            <p className="font-medium text-sm">
+                              Orden #{order.document_number}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {order.customer_name} {order.customer_lastname}
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium text-sm">${order.total.toFixed(2)}</p>
+                            <p className="font-medium text-sm">
+                              ${order.total.toFixed(2)}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {new Date(order.created_at).toLocaleDateString()}
                             </p>
@@ -578,7 +661,9 @@ const CreateReturn = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                    }
                     disabled={currentPage === 1}
                   >
                     Anterior
@@ -589,7 +674,9 @@ const CreateReturn = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                    }
                     disabled={currentPage === totalPages}
                   >
                     Siguiente
@@ -600,21 +687,21 @@ const CreateReturn = () => {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => navigate('/returns')}>
+            <Button variant="outline" onClick={() => navigate("/returns")}>
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={() => {
                 if (!selectedReturnType) {
-                  toast.error('Debe seleccionar un tipo de devolución/cambio');
+                  toast.error("Debe seleccionar un tipo de devolución/cambio");
                   return;
                 }
                 if (!selectedOrder) {
-                  toast.error('Debe seleccionar una orden');
+                  toast.error("Debe seleccionar una orden");
                   return;
                 }
                 handleOrderSelect();
-              }} 
+              }}
               disabled={!selectedOrder || !selectedReturnType}
             >
               Continuar
@@ -627,13 +714,21 @@ const CreateReturn = () => {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/returns')}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/returns")}
+            >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <h1 className="text-3xl font-bold">Nueva Devolución/Cambio</h1>
           </div>
           <div className="flex gap-4">
-            <Button type="button" variant="outline" onClick={() => navigate('/returns')}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate("/returns")}
+            >
               Cancelar
             </Button>
             <Button type="submit" form="return-form" disabled={saving}>
@@ -653,17 +748,24 @@ const CreateReturn = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>ID de Orden</Label>
-                  <Input value={selectedOrder?.id || ''} disabled />
+                  <Input value={selectedOrder?.id || ""} disabled />
                 </div>
                 <div>
                   <Label>Situación</Label>
-                  <Select value={situationId} onValueChange={setSituationId} required>
+                  <Select
+                    value={situationId}
+                    onValueChange={setSituationId}
+                    required
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccione la situación" />
                     </SelectTrigger>
                     <SelectContent>
                       {situations.map((situation) => (
-                        <SelectItem key={situation.id} value={situation.id.toString()}>
+                        <SelectItem
+                          key={situation.id}
+                          value={situation.id.toString()}
+                        >
                           {situation.name}
                         </SelectItem>
                       ))}
@@ -675,7 +777,11 @@ const CreateReturn = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Tipo de Documento</Label>
-                  <Select value={documentType} onValueChange={setDocumentType} required>
+                  <Select
+                    value={documentType}
+                    onValueChange={setDocumentType}
+                    required
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -690,8 +796,8 @@ const CreateReturn = () => {
                 </div>
                 <div>
                   <Label>Número de Documento</Label>
-                  <Input 
-                    value={documentNumber} 
+                  <Input
+                    value={documentNumber}
                     onChange={(e) => setDocumentNumber(e.target.value)}
                     required
                   />
@@ -700,8 +806,8 @@ const CreateReturn = () => {
 
               <div>
                 <Label>Razón de la Devolución/Cambio</Label>
-                <Textarea 
-                  value={reason} 
+                <Textarea
+                  value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   rows={3}
                   required
@@ -709,8 +815,8 @@ const CreateReturn = () => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <Switch 
-                  checked={shippingReturn} 
+                <Switch
+                  checked={shippingReturn}
                   onCheckedChange={setShippingReturn}
                   id="shipping-return"
                 />
@@ -720,7 +826,7 @@ const CreateReturn = () => {
           </Card>
 
           {/* Products to Return - Only for DVP and CAM */}
-          {(returnTypeCode === 'DVP' || returnTypeCode === 'CAM') && (
+          {(returnTypeCode === "DVP" || returnTypeCode === "CAM") && (
             <Card>
               <CardHeader>
                 <CardTitle>Productos a Devolver</CardTitle>
@@ -740,10 +846,16 @@ const CreateReturn = () => {
                   <TableBody>
                     {orderProducts.map((product) => (
                       <TableRow key={product.id}>
-                        <TableCell>{product.variations.products.title}</TableCell>
+                        <TableCell>
+                          {product.variations.products.title}
+                        </TableCell>
                         <TableCell>{product.variations.sku}</TableCell>
                         <TableCell>
-                          ${(product.product_price * (1 - product.product_discount / 100)).toFixed(2)}
+                          $
+                          {(
+                            product.product_price *
+                            (1 - product.product_discount / 100)
+                          ).toFixed(2)}
                         </TableCell>
                         <TableCell>{product.quantity}</TableCell>
                         <TableCell>
@@ -751,14 +863,33 @@ const CreateReturn = () => {
                             type="number"
                             min="0"
                             max={product.quantity}
-                            value={returnProducts.find(p => p.product_variation_id === product.product_variation_id)?.quantity || 0}
-                            onChange={(e) => toggleReturnProduct(product, parseInt(e.target.value) || 0)}
+                            value={
+                              returnProducts.find(
+                                (p) =>
+                                  p.product_variation_id ===
+                                  product.product_variation_id
+                              )?.quantity || 0
+                            }
+                            onChange={(e) =>
+                              toggleReturnProduct(
+                                product,
+                                parseInt(e.target.value) || 0
+                              )
+                            }
                             className="w-24"
                           />
                         </TableCell>
                         <TableCell>
-                          ${((returnProducts.find(p => p.product_variation_id === product.product_variation_id)?.quantity || 0) * 
-                            product.product_price * (1 - product.product_discount / 100)).toFixed(2)}
+                          $
+                          {(
+                            (returnProducts.find(
+                              (p) =>
+                                p.product_variation_id ===
+                                product.product_variation_id
+                            )?.quantity || 0) *
+                            product.product_price *
+                            (1 - product.product_discount / 100)
+                          ).toFixed(2)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -774,7 +905,7 @@ const CreateReturn = () => {
           )}
 
           {/* New Products - Only for CAM */}
-          {returnTypeCode === 'CAM' && (
+          {returnTypeCode === "CAM" && (
             <Card>
               <CardHeader>
                 <CardTitle>Productos Nuevos (Cambio)</CardTitle>
@@ -790,8 +921,8 @@ const CreateReturn = () => {
                         aria-expanded={open}
                         className="w-full justify-between"
                       >
-                        {selectedVariation 
-                          ? `${selectedVariation.product_title} - ${selectedVariation.terms.map((t: any) => t.terms.name).join(' ')}`
+                        {selectedVariation
+                          ? `${selectedVariation.product_title} - ${selectedVariation.terms.map((t: any) => t.terms.name).join(" ")}`
                           : "Buscar producto..."}
                       </Button>
                     </PopoverTrigger>
@@ -803,7 +934,9 @@ const CreateReturn = () => {
                           onValueChange={setSearchQuery}
                         />
                         <CommandList>
-                          <CommandEmpty>No se encontraron productos</CommandEmpty>
+                          <CommandEmpty>
+                            No se encontraron productos
+                          </CommandEmpty>
                           <CommandGroup>
                             {filteredVariations.map((variation) => (
                               <CommandItem
@@ -816,13 +949,18 @@ const CreateReturn = () => {
                                 <Check
                                   className={cn(
                                     "mr-2 h-4 w-4",
-                                    selectedVariation?.id === variation.id ? "opacity-100" : "opacity-0"
+                                    selectedVariation?.id === variation.id
+                                      ? "opacity-100"
+                                      : "opacity-0"
                                   )}
                                 />
                                 <div className="flex flex-col">
                                   <span>{variation.product_title}</span>
                                   <span className="text-sm text-muted-foreground">
-                                    {variation.terms.map((t: any) => t.terms.name).join(' - ')} - SKU: {variation.sku}
+                                    {variation.terms
+                                      .map((t: any) => t.terms.name)
+                                      .join(" - ")}{" "}
+                                    - SKU: {variation.sku}
                                   </span>
                                 </div>
                               </CommandItem>
@@ -834,7 +972,11 @@ const CreateReturn = () => {
                   </Popover>
                 </div>
 
-                <Button type="button" onClick={addNewProduct} className="w-full">
+                <Button
+                  type="button"
+                  onClick={addNewProduct}
+                  className="w-full"
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Agregar Producto
                 </Button>
@@ -862,7 +1004,13 @@ const CreateReturn = () => {
                               type="number"
                               step="0.01"
                               value={product.price}
-                              onChange={(e) => updateNewProduct(index, 'price', parseFloat(e.target.value))}
+                              onChange={(e) =>
+                                updateNewProduct(
+                                  index,
+                                  "price",
+                                  parseFloat(e.target.value)
+                                )
+                              }
                               className="w-24"
                             />
                           </TableCell>
@@ -871,7 +1019,13 @@ const CreateReturn = () => {
                               type="number"
                               min="1"
                               value={product.quantity}
-                              onChange={(e) => updateNewProduct(index, 'quantity', parseInt(e.target.value))}
+                              onChange={(e) =>
+                                updateNewProduct(
+                                  index,
+                                  "quantity",
+                                  parseInt(e.target.value)
+                                )
+                              }
                               className="w-20"
                             />
                           </TableCell>
@@ -881,12 +1035,23 @@ const CreateReturn = () => {
                               min="0"
                               max="100"
                               value={product.discount}
-                              onChange={(e) => updateNewProduct(index, 'discount', parseFloat(e.target.value))}
+                              onChange={(e) =>
+                                updateNewProduct(
+                                  index,
+                                  "discount",
+                                  parseFloat(e.target.value)
+                                )
+                              }
                               className="w-20"
                             />
                           </TableCell>
                           <TableCell>
-                            ${calculateSubtotal(product.price, product.quantity, product.discount).toFixed(2)}
+                            $
+                            {calculateSubtotal(
+                              product.price,
+                              product.quantity,
+                              product.discount
+                            ).toFixed(2)}
                           </TableCell>
                           <TableCell>
                             <Button
@@ -906,13 +1071,13 @@ const CreateReturn = () => {
 
                 <div className="mt-4 space-y-2 text-right">
                   <p className="text-lg">
-                    Total Productos Nuevos: ${calculateNewProductsTotal().toFixed(2)}
+                    Total Productos Nuevos: $
+                    {calculateNewProductsTotal().toFixed(2)}
                   </p>
                   <p className="text-lg font-bold">
                     {calculateReturnTotal() - calculateNewProductsTotal() >= 0
                       ? `A Reembolsar: $${(calculateReturnTotal() - calculateNewProductsTotal()).toFixed(2)}`
-                      : `Diferencia a Pagar: $${(calculateNewProductsTotal() - calculateReturnTotal()).toFixed(2)}`
-                    }
+                      : `Diferencia a Pagar: $${(calculateNewProductsTotal() - calculateReturnTotal()).toFixed(2)}`}
                   </p>
                 </div>
               </CardContent>
