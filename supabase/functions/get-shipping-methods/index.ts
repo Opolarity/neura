@@ -1,154 +1,72 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: {
-            Authorization: req.headers.get('Authorization') || '',
-          },
-        },
-      }
-    );
+    const url = new URL(req.url);
 
-    // Get auth header for user verification
-    const authHeader = req.headers.get('Authorization');
+    const search = url.searchParams.get("search") ?? null;
+    const page = Number(url.searchParams.get("page")) ?? 1;
+    const size = Number(url.searchParams.get("size")) ?? 20;
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error('No authorization header');
+      throw new Error("No authorization header");
     }
 
-    // Verify user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    console.log("Authorization header:", authHeader);
 
-    if (authError || !user) {
-      throw new Error('Unauthorized');
-    }
+    const supabase = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
-    console.log('Fetching shipping methods for user:', user.id);
+    // Validar el token
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims(token);
 
-    // Fetch all shipping methods with their costs
-    const { data: methods, error: methodsError } = await supabase
-      .from('shipping_methods')
-      .select(`
-        id,
-        name,
-        code,
-        created_at,
-        shipping_costs (
-          id,
-          name,
-          cost,
-          country_id,
-          state_id,
-          city_id,
-          neighborhood_id,
-          countries (id, name),
-          states (id, name),
-          cities (id, name),
-          neighborhoods (id, name)
-        )
-      `)
-      .order('created_at', { ascending: false });
-
-    if (methodsError) {
-      console.error('Error fetching shipping methods:', methodsError);
-      throw methodsError;
-    }
-
-    console.log(`Successfully fetched ${methods?.length || 0} shipping methods`);
-
-    // Enrich shipping_costs with location names using ID lookups to ensure names are present even without FK relationships
-    const allCosts = (methods ?? []).flatMap((m: any) => m.shipping_costs ?? []);
-
-    const countryIds = [...new Set(allCosts.map((c: any) => c.country_id).filter((v: any) => v != null))];
-    const stateIds = [...new Set(allCosts.map((c: any) => c.state_id).filter((v: any) => v != null))];
-    const cityIds = [...new Set(allCosts.map((c: any) => c.city_id).filter((v: any) => v != null))];
-    const neighborhoodIds = [...new Set(allCosts.map((c: any) => c.neighborhood_id).filter((v: any) => v != null))];
-
-    const [countriesRes, statesRes, citiesRes, neighborhoodsRes] = await Promise.all([
-      countryIds.length ? supabase.from('countries').select('id, name').in('id', countryIds) : Promise.resolve({ data: [], error: null }),
-      stateIds.length ? supabase.from('states').select('id, name').in('id', stateIds) : Promise.resolve({ data: [], error: null }),
-      cityIds.length ? supabase.from('cities').select('id, name').in('id', cityIds) : Promise.resolve({ data: [], error: null }),
-      neighborhoodIds.length ? supabase.from('neighborhoods').select('id, name').in('id', neighborhoodIds) : Promise.resolve({ data: [], error: null }),
-    ]);
-
-    if (countriesRes.error || statesRes.error || citiesRes.error || neighborhoodsRes.error) {
-      console.error('Error looking up location names', {
-        countries: countriesRes.error,
-        states: statesRes.error,
-        cities: citiesRes.error,
-        neighborhoods: neighborhoodsRes.error,
+    if (claimsError || !claimsData?.claims) {
+      console.error("Auth error:", claimsError);
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: corsHeaders,
       });
     }
 
-    const countryMap = new Map((countriesRes.data || []).map((r: any) => [r.id, r.name]));
-    const stateMap = new Map((statesRes.data || []).map((r: any) => [r.id, r.name]));
-    const cityMap = new Map((citiesRes.data || []).map((r: any) => [r.id, r.name]));
-    const neighborhoodMap = new Map((neighborhoodsRes.data || []).map((r: any) => [r.id, r.name]));
+    const userId = claimsData.claims.sub;
+    console.log("Authenticated user:", userId);
 
-    // Debug maps sizes
-    console.log('Location lookups:', {
-      countryIds, stateIds, cityIds, neighborhoodIds,
-      countriesFound: countryMap.size,
-      statesFound: stateMap.size,
-      citiesFound: cityMap.size,
-      neighborhoodsFound: neighborhoodMap.size,
-    });
+    const { data: shippingMethods, error: shippingMethodsError } = await supabase.rpc(
+      "sp_get_shipping_methods",
+      {
+        p_search: search,
+        p_page: page,
+        p_size: size,
+      }
+    );
 
-    const buildZonePath = (c: any) => {
-      const cn = c.country_id != null ? countryMap.get(c.country_id) : null;
-      const st = c.state_id != null ? stateMap.get(c.state_id) : null;
-      const ci = c.city_id != null ? cityMap.get(c.city_id) : null;
-      const nb = c.neighborhood_id != null ? neighborhoodMap.get(c.neighborhood_id) : null;
-      const parts: string[] = [];
-      if (nb) { if (cn) parts.push(cn); if (st) parts.push(st); if (ci) parts.push(ci); parts.push(nb); }
-      else if (ci) { if (cn) parts.push(cn); if (st) parts.push(st); parts.push(ci); }
-      else if (st) { if (cn) parts.push(cn); parts.push(st); }
-      else if (cn) { parts.push(cn); }
-      return parts.length ? parts.join(' > ') : 'Global';
-    };
-
-    const enrichedMethods = (methods ?? []).map((m: any) => ({
-      ...m,
-      shipping_costs: (m.shipping_costs ?? []).map((c: any) => ({
-        ...c,
-        countries: c.country_id != null ? { id: c.country_id, name: countryMap.get(c.country_id) || null } : null,
-        states: c.state_id != null ? { id: c.state_id, name: stateMap.get(c.state_id) || null } : null,
-        cities: c.city_id != null ? { id: c.city_id, name: cityMap.get(c.city_id) || null } : null,
-        neighborhoods: c.neighborhood_id != null ? { id: c.neighborhood_id, name: neighborhoodMap.get(c.neighborhood_id) || null } : null,
-        zone_path: buildZonePath(c),
-      })),
-    }));
+    if (shippingMethodsError) throw shippingMethodsError;
 
     return new Response(
-      JSON.stringify({ methods: enrichedMethods }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      JSON.stringify({ shippingMethods }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error('Error in get-shipping-methods:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
-    );
+    console.error("Error fetching products list:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
