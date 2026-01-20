@@ -5,5 +5,6 @@ export type Warehouse = {
 
 export type VariationStock = {
   warehouse_id: number;
-  stock: number;
+  stock: number | undefined;
+  hadInitialValue?: boolean;
 };

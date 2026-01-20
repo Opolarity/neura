@@ -81,7 +81,7 @@ export const useAddProduct = () => {
         id: 'single',
         attributes: [],
         prices: priceLists.map(pl => ({ price_list_id: pl.id, price: undefined, sale_price: undefined })),
-        stock: warehouses.map(w => ({ warehouse_id: w.id, stock: 0 })),
+        stock: warehouses.map(w => ({ warehouse_id: w.id, stock: undefined, hadInitialValue: false })),
         selectedImages: []
       };
       setVariations([singleVariation]);
@@ -166,7 +166,7 @@ export const useAddProduct = () => {
       id: `variation-${index}`,
       attributes: combination,
       prices: priceLists.map(pl => ({ price_list_id: pl.id, price: undefined, sale_price: undefined })),
-      stock: warehouses.map(w => ({ warehouse_id: w.id, stock: 0 })),
+      stock: warehouses.map(w => ({ warehouse_id: w.id, stock: undefined, hadInitialValue: false })),
       selectedImages: []
     }));
 
@@ -351,16 +351,26 @@ export const useAddProduct = () => {
     }));
   };
 
-  const updateVariationStock = (variationId: string, warehouseId: number, stock: number) => {
+  const updateVariationStock = (variationId: string, warehouseId: number, value: string) => {
     setVariations(prev => prev.map(variation => {
       if (variation.id === variationId) {
         return {
           ...variation,
-          stock: variation.stock.map(s => 
-            s.warehouse_id === warehouseId
-              ? { ...s, stock }
-              : s
-          )
+          stock: variation.stock.map(s => {
+            if (s.warehouse_id !== warehouseId) return s;
+            
+            // Si el campo ya tenía valor, no puede quedar vacío (mínimo 0)
+            if (s.hadInitialValue && value === '') {
+              return { ...s, stock: 0 };
+            }
+            
+            // Si estaba vacío originalmente, puede quedar vacío
+            return { 
+              ...s, 
+              stock: value === '' ? undefined : Number(value),
+              hadInitialValue: s.hadInitialValue || (value !== '')
+            };
+          })
         };
       }
       return variation;
