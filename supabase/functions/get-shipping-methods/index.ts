@@ -16,6 +16,13 @@ Deno.serve(async (req) => {
     const search = url.searchParams.get("search") ?? null;
     const page = Number(url.searchParams.get("page")) ?? 1;
     const size = Number(url.searchParams.get("size")) ?? 20;
+    const min_cost = Number(url.searchParams.get("min_cost")) ?? null;
+    const max_cost = Number(url.searchParams.get("max_cost")) ?? null;
+    const country = Number(url.searchParams.get("country")) ?? null;
+    const state = Number(url.searchParams.get("state")) ?? null;
+    const city = Number(url.searchParams.get("city")) ?? null;
+    const neighborhood = Number(url.searchParams.get("neighborhood")) ?? null;
+
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -53,6 +60,12 @@ Deno.serve(async (req) => {
         p_search: search,
         p_page: page,
         p_size: size,
+        p_min_cost: min_cost,
+        p_max_cost: max_cost,
+        p_country: country,
+        p_state: state,
+        p_city: city,
+        p_neighborhood: neighborhood,
       }
     );
 
@@ -70,3 +83,4 @@ Deno.serve(async (req) => {
     });
   }
 });
+
