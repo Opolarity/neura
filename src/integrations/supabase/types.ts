@@ -1158,7 +1158,7 @@ export type Database = {
         }
         Insert: {
           category_id: number
-          id: number
+          id?: number
           product_id: number
         }
         Update: {
@@ -1191,7 +1191,7 @@ export type Database = {
           product_id: number
         }
         Insert: {
-          id: number
+          id?: number
           image_order?: number
           image_url: string
           product_id: number
@@ -1337,7 +1337,7 @@ export type Database = {
           product_variation_id: number
         }
         Insert: {
-          id: number
+          id?: number
           product_image_id: number
           product_variation_id: number
         }
@@ -3039,6 +3039,10 @@ export type Database = {
           p_size?: number
           p_variation?: number
         }
+        Returns: Json
+      }
+      sp_get_shipping_methods: {
+        Args: { p_page?: number; p_search?: string; p_size?: number }
         Returns: Json
       }
       sp_get_stock_movements: {
