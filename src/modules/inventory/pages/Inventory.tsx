@@ -21,6 +21,8 @@ const Inventory = () => {
   const {
     inventory,
     warehouses,
+    inventoryTypes,
+    typeId,
     loading,
     isEditing,
     isSaving,
@@ -69,7 +71,7 @@ const Inventory = () => {
             search={search}
             onSearchChange={onSearchChange}
             onOpen={onOpenFilterModal}
-            order={filters.order} // Use filters.order
+            order={filters.order}
             onOrderChange={onOrderChange}
           />
         </CardHeader>
@@ -92,7 +94,9 @@ const Inventory = () => {
         </CardFooter>
       </Card>
       <InventoryFilterModal
+        types={inventoryTypes}
         filters={filters}
+        typeId={typeId}
         isOpen={isOpenFilterModal}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}

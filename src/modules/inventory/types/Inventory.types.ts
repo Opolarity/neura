@@ -53,3 +53,12 @@ export interface InventoryPayload {
   warehouse_id: number;
   //created_by: string;
 }
+
+export interface InventoryTypesApiResponse {
+  types: Array<{ id: number; name: string; code: string }>;
+}
+export interface InventoryTypes {
+  id: number;
+  name: string;
+  code: string;
+}
