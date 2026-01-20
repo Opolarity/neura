@@ -31,41 +31,30 @@ Deno.serve(async (req) => {
     const created_by = user.id
     console.log('Authenticated user:', created_by);
 
-    const payload = await req.json()
-    const {
-      product_variation_id,
-      quantity,
-      stock_type_code,
-      movement_type_code,
-    } = payload
+    const payloadData = await req.json()
+    console.log('Incoming Payload:', JSON.stringify(payloadData))
 
-    let { warehouse_id } = payload
+    // Normalize: ensure we always work with an array of items for internal processing
+    const isArrayInput = Array.isArray(payloadData)
+    const items = isArrayInput ? payloadData : [payloadData]
+    console.log(`Processing ${items.length} items (Input was Array: ${isArrayInput})`)
 
-    // Basic Validation
-    if (!product_variation_id || !quantity || !stock_type_code || !movement_type_code) {
+    if (items.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Empty items list provided' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
 
-    // 1. Resolve Warehouse if missing
-    if (!warehouse_id) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('warehouse_id')
-        .eq('UID', created_by)
-        .single()
+    // Resolve User Default Warehouse (as fallback)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('warehouse_id')
+      .eq('UID', created_by)
+      .single()
 
-      if (profile) warehouse_id = profile.warehouse_id
-
-      if (!warehouse_id) {
-        return new Response(
-          JSON.stringify({ error: 'Warehouse could not be resolved for user' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-        )
-      }
-    }
+    const userWarehouseId = profile?.warehouse_id
+    console.log('User Default Warehouse:', userWarehouseId)
 
     // Helper to resolve type ID by code
     const resolveTypeId = async (code: string) => {
@@ -73,89 +62,164 @@ Deno.serve(async (req) => {
         .from('types')
         .select('id')
         .eq('code', code)
-        .single()
+        .maybeSingle()
 
       if (error || !data) return null
       return data.id
     }
 
-    // 2. Resolve IDs
-    const stock_type_id = await resolveTypeId(stock_type_code)
-    const movements_type_id = await resolveTypeId(movement_type_code)
+    const results = []
+    const errors = []
 
-    if (!stock_type_id) {
-      return new Response(
-        JSON.stringify({ error: `Invalid stock type code: ${stock_type_code}` }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
-    }
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      console.log(`Validating Item ${i}:`, JSON.stringify(item))
 
-    if (!movements_type_id) {
-      return new Response(
-        JSON.stringify({ error: `Invalid movement type code: ${movement_type_code}` }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
-    }
+      // Accept both camelCase and snake_case for flexibility if needed, 
+      // but predominantly using the documented fields.
+      const product_variation_id = item.product_variation_id || item.variation_id
+      const quantity = item.quantity
+      const stock_type_id_input = item.stock_type_id
+      const movements_type_id_input = item.movements_type_id || item.movement_type_id
+      const movement_type_code = item.movement_type_code
+      const itemWarehouseId = item.warehouse_id
 
-    // 3. Update Inventory (Increment/Create)
-    const { data: existingStock, error: stockCheckError } = await supabase
-      .from('product_stock')
-      .select('*')
-      .eq('product_variation_id', product_variation_id)
-      .eq('warehouse_id', warehouse_id)
-      .eq('stock_type_id', stock_type_id)
-      .maybeSingle()
+      const finalWarehouseId = itemWarehouseId || userWarehouseId
 
-    if (stockCheckError) throw stockCheckError
+      // Basic Validation per Item
+      const missingFields = []
+      if (!product_variation_id) missingFields.push('product_variation_id')
+      if (quantity === undefined || quantity === null) missingFields.push('quantity')
+      if (!stock_type_id_input) missingFields.push('stock_type_id')
+      if (!movements_type_id_input) missingFields.push('movements_type_id')
+      if (!movement_type_code) missingFields.push('movement_type_code')
+      if (!finalWarehouseId) missingFields.push('warehouse_id')
 
-    if (existingStock) {
-      // Update existing stock
-      const newStock = existingStock.stock + quantity
-      const { error: updateError } = await supabase
-        .from('product_stock')
-        .update({ stock: newStock })
-        .eq('id', existingStock.id)
+      if (missingFields.length > 0) {
+        const errorMsg = `Missing required fields: ${missingFields.join(', ')}`
+        console.log(`Item ${i} Validation Failed:`, errorMsg)
+        errors.push({ item, error: errorMsg })
+        continue
+      }
 
-      if (updateError) throw updateError
-    } else {
-      // Create new stock record
-      const { error: insertStockError } = await supabase
-        .from('product_stock')
+      // Resolve IDs
+      const stock_type_id = stock_type_id_input
+      let movements_type_id = movements_type_id_input
+
+      // As fallback, if movements_type_id is missing but code is present
+      if (!movements_type_id && movement_type_code) {
+        movements_type_id = await resolveTypeId(movement_type_code)
+      }
+
+      if (!stock_type_id || !movements_type_id) {
+        const errorMsg = `Could not resolve IDs: stock(${stock_type_id_input}), movement(${movements_type_id_input || movement_type_code})`
+        console.log(`Item ${i} ID Resolution Failed:`, errorMsg)
+        errors.push({
+          item,
+          error: errorMsg
+        })
+        continue
+      }
+
+      // Record Movement
+      // The webhook 'update-stock-complete' will handle inventory updates automatically
+      // when 'completed' is set to true.
+      const { data: movement, error: movementError } = await supabase
+        .from('stock_movements')
         .insert([{
           product_variation_id,
-          warehouse_id: warehouse_id,
-          stock: quantity,
-          defects: 0,
-          stock_type_id
+          quantity,
+          created_by,
+          movement_type: movements_type_id,
+          warehouse_id: finalWarehouseId,
+          stock_type_id,
+          is_active: true,
+          completed: true
         }])
+        .select()
+        .single()
 
-      if (insertStockError) throw insertStockError
+      if (movementError) {
+        console.log(`Item ${i} Database Error:`, movementError.message)
+        errors.push({ item, error: movementError.message })
+      } else {
+        console.log(`Item ${i} Processed Successfully:`, movement.id)
+
+        // Manual Stock Update (since webhook is not used)
+        const { data: existingStock, error: fetchError } = await supabase
+          .from('product_stock')
+          .select('*')
+          .eq('product_variation_id', product_variation_id)
+          .eq('warehouse_id', finalWarehouseId)
+          .eq('stock_type_id', stock_type_id)
+          .maybeSingle()
+
+        if (fetchError) {
+          console.error(`Item ${i} Error fetching stock:`, fetchError.message)
+        } else if (existingStock) {
+          let newStockTotal;
+          if (movement_type_code === 'MAN') {
+            console.log(`Item ${i} (MAN): Replaced stock ${existingStock.stock} with ${quantity}`)
+            newStockTotal = Number(quantity)
+          } else if (movement_type_code === 'MER' || movement_type_code === 'ENT') {
+            newStockTotal = Number(existingStock.stock) + Number(quantity)
+            console.log(`Item ${i} (${movement_type_code}): Added ${quantity} to ${existingStock.stock} = ${newStockTotal}`)
+          } else {
+            // Default to addition for any other code
+            newStockTotal = Number(existingStock.stock) + Number(quantity)
+            console.log(`Item ${i} (${movement_type_code}): Default addition ${quantity} to ${existingStock.stock} = ${newStockTotal}`)
+          }
+
+          const { error: updateError } = await supabase
+            .from('product_stock')
+            .update({ stock: newStockTotal })
+            .eq('id', existingStock.id)
+          if (updateError) console.error(`Item ${i} Error updating stock:`, updateError.message)
+        } else {
+          // Only create if positive
+          if (Number(quantity) > 0) {
+            console.log(`Item ${i}: Creating new stock record with ${quantity}`)
+            const { error: insertError } = await supabase
+              .from('product_stock')
+              .insert([{
+                product_variation_id,
+                warehouse_id: finalWarehouseId,
+                stock: quantity,
+                defects: 0,
+                stock_type_id
+              }])
+            if (insertError) console.error(`Item ${i} Error creating stock:`, insertError.message)
+          }
+        }
+
+        results.push(movement)
+      }
     }
 
-    // 4. Record Movement
-    const { data: movement, error: movementError } = await supabase
-      .from('stock_movements')
-      .insert([{
-        product_variation_id,
-        quantity,
-        created_by,
-        movement_type: movements_type_id,
-        warehouse_id,
-        stock_type_id,
-        is_active: true,
-        completed: true
-      }])
-      .select()
-      .single()
+    // Prepare response
+    const hasSuccess = results.length > 0
 
-    if (movementError) throw movementError
+    // If only one item was sent and it failed, return a flat error for easier reading
+    if (items.length === 1 && errors.length === 1) {
+      return new Response(
+        JSON.stringify({ error: errors[0].error }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
 
     return new Response(
-      JSON.stringify({ success: true, movement }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      JSON.stringify({
+        success: hasSuccess,
+        processed: results.length,
+        failed: errors.length,
+        results,
+        errors: errors.length > 0 ? errors : undefined
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: hasSuccess ? 200 : 400 }
     )
 
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Fatal Function Error:', error.message)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }

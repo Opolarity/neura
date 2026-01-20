@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -17,159 +16,173 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // 1. Authentication
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing Authorization header' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
+    }
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token)
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized', details: userError }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
+    }
+
+    const created_by = user.id
     const payload = await req.json()
+    const {
+      reason,
+      out_warehouse_id,
+      in_warehouse_id,
+      items, // Array of { product_variation_id, quantity, stock_type_code }
+      module_code,
+      status_code,
+      situation_code,
+      movement_type_code
+    } = payload
 
-    // Check if it's a request workflow
-    const isRequest = payload.reason && payload.out_warehouse_id && payload.in_warehouse_id
+    if (!reason || !out_warehouse_id || !in_warehouse_id || !items || !Array.isArray(items) || items.length === 0 ||
+      !module_code || !status_code || !situation_code || !movement_type_code) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields or empty items list' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
 
-    if (isRequest) {
-      // --- REQUEST WORKFLOW ---
-      const {
+    // Helper to resolve ID by code
+    const resolveId = async (table: string, code: string, extraFilters: Record<string, any> = {}) => {
+      let query = supabase
+        .from(table)
+        .select('id')
+        .eq('code', code)
+
+      for (const [key, value] of Object.entries(extraFilters)) {
+        query = query.eq(key, value)
+      }
+
+      const { data, error } = await query.maybeSingle()
+
+      if (error) {
+        // Fallback: if multiple rows, just take the first one instead of crashing
+        const { data: list, error: listError } = await query.limit(1)
+        if (listError) throw listError
+        return list?.[0]?.id
+      }
+      return data?.id
+    }
+
+    // 2. Resolve Module, Status, Situation, and Movement Type IDs
+    const moduleId = await resolveId('modules', module_code)
+
+    // Status and Situation are context-dependent (belong to module)
+    const statusId = await resolveId('statuses', status_code, { module_id: moduleId })
+    const situationId = await resolveId('situations', situation_code, { module_id: moduleId })
+    const movementTypeId = await resolveId('types', movement_type_code)
+
+    if (!moduleId || !statusId || !situationId || !movementTypeId) {
+      throw new Error(`Could not resolve codes: module(${module_code}:${moduleId}), status(${status_code}:${statusId}), situation(${situation_code}:${situationId}), movement_type(${movement_type_code}:${movementTypeId})`)
+    }
+
+    // 3. Create Stock Movement Request
+    const { data: requestData, error: requestError } = await supabase
+      .from('stock_movement_requests')
+      .insert([{
         reason,
-        out_warehouse_id,
-        in_warehouse_id,
-        request_situation_id,
+        module_id: moduleId,
+        status_id: statusId,
+        situation_id: situationId,
         created_by,
-        product_variation_id,
-        quantity,
-        stock_type_id
-      } = payload
+        out_warehouse_id,
+        in_warehouse_id
+      }])
+      .select()
+      .single()
 
-      // 1. Create Stock Movement Request
-      const { data: requestData, error: requestError } = await supabase
-        .from('stock_movement_requests')
-        .insert([{
-          reason,
-          situation_id: request_situation_id, // Assuming this maps to situation_id
-          created_by,
-          out_warehouse_id,
-          in_warehouse_id
-        }])
-        .select()
-        .single()
+    if (requestError) throw requestError
 
-      if (requestError) throw requestError
+    // 4. Create Request Situation History
+    const { error: sitError } = await supabase
+      .from('stock_movement_request_situations')
+      .insert([{
+        stock_movement_request_id: requestData.id,
+        module_id: moduleId,
+        status_id: statusId,
+        situation_id: situationId,
+        message: 'Request Created',
+        last_row: true,
+        created_by
+      }])
 
-      // 2. Create Inactive Stock Movement
-      const { data: movementData, error: movementError } = await supabase
+    if (sitError) throw sitError
+
+    // 5. Create Stock Movements (IN/OUT) and Link
+    for (const item of items) {
+      const { product_variation_id, quantity, stock_type_code } = item
+
+      if (!product_variation_id || !quantity || !stock_type_code) continue;
+
+      const stockTypeId = await resolveId('types', stock_type_code)
+      if (!stockTypeId) throw new Error(`Invalid stock type code: ${stock_type_code}`)
+
+      // Insert OUT (Source)
+      const { data: outMov, error: outErr } = await supabase
         .from('stock_movements')
         .insert([{
           product_variation_id,
-          quantity,
+          quantity: -Math.abs(quantity),
           created_by,
-          movements_type: 11, // Fixed type for requests
-          warehouse_id: in_warehouse_id, // Applies to the IN warehouse
-          completed: false, // Requests start as incomplete
-          stock_type_id,
-          is_active: false // Inactive until approved
+          movement_type: movementTypeId,
+          warehouse_id: out_warehouse_id,
+          completed: false,
+          stock_type_id: stockTypeId,
+          is_active: false
         }])
         .select()
         .single()
 
-      if (movementError) throw movementError
+      if (outErr) throw outErr
 
-      // 3. Link Request and Movement
-      const { error: linkError } = await supabase
-        .from('linked_stock_movement_requests')
-        .insert([{
-          stock_movement_request_id: requestData.id,
-          stock_movement_id: movementData.id
-        }])
-
-      if (linkError) throw linkError
-
-      return new Response(
-        JSON.stringify({ success: true, request: requestData, movement: movementData }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      )
-
-    } else {
-      // --- DIRECT MOVEMENT WORKFLOW ---
-      const {
-        product_variation_id,
-        quantity,
-        created_by,
-        movements_type,
-        warehouse_id,
-        completed,
-        stock_type_id,
-        vinculated_movement_id
-      } = payload
-
-      // Validation
-      if (!product_variation_id || quantity === undefined || !movements_type || !warehouse_id || !stock_type_id) {
-        return new Response(
-          JSON.stringify({ error: 'Missing required fields' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-        )
-      }
-
-      // 1. Insert into stock_movements
-      const { data: movement, error: movementError } = await supabase
+      // Insert IN (Destination)
+      const { data: inMov, error: inErr } = await supabase
         .from('stock_movements')
-        .insert([
-          {
-            product_variation_id,
-            quantity,
-            created_by,
-            movements_type,
-            warehouse_id,
-            completed,
-            stock_type_id,
-            vinculated_movement_id: vinculated_movement_id || null, // Handle optional field
-            is_active: true
-          }
-        ])
+        .insert([{
+          product_variation_id,
+          quantity: Math.abs(quantity),
+          created_by,
+          movement_type: movementTypeId,
+          warehouse_id: in_warehouse_id,
+          completed: false,
+          stock_type_id: stockTypeId,
+          is_active: false,
+          vinculated_movement_id: outMov.id
+        }])
         .select()
         .single()
 
-      if (movementError) throw movementError
+      if (inErr) throw inErr
 
-      // 2. Update product_stock if completed
-      if (completed) {
-        // Check if stock record exists
-        const { data: existingStock, error: stockError } = await supabase
-          .from('product_stock')
-          .select('*')
-          .eq('product_variation_id', product_variation_id)
-          .eq('warehouses_id', warehouse_id)
-          .eq('stock_type_id', stock_type_id)
-          .maybeSingle()
+      // Mutual linking of movements
+      await supabase.from('stock_movements').update({ vinculated_movement_id: inMov.id }).eq('id', outMov.id)
 
-        if (stockError) throw stockError
+      // Link request to movements using the mandatory linked_stock_movement_requests table
+      const { error: linkErr } = await supabase.from('linked_stock_movement_requests').insert([
+        { stock_movement_request_id: requestData.id, stock_movement_id: outMov.id, approved: false },
+        { stock_movement_request_id: requestData.id, stock_movement_id: inMov.id, approved: false }
+      ])
 
-        if (existingStock) {
-          // Update existing stock
-          const newStock = existingStock.stock + quantity
-          const { error: updateError } = await supabase
-            .from('product_stock')
-            .update({ stock: newStock })
-            .eq('id', existingStock.id)
-
-          if (updateError) throw updateError
-        } else {
-          // Create new stock record
-          const { error: insertError } = await supabase
-            .from('product_stock')
-            .insert([
-              {
-                product_variation_id,
-                warehouses_id: warehouse_id,
-                stock: quantity,
-                defects: 0,
-                stock_type_id
-              }
-            ])
-
-          if (insertError) throw insertError
-        }
-      }
-
-      return new Response(
-        JSON.stringify(movement),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      )
+      if (linkErr) throw linkErr
     }
+
+    return new Response(
+      JSON.stringify({ success: true, request: requestData }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+    )
 
   } catch (error) {
     return new Response(
