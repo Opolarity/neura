@@ -54,3 +54,12 @@ export interface InventoryPayload {
   movement_type_code: string;
   warehouse_id: number;
 }
+
+export interface InventoryTypesApiResponse {
+  types: Array<{ id: number; name: string; code: string }>;
+}
+export interface InventoryTypes {
+  id: number;
+  name: string;
+  code: string;
+}

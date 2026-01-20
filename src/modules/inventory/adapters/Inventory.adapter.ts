@@ -1,5 +1,10 @@
 import { PaginationState } from "@/shared/components/pagination/Pagination";
-import { Inventory, InventoryApiResponse } from "../types/Inventory.types";
+import {
+  Inventory,
+  InventoryApiResponse,
+  InventoryTypes,
+  InventoryTypesApiResponse,
+} from "../types/Inventory.types";
 
 export const inventoryAdapter = (response: InventoryApiResponse) => {
   const formattedInventory: Inventory[] = response.data.map((item) => ({
@@ -26,4 +31,16 @@ export const inventoryAdapter = (response: InventoryApiResponse) => {
     pagination,
     type_id: response.page.type_id,
   };
+};
+
+export const inventoryTypesAdapter = (
+  response: InventoryTypesApiResponse[],
+): InventoryTypes[] => {
+  const first = response[0]; // el primer elemento del array
+  const types = first.types.map((item) => ({
+    id: item.id,
+    name: item.name,
+    code: item.code,
+  }));
+  return types;
 };

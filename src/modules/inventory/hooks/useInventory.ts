@@ -2,14 +2,19 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   inventoryApi,
+  inventoryTypesApi,
   updateInventoryApi,
   wareHouseListApi,
 } from "../services/Inventory.service";
-import { inventoryAdapter } from "../adapters/Inventory.adapter";
+import {
+  inventoryAdapter,
+  inventoryTypesAdapter,
+} from "../adapters/Inventory.adapter";
 import {
   Inventory,
   InventoryFilters,
   InventoryPayload,
+  InventoryTypes,
   Warehouse,
 } from "../types/Inventory.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
@@ -18,6 +23,7 @@ import { useDebounce } from "@/shared/hooks/useDebounce";
 export const useInventory = () => {
   const [inventory, setInventory] = useState<Inventory[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [inventoryTypes, setInventoryTypes] = useState<InventoryTypes[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -43,6 +49,7 @@ export const useInventory = () => {
     minstock: null,
     maxstock: null,
   });
+  const [typeId, setTypeId] = useState<number>();
 
   const { toast } = useToast();
 
@@ -51,9 +58,43 @@ export const useInventory = () => {
     try {
       const dataWareHouses = await wareHouseListApi();
       setWarehouses(dataWareHouses);
+      const dataTypes = await inventoryTypesApi();
+      const types = inventoryTypesAdapter(dataTypes);
+      setInventoryTypes(types);
 
       // Initial load uses default filters
-      await loadInventory(filters);
+      await loadInventory(filters, true);
+    } catch (error: any) {
+      console.error("Error loading initial data:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar el inventario inicial",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadInventory = async (
+    currentFilters: InventoryFilters = filters,
+    isInitial: boolean = false,
+  ) => {
+    try {
+      const dataInventory = await inventoryApi(currentFilters);
+      const {
+        data,
+        pagination: newPagination,
+        type_id,
+      } = inventoryAdapter(dataInventory);
+
+      setInventory(data);
+      setPagination(newPagination);
+      setFilters((prev) => ({ ...prev, types: type_id }));
+
+      if (isInitial) {
+        setTypeId(type_id);
+      }
     } catch (error: any) {
       console.error("Error loading inventory:", error);
       toast({
@@ -62,26 +103,7 @@ export const useInventory = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadInventory = async (currentFilters: InventoryFilters = filters) => {
-    setStockChanges(new Map());
-    try {
-      const dataInventory = await inventoryApi(currentFilters);
-      const { data, pagination: newPagination } =
-        inventoryAdapter(dataInventory);
-
-      setInventory(data);
-      setPagination(newPagination);
-    } catch (error: any) {
-      console.error("Error loading inventory:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo cargar el inventario",
-        variant: "destructive",
-      });
+      setStockChanges(new Map());
     }
   };
 
@@ -177,7 +199,7 @@ export const useInventory = () => {
             product_variation_id: item.variation_id,
             movement_type_code: "MAN",
             movements_type_id: 9,
-            stock_type_id: 9,
+            stock_type_id: filters.types,
             quantity: quantity,
             warehouse_id: warehouse.id,
           });
@@ -280,6 +302,8 @@ export const useInventory = () => {
   return {
     inventory,
     warehouses,
+    inventoryTypes,
+    typeId,
     loading,
     isEditing,
     isSaving,
