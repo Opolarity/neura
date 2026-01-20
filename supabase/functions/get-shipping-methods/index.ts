@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const size = Number(url.searchParams.get("size")) ?? 20;
     const min_cost = Number(url.searchParams.get("min_cost")) ?? null;
     const max_cost = Number(url.searchParams.get("max_cost")) ?? null;
-    const country = Number(url.searchParams.get("country")) ?? null;
+    const countries = Number(url.searchParams.get("country")) ?? null;
     const state = Number(url.searchParams.get("state")) ?? null;
     const city = Number(url.searchParams.get("city")) ?? null;
     const neighborhood = Number(url.searchParams.get("neighborhood")) ?? null;
@@ -62,10 +62,10 @@ Deno.serve(async (req) => {
         p_size: size,
         p_min_cost: min_cost,
         p_max_cost: max_cost,
-        p_country: country,
-        p_state: state,
-        p_city: city,
-        p_neighborhood: neighborhood,
+        p_countries: countries,
+        p_states: state,
+        p_cities: city,
+        p_neighborhoods: neighborhood,
       }
     );
 
@@ -83,4 +83,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-
