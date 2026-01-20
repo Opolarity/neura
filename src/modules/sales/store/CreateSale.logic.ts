@@ -143,7 +143,7 @@ export const useCreateSaleLogic = () => {
         customer_lastname2: '',
         email: order.email || '',
         phone: order.phone?.toString() || '',
-        sale_type: order.sale_type?.toString() || '',
+        sale_type: order.sale_type_id?.toString() || '',
         shipping_method: order.shipping_method?.toString() || '',
         shipping_cost: '',
         country_id: order.country_id?.toString() || '',
@@ -325,8 +325,8 @@ export const useCreateSaleLogic = () => {
 
     setSearchingClient(true);
     try {
-      const { data, error } = await supabase
-        .from('clients')
+      const { data, error } = await (supabase as any)
+        .from('accounts')
         .select('*')
         .eq('document_type_id', parseInt(formData.document_type))
         .eq('document_number', formData.document_number)
@@ -621,7 +621,7 @@ export const useViewSale = (orderId?: string) => {
         customerLastname: order.customer_lastname,
         email: order.email,
         phone: order.phone,
-        saleType: order.sale_type,
+        saleType: order.sale_type_id,
         shippingMethod: order.shipping_method,
         countryId: order.country_id,
         stateId: order.state_id,

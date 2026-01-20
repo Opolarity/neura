@@ -428,7 +428,7 @@ const CreateReturn = () => {
       }
 
       // Insert return
-      const { data: returnData, error: returnError } = await supabase
+      const { data: returnData, error: returnError } = await (supabase as any)
         .from("returns")
         .insert({
           order_id: selectedOrder.id,
@@ -441,6 +441,7 @@ const CreateReturn = () => {
           status_id: situations.find((s) => s.id === parseInt(situationId))
             ?.status_id,
           created_by: user.id,
+          module_id: 1,
           total_refund_amount: totalRefundAmount,
           total_exchange_difference: totalExchangeDifference,
         })
@@ -459,7 +460,7 @@ const CreateReturn = () => {
           output: false,
         }));
 
-        const { error: productsError } = await supabase
+        const { error: productsError } = await (supabase as any)
           .from("returns_products")
           .insert(returnProductsData);
 
@@ -476,7 +477,7 @@ const CreateReturn = () => {
           output: true,
         }));
 
-        const { error: newProductsError } = await supabase
+        const { error: newProductsError } = await (supabase as any)
           .from("returns_products")
           .insert(newProductsData);
 
@@ -515,15 +516,12 @@ const CreateReturn = () => {
               .single();
 
             // Create stock movement
-            await supabase.from("stock_movements").insert({
+            await (supabase as any).from("stock_movements").insert({
               product_variation_id: product.product_variation_id,
               quantity: product.output ? -product.quantity : product.quantity,
               created_by: user.id,
               movement_type: returnMovementType?.id || 1,
-              order_id: selectedOrder.id,
-              out_warehouse_id: 1,
-              in_warehouse_id: 1,
-              defect_stock: false,
+              warehouse_id: 1,
               completed: true,
             });
 

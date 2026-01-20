@@ -27,8 +27,8 @@ export const getClientsList = async (params: ClientsQueryParams): Promise<Client
  * Elimina un cliente por ID
  */
 export const deleteClient = async (clientId: number): Promise<void> => {
-  const { error } = await supabase
-    .from('clients')
+  const { error } = await (supabase as any)
+    .from('accounts')
     .delete()
     .eq('id', clientId);
 

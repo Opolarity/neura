@@ -13,7 +13,7 @@ import { Loader2, ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils/utils';
 
 interface OrderProduct {
   id: number;
@@ -442,7 +442,7 @@ const EditReturn = () => {
         }));
       }
 
-      const { error: insertReturnError } = await supabase
+      const { error: insertReturnError } = await (supabase as any)
         .from('returns_products')
         .insert(returnProductsToInsert);
 
@@ -458,7 +458,7 @@ const EditReturn = () => {
           output: false
         }));
 
-        const { error: insertNewError } = await supabase
+        const { error: insertNewError } = await (supabase as any)
           .from('returns_products')
           .insert(newProductsToInsert);
 
@@ -517,17 +517,14 @@ const EditReturn = () => {
               .single();
 
             // Create stock movement
-            const { error: movementError } = await supabase
+            const { error: movementError } = await (supabase as any)
               .from('stock_movements')
               .insert({
                 product_variation_id: product.product_variation_id,
                 quantity: product.output ? -product.quantity : product.quantity,
                 created_by: user.id,
                 movement_type: returnMovementType?.id || 1,
-                order_id: orderId,
-                out_warehouse_id: 1,
-                in_warehouse_id: 1,
-                defect_stock: false,
+                warehouse_id: 1,
                 completed: true,
               });
 

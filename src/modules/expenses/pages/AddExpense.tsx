@@ -124,15 +124,19 @@ export default function AddExpense() {
       if (catError) throw catError;
       setCategories(catData || []);
 
-      // Fetch all profiles (users)
-      const { data: profilesData, error: profilesError } = await supabase
+      // Fetch all profiles (users) with account info
+      const { data: profilesData, error: profilesError } = await (supabase as any)
         .from("profiles")
-        .select("UID, name, last_name")
-        .eq("active", true)
-        .order("name");
+        .select("UID, accounts:account_id(name, last_name)")
+        .eq("is_active", true);
 
       if (profilesError) throw profilesError;
-      setProfiles(profilesData || []);
+      const mappedProfiles = (profilesData || []).map((p: any) => ({
+        UID: p.UID,
+        name: p.accounts?.name || '',
+        last_name: p.accounts?.last_name || ''
+      }));
+      setProfiles(mappedProfiles);
 
       // Fetch current user's warehouse
       const { data: userProfile, error: userProfileError } = await supabase

@@ -14,9 +14,11 @@ interface Function {
   name: string;
   code: string | null;
   icon: string | null;
-  url?: string | null;
+  location?: string | null;
   parent_function: number | null;
-  capability_id: number;
+  order?: number | null;
+  active?: boolean;
+  created_at?: string;
   children?: Function[];
 }
 
@@ -113,7 +115,7 @@ const CreateRole = () => {
 
     // First pass: create map of all functions
     functions.forEach(func => {
-      functionMap.set(func.id, { ...func, url: func.url || null, children: [] });
+      functionMap.set(func.id, { ...func, location: func.location || null, children: [] });
     });
 
     // Second pass: build tree structure

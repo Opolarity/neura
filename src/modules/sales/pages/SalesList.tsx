@@ -48,7 +48,7 @@ const SalesList = () => {
 
   const loadOrders = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('orders')
         .select(`
           id, 
@@ -58,11 +58,11 @@ const SalesList = () => {
           customer_lastname, 
           total, 
           created_at,
-          sale_types(name),
+          sale_types:sale_type_id(name),
           order_situations!inner(
-            situations(
+            situations:situation_id(
               name,
-              statuses(code)
+              statuses:status_id(code)
             )
           )
         `)
@@ -70,7 +70,7 @@ const SalesList = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
+      setOrders((data || []) as Order[]);
     } catch (error) {
       console.error('Error loading orders:', error);
       toast({
