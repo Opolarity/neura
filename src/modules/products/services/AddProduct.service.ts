@@ -82,12 +82,12 @@ export const AddProductService = {
   },
 
   /**
-   * Sube una imagen al storage
+   * Sube una imagen al storage en la carpeta temporal
    */
   async uploadImage(file: File, productId?: number): Promise<string> {
-    const tempId = productId || 'tmp';
     const fileExtension = file.name.split('.').pop() || 'jpg';
-    const fileName = `${tempId}/${crypto.randomUUID()}.${fileExtension}`;
+    // Siempre subir a products-images/tmp/ primero, el edge function moverá a la carpeta correcta
+    const fileName = `products-images/tmp/${crypto.randomUUID()}.${fileExtension}`;
     
     const { error: uploadError } = await supabase.storage
       .from('products')

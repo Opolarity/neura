@@ -410,14 +410,7 @@ export const useAddProduct = () => {
       return false;
     }
 
-    if (productImages.length === 0) {
-      toast({
-        title: "Error",
-        description: "Debe agregar al menos una imagen del producto",
-        variant: "destructive"
-      });
-      return false;
-    }
+    // Las imágenes son opcionales - el backend usará placeholder si no hay ninguna
 
     if (isVariable) {
       const groupsWithTerms = Object.keys(selectedTerms)
