@@ -1,15 +1,10 @@
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Edit, Save, Loader2 } from "lucide-react";
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { useInventory } from "../hooks/useInventory";
 import InventoryTable from "../components/inventory/InventoryTable";
 import InventoryHeader from "../components/inventory/InventoryHeader";

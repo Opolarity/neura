@@ -16,6 +16,7 @@ export interface InventoryApiResponse {
     page: number;
     size: number;
     total: number;
+    type_id: number;
   };
 }
 
@@ -48,10 +49,10 @@ export interface InventoryFilters {
 export interface InventoryPayload {
   product_variation_id: number;
   quantity: number | null;
-  stock_type_code: string;
+  stock_type_id: number;
+  movements_type_id: number;
   movement_type_code: string;
   warehouse_id: number;
-  //created_by: string;
 }
 
 export interface InventoryTypesApiResponse {
