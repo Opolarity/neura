@@ -61,7 +61,7 @@ const CreateClient = () => {
 
     try {
       setLoading(true);
-      const { error } = await supabase.from('clients').insert([
+      const { error } = await supabase.from('accounts').insert([
         {
           name: formData.name,
           middle_name: formData.middle_name || null,

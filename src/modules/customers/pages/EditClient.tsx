@@ -57,8 +57,8 @@ const EditClient = () => {
   const fetchClient = async () => {
     try {
       setFetching(true);
-      const { data, error } = await supabase
-        .from('clients')
+      const { data, error } = await (supabase as any)
+        .from('accounts')
         .select('*')
         .eq('id', Number(id))
         .single();
@@ -93,8 +93,8 @@ const EditClient = () => {
 
     try {
       setLoading(true);
-      const { error } = await supabase
-        .from('clients')
+      const { error } = await (supabase as any)
+        .from('accounts')
         .update({
           name: formData.name,
           middle_name: formData.middle_name || null,
