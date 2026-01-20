@@ -21,5 +21,9 @@ export const inventoryAdapter = (response: InventoryApiResponse) => {
     total: response.page.total,
   };
 
-  return { data: formattedInventory, pagination };
+  return {
+    data: formattedInventory,
+    pagination,
+    type_id: response.page.type_id,
+  };
 };

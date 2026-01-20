@@ -54,7 +54,6 @@ export const useInventory = () => {
 
       // Initial load uses default filters
       await loadInventory(filters);
-
     } catch (error: any) {
       console.error("Error loading inventory:", error);
       toast({
@@ -68,9 +67,11 @@ export const useInventory = () => {
   };
 
   const loadInventory = async (currentFilters: InventoryFilters = filters) => {
+    setStockChanges(new Map());
     try {
       const dataInventory = await inventoryApi(currentFilters);
-      const { data, pagination: newPagination } = inventoryAdapter(dataInventory);
+      const { data, pagination: newPagination } =
+        inventoryAdapter(dataInventory);
 
       setInventory(data);
       setPagination(newPagination);
@@ -105,37 +106,51 @@ export const useInventory = () => {
     }
   }, [debouncedSearch]);
 
-
   const getStockKey = (variationId: number, warehouseId: number) => {
     return `${variationId}-${warehouseId}`;
   };
 
   const handleStockChange = (
-    variationId: number,
+    item: Inventory,
     warehouseId: number,
     value: string,
   ) => {
-    const key = getStockKey(variationId, warehouseId);
-    const numericValue = value === "" ? null : parseInt(value) || 0;
+    const key = getStockKey(item.variation_id, warehouseId);
+    const newValue = value === "" ? null : parseInt(value, 10);
+    const originalValue = getOriginalStock(item, warehouseId);
 
     setStockChanges((prev) => {
       const newMap = new Map(prev);
-      newMap.set(key, numericValue);
+      // Si vuelve al valor original → eliminar cambio
+      if (newValue === originalValue) {
+        newMap.delete(key);
+      } else {
+        newMap.set(key, newValue);
+      }
       return newMap;
     });
   };
 
   const getStockValue = (
-    variationId: number,
+    item: Inventory,
     warehouseId: number,
-    originalStock: number,
-  ) => {
-    const key = getStockKey(variationId, warehouseId);
+    originalStock?: number | null,
+  ): number | "" => {
+    const key = getStockKey(item.variation_id, warehouseId);
     if (stockChanges.has(key)) {
-      const value = stockChanges.get(key);
-      return value === null ? "" : value;
+      // Si es null, retornar string vacío para el input, cuando se borre el valor
+      return stockChanges.get(key) ?? "";
     }
-    return originalStock;
+    return originalStock ?? "";
+  };
+
+  const getOriginalStock = (
+    item: Inventory,
+    warehouseId: number,
+  ): number | null => {
+    return (
+      item.stock_by_warehouse.find((w) => w.id === warehouseId)?.stock ?? null
+    );
   };
 
   const handleEdit = () => {
@@ -156,16 +171,14 @@ export const useInventory = () => {
         const key = getStockKey(item.variation_id, warehouse.id);
         const quantity = stockChanges.get(key);
 
+        // Solo incluir si hubo cambios
         if (quantity !== undefined) {
-          const stockInfo = item.stock_by_warehouse.find(
-            (s) => s.id === warehouse.id,
-          );
-
           payload.push({
             product_variation_id: item.variation_id,
-            quantity: quantity,
-            stock_type_code: stockInfo?.stock_type ?? "PRD",
             movement_type_code: "MAN",
+            movements_type_id: 9,
+            stock_type_id: 9,
+            quantity: quantity,
             warehouse_id: warehouse.id,
           });
         }
@@ -196,7 +209,6 @@ export const useInventory = () => {
       });
 
       setIsEditing(false);
-      setStockChanges(new Map());
 
       await loadInventory();
     } catch (error: any) {
@@ -264,7 +276,6 @@ export const useInventory = () => {
     });
     setIsOpenFilterModal(false);
   };
-
 
   return {
     inventory,
