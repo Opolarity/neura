@@ -27,13 +27,9 @@ interface StockMovement {
   quantity: number;
   created_at: string;
   movement_type: number;
-  order_id: number | null;
-  return_id?: number | null;
   product_variation_id: number;
   created_by: string;
-  out_warehouse_id: number;
-  in_warehouse_id: number;
-  defect_stock: boolean;
+  warehouse_id: number;
   variations: {
     id: number;
     sku: string | null;
@@ -52,19 +48,13 @@ interface StockMovement {
     id: number;
     name: string;
   };
-  orders: {
-    id: number;
-    document_number: string;
-  } | null;
   profiles: {
-    name: string;
-    last_name: string;
+    accounts: {
+      name: string;
+      last_name: string;
+    };
   };
-  out_warehouse: {
-    id: number;
-    name: string;
-  };
-  in_warehouse: {
+  warehouses: {
     id: number;
     name: string;
   };
@@ -94,11 +84,17 @@ const Movements: React.FC = () => {
   const fetchMovements = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("stock_movements")
         .select(
           `
-          *,
+          id,
+          quantity,
+          created_at,
+          movement_type,
+          product_variation_id,
+          created_by,
+          warehouse_id,
           variations!inner (
             id,
             sku,
@@ -117,19 +113,13 @@ const Movements: React.FC = () => {
             id,
             name
           ),
-          orders (
-            id,
-            document_number
-          ),
           profiles!stock_movements_created_by_fkey (
-            name,
-            last_name
+            accounts:account_id (
+              name,
+              last_name
+            )
           ),
-          out_warehouse:warehouses!stock_movements_out_warehouse_id_fkey (
-            id,
-            name
-          ),
-          in_warehouse:warehouses!stock_movements_in_warehouse_id_fkey (
+          warehouses!stock_movements_warehouse_id_fkey (
             id,
             name
           )
@@ -142,7 +132,7 @@ const Movements: React.FC = () => {
         return;
       }
 
-      setMovements(data || []);
+      setMovements((data || []) as StockMovement[]);
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -187,12 +177,12 @@ const Movements: React.FC = () => {
 
   const getTotalOutflow = () => {
     return filteredMovements
-      .filter((m) => m.order_id)
-      .reduce((sum, m) => sum + m.quantity, 0);
+      .filter((m) => m.quantity < 0)
+      .reduce((sum, m) => sum + Math.abs(m.quantity), 0);
   };
 
   const getTotalManualMovements = () => {
-    return filteredMovements.filter((m) => !m.order_id).length;
+    return filteredMovements.filter((m) => m.quantity > 0).length;
   };
 
   if (loading) {
@@ -379,28 +369,16 @@ const Movements: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">
-                          {movement.out_warehouse_id ===
-                          movement.in_warehouse_id ? (
-                            movement.out_warehouse.name
-                          ) : (
-                            <>
-                              {movement.out_warehouse.name} →{" "}
-                              {movement.in_warehouse.name}
-                            </>
-                          )}
+                          {movement.warehouses?.name || '-'}
                         </span>
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">
-                          {movement.types.name}
-                          {(movement.order_id || movement.return_id) && (
-                            <> #{movement.order_id || movement.return_id}</>
-                          )}
+                          {movement.types?.name || '-'}
                         </span>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {movement.profiles.name} {movement.profiles.last_name}
-                      </TableCell>
+                        {movement.profiles?.accounts?.name || ''} {movement.profiles?.accounts?.last_name || ''}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

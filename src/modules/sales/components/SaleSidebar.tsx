@@ -73,22 +73,25 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
 
     setLoadingNotes(true);
     try {
-      const { data: orderNotes, error } = await supabase
-        .from('oder_notes')
+      const { data: orderNotes, error } = await (supabase as any)
+        .from('order_notes')
         .select('note_id')
         .eq('order_id', orderId);
 
       if (error) throw error;
 
       if (orderNotes && orderNotes.length > 0) {
-        const noteIds = orderNotes.map(on => on.note_id);
-        const { data: notesData, error: notesError } = await supabase
+        const noteIds = orderNotes.map((on: any) => on.note_id);
+        const { data: notesData, error: notesError } = await (supabase as any)
           .from('notes')
           .select(`
             *,
             profiles:user_id (
-              name,
-              last_name
+              account_id,
+              accounts:account_id (
+                name,
+                last_name
+              )
             )
           `)
           .in('id', noteIds)
@@ -97,10 +100,10 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
         if (notesError) throw notesError;
         
         // Transform data to include user info
-        const notesWithUserInfo = notesData?.map(note => ({
+        const notesWithUserInfo = notesData?.map((note: any) => ({
           ...note,
-          user_name: note.profiles?.name,
-          user_last_name: note.profiles?.last_name
+          user_name: note.profiles?.accounts?.name,
+          user_last_name: note.profiles?.accounts?.last_name
         })) || [];
         
         setNotes(notesWithUserInfo);
@@ -202,8 +205,8 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
       if (noteError) throw noteError;
 
       // Link note to order
-      const { error: orderNoteError } = await supabase
-        .from('oder_notes')
+      const { error: orderNoteError } = await (supabase as any)
+        .from('order_notes')
         .insert({
           order_id: orderId,
           note_id: noteData.id,
