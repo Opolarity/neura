@@ -3014,6 +3014,20 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_list_orders: {
+        Args: {
+          p_channel?: number
+          p_maxfecha?: string
+          p_maxtotal?: number
+          p_minfecha?: string
+          p_mintotal?: number
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_status?: number
+        }
+        Returns: Json
+      }
       sp_get_products_costs: {
         Args: {
           p_cost?: boolean

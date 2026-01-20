@@ -116,7 +116,8 @@ export const AddProductAdapter = {
         const existingStock = (variation.stock || []).find(s => s.warehouse_id === w.id);
         return {
           warehouse_id: w.id,
-          stock: existingStock ? Number(existingStock.stock) : 0
+          stock: existingStock ? Number(existingStock.stock) : undefined,
+          hadInitialValue: existingStock ? true : false
         };
       });
 
@@ -244,9 +245,14 @@ export const AddProductAdapter = {
         prices: v.prices.map(p => ({
           ...p,
           price: Number(p.price) || 0,
-          sale_price: (p.sale_price === null || p.sale_price === undefined) ? null : Number(p.sale_price),
+          sale_price: (p.sale_price === null || p.sale_price === undefined || Number(p.sale_price) === 0) 
+            ? null 
+            : Number(p.sale_price),
         })),
-        stock: v.stock.map(s => ({ ...s, stock: Number(s.stock) || 0 })),
+        // Solo enviar almacenes que tienen stock definido (filtrar undefined/null)
+        stock: v.stock
+          .filter(s => s.stock !== undefined && s.stock !== null)
+          .map(s => ({ warehouse_id: s.warehouse_id, stock: Number(s.stock) })),
       }));
   }
 };
