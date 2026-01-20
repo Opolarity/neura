@@ -14,43 +14,171 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          created_at: string
+          document_number: string
+          document_type_id: number
+          id: number
+          last_name: string
+          last_name2: string | null
+          middle_name: string | null
+          name: string
+          show: boolean
+        }
+        Insert: {
+          created_at?: string
+          document_number: string
+          document_type_id: number
+          id?: number
+          last_name: string
+          last_name2?: string | null
+          middle_name?: string | null
+          name: string
+          show?: boolean
+        }
+        Update: {
+          created_at?: string
+          document_number?: string
+          document_type_id?: number
+          id?: number
+          last_name?: string
+          last_name2?: string | null
+          middle_name?: string | null
+          name?: string
+          show?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_document_type_id_fkey"
+            columns: ["document_type_id"]
+            isOneToOne: false
+            referencedRelation: "document_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      branches: {
+        Row: {
+          address: string
+          address_reference: string | null
+          city_id: number
+          contry_id: number
+          created_at: string | null
+          id: number
+          name: string
+          neighborhood_id: number
+          state_id: number
+          warehouse_id: number
+        }
+        Insert: {
+          address: string
+          address_reference?: string | null
+          city_id: number
+          contry_id: number
+          created_at?: string | null
+          id?: number
+          name?: string
+          neighborhood_id: number
+          state_id: number
+          warehouse_id: number
+        }
+        Update: {
+          address?: string
+          address_reference?: string | null
+          city_id?: number
+          contry_id?: number
+          created_at?: string | null
+          id?: number
+          name?: string
+          neighborhood_id?: number
+          state_id?: number
+          warehouse_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branches_contry_id_fkey"
+            columns: ["contry_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branches_contry_id_state_id_city_id_fkey"
+            columns: ["contry_id", "state_id", "city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["country_id", "state_id", "id"]
+          },
+          {
+            foreignKeyName: "branches_contry_id_state_id_city_id_neighborhood_id_fkey"
+            columns: ["contry_id", "state_id", "city_id", "neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["country_id", "state_id", "city_id", "id"]
+          },
+          {
+            foreignKeyName: "branches_contry_id_state_id_fkey"
+            columns: ["contry_id", "state_id"]
+            isOneToOne: false
+            referencedRelation: "states"
+            referencedColumns: ["country_id", "id"]
+          },
+          {
+            foreignKeyName: "branches_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_accounts: {
         Row: {
           account_number: number | null
           bank: string
+          business_account_type_id: number
           created_at: string
           id: number
           name: string
+          total_amount: number
         }
         Insert: {
           account_number?: number | null
           bank: string
+          business_account_type_id: number
           created_at?: string
           id?: number
           name: string
+          total_amount: number
         }
         Update: {
           account_number?: number | null
           bank?: string
+          business_account_type_id?: number
           created_at?: string
           id?: number
           name?: string
+          total_amount?: number
         }
         Relationships: []
       }
       capabilities: {
         Row: {
           code: string | null
+          created_at: string
           id: number
           name: string
         }
         Insert: {
           code?: string | null
+          created_at?: string
           id?: number
           name: string
         }
         Update: {
           code?: string | null
+          created_at?: string
           id?: number
           name?: string
         }
@@ -204,43 +332,44 @@ export type Database = {
           },
         ]
       }
-      clients: {
+      classes: {
         Row: {
+          code: string
           created_at: string
-          document_number: string
-          document_type_id: number
           id: number
-          last_name: string
-          last_name2: string | null
-          middle_name: string | null
+          module_id: number
           name: string
+          type_id: number
         }
         Insert: {
+          code: string
           created_at?: string
-          document_number: string
-          document_type_id: number
           id?: number
-          last_name: string
-          last_name2?: string | null
-          middle_name?: string | null
+          module_id: number
           name: string
+          type_id: number
         }
         Update: {
+          code?: string
           created_at?: string
-          document_number?: string
-          document_type_id?: number
           id?: number
-          last_name?: string
-          last_name2?: string | null
-          middle_name?: string | null
+          module_id?: number
           name?: string
+          type_id?: number
         }
         Relationships: [
           {
-            foreignKeyName: "clients_document_type_id_fkey"
-            columns: ["document_type_id"]
+            foreignKeyName: "classes_module_id_fkey"
+            columns: ["module_id"]
             isOneToOne: false
-            referencedRelation: "document_types"
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_type_id_fkey"
+            columns: ["type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
             referencedColumns: ["id"]
           },
         ]
@@ -296,7 +425,6 @@ export type Database = {
       functions: {
         Row: {
           active: boolean
-          capability_id: number
           code: string | null
           created_at: string
           icon: string | null
@@ -308,7 +436,6 @@ export type Database = {
         }
         Insert: {
           active?: boolean
-          capability_id: number
           code?: string | null
           created_at?: string
           icon?: string | null
@@ -320,7 +447,6 @@ export type Database = {
         }
         Update: {
           active?: boolean
-          capability_id?: number
           code?: string | null
           created_at?: string
           icon?: string | null
@@ -331,13 +457,6 @@ export type Database = {
           parent_function?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_functions_capability_id_capabilities_id"
-            columns: ["capability_id"]
-            isOneToOne: false
-            referencedRelation: "capabilities"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "functions_parent_function_fkey"
             columns: ["parent_function"]
@@ -398,6 +517,42 @@ export type Database = {
         }
         Relationships: []
       }
+      linked_stock_movement_requests: {
+        Row: {
+          approved: boolean | null
+          id: number
+          stock_movement_id: number
+          stock_movement_request_id: number
+        }
+        Insert: {
+          approved?: boolean | null
+          id?: number
+          stock_movement_id: number
+          stock_movement_request_id: number
+        }
+        Update: {
+          approved?: boolean | null
+          id?: number
+          stock_movement_id?: number
+          stock_movement_request_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linked_stock_movement_requests_stock_movement_id_fkey"
+            columns: ["stock_movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "linked_stock_movement_requests_stock_movement_request_id_fkey"
+            columns: ["stock_movement_request_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movement_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modules: {
         Row: {
           code: string
@@ -419,86 +574,54 @@ export type Database = {
         }
         Relationships: []
       }
-      movement_categories: {
-        Row: {
-          code: string | null
-          created_at: string
-          id: number
-          name: string
-        }
-        Insert: {
-          code?: string | null
-          created_at?: string
-          id?: number
-          name: string
-        }
-        Update: {
-          code?: string | null
-          created_at?: string
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      movement_types: {
-        Row: {
-          code: string | null
-          id: number
-          name: string
-        }
-        Insert: {
-          code?: string | null
-          id?: number
-          name: string
-        }
-        Update: {
-          code?: string | null
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
       movements: {
         Row: {
           amount: number
+          branch_id: number
           business_account_id: number
           created_at: string
           description: string | null
           id: number
-          movement_category_id: number
+          movement_class_id: number
           movement_date: string
           movement_type_id: number
           payment_method_id: number
           user_id: string | null
-          warehouse_id: number
         }
         Insert: {
           amount: number
+          branch_id: number
           business_account_id: number
           created_at?: string
           description?: string | null
           id?: number
-          movement_category_id: number
+          movement_class_id: number
           movement_date: string
           movement_type_id: number
           payment_method_id: number
           user_id?: string | null
-          warehouse_id: number
         }
         Update: {
           amount?: number
+          branch_id?: number
           business_account_id?: number
           created_at?: string
           description?: string | null
           id?: number
-          movement_category_id?: number
+          movement_class_id?: number
           movement_date?: string
           movement_type_id?: number
           payment_method_id?: number
           user_id?: string | null
-          warehouse_id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "movements_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "movements_business_account_id_fkey"
             columns: ["business_account_id"]
@@ -507,17 +630,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "movements_movement_category_id_fkey"
-            columns: ["movement_category_id"]
+            foreignKeyName: "movements_movement_class_id_fkey"
+            columns: ["movement_class_id"]
             isOneToOne: false
-            referencedRelation: "movement_categories"
+            referencedRelation: "types"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "movements_movement_type_id_fkey"
             columns: ["movement_type_id"]
             isOneToOne: false
-            referencedRelation: "movement_types"
+            referencedRelation: "types"
             referencedColumns: ["id"]
           },
           {
@@ -533,13 +656,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["UID"]
-          },
-          {
-            foreignKeyName: "movements_warehouse_id_fkey"
-            columns: ["warehouse_id"]
-            isOneToOne: false
-            referencedRelation: "warehouses"
-            referencedColumns: ["id"]
           },
         ]
       }
@@ -610,7 +726,7 @@ export type Database = {
           },
         ]
       }
-      oder_notes: {
+      order_notes: {
         Row: {
           id: number
           note_id: number
@@ -646,25 +762,31 @@ export type Database = {
       order_payment: {
         Row: {
           amount: number
+          baucher_url: string | null
           date: string
           gateway_confirmation_code: string | null
           id: number
+          movement_id: number
           order_id: number
           payment_method_id: number
         }
         Insert: {
           amount: number
+          baucher_url?: string | null
           date: string
           gateway_confirmation_code?: string | null
           id?: number
+          movement_id: number
           order_id: number
           payment_method_id: number
         }
         Update: {
           amount?: number
+          baucher_url?: string | null
           date?: string
           gateway_confirmation_code?: string | null
           id?: number
+          movement_id?: number
           order_id?: number
           payment_method_id?: number
         }
@@ -683,6 +805,13 @@ export type Database = {
             referencedRelation: "payment_methods"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "order_payment_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "movements"
+            referencedColumns: ["id"]
+          },
         ]
       }
       order_products: {
@@ -690,30 +819,33 @@ export type Database = {
           id: number
           order_id: number
           product_discount: number
+          product_name: string | null
           product_price: number
           product_variation_id: number
           quantity: number
-          reservation: boolean
+          stock_movement_id: number
           warehouses_id: number
         }
         Insert: {
           id?: number
           order_id: number
           product_discount?: number
+          product_name?: string | null
           product_price: number
           product_variation_id: number
           quantity: number
-          reservation?: boolean
+          stock_movement_id?: number
           warehouses_id?: number
         }
         Update: {
           id?: number
           order_id?: number
           product_discount?: number
+          product_name?: string | null
           product_price?: number
           product_variation_id?: number
           quantity?: number
-          reservation?: boolean
+          stock_movement_id?: number
           warehouses_id?: number
         }
         Relationships: [
@@ -729,6 +861,13 @@ export type Database = {
             columns: ["product_variation_id"]
             isOneToOne: false
             referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_products_stock_movement_id_fkey"
+            columns: ["stock_movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
             referencedColumns: ["id"]
           },
           {
@@ -793,6 +932,7 @@ export type Database = {
         Row: {
           address: string | null
           address_reference: string | null
+          branch_id: number | null
           city_id: number | null
           country_id: number | null
           created_at: string
@@ -808,7 +948,8 @@ export type Database = {
           phone: number | null
           reception_person: string | null
           reception_phone: number | null
-          sale_type: number
+          sale_type_id: number
+          shipping_cost: number | null
           shipping_method: number | null
           state_id: number | null
           subtotal: number
@@ -818,6 +959,7 @@ export type Database = {
         Insert: {
           address?: string | null
           address_reference?: string | null
+          branch_id?: number | null
           city_id?: number | null
           country_id?: number | null
           created_at?: string
@@ -833,7 +975,8 @@ export type Database = {
           phone?: number | null
           reception_person?: string | null
           reception_phone?: number | null
-          sale_type: number
+          sale_type_id: number
+          shipping_cost?: number | null
           shipping_method?: number | null
           state_id?: number | null
           subtotal: number
@@ -843,6 +986,7 @@ export type Database = {
         Update: {
           address?: string | null
           address_reference?: string | null
+          branch_id?: number | null
           city_id?: number | null
           country_id?: number | null
           created_at?: string
@@ -858,7 +1002,8 @@ export type Database = {
           phone?: number | null
           reception_person?: string | null
           reception_phone?: number | null
-          sale_type?: number
+          sale_type_id?: number
+          shipping_cost?: number | null
           shipping_method?: number | null
           state_id?: number | null
           subtotal?: number
@@ -866,6 +1011,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_document_type_fkey"
             columns: ["document_type"]
@@ -881,10 +1033,10 @@ export type Database = {
             referencedColumns: ["id", "city_id", "state_id", "country_id"]
           },
           {
-            foreignKeyName: "orders_sale_type_fkey"
-            columns: ["sale_type"]
+            foreignKeyName: "orders_sale_type_id_fkey"
+            columns: ["sale_type_id"]
             isOneToOne: false
-            referencedRelation: "sale_types"
+            referencedRelation: "types"
             referencedColumns: ["id"]
           },
           {
@@ -918,6 +1070,27 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          id?: number
+          name?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      paremeters: {
+        Row: {
+          code: string | null
+          id: number
+          name: string
+          value: string
+        }
+        Insert: {
+          code?: string | null
+          id?: number
+          name: string
+          value: string
+        }
+        Update: {
+          code?: string | null
           id?: number
           name?: string
           value?: string
@@ -1080,24 +1253,24 @@ export type Database = {
       }
       product_stock: {
         Row: {
-          defects: number
           id: number
           product_variation_id: number
           stock: number
+          stock_type_id: number
           warehouse_id: number
         }
         Insert: {
-          defects?: number
           id?: number
           product_variation_id: number
           stock: number
+          stock_type_id?: number
           warehouse_id: number
         }
         Update: {
-          defects?: number
           id?: number
           product_variation_id?: number
           stock?: number
+          stock_type_id?: number
           warehouse_id?: number
         }
         Relationships: [
@@ -1113,6 +1286,13 @@ export type Database = {
             columns: ["warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_stock_stock_type_id_fkey"
+            columns: ["stock_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
             referencedColumns: ["id"]
           },
         ]
@@ -1189,6 +1369,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: number
+          is_active: boolean | null
           is_variable: boolean
           short_description: string
           title: string
@@ -1199,6 +1380,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          is_active?: boolean | null
           is_variable: boolean
           short_description?: string
           title: string
@@ -1209,6 +1391,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          is_active?: boolean | null
           is_variable?: boolean
           short_description?: string
           title?: string
@@ -1218,57 +1401,42 @@ export type Database = {
       }
       profiles: {
         Row: {
-          active: boolean
+          account_id: number
           address: string | null
           address_reference: string | null
+          branch_id: number
           city_id: number | null
-          client_id: number
           country_id: number | null
           created_at: string | null
-          document_number: string
-          document_type: number
-          last_name: string
-          last_name2: string
-          middle_name: string | null
-          name: string
+          is_active: boolean
           neighborhood_id: number | null
           state_id: number | null
           UID: string
           warehouse_id: number
         }
         Insert: {
-          active: boolean
+          account_id: number
           address?: string | null
           address_reference?: string | null
+          branch_id: number
           city_id?: number | null
-          client_id: number
           country_id?: number | null
           created_at?: string | null
-          document_number: string
-          document_type: number
-          last_name: string
-          last_name2: string
-          middle_name?: string | null
-          name: string
+          is_active: boolean
           neighborhood_id?: number | null
           state_id?: number | null
           UID: string
           warehouse_id?: number
         }
         Update: {
-          active?: boolean
+          account_id?: number
           address?: string | null
           address_reference?: string | null
+          branch_id?: number
           city_id?: number | null
-          client_id?: number
           country_id?: number | null
           created_at?: string | null
-          document_number?: string
-          document_type?: number
-          last_name?: string
-          last_name2?: string
-          middle_name?: string | null
-          name?: string
+          is_active?: boolean
           neighborhood_id?: number | null
           state_id?: number | null
           UID?: string
@@ -1276,10 +1444,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_document_type_fkey"
-            columns: ["document_type"]
+            foreignKeyName: "profiles_branch_id_fkey"
+            columns: ["branch_id"]
             isOneToOne: false
-            referencedRelation: "document_types"
+            referencedRelation: "branches"
             referencedColumns: ["id"]
           },
           {
@@ -1319,6 +1487,75 @@ export type Database = {
           },
         ]
       }
+      return_situations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: number
+          last_row: boolean
+          module_id: number
+          return_id: number
+          situation_id: number
+          status_id: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          last_row: boolean
+          module_id: number
+          return_id: number
+          situation_id: number
+          status_id: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          last_row?: boolean
+          module_id?: number
+          return_id?: number
+          situation_id?: number
+          status_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_situations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "return_situations_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_situations_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "returns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_situations_situation_id_fkey"
+            columns: ["situation_id"]
+            isOneToOne: false
+            referencedRelation: "situations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_situations_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       returns: {
         Row: {
           created_at: string | null
@@ -1326,8 +1563,10 @@ export type Database = {
           customer_document_number: string
           customer_document_type_id: number | null
           id: number
+          module_id: number
           order_id: number
           reason: string | null
+          return_id: number | null
           return_type_id: number
           shipping_return: boolean
           situation_id: number
@@ -1341,8 +1580,10 @@ export type Database = {
           customer_document_number: string
           customer_document_type_id?: number | null
           id?: never
+          module_id: number
           order_id: number
           reason?: string | null
+          return_id?: number | null
           return_type_id: number
           shipping_return?: boolean
           situation_id: number
@@ -1356,8 +1597,10 @@ export type Database = {
           customer_document_number?: string
           customer_document_type_id?: number | null
           id?: never
+          module_id?: number
           order_id?: number
           reason?: string | null
+          return_id?: number | null
           return_type_id?: number
           shipping_return?: boolean
           situation_id?: number
@@ -1381,10 +1624,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "returns_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "returns_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "returns"
             referencedColumns: ["id"]
           },
           {
@@ -1419,6 +1676,8 @@ export type Database = {
           product_variation_id: number
           quantity: number
           return_id: number
+          stock_movement_id: number
+          vinculated_return_product_id: number | null
         }
         Insert: {
           created_at?: string | null
@@ -1428,6 +1687,8 @@ export type Database = {
           product_variation_id: number
           quantity: number
           return_id: number
+          stock_movement_id: number
+          vinculated_return_product_id?: number | null
         }
         Update: {
           created_at?: string | null
@@ -1437,6 +1698,8 @@ export type Database = {
           product_variation_id?: number
           quantity?: number
           return_id?: number
+          stock_movement_id?: number
+          vinculated_return_product_id?: number | null
         }
         Relationships: [
           {
@@ -1451,6 +1714,53 @@ export type Database = {
             columns: ["return_id"]
             isOneToOne: false
             referencedRelation: "returns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_products_stock_movement_id_fkey"
+            columns: ["stock_movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_products_vinculated_return_product_id_fkey"
+            columns: ["vinculated_return_product_id"]
+            isOneToOne: false
+            referencedRelation: "returns_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_capabilities: {
+        Row: {
+          capability_id: number
+          id: number
+          role_id: number
+        }
+        Insert: {
+          capability_id: number
+          id?: number
+          role_id: number
+        }
+        Update: {
+          capability_id?: number
+          id?: number
+          role_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_capabilities_capability_id_fkey"
+            columns: ["capability_id"]
+            isOneToOne: false
+            referencedRelation: "capabilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_capabilities_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
             referencedColumns: ["id"]
           },
         ]
@@ -1625,24 +1935,30 @@ export type Database = {
       }
       situations: {
         Row: {
+          code: string | null
           created_at: string
           id: number
           module_id: number
           name: string
+          order: number | null
           status_id: number
         }
         Insert: {
+          code?: string | null
           created_at?: string
           id?: number
           module_id: number
           name: string
+          order?: number | null
           status_id: number
         }
         Update: {
+          code?: string | null
           created_at?: string
           id?: number
           module_id?: number
           name?: string
+          order?: number | null
           status_id?: number
         }
         Relationships: [
@@ -1723,45 +2039,185 @@ export type Database = {
           },
         ]
       }
+      stock_movement_request_situations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: number
+          last_row: boolean
+          message: string | null
+          module_id: number
+          notes: string | null
+          situation_id: number
+          status_id: number
+          stock_movement_request_id: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          last_row?: boolean
+          message?: string | null
+          module_id: number
+          notes?: string | null
+          situation_id: number
+          status_id: number
+          stock_movement_request_id: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          last_row?: boolean
+          message?: string | null
+          module_id?: number
+          notes?: string | null
+          situation_id?: number
+          status_id?: number
+          stock_movement_request_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movement_request_situation_stock_movement_request_id_fkey"
+            columns: ["stock_movement_request_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movement_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movement_request_situations_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movement_request_situations_situation_id_fkey"
+            columns: ["situation_id"]
+            isOneToOne: false
+            referencedRelation: "situations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movement_request_situations_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movement_requests: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: number
+          in_warehouse_id: number | null
+          module_id: number
+          out_warehouse_id: number
+          reason: string | null
+          situation_id: number
+          status_id: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          in_warehouse_id?: number | null
+          module_id: number
+          out_warehouse_id: number
+          reason?: string | null
+          situation_id: number
+          status_id: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          in_warehouse_id?: number | null
+          module_id?: number
+          out_warehouse_id?: number
+          reason?: string | null
+          situation_id?: number
+          status_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movement_requests_in_warehouse_id_fkey"
+            columns: ["in_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movement_requests_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movement_requests_out_warehouse_id_fkey"
+            columns: ["out_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movement_requests_situation_id_fkey"
+            columns: ["situation_id"]
+            isOneToOne: false
+            referencedRelation: "situations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movement_requests_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_movements: {
         Row: {
           completed: boolean
           created_at: string | null
           created_by: string
-          defect_stock: boolean
           id: number
-          in_warehouse_id: number
+          is_active: boolean
           movement_type: number
-          order_id: number | null
-          out_warehouse_id: number
           product_variation_id: number
           quantity: number
+          stock_type_id: number | null
+          vinculated_movement_id: number | null
+          warehouse_id: number
         }
         Insert: {
           completed: boolean
           created_at?: string | null
           created_by: string
-          defect_stock?: boolean
           id?: never
-          in_warehouse_id: number
+          is_active?: boolean
           movement_type: number
-          order_id?: number | null
-          out_warehouse_id: number
           product_variation_id: number
           quantity: number
+          stock_type_id?: number | null
+          vinculated_movement_id?: number | null
+          warehouse_id: number
         }
         Update: {
           completed?: boolean
           created_at?: string | null
           created_by?: string
-          defect_stock?: boolean
           id?: never
-          in_warehouse_id?: number
+          is_active?: boolean
           movement_type?: number
-          order_id?: number | null
-          out_warehouse_id?: number
           product_variation_id?: number
           quantity?: number
+          stock_type_id?: number | null
+          vinculated_movement_id?: number | null
+          warehouse_id?: number
         }
         Relationships: [
           {
@@ -1772,13 +2228,6 @@ export type Database = {
             referencedColumns: ["UID"]
           },
           {
-            foreignKeyName: "stock_movements_in_warehouse_id_fkey"
-            columns: ["in_warehouse_id"]
-            isOneToOne: false
-            referencedRelation: "warehouses"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "stock_movements_movement_type_fkey"
             columns: ["movement_type"]
             isOneToOne: false
@@ -1786,24 +2235,403 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "stock_movements_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_movements_out_warehouse_id_fkey"
-            columns: ["out_warehouse_id"]
-            isOneToOne: false
-            referencedRelation: "warehouses"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "stock_movements_product_variation_id_fkey"
             columns: ["product_variation_id"]
             isOneToOne: false
             referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_stock_type_id_fkey"
+            columns: ["stock_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_vinculated_movement_id_fkey"
+            columns: ["vinculated_movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_quotations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: number
+          price: number | null
+          quantity: number | null
+          request_description: string
+          supplier_id: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          price?: number | null
+          quantity?: number | null
+          request_description: string
+          supplier_id: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          price?: number | null
+          quantity?: number | null
+          request_description?: string
+          supplier_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_quotations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "supplier_quotations_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_quotations_payments: {
+        Row: {
+          created_at: string
+          created_by: string
+          date: string
+          id: number
+          movement_id: number
+          payment_method_id: number
+          supplier_quotation_id: number
+          voucher_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          date?: string
+          id?: number
+          movement_id: number
+          payment_method_id: number
+          supplier_quotation_id: number
+          voucher_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          date?: string
+          id?: number
+          movement_id?: number
+          payment_method_id?: number
+          supplier_quotation_id?: number
+          voucher_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_quotations_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "supplier_quotations_payments_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_quotations_payments_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_quotations_payments_supplier_quotation_id_fkey"
+            columns: ["supplier_quotation_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_service_situations: {
+        Row: {
+          bad_quantity: number | null
+          created_at: string
+          created_by: string
+          id: number
+          last_row: boolean
+          message: string | null
+          module_id: number
+          price: number | null
+          quantity: number | null
+          situation_id: number
+          status_id: number
+          supplier_service_id: number
+        }
+        Insert: {
+          bad_quantity?: number | null
+          created_at?: string
+          created_by?: string
+          id?: number
+          last_row: boolean
+          message?: string | null
+          module_id: number
+          price?: number | null
+          quantity?: number | null
+          situation_id: number
+          status_id: number
+          supplier_service_id: number
+        }
+        Update: {
+          bad_quantity?: number | null
+          created_at?: string
+          created_by?: string
+          id?: number
+          last_row?: boolean
+          message?: string | null
+          module_id?: number
+          price?: number | null
+          quantity?: number | null
+          situation_id?: number
+          status_id?: number
+          supplier_service_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_service_situations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "supplier_service_situations_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_service_situations_situation_id_fkey"
+            columns: ["situation_id"]
+            isOneToOne: false
+            referencedRelation: "situations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_service_situations_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_service_situations_supplier_service_id_fkey"
+            columns: ["supplier_service_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_service_stock: {
+        Row: {
+          id: number
+          stock_movement_id: number
+          supplier_service_id: number
+          unit_cost: number | null
+        }
+        Insert: {
+          id?: number
+          stock_movement_id: number
+          supplier_service_id: number
+          unit_cost?: number | null
+        }
+        Update: {
+          id?: number
+          stock_movement_id?: number
+          supplier_service_id?: number
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_service_stock_stock_movement_id_fkey"
+            columns: ["stock_movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_service_stock_supplier_service_id_fkey"
+            columns: ["supplier_service_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_services: {
+        Row: {
+          description: string
+          id: number
+          module_id: number
+          situation_id: number
+          status_id: number
+          supplier_class_id: number
+          supplier_quotation_id: number
+          supplier_type_id: number
+        }
+        Insert: {
+          description: string
+          id?: number
+          module_id: number
+          situation_id: number
+          status_id: number
+          supplier_class_id: number
+          supplier_quotation_id: number
+          supplier_type_id: number
+        }
+        Update: {
+          description?: string
+          id?: number
+          module_id?: number
+          situation_id?: number
+          status_id?: number
+          supplier_class_id?: number
+          supplier_quotation_id?: number
+          supplier_type_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_services_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_services_situation_id_fkey"
+            columns: ["situation_id"]
+            isOneToOne: false
+            referencedRelation: "situations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_services_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_services_supplier_class_id_fkey"
+            columns: ["supplier_class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_services_supplier_quotation_id_fkey"
+            columns: ["supplier_quotation_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_quotations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_services_supplier_type_id_fkey"
+            columns: ["supplier_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_types: {
+        Row: {
+          id: number
+          spplier_class_id: number
+          supplier_id: number
+          supplier_type_id: number
+        }
+        Insert: {
+          id?: number
+          spplier_class_id: number
+          supplier_id: number
+          supplier_type_id: number
+        }
+        Update: {
+          id?: number
+          spplier_class_id?: number
+          supplier_id?: number
+          supplier_type_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_types_spplier_class_id_fkey"
+            columns: ["spplier_class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_types_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_types_supplier_type_id_fkey"
+            columns: ["supplier_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers_profile: {
+        Row: {
+          created_at: string
+          email: string
+          id: number
+          phone: number
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          id: number
+          phone: number
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: number
+          phone?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_profile_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -1850,16 +2678,19 @@ export type Database = {
       terms: {
         Row: {
           id: number
+          is_active: boolean | null
           name: string
           term_group_id: number | null
         }
         Insert: {
           id?: number
+          is_active?: boolean | null
           name: string
           term_group_id?: number | null
         }
         Update: {
           id?: number
+          is_active?: boolean | null
           name?: string
           term_group_id?: number | null
         }
@@ -2008,6 +2839,7 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          is_active: boolean
           product_cost: number | null
           product_id: number
           sku: string | null
@@ -2015,6 +2847,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: number
+          is_active?: boolean
           product_cost?: number | null
           product_id: number
           sku?: string | null
@@ -2022,6 +2855,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: number
+          is_active?: boolean
           product_cost?: number | null
           product_id?: number
           sku?: string | null
@@ -2038,33 +2872,39 @@ export type Database = {
       }
       warehouses: {
         Row: {
+          address: string
+          address_reference: string | null
           city_id: number
           country_id: number
           id: number
+          is_active: boolean
           name: string
           neighborhood_id: number
           state_id: number
-          street: string
           web: boolean
         }
         Insert: {
+          address: string
+          address_reference?: string | null
           city_id: number
           country_id: number
           id?: number
+          is_active?: boolean
           name: string
           neighborhood_id: number
           state_id: number
-          street: string
           web?: boolean
         }
         Update: {
+          address?: string
+          address_reference?: string | null
           city_id?: number
           country_id?: number
           id?: number
+          is_active?: boolean
           name?: string
           neighborhood_id?: number
           state_id?: number
-          street?: string
           web?: boolean
         }
         Relationships: []
@@ -2074,6 +2914,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      comprueba_variacion: {
+        Args: { p_term_ids: number[]; p_variation_id: number }
+        Returns: boolean
+      }
       get_clients_list: {
         Args: {
           p_date_from?: string
@@ -2129,8 +2973,36 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_categories_product_count: {
+        Args: {
+          p_description?: boolean
+          p_image?: boolean
+          p_max_products?: number
+          p_min_products?: number
+          p_order?: string
+          p_page?: number
+          p_parentcategory?: boolean
+          p_search?: string
+          p_size?: number
+        }
+        Returns: Json
+      }
+      sp_get_inventory: {
+        Args: {
+          p_max_stock?: number
+          p_min_stock?: number
+          p_order?: string
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_types?: number
+          p_warehouse?: number
+        }
+        Returns: Json
+      }
       sp_get_products_costs: {
         Args: {
+          p_cost?: boolean
           p_max_cost?: number
           p_min_cost?: number
           p_order?: string
@@ -2138,6 +3010,32 @@ export type Database = {
           p_search?: string
           p_size?: number
           p_variation?: number
+        }
+        Returns: Json
+      }
+      sp_get_stock_movements: {
+        Args: {
+          p_datetime_end?: string
+          p_datetime_start?: string
+          p_input?: number
+          p_origin?: number
+          p_output?: number
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_user?: number
+          p_warehouse?: number
+        }
+        Returns: Json
+      }
+      sp_get_terms: {
+        Args: {
+          p_group?: number
+          p_max_pr?: number
+          p_min_pr?: number
+          p_page?: number
+          p_search?: string
+          p_size?: number
         }
         Returns: Json
       }
