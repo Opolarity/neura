@@ -220,11 +220,13 @@ const prepareInventoryPayload = () => {
       const quantity = stockChanges.get(key);
 
       // Solo incluir si hubo cambios
-      // Solo incluir si hubo cambios
       if (quantity !== undefined) {
         payload.push({
           product_variation_id: item.variation_id,
           movement_type_code: "MAN",
+          movements_type_id: 9,
+          stock_type_id: filters.types,
+          quantity: quantity,
           warehouse_id: warehouse.id,
         });
       }
@@ -326,8 +328,6 @@ const onApplyFilter = (newFilters: InventoryFilters) => {
 return {
   inventory,
   warehouses,
-  inventoryTypes,
-  typeId,
   loading,
   isEditing,
   isSaving,
