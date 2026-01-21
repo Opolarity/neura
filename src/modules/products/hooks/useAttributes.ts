@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import {
   AttributeRow,
   AttributeFilters,
   AttributePaginationState,
+  AttributeFormValues,
 } from "../types/Attributes.types";
-import { getAttributesApi } from "../services/Attributes.service";
+import { getAttributesApi, createTermGroup } from "../services/Attributes.service";
 import { attributesAdapter } from "../adapters/Attributes.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 
@@ -28,6 +30,11 @@ export const useAttributes = () => {
     page: 1,
     size: 20,
   });
+
+  // Form modal state
+  const [isOpenFormModal, setIsOpenFormModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editingAttribute, setEditingAttribute] = useState<AttributeFormValues | null>(null);
 
   const loadData = async (currentFilters?: AttributeFilters) => {
     setLoading(true);
@@ -124,6 +131,37 @@ export const useAttributes = () => {
     setIsOpenFilterModal(false);
   };
 
+  // Form modal handlers
+  const onOpenNewAttribute = () => {
+    setEditingAttribute(null);
+    setIsOpenFormModal(true);
+  };
+
+  const onCloseFormModal = () => {
+    setIsOpenFormModal(false);
+    setEditingAttribute(null);
+  };
+
+  const onSaveAttribute = async (data: AttributeFormValues) => {
+    setSaving(true);
+    try {
+      await createTermGroup({
+        code: data.code,
+        name: data.name,
+        description: data.description,
+      });
+      toast.success("Atributo creado correctamente");
+      setIsOpenFormModal(false);
+      setEditingAttribute(null);
+      loadData();
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al crear el atributo");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return {
     attributes,
     loading,
@@ -140,5 +178,12 @@ export const useAttributes = () => {
     onCloseFilterModal,
     onApplyFilter,
     onResetFilters,
+    // Form modal
+    isOpenFormModal,
+    saving,
+    editingAttribute,
+    onOpenNewAttribute,
+    onCloseFormModal,
+    onSaveAttribute,
   };
 };
