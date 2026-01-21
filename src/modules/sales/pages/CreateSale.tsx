@@ -419,9 +419,10 @@ const CreateSale = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                {/* Fila 1: País y Departamento */}
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Departamento</Label>
+                    <Label>País</Label>
                     <Select value={formData.countryId} onValueChange={(v) => handleInputChange("countryId", v)}>
                       <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
                       <SelectContent>
@@ -430,7 +431,7 @@ const CreateSale = () => {
                     </Select>
                   </div>
                   <div>
-                    <Label>Provincia</Label>
+                    <Label>Departamento</Label>
                     <Select value={formData.stateId} onValueChange={(v) => handleInputChange("stateId", v)} disabled={!formData.countryId}>
                       <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
                       <SelectContent>
@@ -438,8 +439,12 @@ const CreateSale = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                {/* Fila 2: Provincia y Distrito */}
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Distrito</Label>
+                    <Label>Provincia</Label>
                     <Select value={formData.cityId} onValueChange={(v) => handleInputChange("cityId", v)} disabled={!formData.stateId}>
                       <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
                       <SelectContent>
@@ -447,11 +452,27 @@ const CreateSale = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div>
+                    <Label>Distrito</Label>
+                    <Select value={formData.neighborhoodId} onValueChange={(v) => handleInputChange("neighborhoodId", v)} disabled={!formData.cityId}>
+                      <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                      <SelectContent>
+                        {filteredNeighborhoods.map((n) => <SelectItem key={n.id} value={n.id.toString()}>{n.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div>
-                  <Label>Dirección Exacta</Label>
-                  <Input value={formData.address} onChange={(e) => handleInputChange("address", e.target.value)} placeholder="Calle, número, referencia..." />
+                {/* Fila 3: Dirección y Referencia */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Dirección</Label>
+                    <Input value={formData.address} onChange={(e) => handleInputChange("address", e.target.value)} placeholder="Calle, número..." />
+                  </div>
+                  <div>
+                    <Label>Referencia</Label>
+                    <Input value={formData.addressReference} onChange={(e) => handleInputChange("addressReference", e.target.value)} placeholder="Cerca de, frente a..." />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
