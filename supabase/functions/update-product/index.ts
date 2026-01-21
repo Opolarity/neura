@@ -308,6 +308,22 @@ serve(async (req) => {
     
     const defaultStockTypeId = defaultTypeData?.id;
 
+    // Get manual movement type ID by looking up MAN code in STM module
+    const { data: manualTypeData } = await supabaseAdmin
+      .from('types')
+      .select(`
+        id,
+        modules!inner (
+          code
+        )
+      `)
+      .eq('code', 'MAN')
+      .eq('modules.code', 'STM')
+      .single();
+
+    const manualMovementTypeId = manualTypeData?.id;
+    console.log('Manual movement type ID:', manualMovementTypeId);
+
     // 5. Handle variations based on resetVariations flag
     if (resetVariations) {
       // RESET MODE: Deactivate all existing variations and create new ones
@@ -397,7 +413,7 @@ serve(async (req) => {
           await supabaseAdmin.from('product_price').insert(priceInserts);
         }
 
-        // Insert stock
+        // Insert stock and create stock movements for new variations
         const stockInserts = variation.stock
           .filter((s: VariationStock) => s.stock > 0)
           .map((stock: VariationStock) => ({
@@ -409,6 +425,31 @@ serve(async (req) => {
 
         if (stockInserts.length > 0) {
           await supabaseAdmin.from('product_stock').insert(stockInserts);
+          
+          // Create stock movements for initial stock of new variations
+          if (manualMovementTypeId) {
+            const movementInserts = stockInserts.map(s => ({
+              product_variation_id: newVariation.id,
+              quantity: s.stock,
+              created_by: user.id,
+              movement_type: manualMovementTypeId,
+              warehouse_id: s.warehouse_id,
+              completed: true,
+              stock_type_id: s.stock_type_id,
+              is_active: true
+            }));
+            
+            const { error: movementError } = await supabaseAdmin
+              .from('stock_movements')
+              .insert(movementInserts);
+            
+            if (movementError) {
+              console.error('Error creating stock movements:', movementError);
+              // Don't throw - stock movements are secondary
+            } else {
+              console.log(`Created ${movementInserts.length} stock movements for new variation ${newVariation.id}`);
+            }
+          }
         }
 
         // Insert variation images
@@ -537,10 +578,16 @@ serve(async (req) => {
           }
         }
 
-        // Update stock: For each stock type in the incoming data, delete old and insert new
         // Get unique stock type IDs from incoming data
         const incomingStockTypeIds = [...new Set(incoming.stock.map((s: VariationStock) => s.stock_type_id || defaultStockTypeId))];
         
+        // Get current stock BEFORE deleting to calculate differences
+        const { data: currentStocks } = await supabaseAdmin
+          .from('product_stock')
+          .select('warehouse_id, stock, stock_type_id')
+          .eq('product_variation_id', existing.id)
+          .in('stock_type_id', incomingStockTypeIds);
+
         // Delete stock only for the types we're updating
         for (const typeId of incomingStockTypeIds) {
           await supabaseAdmin.from('product_stock')
@@ -565,6 +612,45 @@ serve(async (req) => {
           if (stockError) {
             console.error('Error updating stock:', stockError);
             throw stockError;
+          }
+        }
+
+        // Calculate stock differences and create movements
+        if (manualMovementTypeId) {
+          for (const newStock of incoming.stock) {
+            const stockTypeId = newStock.stock_type_id || defaultStockTypeId;
+            const oldStockRecord = currentStocks?.find(
+              (s: { warehouse_id: number; stock: number; stock_type_id: number }) => 
+                s.warehouse_id === newStock.warehouse_id && 
+                s.stock_type_id === stockTypeId
+            );
+            
+            const oldQty = oldStockRecord?.stock || 0;
+            const newQty = newStock.stock || 0;
+            const difference = newQty - oldQty;
+            
+            // Only create movement if there's a difference
+            if (difference !== 0) {
+              const { error: movementError } = await supabaseAdmin
+                .from('stock_movements')
+                .insert({
+                  product_variation_id: existing.id,
+                  quantity: difference,
+                  created_by: user.id,
+                  movement_type: manualMovementTypeId,
+                  warehouse_id: newStock.warehouse_id,
+                  completed: true,
+                  stock_type_id: stockTypeId,
+                  is_active: true
+                });
+              
+              if (movementError) {
+                console.error('Error creating stock movement:', movementError);
+                // Don't throw - stock movements are secondary
+              } else {
+                console.log(`Stock movement created for variation ${existing.id}: ${difference} units (warehouse ${newStock.warehouse_id})`);
+              }
+            }
           }
         }
 
@@ -655,7 +741,7 @@ serve(async (req) => {
             await supabaseAdmin.from('product_price').insert(priceInserts);
           }
 
-          // Insert stock
+          // Insert stock and create stock movements for new variations
           const stockInserts = variation.stock
             .filter((s: VariationStock) => s.stock > 0)
             .map((stock: VariationStock) => ({
@@ -667,6 +753,31 @@ serve(async (req) => {
 
           if (stockInserts.length > 0) {
             await supabaseAdmin.from('product_stock').insert(stockInserts);
+            
+            // Create stock movements for initial stock of new variations
+            if (manualMovementTypeId) {
+              const movementInserts = stockInserts.map(s => ({
+                product_variation_id: newVariation.id,
+                quantity: s.stock,
+                created_by: user.id,
+                movement_type: manualMovementTypeId,
+                warehouse_id: s.warehouse_id,
+                completed: true,
+                stock_type_id: s.stock_type_id,
+                is_active: true
+              }));
+              
+              const { error: movementError } = await supabaseAdmin
+                .from('stock_movements')
+                .insert(movementInserts);
+              
+              if (movementError) {
+                console.error('Error creating stock movements:', movementError);
+                // Don't throw - stock movements are secondary
+              } else {
+                console.log(`Created ${movementInserts.length} stock movements for new variation ${newVariation.id}`);
+              }
+            }
           }
 
           // Insert variation images
