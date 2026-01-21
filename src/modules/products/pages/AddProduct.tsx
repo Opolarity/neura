@@ -358,24 +358,6 @@ const AddProduct = () => {
                         </PopoverContent>
                       </Popover>
                       
-                      {selectedGroupTerms.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {selectedGroupTerms.map(termId => {
-                            const term = terms.find(t => t.id === termId);
-                            return term ? (
-                              <Badge
-                                key={termId}
-                                variant="secondary"
-                                className="cursor-pointer"
-                                onClick={() => toggleTermSelection(group.id, termId)}
-                              >
-                                {term.name}
-                                <X className="w-3 h-3 ml-1" />
-                              </Badge>
-                            ) : null;
-                          })}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
