@@ -172,3 +172,33 @@ export const updateTerm = async (data: TermFormValues) => {
 
   return result;
 };
+
+// Eliminar un término (soft delete)
+export const deleteTerm = async (id: number) => {
+  const { data, error } = await supabase.functions.invoke("delete-terms", {
+    method: "POST",
+    body: { termsId: id },
+  });
+
+  if (error) {
+    console.error("Error deleting term:", error);
+    throw error;
+  }
+
+  return data;
+};
+
+// Eliminar un term_group y todos sus términos (soft delete)
+export const deleteTermGroup = async (id: number) => {
+  const { data, error } = await supabase.functions.invoke("delete-term-group", {
+    method: "POST",
+    body: { id },
+  });
+
+  if (error) {
+    console.error("Error deleting term group:", error);
+    throw error;
+  }
+
+  return data;
+};

@@ -13,10 +13,12 @@ import {
   createTermGroup,
   getTermGroupById,
   updateTermGroup,
+  deleteTermGroup,
   getTermGroupsForSelect, 
   createTerm,
   getTermById,
   updateTerm,
+  deleteTerm,
 } from "../services/Attributes.service";
 import { attributesAdapter } from "../adapters/Attributes.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
@@ -53,6 +55,9 @@ export const useAttributes = () => {
   const [savingTerm, setSavingTerm] = useState(false);
   const [editingTerm, setEditingTerm] = useState<TermFormValues | null>(null);
   const [termGroups, setTermGroups] = useState<TermGroupOption[]>([]);
+  
+  // Delete state
+  const [deleting, setDeleting] = useState(false);
 
   const loadData = async (currentFilters?: AttributeFilters) => {
     setLoading(true);
@@ -259,6 +264,36 @@ export const useAttributes = () => {
     }
   };
 
+  // Delete handlers
+  const onDeleteAttribute = async (id: number) => {
+    setDeleting(true);
+    try {
+      await deleteTermGroup(id);
+      toast.success("Atributo y sus términos eliminados correctamente");
+      loadData();
+      loadTermGroups();
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al eliminar el atributo");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const onDeleteTerm = async (id: number) => {
+    setDeleting(true);
+    try {
+      await deleteTerm(id);
+      toast.success("Término eliminado correctamente");
+      loadData();
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al eliminar el término");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return {
     attributes,
     loading,
@@ -293,5 +328,9 @@ export const useAttributes = () => {
     onCloseTermModal,
     onEditTerm,
     onSaveTerm,
+    // Delete handlers
+    deleting,
+    onDeleteAttribute,
+    onDeleteTerm,
   };
 };
