@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X, Upload, Save, ArrowLeft, ChevronDown } from 'lucide-react';
 import WysiwygEditor from '@/components/ui/wysiwyg-editor';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -41,6 +42,9 @@ const AddProduct = () => {
     terms,
     priceLists,
     warehouses,
+    stockTypes,
+    selectedStockType,
+    setSelectedStockType,
     loading,
     handleImageUpload,
     removeImage,
@@ -53,6 +57,7 @@ const AddProduct = () => {
     updateVariationStock,
     toggleVariationImage,
     getVariationLabel,
+    getStockForType,
     handleSubmit,
     navigate,
   } = useAddProduct();
@@ -420,6 +425,26 @@ const AddProduct = () => {
 
               {/* Inventory Tab */}
               <TabsContent value="inventory" className="mt-4">
+                {/* Stock Type Filter */}
+                <div className="mb-4 flex items-center gap-3">
+                  <Label className="text-sm font-medium">Tipo de Inventario:</Label>
+                  <Select 
+                    value={selectedStockType?.toString() || ''} 
+                    onValueChange={(val) => setSelectedStockType(Number(val))}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Seleccionar tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stockTypes.map(type => (
+                        <SelectItem key={type.id} value={type.id.toString()}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="border rounded-lg overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -446,14 +471,14 @@ const AddProduct = () => {
                             </div>
                           </TableCell>
                           {warehouses.map(wh => {
-                            const stock = variation.stock.find(s => s.warehouse_id === wh.id);
+                            const stockValue = getStockForType(variation, wh.id, selectedStockType);
                             return (
                               <TableCell key={wh.id} className="p-2">
                                 <Input
                                   type="number"
                                   placeholder="0"
-                                  value={stock?.stock ?? ''}
-                                  onChange={(e) => updateVariationStock(variation.id, wh.id, e.target.value)}
+                                  value={stockValue ?? ''}
+                                  onChange={(e) => updateVariationStock(variation.id, wh.id, e.target.value, selectedStockType || undefined)}
                                   className="h-8 text-sm text-center"
                                 />
                               </TableCell>

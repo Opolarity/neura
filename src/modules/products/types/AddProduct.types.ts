@@ -1,4 +1,4 @@
-import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock } from '@/types';
+import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock, StockType } from '@/types';
 
 // ================= Form Data Types =================
 
@@ -42,6 +42,7 @@ export interface ProductFormDataResponse {
   terms: Term[];
   priceLists: PriceList[];
   warehouses: Warehouse[];
+  stockTypes: StockType[];
 }
 
 export interface ProductDetailsResponse {
@@ -72,6 +73,7 @@ export interface ProductDetailsResponse {
     stock: {
       warehouse_id: number;
       stock: number;
+      stock_type_id: number;
     }[];
     images: number[];
   }[];
@@ -127,6 +129,8 @@ export interface AddProductState {
   terms: Term[];
   priceLists: PriceList[];
   warehouses: Warehouse[];
+  stockTypes: StockType[];
+  selectedStockType: number | null;
   loading: boolean;
   initialDataLoaded: boolean;
   isLoadingProduct: boolean;

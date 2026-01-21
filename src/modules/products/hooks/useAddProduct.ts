@@ -8,7 +8,7 @@ import type {
   ProductVariation, 
   AddProductState 
 } from '../types/AddProduct.types';
-import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock } from '@/types';
+import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock, StockType } from '@/types';
 
 export const useAddProduct = () => {
   const { toast } = useToast();
@@ -43,6 +43,8 @@ export const useAddProduct = () => {
   const [terms, setTerms] = useState<Term[]>([]);
   const [priceLists, setPriceLists] = useState<PriceList[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [stockTypes, setStockTypes] = useState<StockType[]>([]);
+  const [selectedStockType, setSelectedStockType] = useState<number | null>(null);
   
   // Loading state
   const [loading, setLoading] = useState(false);
@@ -98,6 +100,16 @@ export const useAddProduct = () => {
       setTerms(adapted.terms);
       setPriceLists(adapted.priceLists);
       setWarehouses(adapted.warehouses);
+      setStockTypes(adapted.stockTypes);
+      
+      // Set default stock type to PRD (Production)
+      const defaultType = adapted.stockTypes.find(t => t.code === 'PRD');
+      if (defaultType) {
+        setSelectedStockType(defaultType.id);
+      } else if (adapted.stockTypes.length > 0) {
+        setSelectedStockType(adapted.stockTypes[0].id);
+      }
+      
       setInitialDataLoaded(true);
     } catch (error) {
       toast({
@@ -351,30 +363,44 @@ export const useAddProduct = () => {
     }));
   };
 
-  const updateVariationStock = (variationId: string, warehouseId: number, value: string) => {
+  const updateVariationStock = (variationId: string, warehouseId: number, value: string, stockTypeId?: number) => {
+    const typeId = stockTypeId || selectedStockType;
+    
     setVariations(prev => prev.map(variation => {
       if (variation.id === variationId) {
-        return {
-          ...variation,
-          stock: variation.stock.map(s => {
-            if (s.warehouse_id !== warehouseId) return s;
-            
-            // Si el campo ya tenía valor, no puede quedar vacío (mínimo 0)
-            if (s.hadInitialValue && value === '') {
-              return { ...s, stock: 0 };
-            }
-            
-            // Si estaba vacío originalmente, puede quedar vacío
-            return { 
-              ...s, 
-              stock: value === '' ? undefined : Number(value),
-              hadInitialValue: s.hadInitialValue || (value !== '')
-            };
-          })
+        // Find existing stock entry for this warehouse and type
+        const existingIndex = variation.stock.findIndex(
+          s => s.warehouse_id === warehouseId && (s.stock_type_id === typeId || (!s.stock_type_id && !stockTypeId))
+        );
+        
+        const newStockEntry: VariationStock = {
+          warehouse_id: warehouseId,
+          stock: value === '' ? undefined : Number(value),
+          stock_type_id: typeId || undefined,
+          hadInitialValue: existingIndex >= 0 ? variation.stock[existingIndex].hadInitialValue || value !== '' : value !== ''
         };
+        
+        let newStock: VariationStock[];
+        if (existingIndex >= 0) {
+          // Update existing entry
+          newStock = [...variation.stock];
+          newStock[existingIndex] = newStockEntry;
+        } else {
+          // Add new entry
+          newStock = [...variation.stock, newStockEntry];
+        }
+        
+        return { ...variation, stock: newStock };
       }
       return variation;
     }));
+  };
+
+  const getStockForType = (variation: ProductVariation, warehouseId: number, stockTypeId: number | null): number | undefined => {
+    const stockEntry = variation.stock.find(
+      s => s.warehouse_id === warehouseId && s.stock_type_id === stockTypeId
+    );
+    return stockEntry?.stock;
   };
 
   const toggleVariationImage = (variationId: string, imageId: string) => {
@@ -552,6 +578,9 @@ export const useAddProduct = () => {
     terms,
     priceLists,
     warehouses,
+    stockTypes,
+    selectedStockType,
+    setSelectedStockType,
     
     // Loading
     loading,
@@ -565,6 +594,7 @@ export const useAddProduct = () => {
     toggleVariationImage,
     getVariationLabel,
     getTermName,
+    getStockForType,
     handleSubmit,
     navigate,
   };
