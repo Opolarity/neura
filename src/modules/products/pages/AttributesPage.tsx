@@ -123,7 +123,7 @@ const AttributesPage = () => {
                 attributes.map((row) => (
                   <TableRow 
                     key={row.id}
-                    className={row.type === "group" ? "bg-muted/50" : ""}
+                    className={row.type === "group" ? "bg-muted/50" : "h-10"}
                   >
                     <TableCell>
                       {row.type === "group" ? (
