@@ -21,8 +21,8 @@ Deno.serve(async (req) => {
         const warehouse = Number(url.searchParams.get('warehouse')) || null;
         const input = Number(url.searchParams.get('input')) || null;
         const output = Number(url.searchParams.get('output')) || null;
-        const datetime_start = Date(url.searchParams.get('datetime_start')) || null;
-        const datetime_end = Date(url.searchParams.get('datetime_end')) || null;
+        const start_date = Date(url.searchParams.get('start_date')) || null;
+        const end_date = Date(url.searchParams.get('end_date')) || null;
         const page = Number(url.searchParams.get('page')) || 1;
         const size = Number(url.searchParams.get('size')) || 20;
         const search = url.searchParams.get('search') || null;
@@ -42,8 +42,8 @@ Deno.serve(async (req) => {
             p_warehouse: warehouse,
             p_input: input,
             p_output: output,
-            p_datetime_start: datetime_start,
-            p_datetime_end: datetime_end,
+            p_start_date: start_date,
+            p_end_date: end_date,
             p_page: page,
             p_size: size,
             p_search: search,
