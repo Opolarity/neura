@@ -6,7 +6,7 @@ import type {
   CreateProductRequest,
   UpdateProductRequest
 } from '../types/AddProduct.types';
-import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock } from '@/types';
+import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock, StockType } from '@/types';
 
 export const AddProductAdapter = {
   /**
@@ -18,6 +18,7 @@ export const AddProductAdapter = {
     terms: Term[];
     priceLists: PriceList[];
     warehouses: Warehouse[];
+    stockTypes: StockType[];
   } {
     return {
       categories: data.categories || [],
@@ -27,6 +28,11 @@ export const AddProductAdapter = {
       warehouses: (data.warehouses || []).map((w: any) => ({ 
         id: w.id, 
         name: String(w.name) 
+      })),
+      stockTypes: (data.stockTypes || []).map((st: any) => ({
+        id: st.id,
+        code: st.code,
+        name: st.name
       }))
     };
   },
@@ -111,15 +117,13 @@ export const AddProductAdapter = {
         };
       });
 
-      // Map stock ensuring all warehouses are represented
-      const stock: VariationStock[] = warehouses.map(w => {
-        const existingStock = (variation.stock || []).find(s => s.warehouse_id === w.id);
-        return {
-          warehouse_id: w.id,
-          stock: existingStock ? Number(existingStock.stock) : undefined,
-          hadInitialValue: existingStock ? true : false
-        };
-      });
+      // Map stock ensuring all warehouses are represented (grouped by stock_type_id)
+      const stock: VariationStock[] = (variation.stock || []).map((s: any) => ({
+        warehouse_id: s.warehouse_id,
+        stock: s.stock !== null && s.stock !== undefined ? Number(s.stock) : undefined,
+        stock_type_id: s.stock_type_id,
+        hadInitialValue: true
+      }));
 
       const selectedImages = (variation.images || []).map((imgId: number) => `existing-${imgId}`);
 
@@ -252,7 +256,11 @@ export const AddProductAdapter = {
         // Solo enviar almacenes que tienen stock definido (filtrar undefined/null)
         stock: v.stock
           .filter(s => s.stock !== undefined && s.stock !== null)
-          .map(s => ({ warehouse_id: s.warehouse_id, stock: Number(s.stock) })),
+          .map(s => ({ 
+            warehouse_id: s.warehouse_id, 
+            stock: Number(s.stock),
+            stock_type_id: s.stock_type_id
+          })),
       }));
   }
 };
