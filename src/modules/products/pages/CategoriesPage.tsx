@@ -1,10 +1,14 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardFooter,
+} from "@/components/ui/card";
 
-import { Category, CategoryPayload } from "../types/Categories.types";
+import { Category } from "../types/Categories.types";
 import CategoriesHeader from "../components/categories/CategoriesHeader";
 import CategoriesFilterBar from "../components/categories/CategoriesFilterBar";
 import CategoriesFilterModal from "../components/categories/CategoriesFilterModal";
@@ -31,7 +35,6 @@ const Categories = () => {
     onOpenFilterModal,
     onCloseFilterModal,
     onApplyFilter,
-    loadData,
     createCategory,
     updateCategory,
     deleteCategory,
@@ -39,33 +42,38 @@ const Categories = () => {
 
   // Dialog States
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<CategoryFormValues | null>(null);
+  const [editingCategory, setEditingCategory] =
+    useState<CategoryFormValues | null>(null);
 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
+    null,
+  );
 
   // Async Process States
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const filteredParentCategories = useMemo(() => {
-    return categoriesList.filter((category) => category.id !== editingCategory?.id);
+    return categoriesList.filter(
+      (category) => category.id !== editingCategory?.id,
+    );
   }, [categoriesList, editingCategory]);
 
   const uploadImage = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
+    const fileExt = file.name.split(".").pop();
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('products')
+      .from("products")
       .upload(filePath, file);
 
     if (uploadError) throw uploadError;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('products')
-      .getPublicUrl(filePath);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("products").getPublicUrl(filePath);
 
     return publicUrl;
   };
@@ -87,7 +95,7 @@ const Categories = () => {
           name: data.name,
           description: data.description || null,
           parent_category: data.parent_category || null,
-          image_url: imageUrl || null
+          image_url: imageUrl || null,
         });
         toast.success("Categoría actualizada exitosamente");
       } else {
@@ -95,14 +103,16 @@ const Categories = () => {
           name: data.name,
           description: data.description || null,
           parent_category: data.parent_category || null,
-          image_url: imageUrl || null
+          image_url: imageUrl || null,
         });
         toast.success("Categoría creada exitosamente");
       }
       setIsFormOpen(false);
       setEditingCategory(null);
     } catch (error: any) {
-      toast.error('Error al guardar categoría: ' + (error.message || "Error desconocido"));
+      toast.error(
+        "Error al guardar categoría: " + (error.message || "Error desconocido"),
+      );
       console.error(error);
     } finally {
       setSaving(false);
@@ -118,7 +128,9 @@ const Categories = () => {
     // Find parent ID logic
     let parentId = category.parent_id;
     if (!parentId && category.parent_category) {
-      const parentFound = categoriesList.find(c => c.name === category.parent_category);
+      const parentFound = categoriesList.find(
+        (c) => c.name === category.parent_category,
+      );
       if (parentFound) {
         parentId = parentFound.id;
       }
@@ -129,7 +141,7 @@ const Categories = () => {
       name: category.name,
       description: category.description,
       parent_category: parentId,
-      image_url: category.image
+      image_url: category.image,
     });
     setIsFormOpen(true);
   };
@@ -147,7 +159,10 @@ const Categories = () => {
       toast.success("Categoría eliminada exitosamente");
       setIsDeleteOpen(false);
     } catch (error: any) {
-      toast.error('Error al eliminar categoría: ' + (error.message || "Error desconocido"));
+      toast.error(
+        "Error al eliminar categoría: " +
+          (error.message || "Error desconocido"),
+      );
     } finally {
       setDeleting(false);
     }
@@ -156,7 +171,9 @@ const Categories = () => {
   // Derived state for delete dialog
   const deleteChildCount = useMemo(() => {
     if (!categoryToDelete) return 0;
-    return categoriesList.filter(c => c.parent_category === categoryToDelete.id).length;
+    return categoriesList.filter(
+      (c) => c.parent_category === categoryToDelete.id,
+    ).length;
   }, [categoryToDelete, categoriesList]);
 
   return (
@@ -184,7 +201,8 @@ const Categories = () => {
         </CardContent>
 
         <CardFooter>
-          <PaginationBar pagination={pagination}
+          <PaginationBar
+            pagination={pagination}
             onPageChange={onPageChange}
             onPageSizeChange={handlePageSizeChange}
           />
