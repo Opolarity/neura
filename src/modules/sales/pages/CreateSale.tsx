@@ -350,28 +350,32 @@ const CreateSale = () => {
                 )}
               </div>
 
-              {clientFound === false && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Apellido Paterno</Label>
-                    <Input value={formData.customerLastname} onChange={(e) => handleInputChange("customerLastname", e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Apellido Materno</Label>
-                    <Input value={formData.customerLastname2} onChange={(e) => handleInputChange("customerLastname2", e.target.value)} />
-                  </div>
-                </div>
-              )}
-
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Fecha</Label>
-                  <Input type="date" value={formData.saleDate} onChange={(e) => handleInputChange("saleDate", e.target.value)} />
+                {/* Lado izquierdo: Vendedor y Fecha */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label>Vendedor</Label>
+                    <Input value={formData.vendorName} disabled placeholder="Juan Pérez" className="bg-muted" />
+                  </div>
+                  <div>
+                    <Label>Fecha</Label>
+                    <Input type="date" value={formData.saleDate} onChange={(e) => handleInputChange("saleDate", e.target.value)} />
+                  </div>
                 </div>
-                <div>
-                  <Label>Vendedor</Label>
-                  <Input value={formData.vendorName} disabled placeholder="Juan Pérez" className="bg-muted" />
-                </div>
+                
+                {/* Lado derecho: Apellidos (solo si cliente no encontrado) */}
+                {clientFound === false && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label>Apellido Paterno</Label>
+                      <Input value={formData.customerLastname} onChange={(e) => handleInputChange("customerLastname", e.target.value)} />
+                    </div>
+                    <div>
+                      <Label>Apellido Materno</Label>
+                      <Input value={formData.customerLastname2} onChange={(e) => handleInputChange("customerLastname2", e.target.value)} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center space-x-4 pt-2">
