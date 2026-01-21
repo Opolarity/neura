@@ -100,6 +100,20 @@ const Categories = () => {
         }
         imageUrl = await uploadImage(data.image);
       }
+      // Handle Image Removal (had image before, now doesn't)
+      else if (editingCategory?.image_url && !data.image_url && !data.image) {
+        const oldPath = extractPathFromUrl(editingCategory.image_url);
+        if (oldPath) {
+          const { error: storageError } = await supabase.storage
+            .from('products')
+            .remove([oldPath]);
+          
+          if (storageError) {
+            console.warn('Error al eliminar imagen del storage:', storageError);
+          }
+        }
+        imageUrl = null;
+      }
 
       if (editingCategory?.id) {
         await updateCategory({
