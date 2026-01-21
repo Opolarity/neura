@@ -25,6 +25,7 @@ interface VariationPrice {
 interface VariationStock {
   warehouse_id: number;
   stock: number;
+  stock_type_id?: number;
 }
 
 interface IncomingVariation {
@@ -404,8 +405,26 @@ serve(async (req) => {
         }
       }
 
-      // Update stock: delete old, insert new
-      await supabaseAdmin.from('product_stock').delete().eq('product_variation_id', existing.id);
+      // Update stock: For each stock type in the incoming data, delete old and insert new
+      // Get default stock type ID by looking up PRD code
+      const { data: defaultTypeData } = await supabaseAdmin
+        .from('types')
+        .select('id')
+        .eq('code', 'PRD')
+        .single();
+      
+      const defaultStockTypeId = defaultTypeData?.id;
+
+      // Get unique stock type IDs from incoming data
+      const incomingStockTypeIds = [...new Set(incoming.stock.map((s: VariationStock) => s.stock_type_id || defaultStockTypeId))];
+      
+      // Delete stock only for the types we're updating
+      for (const typeId of incomingStockTypeIds) {
+        await supabaseAdmin.from('product_stock')
+          .delete()
+          .eq('product_variation_id', existing.id)
+          .eq('stock_type_id', typeId);
+      }
 
       const stockInserts = incoming.stock
         .filter((s: VariationStock) => s.stock > 0)
@@ -413,7 +432,7 @@ serve(async (req) => {
           product_variation_id: existing.id,
           warehouse_id: stock.warehouse_id,
           stock: stock.stock,
-          stock_type_id: 9 // Default stock type (PRD)
+          stock_type_id: stock.stock_type_id || defaultStockTypeId
         }));
 
       if (stockInserts.length > 0) {
@@ -512,14 +531,22 @@ serve(async (req) => {
           await supabaseAdmin.from('product_price').insert(priceInserts);
         }
 
-        // Insert stock
+        // Insert stock - lookup default type by code
+        const { data: defaultTypeData } = await supabaseAdmin
+          .from('types')
+          .select('id')
+          .eq('code', 'PRD')
+          .single();
+        
+        const defaultStockTypeId = defaultTypeData?.id;
+
         const stockInserts = variation.stock
           .filter((s: VariationStock) => s.stock > 0)
           .map((stock: VariationStock) => ({
             product_variation_id: newVariation.id,
             warehouse_id: stock.warehouse_id,
             stock: stock.stock,
-            stock_type_id: 9 // Default stock type (PRD)
+            stock_type_id: stock.stock_type_id || defaultStockTypeId
           }));
 
         if (stockInserts.length > 0) {
