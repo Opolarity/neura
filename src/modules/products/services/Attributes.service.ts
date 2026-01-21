@@ -105,6 +105,7 @@ export const getTermGroupsForSelect = async (): Promise<TermGroupOption[]> => {
   const { data, error } = await supabase
     .from("term_groups")
     .select("id, code, name")
+    .eq("is_active", true)
     .order("name");
 
   if (error) {
