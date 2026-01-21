@@ -6,6 +6,6 @@ export type PriceList = {
 
 export type VariationPrice = {
   price_list_id: number;
-  price: number | undefined;
+  price: number;
   sale_price: number | null | undefined;
 };
