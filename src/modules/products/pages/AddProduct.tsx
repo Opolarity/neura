@@ -15,6 +15,7 @@ import WysiwygEditor from '@/components/ui/wysiwyg-editor';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { useAddProduct } from '../hooks/useAddProduct';
+import { PageLoader } from '@/shared/components/page-loader';
 
 const AddProduct = () => {
   const {
@@ -47,6 +48,7 @@ const AddProduct = () => {
     selectedStockType,
     setSelectedStockType,
     loading,
+    isLoadingProduct,
     showResetVariationsDialog,
     confirmResetVariations,
     cancelResetVariations,
@@ -68,6 +70,7 @@ const AddProduct = () => {
 
   return (
     <div className="space-y-6">
+      {isLoadingProduct && <PageLoader message="Cargando datos del producto..." />}
       {/* Reset Variations Confirmation Dialog */}
       <AlertDialog open={showResetVariationsDialog} onOpenChange={(open) => !open && cancelResetVariations()}>
         <AlertDialogContent>

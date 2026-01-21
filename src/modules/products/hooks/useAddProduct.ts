@@ -661,6 +661,7 @@ export const useAddProduct = () => {
     
     // Loading
     loading,
+    isLoadingProduct,
     
     // Handlers
     toggleCategorySelection,
