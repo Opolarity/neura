@@ -13,11 +13,13 @@ import type {
   SalesFormDataResponse,
   ShippingCost,
   ProductVariation,
+  PriceList,
 } from '../types';
 import {
   adaptSalesFormData,
   adaptShippingCosts,
   adaptClientSearchResult,
+  adaptPriceLists,
 } from '../adapters';
 import {
   fetchSalesFormData,
@@ -33,6 +35,7 @@ import {
   fetchProductsByIds,
   fetchVariationTerms,
   fetchTermsByIds,
+  fetchPriceLists,
 } from '../services';
 import {
   calculateSubtotal,
@@ -84,6 +87,11 @@ export const useCreateSale = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchingClient, setSearchingClient] = useState(false);
+  const [priceListsLoading, setPriceListsLoading] = useState(true);
+
+  // Price list modal state
+  const [showPriceListModal, setShowPriceListModal] = useState(true);
+  const [priceLists, setPriceLists] = useState<PriceList[]>([]);
 
   // Form data
   const [formData, setFormData] = useState<SaleFormData>(INITIAL_FORM_DATA);
@@ -105,10 +113,16 @@ export const useCreateSale = () => {
     loadFormData();
   }, []);
 
-  // Load order data when editing
+  // Load price lists on mount
+  useEffect(() => {
+    loadPriceLists();
+  }, []);
+
+  // Load order data when editing (skip modal if editing)
   useEffect(() => {
     if (orderId && salesData) {
       loadOrderData(parseInt(orderId));
+      setShowPriceListModal(false); // Don't show modal when editing
     }
   }, [orderId, salesData]);
 
@@ -209,6 +223,30 @@ export const useCreateSale = () => {
       console.error('Error loading shipping costs:', error);
     }
   };
+
+  // Load price lists
+  const loadPriceLists = async () => {
+    try {
+      setPriceListsLoading(true);
+      const data = await fetchPriceLists();
+      setPriceLists(adaptPriceLists(data || []));
+    } catch (error) {
+      console.error('Error loading price lists:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar las listas de precios',
+        variant: 'destructive',
+      });
+    } finally {
+      setPriceListsLoading(false);
+    }
+  };
+
+  // Handle price list selection from modal
+  const handleSelectPriceList = useCallback((id: string) => {
+    setFormData((prev) => ({ ...prev, priceListId: id }));
+    setShowPriceListModal(false);
+  }, []);
 
   // Load order data for editing
   const loadOrderData = async (id: number) => {
@@ -549,6 +587,11 @@ export const useCreateSale = () => {
     selectedVariation,
     searchQuery,
     
+    // Price list modal
+    showPriceListModal,
+    priceLists,
+    priceListsLoading,
+    
     // Computed
     availableShippingCosts,
     filteredVariations,
@@ -567,6 +610,7 @@ export const useCreateSale = () => {
     handleInputChange,
     handlePaymentChange,
     handleSearchClient,
+    handleSelectPriceList,
     addProduct,
     removeProduct,
     updateProduct,

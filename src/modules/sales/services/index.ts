@@ -212,3 +212,13 @@ export const fetchTermsByIds = async (termIds: number[]) => {
   if (error) throw error;
   return data;
 };
+
+// Fetch price lists
+export const fetchPriceLists = async () => {
+  const { data, error } = await supabase
+    .from('price_list')
+    .select('id, code, name')
+    .order('name');
+  if (error) throw error;
+  return data;
+};

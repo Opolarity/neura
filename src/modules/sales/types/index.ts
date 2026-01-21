@@ -59,6 +59,7 @@ export interface SaleType {
 
 export interface PriceList {
   id: number;
+  code: string | null;
   name: string;
 }
 
