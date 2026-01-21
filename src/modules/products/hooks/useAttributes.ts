@@ -5,8 +5,15 @@ import {
   AttributeFilters,
   AttributePaginationState,
   AttributeFormValues,
+  TermFormValues,
+  TermGroupOption,
 } from "../types/Attributes.types";
-import { getAttributesApi, createTermGroup } from "../services/Attributes.service";
+import { 
+  getAttributesApi, 
+  createTermGroup, 
+  getTermGroupsForSelect, 
+  createTerm 
+} from "../services/Attributes.service";
 import { attributesAdapter } from "../adapters/Attributes.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 
@@ -31,10 +38,16 @@ export const useAttributes = () => {
     size: 20,
   });
 
-  // Form modal state
+  // Form modal state for attribute (term_group)
   const [isOpenFormModal, setIsOpenFormModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingAttribute, setEditingAttribute] = useState<AttributeFormValues | null>(null);
+
+  // Form modal state for term
+  const [isOpenTermModal, setIsOpenTermModal] = useState(false);
+  const [savingTerm, setSavingTerm] = useState(false);
+  const [editingTerm, setEditingTerm] = useState<TermFormValues | null>(null);
+  const [termGroups, setTermGroups] = useState<TermGroupOption[]>([]);
 
   const loadData = async (currentFilters?: AttributeFilters) => {
     setLoading(true);
@@ -64,6 +77,15 @@ export const useAttributes = () => {
     }
   };
 
+  const loadTermGroups = async () => {
+    try {
+      const groups = await getTermGroupsForSelect();
+      setTermGroups(groups);
+    } catch (err) {
+      console.error("Error loading term groups:", err);
+    }
+  };
+
   const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
@@ -76,6 +98,7 @@ export const useAttributes = () => {
 
   useEffect(() => {
     loadData();
+    loadTermGroups();
   }, []);
 
   const onSearchChange = (value: string) => {
@@ -131,7 +154,7 @@ export const useAttributes = () => {
     setIsOpenFilterModal(false);
   };
 
-  // Form modal handlers
+  // Form modal handlers for attribute (term_group)
   const onOpenNewAttribute = () => {
     setEditingAttribute(null);
     setIsOpenFormModal(true);
@@ -154,11 +177,42 @@ export const useAttributes = () => {
       setIsOpenFormModal(false);
       setEditingAttribute(null);
       loadData();
+      loadTermGroups(); // Refresh term groups list
     } catch (err) {
       console.error(err);
       toast.error("Error al crear el atributo");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Form modal handlers for term
+  const onOpenNewTerm = () => {
+    setEditingTerm(null);
+    setIsOpenTermModal(true);
+  };
+
+  const onCloseTermModal = () => {
+    setIsOpenTermModal(false);
+    setEditingTerm(null);
+  };
+
+  const onSaveTerm = async (data: TermFormValues) => {
+    setSavingTerm(true);
+    try {
+      await createTerm({
+        name: data.name,
+        term_group_id: data.term_group_id,
+      });
+      toast.success("Término creado correctamente");
+      setIsOpenTermModal(false);
+      setEditingTerm(null);
+      loadData();
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al crear el término");
+    } finally {
+      setSavingTerm(false);
     }
   };
 
@@ -178,12 +232,20 @@ export const useAttributes = () => {
     onCloseFilterModal,
     onApplyFilter,
     onResetFilters,
-    // Form modal
+    // Form modal for attribute
     isOpenFormModal,
     saving,
     editingAttribute,
     onOpenNewAttribute,
     onCloseFormModal,
     onSaveAttribute,
+    // Form modal for term
+    isOpenTermModal,
+    savingTerm,
+    editingTerm,
+    termGroups,
+    onOpenNewTerm,
+    onCloseTermModal,
+    onSaveTerm,
   };
 };

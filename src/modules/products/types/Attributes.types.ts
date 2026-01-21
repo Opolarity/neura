@@ -48,3 +48,17 @@ export interface AttributeFormValues {
   name: string;
   description?: string | null;
 }
+
+// Form values para crear/editar term
+export interface TermFormValues {
+  id?: number;
+  name: string;
+  term_group_id: number | null;
+}
+
+// Para el selector de grupos
+export interface TermGroupOption {
+  id: number;
+  code: string;
+  name: string;
+}
