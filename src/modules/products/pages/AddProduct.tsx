@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { useAddProduct } from '../hooks/useAddProduct';
 import { PageLoader } from '@/shared/components/page-loader';
+import { buildCategoryTree, flattenCategoryTree } from '../utils/categoryTree';
 
 const AddProduct = () => {
   const {
@@ -67,6 +68,12 @@ const AddProduct = () => {
     handleSubmit,
     navigate,
   } = useAddProduct();
+
+  // Procesar categorías en estructura jerárquica
+  const hierarchicalCategories = useMemo(() => {
+    const tree = buildCategoryTree(categories);
+    return flattenCategoryTree(tree);
+  }, [categories]);
 
   return (
     <div className="space-y-6">
@@ -283,15 +290,25 @@ const AddProduct = () => {
               <CardTitle>Categorías</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                {categories.map(category => (
-                  <div key={category.id} className="flex items-center space-x-2">
+              <div className="space-y-1 max-h-[300px] overflow-y-auto">
+                {hierarchicalCategories.map(category => (
+                  <div 
+                    key={category.id} 
+                    className="flex items-center space-x-2"
+                    style={{ paddingLeft: `${category.level * 16}px` }}
+                  >
                     <Checkbox
                       id={`category-${category.id}`}
                       checked={selectedCategories.includes(category.id)}
                       onCheckedChange={() => toggleCategorySelection(category.id)}
                     />
-                    <Label htmlFor={`category-${category.id}`} className="text-sm cursor-pointer">
+                    <Label 
+                      htmlFor={`category-${category.id}`} 
+                      className="text-sm cursor-pointer flex items-center gap-1"
+                    >
+                      {category.level > 0 && (
+                        <span className="text-muted-foreground text-xs">└</span>
+                      )}
                       {category.name}
                     </Label>
                   </div>
