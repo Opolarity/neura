@@ -3041,25 +3041,20 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_get_shipping_methods:
-        | {
-            Args: {
-              p_cities?: number
-              p_countries?: number
-              p_max_cost?: number
-              p_min_cost?: number
-              p_neighborhoods?: number
-              p_page?: number
-              p_search?: string
-              p_size?: number
-              p_states?: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: { p_page?: number; p_search?: string; p_size?: number }
-            Returns: Json
-          }
+      sp_get_shipping_methods: {
+        Args: {
+          p_cities?: number
+          p_countries?: number
+          p_max_cost?: number
+          p_min_cost?: number
+          p_neighborhoods?: number
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_states?: number
+        }
+        Returns: Json
+      }
       sp_get_stock_movements: {
         Args: {
           p_datetime_end?: string
