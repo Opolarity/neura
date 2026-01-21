@@ -80,7 +80,7 @@ export const useAddProduct = () => {
       const singleVariation: ProductVariation = {
         id: 'single',
         attributes: [],
-        prices: priceLists.map(pl => ({ price_list_id: pl.id, price: undefined, sale_price: undefined })),
+        prices: priceLists.map(pl => ({ price_list_id: pl.id, price: 0, sale_price: undefined })),
         stock: warehouses.map(w => ({ warehouse_id: w.id, stock: undefined, hadInitialValue: false })),
         selectedImages: []
       };
@@ -165,7 +165,7 @@ export const useAddProduct = () => {
     const newVariations: ProductVariation[] = combinations.map((combination, index) => ({
       id: `variation-${index}`,
       attributes: combination,
-      prices: priceLists.map(pl => ({ price_list_id: pl.id, price: undefined, sale_price: undefined })),
+      prices: priceLists.map(pl => ({ price_list_id: pl.id, price: 0, sale_price: undefined })),
       stock: warehouses.map(w => ({ warehouse_id: w.id, stock: undefined, hadInitialValue: false })),
       selectedImages: []
     }));

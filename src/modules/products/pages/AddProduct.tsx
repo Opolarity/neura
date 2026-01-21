@@ -395,7 +395,7 @@ const AddProduct = () => {
                                   <Input
                                     type="number"
                                     placeholder="0.00"
-                                    value={price?.price ?? ''}
+                                    value={price?.price || 0}
                                     onChange={(e) => updateVariationPrice(variation.id, pl.id, 'price', e.target.value)}
                                     className="h-8 text-sm"
                                   />
@@ -403,7 +403,6 @@ const AddProduct = () => {
                                 <TableCell className="p-2">
                                   <Input
                                     type="number"
-                                    placeholder="0.00"
                                     value={price?.sale_price ?? ''}
                                     onChange={(e) => updateVariationPrice(variation.id, pl.id, 'sale_price', e.target.value)}
                                     className="h-8 text-sm"
