@@ -58,6 +58,10 @@ const AttributesPage = () => {
     onCloseTermModal,
     onEditTerm,
     onSaveTerm,
+    // Delete handlers
+    deleting,
+    onDeleteAttribute,
+    onDeleteTerm,
   } = useAttributes();
 
   const handleNewAttribute = () => {
@@ -77,8 +81,11 @@ const AttributesPage = () => {
   };
 
   const handleDelete = (id: number, type: "group" | "term") => {
-    // TODO: Implementar eliminación
-    console.log("Delete", id, type);
+    if (type === "group") {
+      onDeleteAttribute(id);
+    } else {
+      onDeleteTerm(id);
+    }
   };
 
   const renderSkeletonRows = () => {
@@ -182,6 +189,7 @@ const AttributesPage = () => {
                         <Button
                           variant="destructive"
                           size="sm"
+                          disabled={deleting}
                           onClick={() => handleDelete(row.id, row.type)}
                         >
                           <Trash className="w-4 h-4" />
