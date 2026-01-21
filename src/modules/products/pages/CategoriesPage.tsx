@@ -163,6 +163,21 @@ const Categories = () => {
     if (!categoryToDelete) return;
     try {
       setDeleting(true);
+      
+      // Delete image from storage if exists
+      if (categoryToDelete.image) {
+        const imagePath = extractPathFromUrl(categoryToDelete.image);
+        if (imagePath) {
+          const { error: storageError } = await supabase.storage
+            .from('products')
+            .remove([imagePath]);
+          
+          if (storageError) {
+            console.warn('Error al eliminar imagen del storage:', storageError);
+          }
+        }
+      }
+      
       await deleteCategory(categoryToDelete.id);
       toast.success("Categoría eliminada exitosamente");
       setIsDeleteOpen(false);
