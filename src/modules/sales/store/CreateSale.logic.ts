@@ -144,7 +144,7 @@ export const useCreateSaleLogic = () => {
         email: order.email || '',
         phone: order.phone?.toString() || '',
         sale_type: order.sale_type_id?.toString() || '',
-        shipping_method: order.shipping_method?.toString() || '',
+        shipping_method: order.shipping_method_code?.toString() || '',
         shipping_cost: '',
         country_id: order.country_id?.toString() || '',
         state_id: order.state_id?.toString() || '',
@@ -154,7 +154,7 @@ export const useCreateSaleLogic = () => {
         address_reference: order.address_reference || '',
         reception_person: order.reception_person || '',
         reception_phone: order.reception_phone?.toString() || '',
-        with_shipping: !!order.shipping_method,
+        with_shipping: !!order.shipping_method_code,
         employee_sale: false,
       });
 
@@ -622,7 +622,7 @@ export const useViewSale = (orderId?: string) => {
         email: order.email,
         phone: order.phone,
         saleType: order.sale_type_id,
-        shippingMethod: order.shipping_method,
+        shippingMethod: order.shipping_method_code,
         countryId: order.country_id,
         stateId: order.state_id,
         cityId: order.city_id,

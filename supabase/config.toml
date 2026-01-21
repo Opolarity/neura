@@ -44,3 +44,6 @@ verify_jwt = true
 
 [functions.cancel-expired-reservations]
 verify_jwt = false
+
+[functions.get-terms]
+verify_jwt = true
