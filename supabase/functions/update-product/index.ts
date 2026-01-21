@@ -384,8 +384,8 @@ serve(async (req) => {
 
       const priceInserts = incoming.prices
         .filter((p: VariationPrice) =>
-          (p.price !== undefined && p.price > 0) ||
-          (p.sale_price !== undefined && p.sale_price !== null && p.sale_price > 0)
+          p.price !== undefined ||
+          (p.sale_price !== undefined && p.sale_price !== null)
         )
         .map((price: VariationPrice) => ({
           product_variation_id: existing.id,
