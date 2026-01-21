@@ -115,7 +115,7 @@ const CreateSale = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Price List Selection Modal */}
       <Dialog open={showPriceListModal} onOpenChange={() => {}}>
         <DialogContent 
