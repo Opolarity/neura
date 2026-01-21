@@ -131,7 +131,7 @@ serve(async (req) => {
     // 2. Update categories
     console.log('Deleting old categories...');
     await supabaseAdmin.from('product_categories').delete().eq('product_id', productId);
-    
+
     if (selectedCategories.length > 0) {
       console.log('Inserting new categories...');
       const categoryInserts = selectedCategories.map(categoryId => ({
@@ -141,9 +141,9 @@ serve(async (req) => {
 
       const { error: categoriesError } = await supabaseAdmin
         .from('product_categories')
-        .insert(categoryInserts.map((cat, index) => ({ 
-          ...cat, 
-          id: Date.now() + index 
+        .insert(categoryInserts.map((cat, index) => ({
+          ...cat,
+          id: Date.now() + index
         })));
 
       if (categoriesError) {
@@ -167,23 +167,25 @@ serve(async (req) => {
     // 4. Update images (delete all and recreate with proper references)
     console.log('Deleting old product images...');
     await supabaseAdmin.from('product_images').delete().eq('product_id', productId);
-    
+
     // Map to track old image IDs to new DB IDs
     const imageIdMap: Record<string, number> = {};
-    
+
     for (let i = 0; i < productImages.length; i++) {
       const image = productImages[i];
-      
+
       // Get public URL from storage path
+      const rawPath = image.path;
       let imageUrl: string;
-      if (image.isExisting) {
-        // For existing images, use the path (which is the preview URL)
-        imageUrl = image.path;
+
+      if (rawPath && (rawPath.startsWith('http') || image.isExisting)) {
+        // If it's already a full URL or marked as existing, use it directly
+        imageUrl = rawPath;
       } else {
-        // For new images, path is the storage path
+        // For new images (storage paths), get the public URL
         const { data: { publicUrl } } = supabaseAdmin.storage
           .from('products')
-          .getPublicUrl(image.path);
+          .getPublicUrl(rawPath);
         imageUrl = publicUrl;
       }
 
@@ -201,7 +203,7 @@ serve(async (req) => {
         console.error('Image record creation error:', imageError);
         throw imageError;
       }
-      
+
       // Map the temp ID to the new DB ID
       imageIdMap[image.id] = imageId;
     }
@@ -210,7 +212,7 @@ serve(async (req) => {
 
     // 5. Categorize variations: update, create, delete
     console.log('Analyzing variation changes...');
-    
+
     // Helper function to create a key from term IDs
     const createTermKey = (termIds: number[]): string => {
       return termIds.sort((a, b) => a - b).join(',');
@@ -262,7 +264,7 @@ serve(async (req) => {
     // 6. Validate deletions - check if any are linked to orders
     if (toDelete.length > 0) {
       const idsToDelete = toDelete.map(v => v.id);
-      
+
       console.log('Checking if variations to delete are linked to orders...');
       const { data: linkedOrders, error: orderCheckError } = await supabaseAdmin
         .from('order_products')
@@ -274,7 +276,7 @@ serve(async (req) => {
         console.error('Error checking order links:', orderCheckError);
         throw new Error('Error al verificar vínculos con pedidos');
       }
-        
+
       if (linkedOrders && linkedOrders.length > 0) {
         throw new Error(
           'No se pueden eliminar variaciones vinculadas a pedidos existentes. ' +
@@ -282,7 +284,7 @@ serve(async (req) => {
           'Por favor, conserve los términos actuales o agregue nuevos sin eliminar los existentes.'
         );
       }
-      
+
       console.log('Safe to delete - no order links found');
     }
 
@@ -290,13 +292,13 @@ serve(async (req) => {
     console.log('Updating existing variations...');
     for (const { existing, incoming } of toUpdate) {
       console.log(`Updating variation ID: ${existing.id}`);
-      
+
       // Update prices: delete old, insert new
       await supabaseAdmin
         .from('product_price')
         .delete()
         .eq('product_variation_id', existing.id);
-        
+
       const priceInserts = incoming.prices
         .filter(p => (p.price !== undefined && p.price > 0) || (p.sale_price !== undefined && p.sale_price !== null && p.sale_price > 0))
         .map(price => ({
@@ -305,7 +307,7 @@ serve(async (req) => {
           price: price.price !== undefined ? price.price : 0,
           sale_price: price.sale_price !== undefined && price.sale_price !== null ? price.sale_price : null
         }));
-        
+
       if (priceInserts.length > 0) {
         const { error: pricesError } = await supabaseAdmin
           .from('product_price')
@@ -315,13 +317,13 @@ serve(async (req) => {
           throw pricesError;
         }
       }
-      
+
       // Update stock: delete old, insert new
       await supabaseAdmin
         .from('product_stock')
         .delete()
         .eq('product_variation_id', existing.id);
-        
+
       const stockInserts = incoming.stock
         .filter(s => s.stock > 0)
         .map(stock => ({
@@ -329,12 +331,12 @@ serve(async (req) => {
           warehouse_id: stock.warehouse_id,
           stock: stock.stock
         }));
-        
+
       if (stockInserts.length > 0) {
         const { error: stockError } = await supabaseAdmin
           .from('product_stock')
-          .insert(stockInserts.map((stock, index) => ({ 
-            ...stock, 
+          .insert(stockInserts.map((stock, index) => ({
+            ...stock,
             id: Date.now() + index + Math.floor(Math.random() * 1000)
           })));
         if (stockError) {
@@ -342,13 +344,13 @@ serve(async (req) => {
           throw stockError;
         }
       }
-      
+
       // Update variation images: delete old, insert new
       await supabaseAdmin
         .from('product_variation_images')
         .delete()
         .eq('product_variation_id', existing.id);
-        
+
       if (incoming.selectedImages.length > 0) {
         for (const selectedImageId of incoming.selectedImages) {
           const dbImageId = imageIdMap[selectedImageId];
@@ -363,7 +365,7 @@ serve(async (req) => {
           }
         }
       }
-      
+
       console.log(`Variation ${existing.id} updated successfully`);
     }
 
@@ -443,8 +445,8 @@ serve(async (req) => {
         if (stockInserts.length > 0) {
           await supabaseAdmin
             .from('product_stock')
-            .insert(stockInserts.map((stock, index) => ({ 
-              ...stock, 
+            .insert(stockInserts.map((stock, index) => ({
+              ...stock,
               id: Date.now() + index + Math.floor(Math.random() * 1000)
             })));
         }
@@ -464,7 +466,7 @@ serve(async (req) => {
             }
           }
         }
-        
+
         console.log(`New variation ${newVariation.id} created successfully`);
       }
     }
@@ -474,14 +476,14 @@ serve(async (req) => {
       console.log('Deleting safe variations...');
       for (const variation of toDelete) {
         console.log(`Deleting variation ID: ${variation.id}`);
-        
+
         // Delete in proper order to avoid FK constraints
         await supabaseAdmin.from('product_variation_images').delete().eq('product_variation_id', variation.id);
         await supabaseAdmin.from('product_price').delete().eq('product_variation_id', variation.id);
         await supabaseAdmin.from('product_stock').delete().eq('product_variation_id', variation.id);
         await supabaseAdmin.from('variation_terms').delete().eq('product_variation_id', variation.id);
         await supabaseAdmin.from('variations').delete().eq('id', variation.id);
-        
+
         console.log(`Variation ${variation.id} deleted successfully`);
       }
     }
@@ -489,7 +491,7 @@ serve(async (req) => {
     console.log('Product update completed successfully');
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         message: 'Producto actualizado correctamente'
       }),
@@ -502,9 +504,9 @@ serve(async (req) => {
     console.error('Error in update-product function:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: errorMessage 
+      JSON.stringify({
+        success: false,
+        error: errorMessage
       }),
       {
         status: 500,
