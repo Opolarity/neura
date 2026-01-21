@@ -218,6 +218,7 @@ const CreateSale = () => {
                           <CommandGroup>
                             {filteredVariations.map((variation) => {
                               const termsNames = variation.terms.map((t) => t.name).join(" / ");
+                              const displayTerms = termsNames ? `${termsNames} (${variation.sku})` : variation.sku;
                               return (
                                 <CommandItem
                                   key={variation.id}
@@ -227,7 +228,7 @@ const CreateSale = () => {
                                   <Check className={cn("mr-2 h-4 w-4", selectedVariation?.id === variation.id ? "opacity-100" : "opacity-0")} />
                                   <div className="flex flex-col">
                                     <span className="font-medium">{variation.productTitle}</span>
-                                    <span className="text-sm text-muted-foreground">{termsNames || variation.sku}</span>
+                                    <span className="text-sm text-muted-foreground">{displayTerms}</span>
                                   </div>
                                 </CommandItem>
                               );
