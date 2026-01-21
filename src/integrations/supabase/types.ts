@@ -164,7 +164,15 @@ export type Database = {
           name?: string
           total_amount?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_accounts_business_account_type_id_fkey"
+            columns: ["business_account_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       capabilities: {
         Row: {
@@ -3030,6 +3038,21 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_movements: {
+        Args: {
+          p_branches?: number
+          p_bussines_account?: number
+          p_class?: number
+          p_end_date?: string
+          p_page?: number
+          p_payment_method?: number
+          p_search?: string
+          p_size?: number
+          p_start_date?: string
+          p_type?: number
+        }
+        Returns: Json
+      }
       sp_get_products_costs: {
         Args: {
           p_cost?: boolean
@@ -3059,14 +3082,14 @@ export type Database = {
       }
       sp_get_stock_movements: {
         Args: {
-          p_datetime_end?: string
-          p_datetime_start?: string
+          p_end_date?: string
           p_input?: number
           p_origin?: number
           p_output?: number
           p_page?: number
           p_search?: string
           p_size?: number
+          p_start_date?: string
           p_user?: number
           p_warehouse?: number
         }

@@ -1,0 +1,201 @@
+// =============================================
+// Sales Module Types
+// =============================================
+
+// Form Data Types
+export interface SaleFormData {
+  documentType: string;
+  documentNumber: string;
+  customerName: string;
+  customerLastname: string;
+  customerLastname2: string;
+  email: string;
+  phone: string;
+  saleType: string;
+  priceListId: string;
+  saleDate: string;
+  vendorName: string;
+  shippingMethod: string;
+  shippingCost: string;
+  countryId: string;
+  stateId: string;
+  cityId: string;
+  neighborhoodId: string;
+  address: string;
+  addressReference: string;
+  receptionPerson: string;
+  receptionPhone: string;
+  withShipping: boolean;
+  employeeSale: boolean;
+  notes: string;
+}
+
+export interface SaleProduct {
+  variationId: number;
+  productName: string;
+  variationName: string;
+  sku: string;
+  quantity: number;
+  price: number;
+  discountPercent: number;
+}
+
+export interface SalePayment {
+  paymentMethodId: string;
+  amount: string;
+  confirmationCode: string;
+}
+
+// API Response Types
+export interface DocumentType {
+  id: number;
+  name: string;
+}
+
+export interface SaleType {
+  id: number;
+  name: string;
+}
+
+export interface PriceList {
+  id: number;
+  name: string;
+}
+
+export interface PaymentMethod {
+  id: number;
+  name: string;
+}
+
+export interface Situation {
+  id: number;
+  name: string;
+}
+
+export interface Country {
+  id: number;
+  name: string;
+}
+
+export interface State {
+  id: number;
+  name: string;
+  countryId: number;
+}
+
+export interface City {
+  id: number;
+  name: string;
+  stateId: number;
+}
+
+export interface Neighborhood {
+  id: number;
+  name: string;
+  cityId: number;
+}
+
+export interface ShippingMethod {
+  id: number;
+  name: string;
+}
+
+export interface ShippingCost {
+  id: number;
+  name: string;
+  cost: number;
+  shippingMethodId: number;
+  countryId: number | null;
+  stateId: number | null;
+  cityId: number | null;
+  neighborhoodId: number | null;
+}
+
+export interface ProductVariation {
+  id: number;
+  sku: string;
+  productId: number;
+  productTitle: string;
+  terms: Array<{
+    id: number;
+    name: string;
+  }>;
+  prices: Array<{
+    priceListId: number;
+    price: number;
+    salePrice: number | null;
+  }>;
+}
+
+export interface ProductForSearch {
+  id: number;
+  title: string;
+  variations: ProductVariation[];
+}
+
+// Sales Form Data Response
+export interface SalesFormDataResponse {
+  documentTypes: DocumentType[];
+  saleTypes: SaleType[];
+  priceLists: PriceList[];
+  shippingMethods: ShippingMethod[];
+  countries: Country[];
+  states: State[];
+  cities: City[];
+  neighborhoods: Neighborhood[];
+  products: ProductForSearch[];
+  paymentMethods: PaymentMethod[];
+  situations: Situation[];
+}
+
+// Create Order Request
+export interface CreateOrderRequest {
+  documentType: string;
+  documentNumber: string;
+  customerName: string;
+  customerLastname: string;
+  customerLastname2: string | null;
+  email: string | null;
+  phone: string | null;
+  saleType: string;
+  priceListId: string | null;
+  shippingMethod: string | null;
+  shippingCost: number | null;
+  countryId: string | null;
+  stateId: string | null;
+  cityId: string | null;
+  neighborhoodId: string | null;
+  address: string | null;
+  addressReference: string | null;
+  receptionPerson: string | null;
+  receptionPhone: string | null;
+  withShipping: boolean;
+  employeeSale: boolean;
+  notes: string | null;
+  subtotal: number;
+  discount: number;
+  total: number;
+  products: Array<{
+    variationId: number;
+    quantity: number;
+    price: number;
+    discountPercent: number;
+  }>;
+  payment: {
+    paymentMethodId: number;
+    amount: number;
+    date: string;
+    confirmationCode: string | null;
+  } | null;
+  initialSituationId: number;
+}
+
+// Client Search Result
+export interface ClientSearchResult {
+  id: number;
+  name: string;
+  lastName: string;
+  lastName2: string | null;
+  email: string | null;
+  phone: string | null;
+}
