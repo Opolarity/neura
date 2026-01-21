@@ -21,6 +21,7 @@ import AttributesHeader from "../components/attributes/AttributesHeader";
 import AttributesFilterBar from "../components/attributes/AttributesFilterBar";
 import AttributesFilterModal from "../components/attributes/AttributesFilterModal";
 import AttributeFormDialog from "../components/attributes/AttributeFormDialog";
+import TermFormDialog from "../components/attributes/TermFormDialog";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 
 const AttributesPage = () => {
@@ -39,13 +40,21 @@ const AttributesPage = () => {
     onCloseFilterModal,
     onApplyFilter,
     onResetFilters,
-    // Form modal
+    // Form modal for attribute
     isOpenFormModal,
     saving,
     editingAttribute,
     onOpenNewAttribute,
     onCloseFormModal,
     onSaveAttribute,
+    // Form modal for term
+    isOpenTermModal,
+    savingTerm,
+    editingTerm,
+    termGroups,
+    onOpenNewTerm,
+    onCloseTermModal,
+    onSaveTerm,
   } = useAttributes();
 
   const handleNewAttribute = () => {
@@ -53,8 +62,7 @@ const AttributesPage = () => {
   };
 
   const handleNewTerm = () => {
-    // TODO: Implementar modal para nuevo término
-    console.log("New term");
+    onOpenNewTerm();
   };
 
   const handleEdit = (id: string, type: "group" | "term") => {
@@ -203,6 +211,15 @@ const AttributesPage = () => {
         initialData={editingAttribute}
         onSubmit={onSaveAttribute}
         saving={saving}
+      />
+
+      <TermFormDialog
+        open={isOpenTermModal}
+        onOpenChange={onCloseTermModal}
+        initialData={editingTerm}
+        termGroups={termGroups}
+        onSubmit={onSaveTerm}
+        saving={savingTerm}
       />
     </div>
   );
