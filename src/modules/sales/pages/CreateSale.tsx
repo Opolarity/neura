@@ -33,6 +33,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { 
   Loader2, 
@@ -44,7 +51,8 @@ import {
   User, 
   Truck, 
   Receipt,
-  Search
+  Search,
+  ListOrdered
 } from "lucide-react";
 import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
@@ -63,6 +71,9 @@ const CreateSale = () => {
     clientFound,
     selectedVariation,
     searchQuery,
+    showPriceListModal,
+    priceLists,
+    priceListsLoading,
     availableShippingCosts,
     filteredVariations,
     filteredStates,
@@ -78,6 +89,7 @@ const CreateSale = () => {
     handleInputChange,
     handlePaymentChange,
     handleSearchClient,
+    handleSelectPriceList,
     addProduct,
     removeProduct,
     updateProduct,
@@ -86,6 +98,13 @@ const CreateSale = () => {
   } = useCreateSale();
 
   const [open, setOpen] = React.useState(false);
+
+  // Get selected price list name
+  const selectedPriceListName = useMemo(() => {
+    if (!formData.priceListId) return null;
+    const found = priceLists.find(pl => pl.id.toString() === formData.priceListId);
+    return found?.name || null;
+  }, [formData.priceListId, priceLists]);
 
   if (loading) {
     return (
@@ -97,6 +116,54 @@ const CreateSale = () => {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Price List Selection Modal */}
+      <Dialog open={showPriceListModal} onOpenChange={() => {}}>
+        <DialogContent 
+          className="sm:max-w-md" 
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ListOrdered className="w-5 h-5 text-primary" />
+              Seleccionar Lista de Precios
+            </DialogTitle>
+            <DialogDescription>
+              Escoja la lista de precios con la que trabajará en esta venta
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3 py-4">
+            {priceListsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : priceLists.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                No hay listas de precios disponibles
+              </p>
+            ) : (
+              priceLists.map((priceList) => (
+                <Button
+                  key={priceList.id}
+                  variant="outline"
+                  className="w-full justify-start h-auto py-4 hover:bg-primary/5 hover:border-primary"
+                  onClick={() => handleSelectPriceList(priceList.id.toString())}
+                >
+                  <div className="flex flex-col items-start">
+                    <span className="font-semibold">{priceList.name}</span>
+                    {priceList.code && (
+                      <span className="text-sm text-muted-foreground">
+                        Código: {priceList.code}
+                      </span>
+                    )}
+                  </div>
+                </Button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

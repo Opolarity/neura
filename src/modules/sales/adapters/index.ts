@@ -41,6 +41,7 @@ export const adaptSaleTypes = (data: any[]): SaleType[] => {
 export const adaptPriceLists = (data: any[]): PriceList[] => {
   return data.map((item) => ({
     id: item.id,
+    code: item.code || null,
     name: item.name,
   }));
 };
