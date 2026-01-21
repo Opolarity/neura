@@ -1,15 +1,10 @@
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Edit, Save, Loader2 } from "lucide-react";
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { useInventory } from "../hooks/useInventory";
 import InventoryTable from "../components/inventory/InventoryTable";
 import InventoryHeader from "../components/inventory/InventoryHeader";
@@ -21,6 +16,8 @@ const Inventory = () => {
   const {
     inventory,
     warehouses,
+    inventoryTypes,
+    typeId,
     loading,
     isEditing,
     isSaving,
@@ -69,7 +66,7 @@ const Inventory = () => {
             search={search}
             onSearchChange={onSearchChange}
             onOpen={onOpenFilterModal}
-            order={filters.order} // Use filters.order
+            order={filters.order}
             onOrderChange={onOrderChange}
           />
         </CardHeader>
@@ -92,7 +89,9 @@ const Inventory = () => {
         </CardFooter>
       </Card>
       <InventoryFilterModal
+        types={inventoryTypes}
         filters={filters}
+        typeId={typeId}
         isOpen={isOpenFilterModal}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}

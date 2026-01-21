@@ -3,6 +3,7 @@ import {
   InventoryApiResponse,
   InventoryFilters,
   InventoryPayload,
+  InventoryTypesApiResponse,
   Warehouse,
 } from "../types/Inventory.types";
 
@@ -47,7 +48,9 @@ export const inventoryApi = async (
   );
 };
 
-export const updateInventoryApi = async (updateCategory: InventoryPayload[]) => {
+export const updateInventoryApi = async (
+  updateCategory: InventoryPayload[],
+) => {
   const { data, error } = await supabase.functions.invoke(
     "create-stock-movements-entrance",
     {
@@ -57,4 +60,16 @@ export const updateInventoryApi = async (updateCategory: InventoryPayload[]) => 
 
   if (error) throw error;
   if (data?.error) throw new Error(data.error);
+};
+
+export const inventoryTypesApi = async (): Promise<
+  InventoryTypesApiResponse[]
+> => {
+  const { data, error } = await supabase
+    .from("modules")
+    .select("types(id,name,code)")
+    .eq("code", "STK")
+    .order("name");
+  if (error) throw error;
+  return data ?? [];
 };
