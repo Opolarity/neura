@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, Trash2, Palette } from "lucide-react";
+import { Edit, Trash, Palette } from "lucide-react";
 import AttributesHeader from "../components/attributes/AttributesHeader";
 import AttributesFilterBar from "../components/attributes/AttributesFilterBar";
 import AttributesFilterModal from "../components/attributes/AttributesFilterModal";
@@ -121,7 +121,10 @@ const AttributesPage = () => {
                 </TableRow>
               ) : (
                 attributes.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow 
+                    key={row.id}
+                    className={row.type === "group" ? "bg-muted/50" : ""}
+                  >
                     <TableCell>
                       {row.type === "group" ? (
                         <div className="flex items-center gap-2">
@@ -143,20 +146,20 @@ const AttributesPage = () => {
                     </TableCell>
                     <TableCell>{row.products} productos</TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex gap-2">
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => handleEdit(row.id, row.type)}
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="destructive"
                           size="sm"
                           onClick={() => handleDelete(row.id, row.type)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash className="w-4 h-4" />
                         </Button>
                       </div>
                     </TableCell>
