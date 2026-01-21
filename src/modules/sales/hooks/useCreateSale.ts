@@ -437,7 +437,13 @@ export const useCreateSale = () => {
       return;
     }
 
-    const price = selectedVariation.prices[0]?.salePrice || selectedVariation.prices[0]?.price || 0;
+    // Find price for selected price list
+    const priceListId = formData.priceListId ? parseInt(formData.priceListId) : null;
+    const priceEntry = priceListId
+      ? selectedVariation.prices.find((p) => p.priceListId === priceListId)
+      : selectedVariation.prices[0];
+    
+    const price = priceEntry?.salePrice || priceEntry?.price || 0;
     const termsNames = selectedVariation.terms.map((t) => t.name).join(' / ');
 
     setProducts((prev) => [
@@ -455,7 +461,7 @@ export const useCreateSale = () => {
 
     setSearchQuery('');
     setSelectedVariation(null);
-  }, [selectedVariation, toast]);
+  }, [selectedVariation, formData.priceListId, toast]);
 
   // Remove product from list
   const removeProduct = useCallback((index: number) => {

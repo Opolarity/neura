@@ -329,12 +329,11 @@ const CreateSale = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Lista de Precios</Label>
-                  <Select value={formData.priceListId} onValueChange={(v) => handleInputChange("priceListId", v)}>
-                    <SelectTrigger><SelectValue placeholder="Público General" /></SelectTrigger>
-                    <SelectContent>
-                      {salesData?.priceLists.map((pl) => <SelectItem key={pl.id} value={pl.id.toString()}>{pl.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <Input 
+                    value={selectedPriceListName || 'Sin seleccionar'} 
+                    disabled 
+                    className="bg-muted" 
+                  />
                 </div>
                 {clientFound !== null && (
                   clientFound ? (
