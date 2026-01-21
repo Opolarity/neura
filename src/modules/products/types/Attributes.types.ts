@@ -11,11 +11,9 @@ export interface AttributeGroup {
 }
 
 export interface AttributesApiResponse {
-  page: {
-    page: number;
-    size: number;
-    total: number;
-  };
+  page: number;
+  size: number;
+  total: number;
   data: AttributeGroup[];
 }
 

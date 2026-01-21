@@ -41,11 +41,11 @@ export const attributesAdapter = (
   attributes: AttributeRow[];
   pagination: AttributePaginationState;
 } => {
-  const attributes = flattenAttributeGroups(response.data);
+  const attributes = flattenAttributeGroups(response.data || []);
   const pagination: AttributePaginationState = {
-    p_page: response.page.page,
-    p_size: response.page.size,
-    total: response.page.total,
+    p_page: response.page ?? 1,
+    p_size: response.size ?? 20,
+    total: response.total ?? 0,
   };
 
   return { attributes, pagination };
