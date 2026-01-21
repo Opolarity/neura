@@ -40,3 +40,11 @@ export interface AttributePaginationState {
   p_size: number;
   total: number;
 }
+
+// Form values para crear/editar term_group
+export interface AttributeFormValues {
+  id?: number;
+  code: string;
+  name: string;
+  description?: string | null;
+}

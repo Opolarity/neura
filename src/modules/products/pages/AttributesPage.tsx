@@ -20,6 +20,7 @@ import { Edit, Trash } from "lucide-react";
 import AttributesHeader from "../components/attributes/AttributesHeader";
 import AttributesFilterBar from "../components/attributes/AttributesFilterBar";
 import AttributesFilterModal from "../components/attributes/AttributesFilterModal";
+import AttributeFormDialog from "../components/attributes/AttributeFormDialog";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 
 const AttributesPage = () => {
@@ -38,11 +39,17 @@ const AttributesPage = () => {
     onCloseFilterModal,
     onApplyFilter,
     onResetFilters,
+    // Form modal
+    isOpenFormModal,
+    saving,
+    editingAttribute,
+    onOpenNewAttribute,
+    onCloseFormModal,
+    onSaveAttribute,
   } = useAttributes();
 
   const handleNewAttribute = () => {
-    // TODO: Implementar modal para nuevo atributo
-    console.log("New attribute");
+    onOpenNewAttribute();
   };
 
   const handleNewTerm = () => {
@@ -188,6 +195,14 @@ const AttributesPage = () => {
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}
         onReset={onResetFilters}
+      />
+
+      <AttributeFormDialog
+        open={isOpenFormModal}
+        onOpenChange={onCloseFormModal}
+        initialData={editingAttribute}
+        onSubmit={onSaveAttribute}
+        saving={saving}
       />
     </div>
   );
