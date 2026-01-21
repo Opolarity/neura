@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, Trash, Palette } from "lucide-react";
+import { Edit, Trash } from "lucide-react";
 import AttributesHeader from "../components/attributes/AttributesHeader";
 import AttributesFilterBar from "../components/attributes/AttributesFilterBar";
 import AttributesFilterModal from "../components/attributes/AttributesFilterModal";
@@ -128,7 +128,6 @@ const AttributesPage = () => {
                     <TableCell>
                       {row.type === "group" ? (
                         <div className="flex items-center gap-2">
-                          <Palette className="w-4 h-4 text-muted-foreground" />
                           <span className="font-semibold">{row.name}</span>
                           <Badge variant="outline" className="text-xs">
                             ATRIBUTO
