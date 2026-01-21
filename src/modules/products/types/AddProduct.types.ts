@@ -106,6 +106,7 @@ export interface CreateProductRequest {
 export interface UpdateProductRequest extends CreateProductRequest {
   productId: number;
   originalIsVariable: boolean;
+  resetVariations: boolean;
 }
 
 // ================= Hook State Types =================

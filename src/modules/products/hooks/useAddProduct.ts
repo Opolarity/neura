@@ -37,6 +37,14 @@ export const useAddProduct = () => {
   const [selectedTermGroups, setSelectedTermGroups] = useState<number[]>([]);
   const [selectedTerms, setSelectedTerms] = useState<Record<number, number[]>>({});
   
+  // Original terms for tracking changes in edit mode
+  const [originalSelectedTerms, setOriginalSelectedTerms] = useState<Record<number, number[]>>({});
+  const [attributesHaveChanged, setAttributesHaveChanged] = useState(false);
+  
+  // Reset variations dialog state
+  const [showResetVariationsDialog, setShowResetVariationsDialog] = useState(false);
+  const [pendingTermChange, setPendingTermChange] = useState<{ groupId: number; termId: number } | null>(null);
+  
   // Reference data
   const [categories, setCategories] = useState<Category[]>([]);
   const [termGroups, setTermGroups] = useState<TermGroup[]>([]);
@@ -66,7 +74,9 @@ export const useAddProduct = () => {
 
   useEffect(() => {
     if (isLoadingProduct) return;
-    if (isEditMode && productDataLoaded) return;
+    
+    // In edit mode, only regenerate if attributes have changed
+    if (isEditMode && productDataLoaded && !attributesHaveChanged) return;
     
     const groupsWithTerms = Object.keys(selectedTerms)
       .map(Number)
@@ -88,7 +98,7 @@ export const useAddProduct = () => {
       };
       setVariations([singleVariation]);
     }
-  }, [isVariable, selectedTerms, priceLists, warehouses, isEditMode, productDataLoaded]);
+  }, [isVariable, selectedTerms, priceLists, warehouses, isEditMode, productDataLoaded, attributesHaveChanged]);
 
   const loadInitialData = async () => {
     try {
@@ -142,6 +152,8 @@ export const useAddProduct = () => {
       
       if (Object.keys(adapted.selectedTerms).length > 0) {
         setSelectedTerms(adapted.selectedTerms);
+        // Store a deep copy of original terms
+        setOriginalSelectedTerms(JSON.parse(JSON.stringify(adapted.selectedTerms)));
       }
 
       setProductDataLoaded(true);
@@ -183,6 +195,8 @@ export const useAddProduct = () => {
     }));
 
     setVariations(newVariations);
+    // Clear SKUs when regenerating
+    setVariationSkus({});
   }, [selectedTermGroups, selectedTerms, priceLists, warehouses]);
 
   const generateCombinations = (termsByGroup: { groupId: number; terms: number[] }[]): { term_group_id: number; term_id: number }[][] => {
@@ -329,7 +343,29 @@ export const useAddProduct = () => {
     });
   };
 
-  const toggleTermSelection = (termGroupId: number, termId: number) => {
+  // Check if a term change will affect existing variations
+  const checkIfChangeAffectsVariations = (termGroupId: number, termId: number): boolean => {
+    // If not in edit mode or no product loaded, no confirmation needed
+    if (!isEditMode || !productDataLoaded) return false;
+    
+    // If product is not variable, no confirmation needed
+    if (!isVariable) return false;
+    
+    // Check if there are existing variations with data
+    if (variations.length === 0) return false;
+    
+    // Check if there's any variation with actual data (prices or stock)
+    const hasDataInVariations = variations.some(v => 
+      v.prices.some(p => p.price && p.price > 0) ||
+      v.stock.some(s => s.stock && s.stock > 0)
+    );
+    
+    if (!hasDataInVariations) return false;
+    
+    return true;
+  };
+
+  const applyTermChange = (termGroupId: number, termId: number) => {
     setSelectedTerms(prev => {
       const groupTerms = prev[termGroupId] || [];
       const updated = groupTerms.includes(termId)
@@ -338,6 +374,41 @@ export const useAddProduct = () => {
       
       return { ...prev, [termGroupId]: updated };
     });
+  };
+
+  const toggleTermSelection = (termGroupId: number, termId: number) => {
+    // If in edit mode and product data is loaded, check if we need confirmation
+    if (isEditMode && productDataLoaded && isVariable) {
+      const wouldAffect = checkIfChangeAffectsVariations(termGroupId, termId);
+      
+      if (wouldAffect) {
+        setPendingTermChange({ groupId: termGroupId, termId });
+        setShowResetVariationsDialog(true);
+        return;
+      }
+    }
+    
+    // No confirmation needed, apply change directly
+    applyTermChange(termGroupId, termId);
+    
+    // Mark that attributes have changed
+    if (isEditMode && productDataLoaded) {
+      setAttributesHaveChanged(true);
+    }
+  };
+
+  const confirmResetVariations = () => {
+    if (pendingTermChange) {
+      applyTermChange(pendingTermChange.groupId, pendingTermChange.termId);
+      setAttributesHaveChanged(true);
+      setPendingTermChange(null);
+    }
+    setShowResetVariationsDialog(false);
+  };
+
+  const cancelResetVariations = () => {
+    setPendingTermChange(null);
+    setShowResetVariationsDialog(false);
   };
 
   // ================= Variation Update Handlers =================
@@ -486,7 +557,8 @@ export const useAddProduct = () => {
           originalIsVariable,
           selectedCategories,
           productImages,
-          variations
+          variations,
+          attributesHaveChanged
         );
 
         const result = await AddProductService.updateProduct(request);
@@ -571,6 +643,11 @@ export const useAddProduct = () => {
     selectedTermGroups,
     setSelectedTermGroups,
     selectedTerms,
+    
+    // Reset variations dialog
+    showResetVariationsDialog,
+    confirmResetVariations,
+    cancelResetVariations,
     
     // Reference data
     categories,

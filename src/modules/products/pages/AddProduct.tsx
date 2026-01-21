@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { X, Upload, Save, ArrowLeft, ChevronDown } from 'lucide-react';
 import WysiwygEditor from '@/components/ui/wysiwyg-editor';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -46,6 +47,9 @@ const AddProduct = () => {
     selectedStockType,
     setSelectedStockType,
     loading,
+    showResetVariationsDialog,
+    confirmResetVariations,
+    cancelResetVariations,
     handleImageUpload,
     removeImage,
     handleDragStart,
@@ -64,6 +68,33 @@ const AddProduct = () => {
 
   return (
     <div className="space-y-6">
+      {/* Reset Variations Confirmation Dialog */}
+      <AlertDialog open={showResetVariationsDialog} onOpenChange={(open) => !open && cancelResetVariations()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resetear variaciones</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Está a punto de modificar los atributos del producto. Esto reseteará todas las variaciones 
+                existentes y creará nuevas combinaciones con los campos vacíos.
+              </p>
+              <p>
+                Las variaciones anteriores serán desactivadas (no se eliminarán si tienen pedidos asociados).
+              </p>
+              <p className="font-medium">
+                ¿Desea continuar?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelResetVariations}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmResetVariations}>
+              Sí, resetear variaciones
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -430,7 +461,7 @@ const AddProduct = () => {
                   <Label className="text-sm font-medium">Tipo de Inventario:</Label>
                   <Select 
                     value={selectedStockType?.toString() || ''} 
-                    onValueChange={(val) => setSelectedStockType(Number(val))}
+                    onValueChange={(value) => setSelectedStockType(Number(value))}
                   >
                     <SelectTrigger className="w-[200px]">
                       <SelectValue placeholder="Seleccionar tipo" />
@@ -444,7 +475,7 @@ const AddProduct = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
+                
                 <div className="border rounded-lg overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -479,7 +510,7 @@ const AddProduct = () => {
                                   placeholder="0"
                                   value={stockValue ?? ''}
                                   onChange={(e) => updateVariationStock(variation.id, wh.id, e.target.value, selectedStockType || undefined)}
-                                  className="h-8 text-sm text-center"
+                                  className="h-8 text-sm"
                                 />
                               </TableCell>
                             );
@@ -494,22 +525,22 @@ const AddProduct = () => {
               {/* Images Tab */}
               <TabsContent value="images" className="mt-4">
                 {productImages.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground border rounded-lg">
-                    <p>No hay imágenes subidas. Suba imágenes en la galería general primero.</p>
-                  </div>
+                  <p className="text-center text-muted-foreground py-8">
+                    No hay imágenes disponibles. Agregue imágenes en la sección "Galería general".
+                  </p>
                 ) : (
                   <div className="border rounded-lg overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead className="min-w-[150px] sticky left-0 bg-background">Variación</TableHead>
-                          <TableHead>Imágenes (seleccionar de la galería)</TableHead>
+                          <TableHead>Imágenes disponibles</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {variations.map(variation => (
                           <TableRow key={variation.id}>
-                            <TableCell className="font-medium sticky left-0 bg-background align-top pt-4">
+                            <TableCell className="font-medium sticky left-0 bg-background">
                               <div className="flex flex-col">
                                 <span>{getVariationLabel(variation)}</span>
                                 {variationSkus[variation.id] && (
@@ -521,32 +552,33 @@ const AddProduct = () => {
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-2">
-                                {productImages.map(image => (
-                                  <div
-                                    key={image.id}
-                                    className={`relative cursor-pointer rounded-md overflow-hidden border-2 transition-all ${
-                                      variation.selectedImages.includes(image.id)
-                                        ? 'border-primary ring-2 ring-primary/20'
-                                        : 'border-border hover:border-muted-foreground'
-                                    }`}
-                                    onClick={() => toggleVariationImage(variation.id, image.id)}
-                                  >
-                                    <img
-                                      src={image.preview}
-                                      alt="Product"
-                                      className="w-16 h-16 object-cover"
-                                    />
-                                    {variation.selectedImages.includes(image.id) && (
-                                      <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                                        <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                                          <svg className="w-3 h-3 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                          </svg>
-                                        </div>
+                                {productImages
+                                  .sort((a, b) => a.order - b.order)
+                                  .map(image => {
+                                    const isSelected = variation.selectedImages.includes(image.id);
+                                    return (
+                                      <div
+                                        key={image.id}
+                                        className={`relative w-16 h-16 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                                          isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-primary/50'
+                                        }`}
+                                        onClick={() => toggleVariationImage(variation.id, image.id)}
+                                      >
+                                        <img
+                                          src={image.preview}
+                                          alt="Product"
+                                          className="w-full h-full object-cover"
+                                        />
+                                        {isSelected && (
+                                          <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                            <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                              <span className="text-primary-foreground text-xs">✓</span>
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
-                                    )}
-                                  </div>
-                                ))}
+                                    );
+                                  })}
                               </div>
                             </TableCell>
                           </TableRow>
