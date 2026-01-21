@@ -12,7 +12,7 @@ serve(async (req)=>{
     });
   }
   try {
-    console.log('Fetching categories product count...');
+    console.log('Fetching terms/attributes...');
     const url = new URL(req.url);
     const page = Number(url.searchParams.get('page')) || 1;
     const size = Number(url.searchParams.get('size')) || 20;
@@ -42,7 +42,7 @@ serve(async (req)=>{
       status: 200
     });
   } catch (error) {
-    console.error('Error in get-categories-product-count function:', error);
+    console.error('Error in get-terms function:', error);
     return new Response(JSON.stringify({
       error: error.message
     }), {

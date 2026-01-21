@@ -20,6 +20,7 @@ export type Database = {
           document_number: string
           document_type_id: number
           id: number
+          is_active: boolean
           last_name: string
           last_name2: string | null
           middle_name: string | null
@@ -31,6 +32,7 @@ export type Database = {
           document_number: string
           document_type_id: number
           id?: number
+          is_active?: boolean
           last_name: string
           last_name2?: string | null
           middle_name?: string | null
@@ -42,6 +44,7 @@ export type Database = {
           document_number?: string
           document_type_id?: number
           id?: number
+          is_active?: boolean
           last_name?: string
           last_name2?: string | null
           middle_name?: string | null
@@ -950,7 +953,7 @@ export type Database = {
           reception_phone: number | null
           sale_type_id: number
           shipping_cost: number | null
-          shipping_method: number | null
+          shipping_method_code: string | null
           state_id: number | null
           subtotal: number
           total: number
@@ -977,7 +980,7 @@ export type Database = {
           reception_phone?: number | null
           sale_type_id: number
           shipping_cost?: number | null
-          shipping_method?: number | null
+          shipping_method_code?: string | null
           state_id?: number | null
           subtotal: number
           total: number
@@ -1004,7 +1007,7 @@ export type Database = {
           reception_phone?: number | null
           sale_type_id?: number
           shipping_cost?: number | null
-          shipping_method?: number | null
+          shipping_method_code?: string | null
           state_id?: number | null
           subtotal?: number
           total?: number
@@ -1037,13 +1040,6 @@ export type Database = {
             columns: ["sale_type_id"]
             isOneToOne: false
             referencedRelation: "types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "orders_shipping_method_fkey"
-            columns: ["shipping_method"]
-            isOneToOne: false
-            referencedRelation: "shipping_methods"
             referencedColumns: ["id"]
           },
           {
@@ -2660,16 +2656,19 @@ export type Database = {
       term_groups: {
         Row: {
           code: string
+          description: string | null
           id: number
           name: string
         }
         Insert: {
           code: string
+          description?: string | null
           id?: number
           name: string
         }
         Update: {
           code?: string
+          description?: string | null
           id?: number
           name?: string
         }
