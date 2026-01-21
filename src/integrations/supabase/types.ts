@@ -3072,19 +3072,17 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_get_terms:
-        | { Args: { p_page?: number; p_size?: number }; Returns: Json }
-        | {
-            Args: {
-              p_group?: number
-              p_max_pr?: number
-              p_min_pr?: number
-              p_page?: number
-              p_search?: string
-              p_size?: number
-            }
-            Returns: Json
-          }
+      sp_get_terms: {
+        Args: {
+          p_group?: number
+          p_max_pr?: number
+          p_min_pr?: number
+          p_page?: number
+          p_search?: string
+          p_size?: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
