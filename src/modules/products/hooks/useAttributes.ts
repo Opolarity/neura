@@ -10,9 +10,13 @@ import {
 } from "../types/Attributes.types";
 import { 
   getAttributesApi, 
-  createTermGroup, 
+  createTermGroup,
+  getTermGroupById,
+  updateTermGroup,
   getTermGroupsForSelect, 
-  createTerm 
+  createTerm,
+  getTermById,
+  updateTerm,
 } from "../services/Attributes.service";
 import { attributesAdapter } from "../adapters/Attributes.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
@@ -41,6 +45,7 @@ export const useAttributes = () => {
   // Form modal state for attribute (term_group)
   const [isOpenFormModal, setIsOpenFormModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(false);
   const [editingAttribute, setEditingAttribute] = useState<AttributeFormValues | null>(null);
 
   // Form modal state for term
@@ -165,22 +170,41 @@ export const useAttributes = () => {
     setEditingAttribute(null);
   };
 
+  const onEditAttribute = async (id: number) => {
+    setLoadingEdit(true);
+    try {
+      const attributeData = await getTermGroupById(id);
+      setEditingAttribute(attributeData);
+      setIsOpenFormModal(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al cargar el atributo");
+    } finally {
+      setLoadingEdit(false);
+    }
+  };
+
   const onSaveAttribute = async (data: AttributeFormValues) => {
     setSaving(true);
     try {
-      await createTermGroup({
-        code: data.code,
-        name: data.name,
-        description: data.description,
-      });
-      toast.success("Atributo creado correctamente");
+      if (data.id) {
+        await updateTermGroup(data);
+        toast.success("Atributo actualizado correctamente");
+      } else {
+        await createTermGroup({
+          code: data.code,
+          name: data.name,
+          description: data.description,
+        });
+        toast.success("Atributo creado correctamente");
+      }
       setIsOpenFormModal(false);
       setEditingAttribute(null);
       loadData();
-      loadTermGroups(); // Refresh term groups list
+      loadTermGroups();
     } catch (err) {
       console.error(err);
-      toast.error("Error al crear el atributo");
+      toast.error(data.id ? "Error al actualizar el atributo" : "Error al crear el atributo");
     } finally {
       setSaving(false);
     }
@@ -197,20 +221,39 @@ export const useAttributes = () => {
     setEditingTerm(null);
   };
 
+  const onEditTerm = async (id: number) => {
+    setLoadingEdit(true);
+    try {
+      const termData = await getTermById(id);
+      setEditingTerm(termData);
+      setIsOpenTermModal(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al cargar el término");
+    } finally {
+      setLoadingEdit(false);
+    }
+  };
+
   const onSaveTerm = async (data: TermFormValues) => {
     setSavingTerm(true);
     try {
-      await createTerm({
-        name: data.name,
-        term_group_id: data.term_group_id,
-      });
-      toast.success("Término creado correctamente");
+      if (data.id) {
+        await updateTerm(data);
+        toast.success("Término actualizado correctamente");
+      } else {
+        await createTerm({
+          name: data.name,
+          term_group_id: data.term_group_id,
+        });
+        toast.success("Término creado correctamente");
+      }
       setIsOpenTermModal(false);
       setEditingTerm(null);
       loadData();
     } catch (err) {
       console.error(err);
-      toast.error("Error al crear el término");
+      toast.error(data.id ? "Error al actualizar el término" : "Error al crear el término");
     } finally {
       setSavingTerm(false);
     }
@@ -235,9 +278,11 @@ export const useAttributes = () => {
     // Form modal for attribute
     isOpenFormModal,
     saving,
+    loadingEdit,
     editingAttribute,
     onOpenNewAttribute,
     onCloseFormModal,
+    onEditAttribute,
     onSaveAttribute,
     // Form modal for term
     isOpenTermModal,
@@ -246,6 +291,7 @@ export const useAttributes = () => {
     termGroups,
     onOpenNewTerm,
     onCloseTermModal,
+    onEditTerm,
     onSaveTerm,
   };
 };

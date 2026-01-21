@@ -1,9 +1,11 @@
 export interface TermItem {
+  id: number;
   name: string;
   products: number;
 }
 
 export interface AttributeGroup {
+  group_id: number;
   group_name: string;
   terms: TermItem[];
 }
@@ -18,10 +20,11 @@ export interface AttributesApiResponse {
 }
 
 export interface AttributeRow {
-  id: string;
+  id: number;
   type: 'group' | 'term';
   name: string;
   products: number;
+  groupId?: number;
   groupName?: string;
 }
 

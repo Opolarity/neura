@@ -10,22 +10,23 @@ export const flattenAttributeGroups = (
 ): AttributeRow[] => {
   const rows: AttributeRow[] = [];
 
-  groups.forEach((group, groupIndex) => {
+  groups.forEach((group) => {
     const totalProducts = group.terms.reduce((sum, t) => sum + t.products, 0);
 
     rows.push({
-      id: `group-${groupIndex}`,
+      id: group.group_id,
       type: "group",
       name: group.group_name,
       products: totalProducts,
     });
 
-    group.terms.forEach((term, termIndex) => {
+    group.terms.forEach((term) => {
       rows.push({
-        id: `term-${groupIndex}-${termIndex}`,
+        id: term.id,
         type: "term",
         name: term.name,
         products: term.products,
+        groupId: group.group_id,
         groupName: group.group_name,
       });
     });
