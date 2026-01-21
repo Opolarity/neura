@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAttributes } from "../hooks/useAttributes";
 import {
   Card,
@@ -13,6 +14,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,7 +35,15 @@ import AttributeFormDialog from "../components/attributes/AttributeFormDialog";
 import TermFormDialog from "../components/attributes/TermFormDialog";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 
+interface DeleteConfirmation {
+  id: number;
+  type: "group" | "term";
+  name: string;
+}
+
 const AttributesPage = () => {
+  const [deleteConfirmation, setDeleteConfirmation] = useState<DeleteConfirmation | null>(null);
+  
   const {
     attributes,
     loading,
@@ -80,12 +99,23 @@ const AttributesPage = () => {
     }
   };
 
-  const handleDelete = (id: number, type: "group" | "term") => {
-    if (type === "group") {
-      onDeleteAttribute(id);
+  const handleDeleteClick = (id: number, type: "group" | "term", name: string) => {
+    setDeleteConfirmation({ id, type, name });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmation) return;
+    
+    if (deleteConfirmation.type === "group") {
+      await onDeleteAttribute(deleteConfirmation.id);
     } else {
-      onDeleteTerm(id);
+      await onDeleteTerm(deleteConfirmation.id);
     }
+    setDeleteConfirmation(null);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmation(null);
   };
 
   const renderSkeletonRows = () => {
@@ -190,7 +220,7 @@ const AttributesPage = () => {
                           variant="destructive"
                           size="sm"
                           disabled={deleting}
-                          onClick={() => handleDelete(row.id, row.type)}
+                          onClick={() => handleDeleteClick(row.id, row.type, row.name)}
                         >
                           <Trash className="w-4 h-4" />
                         </Button>
@@ -236,6 +266,35 @@ const AttributesPage = () => {
         onSubmit={onSaveTerm}
         saving={savingTerm}
       />
+
+      <AlertDialog open={!!deleteConfirmation} onOpenChange={handleCancelDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirmation?.type === "group" ? (
+                <>
+                  Se eliminará el atributo <strong>"{deleteConfirmation?.name}"</strong> y todos sus términos asociados. Esta acción no se puede deshacer.
+                </>
+              ) : (
+                <>
+                  Se eliminará el término <strong>"{deleteConfirmation?.name}"</strong>. Esta acción no se puede deshacer.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
