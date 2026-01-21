@@ -8,7 +8,6 @@ const corsHeaders = {
 };
 
 interface ShippingCost {
-  id?: number;
   name: string;
   cost: number;
   country_id?: number;
@@ -59,52 +58,30 @@ serve(async (req) => {
       }
     );
 
-    const { id, name, code, costs } = await req.json();
-
-    if (!id) {
-      throw new Error('Shipping method ID is required for update');
-    }
-
+    const { name, code, costs } = await req.json();
     if (!name || !costs || !Array.isArray(costs) || costs.length === 0) {
       throw new Error('Name and at least one cost configuration are required');
     }
 
-    console.log('Updating shipping method:', id, 'for user:', user.id);
+    console.log('Creating shipping method:', name, 'for user:', user.id);
 
-    // Update the shipping method
+    // Create the shipping method
     const { data: method, error: methodError } = await db
       .from('shipping_methods')
-      .update({ name, code })
-      .eq('id', id)
+      .insert([{ name, code }])
       .select()
       .single();
 
     if (methodError) {
-      console.error('Error updating shipping method:', methodError);
+      console.error('Error creating shipping method:', methodError);
       throw methodError;
     }
 
-    console.log('Updated shipping method with ID:', method.id);
+    console.log('Created shipping method with ID:', method.id);
 
-    // Delete existing shipping costs for this method
-    const { error: deleteError } = await db
-      .from('shipping_costs')
-      .delete()
-      .eq('shipping_method_id', method.id);
-
-    if (deleteError) {
-      console.error('Error deleting old shipping costs:', deleteError);
-      throw deleteError;
-    }
-
-    // Insert new shipping costs
+    // Create the shipping costs
     const costsToInsert = costs.map((cost: ShippingCost) => ({
-      name: cost.name,
-      cost: cost.cost,
-      country_id: cost.country_id,
-      state_id: cost.state_id,
-      city_id: cost.city_id,
-      neighborhood_id: cost.neighborhood_id,
+      ...cost,
       shipping_method_id: method.id,
     }));
 
@@ -115,6 +92,8 @@ serve(async (req) => {
 
     if (costsError) {
       console.error('Error creating shipping costs:', costsError);
+      // Try to rollback the method creation
+      await db.from('shipping_methods').delete().eq('id', method.id);
       throw costsError;
     }
 
@@ -128,7 +107,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error in update-shipping-method:', error);
+    console.error('Error in create-shipping-method:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
