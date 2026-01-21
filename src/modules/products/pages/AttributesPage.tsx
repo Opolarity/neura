@@ -43,9 +43,11 @@ const AttributesPage = () => {
     // Form modal for attribute
     isOpenFormModal,
     saving,
+    loadingEdit,
     editingAttribute,
     onOpenNewAttribute,
     onCloseFormModal,
+    onEditAttribute,
     onSaveAttribute,
     // Form modal for term
     isOpenTermModal,
@@ -54,6 +56,7 @@ const AttributesPage = () => {
     termGroups,
     onOpenNewTerm,
     onCloseTermModal,
+    onEditTerm,
     onSaveTerm,
   } = useAttributes();
 
@@ -65,12 +68,15 @@ const AttributesPage = () => {
     onOpenNewTerm();
   };
 
-  const handleEdit = (id: string, type: "group" | "term") => {
-    // TODO: Implementar edición
-    console.log("Edit", id, type);
+  const handleEdit = (id: number, type: "group" | "term") => {
+    if (type === "group") {
+      onEditAttribute(id);
+    } else {
+      onEditTerm(id);
+    }
   };
 
-  const handleDelete = (id: string, type: "group" | "term") => {
+  const handleDelete = (id: number, type: "group" | "term") => {
     // TODO: Implementar eliminación
     console.log("Delete", id, type);
   };
@@ -137,7 +143,7 @@ const AttributesPage = () => {
               ) : (
                 attributes.map((row) => (
                   <TableRow 
-                    key={row.id}
+                    key={`${row.type}-${row.id}`}
                     className={
                       row.type === "group"
                         ? "bg-muted/50 [&>td]:py-4"
@@ -168,6 +174,7 @@ const AttributesPage = () => {
                         <Button
                           variant="outline"
                           size="sm"
+                          disabled={loadingEdit}
                           onClick={() => handleEdit(row.id, row.type)}
                         >
                           <Edit className="w-4 h-4" />
