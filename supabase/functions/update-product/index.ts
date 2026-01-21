@@ -180,7 +180,48 @@ serve(async (req) => {
       .eq('product_id', productId);
 
     // 4. Update images (delete all and recreate with proper references)
-    console.log('Deleting old product images...');
+    
+    // First, fetch current images BEFORE deleting to identify which files to remove from storage
+    console.log('Fetching current images before deletion...');
+    const { data: currentImages } = await supabaseAdmin
+      .from('product_images')
+      .select('id, image_url')
+      .eq('product_id', productId);
+
+    // Identify existing images that should be kept (they have 'existing-' prefix in ID)
+    const existingImageIds = productImages
+      .filter((img: ProductImage) => img.id.startsWith('existing-'))
+      .map((img: ProductImage) => parseInt(img.id.replace('existing-', '')));
+
+    // Identify images to delete from storage (in DB but not in the request as existing)
+    const imagesToDeleteFromStorage = (currentImages || []).filter(
+      (img: { id: number; image_url: string }) => !existingImageIds.includes(img.id)
+    );
+
+    // Delete files from storage (except placeholder/default images)
+    for (const img of imagesToDeleteFromStorage) {
+      // Extract the relative path from the full URL
+      // URL example: https://xxx.supabase.co/storage/v1/object/public/products/products-images/123/file.jpg
+      const urlParts = img.image_url.split('/products/');
+      if (urlParts[1] && !urlParts[1].includes('default/')) {
+        const storagePath = urlParts[1];
+        console.log(`Deleting image from storage: ${storagePath}`);
+        
+        const { error: deleteStorageError } = await supabaseAdmin.storage
+          .from('products')
+          .remove([storagePath]);
+        
+        if (deleteStorageError) {
+          console.error('Error deleting image from storage:', deleteStorageError);
+          // Don't throw - continue with the process even if storage deletion fails
+        } else {
+          console.log(`Image deleted successfully from storage: ${storagePath}`);
+        }
+      }
+    }
+
+    // Now delete all image records from DB
+    console.log('Deleting old product images from database...');
     await supabaseAdmin.from('product_images').delete().eq('product_id', productId);
 
     // Map to track old image IDs to new DB IDs
