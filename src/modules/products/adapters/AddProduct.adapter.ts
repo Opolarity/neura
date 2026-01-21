@@ -197,7 +197,8 @@ export const AddProductAdapter = {
     originalIsVariable: boolean,
     selectedCategories: number[],
     productImages: ProductImage[],
-    variations: ProductVariation[]
+    variations: ProductVariation[],
+    resetVariations: boolean = false
   ): UpdateProductRequest {
     const imageRefs = productImages.map(img => ({
       id: img.id,
@@ -218,7 +219,8 @@ export const AddProductAdapter = {
       originalIsVariable,
       selectedCategories,
       productImages: imageRefs,
-      variations: sanitizedVariations
+      variations: sanitizedVariations,
+      resetVariations
     };
   },
 
