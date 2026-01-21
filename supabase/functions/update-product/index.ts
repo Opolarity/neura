@@ -197,11 +197,39 @@ serve(async (req) => {
         // If it's already a full URL or marked as existing, use it directly
         imageUrl = rawPath;
       } else {
-        // For new images (storage paths), get the public URL
-        const { data: { publicUrl } } = supabaseAdmin.storage
-          .from('products')
-          .getPublicUrl(rawPath);
-        imageUrl = publicUrl;
+        // For new images (storage paths from tmp/), move to product folder first
+        if (rawPath && rawPath.includes('products-images/tmp/')) {
+          const fileName = rawPath.split('/').pop();
+          const newPath = `products-images/${productId}/${fileName}`;
+          
+          console.log(`Moving image from ${rawPath} to ${newPath}`);
+          
+          const { error: moveError } = await supabaseAdmin.storage
+            .from('products')
+            .move(rawPath, newPath);
+          
+          if (moveError) {
+            console.error('Error moving image:', moveError);
+            // If move fails, try to use the original path
+            const { data: { publicUrl } } = supabaseAdmin.storage
+              .from('products')
+              .getPublicUrl(rawPath);
+            imageUrl = publicUrl;
+          } else {
+            // Get public URL from the new location
+            const { data: { publicUrl } } = supabaseAdmin.storage
+              .from('products')
+              .getPublicUrl(newPath);
+            imageUrl = publicUrl;
+            console.log(`Image moved successfully. New URL: ${imageUrl}`);
+          }
+        } else {
+          // For other storage paths, just get the public URL
+          const { data: { publicUrl } } = supabaseAdmin.storage
+            .from('products')
+            .getPublicUrl(rawPath);
+          imageUrl = publicUrl;
+        }
       }
 
       const { data: insertedImage, error: imageError } = await supabaseAdmin
