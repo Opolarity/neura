@@ -52,14 +52,27 @@ const Categories = () => {
     return categoriesList.filter((category) => category.id !== editingCategory?.id);
   }, [categoriesList, editingCategory]);
 
+  // Extract storage path from public URL
+  const extractPathFromUrl = (url: string): string | null => {
+    try {
+      const match = url.match(/\/products\/(.+)$/);
+      return match ? match[1] : null;
+    } catch {
+      return null;
+    }
+  };
+
   const uploadImage = async (file: File): Promise<string> => {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `${fileName}`;
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `categories-images/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('products')
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        upsert: true,
+        contentType: file.type
+      });
 
     if (uploadError) throw uploadError;
 
@@ -78,6 +91,13 @@ const Categories = () => {
 
       // Handle Image Upload if a new file is present
       if (data.image && data.image instanceof File) {
+        // Delete old image if updating with a new one
+        if (editingCategory?.image_url) {
+          const oldPath = extractPathFromUrl(editingCategory.image_url);
+          if (oldPath) {
+            await supabase.storage.from('products').remove([oldPath]);
+          }
+        }
         imageUrl = await uploadImage(data.image);
       }
 
