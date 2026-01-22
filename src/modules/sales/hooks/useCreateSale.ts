@@ -425,14 +425,15 @@ export const useCreateSale = () => {
   }, []);
 
   // Search client by document
-  const handleSearchClient = useCallback(async () => {
-    if (!formData.documentType || !formData.documentNumber) return;
+  const handleSearchClient = useCallback(async (overrideDocumentType?: string) => {
+    const docType = overrideDocumentType || formData.documentType;
+    if (!docType || !formData.documentNumber) return;
 
     setSearchingClient(true);
     try {
       // First, search in accounts table
       const data = await searchClientByDocument(
-        parseInt(formData.documentType),
+        parseInt(docType),
         formData.documentNumber
       );
       const client = adaptClientSearchResult(data);
@@ -449,7 +450,7 @@ export const useCreateSale = () => {
       } else {
         // Client not found - check document type code
         const selectedDocType = salesData?.documentTypes.find(
-          (dt) => dt.id.toString() === formData.documentType
+          (dt) => dt.id.toString() === docType
         );
         const docTypeCode = selectedDocType?.code?.toUpperCase();
 

@@ -361,7 +361,7 @@ const CreateSale = () => {
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <Label>Tipo Doc.</Label>
-                    <Select value={formData.documentType} onValueChange={(v) => { handleInputChange("documentType", v); if (formData.documentNumber) handleSearchClient(); }}>
+                    <Select value={formData.documentType} onValueChange={(v) => { handleInputChange("documentType", v); if (formData.documentNumber) handleSearchClient(v); }}>
                       <SelectTrigger><SelectValue placeholder="DNI" /></SelectTrigger>
                       <SelectContent>
                         {salesData?.documentTypes.map((dt) => <SelectItem key={dt.id} value={dt.id.toString()}>{dt.name}</SelectItem>)}
@@ -371,7 +371,7 @@ const CreateSale = () => {
                   <div className="col-span-2">
                     <Label>Número</Label>
                     <div className="flex gap-2">
-                      <Input value={formData.documentNumber} onChange={(e) => handleInputChange("documentNumber", e.target.value)} onBlur={handleSearchClient} disabled={!formData.documentType} />
+                      <Input value={formData.documentNumber} onChange={(e) => handleInputChange("documentNumber", e.target.value)} onBlur={() => handleSearchClient()} disabled={!formData.documentType} />
                       {searchingClient && <Loader2 className="w-5 h-5 animate-spin self-center" />}
                     </div>
                   </div>
