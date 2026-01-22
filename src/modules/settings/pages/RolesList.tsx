@@ -47,7 +47,7 @@ const RolesList = () => {
               .from('role_functions')
               .select('*', { count: 'exact', head: true })
               .eq('role_id', role.id);
-            
+
             return { ...role, function_count: count || 0 };
           })
         );
@@ -74,10 +74,9 @@ const RolesList = () => {
     if (!confirm('¿Estás seguro de eliminar este rol?')) return;
 
     try {
-      const { error } = await supabase
-        .from('roles')
-        .delete()
-        .eq('id', roleId);
+      const { data, error } = await supabase.functions.invoke('delete-role', {
+        body: { id: roleId }
+      });
 
       if (error) throw error;
 
@@ -224,8 +223,8 @@ const RolesList = () => {
                           <Edit className="w-4 h-4" />
                         </Link>
                       </Button>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteRole(role.id)}
                       >

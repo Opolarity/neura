@@ -5,7 +5,7 @@ import Header from "../components/layout/Header";
 import { useAuth } from "@/modules/auth";
 
 const DashboardLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { signOut } = useAuth();
 
   const handleSignOut = async () => {
@@ -14,14 +14,16 @@ const DashboardLayout = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar isOpen={sidebarOpen} />
+      <Sidebar
+        isOpen={!isSidebarCollapsed}
+        onCollapseChange={setIsSidebarCollapsed}
+      />
       <div
-        className={`flex-1 transition-all duration-300 ${
-          sidebarOpen ? "ml-64" : "ml-16"
-        }`}
+        className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "ml-16" : "ml-64"
+          }`}
       >
         <Header
-          toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           onSignOut={handleSignOut}
         />
         <main className="p-6">

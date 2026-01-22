@@ -111,12 +111,10 @@ const CreateRole = () => {
     const functionMap = new Map<number, Function>();
     const roots: Function[] = [];
 
-    // First pass: create map of all functions
     functions.forEach(func => {
       functionMap.set(func.id, { ...func, url: func.url || null, children: [] });
     });
 
-    // Second pass: build tree structure
     functions.forEach(func => {
       const funcWithChildren = functionMap.get(func.id);
       if (!funcWithChildren) return;
@@ -144,17 +142,67 @@ const CreateRole = () => {
     setExpandedNodes(newExpanded);
   };
 
+  const getParentIds = (functionId: number, allFuncs: Function[]): number[] => {
+    const parents: number[] = [];
+    let current = allFuncs.find(f => f.id === functionId);
+    while (current && current.parent_function !== null) {
+      parents.push(current.parent_function);
+      const parentId = current.parent_function;
+      current = allFuncs.find(f => f.id === parentId);
+    }
+    return parents;
+  };
+
   const toggleFunction = (functionId: number) => {
+    if (formData.admin) return; // Prevent changes in admin mode
+
     const newSelected = new Set(formData.selectedFunctions);
     if (newSelected.has(functionId)) {
       newSelected.delete(functionId);
+      // Optional: unselect children logic could go here
     } else {
       newSelected.add(functionId);
+      // Select parents automatically
+      const allFuncsFlat: Function[] = [];
+      const flatten = (nodes: Function[]) => {
+        nodes.forEach(n => {
+          allFuncsFlat.push(n);
+          if (n.children) flatten(n.children);
+        });
+      };
+      flatten(functions);
+      const parentIds = getParentIds(functionId, allFuncsFlat);
+      parentIds.forEach(pId => newSelected.add(pId));
     }
     setFormData({
       ...formData,
       selectedFunctions: Array.from(newSelected)
     });
+  };
+
+  const handleAdminChange = (checked: boolean) => {
+    if (checked) {
+      // Select all functions
+      const allIds: number[] = [];
+      const collectIds = (nodes: Function[]) => {
+        nodes.forEach(n => {
+          allIds.push(n.id);
+          if (n.children) collectIds(n.children);
+        });
+      };
+      collectIds(functions);
+      setFormData({
+        ...formData,
+        admin: true,
+        selectedFunctions: allIds
+      });
+    } else {
+      setFormData({
+        ...formData,
+        admin: false,
+        selectedFunctions: []
+      });
+    }
   };
 
   const renderFunctionTree = (functions: Function[], level = 0) => {
@@ -163,7 +211,7 @@ const CreateRole = () => {
         <div className="flex items-center gap-2 py-1">
           {func.children && func.children.length > 0 && (
             <Button
-              type="button" 
+              type="button"
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0"
@@ -183,10 +231,11 @@ const CreateRole = () => {
             id={`function-${func.id}`}
             checked={formData.selectedFunctions.includes(func.id)}
             onCheckedChange={() => toggleFunction(func.id)}
+            disabled={formData.admin}
           />
-          <Label 
-            htmlFor={`function-${func.id}`} 
-            className="text-sm cursor-pointer"
+          <Label
+            htmlFor={`function-${func.id}`}
+            className={`text-sm ${formData.admin ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
           >
             {func.name}
           </Label>
@@ -202,7 +251,7 @@ const CreateRole = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
         title: "Error",
@@ -213,83 +262,32 @@ const CreateRole = () => {
     }
 
     try {
-      if (isEdit && roleId) {
-        // Update role
-        const { error: roleError } = await supabase
-          .from('roles')
-          .update({
-            name: formData.name,
-            admin: formData.admin
-          })
-          .eq('id', parseInt(roleId));
+      const payload = {
+        id: isEdit ? parseInt(roleId!) : undefined,
+        name: formData.name,
+        admin: formData.admin,
+        functions: formData.selectedFunctions
+      };
 
-        if (roleError) throw roleError;
+      const functionName = isEdit ? 'update-role' : 'create-role';
 
-        // Delete existing role functions
-        const { error: deleteError } = await supabase
-          .from('role_functions')
-          .delete()
-          .eq('role_id', parseInt(roleId));
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        body: payload
+      });
 
-        if (deleteError) throw deleteError;
+      if (error) throw error;
 
-        // Insert new role functions
-        if (formData.selectedFunctions.length > 0) {
-          for (const functionId of formData.selectedFunctions) {
-            const { error: insertError } = await supabase
-              .from('role_functions')
-              .insert({
-                role_id: parseInt(roleId),
-                function_id: functionId
-              } as any);
-
-            if (insertError) throw insertError;
-          }
-        }
-
-        toast({
-          title: "Éxito",
-          description: "Rol actualizado correctamente",
-        });
-      } else {
-        // Create new role
-        const { data: roleData, error: roleError } = await supabase
-          .from('roles')
-          .insert({
-            name: formData.name,
-            admin: formData.admin
-          })
-          .select()
-          .single();
-
-        if (roleError) throw roleError;
-
-        // Insert role functions
-        if (formData.selectedFunctions.length > 0) {
-          for (const functionId of formData.selectedFunctions) {
-            const { error: functionsError } = await supabase
-              .from('role_functions')
-              .insert({
-                role_id: roleData.id,
-                function_id: functionId
-              } as any);
-
-            if (functionsError) throw functionsError;
-          }
-        }
-
-        toast({
-          title: "Éxito",
-          description: "Rol creado correctamente",
-        });
-      }
+      toast({
+        title: "Éxito",
+        description: isEdit ? "Rol actualizado correctamente" : "Rol creado correctamente",
+      });
 
       navigate('/settings/roles');
     } catch (error) {
       console.error('Error saving role:', error);
       toast({
         title: "Error",
-        description: "No se pudo guardar el rol",
+        description: error.message || "No se pudo guardar el rol",
         variant: "destructive",
       });
     }
@@ -313,7 +311,7 @@ const CreateRole = () => {
             {isEdit ? 'Editar Rol' : 'Crear Rol'}
           </h1>
           <p className="text-muted-foreground mt-2">
-            {isEdit 
+            {isEdit
               ? 'Modifica la información del rol y sus funciones asignadas'
               : 'Completa la información para crear un nuevo rol'
             }
@@ -332,20 +330,20 @@ const CreateRole = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nombre del Rol *</Label>
-                  <Input 
+                  <Input
                     id="name"
                     placeholder="Ingresa el nombre del rol"
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
+                  <Checkbox
                     id="admin"
                     checked={formData.admin}
-                    onCheckedChange={(checked) => setFormData({...formData, admin: checked as boolean})}
+                    onCheckedChange={(checked) => handleAdminChange(checked as boolean)}
                   />
                   <Label htmlFor="admin">Rol de Administrador</Label>
                 </div>
