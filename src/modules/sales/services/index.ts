@@ -224,3 +224,12 @@ export const fetchPriceLists = async () => {
   if (error) throw error;
   return data;
 };
+
+// Lookup document in external API (DNI/RUC)
+export const lookupDocument = async (documentType: string, documentNumber: string) => {
+  const { data, error } = await supabase.functions.invoke('document-lookup', {
+    body: { documentType, documentNumber },
+  });
+  if (error) throw error;
+  return data;
+};

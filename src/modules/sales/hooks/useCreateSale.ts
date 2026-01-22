@@ -26,6 +26,7 @@ import {
   fetchSalesFormData,
   fetchShippingCosts,
   searchClientByDocument,
+  lookupDocument,
   createOrder,
   updateOrder,
   updateOrderSituation,
@@ -429,6 +430,7 @@ export const useCreateSale = () => {
 
     setSearchingClient(true);
     try {
+      // First, search in accounts table
       const data = await searchClientByDocument(
         parseInt(formData.documentType),
         formData.documentNumber
@@ -436,6 +438,7 @@ export const useCreateSale = () => {
       const client = adaptClientSearchResult(data);
 
       if (client) {
+        // Client exists in database
         setClientFound(true);
         setFormData((prev) => ({
           ...prev,
@@ -444,13 +447,70 @@ export const useCreateSale = () => {
           customerLastname2: client.lastName2 || '',
         }));
       } else {
-        setClientFound(false);
-        setFormData((prev) => ({
-          ...prev,
-          customerName: '',
-          customerLastname: '',
-          customerLastname2: '',
-        }));
+        // Client not found - check document type code
+        const selectedDocType = salesData?.documentTypes.find(
+          (dt) => dt.id.toString() === formData.documentType
+        );
+        const docTypeCode = selectedDocType?.code?.toUpperCase();
+
+        if (docTypeCode === 'DNI' || docTypeCode === 'RUC') {
+          // Query external API for DNI/RUC
+          try {
+            const lookupResult = await lookupDocument(docTypeCode, formData.documentNumber);
+
+            if (lookupResult?.found) {
+              setClientFound(false); // Allow editing if needed
+              setFormData((prev) => ({
+                ...prev,
+                customerName: lookupResult.nombres || '',
+                customerLastname: lookupResult.apellidoPaterno || '',
+                customerLastname2: lookupResult.apellidoMaterno || '',
+              }));
+              toast({
+                title: 'Datos encontrados',
+                description: 'Se encontraron datos del documento en RENIEC/SUNAT',
+              });
+            } else {
+              // DNI/RUC not found in external API
+              setClientFound(false);
+              setFormData((prev) => ({
+                ...prev,
+                customerName: '',
+                customerLastname: '',
+                customerLastname2: '',
+              }));
+              toast({
+                title: 'Documento no encontrado',
+                description: 'No se encontraron datos para este documento',
+                variant: 'destructive',
+              });
+            }
+          } catch (lookupError) {
+            console.error('Error looking up document:', lookupError);
+            // On API error, still allow manual input
+            setClientFound(false);
+            setFormData((prev) => ({
+              ...prev,
+              customerName: '',
+              customerLastname: '',
+              customerLastname2: '',
+            }));
+            toast({
+              title: 'Error de consulta',
+              description: 'No se pudo consultar el documento. Ingrese los datos manualmente.',
+              variant: 'destructive',
+            });
+          }
+        } else {
+          // Other document types (Passport, etc.) - enable manual input
+          setClientFound(false);
+          setFormData((prev) => ({
+            ...prev,
+            customerName: '',
+            customerLastname: '',
+            customerLastname2: '',
+          }));
+        }
       }
     } catch (error) {
       console.error('Error searching client:', error);
@@ -462,7 +522,7 @@ export const useCreateSale = () => {
     } finally {
       setSearchingClient(false);
     }
-  }, [formData.documentType, formData.documentNumber, toast]);
+  }, [formData.documentType, formData.documentNumber, salesData?.documentTypes, toast]);
 
   // Add product to list
   const addProduct = useCallback(() => {

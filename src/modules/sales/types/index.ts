@@ -52,6 +52,17 @@ export interface SalePayment {
 export interface DocumentType {
   id: number;
   name: string;
+  code: string | null;
+}
+
+// Document Lookup Response (external API)
+export interface DocumentLookupResponse {
+  found: boolean;
+  nombres?: string;
+  apellidoPaterno?: string;
+  apellidoMaterno?: string;
+  razonSocial?: string;
+  error?: string;
 }
 
 export interface SaleType {
