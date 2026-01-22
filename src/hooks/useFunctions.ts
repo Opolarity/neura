@@ -33,6 +33,8 @@ export const useFunctions = () => {
           .eq('active', true)
           .order('order', { ascending: true, nullsFirst: false });
 
+        console.log(data);
+
         if (error) throw error;
 
         // Transform the flat functions data into a hierarchical structure
@@ -56,13 +58,13 @@ const transformToMenuStructure = (functions: Function[]): MenuFunction[] => {
   const parentFunctions = functions
     .filter(f => f.parent_function === null)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
-  
+
   return parentFunctions.map(parent => {
     // Check if this parent has children
     const children = functions
       .filter(f => f.parent_function === parent.id)
       .sort((a, b) => (a.order || 0) - (b.order || 0));
-    
+
     if (children.length === 0) {
       return parent;
     }
