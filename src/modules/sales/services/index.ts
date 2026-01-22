@@ -69,12 +69,13 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
         price: p.price,
         discount_percent: p.discountPercent,
       })),
-      payment: orderData.payment ? {
-        payment_method_id: orderData.payment.paymentMethodId,
-        amount: orderData.payment.amount,
-        date: orderData.payment.date,
-        confirmation_code: orderData.payment.confirmationCode,
-      } : null,
+      payments: orderData.payments.map(p => ({
+        payment_method_id: p.paymentMethodId,
+        amount: p.amount,
+        date: p.date,
+        confirmation_code: p.confirmationCode,
+        voucher_url: p.voucherUrl,
+      })),
       initial_situation_id: orderData.initialSituationId,
     },
   });
@@ -118,12 +119,13 @@ export const updateOrder = async (orderId: number, orderData: CreateOrderRequest
         price: p.price,
         discount_percent: p.discountPercent,
       })),
-      payment: orderData.payment ? {
-        payment_method_id: orderData.payment.paymentMethodId,
-        amount: orderData.payment.amount,
-        date: orderData.payment.date,
-        confirmation_code: orderData.payment.confirmationCode,
-      } : null,
+      payments: orderData.payments.map(p => ({
+        payment_method_id: p.paymentMethodId,
+        amount: p.amount,
+        date: p.date,
+        confirmation_code: p.confirmationCode,
+        voucher_url: p.voucherUrl,
+      })),
     },
   });
   if (error) throw error;

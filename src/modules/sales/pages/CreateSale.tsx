@@ -52,7 +52,9 @@ import {
   Truck, 
   Receipt,
   Search,
-  ListOrdered
+  ListOrdered,
+  Upload,
+  CreditCard
 } from "lucide-react";
 import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
@@ -65,7 +67,8 @@ const CreateSale = () => {
     searchingClient,
     formData,
     products,
-    payment,
+    payments,
+    currentPayment,
     orderSituation,
     salesData,
     clientFound,
@@ -88,6 +91,8 @@ const CreateSale = () => {
     setSearchQuery,
     handleInputChange,
     handlePaymentChange,
+    addPayment,
+    removePayment,
     handleSearchClient,
     handleSelectPriceList,
     addProduct,
@@ -539,25 +544,54 @@ const CreateSale = () => {
 
               <Separator />
 
-              <div className="space-y-3">
-                <div>
-                  <Label>Método de Pago</Label>
-                  <Select value={payment.paymentMethodId} onValueChange={(v) => handlePaymentChange("paymentMethodId", v)}>
-                    <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
-                    <SelectContent>
-                      {salesData?.paymentMethods.map((pm) => <SelectItem key={pm.id} value={pm.id.toString()}>{pm.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+              {/* Lista de pagos agregados */}
+              {payments.filter(p => p.paymentMethodId).length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Pagos Registrados</Label>
+                  {payments.filter(p => p.paymentMethodId).map((p) => {
+                    const method = salesData?.paymentMethods.find(pm => pm.id.toString() === p.paymentMethodId);
+                    return (
+                      <div key={p.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm">{method?.name || 'Método'}</span>
+                          <span className="text-sm font-medium">{formatCurrency(parseFloat(p.amount) || 0)}</span>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removePayment(p.id)}>
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
+              )}
+
+              {/* Formulario para agregar nuevo pago */}
+              <div className="space-y-3 p-3 border rounded-md bg-muted/30">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label>Monto Pagado</Label>
-                    <Input type="number" value={payment.amount} onChange={(e) => handlePaymentChange("amount", e.target.value)} placeholder={total.toFixed(2)} />
+                    <Label>Método de Pago</Label>
+                    <Select value={currentPayment.paymentMethodId} onValueChange={(v) => handlePaymentChange("paymentMethodId", v)}>
+                      <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                      <SelectContent>
+                        {salesData?.paymentMethods.map((pm) => <SelectItem key={pm.id} value={pm.id.toString()}>{pm.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
-                    <Label>Código</Label>
-                    <Input value={payment.confirmationCode} onChange={(e) => handlePaymentChange("confirmationCode", e.target.value)} placeholder="Confirmación" />
+                    <Label>Monto</Label>
+                    <Input type="number" value={currentPayment.amount} onChange={(e) => handlePaymentChange("amount", e.target.value)} placeholder={total.toFixed(2)} />
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button type="button" variant="outline" size="sm" className="w-full">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Subir Baucher
+                  </Button>
+                  <Button type="button" variant="secondary" size="sm" className="w-full" onClick={addPayment}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Agregar Pago
+                  </Button>
                 </div>
               </div>
 

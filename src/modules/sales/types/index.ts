@@ -41,9 +41,11 @@ export interface SaleProduct {
 }
 
 export interface SalePayment {
+  id: string; // unique identifier for the payment entry
   paymentMethodId: string;
   amount: string;
   confirmationCode: string;
+  voucherUrl?: string;
 }
 
 // API Response Types
@@ -182,12 +184,13 @@ export interface CreateOrderRequest {
     price: number;
     discountPercent: number;
   }>;
-  payment: {
+  payments: Array<{
     paymentMethodId: number;
     amount: number;
     date: string;
     confirmationCode: string | null;
-  } | null;
+    voucherUrl: string | null;
+  }>;
   initialSituationId: number;
 }
 

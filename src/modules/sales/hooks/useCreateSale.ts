@@ -72,11 +72,13 @@ const INITIAL_FORM_DATA: SaleFormData = {
   notes: '',
 };
 
-const INITIAL_PAYMENT: SalePayment = {
+const createEmptyPayment = (): SalePayment => ({
+  id: crypto.randomUUID(),
   paymentMethodId: '',
   amount: '',
   confirmationCode: '',
-};
+  voucherUrl: '',
+});
 
 export const useCreateSale = () => {
   const navigate = useNavigate();
@@ -96,7 +98,8 @@ export const useCreateSale = () => {
   // Form data
   const [formData, setFormData] = useState<SaleFormData>(INITIAL_FORM_DATA);
   const [products, setProducts] = useState<SaleProduct[]>([]);
-  const [payment, setPayment] = useState<SalePayment>(INITIAL_PAYMENT);
+  const [payments, setPayments] = useState<SalePayment[]>([createEmptyPayment()]);
+  const [currentPayment, setCurrentPayment] = useState<SalePayment>(createEmptyPayment());
   const [orderSituation, setOrderSituation] = useState<string>('');
 
   // Dropdown data
@@ -332,11 +335,13 @@ export const useCreateSale = () => {
       // Load payment
       const paymentData = await fetchOrderPayment(id);
       if (paymentData) {
-        setPayment({
+        setPayments([{
+          id: crypto.randomUUID(),
           paymentMethodId: paymentData.payment_method_id?.toString() || '',
           amount: paymentData.amount?.toString() || '',
           confirmationCode: paymentData.gateway_confirmation_code || '',
-        });
+          voucherUrl: paymentData.baucher_url || '',
+        }]);
       }
 
       // Load situation
@@ -380,9 +385,35 @@ export const useCreateSale = () => {
     }
   }, [allShippingCosts]);
 
-  // Handle payment changes
+  // Handle current payment changes
   const handlePaymentChange = useCallback((field: keyof SalePayment, value: string) => {
-    setPayment((prev) => ({ ...prev, [field]: value }));
+    setCurrentPayment((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  // Add payment to list
+  const addPayment = useCallback(() => {
+    if (!currentPayment.paymentMethodId || !currentPayment.amount) {
+      toast({
+        title: 'Error',
+        description: 'Seleccione método de pago y monto',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setPayments((prev) => [...prev, { ...currentPayment, id: crypto.randomUUID() }]);
+    setCurrentPayment(createEmptyPayment());
+  }, [currentPayment, toast]);
+
+  // Remove payment from list
+  const removePayment = useCallback((paymentId: string) => {
+    setPayments((prev) => prev.filter((p) => p.id !== paymentId));
+  }, []);
+
+  // Update payment in list
+  const updatePaymentInList = useCallback((paymentId: string, field: keyof SalePayment, value: string) => {
+    setPayments((prev) =>
+      prev.map((p) => (p.id === paymentId ? { ...p, [field]: value } : p))
+    );
   }, []);
 
   // Search client by document
@@ -534,14 +565,15 @@ export const useCreateSale = () => {
           price: p.price,
           discountPercent: p.discountPercent,
         })),
-        payment: payment.paymentMethodId
-          ? {
-              paymentMethodId: parseInt(payment.paymentMethodId),
-              amount: parseFloat(payment.amount) || total,
-              date: new Date().toISOString(),
-              confirmationCode: payment.confirmationCode || null,
-            }
-          : null,
+        payments: payments
+          .filter((p) => p.paymentMethodId && p.amount)
+          .map((p) => ({
+            paymentMethodId: parseInt(p.paymentMethodId),
+            amount: parseFloat(p.amount) || 0,
+            date: new Date().toISOString(),
+            confirmationCode: p.confirmationCode || null,
+            voucherUrl: p.voucherUrl || null,
+          })),
         initialSituationId: parseInt(orderSituation),
       };
 
@@ -577,7 +609,7 @@ export const useCreateSale = () => {
     } finally {
       setSaving(false);
     }
-  }, [formData, products, payment, orderSituation, orderId, subtotal, discountAmount, total, toast, navigate]);
+  }, [formData, products, payments, orderSituation, orderId, subtotal, discountAmount, total, toast, navigate]);
 
   return {
     // State
@@ -586,7 +618,8 @@ export const useCreateSale = () => {
     searchingClient,
     formData,
     products,
-    payment,
+    payments,
+    currentPayment,
     orderSituation,
     salesData,
     clientFound,
@@ -615,6 +648,9 @@ export const useCreateSale = () => {
     setSearchQuery,
     handleInputChange,
     handlePaymentChange,
+    addPayment,
+    removePayment,
+    updatePaymentInList,
     handleSearchClient,
     handleSelectPriceList,
     addProduct,
