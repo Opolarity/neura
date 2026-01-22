@@ -19,9 +19,6 @@ import MovementsFilterModal from "../components/movements/MovementsFilterModal";
 const Movements = () => {
   const {
     movements,
-    movementsTypes,
-    warehouses,
-    users,
     loading,
     search,
     pagination,
@@ -64,6 +61,70 @@ const Movements = () => {
             onOpen={onOpenFilterModal}
           />
         </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por producto..."
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            <div className="relative">
+              <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="date"
+                placeholder="Fecha inicio"
+                value={filters.start_date || ""}
+                onChange={(e) => onDateChange("start", e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            <div className="relative">
+              <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="date"
+                placeholder="Fecha fin"
+                value={filters.end_date || ""}
+                onChange={(e) => onDateChange("end", e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          {(search || filters.start_date || filters.end_date) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={clearFilters}
+            >
+              Limpiar filtros
+            </Button>
+          )}
+        </CardContent>
+
+        <CardFooter>
+          <PaginationBar
+            pagination={pagination}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+          />
+        </CardFooter>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <MovementsFilterBar
+            search={search}
+            onSearchChange={onSearchChange}
+            onOpen={onOpenFilterModal}
+          />
+        </CardHeader>
 
         <CardContent className="p-0">
           <MovementsTable movements={movements} />
@@ -80,9 +141,6 @@ const Movements = () => {
 
       <MovementsFilterModal
         filters={filters}
-        warehouses={warehouses}
-        users={users}
-        movementsTypes={movementsTypes}
         isOpen={isOpenFilterModal}
         onClose={onCloseFilterModal}
         onApply={onApplyFilterModal}

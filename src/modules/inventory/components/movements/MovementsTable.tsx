@@ -32,16 +32,15 @@ const MovementsTable = ({ movements }: MovementsTableProps) => {
         <Table>
             <TableHeader>
                 <TableRow>
-
+                    <TableHead>Fecha</TableHead>
                     <TableHead>Producto</TableHead>
+                    <TableHead>Almacén</TableHead>
                     <TableHead>Variación</TableHead>
                     <TableHead>Cantidad</TableHead>
+                    <TableHead>Tipo Stock</TableHead>
+                    <TableHead>Vinculo Stock</TableHead>
                     <TableHead>Origen</TableHead>
-                    <TableHead>Tipo Movimiento</TableHead>
-                    <TableHead>Almacén</TableHead>
-                    <TableHead>Fecha</TableHead>
                     <TableHead>Usuario</TableHead>
-
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -67,10 +66,17 @@ const MovementsTable = ({ movements }: MovementsTableProps) => {
                             movement.vinc_stock_type,
                             movement.quantity
                         )
+
                         return (
                             <TableRow key={movement.movements_id}>
+                                <TableCell className="whitespace-nowrap text-xs">
+                                    {format(new Date(movement.date), "dd/MM/yyyy")}
+                                </TableCell>
                                 <TableCell className="font-medium text-sm">
                                     {movement.product}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                    {movement.warehouse}
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">
                                     <Badge
@@ -82,23 +88,14 @@ const MovementsTable = ({ movements }: MovementsTableProps) => {
                                     </Badge>
                                 </TableCell>
                                 <TableCell>
-                                    <Badge variant="outline" className={`font-mono ${movement.quantity > 0 ? "bg-green-300" : "bg-red-300"}`}>
+                                    <Badge variant="outline" className="font-mono">
                                         {movement.quantity}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-xs uppercase font-semibold">
-                                    <Badge
-                                        key={movement.movement_type}
-                                        variant="outline"
-                                        className="text-xs"
-                                    >
-                                        {movement.movement_type}
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-sm">
                                     {
                                         stockTypeDirection ? (
-                                            <>
+                                            <Badge variant="outline" className="font-mono flex gap-1">
                                                 {stockTypeDirection.from === stockTypeDirection.to ? stockTypeDirection.from : (
                                                     <>
                                                         <span
@@ -111,7 +108,7 @@ const MovementsTable = ({ movements }: MovementsTableProps) => {
                                                             {stockTypeDirection.to}
                                                         </span>
 
-                                                        <span> → </span>
+                                                        <span>→</span>
 
                                                         <span
                                                             className={
@@ -124,14 +121,14 @@ const MovementsTable = ({ movements }: MovementsTableProps) => {
                                                         </span>
                                                     </>
                                                 )}
-                                            </>
-                                        ) : movement.stock_type
+                                            </Badge>
+                                        ) : ""
                                     }
                                 </TableCell>
                                 <TableCell className="text-sm">
                                     {
                                         warehouseDirection ? (
-                                            <>
+                                            <Badge variant="outline" className="font-mono flex gap-1">
                                                 {warehouseDirection.from === warehouseDirection.to ? warehouseDirection.from : (
                                                     <>
                                                         <span
@@ -144,7 +141,7 @@ const MovementsTable = ({ movements }: MovementsTableProps) => {
                                                             {warehouseDirection.to}
                                                         </span>
 
-                                                        <span> → </span>
+                                                        <span>→</span>
 
                                                         <span
                                                             className={
@@ -157,17 +154,19 @@ const MovementsTable = ({ movements }: MovementsTableProps) => {
                                                         </span>
                                                     </>
                                                 )}
-                                            </>
-                                        ) : movement.warehouse
+                                            </Badge>
+                                        ) : ""
                                     }
                                 </TableCell>
 
-
-
-
-
-                                <TableCell className="whitespace-nowrap text-xs">
-                                    {format(new Date(movement.date.replace(/-/g, '/')), "dd/MM/yyyy")}
+                                <TableCell className="text-xs uppercase font-semibold">
+                                    <Badge
+                                        key={movement.variation}
+                                        variant="outline"
+                                        className="text-xs"
+                                    >
+                                        {movement.movement_type}
+                                    </Badge>
                                 </TableCell>
                                 <TableCell className="text-sm">{movement.user}</TableCell>
                             </TableRow>

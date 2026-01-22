@@ -1,22 +1,16 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { getStockMovementsApi, movementsTypesApi, usersListApi, warehousesListApi } from "../services/Movements.service";
-import { movementsAdapter, movementsTypesAdapter } from "../adapters/Movements.adapter";
+import { getStockMovementsApi } from "../services/Movements.service";
+import { movementsAdapter } from "../adapters/Movements.adapter";
 import {
     Movements,
     MovementsFilters,
-    MovementsTypes,
-    SimpleUsers,
-    SimpleWarehouses,
 } from "../types/Movements.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 
 export const useMovements = () => {
     const [movements, setMovements] = useState<Movements[]>([]);
-    const [movementsTypes, setMovementsTypes] = useState<MovementsTypes[]>([]);
-    const [warehouses, setWarehouses] = useState<SimpleWarehouses[]>([]);
-    const [users, setUsers] = useState<SimpleUsers[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
@@ -35,33 +29,6 @@ export const useMovements = () => {
         start_date: null,
         end_date: null,
     });
-
-    const loadInitial = async () => {
-        setLoading(true);
-        try {
-            const dataTypes = await movementsTypesApi();
-            const types = movementsTypesAdapter(dataTypes);
-            setMovementsTypes(types);
-
-            const dataWarehouses = await warehousesListApi();
-            setWarehouses(dataWarehouses);
-
-            const dataUsers = await usersListApi();
-            setUsers(dataUsers);
-
-            // Initial load uses default filters
-            await loadMovements(filters);
-        } catch (error: any) {
-            console.error("Error loading initial data:", error);
-            toast({
-                title: "Error",
-                description: "No se pudo cargar el inventario inicial",
-                variant: "destructive",
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const loadMovements = async (
         currentFilters: MovementsFilters = filters,
@@ -86,7 +53,7 @@ export const useMovements = () => {
     };
 
     useEffect(() => {
-        loadInitial();
+        loadMovements();
     }, []);
 
     // Debounced Search Effect
@@ -177,9 +144,6 @@ export const useMovements = () => {
 
     return {
         movements,
-        movementsTypes,
-        warehouses,
-        users,
         loading,
         search,
         pagination,
@@ -195,53 +159,3 @@ export const useMovements = () => {
         onApplyFilterModal,
     };
 };
-
-
-
-/*
-//POSIBLEMENTE SI PIDEN DATOS POR DEFECTO ACÁ SE AGREGAN
-
-const loadInitial = async () => {
-        setLoading(true);
-        try {
-            const dataTypes = await movementsTypesApi();
-            const types = movementsTypesAdapter(dataTypes);
-            setMovementsTypes(types);
-
-            // Initial load uses default filters
-            await loadMovements(filters, true);
-        } catch (error: any) {
-            console.error("Error loading initial data:", error);
-            toast({
-                title: "Error",
-                description: "No se pudo cargar el inventario inicial",
-                variant: "destructive",
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const loadInventory = async (
-        currentFilters: MovementsFilters = filters,
-        isInitial: boolean = false,
-    ) => {
-        try {
-            const dataInventory = await getStockMovementsApi(currentFilters);
-            const {
-                data,
-                pagination: newPagination
-            } = movementsAdapter(dataInventory);
-
-            setMovements(data);
-            setPagination(newPagination);
-        } catch (error: any) {
-            console.error("Error loading inventory:", error);
-            toast({
-                title: "Error",
-                description: "No se pudo cargar el inventario",
-                variant: "destructive",
-            });
-        }
-    };
-*/

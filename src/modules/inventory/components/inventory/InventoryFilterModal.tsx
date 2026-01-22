@@ -72,7 +72,6 @@ const InventoryFilterModal = ({
       types: typeId,
       order: null,
     });
-    console.log(typeId);
   };
 
   return (
