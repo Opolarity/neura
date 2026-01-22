@@ -372,7 +372,7 @@ const CreateSale = () => {
                   <div className="col-span-2">
                     <Label>Número</Label>
                     <div className="flex gap-2">
-                      <Input value={formData.documentNumber} onChange={(e) => handleInputChange("documentNumber", e.target.value)} onBlur={() => handleSearchClient()} disabled={!formData.documentType} />
+                      <Input value={formData.documentNumber} onChange={(e) => handleInputChange("documentNumber", e.target.value)} onBlur={() => handleSearchClient()} />
                       {searchingClient && <Loader2 className="w-5 h-5 animate-spin self-center" />}
                     </div>
                   </div>
