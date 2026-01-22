@@ -232,6 +232,8 @@ export interface PaginatedProductVariation {
   productTitle: string;
   variationId: number;
   sku: string;
+  imageUrl: string | null;
+  stock: number;
   terms: Array<{ id: number; name: string }>;
   prices: Array<{ price_list_id: number; price: number; sale_price: number | null }>;
 }

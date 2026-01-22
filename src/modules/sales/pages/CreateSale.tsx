@@ -290,12 +290,37 @@ const CreateSale = () => {
                                       key={variation.id}
                                       value={`${variation.productTitle} ${variation.sku} ${termsNames}`}
                                       onSelect={() => { setSelectedVariation(variation); setOpen(false); }}
+                                      className="flex items-center gap-3 py-2"
                                     >
-                                      <Check className={cn("mr-2 h-4 w-4", selectedVariation?.id === variation.id ? "opacity-100" : "opacity-0")} />
-                                      <div className="flex flex-col">
-                                        <span className="font-medium">{variation.productTitle}</span>
-                                        <span className="text-sm text-muted-foreground">{displayTerms}</span>
+                                      <Check className={cn("h-4 w-4 shrink-0", selectedVariation?.id === variation.id ? "opacity-100" : "opacity-0")} />
+                                      {/* Product Image */}
+                                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
+                                        {variation.imageUrl ? (
+                                          <img 
+                                            src={variation.imageUrl} 
+                                            alt={variation.productTitle}
+                                            className="h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="flex h-full w-full items-center justify-center">
+                                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                          </div>
+                                        )}
                                       </div>
+                                      {/* Product Info */}
+                                      <div className="flex flex-1 flex-col min-w-0">
+                                        <span className="font-medium truncate">{variation.productTitle}</span>
+                                        <span className="text-sm text-muted-foreground truncate">{displayTerms}</span>
+                                      </div>
+                                      {/* Stock */}
+                                      <span className={cn(
+                                        "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
+                                        variation.stock > 0 
+                                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
+                                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                      )}>
+                                        {variation.stock}
+                                      </span>
                                     </CommandItem>
                                   );
                                 })}
