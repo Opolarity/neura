@@ -363,7 +363,7 @@ const CreateSale = () => {
                   <div>
                     <Label>Tipo Doc.</Label>
                     <Select value={formData.documentType} onValueChange={(v) => { handleInputChange("documentType", v); if (formData.documentNumber) handleSearchClient(v); }}>
-                      <SelectTrigger><SelectValue placeholder="DNI" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
                       <SelectContent>
                         {salesData?.documentTypes.map((dt) => <SelectItem key={dt.id} value={dt.id.toString()}>{dt.name}</SelectItem>)}
                       </SelectContent>
