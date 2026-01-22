@@ -208,6 +208,15 @@ export const useCreateSale = () => {
     [products, shippingCostValue]
   );
 
+  // Computed: Check if selected document type is persona jurídica (company)
+  const isPersonaJuridica = useMemo(() => {
+    if (!formData.documentType || !salesData?.documentTypes) return false;
+    const selectedDocType = salesData.documentTypes.find(
+      (dt) => dt.id.toString() === formData.documentType
+    );
+    return selectedDocType?.personType === 2;
+  }, [formData.documentType, salesData?.documentTypes]);
+
   // Load form data from API
   const loadFormData = async () => {
     try {
@@ -371,6 +380,23 @@ export const useCreateSale = () => {
 
   // Handle form input changes
   const handleInputChange = useCallback((field: keyof SaleFormData, value: string | boolean) => {
+    // When document type changes to persona jurídica, clear lastname fields
+    if (field === 'documentType' && typeof value === 'string') {
+      const selectedDocType = salesData?.documentTypes.find(
+        (dt) => dt.id.toString() === value
+      );
+      if (selectedDocType?.personType === 2) {
+        // Persona jurídica: clear lastnames
+        setFormData((prev) => ({
+          ...prev,
+          [field]: value,
+          customerLastname: '',
+          customerLastname2: '',
+        }));
+        return;
+      }
+    }
+
     setFormData((prev) => ({ ...prev, [field]: value }));
 
     // When shipping method changes, update the cost
@@ -391,7 +417,7 @@ export const useCreateSale = () => {
     if (field === 'cityId') {
       setFormData((prev) => ({ ...prev, neighborhoodId: '' }));
     }
-  }, [allShippingCosts]);
+  }, [allShippingCosts, salesData?.documentTypes]);
 
   // Handle current payment changes
   const handlePaymentChange = useCallback((field: keyof SalePayment, value: string) => {
@@ -461,15 +487,29 @@ export const useCreateSale = () => {
 
             if (lookupResult?.found) {
               setClientFound(true); // Lock fields when data found from external API
-              setFormData((prev) => ({
-                ...prev,
-                customerName: lookupResult.nombres || '',
-                customerLastname: lookupResult.apellidoPaterno || '',
-                customerLastname2: lookupResult.apellidoMaterno || '',
-              }));
+              
+              // Check if persona jurídica (RUC) - use razón social
+              if (docTypeCode === 'RUC') {
+                setFormData((prev) => ({
+                  ...prev,
+                  customerName: lookupResult.razonSocial || lookupResult.nombres || '',
+                  customerLastname: '',
+                  customerLastname2: '',
+                }));
+              } else {
+                // Persona natural (DNI) - use nombres y apellidos
+                setFormData((prev) => ({
+                  ...prev,
+                  customerName: lookupResult.nombres || '',
+                  customerLastname: lookupResult.apellidoPaterno || '',
+                  customerLastname2: lookupResult.apellidoMaterno || '',
+                }));
+              }
               toast({
                 title: 'Datos encontrados',
-                description: 'Se encontraron datos del documento en RENIEC/SUNAT',
+                description: docTypeCode === 'RUC' 
+                  ? 'Se encontraron datos de la empresa en SUNAT'
+                  : 'Se encontraron datos del documento en RENIEC',
               });
             } else {
               // DNI/RUC not found in external API
@@ -756,6 +796,7 @@ export const useCreateSale = () => {
     discountAmount,
     total,
     orderId,
+    isPersonaJuridica,
 
     // Actions
     setOrderSituation,
