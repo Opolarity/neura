@@ -460,7 +460,7 @@ export const useCreateSale = () => {
             const lookupResult = await lookupDocument(docTypeCode, formData.documentNumber);
 
             if (lookupResult?.found) {
-              setClientFound(false); // Allow editing if needed
+              setClientFound(true); // Lock fields when data found from external API
               setFormData((prev) => ({
                 ...prev,
                 customerName: lookupResult.nombres || '',
