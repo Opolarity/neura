@@ -193,6 +193,8 @@ export const useCreateSale = () => {
       sku: p.sku,
       productId: p.productId,
       productTitle: p.productTitle,
+      imageUrl: p.imageUrl,
+      stock: p.stock,
       terms: p.terms,
       prices: p.prices.map((pr) => ({
         priceListId: pr.price_list_id,
@@ -274,7 +276,13 @@ export const useCreateSale = () => {
         size: 10,
         search: search || undefined,
       });
-      setPaginatedProducts(result.data || []);
+      // Map response with default values for imageUrl and stock
+      const mappedProducts = (result.data || []).map((p: any) => ({
+        ...p,
+        imageUrl: p.imageUrl ?? null,
+        stock: p.stock ?? 0,
+      }));
+      setPaginatedProducts(mappedProducts);
       setProductPagination(result.page);
     } catch (error) {
       console.error('Error loading products:', error);
