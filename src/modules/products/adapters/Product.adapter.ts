@@ -7,7 +7,11 @@ import {
 } from "../types/Products.types";
 
 export const productAdapter = (response: ProductApiResponse) => {
-  const formattedProducts: Product[] = response.productsdata.data.map(
+  // Handle both old format (productsdata.productsdata) and new format (productsdata)
+  const rawData = response.productsdata;
+  const productsData = 'productsdata' in rawData ? rawData.productsdata : rawData;
+  
+  const formattedProducts: Product[] = (productsData?.data ?? []).map(
     (item) => ({
       id: item.product_id,
       categories: item.categories,
@@ -22,9 +26,9 @@ export const productAdapter = (response: ProductApiResponse) => {
   );
 
   const pagination: PaginationState = {
-    p_page: response.productsdata.page.p_page,
-    p_size: response.productsdata.page.p_size,
-    total: response.productsdata.page.total,
+    p_page: productsData?.page?.p_page ?? 1,
+    p_size: productsData?.page?.p_size ?? 20,
+    total: productsData?.page?.total ?? 0,
   };
 
   return { products: formattedProducts, pagination };

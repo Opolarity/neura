@@ -1,22 +1,24 @@
-export interface ProductApiResponse {
-  productsdata: {
-    data: Array<{
-      categories: string;
-      estado: boolean;
-      image_url: string;
-      name: string;
-      price: string;
-      product_id: number;
-      terminos: string;
-      web: boolean;
-      stock: number;
-    }>;
-    page: {
-      p_page: number;
-      p_size: number;
-      total: number;
-    };
+interface ProductsData {
+  data: Array<{
+    categories: string;
+    estado: boolean;
+    image_url: string | null;
+    name: string;
+    price: string;
+    product_id: number;
+    terminos: string;
+    web: boolean;
+    stock: number;
+  }>;
+  page: {
+    p_page: number;
+    p_size: number;
+    total: number;
   };
+}
+
+export interface ProductApiResponse {
+  productsdata: ProductsData | { productsdata: ProductsData };
 }
 
 export interface Product {
@@ -24,7 +26,7 @@ export interface Product {
   categories: string;
   estatus: boolean;
   web: boolean;
-  image: string;
+  image: string | null;
   name: string;
   price: string;
   terms: string;
