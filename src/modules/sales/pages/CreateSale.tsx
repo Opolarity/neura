@@ -728,22 +728,24 @@ const CreateSale = () => {
                   size="icon"
                   className="flex-shrink-0"
                   onClick={() => noteFileInputRef.current?.click()}
+                  disabled={!orderId}
                 >
                   <Paperclip className="w-4 h-4" />
                 </Button>
                 <Input
-                  placeholder="Escribir nota..."
+                  placeholder={orderId ? "Escribir nota..." : "Guarde la venta para agregar notas"}
                   value={newNoteText}
                   onChange={(e) => setNewNoteText(e.target.value)}
                   onKeyDown={handleNoteKeyDown}
                   className="flex-1"
+                  disabled={!orderId}
                 />
                 <Button
                   type="button"
                   size="icon"
                   className="flex-shrink-0"
                   onClick={addNote}
-                  disabled={!newNoteText.trim() && !noteImagePreview}
+                  disabled={!orderId || (!newNoteText.trim() && !noteImagePreview)}
                 >
                   <Send className="w-4 h-4" />
                 </Button>
