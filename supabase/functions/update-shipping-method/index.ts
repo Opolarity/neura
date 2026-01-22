@@ -86,7 +86,6 @@ serve(async (req) => {
 
     console.log('Updated shipping method with ID:', method.id);
 
-    // Delete existing shipping costs for this method
     const { error: deleteError } = await db
       .from('shipping_costs')
       .delete()
