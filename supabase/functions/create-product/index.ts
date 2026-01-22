@@ -131,60 +131,66 @@ serve(async (req) => {
     const productId = data.product_id;
     console.log('Product created with ID:', productId);
 
-    // Now move images from tmp to the product folder (only if not using placeholder)
+    // Now move images from tmp to the product folder with proper naming (only if not using placeholder)
     if (!usingPlaceholder && productImages && productImages.length > 0) {
-      console.log('Moving images to product folder...');
+      console.log('Moving images to product folder with proper naming...');
       
-      // Track which images were moved and their new URLs by order
-      const movedImages: { order: number; newUrl: string }[] = [];
+      // First, get the inserted product_images IDs by order
+      const { data: insertedImages } = await supabaseAdmin
+        .from('product_images')
+        .select('id, image_order')
+        .eq('product_id', productId)
+        .order('image_order', { ascending: true });
       
-      for (const image of productImages) {
-        const oldPath = image.path;
-        // Only move if it's in the tmp folder
-        if (oldPath.startsWith('products-images/tmp/')) {
-          const fileName = oldPath.split('/').pop();
-          const newPath = `products-images/${productId}/${fileName}`;
-          
-          console.log(`Moving: ${oldPath} -> ${newPath}`);
-          
-          // Use admin client for storage operations
-          const { error: moveError } = await supabaseAdmin.storage
-            .from('products')
-            .move(oldPath, newPath);
-          
-          if (moveError) {
-            console.error('Error moving image:', moveError);
-            // Continue with other images even if one fails
-          } else {
-            const { data: { publicUrl } } = supabaseAdmin.storage
-              .from('products')
-              .getPublicUrl(newPath);
+      if (insertedImages && insertedImages.length > 0) {
+        for (const image of productImages) {
+          const oldPath = image.path;
+          // Only move if it's in the tmp folder
+          if (oldPath.startsWith('products-images/tmp/')) {
+            // Find the corresponding DB image ID by order
+            const dbImage = insertedImages.find(img => img.image_order === image.order);
+            if (!dbImage) {
+              console.error(`No DB image found for order ${image.order}`);
+              continue;
+            }
             
-            movedImages.push({
-              order: image.order,
-              newUrl: publicUrl
-            });
-            console.log(`Image moved successfully. New URL: ${publicUrl}`);
-          }
-        }
-      }
-
-      // Update image URLs in the database using the image order (more reliable than URL matching)
-      if (movedImages.length > 0) {
-        console.log('Updating image URLs in database by order...');
-        
-        for (const movedImage of movedImages) {
-          // Update by product_id and image_order (more reliable than URL matching)
-          const { error: updateError } = await supabaseAdmin
-            .from('product_images')
-            .update({ image_url: movedImage.newUrl })
-            .eq('product_id', productId)
-            .eq('image_order', movedImage.order);
-          
-          if (updateError) {
-            console.error('Error updating image URL:', updateError);
-          } else {
-            console.log(`Updated image at order ${movedImage.order} with new URL`);
+            // Get file extension from original path
+            const originalFileName = oldPath.split('/').pop() || '';
+            const extension = originalFileName.includes('.') 
+              ? originalFileName.substring(originalFileName.lastIndexOf('.')) 
+              : '.jpg';
+            
+            // New file name format: {product_image_id}-{product_id}.{extension}
+            const newFileName = `${dbImage.id}-${productId}${extension}`;
+            const newPath = `products-images/${productId}/${newFileName}`;
+            
+            console.log(`Moving: ${oldPath} -> ${newPath}`);
+            
+            // Use admin client for storage operations
+            const { error: moveError } = await supabaseAdmin.storage
+              .from('products')
+              .move(oldPath, newPath);
+            
+            if (moveError) {
+              console.error('Error moving image:', moveError);
+              // Continue with other images even if one fails
+            } else {
+              const { data: { publicUrl } } = supabaseAdmin.storage
+                .from('products')
+                .getPublicUrl(newPath);
+              
+              // Update the image URL in the database
+              const { error: updateError } = await supabaseAdmin
+                .from('product_images')
+                .update({ image_url: publicUrl })
+                .eq('id', dbImage.id);
+              
+              if (updateError) {
+                console.error('Error updating image URL:', updateError);
+              } else {
+                console.log(`Image ${dbImage.id} moved successfully. New URL: ${publicUrl}`);
+              }
+            }
           }
         }
       }

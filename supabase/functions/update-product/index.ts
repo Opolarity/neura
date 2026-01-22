@@ -238,46 +238,21 @@ serve(async (req) => {
       // Get public URL from storage path
       const rawPath = image.path;
       let imageUrl: string;
+      let needsRename = false;
       
       if (rawPath && (rawPath.startsWith('http') || image.isExisting)) {
         // If it's already a full URL or marked as existing, use it directly
         imageUrl = rawPath;
       } else {
-        // For new images (storage paths from tmp/), move to product folder first
-        if (rawPath && rawPath.includes('products-images/tmp/')) {
-          const fileName = rawPath.split('/').pop();
-          const newPath = `products-images/${productId}/${fileName}`;
-          
-          console.log(`Moving image from ${rawPath} to ${newPath}`);
-          
-          const { error: moveError } = await supabaseAdmin.storage
-            .from('products')
-            .move(rawPath, newPath);
-          
-          if (moveError) {
-            console.error('Error moving image:', moveError);
-            // If move fails, try to use the original path
-            const { data: { publicUrl } } = supabaseAdmin.storage
-              .from('products')
-              .getPublicUrl(rawPath);
-            imageUrl = publicUrl;
-          } else {
-            // Get public URL from the new location
-            const { data: { publicUrl } } = supabaseAdmin.storage
-              .from('products')
-              .getPublicUrl(newPath);
-            imageUrl = publicUrl;
-            console.log(`Image moved successfully. New URL: ${imageUrl}`);
-          }
-        } else {
-          // For other storage paths, just get the public URL
-          const { data: { publicUrl } } = supabaseAdmin.storage
-            .from('products')
-            .getPublicUrl(rawPath);
-          imageUrl = publicUrl;
-        }
+        // For new images, use a temporary URL first (will be updated after insert)
+        const { data: { publicUrl } } = supabaseAdmin.storage
+          .from('products')
+          .getPublicUrl(rawPath);
+        imageUrl = publicUrl;
+        needsRename = rawPath && rawPath.includes('products-images/tmp/');
       }
 
+      // Insert the image record first to get the DB ID
       const { data: insertedImage, error: imageError } = await supabaseAdmin
         .from('product_images')
         .insert({
@@ -295,6 +270,46 @@ serve(async (req) => {
 
       // Map the temp ID to the new DB ID
       imageIdMap[image.id] = insertedImage.id;
+
+      // Now move the file with proper naming if it's a new image from tmp/
+      if (needsRename && rawPath) {
+        // Get file extension from original path
+        const originalFileName = rawPath.split('/').pop() || '';
+        const extension = originalFileName.includes('.') 
+          ? originalFileName.substring(originalFileName.lastIndexOf('.')) 
+          : '.jpg';
+        
+        // New file name format: {product_image_id}-{product_id}.{extension}
+        const newFileName = `${insertedImage.id}-${productId}${extension}`;
+        const newPath = `products-images/${productId}/${newFileName}`;
+        
+        console.log(`Moving image from ${rawPath} to ${newPath}`);
+        
+        const { error: moveError } = await supabaseAdmin.storage
+          .from('products')
+          .move(rawPath, newPath);
+        
+        if (moveError) {
+          console.error('Error moving image:', moveError);
+          // Keep the original URL if move fails
+        } else {
+          // Get public URL from the new location and update the DB record
+          const { data: { publicUrl } } = supabaseAdmin.storage
+            .from('products')
+            .getPublicUrl(newPath);
+          
+          const { error: updateError } = await supabaseAdmin
+            .from('product_images')
+            .update({ image_url: publicUrl })
+            .eq('id', insertedImage.id);
+          
+          if (updateError) {
+            console.error('Error updating image URL:', updateError);
+          } else {
+            console.log(`Image ${insertedImage.id} moved successfully. New URL: ${publicUrl}`);
+          }
+        }
+      }
     }
 
     console.log('Images updated:', productImages.length);
