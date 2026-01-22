@@ -91,43 +91,54 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build API URL based on document type
-    const endpoint = docType === "DNI" ? "dni" : "ruc";
-    const apiUrl = `https://dniruc.apisperu.com/api/v1/${endpoint}/${docNumber}?token=${apiToken}`;
+    // Build API URL based on document type (using Decolecta API)
+    const baseUrl = "https://api.decolecta.com/v1";
+    const endpoint = docType === "DNI" 
+      ? `${baseUrl}/reniec/dni?numero=${docNumber}`
+      : `${baseUrl}/sunat/ruc?numero=${docNumber}`;
 
     console.log(`Looking up ${docType}: ${docNumber}`);
 
-    // Call external API
-    const response = await fetch(apiUrl);
+    // Call external API with Bearer token in header
+    const response = await fetch(endpoint, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiToken}`,
+      },
+    });
     const data = await response.json();
 
-    if (!response.ok || data.success === false || data.message) {
+    console.log("API Response:", JSON.stringify(data));
+
+    if (!response.ok || data.error || !data.data) {
       console.log("Document not found in external API:", data);
       return new Response(
-        JSON.stringify({ error: "Document not found", found: false }),
+        JSON.stringify({ error: data.error || "Document not found", found: false }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Return normalized response
-    // DNI response: { nombres, apellidoPaterno, apellidoMaterno, ... }
-    // RUC response: { razonSocial, ... }
+    // Decolecta DNI response: { data: { nombres, apellido_paterno, apellido_materno, ... } }
+    // Decolecta RUC response: { data: { nombre_o_razon_social, ... } }
+    const apiData = data.data;
     let result;
     if (docType === "DNI") {
       result = {
         found: true,
-        nombres: data.nombres || "",
-        apellidoPaterno: data.apellidoPaterno || "",
-        apellidoMaterno: data.apellidoMaterno || "",
+        nombres: apiData.nombres || "",
+        apellidoPaterno: apiData.apellido_paterno || "",
+        apellidoMaterno: apiData.apellido_materno || "",
       };
     } else {
-      // For RUC, use razonSocial as customerName
+      // For RUC, use nombre_o_razon_social as customerName
       result = {
         found: true,
-        nombres: data.razonSocial || "",
+        nombres: apiData.nombre_o_razon_social || "",
         apellidoPaterno: "",
         apellidoMaterno: "",
-        razonSocial: data.razonSocial || "",
+        razonSocial: apiData.nombre_o_razon_social || "",
       };
     }
 
