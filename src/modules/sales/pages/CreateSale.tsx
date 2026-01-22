@@ -636,11 +636,6 @@ const CreateSale = () => {
                   </Button>
                 </div>
               </div>
-
-              <Button type="submit" form="sale-form" className="w-full" disabled={saving}>
-                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Finalizar y Crear Venta
-              </Button>
             </CardContent>
           </Card>
 
