@@ -20,12 +20,31 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
-    const supabaseClient = createClient(
+    // Auth client to validate user
+    const supabaseAuth = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: { headers: { Authorization: authHeader } }
       }
+    );
+
+    // Validate user authentication
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication error:', authError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'No autorizado' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('User authenticated:', user.id);
+
+    // Admin client for database operations (bypasses RLS)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     const { 
@@ -59,7 +78,7 @@ serve(async (req) => {
 
     // For now, prepare images with temporary URLs (will be updated after product creation)
     const tempPreparedImages = imagesToProcess.map((image: any) => {
-      const { data: { publicUrl } } = supabaseClient.storage
+      const { data: { publicUrl } } = supabaseAdmin.storage
         .from('products')
         .getPublicUrl(image.path);
       
@@ -87,8 +106,8 @@ serve(async (req) => {
       selectedImages: v.selectedImages || []
     }));
 
-    // Call the transactional RPC to create product first
-    const { data, error } = await supabaseClient.rpc('sp_create_product', {
+    // Call the transactional RPC to create product first (using admin client)
+    const { data, error } = await supabaseAdmin.rpc('sp_create_product', {
       p_title: productName,
       p_short_description: shortDescription || '',
       p_description: description || '',
@@ -116,7 +135,8 @@ serve(async (req) => {
     if (!usingPlaceholder && productImages && productImages.length > 0) {
       console.log('Moving images to product folder...');
       
-      const movedImages: { oldPath: string; newPath: string; newUrl: string }[] = [];
+      // Track which images were moved and their new URLs by order
+      const movedImages: { order: number; newUrl: string }[] = [];
       
       for (const image of productImages) {
         const oldPath = image.path;
@@ -127,7 +147,8 @@ serve(async (req) => {
           
           console.log(`Moving: ${oldPath} -> ${newPath}`);
           
-          const { error: moveError } = await supabaseClient.storage
+          // Use admin client for storage operations
+          const { error: moveError } = await supabaseAdmin.storage
             .from('products')
             .move(oldPath, newPath);
           
@@ -135,38 +156,35 @@ serve(async (req) => {
             console.error('Error moving image:', moveError);
             // Continue with other images even if one fails
           } else {
-            const { data: { publicUrl } } = supabaseClient.storage
+            const { data: { publicUrl } } = supabaseAdmin.storage
               .from('products')
               .getPublicUrl(newPath);
             
             movedImages.push({
-              oldPath,
-              newPath,
+              order: image.order,
               newUrl: publicUrl
             });
+            console.log(`Image moved successfully. New URL: ${publicUrl}`);
           }
         }
       }
 
-      // Update image URLs in the database if we moved any
+      // Update image URLs in the database using the image order (more reliable than URL matching)
       if (movedImages.length > 0) {
-        console.log('Updating image URLs in database...');
+        console.log('Updating image URLs in database by order...');
         
         for (const movedImage of movedImages) {
-          // Get the old URL to find the record
-          const { data: { publicUrl: oldUrl } } = supabaseClient.storage
-            .from('products')
-            .getPublicUrl(movedImage.oldPath);
-          
-          // Update the product_images table
-          const { error: updateError } = await supabaseClient
+          // Update by product_id and image_order (more reliable than URL matching)
+          const { error: updateError } = await supabaseAdmin
             .from('product_images')
             .update({ image_url: movedImage.newUrl })
             .eq('product_id', productId)
-            .eq('image_url', oldUrl);
+            .eq('image_order', movedImage.order);
           
           if (updateError) {
             console.error('Error updating image URL:', updateError);
+          } else {
+            console.log(`Updated image at order ${movedImage.order} with new URL`);
           }
         }
       }
