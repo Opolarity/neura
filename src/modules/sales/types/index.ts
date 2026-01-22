@@ -203,3 +203,13 @@ export interface ClientSearchResult {
   email: string | null;
   phone: string | null;
 }
+
+// Local Note for chat-style notes (before saving)
+export interface LocalNote {
+  id: string;
+  message: string;
+  imageFile?: File;
+  imagePreview?: string;
+  createdAt: Date;
+  userName: string;
+}

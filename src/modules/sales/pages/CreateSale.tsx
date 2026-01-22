@@ -1,8 +1,7 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -41,6 +40,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Loader2, 
   Plus, 
@@ -54,7 +54,12 @@ import {
   Search,
   ListOrdered,
   Upload,
-  CreditCard
+  CreditCard,
+  MessageSquare,
+  Paperclip,
+  Send,
+  X,
+  Image as ImageIcon
 } from "lucide-react";
 import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
@@ -86,6 +91,11 @@ const CreateSale = () => {
     discountAmount,
     total,
     orderId,
+    // Notes state
+    notes,
+    newNoteText,
+    noteImagePreview,
+    // Actions
     setOrderSituation,
     setSelectedVariation,
     setSearchQuery,
@@ -100,9 +110,16 @@ const CreateSale = () => {
     updateProduct,
     handleSubmit,
     navigate,
+    // Notes actions
+    setNewNoteText,
+    addNote,
+    removeNote,
+    handleNoteImageSelect,
+    removeNoteImage,
   } = useCreateSale();
 
   const [open, setOpen] = React.useState(false);
+  const noteFileInputRef = useRef<HTMLInputElement>(null);
 
   // Get selected price list name
   const selectedPriceListName = useMemo(() => {
@@ -110,6 +127,33 @@ const CreateSale = () => {
     const found = priceLists.find(pl => pl.id.toString() === formData.priceListId);
     return found?.name || null;
   }, [formData.priceListId, priceLists]);
+
+  // Format note date
+  const formatNoteDate = (date: Date) => {
+    return new Intl.DateTimeFormat('es-PE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  };
+
+  // Handle note file input change
+  const handleNoteFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleNoteImageSelect(file);
+    }
+  };
+
+  // Handle send note on Enter key
+  const handleNoteKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      addNote();
+    }
+  };
 
   if (loading) {
     return (
@@ -591,15 +635,119 @@ const CreateSale = () => {
                 </div>
               </div>
 
-              <div>
-                <Label>Notas del Pedido</Label>
-                <Textarea value={formData.notes} onChange={(e) => handleInputChange("notes", e.target.value)} placeholder="Agregar observaciones especiales..." rows={3} />
-              </div>
-
               <Button type="submit" form="sale-form" className="w-full" disabled={saving}>
                 {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Finalizar y Crear Venta
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Notes Card - Chat Style */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-primary" />
+                <CardTitle className="text-lg">Notas del Pedido</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* Notes list - Chat style */}
+              <ScrollArea className="h-[200px] pr-2">
+                {notes.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
+                    <MessageSquare className="w-8 h-8 mb-2 opacity-50" />
+                    <p className="text-sm">No hay notas aún</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {notes.map((note) => (
+                      <div key={note.id} className="bg-muted/50 p-3 rounded-lg relative group">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => removeNote(note.id)}
+                        >
+                          <X className="w-3 h-3 text-destructive" />
+                        </Button>
+                        {note.message && (
+                          <p className="text-sm pr-6">{note.message}</p>
+                        )}
+                        {note.imagePreview && (
+                          <div className="mt-2">
+                            <img 
+                              src={note.imagePreview} 
+                              alt="Imagen adjunta" 
+                              className="max-w-full max-h-32 rounded-md object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                          <span className="font-medium">{note.userName}</span>
+                          <span>{formatNoteDate(note.createdAt)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+
+              {/* Image preview before sending */}
+              {noteImagePreview && (
+                <div className="relative inline-block">
+                  <img 
+                    src={noteImagePreview} 
+                    alt="Preview" 
+                    className="max-h-16 rounded-md object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-5 w-5"
+                    onClick={removeNoteImage}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
+
+              {/* Input area */}
+              <div className="flex gap-2 pt-2 border-t">
+                <input
+                  type="file"
+                  ref={noteFileInputRef}
+                  onChange={handleNoteFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="flex-shrink-0"
+                  onClick={() => noteFileInputRef.current?.click()}
+                >
+                  <Paperclip className="w-4 h-4" />
+                </Button>
+                <Input
+                  placeholder="Escribir nota..."
+                  value={newNoteText}
+                  onChange={(e) => setNewNoteText(e.target.value)}
+                  onKeyDown={handleNoteKeyDown}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  className="flex-shrink-0"
+                  onClick={addNote}
+                  disabled={!newNoteText.trim() && !noteImagePreview}
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </aside>

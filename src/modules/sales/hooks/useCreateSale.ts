@@ -14,6 +14,7 @@ import type {
   ShippingCost,
   ProductVariation,
   PriceList,
+  LocalNote,
 } from '../types';
 import {
   adaptSalesFormData,
@@ -110,6 +111,12 @@ export const useCreateSale = () => {
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Notes state (chat-style)
+  const [notes, setNotes] = useState<LocalNote[]>([]);
+  const [newNoteText, setNewNoteText] = useState('');
+  const [noteImageFile, setNoteImageFile] = useState<File | null>(null);
+  const [noteImagePreview, setNoteImagePreview] = useState<string | null>(null);
 
   // Load initial form data
   useEffect(() => {
@@ -508,6 +515,48 @@ export const useCreateSale = () => {
     });
   }, []);
 
+  // Add a note to the list (chat-style)
+  const addNote = useCallback(() => {
+    if (!newNoteText.trim() && !noteImageFile) {
+      return;
+    }
+
+    const newNote: LocalNote = {
+      id: crypto.randomUUID(),
+      message: newNoteText.trim(),
+      imageFile: noteImageFile || undefined,
+      imagePreview: noteImagePreview || undefined,
+      createdAt: new Date(),
+      userName: 'Usuario', // TODO: Get from auth context
+    };
+
+    setNotes((prev) => [...prev, newNote]);
+    setNewNoteText('');
+    setNoteImageFile(null);
+    setNoteImagePreview(null);
+  }, [newNoteText, noteImageFile, noteImagePreview]);
+
+  // Remove a note from the list
+  const removeNote = useCallback((noteId: string) => {
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+  }, []);
+
+  // Handle note image selection
+  const handleNoteImageSelect = useCallback((file: File) => {
+    setNoteImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNoteImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  // Remove selected note image
+  const removeNoteImage = useCallback(() => {
+    setNoteImageFile(null);
+    setNoteImagePreview(null);
+  }, []);
+
   // Handle form submission
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -626,6 +675,11 @@ export const useCreateSale = () => {
     selectedVariation,
     searchQuery,
     
+    // Notes state (chat-style)
+    notes,
+    newNoteText,
+    noteImagePreview,
+    
     // Price list modal
     showPriceListModal,
     priceLists,
@@ -658,5 +712,12 @@ export const useCreateSale = () => {
     updateProduct,
     handleSubmit,
     navigate,
+    
+    // Notes actions
+    setNewNoteText,
+    addNote,
+    removeNote,
+    handleNoteImageSelect,
+    removeNoteImage,
   };
 };
