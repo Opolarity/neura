@@ -3,7 +3,7 @@
 // Main logic for Create/Edit Sale page
 // =============================================
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type {
@@ -15,6 +15,8 @@ import type {
   ProductVariation,
   PriceList,
   LocalNote,
+  PaginatedProductVariation,
+  PaginationMeta,
 } from '../types';
 import {
   adaptSalesFormData,
@@ -38,6 +40,7 @@ import {
   fetchVariationTerms,
   fetchTermsByIds,
   fetchPriceLists,
+  fetchSaleProducts,
 } from '../services';
 import {
   calculateSubtotal,
@@ -113,6 +116,13 @@ export const useCreateSale = () => {
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Server-side product pagination state
+  const [paginatedProducts, setPaginatedProducts] = useState<PaginatedProductVariation[]>([]);
+  const [productPage, setProductPage] = useState(1);
+  const [productPagination, setProductPagination] = useState<PaginationMeta>({ page: 1, size: 10, total: 0 });
+  const [productsLoading, setProductsLoading] = useState(false);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Notes state (chat-style)
   const [notes, setNotes] = useState<LocalNote[]>([]);
   const [newNoteText, setNewNoteText] = useState('');
@@ -122,6 +132,7 @@ export const useCreateSale = () => {
   // Load initial form data
   useEffect(() => {
     loadFormData();
+    loadProducts(1, ''); // Load initial products
   }, []);
 
   // Load price lists on mount
@@ -144,6 +155,23 @@ export const useCreateSale = () => {
     }
   }, [formData.withShipping]);
 
+  // Debounced search effect
+  useEffect(() => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    searchDebounceRef.current = setTimeout(() => {
+      setProductPage(1);
+      loadProducts(1, searchQuery);
+    }, 300);
+
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [searchQuery]);
+
   // Computed: Available shipping costs based on selected location
   const availableShippingCosts = useMemo(() => {
     if (!formData.countryId || !formData.stateId || !formData.cityId || !formData.neighborhoodId) {
@@ -158,28 +186,21 @@ export const useCreateSale = () => {
     );
   }, [allShippingCosts, formData.countryId, formData.stateId, formData.cityId, formData.neighborhoodId]);
 
-  // Computed: All variations flattened for search
-  const allVariations = useMemo(() => {
-    if (!salesData?.products) return [];
-    return salesData.products.flatMap((product) =>
-      product.variations.map((variation) => ({
-        ...variation,
-        productTitle: product.title,
-      }))
-    );
-  }, [salesData?.products]);
-
-  // Computed: Filtered variations by search query
+  // Computed: Filtered variations from server-side paginated data (for dropdown display)
   const filteredVariations = useMemo(() => {
-    if (!searchQuery) return allVariations;
-    const query = searchQuery.toLowerCase();
-    return allVariations.filter((variation) => {
-      const productTitle = variation.productTitle.toLowerCase();
-      const sku = variation.sku?.toLowerCase() || '';
-      const termsNames = variation.terms.map((t) => t.name.toLowerCase()).join(' ');
-      return productTitle.includes(query) || sku.includes(query) || termsNames.includes(query);
-    });
-  }, [allVariations, searchQuery]);
+    return paginatedProducts.map((p) => ({
+      id: p.variationId,
+      sku: p.sku,
+      productId: p.productId,
+      productTitle: p.productTitle,
+      terms: p.terms,
+      prices: p.prices.map((pr) => ({
+        priceListId: pr.price_list_id,
+        price: pr.price,
+        salePrice: pr.sale_price,
+      })),
+    }));
+  }, [paginatedProducts]);
 
   // Computed: Filtered states by country
   const filteredStates = useMemo(() => {
@@ -243,6 +264,35 @@ export const useCreateSale = () => {
       console.error('Error loading shipping costs:', error);
     }
   };
+
+  // Load products with server-side pagination
+  const loadProducts = async (page: number, search: string) => {
+    try {
+      setProductsLoading(true);
+      const result = await fetchSaleProducts({
+        page,
+        size: 10,
+        search: search || undefined,
+      });
+      setPaginatedProducts(result.data || []);
+      setProductPagination(result.page);
+    } catch (error) {
+      console.error('Error loading products:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los productos',
+        variant: 'destructive',
+      });
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  // Handle product page change
+  const handleProductPageChange = useCallback((newPage: number) => {
+    setProductPage(newPage);
+    loadProducts(newPage, searchQuery);
+  }, [searchQuery]);
 
   // Load price lists
   const loadPriceLists = async () => {
@@ -776,6 +826,11 @@ export const useCreateSale = () => {
     selectedVariation,
     searchQuery,
     
+    // Server-side pagination state
+    productPage,
+    productPagination,
+    productsLoading,
+    
     // Notes state (chat-style)
     notes,
     newNoteText,
@@ -809,6 +864,7 @@ export const useCreateSale = () => {
     updatePaymentInList,
     handleSearchClient,
     handleSelectPriceList,
+    handleProductPageChange,
     addProduct,
     removeProduct,
     updateProduct,

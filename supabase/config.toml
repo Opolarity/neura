@@ -50,3 +50,6 @@ verify_jwt = true
 
 [functions.document-lookup]
 verify_jwt = false
+
+[functions.get-sale-products]
+verify_jwt = true
