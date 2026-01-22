@@ -393,10 +393,6 @@ const CreateSale = () => {
                   <Checkbox id="withShipping" checked={formData.withShipping} onCheckedChange={(checked) => handleInputChange("withShipping", checked as boolean)} />
                   <Label htmlFor="withShipping" className="cursor-pointer font-medium">Requiere Envío</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="employeeSale" checked={formData.employeeSale} onCheckedChange={(checked) => handleInputChange("employeeSale", checked as boolean)} />
-                  <Label htmlFor="employeeSale" className="cursor-pointer">Venta a empleado</Label>
-                </div>
               </div>
             </CardContent>
           </Card>
