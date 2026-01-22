@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.get-terms]
 verify_jwt = true
+
+[functions.document-lookup]
+verify_jwt = false

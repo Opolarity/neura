@@ -26,6 +26,7 @@ export const adaptDocumentTypes = (data: any[]): DocumentType[] => {
   return data.map((item) => ({
     id: item.id,
     name: item.name,
+    code: item.code || null,
   }));
 };
 
