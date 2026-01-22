@@ -728,7 +728,7 @@ const CreateSale = () => {
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="flex-shrink-0"
+                  className={cn("flex-shrink-0", !orderId && "opacity-50 cursor-not-allowed")}
                   onClick={() => {
                     if (!orderId) {
                       toast({
@@ -740,6 +740,7 @@ const CreateSale = () => {
                     }
                     noteFileInputRef.current?.click();
                   }}
+                  disabled={!orderId}
                 >
                   <Paperclip className="w-4 h-4" />
                 </Button>
@@ -761,13 +762,13 @@ const CreateSale = () => {
                     onChange={(e) => setNewNoteText(e.target.value)}
                     onKeyDown={handleNoteKeyDown}
                     disabled={!orderId}
-                    className="w-full"
+                    className={cn("w-full", !orderId && "cursor-not-allowed")}
                   />
                 </div>
                 <Button
                   type="button"
                   size="icon"
-                  className="flex-shrink-0"
+                  className={cn("flex-shrink-0", !orderId && "opacity-50 cursor-not-allowed")}
                   onClick={() => {
                     if (!orderId) {
                       toast({
@@ -779,7 +780,7 @@ const CreateSale = () => {
                     }
                     addNote();
                   }}
-                  disabled={orderId ? (!newNoteText.trim() && !noteImagePreview) : false}
+                  disabled={!orderId || (!newNoteText.trim() && !noteImagePreview)}
                 >
                   <Send className="w-4 h-4" />
                 </Button>
