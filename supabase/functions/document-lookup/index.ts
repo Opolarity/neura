@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
 
     console.log("API Response:", JSON.stringify(data));
 
-    if (!response.ok || data.error || !data.data) {
+    if (!response.ok || data.error) {
       console.log("Document not found in external API:", data);
       return new Response(
         JSON.stringify({ error: data.error || "Document not found", found: false }),
@@ -120,25 +120,24 @@ Deno.serve(async (req) => {
     }
 
     // Return normalized response
-    // Decolecta DNI response: { data: { nombres, apellido_paterno, apellido_materno, ... } }
-    // Decolecta RUC response: { data: { nombre_o_razon_social, ... } }
-    const apiData = data.data;
+    // Decolecta DNI response: { first_name, first_last_name, second_last_name, full_name, document_number }
+    // Decolecta RUC response: { razon_social, numero_documento, estado, condicion, direccion, ... }
     let result;
     if (docType === "DNI") {
       result = {
         found: true,
-        nombres: apiData.nombres || "",
-        apellidoPaterno: apiData.apellido_paterno || "",
-        apellidoMaterno: apiData.apellido_materno || "",
+        nombres: data.first_name || "",
+        apellidoPaterno: data.first_last_name || "",
+        apellidoMaterno: data.second_last_name || "",
       };
     } else {
-      // For RUC, use nombre_o_razon_social as customerName
+      // For RUC, use razon_social as customerName
       result = {
         found: true,
-        nombres: apiData.nombre_o_razon_social || "",
+        nombres: data.razon_social || "",
         apellidoPaterno: "",
         apellidoMaterno: "",
-        razonSocial: apiData.nombre_o_razon_social || "",
+        razonSocial: data.razon_social || "",
       };
     }
 
