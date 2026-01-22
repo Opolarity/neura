@@ -586,11 +586,11 @@ const CreateSale = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <Button type="button" variant="outline" size="sm" className="w-full">
                     <Upload className="w-4 h-4 mr-2" />
-                    Subir Baucher
+                    Comprobante
                   </Button>
                   <Button type="button" variant="secondary" size="sm" className="w-full" onClick={addPayment}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Agregar Pago
+                    Agregar
                   </Button>
                 </div>
               </div>
