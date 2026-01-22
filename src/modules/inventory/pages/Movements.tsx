@@ -19,6 +19,9 @@ import MovementsFilterModal from "../components/movements/MovementsFilterModal";
 const Movements = () => {
   const {
     movements,
+    movementsTypes,
+    warehouses,
+    users,
     loading,
     search,
     pagination,
@@ -129,6 +132,9 @@ const Movements = () => {
 
       <MovementsFilterModal
         filters={filters}
+        warehouses={warehouses}
+        users={users}
+        movementsTypes={movementsTypes}
         isOpen={isOpenFilterModal}
         onClose={onCloseFilterModal}
         onApply={onApplyFilterModal}
