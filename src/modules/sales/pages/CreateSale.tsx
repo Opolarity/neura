@@ -123,10 +123,14 @@ const CreateSale = () => {
     removeNote,
     handleNoteImageSelect,
     removeNoteImage,
+    // Voucher actions
+    handleVoucherSelect,
+    removeVoucher,
   } = useCreateSale();
 
   const [open, setOpen] = React.useState(false);
   const noteFileInputRef = useRef<HTMLInputElement>(null);
+  const voucherFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Total pages for product pagination
@@ -699,10 +703,55 @@ const CreateSale = () => {
                     <Input type="number" value={currentPayment.amount} onChange={(e) => handlePaymentChange("amount", e.target.value)} placeholder={total.toFixed(2)} />
                   </div>
                 </div>
+                
+                {/* Voucher preview */}
+                {currentPayment.voucherPreview && (
+                  <div className="relative group">
+                    <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+                      <img 
+                        src={currentPayment.voucherPreview} 
+                        alt="Comprobante" 
+                        className="h-12 w-12 object-cover rounded"
+                      />
+                      <span className="text-xs text-muted-foreground flex-1 truncate">
+                        {currentPayment.voucherFile?.name}
+                      </span>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6" 
+                        onClick={removeVoucher}
+                      >
+                        <X className="w-3 h-3 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-2 gap-2">
-                  <Button type="button" variant="outline" size="sm" className="w-full">
+                  <input
+                    type="file"
+                    ref={voucherFileInputRef}
+                    className="hidden"
+                    accept="image/*,.pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handleVoucherSelect(file);
+                      }
+                      e.target.value = '';
+                    }}
+                  />
+                  <Button 
+                    type="button" 
+                    variant={currentPayment.voucherPreview ? "default" : "outline"} 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => voucherFileInputRef.current?.click()}
+                  >
                     <Upload className="w-4 h-4 mr-0.5" />
-                    Comprobante
+                    {currentPayment.voucherPreview ? "Cambiar" : "Comprobante"}
                   </Button>
                   <Button type="button" variant="secondary" size="sm" className="w-full" onClick={addPayment}>
                     <Plus className="w-4 h-4 mr-0.5" />

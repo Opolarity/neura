@@ -46,6 +46,8 @@ export interface SalePayment {
   amount: string;
   confirmationCode: string;
   voucherUrl?: string;
+  voucherFile?: File;
+  voucherPreview?: string;
 }
 
 // API Response Types
