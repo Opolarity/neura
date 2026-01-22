@@ -83,6 +83,8 @@ const createEmptyPayment = (): SalePayment => ({
   amount: '',
   confirmationCode: '',
   voucherUrl: '',
+  voucherFile: undefined,
+  voucherPreview: undefined,
 });
 
 export const useCreateSale = () => {
@@ -480,6 +482,28 @@ export const useCreateSale = () => {
   // Handle current payment changes
   const handlePaymentChange = useCallback((field: keyof SalePayment, value: string) => {
     setCurrentPayment((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  // Handle voucher file selection
+  const handleVoucherSelect = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCurrentPayment((prev) => ({
+        ...prev,
+        voucherFile: file,
+        voucherPreview: reader.result as string,
+      }));
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  // Remove selected voucher
+  const removeVoucher = useCallback(() => {
+    setCurrentPayment((prev) => ({
+      ...prev,
+      voucherFile: undefined,
+      voucherPreview: undefined,
+    }));
   }, []);
 
   // Add payment to list
@@ -885,5 +909,9 @@ export const useCreateSale = () => {
     removeNote,
     handleNoteImageSelect,
     removeNoteImage,
+    
+    // Voucher actions
+    handleVoucherSelect,
+    removeVoucher,
   };
 };
