@@ -10,13 +10,14 @@ export const getStockMovementsApi = async (
             .map(([key, value]) => [key, String(value)])
     );
 
-    // const endpoint = queryParams.toString()
-    //     ? `get-stock-movements?${queryParams.toString()}`
-    //     : "get-stock-movements";
+    const endpoint = queryParams.toString()
+        ? `get-stock-movements?${queryParams.toString()}`
+        : "get-stock-movements";
 
     //const endpoint = "get-stock-movements?page=1&size=20&start_date=2026-01-19&end_date=2026-01-19"
 
-    const endpoint = "get-stock-movements?page=2"
+    //const endpoint = "get-stock-movements?page=1"
+
     const { data, error } = await supabase.functions.invoke(endpoint);
 
     if (error) {
