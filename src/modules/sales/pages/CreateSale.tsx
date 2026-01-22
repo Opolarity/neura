@@ -585,11 +585,11 @@ const CreateSale = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <Button type="button" variant="outline" size="sm" className="w-full">
-                    <Upload className="w-4 h-4 mr-2" />
+                    <Upload className="w-4 h-4 mr-1" />
                     Comprobante
                   </Button>
                   <Button type="button" variant="secondary" size="sm" className="w-full" onClick={addPayment}>
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4 mr-1" />
                     Agregar
                   </Button>
                 </div>
