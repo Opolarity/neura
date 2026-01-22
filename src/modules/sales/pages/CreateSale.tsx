@@ -92,6 +92,7 @@ const CreateSale = () => {
     discountAmount,
     total,
     orderId,
+    isPersonaJuridica,
     // Notes state
     notes,
     newNoteText,
@@ -388,7 +389,7 @@ const CreateSale = () => {
                   />
                 </div>
 <div>
-                  <Label>Nombre</Label>
+                  <Label>{isPersonaJuridica ? "Razón Social" : "Nombre"}</Label>
                   <Input 
                     value={formData.customerName} 
                     onChange={(e) => handleInputChange("customerName", e.target.value)} 
@@ -411,27 +412,29 @@ const CreateSale = () => {
                   </div>
                 </div>
                 
-                {/* Lado derecho: Apellidos */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label>Apellido Paterno</Label>
-                    <Input 
-                      value={formData.customerLastname} 
-                      onChange={(e) => handleInputChange("customerLastname", e.target.value)} 
-                      disabled={clientFound === true}
-                      className={clientFound === true ? "bg-muted" : ""}
-                    />
+                {/* Lado derecho: Apellidos (solo para persona natural) */}
+                {!isPersonaJuridica && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label>Apellido Paterno</Label>
+                      <Input 
+                        value={formData.customerLastname} 
+                        onChange={(e) => handleInputChange("customerLastname", e.target.value)} 
+                        disabled={clientFound === true}
+                        className={clientFound === true ? "bg-muted" : ""}
+                      />
+                    </div>
+                    <div>
+                      <Label>Apellido Materno</Label>
+                      <Input 
+                        value={formData.customerLastname2} 
+                        onChange={(e) => handleInputChange("customerLastname2", e.target.value)} 
+                        disabled={clientFound === true}
+                        className={clientFound === true ? "bg-muted" : ""}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label>Apellido Materno</Label>
-                    <Input 
-                      value={formData.customerLastname2} 
-                      onChange={(e) => handleInputChange("customerLastname2", e.target.value)} 
-                      disabled={clientFound === true}
-                      className={clientFound === true ? "bg-muted" : ""}
-                    />
-                  </div>
-                </div>
+                )}
               </div>
 
               <div className="flex items-center space-x-4 pt-2">

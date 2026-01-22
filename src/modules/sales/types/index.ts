@@ -53,6 +53,7 @@ export interface DocumentType {
   id: number;
   name: string;
   code: string | null;
+  personType: number; // 1 = persona natural, 2 = persona jurídica
 }
 
 // Document Lookup Response (external API)

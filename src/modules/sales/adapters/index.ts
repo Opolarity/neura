@@ -27,6 +27,7 @@ export const adaptDocumentTypes = (data: any[]): DocumentType[] => {
     id: item.id,
     name: item.name,
     code: item.code || null,
+    personType: item.person_type || 1, // default: persona natural
   }));
 };
 

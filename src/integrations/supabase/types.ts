@@ -21,7 +21,7 @@ export type Database = {
           document_type_id: number
           id: number
           is_active: boolean
-          last_name: string
+          last_name: string | null
           last_name2: string | null
           middle_name: string | null
           name: string
@@ -33,7 +33,7 @@ export type Database = {
           document_type_id: number
           id?: number
           is_active?: boolean
-          last_name: string
+          last_name?: string | null
           last_name2?: string | null
           middle_name?: string | null
           name: string
@@ -45,7 +45,7 @@ export type Database = {
           document_type_id?: number
           id?: number
           is_active?: boolean
-          last_name?: string
+          last_name?: string | null
           last_name2?: string | null
           middle_name?: string | null
           name?: string
@@ -414,6 +414,7 @@ export type Database = {
           max_length: number | null
           min_length: number | null
           name: string
+          person_type: number
         }
         Insert: {
           code?: string | null
@@ -422,6 +423,7 @@ export type Database = {
           max_length?: number | null
           min_length?: number | null
           name: string
+          person_type?: number
         }
         Update: {
           code?: string | null
@@ -430,6 +432,7 @@ export type Database = {
           max_length?: number | null
           min_length?: number | null
           name?: string
+          person_type?: number
         }
         Relationships: []
       }
