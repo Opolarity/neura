@@ -64,6 +64,7 @@ import {
 import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
+import { useToast } from "@/hooks/use-toast";
 
 const CreateSale = () => {
   const {
@@ -120,6 +121,7 @@ const CreateSale = () => {
 
   const [open, setOpen] = React.useState(false);
   const noteFileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   // Get selected price list name
   const selectedPriceListName = useMemo(() => {
@@ -727,25 +729,57 @@ const CreateSale = () => {
                   variant="outline"
                   size="icon"
                   className="flex-shrink-0"
-                  onClick={() => noteFileInputRef.current?.click()}
-                  disabled={!orderId}
+                  onClick={() => {
+                    if (!orderId) {
+                      toast({
+                        title: "Acción no disponible",
+                        description: "Primero debe crear la venta para agregar notas",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    noteFileInputRef.current?.click();
+                  }}
                 >
                   <Paperclip className="w-4 h-4" />
                 </Button>
-                <Input
-                  placeholder={orderId ? "Escribir nota..." : "Guarde la venta para agregar notas"}
-                  value={newNoteText}
-                  onChange={(e) => setNewNoteText(e.target.value)}
-                  onKeyDown={handleNoteKeyDown}
+                <div 
                   className="flex-1"
-                  disabled={!orderId}
-                />
+                  onClick={() => {
+                    if (!orderId) {
+                      toast({
+                        title: "Acción no disponible",
+                        description: "Primero debe crear la venta para agregar notas",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  <Input
+                    placeholder={orderId ? "Escribir nota..." : "Guarde la venta para agregar notas"}
+                    value={newNoteText}
+                    onChange={(e) => setNewNoteText(e.target.value)}
+                    onKeyDown={handleNoteKeyDown}
+                    disabled={!orderId}
+                    className="w-full"
+                  />
+                </div>
                 <Button
                   type="button"
                   size="icon"
                   className="flex-shrink-0"
-                  onClick={addNote}
-                  disabled={!orderId || (!newNoteText.trim() && !noteImagePreview)}
+                  onClick={() => {
+                    if (!orderId) {
+                      toast({
+                        title: "Acción no disponible",
+                        description: "Primero debe crear la venta para agregar notas",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    addNote();
+                  }}
+                  disabled={orderId ? (!newNoteText.trim() && !noteImagePreview) : false}
                 >
                   <Send className="w-4 h-4" />
                 </Button>
