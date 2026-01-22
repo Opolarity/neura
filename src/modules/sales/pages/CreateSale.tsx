@@ -93,6 +93,10 @@ const CreateSale = () => {
     total,
     orderId,
     isPersonaJuridica,
+    // Server-side pagination
+    productPage,
+    productPagination,
+    productsLoading,
     // Notes state
     notes,
     newNoteText,
@@ -107,6 +111,7 @@ const CreateSale = () => {
     removePayment,
     handleSearchClient,
     handleSelectPriceList,
+    handleProductPageChange,
     addProduct,
     removeProduct,
     updateProduct,
@@ -121,24 +126,11 @@ const CreateSale = () => {
   } = useCreateSale();
 
   const [open, setOpen] = React.useState(false);
-  const [productPage, setProductPage] = React.useState(0);
   const noteFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const PRODUCTS_PER_PAGE = 10;
-
-  // Paginated variations
-  const paginatedVariations = useMemo(() => {
-    const start = productPage * PRODUCTS_PER_PAGE;
-    return filteredVariations.slice(start, start + PRODUCTS_PER_PAGE);
-  }, [filteredVariations, productPage]);
-
-  const totalProductPages = Math.ceil(filteredVariations.length / PRODUCTS_PER_PAGE);
-
-  // Reset page when search changes
-  React.useEffect(() => {
-    setProductPage(0);
-  }, [searchQuery]);
+  // Total pages for product pagination
+  const totalProductPages = Math.ceil(productPagination.total / productPagination.size);
 
   // Get selected price list name
   const selectedPriceListName = useMemo(() => {
@@ -282,32 +274,40 @@ const CreateSale = () => {
                       <Command shouldFilter={false}>
                         <CommandInput placeholder="Buscar producto o SKU..." value={searchQuery} onValueChange={setSearchQuery} />
                         <CommandList>
-                          <CommandEmpty>No se encontraron productos.</CommandEmpty>
-                          <CommandGroup>
-                            {paginatedVariations.map((variation) => {
-                              const termsNames = variation.terms.map((t) => t.name).join(" / ");
-                              const displayTerms = termsNames ? `${termsNames} (${variation.sku})` : variation.sku;
-                              return (
-                                <CommandItem
-                                  key={variation.id}
-                                  value={`${variation.productTitle} ${variation.sku} ${termsNames}`}
-                                  onSelect={() => { setSelectedVariation(variation); setOpen(false); }}
-                                >
-                                  <Check className={cn("mr-2 h-4 w-4", selectedVariation?.id === variation.id ? "opacity-100" : "opacity-0")} />
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">{variation.productTitle}</span>
-                                    <span className="text-sm text-muted-foreground">{displayTerms}</span>
-                                  </div>
-                                </CommandItem>
-                              );
-                            })}
-                          </CommandGroup>
+                          {productsLoading ? (
+                            <div className="flex justify-center py-6">
+                              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                            </div>
+                          ) : (
+                            <>
+                              <CommandEmpty>No se encontraron productos.</CommandEmpty>
+                              <CommandGroup>
+                                {filteredVariations.map((variation) => {
+                                  const termsNames = variation.terms.map((t) => t.name).join(" / ");
+                                  const displayTerms = termsNames ? `${termsNames} (${variation.sku})` : variation.sku;
+                                  return (
+                                    <CommandItem
+                                      key={variation.id}
+                                      value={`${variation.productTitle} ${variation.sku} ${termsNames}`}
+                                      onSelect={() => { setSelectedVariation(variation); setOpen(false); }}
+                                    >
+                                      <Check className={cn("mr-2 h-4 w-4", selectedVariation?.id === variation.id ? "opacity-100" : "opacity-0")} />
+                                      <div className="flex flex-col">
+                                        <span className="font-medium">{variation.productTitle}</span>
+                                        <span className="text-sm text-muted-foreground">{displayTerms}</span>
+                                      </div>
+                                    </CommandItem>
+                                  );
+                                })}
+                              </CommandGroup>
+                            </>
+                          )}
                         </CommandList>
                         {/* Pagination controls */}
                         {totalProductPages > 1 && (
                           <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
                             <span className="text-xs text-muted-foreground">
-                              {productPage * PRODUCTS_PER_PAGE + 1}-{Math.min((productPage + 1) * PRODUCTS_PER_PAGE, filteredVariations.length)} de {filteredVariations.length}
+                              {(productPage - 1) * productPagination.size + 1}-{Math.min(productPage * productPagination.size, productPagination.total)} de {productPagination.total}
                             </span>
                             <div className="flex gap-1">
                               <Button
@@ -315,8 +315,8 @@ const CreateSale = () => {
                                 variant="outline"
                                 size="sm"
                                 className="h-7 px-2 text-xs"
-                                onClick={() => setProductPage((p) => Math.max(0, p - 1))}
-                                disabled={productPage === 0}
+                                onClick={() => handleProductPageChange(productPage - 1)}
+                                disabled={productPage <= 1 || productsLoading}
                               >
                                 Anterior
                               </Button>
@@ -325,8 +325,8 @@ const CreateSale = () => {
                                 variant="outline"
                                 size="sm"
                                 className="h-7 px-2 text-xs"
-                                onClick={() => setProductPage((p) => Math.min(totalProductPages - 1, p + 1))}
-                                disabled={productPage >= totalProductPages - 1}
+                                onClick={() => handleProductPageChange(productPage + 1)}
+                                disabled={productPage >= totalProductPages || productsLoading}
                               >
                                 Siguiente
                               </Button>

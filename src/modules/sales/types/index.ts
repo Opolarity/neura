@@ -225,3 +225,20 @@ export interface LocalNote {
   createdAt: Date;
   userName: string;
 }
+
+// Server-side paginated product variation (from SP)
+export interface PaginatedProductVariation {
+  productId: number;
+  productTitle: string;
+  variationId: number;
+  sku: string;
+  terms: Array<{ id: number; name: string }>;
+  prices: Array<{ price_list_id: number; price: number; sale_price: number | null }>;
+}
+
+// Paginated response metadata
+export interface PaginationMeta {
+  page: number;
+  size: number;
+  total: number;
+}

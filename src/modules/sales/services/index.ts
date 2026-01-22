@@ -233,3 +233,44 @@ export const lookupDocument = async (documentType: string, documentNumber: strin
   if (error) throw error;
   return data;
 };
+
+// Fetch sale products with server-side pagination
+export interface FetchSaleProductsParams {
+  page?: number;
+  size?: number;
+  search?: string;
+}
+
+export interface SaleProductsResponse {
+  data: Array<{
+    productId: number;
+    productTitle: string;
+    variationId: number;
+    sku: string;
+    terms: Array<{ id: number; name: string }>;
+    prices: Array<{ price_list_id: number; price: number; sale_price: number | null }>;
+  }>;
+  page: {
+    page: number;
+    size: number;
+    total: number;
+  };
+}
+
+export const fetchSaleProducts = async (params: FetchSaleProductsParams): Promise<SaleProductsResponse> => {
+  const queryParams = new URLSearchParams();
+  if (params.page) queryParams.set('p_page', String(params.page));
+  if (params.size) queryParams.set('p_size', String(params.size));
+  if (params.search) queryParams.set('p_search', params.search);
+
+  const endpoint = queryParams.toString()
+    ? `get-sale-products?${queryParams.toString()}`
+    : 'get-sale-products';
+
+  const { data, error } = await supabase.functions.invoke(endpoint, {
+    method: 'GET',
+  });
+
+  if (error) throw error;
+  return data;
+};
