@@ -361,7 +361,7 @@ const CreateSale = () => {
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <Label>Tipo Doc.</Label>
-                    <Select value={formData.documentType} onValueChange={(v) => handleInputChange("documentType", v)}>
+                    <Select value={formData.documentType} onValueChange={(v) => { handleInputChange("documentType", v); if (formData.documentNumber) handleSearchClient(); }}>
                       <SelectTrigger><SelectValue placeholder="DNI" /></SelectTrigger>
                       <SelectContent>
                         {salesData?.documentTypes.map((dt) => <SelectItem key={dt.id} value={dt.id.toString()}>{dt.name}</SelectItem>)}
