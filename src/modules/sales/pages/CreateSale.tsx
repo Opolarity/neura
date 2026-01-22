@@ -121,8 +121,24 @@ const CreateSale = () => {
   } = useCreateSale();
 
   const [open, setOpen] = React.useState(false);
+  const [productPage, setProductPage] = React.useState(0);
   const noteFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const PRODUCTS_PER_PAGE = 10;
+
+  // Paginated variations
+  const paginatedVariations = useMemo(() => {
+    const start = productPage * PRODUCTS_PER_PAGE;
+    return filteredVariations.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [filteredVariations, productPage]);
+
+  const totalProductPages = Math.ceil(filteredVariations.length / PRODUCTS_PER_PAGE);
+
+  // Reset page when search changes
+  React.useEffect(() => {
+    setProductPage(0);
+  }, [searchQuery]);
 
   // Get selected price list name
   const selectedPriceListName = useMemo(() => {
@@ -262,13 +278,13 @@ const CreateSale = () => {
                           : "Buscar por nombre o SKU..."}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0">
-                      <Command>
+                    <PopoverContent className="w-[400px] p-0 bg-popover">
+                      <Command shouldFilter={false}>
                         <CommandInput placeholder="Buscar producto o SKU..." value={searchQuery} onValueChange={setSearchQuery} />
                         <CommandList>
                           <CommandEmpty>No se encontraron productos.</CommandEmpty>
                           <CommandGroup>
-                            {filteredVariations.map((variation) => {
+                            {paginatedVariations.map((variation) => {
                               const termsNames = variation.terms.map((t) => t.name).join(" / ");
                               const displayTerms = termsNames ? `${termsNames} (${variation.sku})` : variation.sku;
                               return (
@@ -287,6 +303,36 @@ const CreateSale = () => {
                             })}
                           </CommandGroup>
                         </CommandList>
+                        {/* Pagination controls */}
+                        {totalProductPages > 1 && (
+                          <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
+                            <span className="text-xs text-muted-foreground">
+                              {productPage * PRODUCTS_PER_PAGE + 1}-{Math.min((productPage + 1) * PRODUCTS_PER_PAGE, filteredVariations.length)} de {filteredVariations.length}
+                            </span>
+                            <div className="flex gap-1">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => setProductPage((p) => Math.max(0, p - 1))}
+                                disabled={productPage === 0}
+                              >
+                                Anterior
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => setProductPage((p) => Math.min(totalProductPages - 1, p + 1))}
+                                disabled={productPage >= totalProductPages - 1}
+                              >
+                                Siguiente
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </Command>
                     </PopoverContent>
                   </Popover>
