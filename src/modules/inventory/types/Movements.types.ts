@@ -49,3 +49,23 @@ export interface MovementsFilters {
     size?: number;
     search?: string | null;
 }
+
+export interface MovementsTypesApiResponse {
+    types: Array<{ id: number; name: string; code: string }>;
+}
+
+export interface MovementsTypes {
+    id: number;
+    name: string;
+    code: string;
+}
+
+export interface SimpleWarehouses {
+    id: number;
+    name: string;
+}
+
+export interface SimpleUsers {
+    id: number;
+    name: string;
+}

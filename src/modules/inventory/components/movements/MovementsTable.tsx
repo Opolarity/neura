@@ -66,11 +66,10 @@ const MovementsTable = ({ movements }: MovementsTableProps) => {
                             movement.vinc_stock_type,
                             movement.quantity
                         )
-
                         return (
                             <TableRow key={movement.movements_id}>
                                 <TableCell className="whitespace-nowrap text-xs">
-                                    {format(new Date(movement.date), "dd/MM/yyyy")}
+                                    {format(new Date(movement.date.replace(/-/g, '/')), "dd/MM/yyyy")}
                                 </TableCell>
                                 <TableCell className="font-medium text-sm">
                                     {movement.product}

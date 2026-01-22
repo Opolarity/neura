@@ -2,6 +2,8 @@ import { PaginationState } from "@/shared/components/pagination/Pagination";
 import {
     Movements,
     MovementsApiResponse,
+    MovementsTypes,
+    MovementsTypesApiResponse,
 } from "../types/Movements.types";
 
 export const movementsAdapter = (response: MovementsApiResponse) => {
@@ -32,4 +34,16 @@ export const movementsAdapter = (response: MovementsApiResponse) => {
         data: formattedMovements,
         pagination,
     };
+};
+
+export const movementsTypesAdapter = (
+    response: MovementsTypesApiResponse[],
+): MovementsTypes[] => {
+    const first = response[0]; // el primer elemento del array
+    const types = first.types.map((item) => ({
+        id: item.id,
+        name: item.name,
+        code: item.code,
+    }));
+    return types;
 };

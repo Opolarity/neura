@@ -7,9 +7,13 @@ import { Calendar } from 'lucide-react';
 import { MovementsFilters } from '../../types/Movements.types';
 import { useState } from 'react';
 import MovementsDateRange from './MovementsDateRange';
+import { SimpleWarehouses, MovementsTypes, SimpleUsers } from '../../types/Movements.types';
 
 interface InventoryFilterModalProps {
     filters: MovementsFilters;
+    warehouses: SimpleWarehouses[];
+    users: SimpleUsers[];
+    movementsTypes: MovementsTypes[];
     isOpen: boolean;
     onClose: () => void;
     onApply?: (filters: MovementsFilters) => void;
@@ -17,6 +21,9 @@ interface InventoryFilterModalProps {
 
 const MovementsFilterModal = ({
     filters,
+    warehouses,
+    users,
+    movementsTypes,
     isOpen,
     onClose,
     onApply,
@@ -55,10 +62,47 @@ const MovementsFilterModal = ({
         setInternalFilters((prev) => ({ ...prev, end_date: dateValue }))
     };
 
+    const handleWarehouseChange = (value: string) => {
+        setInternalFilters((prev) => ({
+            ...prev,
+            warehouse: value ? Number(value) : null,
+        }));
+    };
+
+    const handleOriginChange = (value: string) => {
+        setInternalFilters((prev) => ({
+            ...prev,
+            origin: value ? Number(value) : null,
+        }));
+    };
+
+    const handleUserChange = (value: string) => {
+        setInternalFilters((prev) => ({
+            ...prev,
+            user: value ? Number(value) : null,
+        }));
+    };
+
+    const handleInputChange = (value: string) => {
+        setInternalFilters((prev) => ({
+            ...prev,
+            input: value ? Number(value) : null,
+        }));
+    };
+
+    const handleOutputChange = (value: string) => {
+        setInternalFilters((prev) => ({
+            ...prev,
+            output: value ? Number(value) : null,
+        }));
+    };
+
     const handleClear = () => {
         setInternalFilters((prev) => (
             {
                 ...prev,
+                warehouse: null,
+                origin: null,
                 start_date: null,
                 end_date: null,
                 page: 1,
@@ -81,6 +125,128 @@ const MovementsFilterModal = ({
                         onStartDateChange={handleStartDateChange}
                         onEndDateChange={handleEndDateChange}
                     />
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="warehouse">Almacén</Label>
+                        <Select
+                            value={
+                                internalFilters.warehouse?.toString() == null
+                                    ? "none"
+                                    : String(internalFilters.warehouse.toString())
+                            }
+                            onValueChange={(value) => handleWarehouseChange(value)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar almacén" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">Ninguno</SelectItem>
+                                {warehouses.map((warehouse) => (
+                                    <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                                        {warehouse.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="type">Origen</Label>
+                        <Select
+                            value={
+                                internalFilters.origin?.toString() == null
+                                    ? "none"
+                                    : String(internalFilters.origin.toString())
+                            }
+                            onValueChange={(value) => handleOriginChange(value)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar origen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">Ninguno</SelectItem>
+                                {movementsTypes.map((type) => (
+                                    <SelectItem key={type.id} value={type.id.toString()}>
+                                        {type.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="user">Usuario</Label>
+                        <Select
+                            value={
+                                internalFilters.user?.toString() == null
+                                    ? "none"
+                                    : String(internalFilters.user.toString())
+                            }
+                            onValueChange={(value) => handleUserChange(value)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar usuario" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">Ninguno</SelectItem>
+                                {users.map((user) => (
+                                    <SelectItem key={user.id} value={user.id.toString()}>
+                                        {user.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className='flex flex-row gap-2'>
+                        <div className="flex-1 grid gap-2">
+                            <Label htmlFor="input">Entrada</Label>
+                            <Select
+                                value={
+                                    internalFilters.input?.toString() == null
+                                        ? "none"
+                                        : String(internalFilters.input.toString())
+                                }
+                                onValueChange={(value) => handleInputChange(value)}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Seleccionar entrada" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Ninguno</SelectItem>
+                                    {warehouses.map((warehouse) => (
+                                        <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                                            {warehouse.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="flex-1 grid gap-2">
+                            <Label htmlFor="output">Salida</Label>
+                            <Select
+                                value={
+                                    internalFilters.output?.toString() == null
+                                        ? "none"
+                                        : String(internalFilters.output.toString())
+                                }
+                                onValueChange={(value) => handleOutputChange(value)}
+                            >
+                                <SelectTrigger className='w-full'>
+                                    <SelectValue placeholder="Seleccionar salida" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Ninguno</SelectItem>
+                                    {warehouses.map((warehouse) => (
+                                        <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                                            {warehouse.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                 </div>
 
                 <DialogFooter className="flex gap-2">
