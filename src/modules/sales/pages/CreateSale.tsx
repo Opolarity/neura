@@ -753,6 +753,18 @@ const CreateSale = () => {
                           <CreditCard className="w-4 h-4 text-muted-foreground" />
                           <span className="text-sm">{method?.name || 'Método'}</span>
                           <span className="text-sm font-medium">{formatCurrency(parseFloat(p.amount) || 0)}</span>
+                          {p.voucherPreview && (
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6"
+                              onClick={() => window.open(p.voucherPreview, '_blank')}
+                              title="Ver comprobante"
+                            >
+                              <Paperclip className="w-3 h-3 text-primary" />
+                            </Button>
+                          )}
                         </div>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removePayment(p.id)}>
                           <Trash2 className="w-3 h-3 text-destructive" />
