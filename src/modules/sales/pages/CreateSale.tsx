@@ -212,7 +212,7 @@ const CreateSale = () => {
             ) : (
               <>
                 {/* Price List Select */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label>Lista de precios</Label>
                   {priceLists.length === 0 ? (
                     <p className="text-sm text-muted-foreground py-2">
@@ -235,7 +235,7 @@ const CreateSale = () => {
                 </div>
 
                 {/* Warehouse Select (Locked) */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label>Almacén</Label>
                   <Select value={userWarehouseId?.toString() || ''} disabled>
                     <SelectTrigger className="w-full bg-muted cursor-not-allowed">
