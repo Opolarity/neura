@@ -567,6 +567,17 @@ export const useCreateSale = () => {
       });
       return;
     }
+
+    const amount = parseFloat(currentPayment.amount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: 'Monto inválido',
+        description: 'El monto del pago debe ser mayor a cero',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setPayments((prev) => [...prev, { ...currentPayment, id: crypto.randomUUID() }]);
     setCurrentPayment(createEmptyPayment());
   }, [currentPayment, toast]);
