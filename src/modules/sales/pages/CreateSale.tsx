@@ -52,14 +52,15 @@ import {
   Truck, 
   Receipt,
   Search,
-  ListOrdered,
+  Settings,
   Upload,
   CreditCard,
   MessageSquare,
   Paperclip,
   Send,
   X,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Warehouse
 } from "lucide-react";
 import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
@@ -84,6 +85,9 @@ const CreateSale = () => {
     showPriceListModal,
     priceLists,
     priceListsLoading,
+    userWarehouseId,
+    userWarehouseName,
+    loadingWarehouse,
     availableShippingCosts,
     filteredVariations,
     filteredStates,
@@ -183,7 +187,7 @@ const CreateSale = () => {
 
   return (
     <div className="space-y-6">
-      {/* Price List Selection Modal */}
+      {/* Sale Settings Modal */}
       <Dialog open={showPriceListModal} onOpenChange={() => {}}>
         <DialogContent 
           className="sm:max-w-md" 
@@ -192,38 +196,69 @@ const CreateSale = () => {
         >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ListOrdered className="w-5 h-5 text-primary" />
-              Seleccionar Lista de Precios
+              <Settings className="w-5 h-5 text-primary" />
+              Ajustes de venta
             </DialogTitle>
             <DialogDescription>
-              Escoja la lista de precios con la que trabajará en esta venta
+              Configure los ajustes iniciales para esta venta
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-3 py-4">
-            {priceListsLoading ? (
+          <div className="space-y-4 py-4">
+            {priceListsLoading || loadingWarehouse ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
-            ) : priceLists.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">
-                No hay listas de precios disponibles
-              </p>
             ) : (
-              <div className="space-y-4">
-                <Select value={tempPriceListId} onValueChange={setTempPriceListId}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccione una lista de precios" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priceLists.map((priceList) => (
-                      <SelectItem key={priceList.id} value={priceList.id.toString()}>
-                        {priceList.name} {priceList.code && `(${priceList.code})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <>
+                {/* Price List Select */}
+                <div className="space-y-2">
+                  <Label>Lista de precios</Label>
+                  {priceLists.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-2">
+                      No hay listas de precios disponibles
+                    </p>
+                  ) : (
+                    <Select value={tempPriceListId} onValueChange={setTempPriceListId}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione una lista de precios" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {priceLists.map((priceList) => (
+                          <SelectItem key={priceList.id} value={priceList.id.toString()}>
+                            {priceList.name} {priceList.code && `(${priceList.code})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                {/* Warehouse Select (Locked) */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Warehouse className="w-4 h-4" />
+                    Almacén
+                  </Label>
+                  <Select value={userWarehouseId?.toString() || ''} disabled>
+                    <SelectTrigger className="w-full bg-muted cursor-not-allowed">
+                      <SelectValue>
+                        {userWarehouseName || 'Sin almacén asignado'}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {userWarehouseId && (
+                        <SelectItem value={userWarehouseId.toString()}>
+                          {userWarehouseName}
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    El inventario se descontará de este almacén
+                  </p>
+                </div>
+              </>
             )}
           </div>
           
@@ -233,7 +268,7 @@ const CreateSale = () => {
             </Button>
             <Button 
               onClick={() => handleSelectPriceList(tempPriceListId)} 
-              disabled={!tempPriceListId}
+              disabled={!tempPriceListId || !userWarehouseId}
             >
               Aceptar
             </Button>

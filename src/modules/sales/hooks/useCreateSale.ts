@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type {
   SaleFormData,
@@ -97,10 +98,15 @@ export const useCreateSale = () => {
   const [saving, setSaving] = useState(false);
   const [searchingClient, setSearchingClient] = useState(false);
   const [priceListsLoading, setPriceListsLoading] = useState(true);
+  const [loadingWarehouse, setLoadingWarehouse] = useState(true);
 
   // Price list modal state
   const [showPriceListModal, setShowPriceListModal] = useState(true);
   const [priceLists, setPriceLists] = useState<PriceList[]>([]);
+
+  // User warehouse state
+  const [userWarehouseId, setUserWarehouseId] = useState<number | null>(null);
+  const [userWarehouseName, setUserWarehouseName] = useState<string>('');
 
   // Form data
   const [formData, setFormData] = useState<SaleFormData>(INITIAL_FORM_DATA);
@@ -136,6 +142,7 @@ export const useCreateSale = () => {
   useEffect(() => {
     loadFormData();
     loadProducts(1, ''); // Load initial products
+    loadUserWarehouse(); // Load user's assigned warehouse
   }, []);
 
   // Load price lists on mount
@@ -321,6 +328,42 @@ export const useCreateSale = () => {
       });
     } finally {
       setPriceListsLoading(false);
+    }
+  };
+
+  // Load user's assigned warehouse from profile
+  const loadUserWarehouse = async () => {
+    try {
+      setLoadingWarehouse(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('No user logged in');
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('warehouse_id, warehouses(id, name)')
+        .eq('UID', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      if (profile?.warehouse_id) {
+        setUserWarehouseId(profile.warehouse_id);
+        // Handle the warehouses relation (could be an object or array)
+        const warehouse = Array.isArray(profile.warehouses) 
+          ? profile.warehouses[0] 
+          : profile.warehouses;
+        setUserWarehouseName(warehouse?.name || '');
+      }
+    } catch (error) {
+      console.error('Error loading user warehouse:', error);
+    } finally {
+      setLoadingWarehouse(false);
     }
   };
 
@@ -886,6 +929,11 @@ export const useCreateSale = () => {
     showPriceListModal,
     priceLists,
     priceListsLoading,
+    
+    // User warehouse
+    userWarehouseId,
+    userWarehouseName,
+    loadingWarehouse,
     
     // Computed
     availableShippingCosts,
