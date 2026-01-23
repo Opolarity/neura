@@ -138,6 +138,8 @@ export const adaptProductVariation = (variation: any, productTitle: string): Pro
     sku: variation.sku || '',
     productId: variation.product_id,
     productTitle,
+    imageUrl: variation.imageUrl || variation.image_url || null,
+    stock: variation.stock || 0,
     terms: (variation.terms || []).map((t: any) => ({
       id: t.terms?.id || t.id,
       name: t.terms?.name || t.name,

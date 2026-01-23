@@ -39,6 +39,7 @@ export interface SaleProduct {
   price: number;
   discountPercent: number;
   stockTypeId: number; // tipo de inventario del que se descontará
+  maxStock: number; // stock disponible para este producto/almacén/tipo
 }
 
 export interface SalePayment {
@@ -140,6 +141,8 @@ export interface ProductVariation {
   sku: string;
   productId: number;
   productTitle: string;
+  imageUrl?: string | null;
+  stock: number;
   terms: Array<{
     id: number;
     name: string;
