@@ -448,6 +448,7 @@ export const useCreateSale = () => {
             price: parseFloat(op.product_price),
             discountPercent: Math.round(discountPercent * 100) / 100,
             stockTypeId: op.stock_type_id || 0, // Default when loading existing orders
+            stockTypeName: '', // Will be resolved from salesData if needed
             maxStock: op.quantity, // For existing orders, set maxStock to current quantity
           };
         });
@@ -734,6 +735,9 @@ export const useCreateSale = () => {
     const price = priceEntry?.salePrice || priceEntry?.price || 0;
     const termsNames = selectedVariation.terms.map((t) => t.name).join(' / ');
 
+    // Get stock type name
+    const stockTypeName = salesData?.stockTypes?.find(st => st.id === parseInt(selectedStockTypeId))?.name || '';
+
     setProducts((prev) => [
       ...prev,
       {
@@ -745,6 +749,7 @@ export const useCreateSale = () => {
         price,
         discountPercent: 0,
         stockTypeId: parseInt(selectedStockTypeId),
+        stockTypeName,
         maxStock: availableStock,
       },
     ]);

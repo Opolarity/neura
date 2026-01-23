@@ -444,8 +444,10 @@ const CreateSale = () => {
                       <TableRow key={index}>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium">{product.productName}</span>
-                            <span className="text-sm text-muted-foreground">{product.variationName}</span>
+                            <span className="font-medium">
+                              {product.productName} ({product.variationName.replace(/ \/ /g, ' - ')})
+                            </span>
+                            <span className="text-sm text-muted-foreground">{product.stockTypeName}</span>
                           </div>
                         </TableCell>
                         <TableCell>
