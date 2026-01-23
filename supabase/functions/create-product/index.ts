@@ -101,7 +101,8 @@ serve(async (req) => {
       })),
       stock: (v.stock || []).map((s: any) => ({
         warehouse_id: s.warehouse_id,
-        stock: Number(s.stock) || 0
+        stock: Number(s.stock) || 0,
+        stock_type_id: s.stock_type_id
       })),
       selectedImages: v.selectedImages || []
     }));

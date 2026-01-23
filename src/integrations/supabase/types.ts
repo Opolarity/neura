@@ -69,6 +69,7 @@ export type Database = {
           contry_id: number
           created_at: string | null
           id: number
+          is_active: boolean
           name: string
           neighborhood_id: number
           state_id: number
@@ -81,6 +82,7 @@ export type Database = {
           contry_id: number
           created_at?: string | null
           id?: number
+          is_active?: boolean
           name?: string
           neighborhood_id: number
           state_id: number
@@ -93,6 +95,7 @@ export type Database = {
           contry_id?: number
           created_at?: string | null
           id?: number
+          is_active?: boolean
           name?: string
           neighborhood_id?: number
           state_id?: number
@@ -3000,6 +3003,19 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_branches: {
+        Args: {
+          p_cities?: number
+          p_countries?: number
+          p_neighborhoods?: number
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_states?: number
+          p_warehouse?: number
+        }
+        Returns: Json
+      }
       sp_get_categories_product_count: {
         Args: {
           p_description?: boolean
@@ -3101,9 +3117,8 @@ export type Database = {
       sp_get_stock_movements: {
         Args: {
           p_end_date?: string
-          p_input?: number
+          p_in_out?: boolean
           p_origin?: number
-          p_output?: number
           p_page?: number
           p_search?: string
           p_size?: number
@@ -3121,6 +3136,19 @@ export type Database = {
           p_page?: number
           p_search?: string
           p_size?: number
+        }
+        Returns: Json
+      }
+      sp_get_warehouses: {
+        Args: {
+          p_branches?: number
+          p_cities?: number
+          p_countries?: number
+          p_neighborhoods?: number
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_states?: number
         }
         Returns: Json
       }

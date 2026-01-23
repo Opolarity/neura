@@ -593,78 +593,78 @@ serve(async (req) => {
           }
         }
 
-        // Get unique stock type IDs from incoming data
-        const incomingStockTypeIds = [...new Set(incoming.stock.map((s: VariationStock) => s.stock_type_id || defaultStockTypeId))];
-        
-        // Get current stock BEFORE deleting to calculate differences
+        // Get current stock BEFORE updating to calculate differences
         const { data: currentStocks } = await supabaseAdmin
           .from('product_stock')
           .select('warehouse_id, stock, stock_type_id')
-          .eq('product_variation_id', existing.id)
-          .in('stock_type_id', incomingStockTypeIds);
+          .eq('product_variation_id', existing.id);
 
-        // Delete stock only for the types we're updating
-        for (const typeId of incomingStockTypeIds) {
-          await supabaseAdmin.from('product_stock')
-            .delete()
-            .eq('product_variation_id', existing.id)
-            .eq('stock_type_id', typeId);
-        }
-
-        const stockInserts = incoming.stock
-          .filter((s: VariationStock) => s.stock > 0)
-          .map((stock: VariationStock) => ({
-            product_variation_id: existing.id,
-            warehouse_id: stock.warehouse_id,
-            stock: stock.stock,
-            stock_type_id: stock.stock_type_id || defaultStockTypeId
-          }));
-
-        if (stockInserts.length > 0) {
-          const { error: stockError } = await supabaseAdmin
-            .from('product_stock')
-            .insert(stockInserts);
-          if (stockError) {
-            console.error('Error updating stock:', stockError);
-            throw stockError;
+        // Process each stock entry with UPSERT logic
+        for (const newStock of incoming.stock) {
+          const stockTypeId = newStock.stock_type_id || defaultStockTypeId;
+          const newQty = newStock.stock || 0;
+          
+          // Find current stock for this combination
+          const oldStockRecord = currentStocks?.find(
+            (s: { warehouse_id: number; stock: number; stock_type_id: number }) => 
+              s.warehouse_id === newStock.warehouse_id && 
+              s.stock_type_id === stockTypeId
+          );
+          
+          const oldQty = oldStockRecord?.stock || 0;
+          const difference = newQty - oldQty;
+          
+          // UPSERT: Update if exists, insert if not
+          if (oldStockRecord) {
+            // Update existing record
+            const { error: updateError } = await supabaseAdmin
+              .from('product_stock')
+              .update({ stock: newQty })
+              .eq('product_variation_id', existing.id)
+              .eq('warehouse_id', newStock.warehouse_id)
+              .eq('stock_type_id', stockTypeId);
+            
+            if (updateError) {
+              console.error('Error updating stock:', updateError);
+              throw updateError;
+            }
+          } else if (newQty > 0) {
+            // Insert new record only if stock > 0
+            const { error: insertError } = await supabaseAdmin
+              .from('product_stock')
+              .insert({
+                product_variation_id: existing.id,
+                warehouse_id: newStock.warehouse_id,
+                stock: newQty,
+                stock_type_id: stockTypeId
+              });
+            
+            if (insertError) {
+              console.error('Error inserting stock:', insertError);
+              throw insertError;
+            }
           }
-        }
-
-        // Calculate stock differences and create movements
-        if (manualMovementTypeId) {
-          for (const newStock of incoming.stock) {
-            const stockTypeId = newStock.stock_type_id || defaultStockTypeId;
-            const oldStockRecord = currentStocks?.find(
-              (s: { warehouse_id: number; stock: number; stock_type_id: number }) => 
-                s.warehouse_id === newStock.warehouse_id && 
-                s.stock_type_id === stockTypeId
-            );
+          
+          // Only create movement if there's a real difference
+          if (difference !== 0 && manualMovementTypeId) {
+            const { error: movementError } = await supabaseAdmin
+              .from('stock_movements')
+              .insert({
+                product_variation_id: existing.id,
+                quantity: difference,
+                created_by: user.id,
+                movement_type: manualMovementTypeId,
+                warehouse_id: newStock.warehouse_id,
+                completed: true,
+                stock_type_id: stockTypeId,
+                is_active: true
+              });
             
-            const oldQty = oldStockRecord?.stock || 0;
-            const newQty = newStock.stock || 0;
-            const difference = newQty - oldQty;
-            
-            // Only create movement if there's a difference
-            if (difference !== 0) {
-              const { error: movementError } = await supabaseAdmin
-                .from('stock_movements')
-                .insert({
-                  product_variation_id: existing.id,
-                  quantity: difference,
-                  created_by: user.id,
-                  movement_type: manualMovementTypeId,
-                  warehouse_id: newStock.warehouse_id,
-                  completed: true,
-                  stock_type_id: stockTypeId,
-                  is_active: true
-                });
-              
-              if (movementError) {
-                console.error('Error creating stock movement:', movementError);
-                // Don't throw - stock movements are secondary
-              } else {
-                console.log(`Stock movement created for variation ${existing.id}: ${difference} units (warehouse ${newStock.warehouse_id})`);
-              }
+            if (movementError) {
+              console.error('Error creating stock movement:', movementError);
+              // Don't throw - stock movements are secondary
+            } else {
+              console.log(`Stock movement created for variation ${existing.id}: ${difference} units (warehouse ${newStock.warehouse_id}, type ${stockTypeId})`);
             }
           }
         }
