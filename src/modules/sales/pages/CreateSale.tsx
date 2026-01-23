@@ -268,8 +268,8 @@ const CreateSale = () => {
               <div className="flex gap-3">
                 {/* Stock Type Selector */}
                 <Select value={selectedStockTypeId} onValueChange={setSelectedStockTypeId}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Tipo de inventario" />
+                  <SelectTrigger className="w-auto min-w-[160px]">
+                    <SelectValue placeholder="Tipo inventario" />
                   </SelectTrigger>
                   <SelectContent>
                     {salesData?.stockTypes?.map((st) => (
