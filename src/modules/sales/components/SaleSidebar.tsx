@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { uploadNoteImage } from '../services';
 
 interface Note {
   id: number;
@@ -146,29 +147,6 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
     }
   };
 
-  const uploadFile = async (file: File): Promise<string | null> => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `notes/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('products')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage
-        .from('products')
-        .getPublicUrl(filePath);
-
-      return data.publicUrl;
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      return null;
-    }
-  };
-
   const handleSendNote = async () => {
     if (!newNote.trim() && !selectedFile) return;
 
@@ -182,29 +160,31 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
 
     setUploading(true);
     try {
-      let imageUrl: string | null = null;
-
-      // Upload file if selected
-      if (selectedFile) {
-        imageUrl = await uploadFile(selectedFile);
-        if (!imageUrl) {
-          throw new Error('Failed to upload file');
-        }
-      }
-
-      // Insert note
+      // 1. Insert note without image first to get the note_id
       const { data: noteData, error: noteError } = await supabase
         .from('notes')
         .insert({
           message: newNote.trim() || 'Archivo adjunto',
-          image_url: imageUrl,
         })
         .select()
         .single();
 
       if (noteError) throw noteError;
 
-      // Link note to order
+      // 2. If there's a file, upload it using the note_id and order_id
+      if (selectedFile && noteData) {
+        const imageUrl = await uploadNoteImage(orderId, noteData.id, selectedFile);
+        
+        // 3. Update the note with the image_url
+        const { error: updateError } = await supabase
+          .from('notes')
+          .update({ image_url: imageUrl })
+          .eq('id', noteData.id);
+
+        if (updateError) throw updateError;
+      }
+
+      // 4. Link note to order
       const { error: orderNoteError } = await (supabase as any)
         .from('order_notes')
         .insert({

@@ -312,3 +312,26 @@ export const fetchSaleProducts = async (params: FetchSaleProductsParams): Promis
   if (error) throw error;
   return data;
 };
+
+// Upload note image to storage
+export const uploadNoteImage = async (
+  orderId: number,
+  noteId: number,
+  file: File
+): Promise<string> => {
+  const fileExt = file.name.split('.').pop() || 'jpg';
+  const fileName = `${noteId}-${orderId}.${fileExt}`;
+  const filePath = `sales-notes/${orderId}/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('sales')
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('sales')
+    .getPublicUrl(filePath);
+
+  return publicUrl;
+};
