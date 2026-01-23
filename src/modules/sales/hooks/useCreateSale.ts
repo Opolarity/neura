@@ -448,6 +448,7 @@ export const useCreateSale = () => {
             price: parseFloat(op.product_price),
             discountPercent: Math.round(discountPercent * 100) / 100,
             stockTypeId: op.stock_type_id || 0, // Default when loading existing orders
+            maxStock: op.quantity, // For existing orders, set maxStock to current quantity
           };
         });
         setProducts(loadedProducts);
@@ -713,6 +714,17 @@ export const useCreateSale = () => {
       return;
     }
 
+    // Validate stock is greater than 0
+    const availableStock = selectedVariation.stock || 0;
+    if (availableStock <= 0) {
+      toast({
+        title: 'Sin stock',
+        description: 'Este producto no tiene stock disponible para el tipo de inventario seleccionado',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     // Find price for selected price list
     const priceListId = formData.priceListId ? parseInt(formData.priceListId) : null;
     const priceEntry = priceListId
@@ -733,6 +745,7 @@ export const useCreateSale = () => {
         price,
         discountPercent: 0,
         stockTypeId: parseInt(selectedStockTypeId),
+        maxStock: availableStock,
       },
     ]);
 
@@ -749,7 +762,16 @@ export const useCreateSale = () => {
   const updateProduct = useCallback((index: number, field: keyof SaleProduct, value: any) => {
     setProducts((prev) => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      const product = updated[index];
+      
+      // Validate quantity doesn't exceed max stock
+      if (field === 'quantity') {
+        const newQuantity = Math.max(1, Math.min(value, product.maxStock));
+        updated[index] = { ...product, quantity: newQuantity };
+      } else {
+        updated[index] = { ...product, [field]: value };
+      }
+      
       return updated;
     });
   }, []);

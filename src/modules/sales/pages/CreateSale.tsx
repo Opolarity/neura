@@ -449,7 +449,14 @@ const CreateSale = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Input type="number" value={product.quantity} onChange={(e) => updateProduct(index, "quantity", parseInt(e.target.value) || 1)} min="1" className="w-16 text-center" />
+                          <Input 
+                            type="number" 
+                            value={product.quantity} 
+                            onChange={(e) => updateProduct(index, "quantity", parseInt(e.target.value) || 1)} 
+                            min="1" 
+                            max={product.maxStock}
+                            className="w-16 text-center" 
+                          />
                         </TableCell>
                         <TableCell>
                           <Input type="number" value={product.price} onChange={(e) => updateProduct(index, "price", parseFloat(e.target.value) || 0)} min="0" step="0.01" className="w-24" />
