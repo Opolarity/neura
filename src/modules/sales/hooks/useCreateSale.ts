@@ -117,6 +117,7 @@ export const useCreateSale = () => {
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStockTypeId, setSelectedStockTypeId] = useState<string>('');
 
   // Server-side product pagination state
   const [paginatedProducts, setPaginatedProducts] = useState<PaginatedProductVariation[]>([]);
@@ -157,14 +158,14 @@ export const useCreateSale = () => {
     }
   }, [formData.withShipping]);
 
-  // Debounced search effect
+  // Debounced search effect - also re-load when stockTypeId changes
   useEffect(() => {
     if (searchDebounceRef.current) {
       clearTimeout(searchDebounceRef.current);
     }
     searchDebounceRef.current = setTimeout(() => {
       setProductPage(1);
-      loadProducts(1, searchQuery);
+      loadProducts(1, searchQuery, selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined);
     }, 300);
 
     return () => {
@@ -172,7 +173,7 @@ export const useCreateSale = () => {
         clearTimeout(searchDebounceRef.current);
       }
     };
-  }, [searchQuery]);
+  }, [searchQuery, selectedStockTypeId]);
 
   // Computed: Available shipping costs based on selected location
   const availableShippingCosts = useMemo(() => {
@@ -270,13 +271,14 @@ export const useCreateSale = () => {
   };
 
   // Load products with server-side pagination
-  const loadProducts = async (page: number, search: string) => {
+  const loadProducts = async (page: number, search: string, stockTypeId?: number) => {
     try {
       setProductsLoading(true);
       const result = await fetchSaleProducts({
         page,
         size: 10,
         search: search || undefined,
+        stockTypeId,
       });
       // Map response with default values for imageUrl and stock
       const mappedProducts = (result.data || []).map((p: any) => ({
@@ -301,8 +303,8 @@ export const useCreateSale = () => {
   // Handle product page change
   const handleProductPageChange = useCallback((newPage: number) => {
     setProductPage(newPage);
-    loadProducts(newPage, searchQuery);
-  }, [searchQuery]);
+    loadProducts(newPage, searchQuery, selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined);
+  }, [searchQuery, selectedStockTypeId]);
 
   // Load price lists
   const loadPriceLists = async () => {
@@ -402,6 +404,7 @@ export const useCreateSale = () => {
             quantity: op.quantity,
             price: parseFloat(op.product_price),
             discountPercent: Math.round(discountPercent * 100) / 100,
+            stockTypeId: op.stock_type_id || 0, // Default when loading existing orders
           };
         });
         setProducts(loadedProducts);
@@ -658,6 +661,15 @@ export const useCreateSale = () => {
       return;
     }
 
+    if (!selectedStockTypeId) {
+      toast({
+        title: 'Error',
+        description: 'Seleccione un tipo de inventario',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     // Find price for selected price list
     const priceListId = formData.priceListId ? parseInt(formData.priceListId) : null;
     const priceEntry = priceListId
@@ -677,12 +689,13 @@ export const useCreateSale = () => {
         quantity: 1,
         price,
         discountPercent: 0,
+        stockTypeId: parseInt(selectedStockTypeId),
       },
     ]);
 
     setSearchQuery('');
     setSelectedVariation(null);
-  }, [selectedVariation, formData.priceListId, toast]);
+  }, [selectedVariation, formData.priceListId, selectedStockTypeId, toast]);
 
   // Remove product from list
   const removeProduct = useCallback((index: number) => {
@@ -857,6 +870,7 @@ export const useCreateSale = () => {
     clientFound,
     selectedVariation,
     searchQuery,
+    selectedStockTypeId,
     
     // Server-side pagination state
     productPage,
@@ -889,6 +903,7 @@ export const useCreateSale = () => {
     setOrderSituation,
     setSelectedVariation,
     setSearchQuery,
+    setSelectedStockTypeId,
     handleInputChange,
     handlePaymentChange,
     addPayment,

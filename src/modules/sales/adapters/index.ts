@@ -10,6 +10,7 @@ import type {
   PriceList,
   PaymentMethod,
   Situation,
+  StockType,
   Country,
   State,
   City,
@@ -61,6 +62,15 @@ export const adaptSituations = (data: any[]): Situation[] => {
   return data.map((item) => ({
     id: item.id,
     name: item.name,
+  }));
+};
+
+// Adapt stock types from API
+export const adaptStockTypes = (data: any[]): StockType[] => {
+  return data.map((item) => ({
+    id: item.id,
+    name: item.name,
+    code: item.code || null,
   }));
 };
 
@@ -165,6 +175,7 @@ export const adaptSalesFormData = (data: any): SalesFormDataResponse => {
     products: adaptProducts(data.products || []),
     paymentMethods: adaptPaymentMethods(data.paymentMethods || []),
     situations: adaptSituations(data.situations || []),
+    stockTypes: adaptStockTypes(data.stockTypes || []),
   };
 };
 

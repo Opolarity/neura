@@ -80,6 +80,7 @@ const CreateSale = () => {
     clientFound,
     selectedVariation,
     searchQuery,
+    selectedStockTypeId,
     showPriceListModal,
     priceLists,
     priceListsLoading,
@@ -105,6 +106,7 @@ const CreateSale = () => {
     setOrderSituation,
     setSelectedVariation,
     setSearchQuery,
+    setSelectedStockTypeId,
     handleInputChange,
     handlePaymentChange,
     addPayment,
@@ -264,6 +266,21 @@ const CreateSale = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-3">
+                {/* Stock Type Selector */}
+                <Select value={selectedStockTypeId} onValueChange={setSelectedStockTypeId}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Tipo de inventario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {salesData?.stockTypes?.map((st) => (
+                      <SelectItem key={st.id} value={st.id.toString()}>
+                        {st.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Product Search */}
                 <div className="flex-1">
                   <Popover open={open} onOpenChange={setOpen}>
                     <PopoverTrigger asChild>
@@ -316,7 +333,7 @@ const CreateSale = () => {
                                         <span className="font-medium truncate">{variation.productTitle}</span>
                                         <span className="text-sm text-muted-foreground truncate">{displayTerms}</span>
                                       </div>
-                                      {/* Stock */}
+                                      {/* Stock (filtered by selected stock type) */}
                                       <span className={cn(
                                         "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
                                         variation.stock > 0 
@@ -366,7 +383,7 @@ const CreateSale = () => {
                     </PopoverContent>
                   </Popover>
                 </div>
-                <Button type="button" onClick={addProduct} disabled={!selectedVariation}>
+                <Button type="button" onClick={addProduct} disabled={!selectedVariation || !selectedStockTypeId}>
                   <Plus className="w-4 h-4 mr-2" /> Agregar
                 </Button>
               </div>

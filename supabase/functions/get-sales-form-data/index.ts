@@ -15,6 +15,14 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Get the STK module id first for stock types query
+    const { data: stkModule } = await supabase
+      .from("modules")
+      .select("id")
+      .eq("code", "STK")
+      .single();
+    const stkModuleId = stkModule?.id || 0;
+
     // Fetch all dropdown data in parallel
     const [
       documentTypesRes,
@@ -27,6 +35,7 @@ Deno.serve(async (req) => {
       neighborhoodsRes,
       paymentMethodsRes,
       situationsRes,
+      stockTypesRes,
       productsRes,
     ] = await Promise.all([
       supabase.from("document_types").select("id, name, code, person_type").neq("id", 0).order("name"),
@@ -39,6 +48,7 @@ Deno.serve(async (req) => {
       supabase.from("neighborhoods").select("id, name, city_id, state_id, country_id").order("name"),
       supabase.from("payment_methods").select("id, name").eq("active", true).order("name"),
       supabase.from("situations").select("id, name").eq("module_id", 1).order("order"), // Module 1 = Sales
+      supabase.from("types").select("id, name, code").eq("module_id", stkModuleId).order("name"), // Stock types
       // Fetch only active products with active variations
       supabase
         .from("products")
@@ -81,6 +91,7 @@ Deno.serve(async (req) => {
       neighborhoodsRes.error,
       paymentMethodsRes.error,
       situationsRes.error,
+      stockTypesRes.error,
       productsRes.error,
     ].filter(Boolean);
 
@@ -123,6 +134,7 @@ Deno.serve(async (req) => {
       neighborhoods: neighborhoodsRes.data || [],
       paymentMethods: paymentMethodsRes.data || [],
       situations: situationsRes.data || [],
+      stockTypes: stockTypesRes.data || [],
       products,
     };
 

@@ -239,6 +239,7 @@ export interface FetchSaleProductsParams {
   page?: number;
   size?: number;
   search?: string;
+  stockTypeId?: number;
 }
 
 export interface SaleProductsResponse {
@@ -262,6 +263,7 @@ export const fetchSaleProducts = async (params: FetchSaleProductsParams): Promis
   if (params.page) queryParams.set('p_page', String(params.page));
   if (params.size) queryParams.set('p_size', String(params.size));
   if (params.search) queryParams.set('p_search', params.search);
+  if (params.stockTypeId) queryParams.set('p_stock_type_id', String(params.stockTypeId));
 
   const endpoint = queryParams.toString()
     ? `get-sale-products?${queryParams.toString()}`
