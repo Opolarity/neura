@@ -779,33 +779,33 @@ export type Database = {
       order_payment: {
         Row: {
           amount: number
-          baucher_url: string | null
           date: string
           gateway_confirmation_code: string | null
           id: number
           movement_id: number
           order_id: number
           payment_method_id: number
+          voucher_url: string | null
         }
         Insert: {
           amount: number
-          baucher_url?: string | null
           date: string
           gateway_confirmation_code?: string | null
           id?: number
           movement_id: number
           order_id: number
           payment_method_id: number
+          voucher_url?: string | null
         }
         Update: {
           amount?: number
-          baucher_url?: string | null
           date?: string
           gateway_confirmation_code?: string | null
           id?: number
           movement_id?: number
           order_id?: number
           payment_method_id?: number
+          voucher_url?: string | null
         }
         Relationships: [
           {
