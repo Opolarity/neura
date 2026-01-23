@@ -9,12 +9,10 @@ export const calculateSubtotal = (products: SaleProduct[]): number => {
   return products.reduce((sum, p) => sum + p.quantity * p.price, 0);
 };
 
-// Calculate total discount amount from products (percentage-based)
+// Calculate total discount amount from products (amount-based per unit)
 export const calculateDiscountAmount = (products: SaleProduct[]): number => {
   return products.reduce((sum, p) => {
-    const lineSubtotal = p.quantity * p.price;
-    const lineDiscount = (lineSubtotal * p.discountPercent) / 100;
-    return sum + lineDiscount;
+    return sum + (p.discountAmount * p.quantity);
   }, 0);
 };
 
@@ -28,11 +26,10 @@ export const calculateTotal = (
   return subtotal - discount + shippingCost;
 };
 
-// Calculate line subtotal for a single product
+// Calculate line subtotal for a single product (discount is per unit amount)
 export const calculateLineSubtotal = (product: SaleProduct): number => {
-  const lineSubtotal = product.quantity * product.price;
-  const lineDiscount = (lineSubtotal * product.discountPercent) / 100;
-  return lineSubtotal - lineDiscount;
+  const priceAfterDiscount = product.price - product.discountAmount;
+  return product.quantity * priceAfterDiscount;
 };
 
 // Filter shipping costs by location hierarchy

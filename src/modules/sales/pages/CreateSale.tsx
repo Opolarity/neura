@@ -437,7 +437,7 @@ const CreateSale = () => {
                       <TableHead>Producto</TableHead>
                       <TableHead className="w-20 text-center">Cantidad</TableHead>
                       <TableHead className="w-28 text-center">Precio (S/)</TableHead>
-                      <TableHead className="w-20 text-center">Desc. (%)</TableHead>
+                      <TableHead className="w-24 text-center">Desc. (S/)</TableHead>
                       <TableHead className="w-28 text-right">Subtotal</TableHead>
                       <TableHead className="w-12"></TableHead>
                     </TableRow>
@@ -454,32 +454,37 @@ const CreateSale = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Input 
-                            type="number" 
-                            value={product.quantity === 0 ? '' : product.quantity} 
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === '') {
-                                updateProduct(index, "quantity", 0);
-                              } else {
-                                updateProduct(index, "quantity", parseInt(val) || 0);
-                              }
-                            }}
-                            onBlur={() => {
-                              if (product.quantity < 1) {
-                                updateProduct(index, "quantity", 1);
-                              }
-                            }}
-                            min="1" 
-                            max={product.maxStock}
-                            className="w-16 text-center" 
-                          />
+                          <div className="flex flex-col items-center">
+                            <Input 
+                              type="number" 
+                              value={product.quantity === 0 ? '' : product.quantity} 
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === '') {
+                                  updateProduct(index, "quantity", 0);
+                                } else {
+                                  updateProduct(index, "quantity", parseInt(val) || 0);
+                                }
+                              }}
+                              onBlur={() => {
+                                if (product.quantity < 1) {
+                                  updateProduct(index, "quantity", 1);
+                                }
+                              }}
+                              min="1" 
+                              max={product.maxStock}
+                              className="w-16 text-center" 
+                            />
+                            <span className="text-xs text-muted-foreground mt-1">
+                              Stock: {product.maxStock}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Input type="number" value={product.price} onChange={(e) => updateProduct(index, "price", parseFloat(e.target.value) || 0)} min="0" step="0.01" className="w-24" />
                         </TableCell>
                         <TableCell>
-                          <Input type="number" value={product.discountPercent} onChange={(e) => updateProduct(index, "discountPercent", parseFloat(e.target.value) || 0)} min="0" max="100" className="w-16 text-center" />
+                          <Input type="number" value={product.discountAmount} onChange={(e) => updateProduct(index, "discountAmount", parseFloat(e.target.value) || 0)} min="0" step="0.01" className="w-20 text-center" />
                         </TableCell>
                         <TableCell className="text-right font-medium">{formatCurrency(calculateLineSubtotal(product))}</TableCell>
                         <TableCell>
