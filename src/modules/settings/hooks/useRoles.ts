@@ -97,7 +97,6 @@ const useRoles = () => {
     };
 
     const handleApplyFilter = async (newFilters: RolesFilters) => {
-        await loadRoles(newFilters);
         setPagination((prev) => ({ ...prev, p_page: 1 }));
         setFilters((prev) => {
             const updatedFilters = { ...newFilters, page: 1, size: prev.size };
