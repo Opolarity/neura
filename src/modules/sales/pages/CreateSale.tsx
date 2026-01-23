@@ -236,10 +236,7 @@ const CreateSale = () => {
 
                 {/* Warehouse Select (Locked) */}
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Warehouse className="w-4 h-4" />
-                    Almacén
-                  </Label>
+                  <Label>Almacén</Label>
                   <Select value={userWarehouseId?.toString() || ''} disabled>
                     <SelectTrigger className="w-full bg-muted cursor-not-allowed">
                       <SelectValue>
@@ -254,9 +251,6 @@ const CreateSale = () => {
                       )}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">
-                    El inventario se descontará de este almacén
-                  </p>
                 </div>
               </>
             )}
