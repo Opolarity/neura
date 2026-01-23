@@ -3149,6 +3149,20 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_users: {
+        Args: {
+          p_branches?: number
+          p_order?: string
+          p_page?: number
+          p_person_type?: number
+          p_role?: number
+          p_search?: string
+          p_show?: boolean
+          p_size?: number
+          p_warehouses?: number
+        }
+        Returns: Json
+      }
       sp_get_warehouses: {
         Args: {
           p_branches?: number
