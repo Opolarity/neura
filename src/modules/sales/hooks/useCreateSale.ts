@@ -764,9 +764,9 @@ export const useCreateSale = () => {
       const updated = [...prev];
       const product = updated[index];
       
-      // Validate quantity doesn't exceed max stock
+      // For quantity, allow 0 temporarily (for editing), but clamp to maxStock
       if (field === 'quantity') {
-        const newQuantity = Math.max(1, Math.min(value, product.maxStock));
+        const newQuantity = Math.min(Math.max(0, value), product.maxStock);
         updated[index] = { ...product, quantity: newQuantity };
       } else {
         updated[index] = { ...product, [field]: value };
