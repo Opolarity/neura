@@ -49,6 +49,42 @@ serve(async (req) => {
 
     console.log('Start create user:', email);
 
+
+    const { data: userExists, error: userexistserror } = await supabase
+      .from('accounts')
+      .select()
+      .eq('document_number', document_number)
+      .eq('document_type_id', document_type_id)
+      .maybeSingle();
+
+    if (userExists) {
+      return new Response(
+        JSON.stringify({ error: 'User exists' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (userexistserror) {
+      console.error('Error checking email:', userexistserror);
+      throw new Error(`Email check failed: ${userexistserror.message}`);
+    }
+
+
+
+    // 3. Create Auth User (Admin API)
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      display_name: `${name} ${middle_name ? middle_name + ' ' : ''}${last_name} ${last_name2 ? last_name2 : ''}`.trim(),
+      password,
+      phone,
+    });
+
+    if (authError || !authData.user) {
+      console.error('Error creating auth user:', authError);
+      throw new Error(`Auth user creation failed: ${authError?.message ?? 'Unknown error'}`);
+    }
+
+    const user_uid = authData.user.id;
     // 2. Create Account
     const { data: accountData, error: accountError } = await supabase
       .from('accounts')
@@ -70,20 +106,6 @@ serve(async (req) => {
       throw new Error(`Account creation failed: ${accountError.message}`);
     }
 
-    // 3. Create Auth User (Admin API)
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      display_name: `${name} ${middle_name ? middle_name + ' ' : ''}${last_name} ${last_name2 ? last_name2 : ''}`.trim(),
-      password,
-      phone,
-    });
-
-    if (authError || !authData.user) {
-      console.error('Error creating auth user:', authError);
-      throw new Error(`Auth user creation failed: ${authError?.message ?? 'Unknown error'}`);
-    }
-
-    const user_uid = authData.user.id;
 
     // 4. Create Profile (Linkage)
     const { data: profileData, error: profileError } = await supabase

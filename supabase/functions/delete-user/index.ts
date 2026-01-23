@@ -14,9 +14,9 @@ serve(async (req) => {
 
   try {
     const payload = await req.json();
-    const { id, uid } = payload;
+    const { uid } = payload;
 
-    if (!id || !uid) {
+    if (!uid) {
       return new Response(
         JSON.stringify({ error: 'ID (account_id) and UID (auth_uid) are required for soft delete' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -47,17 +47,6 @@ serve(async (req) => {
     if (authError) {
       console.error('Error updating user auth (password scramble):', authError);
       throw new Error(`Failed to scramble password: ${authError.message}`);
-    }
-
-
-    const { error: accountError } = await supabase
-      .from('accounts')
-      .update({ is_active: false })
-      .eq('id', id);
-
-    if (accountError) {
-      console.error('Error deactivating account:', accountError);
-      throw new Error(`Account deactivation failed: ${accountError.message}`);
     }
 
     const { error: profileError } = await supabase
