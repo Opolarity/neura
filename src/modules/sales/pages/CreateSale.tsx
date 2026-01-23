@@ -181,55 +181,54 @@ const CreateSale = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Price List Selection Modal */}
-      <Dialog open={showPriceListModal} onOpenChange={() => {}}>
-        <DialogContent 
-          className="sm:max-w-md" 
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-        >
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ListOrdered className="w-5 h-5 text-primary" />
-              Seleccionar Lista de Precios
-            </DialogTitle>
-            <DialogDescription>
-              Escoja la lista de precios con la que trabajará en esta venta
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-3 py-4">
-            {priceListsLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              </div>
-            ) : priceLists.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">
-                No hay listas de precios disponibles
-              </p>
-            ) : (
-              priceLists.map((priceList) => (
-                <Button
-                  key={priceList.id}
-                  variant="outline"
-                  className="w-full justify-start h-auto py-4 hover:bg-primary/5 hover:border-primary"
-                  onClick={() => handleSelectPriceList(priceList.id.toString())}
-                >
-                  <div className="flex flex-col items-start">
-                    <span className="font-semibold">{priceList.name}</span>
-                    {priceList.code && (
-                      <span className="text-sm text-muted-foreground">
-                        Código: {priceList.code}
-                      </span>
-                    )}
+    <div className="space-y-6 relative">
+      {/* Price List Selection Overlay - Only covers content area */}
+      {showPriceListModal && (
+        <div className="absolute inset-0 z-40 flex items-start justify-center pt-20 bg-background/80 backdrop-blur-sm rounded-lg">
+          <div className="w-full max-w-md mx-4">
+            <Card className="shadow-lg border-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ListOrdered className="w-5 h-5 text-primary" />
+                  Seleccionar Lista de Precios
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Escoja la lista de precios con la que trabajará en esta venta
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {priceListsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
-                </Button>
-              ))
-            )}
+                ) : priceLists.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">
+                    No hay listas de precios disponibles
+                  </p>
+                ) : (
+                  priceLists.map((priceList) => (
+                    <Button
+                      key={priceList.id}
+                      variant="outline"
+                      className="w-full justify-start h-auto py-3 hover:bg-primary/5 hover:border-primary"
+                      onClick={() => handleSelectPriceList(priceList.id.toString())}
+                    >
+                      <div className="flex flex-col items-start">
+                        <span className="font-semibold">{priceList.name}</span>
+                        {priceList.code && (
+                          <span className="text-sm text-muted-foreground">
+                            Código: {priceList.code}
+                          </span>
+                        )}
+                      </div>
+                    </Button>
+                  ))
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
