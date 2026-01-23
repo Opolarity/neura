@@ -41,8 +41,7 @@ export interface MovementsFilters {
     origin?: number | null;
     user?: number | null;
     warehouse?: number | null;
-    input?: number | null;
-    output?: number | null;
+    in_out?: boolean | null;
     start_date?: string | null;
     end_date?: string | null;
     page?: number;
