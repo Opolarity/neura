@@ -67,7 +67,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
         variation_id: p.variationId,
         quantity: p.quantity,
         price: p.price,
-        discount_percent: p.discountPercent,
+        discount_amount: p.discountAmount,
       })),
       payments: orderData.payments.map(p => ({
         payment_method_id: p.paymentMethodId,
@@ -117,7 +117,7 @@ export const updateOrder = async (orderId: number, orderData: CreateOrderRequest
         variation_id: p.variationId,
         quantity: p.quantity,
         price: p.price,
-        discount_percent: p.discountPercent,
+        discount_amount: p.discountAmount,
       })),
       payments: orderData.payments.map(p => ({
         payment_method_id: p.paymentMethodId,

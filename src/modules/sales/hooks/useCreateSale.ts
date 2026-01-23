@@ -435,10 +435,9 @@ export const useCreateSale = () => {
           const productTitle = v ? (productMap.get(v.product_id) || '') : '';
           const termsNames = termsByVariation.get(op.product_variation_id)?.join(' / ') || '';
           
-          // Convert discount amount to percentage
-          const lineSubtotal = op.quantity * parseFloat(op.product_price);
-          const discountPercent = lineSubtotal > 0 
-            ? (parseFloat(op.product_discount) / lineSubtotal) * 100 
+          // Discount amount is stored per unit in the database
+          const discountAmount = op.quantity > 0 
+            ? parseFloat(op.product_discount) / op.quantity 
             : 0;
 
           return {
@@ -448,7 +447,7 @@ export const useCreateSale = () => {
             sku: v?.sku || '',
             quantity: op.quantity,
             price: parseFloat(op.product_price),
-            discountPercent: Math.round(discountPercent * 100) / 100,
+            discountAmount: Math.round(discountAmount * 100) / 100,
             stockTypeId: op.stock_type_id || 0, // Default when loading existing orders
             stockTypeName: '', // Will be resolved from salesData if needed
             maxStock: op.quantity, // For existing orders, set maxStock to current quantity
@@ -761,7 +760,7 @@ export const useCreateSale = () => {
         sku: selectedVariation.sku,
         quantity: 1,
         price,
-        discountPercent: 0,
+        discountAmount: 0,
         stockTypeId: parseInt(selectedStockTypeId),
         stockTypeName,
         maxStock: availableStock,
@@ -892,7 +891,7 @@ export const useCreateSale = () => {
           variationId: p.variationId,
           quantity: p.quantity,
           price: p.price,
-          discountPercent: p.discountPercent,
+          discountAmount: p.discountAmount,
         })),
         payments: payments
           .filter((p) => p.paymentMethodId && p.amount)

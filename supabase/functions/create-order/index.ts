@@ -18,7 +18,7 @@ interface ProductInput {
   variation_id: number;
   quantity: number;
   price: number;
-  discount_percent: number;
+  discount_amount: number; // discount per unit in currency
 }
 
 interface OrderInput {
@@ -169,7 +169,8 @@ serve(async (req) => {
 
     // Insert order products and create stock movements
     for (const product of input.products) {
-      const lineDiscount = product.quantity * product.price * (product.discount_percent / 100);
+      // Calculate total line discount (discount per unit * quantity)
+      const lineDiscount = product.discount_amount * product.quantity;
 
       // Create stock movement (negative for sales)
       const { data: stockMovement, error: smError } = await supabase
