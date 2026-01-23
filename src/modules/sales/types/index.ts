@@ -38,6 +38,7 @@ export interface SaleProduct {
   quantity: number;
   price: number;
   discountPercent: number;
+  stockTypeId: number; // tipo de inventario del que se descontará
 }
 
 export interface SalePayment {
@@ -87,6 +88,12 @@ export interface PaymentMethod {
 export interface Situation {
   id: number;
   name: string;
+}
+
+export interface StockType {
+  id: number;
+  name: string;
+  code: string | null;
 }
 
 export interface Country {
@@ -163,6 +170,7 @@ export interface SalesFormDataResponse {
   products: ProductForSearch[];
   paymentMethods: PaymentMethod[];
   situations: Situation[];
+  stockTypes: StockType[];
 }
 
 // Create Order Request

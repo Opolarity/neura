@@ -3096,10 +3096,20 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_get_sale_products: {
-        Args: { p_page?: number; p_search?: string; p_size?: number }
-        Returns: Json
-      }
+      sp_get_sale_products:
+        | {
+            Args: { p_page?: number; p_search?: string; p_size?: number }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_page?: number
+              p_search?: string
+              p_size?: number
+              p_stock_type_id?: number
+            }
+            Returns: Json
+          }
       sp_get_shipping_methods: {
         Args: {
           p_cities?: number
