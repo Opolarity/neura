@@ -13,8 +13,8 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
 
-    const minuser = Number(url.searchParams.get("minprice")) || null;
-    const maxuser = Number(url.searchParams.get("maxprice")) || null;
+    const minuser = Number(url.searchParams.get("minuser")) || null;
+    const maxuser = Number(url.searchParams.get("maxuser")) || null;
     const isadmin = url.searchParams.get("is_admin") || null
     const page = Number(url.searchParams.get("page")) || 1;
     const size = Number(url.searchParams.get("size")) || 20;
