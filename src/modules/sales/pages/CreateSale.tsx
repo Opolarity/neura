@@ -451,8 +451,20 @@ const CreateSale = () => {
                         <TableCell>
                           <Input 
                             type="number" 
-                            value={product.quantity} 
-                            onChange={(e) => updateProduct(index, "quantity", parseInt(e.target.value) || 1)} 
+                            value={product.quantity === 0 ? '' : product.quantity} 
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '') {
+                                updateProduct(index, "quantity", 0);
+                              } else {
+                                updateProduct(index, "quantity", parseInt(val) || 0);
+                              }
+                            }}
+                            onBlur={() => {
+                              if (product.quantity < 1) {
+                                updateProduct(index, "quantity", 1);
+                              }
+                            }}
                             min="1" 
                             max={product.maxStock}
                             className="w-16 text-center" 
