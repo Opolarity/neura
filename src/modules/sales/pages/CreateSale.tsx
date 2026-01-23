@@ -182,9 +182,9 @@ const CreateSale = () => {
 
   return (
     <div className="space-y-6 relative">
-      {/* Price List Selection Overlay - Only covers content area */}
+      {/* Price List Selection Overlay - Covers entire main content area */}
       {showPriceListModal && (
-        <div className="absolute inset-0 z-40 flex items-start justify-center pt-20 bg-black/80 backdrop-blur-sm rounded-lg">
+        <div className="fixed inset-0 z-40 flex items-start justify-center pt-32 bg-black/80 backdrop-blur-sm ml-64 mt-16">
           <div className="w-full max-w-sm mx-4">
             <Card className="shadow-lg border bg-card">
               <CardHeader className="pb-3">
