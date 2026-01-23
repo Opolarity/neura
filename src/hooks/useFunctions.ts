@@ -33,8 +33,6 @@ export const useFunctions = () => {
           .eq('active', true)
           .order('order', { ascending: true, nullsFirst: false });
 
-        console.log(data);
-
         if (error) throw error;
 
         // Transform the flat functions data into a hierarchical structure
