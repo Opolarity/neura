@@ -540,15 +540,28 @@ const CreateSale = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Lista de Precios</Label>
-                  <Input 
-                    value={selectedPriceListName || 'Sin seleccionar'} 
-                    disabled 
-                    className="bg-muted" 
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label>Lista de Precios</Label>
+                    <Input 
+                      value={selectedPriceListName || 'Sin seleccionar'} 
+                      disabled 
+                      className="bg-muted" 
+                    />
+                  </div>
+                  <div>
+                    <Label>Almacén</Label>
+                    <div className="flex items-center gap-2">
+                      <Warehouse className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <Input 
+                        value={userWarehouseName || 'Sin asignar'} 
+                        disabled 
+                        className="bg-muted cursor-not-allowed" 
+                      />
+                    </div>
+                  </div>
                 </div>
-<div>
+                <div>
                   <Label>{isPersonaJuridica ? "Razón Social" : "Nombre"}</Label>
                   <Input 
                     value={formData.customerName} 
