@@ -209,23 +209,20 @@ const CreateSale = () => {
                 No hay listas de precios disponibles
               </p>
             ) : (
-              priceLists.map((priceList) => (
-                <Button
-                  key={priceList.id}
-                  variant="outline"
-                  className="w-full justify-start h-auto py-4 hover:bg-primary/5 hover:border-primary"
-                  onClick={() => handleSelectPriceList(priceList.id.toString())}
-                >
-                  <div className="flex flex-col items-start">
-                    <span className="font-semibold">{priceList.name}</span>
-                    {priceList.code && (
-                      <span className="text-sm text-muted-foreground">
-                        Código: {priceList.code}
-                      </span>
-                    )}
-                  </div>
-                </Button>
-              ))
+              <div className="space-y-4">
+                <Select onValueChange={handleSelectPriceList}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccione una lista de precios" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {priceLists.map((priceList) => (
+                      <SelectItem key={priceList.id} value={priceList.id.toString()}>
+                        {priceList.name} {priceList.code && `(${priceList.code})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
         </DialogContent>
