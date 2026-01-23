@@ -225,6 +225,42 @@ export const fetchPriceLists = async () => {
   return data;
 };
 
+// Upload payment voucher to storage
+export const uploadPaymentVoucher = async (
+  orderId: number,
+  orderPaymentId: number,
+  file: File
+): Promise<string> => {
+  const fileExt = file.name.split('.').pop() || 'jpg';
+  const fileName = `${orderPaymentId}-${orderId}.${fileExt}`;
+  const filePath = `sale-vouchers/${orderId}/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('sales')
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('sales')
+    .getPublicUrl(filePath);
+
+  return publicUrl;
+};
+
+// Update voucher_url in order_payment
+export const updatePaymentVoucherUrl = async (
+  orderPaymentId: number,
+  voucherUrl: string
+): Promise<void> => {
+  const { error } = await supabase
+    .from('order_payment')
+    .update({ voucher_url: voucherUrl })
+    .eq('id', orderPaymentId);
+
+  if (error) throw error;
+};
+
 // Lookup document in external API (DNI/RUC)
 export const lookupDocument = async (documentType: string, documentNumber: string) => {
   const { data, error } = await supabase.functions.invoke('document-lookup', {

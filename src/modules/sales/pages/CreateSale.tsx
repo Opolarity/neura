@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,6 +66,7 @@ import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
 import { useToast } from "@/hooks/use-toast";
+import { VoucherPreviewModal } from "../components/VoucherPreviewModal";
 
 const CreateSale = () => {
   const {
@@ -134,8 +135,10 @@ const CreateSale = () => {
     removeVoucher,
   } = useCreateSale();
 
-  const [open, setOpen] = React.useState(false);
-  const [tempPriceListId, setTempPriceListId] = React.useState<string>('');
+  const [open, setOpen] = useState(false);
+  const [tempPriceListId, setTempPriceListId] = useState<string>('');
+  const [voucherModalOpen, setVoucherModalOpen] = useState(false);
+  const [selectedVoucherPreview, setSelectedVoucherPreview] = useState<string | null>(null);
   const noteFileInputRef = useRef<HTMLInputElement>(null);
   const voucherFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -759,7 +762,10 @@ const CreateSale = () => {
                               variant="ghost" 
                               size="icon" 
                               className="h-6 w-6"
-                              onClick={() => window.open(p.voucherPreview, '_blank')}
+                              onClick={() => {
+                                setSelectedVoucherPreview(p.voucherPreview || null);
+                                setVoucherModalOpen(true);
+                              }}
                               title="Ver comprobante"
                             >
                               <Paperclip className="w-3 h-3 text-primary" />
@@ -996,6 +1002,13 @@ const CreateSale = () => {
           </Card>
         </aside>
       </div>
+
+      {/* Voucher Preview Modal */}
+      <VoucherPreviewModal
+        open={voucherModalOpen}
+        onOpenChange={setVoucherModalOpen}
+        voucherSrc={selectedVoucherPreview || ''}
+      />
     </div>
   );
 };

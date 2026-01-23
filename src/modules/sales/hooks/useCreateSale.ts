@@ -42,6 +42,8 @@ import {
   fetchTermsByIds,
   fetchPriceLists,
   fetchSaleProducts,
+  uploadPaymentVoucher,
+  updatePaymentVoucherUrl,
 } from '../services';
 import {
   calculateSubtotal,
@@ -465,7 +467,8 @@ export const useCreateSale = () => {
           paymentMethodId: paymentData.payment_method_id?.toString() || '',
           amount: paymentData.amount?.toString() || '',
           confirmationCode: paymentData.gateway_confirmation_code || '',
-          voucherUrl: paymentData.baucher_url || '',
+          voucherUrl: paymentData.voucher_url || '',
+          voucherPreview: paymentData.voucher_url || undefined,
         }]);
       }
 
@@ -893,6 +896,7 @@ export const useCreateSale = () => {
       };
 
       let createdOrderId = orderId ? parseInt(orderId) : null;
+      let createdPayments: Array<{ id: number; localIndex: number }> = [];
 
       if (orderId) {
         await updateOrder(parseInt(orderId), orderData);
@@ -900,6 +904,34 @@ export const useCreateSale = () => {
         const response = await createOrder(orderData);
         if (response?.order?.id) {
           createdOrderId = response.order.id;
+        }
+        if (response?.payments) {
+          createdPayments = response.payments;
+        }
+      }
+
+      // Upload vouchers to storage after order is created
+      if (createdOrderId && createdPayments.length > 0) {
+        const paymentsWithVouchers = payments.filter((p) => p.paymentMethodId && p.amount && p.voucherFile);
+        
+        for (const payment of paymentsWithVouchers) {
+          // Find the corresponding created payment by index
+          const paymentIndex = payments.findIndex((p) => p.id === payment.id);
+          const createdPayment = createdPayments.find((cp) => cp.localIndex === paymentIndex);
+          
+          if (createdPayment && payment.voucherFile) {
+            try {
+              const voucherUrl = await uploadPaymentVoucher(
+                createdOrderId,
+                createdPayment.id,
+                payment.voucherFile
+              );
+              await updatePaymentVoucherUrl(createdPayment.id, voucherUrl);
+            } catch (voucherError) {
+              console.error('Error uploading voucher:', voucherError);
+              // Continue with other vouchers even if one fails
+            }
+          }
         }
       }
 
