@@ -15,17 +15,16 @@ serve(async (req) => {
   try {
     const payload = await req.json();
     const {
-      id, // account_id
-      uid, // auth_uid
+      id,
+      uid,
       name,
       middle_name,
       last_name,
       last_name2,
-      document_type_id,
-      document_number,
       email,
       password,
       phone,
+      display_name,
       country_id,
       state_id,
       city_id,
@@ -34,7 +33,7 @@ serve(async (req) => {
       address_reference,
       warehouse_id,
       branch_id,
-      is_active
+      show,
     } = payload;
 
     if (!id || !uid) {
@@ -58,9 +57,8 @@ serve(async (req) => {
         middle_name,
         last_name,
         last_name2,
-        document_type_id,
-        document_number,
-        is_active: is_active !== undefined ? is_active : true,
+        is_active: true,
+        show,
       })
       .eq('id', id);
 
@@ -72,13 +70,10 @@ serve(async (req) => {
     // 2. Update Auth User (Admin API)
     const authUpdates: any = {};
     if (email) authUpdates.email = email;
+    if (display_name) authUpdates.display_name = `${name ?? ''} ${last_name ?? ''}${last_name ?? ''} ${last_name2 ?? ''}`.trim();
     if (password) authUpdates.password = password;
     if (phone) authUpdates.phone = phone;
-    if (name || last_name) {
-      authUpdates.user_metadata = {
-        display_name: `${name ?? ''} ${last_name ?? ''}`.trim()
-      };
-    }
+
 
     if (Object.keys(authUpdates).length > 0) {
       const { error: authError } = await supabase.auth.admin.updateUserById(uid, authUpdates);
@@ -100,7 +95,7 @@ serve(async (req) => {
         address_reference,
         warehouse_id,
         branch_id,
-        is_active: is_active !== undefined ? is_active : true,
+        is_active: true,
       })
       .eq('UID', uid);
 

@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     const isadmin = url.searchParams.get("is_admin") || null
     const page = Number(url.searchParams.get("page")) || 1;
     const size = Number(url.searchParams.get("size")) || 20;
+    const search = url.searchParams.get("search") || null;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -55,6 +56,7 @@ Deno.serve(async (req) => {
         p_min_user: minuser,
         p_max_user: maxuser,
         p_is_admin: isadmin,
+        p_search: search,
         p_page: page,
         p_size: size,
       }

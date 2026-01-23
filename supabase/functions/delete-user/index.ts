@@ -29,7 +29,27 @@ serve(async (req) => {
 
     console.log('Starting soft delete for user:', uid);
 
-    // 1. Deactivate Account
+    const generateRandomPassword = (length: number) => {
+      const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&/()=";
+      let retVal = "";
+      for (let i = 0, n = charset.length; i < length; ++i) {
+        retVal += charset.charAt(Math.floor(Math.random() * n));
+      }
+      return retVal;
+    };
+
+    const newPassword = generateRandomPassword(20);
+    const { error: authError } = await supabase.auth.admin.updateUserById(
+      uid,
+      { password: newPassword }
+    );
+
+    if (authError) {
+      console.error('Error updating user auth (password scramble):', authError);
+      throw new Error(`Failed to scramble password: ${authError.message}`);
+    }
+
+
     const { error: accountError } = await supabase
       .from('accounts')
       .update({ is_active: false })
@@ -40,7 +60,6 @@ serve(async (req) => {
       throw new Error(`Account deactivation failed: ${accountError.message}`);
     }
 
-    // 2. Deactivate Profile
     const { error: profileError } = await supabase
       .from('profiles')
       .update({ is_active: false })

@@ -32,11 +32,11 @@ serve(async (req) => {
       address,
       address_reference,
       warehouse_id,
-      branch_id
+      branch_id,
+      show
     } = payload;
 
-    // 1. Validation
-    if (!name || !last_name || !document_type_id || !document_number || !email || !password || !warehouse_id || !branch_id) {
+    if (!name || !document_type_id || !document_number || !email || !password || !warehouse_id || !branch_id) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: name, last_name, document_type_id, document_number, email, password, warehouse_id, and branch_id are required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -47,7 +47,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Starting user creation workflow for:', email);
+    console.log('Start create user:', email);
 
     // 2. Create Account
     const { data: accountData, error: accountError } = await supabase
@@ -60,7 +60,7 @@ serve(async (req) => {
         document_type_id,
         document_number,
         is_active: true,
-        show: true,
+        show,
       })
       .select()
       .single();
@@ -73,16 +73,13 @@ serve(async (req) => {
     // 3. Create Auth User (Admin API)
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
+      display_name: `${name} ${middle_name ? middle_name + ' ' : ''}${last_name} ${last_name2 ? last_name2 : ''}`.trim(),
       password,
       phone,
-      email_confirm: true,
-      user_metadata: { display_name: `${name} ${last_name}`.trim() }
     });
 
     if (authError || !authData.user) {
       console.error('Error creating auth user:', authError);
-      // Rollback: delete account? Or let the user handle it. 
-      // For now, just throw error.
       throw new Error(`Auth user creation failed: ${authError?.message ?? 'Unknown error'}`);
     }
 
@@ -109,7 +106,6 @@ serve(async (req) => {
 
     if (profileError) {
       console.error('Error creating profile:', profileError);
-      // Note: Ideally we would roll back auth user creation here too.
       throw new Error(`Profile creation failed: ${profileError.message}`);
     }
 
