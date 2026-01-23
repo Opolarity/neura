@@ -131,6 +131,7 @@ const CreateSale = () => {
   } = useCreateSale();
 
   const [open, setOpen] = React.useState(false);
+  const [tempPriceListId, setTempPriceListId] = React.useState<string>('');
   const noteFileInputRef = useRef<HTMLInputElement>(null);
   const voucherFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -210,7 +211,7 @@ const CreateSale = () => {
               </p>
             ) : (
               <div className="space-y-4">
-                <Select onValueChange={handleSelectPriceList}>
+                <Select value={tempPriceListId} onValueChange={setTempPriceListId}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Seleccione una lista de precios" />
                   </SelectTrigger>
@@ -224,6 +225,18 @@ const CreateSale = () => {
                 </Select>
               </div>
             )}
+          </div>
+          
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => navigate("/sales")}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => handleSelectPriceList(tempPriceListId)} 
+              disabled={!tempPriceListId}
+            >
+              Aceptar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
