@@ -250,7 +250,7 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
                     )}
                   </button>
                   {!isCollapsed && isExpanded && item.subItems && (
-                    <div className="pl-6 mt-1 space-y-1 border-l border-white/5 ml-5 animate-in slide-in-from-top-1 duration-200">
+                    <div className="pl-2 mt-1 space-y-1 border-l border-white/5 ml-2 animate-in slide-in-from-top-1 duration-200">
                       {item.subItems.map((subGroup) => (
                         <div key={subGroup.label} className="space-y-1 pt-1">
                           <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
@@ -264,7 +264,7 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
                                 to={subItem.location || '#'}
                                 className={`flex items-center px-4 py-2 text-xs rounded-md transition-all relative ${isSubActive
                                   ? 'text-blue-400 font-semibold bg-blue-400/5'
-                                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                  : 'text-slate-300 hover:text-white hover:bg-white/5'
                                   }`}
                               >
                                 {isSubActive && <div className="absolute left-0 w-1 h-3 bg-blue-400 rounded-full" />}
@@ -344,7 +344,7 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
                         onClick={() => setActiveSubMenu(null)}
                         className={`flex items-center px-4 py-2 text-xs rounded-md transition-all relative ${isSubActive
                           ? 'text-blue-400 font-semibold bg-blue-400/5'
-                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                          : 'text-slate-300 hover:text-white hover:bg-white/5'
                           }`}
                       >
                         {isSubActive && <div className="absolute left-0 w-1 h-3 bg-blue-400 rounded-full" />}
