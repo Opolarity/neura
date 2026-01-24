@@ -85,64 +85,67 @@ serve(async (req) => {
     }
 
     const user_uid = authData.user.id;
-    // 2. Create Account
-    const { data: accountData, error: accountError } = await supabase
-      .from('accounts')
-      .insert({
-        name,
-        middle_name,
-        last_name,
-        last_name2,
-        document_type_id,
-        document_number,
-        is_active: true,
-        show,
-      })
-      .select()
-      .single();
 
-    if (accountError) {
-      console.error('Error creating account:', accountError);
-      throw new Error(`Account creation failed: ${accountError.message}`);
+    if (authData) {
+      // 2. Create Account
+      const { data: accountData, error: accountError } = await supabase
+        .from('accounts')
+        .insert({
+          name,
+          middle_name,
+          last_name,
+          last_name2,
+          document_type_id,
+          document_number,
+          is_active: true,
+          show,
+        })
+        .select()
+        .single();
+
+      if (accountError) {
+        console.error('Error creating account:', accountError);
+        throw new Error(`Account creation failed: ${accountError.message}`);
+      }
+
+
+      // 4. Create Profile (Linkage)
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          UID: user_uid,
+          account_id: accountData.id,
+          country_id,
+          state_id,
+          city_id,
+          neighborhood_id,
+          address,
+          address_reference,
+          warehouse_id,
+          branch_id,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        throw new Error(`Profile creation failed: ${profileError.message}`);
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'User created successfully',
+          data: {
+            account: accountData,
+            auth_uid: user_uid,
+            profile: profileData
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
     }
-
-
-    // 4. Create Profile (Linkage)
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        UID: user_uid,
-        account_id: accountData.id,
-        country_id,
-        state_id,
-        city_id,
-        neighborhood_id,
-        address,
-        address_reference,
-        warehouse_id,
-        branch_id,
-        is_active: true,
-      })
-      .select()
-      .single();
-
-    if (profileError) {
-      console.error('Error creating profile:', profileError);
-      throw new Error(`Profile creation failed: ${profileError.message}`);
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'User created successfully',
-        data: {
-          account: accountData,
-          auth_uid: user_uid,
-          profile: profileData
-        }
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-    );
 
   } catch (error) {
     console.error('Error in user creation workflow:', error);
