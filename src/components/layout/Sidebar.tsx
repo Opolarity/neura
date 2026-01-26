@@ -250,10 +250,10 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
                     )}
                   </button>
                   {!isCollapsed && isExpanded && item.subItems && (
-                    <div className="pl-2 mt-1 space-y-1 border-l border-white/5 ml-2 animate-in slide-in-from-top-1 duration-200">
+                    <div className="pl-3 mt-1 space-y-1 border-l border-white/5 ml-3 animate-in slide-in-from-top-1 duration-200">
                       {item.subItems.map((subGroup) => (
                         <div key={subGroup.label} className="space-y-1 pt-1">
-                          <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          <div className="px-0 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                             {subGroup.label}
                           </div>
                           {subGroup.items.map((subItem) => {

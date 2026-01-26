@@ -87,7 +87,6 @@ serve(async (req) => {
     const user_uid = authData.user.id;
 
     if (authData) {
-      // 2. Create Account
       const { data: accountData, error: accountError } = await supabase
         .from('accounts')
         .insert({
@@ -109,7 +108,6 @@ serve(async (req) => {
       }
 
 
-      // 4. Create Profile (Linkage)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .insert({
