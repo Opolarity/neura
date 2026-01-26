@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { RolesApiResponse, RolesFilters } from "../types/Roles.types";
+import { RolesApiResponse, RolesFilters, RolePayload } from "../types/Roles.types";
 
 export const rolesApi = async (
     filters: RolesFilters
@@ -34,3 +34,22 @@ export const rolesApi = async (
         }
     );
 };
+
+export const deleteRoleApi = async (roleId: number) => {
+    const { data, error } = await supabase.functions.invoke("delete-role", {
+        body: { id: roleId },
+    });
+
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+}
+
+export const createRoleApi = async (newRole: RolePayload) => {
+    const { data, error } = await supabase.functions.invoke("create-role", {
+        method: "POST",
+        body: newRole
+    });
+
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+}

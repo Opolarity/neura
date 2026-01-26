@@ -6,15 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RolesFilters } from '../../types/Roles.types';
 import { useState, useEffect } from 'react';
 
-// Mover a types
-// Cambiar de nombre o dejarlo así
-// No sincronizar con el useEffect desde acá
-interface FilterDraft {
-    minuser?: number | null;
-    maxuser?: number | null;
-    is_admin?: boolean | null;
-}
-
 interface RolesFilterModalProps {
     filters: RolesFilters;
     isOpen: boolean;

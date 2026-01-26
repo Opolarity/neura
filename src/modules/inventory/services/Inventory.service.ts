@@ -11,7 +11,8 @@ export const wareHouseListApi = async (): Promise<Warehouse[]> => {
   const { data, error } = await supabase
     .from("warehouses")
     .select("id, name")
-    .order("name");
+    .order("name")
+    .eq("is_active", true);
   if (error) throw error;
   return data ?? [];
 };

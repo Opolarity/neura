@@ -1,12 +1,11 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Plus } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import useRoles from '../hooks/useRoles';
 import RolesFilterBar from '../components/roles/RolesFilterBar';
 import RolesTable from '../components/roles/RolesTable';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import RolesFilterModal from '../components/roles/RolesFilterModal';
+import RolesHeader from "../components/roles/RolesHeader";
+import RolesDeleteModal from "../components/roles/RolesDeleteModal";
 
 const RolesList = () => {
   const {
@@ -16,7 +15,12 @@ const RolesList = () => {
     search,
     isOpenFilterModal,
     pagination,
+    isOpenDeleteModal,
+    deleting,
+    handleCloseDeleteModal,
+    handleDeleteConfirm,
     handleDeleteRole,
+    handleEditRole,
     handleSearchChange,
     handleOpenFilterModal,
     handleCloseFilterModal,
@@ -27,23 +31,8 @@ const RolesList = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Listado de Roles</h1>
-          <p className="text-muted-foreground mt-2">
-            Administra los roles del sistema y sus funciones asignadas
-          </p>
-        </div>
-        <Button asChild className="gap-2">
-          <Link to="/settings/roles/create">
-            <Plus className="w-4 h-4" />
-            Nuevo Rol
-          </Link>
-        </Button>
-      </div>
+      <RolesHeader />
 
-      {/* Roles Table */}
       <Card>
         <CardHeader>
           <RolesFilterBar
@@ -57,6 +46,7 @@ const RolesList = () => {
             roles={roles}
             loading={loading}
             handleDeleteRole={handleDeleteRole}
+            handleEditRole={handleEditRole}
           />
           <PaginationBar
             pagination={pagination}
@@ -71,6 +61,12 @@ const RolesList = () => {
         onClose={handleCloseFilterModal}
         filters={filters}
         onApply={handleApplyFilter}
+      />
+      <RolesDeleteModal
+        isOpen={isOpenDeleteModal}
+        onClose={handleCloseDeleteModal}
+        deleting={deleting}
+        handleDeleteConfirm={handleDeleteConfirm}
       />
     </div>
   );
