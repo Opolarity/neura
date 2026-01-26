@@ -3,8 +3,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RolesFilters } from '../../types/Roles.types';
-import { useState, useEffect } from 'react';
+import { RolesFilters, RolesFilterDraft } from '../../types/Roles.types';
+import { useState } from 'react';
 
 interface RolesFilterModalProps {
     filters: RolesFilters;
@@ -19,13 +19,11 @@ const RolesFilterModal = ({
     onClose,
     onApply,
 }: RolesFilterModalProps) => {
-    const [internalFilters, setInternalFilters] = useState<RolesFilters>(filters);
-
-    useEffect(() => {
-        if (isOpen) {
-            setInternalFilters(filters);
-        }
-    }, [isOpen, filters]);
+    const [internalFilters, setInternalFilters] = useState<RolesFilterDraft>({
+        minuser: filters.minuser,
+        maxuser: filters.maxuser,
+        is_admin: filters.is_admin,
+    });
 
     const handleIsAdminChange = (value: string) => {
         setInternalFilters((prev) => ({
@@ -50,12 +48,9 @@ const RolesFilterModal = ({
 
     const handleClear = () => {
         setInternalFilters((prev) => ({
-            ...prev,
             minuser: null,
             maxuser: null,
             is_admin: null,
-            page: 1,
-            size: prev.size,
         }));
     };
 

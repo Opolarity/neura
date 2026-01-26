@@ -53,3 +53,12 @@ export const createRoleApi = async (newRole: RolePayload) => {
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
 }
+
+export const updateRoleApi = async (updateRole: RolePayload) => {
+    const { data, error } = await supabase.functions.invoke("update-role", {
+        body: updateRole
+    });
+
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+}

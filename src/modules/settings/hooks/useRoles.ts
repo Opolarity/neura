@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Role, RolesFilters } from '../types/Roles.types';
+import { Role, RolesFilterDraft, RolesFilters } from '../types/Roles.types';
 import { deleteRoleApi, rolesApi } from '../services/Roles.services';
 import { rolesAdapter } from '../adapters/Roles.adapters';
 import { useToast } from '@/shared/hooks';
@@ -110,12 +110,11 @@ const useRoles = () => {
         setFilters((prev) => ({ ...prev, size, page: 1 }));
     };
 
-    const handleApplyFilter = async (newFilters: RolesFilters) => {
+    const handleApplyFilter = async (newFilters: RolesFilterDraft) => {
         setPagination((prev) => ({ ...prev, p_page: 1 }));
         setFilters((prev) => {
             const updatedFilters = { ...newFilters, page: 1, size: prev.size };
             loadRoles(updatedFilters);
-
             return updatedFilters;
         });
         handleCloseFilterModal();
