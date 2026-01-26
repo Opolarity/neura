@@ -68,24 +68,25 @@ const InventoryTable = ({
               <TableCell className="text-muted-foreground">
                 {item.variation_name}
               </TableCell>
-              {item.stock_by_warehouse.map((stock) => {
+              {warehouses.map((warehouse) => {
+                // Buscamos si el producto ya tiene stock en este almacén
+                const stockRecord = item.stock_by_warehouse.find(s => s.id === warehouse.id);
+                const baseValue = stockRecord?.stock ?? 0; // Si no existe, el valor base es 0
+
                 return (
-                  <TableCell key={stock.id}>
+                  <TableCell key={warehouse.id}>
                     <Input
                       type="number"
+                      value={getStockValue(item, warehouse.id, baseValue)}
+                      onChange={(e) => handleStockChange(item, warehouse.id, e.target.value)}
                       min="0"
-                      value={getStockValue(item, stock.id, stock.stock)}
-                      onChange={(e) =>
-                        handleStockChange(item, stock.id, e.target.value)
-                      }
                       onWheel={(e) => e.currentTarget.blur()}
                       disabled={!isEditing}
                       className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </TableCell>
-                )
-              })
-              }
+                );
+              })}
               <TableCell className="font-semibold">{total}</TableCell>
             </TableRow>
           );
