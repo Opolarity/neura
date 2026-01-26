@@ -31,3 +31,9 @@ export interface RolesFilters {
     page?: number;
     size?: number;
 }
+
+export interface RolesFilterDraft {
+    minuser?: number | null;
+    maxuser?: number | null;
+    is_admin?: boolean | null;
+}
