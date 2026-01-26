@@ -47,10 +47,17 @@ const InventoryTable = ({
       </TableHeader>
       <TableBody>
         {inventory.map((item) => {
-          const total = item.stock_by_warehouse.reduce((sum, stock) => {
-            const value = getStockValue(item, stock.id, stock.stock || 0);
+          const total = warehouses.reduce((sum, warehouse) => {
+            const stock = item.stock_by_warehouse.find(
+              (s) => s.id === warehouse.id
+            );
+
+            const baseValue = stock?.stock ?? 0;
+            const value = getStockValue(item, warehouse.id, baseValue);
+
             const numericValue =
               value === "" ? 0 : typeof value === "string" ? 0 : value;
+
             return sum + numericValue;
           }, 0);
 
@@ -61,21 +68,24 @@ const InventoryTable = ({
               <TableCell className="text-muted-foreground">
                 {item.variation_name}
               </TableCell>
-              {item.stock_by_warehouse.map((stock) => (
-                <TableCell key={stock.id}>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={getStockValue(item, stock.id, stock.stock)}
-                    onChange={(e) =>
-                      handleStockChange(item, stock.id, e.target.value)
-                    }
-                    onWheel={(e) => e.currentTarget.blur()}
-                    disabled={!isEditing}
-                    className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                </TableCell>
-              ))}
+              {item.stock_by_warehouse.map((stock) => {
+                return (
+                  <TableCell key={stock.id}>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={getStockValue(item, stock.id, stock.stock)}
+                      onChange={(e) =>
+                        handleStockChange(item, stock.id, e.target.value)
+                      }
+                      onWheel={(e) => e.currentTarget.blur()}
+                      disabled={!isEditing}
+                      className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </TableCell>
+                )
+              })
+              }
               <TableCell className="font-semibold">{total}</TableCell>
             </TableRow>
           );

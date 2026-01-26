@@ -41,11 +41,30 @@ export interface MovementsFilters {
     origin?: number | null;
     user?: number | null;
     warehouse?: number | null;
-    input?: number | null;
-    output?: number | null;
+    in_out?: boolean | null;
     start_date?: string | null;
     end_date?: string | null;
     page?: number;
     size?: number;
     search?: string | null;
+}
+
+export interface MovementsTypesApiResponse {
+    types: Array<{ id: number; name: string; code: string }>;
+}
+
+export interface MovementsTypes {
+    id: number;
+    name: string;
+    code: string;
+}
+
+export interface SimpleWarehouses {
+    id: number;
+    name: string;
+}
+
+export interface SimpleUsers {
+    id: number;
+    name: string;
 }

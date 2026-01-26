@@ -302,6 +302,8 @@ export const useInventory = () => {
   return {
     inventory,
     warehouses,
+    inventoryTypes,
+    typeId,
     loading,
     isEditing,
     isSaving,
