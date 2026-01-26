@@ -198,11 +198,7 @@ export const useInventory = () => {
           payload.push({
             product_variation_id: item.variation_id,
             movement_type_code: "MAN",
-<<<<<<< HEAD
             movements_type_id: 6,
-=======
-            movements_type_id: 9,
->>>>>>> 6c0358f (module/inventory)
             stock_type_id: filters.types,
             quantity: quantity,
             warehouse_id: warehouse.id,
