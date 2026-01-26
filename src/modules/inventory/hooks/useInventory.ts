@@ -134,13 +134,9 @@ export const useInventory = () => {
 
   const handleStockChange = (
     item: Inventory,
-    item: Inventory,
     warehouseId: number,
     value: string,
   ) => {
-    const key = getStockKey(item.variation_id, warehouseId);
-    const newValue = value === "" ? null : parseInt(value, 10);
-    const originalValue = getOriginalStock(item, warehouseId);
     const key = getStockKey(item.variation_id, warehouseId);
     const newValue = value === "" ? null : parseInt(value, 10);
     const originalValue = getOriginalStock(item, warehouseId);
@@ -153,202 +149,180 @@ export const useInventory = () => {
       } else {
         newMap.set(key, newValue);
       }
-      // Si vuelve al valor original → eliminar cambio
-      if (newValue === originalValue) {
-        newMap.delete(key);
-      } else {
-        newMap.set(key, newValue);
-      }
       return newMap;
     });
   };
 
   const getStockValue = (
     item: Inventory,
-    item: Inventory,
     warehouseId: number,
     originalStock?: number | null,
   ): number | "" => {
     const key = getStockKey(item.variation_id, warehouseId);
-    originalStock ?: number | null,
-  ): number | "" => {
-  const key = getStockKey(item.variation_id, warehouseId);
-  if (stockChanges.has(key)) {
-    // Si es null, retornar string vacío para el input, cuando se borre el valor
-    return stockChanges.get(key) ?? "";
-    // Si es null, retornar string vacío para el input, cuando se borre el valor
-    return stockChanges.get(key) ?? "";
-  }
-  return originalStock ?? "";
-};
+    if (stockChanges.has(key)) {
+      // Si es null, retornar string vacío para el input, cuando se borre el valor
+      return stockChanges.get(key) ?? "";
+    }
+    return originalStock ?? "";
+  };
 
-const getOriginalStock = (
-  item: Inventory,
-  warehouseId: number,
-): number | null => {
-  return (
-    item.stock_by_warehouse.find((w) => w.id === warehouseId)?.stock ?? null
-  );
-  return originalStock ?? "";
-};
+  const getOriginalStock = (
+    item: Inventory,
+    warehouseId: number,
+  ): number | null => {
+    return (
+      item.stock_by_warehouse.find((w) => w.id === warehouseId)?.stock ?? null
+    );
+  };
 
-const getOriginalStock = (
-  item: Inventory,
-  warehouseId: number,
-): number | null => {
-  return (
-    item.stock_by_warehouse.find((w) => w.id === warehouseId)?.stock ?? null
-  );
-};
+  const handleEdit = () => {
+    setIsEditing(true);
+    setStockChanges(new Map());
+  };
 
-const handleEdit = () => {
-  setIsEditing(true);
-  setStockChanges(new Map());
-};
+  const handleCancel = () => {
+    setIsEditing(false);
+    setStockChanges(new Map());
+  };
 
-const handleCancel = () => {
-  setIsEditing(false);
-  setStockChanges(new Map());
-};
+  const prepareInventoryPayload = () => {
+    const payload: InventoryPayload[] = [];
 
-const prepareInventoryPayload = () => {
-  const payload: InventoryPayload[] = [];
+    inventory.forEach((item) => {
+      warehouses.forEach((warehouse) => {
+        const key = getStockKey(item.variation_id, warehouse.id);
+        const quantity = stockChanges.get(key);
 
-  inventory.forEach((item) => {
-    warehouses.forEach((warehouse) => {
-      const key = getStockKey(item.variation_id, warehouse.id);
-      const quantity = stockChanges.get(key);
-
-      // Solo incluir si hubo cambios
-      if (quantity !== undefined) {
-        payload.push({
-          product_variation_id: item.variation_id,
-          movement_type_code: "MAN",
-          movements_type_id: 9,
-          stock_type_id: filters.types,
-          quantity: quantity,
-          warehouse_id: warehouse.id,
-        });
-      }
+        // Solo incluir si hubo cambios
+        if (quantity !== undefined) {
+          payload.push({
+            product_variation_id: item.variation_id,
+            movement_type_code: "MAN",
+            movements_type_id: 9,
+            stock_type_id: filters.types,
+            quantity: quantity,
+            warehouse_id: warehouse.id,
+          });
+        }
+      });
     });
-  });
 
-  return payload;
-};
+    return payload;
+  };
 
-const handleSave = async () => {
-  try {
-    setIsSaving(true);
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
 
-    const payload = prepareInventoryPayload();
+      const payload = prepareInventoryPayload();
 
-    if (payload.length === 0) {
+      if (payload.length === 0) {
+        setIsEditing(false);
+        return;
+      }
+
+      console.log("Enviando a API:", payload);
+
+      await updateInventoryApi(payload);
+
+      toast({
+        title: "Éxito",
+        description: "Inventario actualizado correctamente",
+      });
+
       setIsEditing(false);
-      return;
+
+      await loadInventory();
+    } catch (error: any) {
+      console.error("Error saving inventory:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el inventario",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Filter Handlers
+  const onSearchChange = (value: string) => {
+    setSearch(value);
+  };
+
+  const onPageChange = (page: number) => {
+    setPagination((prev) => ({ ...prev, p_page: page }));
+    setFilters((prev) => {
+      const newFilters = { ...prev, page };
+      loadInventory(newFilters);
+      return newFilters;
+    });
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPagination((prev) => ({ ...prev, p_size: size, p_page: 1 }));
+    setFilters((prev) => {
+      const newFilters = { ...prev, size, page: 1 };
+      loadInventory(newFilters);
+      return newFilters;
+    });
+  };
+
+  const onOrderChange = (order: string) => {
+    const orderValue = order === "none" ? null : order;
+    setFilters((prev) => {
+      const newFilters = { ...prev, order: orderValue, page: 1 };
+      loadInventory(newFilters);
+      return newFilters;
+    });
+  };
+
+  const onOpenFilterModal = () => {
+    setIsOpenFilterModal(true);
+  };
+
+  const onCloseFilterModal = () => {
+    setIsOpenFilterModal(false);
+  };
+
+  const onApplyFilter = (newFilters: InventoryFilters) => {
+    if (newFilters.search === null && search !== "") {
+      setSearch("");
     }
 
-    console.log("Enviando a API:", payload);
-
-    await updateInventoryApi(payload);
-
-    toast({
-      title: "Éxito",
-      description: "Inventario actualizado correctamente",
+    setPagination((prev) => ({ ...prev, p_page: 1 }));
+    setFilters((prev) => {
+      const updatedFilters = { ...newFilters, page: 1, size: prev.size };
+      loadInventory(updatedFilters);
+      return updatedFilters;
     });
+    setIsOpenFilterModal(false);
+  };
 
-    setIsEditing(false);
-
-    await loadInventory();
-  } catch (error: any) {
-    console.error("Error saving inventory:", error);
-    toast({
-      title: "Error",
-      description: "No se pudo actualizar el inventario",
-      variant: "destructive",
-    });
-  } finally {
-    setIsSaving(false);
-  }
-};
-
-// Filter Handlers
-const onSearchChange = (value: string) => {
-  setSearch(value);
-};
-
-const onPageChange = (page: number) => {
-  setPagination((prev) => ({ ...prev, p_page: page }));
-  setFilters((prev) => {
-    const newFilters = { ...prev, page };
-    loadInventory(newFilters);
-    return newFilters;
-  });
-};
-
-const handlePageSizeChange = (size: number) => {
-  setPagination((prev) => ({ ...prev, p_size: size, p_page: 1 }));
-  setFilters((prev) => {
-    const newFilters = { ...prev, size, page: 1 };
-    loadInventory(newFilters);
-    return newFilters;
-  });
-};
-
-const onOrderChange = (order: string) => {
-  const orderValue = order === "none" ? null : order;
-  setFilters((prev) => {
-    const newFilters = { ...prev, order: orderValue, page: 1 };
-    loadInventory(newFilters);
-    return newFilters;
-  });
-};
-
-const onOpenFilterModal = () => {
-  setIsOpenFilterModal(true);
-};
-
-const onCloseFilterModal = () => {
-  setIsOpenFilterModal(false);
-};
-
-const onApplyFilter = (newFilters: InventoryFilters) => {
-  if (newFilters.search === null && search !== "") {
-    setSearch("");
-  }
-
-  setPagination((prev) => ({ ...prev, p_page: 1 }));
-  setFilters((prev) => {
-    const updatedFilters = { ...newFilters, page: 1, size: prev.size };
-    loadInventory(updatedFilters);
-    return updatedFilters;
-  });
-  setIsOpenFilterModal(false);
-};
-
-return {
-  inventory,
-  warehouses,
-  loading,
-  isEditing,
-  isSaving,
-  hasChanges: stockChanges.size > 0,
-  // Filter State & Handlers
-  search,
-  pagination,
-  isOpenFilterModal,
-  filters,
-  onSearchChange,
-  onPageChange,
-  handlePageSizeChange,
-  onOrderChange,
-  onOpenFilterModal,
-  onCloseFilterModal,
-  onApplyFilter,
-  // Stock Handlers
-  handleStockChange,
-  getStockValue,
-  handleEdit,
-  handleCancel,
-  handleSave,
-};
+  return {
+    inventory,
+    warehouses,
+    loading,
+    isEditing,
+    isSaving,
+    hasChanges: stockChanges.size > 0,
+    // Filter State & Handlers
+    search,
+    pagination,
+    isOpenFilterModal,
+    filters,
+    onSearchChange,
+    onPageChange,
+    handlePageSizeChange,
+    onOrderChange,
+    onOpenFilterModal,
+    onCloseFilterModal,
+    onApplyFilter,
+    // Stock Handlers
+    handleStockChange,
+    getStockValue,
+    handleEdit,
+    handleCancel,
+    handleSave,
+  };
 };
