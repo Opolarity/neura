@@ -27,14 +27,12 @@ const useRoles = () => {
     const { toast } = useToast();
 
     const loadRoles = async (filtersObj: RolesFilters) => {
-        setLoading(true);
         try {
+            setLoading(true);
             const dataRoles = await rolesApi(filtersObj);
             const { data, pagination: paginationData } = rolesAdapter(dataRoles);
             setRoles(data);
             setPagination(paginationData);
-            console.log(dataRoles);
-
         } catch (error) {
             console.error('Error fetching roles:', error);
             toast({
@@ -54,23 +52,20 @@ const useRoles = () => {
     const debouncedSearch = useDebounce(search, 500);
 
     useEffect(() => {
-        const loadSearch = () => {
-            setLoading(true);
+        const loadSearch = async () => {
             if (debouncedSearch !== filters.search) {
-                setFilters((prev) => {
-                    const newFilters = { ...prev, search: debouncedSearch, page: 1 };
-                    loadRoles(newFilters);
-                    return newFilters;
-                });
+                setLoading(true)
+                await loadRoles({ ...filters, search: debouncedSearch, page: 1 });
+                setFilters((prev) => ({ ...prev, search: debouncedSearch, page: 1 }));
+                setLoading(false)
             }
-            setLoading(false);
         };
 
         loadSearch();
     }, [debouncedSearch]);
 
-    const handleSearchChange = (text: string) => {
-        setSearch(text);
+    const handleSearchChange = (value: string) => {
+        setSearch(value);
     };
 
     const handleOpenFilterModal = () => {

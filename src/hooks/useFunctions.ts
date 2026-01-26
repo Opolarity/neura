@@ -39,6 +39,7 @@ export const useFunctions = () => {
 
         // Transform the flat functions data into a hierarchical structure
         const transformedFunctions = transformToMenuStructure(data || []);
+
         setFunctions(transformedFunctions);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
