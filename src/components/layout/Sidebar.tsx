@@ -41,7 +41,7 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
   const [expandedSections, setExpandedSections] = useState<
     Record<number, boolean>
   >({});
-  //console.log("menuItems", menuItems);
+  console.log("menuItems", menuItems);
 
   const toggleSection = (itemId: number) => {
     setExpandedSections((prev) => ({
