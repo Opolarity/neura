@@ -1,5 +1,6 @@
 import { Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
     Table,
     TableBody,
@@ -48,7 +49,20 @@ export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
                             <TableCell>{account.fullName}</TableCell>
                             <TableCell>{account.documentNumber}</TableCell>
                             <TableCell>{account.typeName}</TableCell>
-                            <TableCell>{account.show ? 'Activo' : 'Inactivo'}</TableCell>
+                            <TableCell>
+                                <div className="flex gap-2">
+                                    {account.show === true && (
+                                        <Badge className="bg-green-400 hover:bg-green-400">
+                                            Activo
+                                        </Badge>
+                                    )}
+                                    {account.show === false && (
+                                        <Badge className="bg-red-400 hover:bg-red-400">
+                                            Inactivo
+                                        </Badge>
+                                    )}
+                                </div>
+                            </TableCell>
                         </TableRow>
                     ))
                 )}
