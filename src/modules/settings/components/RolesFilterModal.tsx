@@ -3,17 +3,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RolesFilters } from '../../types/Roles.types';
-import { useState, useEffect } from 'react';
-
-// Mover a types
-// Cambiar de nombre o dejarlo así
-// No sincronizar con el useEffect desde acá
-interface FilterDraft {
-    minuser?: number | null;
-    maxuser?: number | null;
-    is_admin?: boolean | null;
-}
+import { RolesFilters, RolesFilterDraft } from '../../types/Roles.types';
+import { useEffect, useState } from 'react';
 
 interface RolesFilterModalProps {
     filters: RolesFilters;
@@ -28,13 +19,11 @@ const RolesFilterModal = ({
     onClose,
     onApply,
 }: RolesFilterModalProps) => {
-    const [internalFilters, setInternalFilters] = useState<RolesFilters>(filters);
-
-    useEffect(() => {
-        if (isOpen) {
-            setInternalFilters(filters);
-        }
-    }, [isOpen, filters]);
+    const [internalFilters, setInternalFilters] = useState<RolesFilterDraft>({
+        minuser: filters.minuser,
+        maxuser: filters.maxuser,
+        is_admin: filters.is_admin,
+    });
 
     const handleIsAdminChange = (value: string) => {
         setInternalFilters((prev) => ({
@@ -58,14 +47,11 @@ const RolesFilterModal = ({
     };
 
     const handleClear = () => {
-        setInternalFilters((prev) => ({
-            ...prev,
+        setInternalFilters({
             minuser: null,
             maxuser: null,
             is_admin: null,
-            page: 1,
-            size: prev.size,
-        }));
+        });
     };
 
     return (
@@ -125,7 +111,7 @@ const RolesFilterModal = ({
                     <Button variant="outline" onClick={handleClear}>
                         Limpiar
                     </Button>
-                    <Button onClick={() => onApply(internalFilters)}>
+                    <Button onClick={() => onApply({ ...filters, ...internalFilters, page: 1 })}>
                         Aplicar
                     </Button>
                 </DialogFooter>

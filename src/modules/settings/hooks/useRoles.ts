@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Role, RolesFilters } from '../types/Roles.types';
-import { rolesApi } from '../services/Roles.services';
+import { Role, RolesFilterDraft, RolesFilters } from '../types/Roles.types';
+import { deleteRoleApi, rolesApi } from '../services/Roles.services';
 import { rolesAdapter } from '../adapters/Roles.adapters';
 import { useToast } from '@/shared/hooks';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
+import { useNavigate } from 'react-router-dom';
 
 const useRoles = () => {
     const [roles, setRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deleting, setDeleting] = useState(false);
+    const [isOpenDeleteModal, setIsOpenDeleteModal] = useState(false);
+    const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
     const [filters, setFilters] = useState<RolesFilters>({
         page: 1,
         size: 20,
@@ -25,6 +29,7 @@ const useRoles = () => {
     });
     const [isOpenFilterModal, setIsOpenFilterModal] = useState(false);
     const { toast } = useToast();
+    const navigate = useNavigate();
 
     const loadRoles = async (filtersObj: RolesFilters) => {
         try {
@@ -76,9 +81,23 @@ const useRoles = () => {
         setIsOpenFilterModal(false);
     };
 
-    const handleDeleteRole = async (roleId: number) => {
-        // Implementation pending
-        console.log("Delete role", roleId);
+    const handleDeleteRole = (roleId: number) => {
+        setSelectedRoleId(roleId);
+        setIsOpenDeleteModal(true);
+    };
+    const handleDeleteConfirm = async () => {
+        setDeleting(true);
+        await deleteRoleApi(selectedRoleId);
+        setDeleting(false);
+        setIsOpenDeleteModal(false);
+        await loadRoles(filters);
+    };
+    const handleCloseDeleteModal = () => {
+        setIsOpenDeleteModal(false);
+    };
+
+    const handleEditRole = (roleId: number) => {
+        navigate(`/settings/roles/edit/${roleId}`);
     };
 
     const handlePageChange = async (page: number) => {
@@ -91,17 +110,11 @@ const useRoles = () => {
         setFilters((prev) => ({ ...prev, size, page: 1 }));
     };
 
-    const handleApplyFilter = async (newFilters: RolesFilters) => {
+    const handleApplyFilter = async (newFilters: RolesFilterDraft) => {
         setPagination((prev) => ({ ...prev, p_page: 1 }));
-        setFilters((prev) => {
-            const updatedFilters = { ...newFilters, page: 1, size: prev.size };
-            loadRoles(updatedFilters);
-
-            return updatedFilters;
-        });
+        setFilters(newFilters);
+        await loadRoles(newFilters);
         handleCloseFilterModal();
-
-
     };
 
     return {
@@ -111,7 +124,12 @@ const useRoles = () => {
         search,
         pagination,
         isOpenFilterModal,
+        isOpenDeleteModal,
+        deleting,
+        handleEditRole,
         handleDeleteRole,
+        handleDeleteConfirm,
+        handleCloseDeleteModal,
         handleSearchChange,
         handleOpenFilterModal,
         handleCloseFilterModal,
