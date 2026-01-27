@@ -1,11 +1,9 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import useRoles from '../hooks/useRoles';
-import RolesFilterBar from '../components/roles/RolesFilterBar';
-import RolesTable from '../components/roles/RolesTable';
-import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
-import RolesFilterModal from '../components/roles/RolesFilterModal';
-import RolesHeader from "../components/roles/RolesHeader";
-import RolesDeleteModal from "../components/roles/RolesDeleteModal";
+import useRoles from "../hooks/useRoles";
+import RolesFilterBar from "../components/RolesFilterBar";
+import RolesTable from "../components/RolesTable";
+import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
+import RolesFilterModal from "../components/RolesFilterModal";
 
 const RolesList = () => {
   const {
@@ -26,7 +24,7 @@ const RolesList = () => {
     handleCloseFilterModal,
     handlePageChange,
     handleSizeChange,
-    handleApplyFilter
+    handleApplyFilter,
   } = useRoles();
 
   return (
