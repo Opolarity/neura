@@ -8,6 +8,8 @@ import { ArrowLeft, Save, ChevronRight, ChevronDown } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import useCreateRole from "../hooks/useCreateRole";
+import { RolePayload } from '../types/Roles.types';
 
 interface Function {
   id: number;
@@ -22,22 +24,19 @@ interface Function {
   children?: Function[];
 }
 
-interface RoleFormData {
-  name: string;
-  admin: boolean;
-  selectedFunctions: number[];
-}
-
 const CreateRole = () => {
   const navigate = useNavigate();
   const { id: roleId } = useParams();
   const isEdit = Boolean(roleId);
   const { toast } = useToast();
 
-  const [formData, setFormData] = useState<RoleFormData>({
+  const { role, createLoading, createRole, updateLoading, updateRole } = useCreateRole();
+
+  const [formData, setFormData] = useState<RolePayload>({
+    id: null,
     name: '',
     admin: false,
-    selectedFunctions: []
+    functions: []
   });
 
   const [functions, setFunctions] = useState<Function[]>([]);
@@ -63,7 +62,10 @@ const CreateRole = () => {
       if (error) throw error;
 
       // Build function tree
+      console.log("fetchFunctions", data);
+
       const functionTree = buildFunctionTree(data || []);
+      console.log("functionTree", functionTree);
       setFunctions(functionTree);
     } catch (error) {
       console.error('Error fetching functions:', error);
@@ -95,7 +97,7 @@ const CreateRole = () => {
       setFormData({
         name: roleData.name,
         admin: roleData.admin,
-        selectedFunctions: roleFunctions.map(rf => rf.function_id)
+        functions: roleFunctions.map(rf => rf.function_id)
       });
     } catch (error) {
       console.error('Error fetching role:', error);
@@ -147,7 +149,7 @@ const CreateRole = () => {
   };
 
   const toggleFunction = (functionId: number) => {
-    const newSelected = new Set(formData.selectedFunctions);
+    const newSelected = new Set(formData.functions);
     if (newSelected.has(functionId)) {
       newSelected.delete(functionId);
     } else {
@@ -155,7 +157,7 @@ const CreateRole = () => {
     }
     setFormData({
       ...formData,
-      selectedFunctions: Array.from(newSelected)
+      functions: Array.from(newSelected)
     });
   };
 
@@ -165,7 +167,7 @@ const CreateRole = () => {
         <div className="flex items-center gap-2 py-1">
           {func.children && func.children.length > 0 && (
             <Button
-              type="button" 
+              type="button"
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0"
@@ -183,11 +185,11 @@ const CreateRole = () => {
           )}
           <Checkbox
             id={`function-${func.id}`}
-            checked={formData.selectedFunctions.includes(func.id)}
+            checked={formData.functions.includes(func.id)}
             onCheckedChange={() => toggleFunction(func.id)}
           />
-          <Label 
-            htmlFor={`function-${func.id}`} 
+          <Label
+            htmlFor={`function-${func.id}`}
             className="text-sm cursor-pointer"
           >
             {func.name}
@@ -204,7 +206,7 @@ const CreateRole = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
         title: "Error",
@@ -217,37 +219,7 @@ const CreateRole = () => {
     try {
       if (isEdit && roleId) {
         // Update role
-        const { error: roleError } = await supabase
-          .from('roles')
-          .update({
-            name: formData.name,
-            admin: formData.admin
-          })
-          .eq('id', parseInt(roleId));
-
-        if (roleError) throw roleError;
-
-        // Delete existing role functions
-        const { error: deleteError } = await supabase
-          .from('role_functions')
-          .delete()
-          .eq('role_id', parseInt(roleId));
-
-        if (deleteError) throw deleteError;
-
-        // Insert new role functions
-        if (formData.selectedFunctions.length > 0) {
-          for (const functionId of formData.selectedFunctions) {
-            const { error: insertError } = await supabase
-              .from('role_functions')
-              .insert({
-                role_id: parseInt(roleId),
-                function_id: functionId
-              } as any);
-
-            if (insertError) throw insertError;
-          }
-        }
+        await updateRole({ ...formData, id: parseInt(roleId) });
 
         toast({
           title: "Éxito",
@@ -255,29 +227,9 @@ const CreateRole = () => {
         });
       } else {
         // Create new role
-        const { data: roleData, error: roleError } = await supabase
-          .from('roles')
-          .insert({
-            name: formData.name,
-            admin: formData.admin
-          })
-          .select()
-          .single();
-
-        if (roleError) throw roleError;
-
         // Insert role functions
-        if (formData.selectedFunctions.length > 0) {
-          for (const functionId of formData.selectedFunctions) {
-            const { error: functionsError } = await supabase
-              .from('role_functions')
-              .insert({
-                role_id: roleData.id,
-                function_id: functionId
-              } as any);
-
-            if (functionsError) throw functionsError;
-          }
+        if (formData.functions.length > 0) {
+          await createRole(formData);
         }
 
         toast({
@@ -315,7 +267,7 @@ const CreateRole = () => {
             {isEdit ? 'Editar Rol' : 'Crear Rol'}
           </h1>
           <p className="text-muted-foreground mt-2">
-            {isEdit 
+            {isEdit
               ? 'Modifica la información del rol y sus funciones asignadas'
               : 'Completa la información para crear un nuevo rol'
             }
@@ -334,20 +286,20 @@ const CreateRole = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nombre del Rol *</Label>
-                  <Input 
+                  <Input
                     id="name"
                     placeholder="Ingresa el nombre del rol"
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
+                  <Checkbox
                     id="admin"
                     checked={formData.admin}
-                    onCheckedChange={(checked) => setFormData({...formData, admin: checked as boolean})}
+                    onCheckedChange={(checked) => setFormData({ ...formData, admin: checked as boolean })}
                   />
                   <Label htmlFor="admin">Rol de Administrador</Label>
                 </div>
@@ -381,7 +333,7 @@ const CreateRole = () => {
               <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm font-medium">Funciones seleccionadas:</p>
-                  <p className="text-2xl font-bold text-primary">{formData.selectedFunctions.length}</p>
+                  <p className="text-2xl font-bold text-primary">{formData.functions.length}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Tipo de rol:</p>

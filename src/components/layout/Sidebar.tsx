@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  Store, 
-  Archive, 
-  ShoppingCart, 
-  FileText, 
-  Grid, 
+import {
+  Store,
+  Archive,
+  ShoppingCart,
+  FileText,
+  Grid,
   Settings,
   Tag,
   Users,
@@ -39,6 +39,7 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
   const location = useLocation();
   const { functions: menuItems, loading, error } = useFunctions();
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
+  console.log("menuItems", menuItems);
 
   const toggleSection = (itemId: number) => {
     setExpandedSections(prev => ({
@@ -49,9 +50,8 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
 
   if (loading) {
     return (
-      <div className={`fixed left-0 top-0 h-full bg-slate-900 text-white transition-all duration-300 z-30 flex flex-col ${
-        isOpen ? 'w-64' : 'w-16'
-      }`}>
+      <div className={`fixed left-0 top-0 h-full bg-slate-900 text-white transition-all duration-300 z-30 flex flex-col ${isOpen ? 'w-64' : 'w-16'
+        }`}>
         <div className="p-4 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -74,9 +74,8 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
 
   if (error) {
     return (
-      <div className={`fixed left-0 top-0 h-full bg-slate-900 text-white transition-all duration-300 z-30 flex flex-col ${
-        isOpen ? 'w-64' : 'w-16'
-      }`}>
+      <div className={`fixed left-0 top-0 h-full bg-slate-900 text-white transition-all duration-300 z-30 flex flex-col ${isOpen ? 'w-64' : 'w-16'
+        }`}>
         <div className="p-4 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -98,9 +97,8 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
   }
 
   return (
-    <div className={`fixed left-0 top-0 h-full bg-slate-900 text-white transition-all duration-300 z-30 flex flex-col ${
-      isOpen ? 'w-64' : 'w-16'
-    }`}>
+    <div className={`fixed left-0 top-0 h-full bg-slate-900 text-white transition-all duration-300 z-30 flex flex-col ${isOpen ? 'w-64' : 'w-16'
+      }`}>
       <div className="p-4 border-b border-slate-700 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -121,15 +119,14 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
           const isActive = location.pathname === item.location;
           const hasSubItems = 'subItems' in item;
           const isExpanded = expandedSections[item.id];
-          
+
           if (hasSubItems) {
             return (
               <div key={item.id} className="space-y-1">
                 <button
                   onClick={() => toggleSection(item.id)}
-                  className={`flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-800 transition-colors w-full text-left ${
-                    isExpanded ? 'bg-slate-800' : ''
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-800 transition-colors w-full text-left ${isExpanded ? 'bg-slate-800' : ''
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   {isOpen && <span>{item.name}</span>}
@@ -147,9 +144,8 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
                             <Link
                               key={subItem.location || subItem.id}
                               to={subItem.location || '#'}
-                              className={`flex items-center px-4 py-2 text-sm hover:bg-slate-800 transition-colors ml-4 ${
-                                isSubActive ? 'bg-slate-700 text-blue-400' : 'text-slate-300'
-                              }`}
+                              className={`flex items-center px-4 py-2 text-sm hover:bg-slate-800 transition-colors ml-4 ${isSubActive ? 'bg-slate-700 text-blue-400' : 'text-slate-300'
+                                }`}
                             >
                               {subItem.name}
                             </Link>
@@ -162,14 +158,13 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
               </div>
             );
           }
-          
+
           return (
             <Link
               key={item.location || item.id}
               to={item.location || '#'}
-              className={`flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-800 transition-colors ${
-                isActive ? 'bg-blue-600 border-r-2 border-blue-400' : ''
-              }`}
+              className={`flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-800 transition-colors ${isActive ? 'bg-blue-600 border-r-2 border-blue-400' : ''
+                }`}
             >
               <Icon className="w-5 h-5" />
               {isOpen && <span>{item.name}</span>}

@@ -32,8 +32,16 @@ export interface RolesFilters {
     size?: number;
 }
 
+//Usar en un futuro para no usar useEffect para sincronizar los filtros
 export interface RolesFilterDraft {
     minuser?: number | null;
     maxuser?: number | null;
     is_admin?: boolean | null;
+}
+
+export interface RolePayload {
+    id?: number;
+    name: string;
+    admin: boolean;
+    functions: number[];
 }
