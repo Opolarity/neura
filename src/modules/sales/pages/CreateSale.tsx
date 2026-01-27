@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -60,13 +66,16 @@ import {
   Send,
   X,
   Image as ImageIcon,
-  Warehouse
+  Warehouse,
 } from "lucide-react";
 import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
 import { useToast } from "@/hooks/use-toast";
 import { VoucherPreviewModal } from "../components/VoucherPreviewModal";
+import { SalesHistoryModal } from "../components/SalesHistoryModal";
+import { getOrdersSituationsById } from "../services";
+import { getOrdersSituationsByIdAdapter } from "../adapters";
 
 const CreateSale = () => {
   const {
@@ -133,34 +142,51 @@ const CreateSale = () => {
     // Voucher actions
     handleVoucherSelect,
     removeVoucher,
+    historyModalOpen,
+    createdOrderId,
+    orderSituationTable,
+    setHistoryModalOpen,
   } = useCreateSale();
 
   const [open, setOpen] = useState(false);
-  const [tempPriceListId, setTempPriceListId] = useState<string>('');
+  const [tempPriceListId, setTempPriceListId] = useState<string>("");
   const [voucherModalOpen, setVoucherModalOpen] = useState(false);
-  const [selectedVoucherPreview, setSelectedVoucherPreview] = useState<string | null>(null);
+  const [selectedVoucherPreview, setSelectedVoucherPreview] = useState<
+    string | null
+  >(null);
   const noteFileInputRef = useRef<HTMLInputElement>(null);
   const voucherFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Total pages for product pagination
-  const totalProductPages = Math.ceil(productPagination.total / productPagination.size);
+  const totalProductPages = Math.ceil(
+    productPagination.total / productPagination.size,
+  );
 
   // Get selected price list name
   const selectedPriceListName = useMemo(() => {
     if (!formData.priceListId) return null;
-    const found = priceLists.find(pl => pl.id.toString() === formData.priceListId);
+    const found = priceLists.find(
+      (pl) => pl.id.toString() === formData.priceListId,
+    );
     return found?.name || null;
   }, [formData.priceListId, priceLists]);
 
+  //Vuelto = Pagado - Total
+  const totalPaid = payments.reduce((acc, payment) => {
+    return acc + (parseFloat(payment.amount) || 0);
+  }, 0);
+
+  const changeAmount = totalPaid - total;
+
   // Format note date
   const formatNoteDate = (date: Date) => {
-    return new Intl.DateTimeFormat('es-PE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Intl.DateTimeFormat("es-PE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(date);
   };
 
@@ -174,7 +200,7 @@ const CreateSale = () => {
 
   // Handle send note on Enter key
   const handleNoteKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       addNote();
     }
@@ -191,7 +217,7 @@ const CreateSale = () => {
   return (
     <div className="space-y-6">
       {/* Sale Settings Modal */}
-      <Dialog open={showPriceListModal} onOpenChange={() => { }}>
+      <Dialog open={showPriceListModal} onOpenChange={() => {}}>
         <DialogContent
           className="sm:max-w-md"
           onPointerDownOutside={(e) => e.preventDefault()}
@@ -222,14 +248,21 @@ const CreateSale = () => {
                       No hay listas de precios disponibles
                     </p>
                   ) : (
-                    <Select value={tempPriceListId} onValueChange={setTempPriceListId}>
+                    <Select
+                      value={tempPriceListId}
+                      onValueChange={setTempPriceListId}
+                    >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Seleccione una lista de precios" />
                       </SelectTrigger>
                       <SelectContent>
                         {priceLists.map((priceList) => (
-                          <SelectItem key={priceList.id} value={priceList.id.toString()}>
-                            {priceList.name} {priceList.code && `(${priceList.code})`}
+                          <SelectItem
+                            key={priceList.id}
+                            value={priceList.id.toString()}
+                          >
+                            {priceList.name}{" "}
+                            {priceList.code && `(${priceList.code})`}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -240,10 +273,10 @@ const CreateSale = () => {
                 {/* Warehouse Select (Locked) */}
                 <div className="space-y-1">
                   <Label>Almacén</Label>
-                  <Select value={userWarehouseId?.toString() || ''} disabled>
+                  <Select value={userWarehouseId?.toString() || ""} disabled>
                     <SelectTrigger className="w-full bg-muted cursor-not-allowed">
                       <SelectValue>
-                        {userWarehouseName || 'Sin almacén asignado'}
+                        {userWarehouseName || "Sin almacén asignado"}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
@@ -275,7 +308,11 @@ const CreateSale = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/sales")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/sales")}
+          >
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-2xl font-semibold text-foreground">
@@ -295,8 +332,12 @@ const CreateSale = () => {
 
       <div className="flex gap-6 items-start">
         {/* Main Form - 70% */}
-        <form id="sale-form" onSubmit={handleSubmit} className="flex-1 space-y-6" style={{ width: "70%" }}>
-
+        <form
+          id="sale-form"
+          onSubmit={handleSubmit}
+          className="flex-1 space-y-6"
+          style={{ width: "70%" }}
+        >
           {/* Products Section - First */}
           <Card>
             <CardHeader className="pb-3">
@@ -304,12 +345,17 @@ const CreateSale = () => {
                 <Package className="w-5 h-5 text-primary" />
                 <CardTitle className="text-lg">Productos</CardTitle>
               </div>
-              <p className="text-sm text-muted-foreground">Agregue los artículos a la orden</p>
+              <p className="text-sm text-muted-foreground">
+                Agregue los artículos a la orden
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-3">
                 {/* Stock Type Selector */}
-                <Select value={selectedStockTypeId} onValueChange={setSelectedStockTypeId}>
+                <Select
+                  value={selectedStockTypeId}
+                  onValueChange={setSelectedStockTypeId}
+                >
                   <SelectTrigger className="w-auto min-w-[160px]">
                     <SelectValue placeholder="Tipo inventario" />
                   </SelectTrigger>
@@ -326,7 +372,11 @@ const CreateSale = () => {
                 <div className="flex-1">
                   <Popover open={open} onOpenChange={setOpen}>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" role="combobox" className="w-full justify-start text-muted-foreground font-normal">
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-start text-muted-foreground font-normal"
+                      >
                         <Search className="w-4 h-4 mr-2" />
                         {selectedVariation
                           ? `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`
@@ -335,7 +385,11 @@ const CreateSale = () => {
                     </PopoverTrigger>
                     <PopoverContent className="w-[400px] p-0 bg-popover">
                       <Command shouldFilter={false}>
-                        <CommandInput placeholder="Buscar producto o SKU..." value={searchQuery} onValueChange={setSearchQuery} />
+                        <CommandInput
+                          placeholder="Buscar producto o SKU..."
+                          value={searchQuery}
+                          onValueChange={setSearchQuery}
+                        />
                         <CommandList>
                           {productsLoading ? (
                             <div className="flex justify-center py-6">
@@ -343,19 +397,35 @@ const CreateSale = () => {
                             </div>
                           ) : (
                             <>
-                              <CommandEmpty>No se encontraron productos.</CommandEmpty>
+                              <CommandEmpty>
+                                No se encontraron productos.
+                              </CommandEmpty>
                               <CommandGroup>
                                 {filteredVariations.map((variation) => {
-                                  const termsNames = variation.terms.map((t) => t.name).join(" / ");
-                                  const displayTerms = termsNames ? `${termsNames} (${variation.sku})` : variation.sku;
+                                  const termsNames = variation.terms
+                                    .map((t) => t.name)
+                                    .join(" / ");
+                                  const displayTerms = termsNames
+                                    ? `${termsNames} (${variation.sku})`
+                                    : variation.sku;
                                   return (
                                     <CommandItem
                                       key={variation.id}
                                       value={`${variation.productTitle} ${variation.sku} ${termsNames}`}
-                                      onSelect={() => { setSelectedVariation(variation); setOpen(false); }}
+                                      onSelect={() => {
+                                        setSelectedVariation(variation);
+                                        setOpen(false);
+                                      }}
                                       className="flex items-center gap-3 py-2"
                                     >
-                                      <Check className={cn("h-4 w-4 shrink-0", selectedVariation?.id === variation.id ? "opacity-100" : "opacity-0")} />
+                                      <Check
+                                        className={cn(
+                                          "h-4 w-4 shrink-0",
+                                          selectedVariation?.id === variation.id
+                                            ? "opacity-100"
+                                            : "opacity-0",
+                                        )}
+                                      />
                                       {/* Product Image */}
                                       <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
                                         {variation.imageUrl ? (
@@ -372,16 +442,22 @@ const CreateSale = () => {
                                       </div>
                                       {/* Product Info */}
                                       <div className="flex flex-1 flex-col min-w-0">
-                                        <span className="font-medium truncate">{variation.productTitle}</span>
-                                        <span className="text-sm text-muted-foreground truncate">{displayTerms}</span>
+                                        <span className="font-medium truncate">
+                                          {variation.productTitle}
+                                        </span>
+                                        <span className="text-sm text-muted-foreground truncate">
+                                          {displayTerms}
+                                        </span>
                                       </div>
                                       {/* Stock (filtered by selected stock type) */}
-                                      <span className={cn(
-                                        "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
-                                        variation.stock > 0
-                                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                      )}>
+                                      <span
+                                        className={cn(
+                                          "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
+                                          variation.stock > 0
+                                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                                        )}
+                                      >
                                         {variation.stock}
                                       </span>
                                     </CommandItem>
@@ -395,7 +471,12 @@ const CreateSale = () => {
                         {totalProductPages > 1 && (
                           <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
                             <span className="text-xs text-muted-foreground">
-                              {(productPage - 1) * productPagination.size + 1}-{Math.min(productPage * productPagination.size, productPagination.total)} de {productPagination.total}
+                              {(productPage - 1) * productPagination.size + 1}-
+                              {Math.min(
+                                productPage * productPagination.size,
+                                productPagination.total,
+                              )}{" "}
+                              de {productPagination.total}
                             </span>
                             <div className="flex gap-1">
                               <Button
@@ -403,7 +484,9 @@ const CreateSale = () => {
                                 variant="outline"
                                 size="sm"
                                 className="h-7 px-2 text-xs"
-                                onClick={() => handleProductPageChange(productPage - 1)}
+                                onClick={() =>
+                                  handleProductPageChange(productPage - 1)
+                                }
                                 disabled={productPage <= 1 || productsLoading}
                               >
                                 Anterior
@@ -413,8 +496,13 @@ const CreateSale = () => {
                                 variant="outline"
                                 size="sm"
                                 className="h-7 px-2 text-xs"
-                                onClick={() => handleProductPageChange(productPage + 1)}
-                                disabled={productPage >= totalProductPages || productsLoading}
+                                onClick={() =>
+                                  handleProductPageChange(productPage + 1)
+                                }
+                                disabled={
+                                  productPage >= totalProductPages ||
+                                  productsLoading
+                                }
                               >
                                 Siguiente
                               </Button>
@@ -425,7 +513,11 @@ const CreateSale = () => {
                     </PopoverContent>
                   </Popover>
                 </div>
-                <Button type="button" onClick={addProduct} disabled={!selectedVariation || !selectedStockTypeId}>
+                <Button
+                  type="button"
+                  onClick={addProduct}
+                  disabled={!selectedVariation || !selectedStockTypeId}
+                >
                   <Plus className="w-4 h-4 mr-2" /> Agregar
                 </Button>
               </div>
@@ -435,10 +527,18 @@ const CreateSale = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Producto</TableHead>
-                      <TableHead className="w-20 text-center">Cantidad</TableHead>
-                      <TableHead className="w-28 text-center">Precio (S/)</TableHead>
-                      <TableHead className="w-24 text-center">Desc. (S/)</TableHead>
-                      <TableHead className="w-28 text-right">Subtotal</TableHead>
+                      <TableHead className="w-20 text-center">
+                        Cantidad
+                      </TableHead>
+                      <TableHead className="w-28 text-center">
+                        Precio (S/)
+                      </TableHead>
+                      <TableHead className="w-24 text-center">
+                        Desc. (S/)
+                      </TableHead>
+                      <TableHead className="w-28 text-right">
+                        Subtotal
+                      </TableHead>
                       <TableHead className="w-12"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -448,22 +548,31 @@ const CreateSale = () => {
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">
-                              {product.productName} ({product.variationName.replace(/ \/ /g, ' - ')})
+                              {product.productName} (
+                              {product.variationName.replace(/ \/ /g, " - ")})
                             </span>
-                            <span className="text-sm text-muted-foreground">{product.stockTypeName}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {product.stockTypeName}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col items-center">
                             <Input
                               type="number"
-                              value={product.quantity === 0 ? '' : product.quantity}
+                              value={
+                                product.quantity === 0 ? "" : product.quantity
+                              }
                               onChange={(e) => {
                                 const val = e.target.value;
-                                if (val === '') {
+                                if (val === "") {
                                   updateProduct(index, "quantity", 0);
                                 } else {
-                                  updateProduct(index, "quantity", parseInt(val) || 0);
+                                  updateProduct(
+                                    index,
+                                    "quantity",
+                                    parseInt(val) || 0,
+                                  );
                                 }
                               }}
                               onBlur={() => {
@@ -481,14 +590,48 @@ const CreateSale = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Input type="number" value={product.price} onChange={(e) => updateProduct(index, "price", parseFloat(e.target.value) || 0)} min="0" step="0.01" className="w-24" />
+                          <Input
+                            type="number"
+                            value={product.price}
+                            onChange={(e) =>
+                              updateProduct(
+                                index,
+                                "price",
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            min="0"
+                            step="0.01"
+                            className="w-24"
+                          />
                         </TableCell>
                         <TableCell>
-                          <Input type="number" value={product.discountAmount} onChange={(e) => updateProduct(index, "discountAmount", parseFloat(e.target.value) || 0)} min="0" step="0.01" className="w-20 text-center" />
+                          <Input
+                            type="number"
+                            value={product.discountAmount}
+                            onChange={(e) =>
+                              updateProduct(
+                                index,
+                                "discountAmount",
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            min="0"
+                            step="0.01"
+                            className="w-20 text-center"
+                          />
                         </TableCell>
-                        <TableCell className="text-right font-medium">{formatCurrency(calculateLineSubtotal(product))}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(calculateLineSubtotal(product))}
+                        </TableCell>
                         <TableCell>
-                          <Button type="button" variant="ghost" size="icon" onClick={() => removeProduct(index)} className="text-destructive hover:text-destructive">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeProduct(index)}
+                            className="text-destructive hover:text-destructive"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </TableCell>
@@ -505,35 +648,66 @@ const CreateSale = () => {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <User className="w-5 h-5 text-primary" />
-                <CardTitle className="text-lg">Información de la Venta</CardTitle>
+                <CardTitle className="text-lg">
+                  Información de la Venta
+                </CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Canal de Venta</Label>
-                  <Select value={formData.saleType} onValueChange={(v) => handleInputChange("saleType", v)}>
-                    <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                  <Select
+                    value={formData.saleType}
+                    onValueChange={(v) => handleInputChange("saleType", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione" />
+                    </SelectTrigger>
                     <SelectContent>
-                      {salesData?.saleTypes.map((st) => <SelectItem key={st.id} value={st.id.toString()}>{st.name}</SelectItem>)}
+                      {salesData?.saleTypes.map((st) => (
+                        <SelectItem key={st.id} value={st.id.toString()}>
+                          {st.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <Label>Tipo Doc.</Label>
-                    <Select value={formData.documentType} onValueChange={(v) => { handleInputChange("documentType", v); if (formData.documentNumber) handleSearchClient(v); }}>
-                      <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                    <Select
+                      value={formData.documentType}
+                      onValueChange={(v) => {
+                        handleInputChange("documentType", v);
+                        if (formData.documentNumber) handleSearchClient(v);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione" />
+                      </SelectTrigger>
                       <SelectContent>
-                        {salesData?.documentTypes.map((dt) => <SelectItem key={dt.id} value={dt.id.toString()}>{dt.name}</SelectItem>)}
+                        {salesData?.documentTypes.map((dt) => (
+                          <SelectItem key={dt.id} value={dt.id.toString()}>
+                            {dt.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="col-span-2">
                     <Label>Número</Label>
                     <div className="flex gap-2">
-                      <Input value={formData.documentNumber} onChange={(e) => handleInputChange("documentNumber", e.target.value)} onBlur={() => handleSearchClient()} />
-                      {searchingClient && <Loader2 className="w-5 h-5 animate-spin self-center" />}
+                      <Input
+                        value={formData.documentNumber}
+                        onChange={(e) =>
+                          handleInputChange("documentNumber", e.target.value)
+                        }
+                        onBlur={() => handleSearchClient()}
+                      />
+                      {searchingClient && (
+                        <Loader2 className="w-5 h-5 animate-spin self-center" />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -544,7 +718,7 @@ const CreateSale = () => {
                   <div>
                     <Label>Lista de Precios</Label>
                     <Input
-                      value={selectedPriceListName || 'Sin seleccionar'}
+                      value={selectedPriceListName || "Sin seleccionar"}
                       disabled
                       className="bg-muted"
                     />
@@ -552,7 +726,7 @@ const CreateSale = () => {
                   <div>
                     <Label>Almacén</Label>
                     <Input
-                      value={userWarehouseName || 'Sin asignar'}
+                      value={userWarehouseName || "Sin asignar"}
                       disabled
                       className="bg-muted cursor-not-allowed"
                     />
@@ -562,7 +736,9 @@ const CreateSale = () => {
                   <Label>{isPersonaJuridica ? "Razón Social" : "Nombre"}</Label>
                   <Input
                     value={formData.customerName}
-                    onChange={(e) => handleInputChange("customerName", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("customerName", e.target.value)
+                    }
                     disabled={clientFound === true}
                     className={clientFound === true ? "bg-muted" : ""}
                   />
@@ -574,11 +750,22 @@ const CreateSale = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label>Vendedor</Label>
-                    <Input value={formData.vendorName} disabled placeholder="Juan Pérez" className="bg-muted" />
+                    <Input
+                      value={formData.vendorName}
+                      disabled
+                      placeholder="Juan Pérez"
+                      className="bg-muted"
+                    />
                   </div>
                   <div>
                     <Label>Fecha</Label>
-                    <Input type="date" value={formData.saleDate} onChange={(e) => handleInputChange("saleDate", e.target.value)} />
+                    <Input
+                      type="date"
+                      value={formData.saleDate}
+                      onChange={(e) =>
+                        handleInputChange("saleDate", e.target.value)
+                      }
+                    />
                   </div>
                 </div>
 
@@ -589,7 +776,9 @@ const CreateSale = () => {
                       <Label>Apellido Paterno</Label>
                       <Input
                         value={formData.customerLastname}
-                        onChange={(e) => handleInputChange("customerLastname", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("customerLastname", e.target.value)
+                        }
                         disabled={clientFound === true}
                         className={clientFound === true ? "bg-muted" : ""}
                       />
@@ -598,7 +787,9 @@ const CreateSale = () => {
                       <Label>Apellido Materno</Label>
                       <Input
                         value={formData.customerLastname2}
-                        onChange={(e) => handleInputChange("customerLastname2", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("customerLastname2", e.target.value)
+                        }
                         disabled={clientFound === true}
                         className={clientFound === true ? "bg-muted" : ""}
                       />
@@ -609,8 +800,19 @@ const CreateSale = () => {
 
               <div className="flex items-center space-x-4 pt-2">
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="withShipping" checked={formData.withShipping} onCheckedChange={(checked) => handleInputChange("withShipping", checked as boolean)} />
-                  <Label htmlFor="withShipping" className="cursor-pointer font-medium">Requiere Envío</Label>
+                  <Checkbox
+                    id="withShipping"
+                    checked={formData.withShipping}
+                    onCheckedChange={(checked) =>
+                      handleInputChange("withShipping", checked as boolean)
+                    }
+                  />
+                  <Label
+                    htmlFor="withShipping"
+                    className="cursor-pointer font-medium"
+                  >
+                    Requiere Envío
+                  </Label>
                 </div>
               </div>
             </CardContent>
@@ -626,37 +828,85 @@ const CreateSale = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label>Método de Envío</Label>
-                  {availableShippingCosts.length > 0 ? (
-                    <Select value={formData.shippingMethod} onValueChange={(v) => handleInputChange("shippingMethod", v)}>
-                      <SelectTrigger><SelectValue placeholder="Seleccione método de envío" /></SelectTrigger>
-                      <SelectContent>
-                        {availableShippingCosts.map((sc) => <SelectItem key={sc.id} value={sc.id.toString()}>{sc.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="text-sm text-muted-foreground p-3 border rounded-md bg-muted/50">Seleccione ubicación para ver métodos de envío</div>
-                  )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Método de Envío</Label>
+                    {availableShippingCosts.length > 0 ? (
+                      <Select
+                        value={formData.shippingMethod}
+                        onValueChange={(v) =>
+                          handleInputChange("shippingMethod", v)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione método de envío" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableShippingCosts.map((sc) => (
+                            <SelectItem key={sc.id} value={sc.id.toString()}>
+                              {sc.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
+                        Elige ubicación para ver envíos.
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label>Costo de envío</Label>
+                    <Input
+                      type="number"
+                      value={formData.shippingCost}
+                      onChange={(e) =>
+                        handleInputChange("shippingCost", e.target.value)
+                      }
+                      placeholder="0"
+                      className="w-full  text-right"
+                      disabled={!formData.withShipping}
+                    />
+                  </div>
                 </div>
 
                 {/* Fila 1: País y Departamento */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>País</Label>
-                    <Select value={formData.countryId} onValueChange={(v) => handleInputChange("countryId", v)}>
-                      <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                    <Select
+                      value={formData.countryId}
+                      onValueChange={(v) => handleInputChange("countryId", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione" />
+                      </SelectTrigger>
                       <SelectContent>
-                        {salesData?.countries.map((c) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
+                        {salesData?.countries.map((c) => (
+                          <SelectItem key={c.id} value={c.id.toString()}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>Departamento</Label>
-                    <Select value={formData.stateId} onValueChange={(v) => handleInputChange("stateId", v)} disabled={!formData.countryId}>
-                      <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                    <Select
+                      value={formData.stateId}
+                      onValueChange={(v) => handleInputChange("stateId", v)}
+                      disabled={!formData.countryId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione" />
+                      </SelectTrigger>
                       <SelectContent>
-                        {filteredStates.map((s) => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                        {filteredStates.map((s) => (
+                          <SelectItem key={s.id} value={s.id.toString()}>
+                            {s.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -666,19 +916,41 @@ const CreateSale = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Provincia</Label>
-                    <Select value={formData.cityId} onValueChange={(v) => handleInputChange("cityId", v)} disabled={!formData.stateId}>
-                      <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                    <Select
+                      value={formData.cityId}
+                      onValueChange={(v) => handleInputChange("cityId", v)}
+                      disabled={!formData.stateId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione" />
+                      </SelectTrigger>
                       <SelectContent>
-                        {filteredCities.map((c) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
+                        {filteredCities.map((c) => (
+                          <SelectItem key={c.id} value={c.id.toString()}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>Distrito</Label>
-                    <Select value={formData.neighborhoodId} onValueChange={(v) => handleInputChange("neighborhoodId", v)} disabled={!formData.cityId}>
-                      <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                    <Select
+                      value={formData.neighborhoodId}
+                      onValueChange={(v) =>
+                        handleInputChange("neighborhoodId", v)
+                      }
+                      disabled={!formData.cityId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione" />
+                      </SelectTrigger>
                       <SelectContent>
-                        {filteredNeighborhoods.map((n) => <SelectItem key={n.id} value={n.id.toString()}>{n.name}</SelectItem>)}
+                        {filteredNeighborhoods.map((n) => (
+                          <SelectItem key={n.id} value={n.id.toString()}>
+                            {n.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -688,22 +960,44 @@ const CreateSale = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Dirección</Label>
-                    <Input value={formData.address} onChange={(e) => handleInputChange("address", e.target.value)} placeholder="Calle, número..." />
+                    <Input
+                      value={formData.address}
+                      onChange={(e) =>
+                        handleInputChange("address", e.target.value)
+                      }
+                      placeholder="Calle, número..."
+                    />
                   </div>
                   <div>
                     <Label>Referencia</Label>
-                    <Input value={formData.addressReference} onChange={(e) => handleInputChange("addressReference", e.target.value)} placeholder="Cerca de, frente a..." />
+                    <Input
+                      value={formData.addressReference}
+                      onChange={(e) =>
+                        handleInputChange("addressReference", e.target.value)
+                      }
+                      placeholder="Cerca de, frente a..."
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Persona que Recibe</Label>
-                    <Input value={formData.receptionPerson} onChange={(e) => handleInputChange("receptionPerson", e.target.value)} />
+                    <Input
+                      value={formData.receptionPerson}
+                      onChange={(e) =>
+                        handleInputChange("receptionPerson", e.target.value)
+                      }
+                    />
                   </div>
                   <div>
                     <Label>Teléfono de Contacto</Label>
-                    <Input value={formData.receptionPhone} onChange={(e) => handleInputChange("receptionPhone", e.target.value)} />
+                    <Input
+                      value={formData.receptionPhone}
+                      onChange={(e) =>
+                        handleInputChange("receptionPhone", e.target.value)
+                      }
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -712,7 +1006,10 @@ const CreateSale = () => {
         </form>
 
         {/* Sidebar - 30% */}
-        <aside className="flex-shrink-0 sticky top-6 space-y-4" style={{ width: "30%" }}>
+        <aside
+          className="flex-shrink-0 sticky top-6 space-y-4"
+          style={{ width: "30%" }}
+        >
           {/* Order Status */}
           <Card>
             <CardHeader className="pb-3">
@@ -720,12 +1017,28 @@ const CreateSale = () => {
             </CardHeader>
             <CardContent>
               <Select value={orderSituation} onValueChange={setOrderSituation}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar estado" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
                 <SelectContent>
-                  {salesData?.situations.map((s) => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                  {salesData?.situations.map((s) => (
+                    <SelectItem key={s.id} value={s.id.toString()}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </CardContent>
+            <CardFooter>
+              {createdOrderId && (
+                <em
+                  className="italic text-sm underline cursor-pointer"
+                  onClick={() => setHistoryModalOpen(true)}
+                >
+                  Ver Historial
+                </em>
+              )}
+            </CardFooter>
           </Card>
 
           {/* Summary & Payment */}
@@ -744,7 +1057,9 @@ const CreateSale = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Descuento</span>
-                  <span className="text-destructive">-{formatCurrency(discountAmount)}</span>
+                  <span className="text-destructive">
+                    -{formatCurrency(discountAmount)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm items-center">
                   <span className="text-muted-foreground">Costo de Envío</span>
@@ -756,44 +1071,70 @@ const CreateSale = () => {
                   <span>Total</span>
                   <span className="text-primary">{formatCurrency(total)}</span>
                 </div>
+                {changeAmount > 0 && (
+                  <div className="flex justify-between font-medium text-green-600 mt-2">
+                    <span>Vuelto</span>
+                    <span>{formatCurrency(changeAmount)}</span>
+                  </div>
+                )}
               </div>
 
               <Separator />
 
               {/* Lista de pagos agregados */}
-              {payments.filter(p => p.paymentMethodId).length > 0 && (
+              {payments.filter((p) => p.paymentMethodId).length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Pagos Registrados</Label>
-                  {payments.filter(p => p.paymentMethodId).map((p) => {
-                    const method = salesData?.paymentMethods.find(pm => pm.id.toString() === p.paymentMethodId);
-                    return (
-                      <div key={p.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm">{method?.name || 'Método'}</span>
-                          <span className="text-sm font-medium">{formatCurrency(parseFloat(p.amount) || 0)}</span>
-                          {p.voucherPreview && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => {
-                                setSelectedVoucherPreview(p.voucherPreview || null);
-                                setVoucherModalOpen(true);
-                              }}
-                              title="Ver comprobante"
-                            >
-                              <Paperclip className="w-3 h-3 text-primary" />
-                            </Button>
-                          )}
+                  <Label className="text-sm font-medium">
+                    Pagos Registrados
+                  </Label>
+                  {payments
+                    .filter((p) => p.paymentMethodId)
+                    .map((p) => {
+                      const method = salesData?.paymentMethods.find(
+                        (pm) => pm.id.toString() === p.paymentMethodId,
+                      );
+                      return (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between p-2 bg-muted/50 rounded-md"
+                        >
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              {method?.name || "Método"}
+                            </span>
+                            <span className="text-sm font-medium">
+                              {formatCurrency(parseFloat(p.amount) || 0)}
+                            </span>
+                            {p.voucherPreview && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  setSelectedVoucherPreview(
+                                    p.voucherPreview || null,
+                                  );
+                                  setVoucherModalOpen(true);
+                                }}
+                                title="Ver comprobante"
+                              >
+                                <Paperclip className="w-3 h-3 text-primary" />
+                              </Button>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => removePayment(p.id)}
+                          >
+                            <Trash2 className="w-3 h-3 text-destructive" />
+                          </Button>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removePayment(p.id)}>
-                          <Trash2 className="w-3 h-3 text-destructive" />
-                        </Button>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               )}
 
@@ -802,16 +1143,34 @@ const CreateSale = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label>Método de Pago</Label>
-                    <Select value={currentPayment.paymentMethodId} onValueChange={(v) => handlePaymentChange("paymentMethodId", v)}>
-                      <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                    <Select
+                      value={currentPayment.paymentMethodId}
+                      onValueChange={(v) =>
+                        handlePaymentChange("paymentMethodId", v)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione" />
+                      </SelectTrigger>
                       <SelectContent>
-                        {salesData?.paymentMethods.map((pm) => <SelectItem key={pm.id} value={pm.id.toString()}>{pm.name}</SelectItem>)}
+                        {salesData?.paymentMethods.map((pm) => (
+                          <SelectItem key={pm.id} value={pm.id.toString()}>
+                            {pm.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>Monto</Label>
-                    <Input type="number" value={currentPayment.amount} onChange={(e) => handlePaymentChange("amount", e.target.value)} placeholder={total.toFixed(2)} />
+                    <Input
+                      type="number"
+                      value={currentPayment.amount}
+                      onChange={(e) =>
+                        handlePaymentChange("amount", e.target.value)
+                      }
+                      placeholder={total.toFixed(2)}
+                    />
                   </div>
                 </div>
 
@@ -851,12 +1210,14 @@ const CreateSale = () => {
                       if (file) {
                         handleVoucherSelect(file);
                       }
-                      e.target.value = '';
+                      e.target.value = "";
                     }}
                   />
                   <Button
                     type="button"
-                    variant={currentPayment.voucherPreview ? "default" : "outline"}
+                    variant={
+                      currentPayment.voucherPreview ? "default" : "outline"
+                    }
                     size="sm"
                     className="w-full"
                     onClick={() => voucherFileInputRef.current?.click()}
@@ -864,7 +1225,13 @@ const CreateSale = () => {
                     <Upload className="w-4 h-4 mr-0.5" />
                     {currentPayment.voucherPreview ? "Cambiar" : "Comprobante"}
                   </Button>
-                  <Button type="button" variant="secondary" size="sm" className="w-full" onClick={addPayment}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                    onClick={addPayment}
+                  >
                     <Plus className="w-4 h-4 mr-0.5" />
                     Agregar
                   </Button>
@@ -892,7 +1259,10 @@ const CreateSale = () => {
                 ) : (
                   <div className="space-y-3">
                     {notes.map((note) => (
-                      <div key={note.id} className="bg-muted/50 p-3 rounded-lg relative group">
+                      <div
+                        key={note.id}
+                        className="bg-muted/50 p-3 rounded-lg relative group"
+                      >
                         <Button
                           type="button"
                           variant="ghost"
@@ -957,12 +1327,16 @@ const CreateSale = () => {
                   type="button"
                   variant="outline"
                   size="icon"
-                  className={cn("flex-shrink-0", !orderId && "opacity-50 cursor-not-allowed")}
+                  className={cn(
+                    "flex-shrink-0",
+                    !orderId && "opacity-50 cursor-not-allowed",
+                  )}
                   onClick={() => {
                     if (!orderId) {
                       toast({
                         title: "Acción no disponible",
-                        description: "Primero debe crear la venta para agregar notas",
+                        description:
+                          "Primero debe crear la venta para agregar notas",
                         variant: "destructive",
                       });
                       return;
@@ -979,14 +1353,19 @@ const CreateSale = () => {
                     if (!orderId) {
                       toast({
                         title: "Acción no disponible",
-                        description: "Primero debe crear la venta para agregar notas",
+                        description:
+                          "Primero debe crear la venta para agregar notas",
                         variant: "destructive",
                       });
                     }
                   }}
                 >
                   <Input
-                    placeholder={orderId ? "Escribir nota..." : "Guarde la venta para agregar notas"}
+                    placeholder={
+                      orderId
+                        ? "Escribir nota..."
+                        : "Guarde la venta para agregar notas"
+                    }
                     value={newNoteText}
                     onChange={(e) => setNewNoteText(e.target.value)}
                     onKeyDown={handleNoteKeyDown}
@@ -997,19 +1376,25 @@ const CreateSale = () => {
                 <Button
                   type="button"
                   size="icon"
-                  className={cn("flex-shrink-0", !orderId && "opacity-50 cursor-not-allowed")}
+                  className={cn(
+                    "flex-shrink-0",
+                    !orderId && "opacity-50 cursor-not-allowed",
+                  )}
                   onClick={() => {
                     if (!orderId) {
                       toast({
                         title: "Acción no disponible",
-                        description: "Primero debe crear la venta para agregar notas",
+                        description:
+                          "Primero debe crear la venta para agregar notas",
                         variant: "destructive",
                       });
                       return;
                     }
                     addNote();
                   }}
-                  disabled={!orderId || (!newNoteText.trim() && !noteImagePreview)}
+                  disabled={
+                    !orderId || (!newNoteText.trim() && !noteImagePreview)
+                  }
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -1023,7 +1408,13 @@ const CreateSale = () => {
       <VoucherPreviewModal
         open={voucherModalOpen}
         onOpenChange={setVoucherModalOpen}
-        voucherSrc={selectedVoucherPreview || ''}
+        voucherSrc={selectedVoucherPreview || ""}
+      />
+
+      <SalesHistoryModal
+        orders={orderSituationTable}
+        open={historyModalOpen}
+        onOpenChange={setHistoryModalOpen}
       />
     </div>
   );

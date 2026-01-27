@@ -249,7 +249,11 @@ export interface PaginatedProductVariation {
   imageUrl: string | null;
   stock: number;
   terms: Array<{ id: number; name: string }>;
-  prices: Array<{ price_list_id: number; price: number; sale_price: number | null }>;
+  prices: Array<{
+    price_list_id: number;
+    price: number;
+    sale_price: number | null;
+  }>;
 }
 
 // Paginated response metadata
@@ -257,4 +261,26 @@ export interface PaginationMeta {
   page: number;
   size: number;
   total: number;
+}
+
+export type ModuleTypeApiResponse = {
+  types: {
+    id: number;
+  }[];
+};
+
+export interface OrdersSituationsByIdApiResponse {
+  created_at: string;
+  situations: {
+    name: string;
+  };
+  statuses: {
+    name: string;
+  };
+}
+
+export interface OrdersSituationsById {
+  situation_name: string;
+  statuses_name: string;
+  created_at: string;
 }

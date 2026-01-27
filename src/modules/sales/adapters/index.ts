@@ -20,7 +20,10 @@ import type {
   ProductForSearch,
   ProductVariation,
   ClientSearchResult,
-} from '../types';
+  ModuleTypeApiResponse,
+  OrdersSituationsByIdApiResponse,
+  OrdersSituationsById,
+} from "../types";
 
 // Adapt document types from API
 export const adaptDocumentTypes = (data: any[]): DocumentType[] => {
@@ -132,10 +135,13 @@ export const adaptShippingCosts = (data: any[]): ShippingCost[] => {
 };
 
 // Adapt product variation from API
-export const adaptProductVariation = (variation: any, productTitle: string): ProductVariation => {
+export const adaptProductVariation = (
+  variation: any,
+  productTitle: string,
+): ProductVariation => {
   return {
     id: variation.id,
-    sku: variation.sku || '',
+    sku: variation.sku || "",
     productId: variation.product_id,
     productTitle,
     imageUrl: variation.imageUrl || variation.image_url || null,
@@ -157,8 +163,8 @@ export const adaptProducts = (data: any[]): ProductForSearch[] => {
   return data.map((product) => ({
     id: product.id,
     title: product.title,
-    variations: (product.variations || []).map((v: any) => 
-      adaptProductVariation(v, product.title)
+    variations: (product.variations || []).map((v: any) =>
+      adaptProductVariation(v, product.title),
     ),
   }));
 };
@@ -182,7 +188,9 @@ export const adaptSalesFormData = (data: any): SalesFormDataResponse => {
 };
 
 // Adapt client search result from API
-export const adaptClientSearchResult = (data: any): ClientSearchResult | null => {
+export const adaptClientSearchResult = (
+  data: any,
+): ClientSearchResult | null => {
   if (!data) return null;
   return {
     id: data.id,
@@ -192,4 +200,20 @@ export const adaptClientSearchResult = (data: any): ClientSearchResult | null =>
     email: data.email || null,
     phone: data.phone || null,
   };
+};
+
+export const getIdInventoryTypeAdapter = (
+  response: ModuleTypeApiResponse,
+): number => {
+  return response.types[0].id;
+};
+
+export const getOrdersSituationsByIdAdapter = (
+  response: OrdersSituationsByIdApiResponse[],
+): OrdersSituationsById[] => {
+  return response.map((item) => ({
+    situation_name: item.situations.name,
+    statuses_name: item.statuses.name,
+    created_at: item.created_at,
+  }));
 };
