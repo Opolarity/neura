@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import useRoles from '../hooks/useRoles';
-import RolesFilterBar from '../components/roles/RolesFilterBar';
-import RolesTable from '../components/roles/RolesTable';
+import RolesFilterBar from '../components/RolesFilterBar';
+import RolesTable from '../components/RolesTable';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
-import RolesFilterModal from '../components/roles/RolesFilterModal';
+import RolesFilterModal from '../components/RolesFilterModal';
 
 const RolesList = () => {
   const {

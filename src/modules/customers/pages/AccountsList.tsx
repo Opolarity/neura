@@ -32,9 +32,6 @@ const AccountsList = () => {
         accountTypes,
     } = useAccounts();
 
-    const handleEdit = (accountId: number) => {
-        navigate(`/customers/edit/${accountId}`);
-    };
 
     const handleOpenFilterModal = () => {
         setIsFilterModalOpen(true);
@@ -56,10 +53,6 @@ const AccountsList = () => {
                     <h1 className="text-3xl font-bold">Listado de Cuentas</h1>
                     <p className="text-muted-foreground">Administra tus cuentas</p>
                 </div>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Añadir Cliente
-                </Button>
             </div>
 
             {/* Tabla */}
@@ -82,7 +75,7 @@ const AccountsList = () => {
                     <AccountsTable
                         accounts={accounts}
                         loading={loading}
-                        onEdit={handleEdit}
+
                     />
 
                     {/* Paginación */}

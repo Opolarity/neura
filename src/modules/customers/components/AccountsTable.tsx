@@ -13,10 +13,10 @@ import { Account } from '../types/accounts.types';
 interface AccountsTableProps {
     accounts: Account[];
     loading: boolean;
-    onEdit: (accountId: number) => void;
+
 }
 
-export const AccountsTable = ({ accounts, loading, onEdit }: AccountsTableProps) => {
+export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
     return (
         <Table>
             <TableHeader>
@@ -25,7 +25,7 @@ export const AccountsTable = ({ accounts, loading, onEdit }: AccountsTableProps)
                     <TableHead>Nombre</TableHead>
                     <TableHead>Documento</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead className="text-center w-28">Acciones</TableHead>
+                    <TableHead>Estado</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -48,14 +48,7 @@ export const AccountsTable = ({ accounts, loading, onEdit }: AccountsTableProps)
                             <TableCell>{account.fullName}</TableCell>
                             <TableCell>{account.documentNumber}</TableCell>
                             <TableCell>{account.typeName}</TableCell>
-                            <TableCell>
-                                <div className="flex gap-1">
-                                    <Button variant="outline"
-                                        size="sm">
-                                        <Edit className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            </TableCell>
+                            <TableCell>{account.show ? 'Activo' : 'Inactivo'}</TableCell>
                         </TableRow>
                     ))
                 )}
