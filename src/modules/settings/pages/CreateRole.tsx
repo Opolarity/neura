@@ -62,7 +62,10 @@ const CreateRole = () => {
       if (error) throw error;
 
       // Build function tree
+      console.log("fetchFunctions", data);
+
       const functionTree = buildFunctionTree(data || []);
+      console.log("functionTree", functionTree);
       setFunctions(functionTree);
     } catch (error) {
       console.error('Error fetching functions:', error);
@@ -217,9 +220,6 @@ const CreateRole = () => {
       if (isEdit && roleId) {
         // Update role
         await updateRole({ ...formData, id: parseInt(roleId) });
-
-        // Insert new role functions
-
 
         toast({
           title: "Éxito",

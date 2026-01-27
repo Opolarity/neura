@@ -41,15 +41,15 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Loader2, 
-  Plus, 
-  Trash2, 
-  ArrowLeft, 
-  Check, 
-  Package, 
-  User, 
-  Truck, 
+import {
+  Loader2,
+  Plus,
+  Trash2,
+  ArrowLeft,
+  Check,
+  Package,
+  User,
+  Truck,
   Receipt,
   Search,
   Settings,
@@ -191,9 +191,9 @@ const CreateSale = () => {
   return (
     <div className="space-y-6">
       {/* Sale Settings Modal */}
-      <Dialog open={showPriceListModal} onOpenChange={() => {}}>
-        <DialogContent 
-          className="sm:max-w-md" 
+      <Dialog open={showPriceListModal} onOpenChange={() => { }}>
+        <DialogContent
+          className="sm:max-w-md"
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
@@ -206,7 +206,7 @@ const CreateSale = () => {
               Configure los ajustes iniciales para esta venta
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             {priceListsLoading || loadingWarehouse ? (
               <div className="flex justify-center py-8">
@@ -258,13 +258,13 @@ const CreateSale = () => {
               </>
             )}
           </div>
-          
+
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={() => navigate("/sales")}>
               Cancelar
             </Button>
-            <Button 
-              onClick={() => handleSelectPriceList(tempPriceListId)} 
+            <Button
+              onClick={() => handleSelectPriceList(tempPriceListId)}
               disabled={!tempPriceListId || !userWarehouseId}
             >
               Aceptar
@@ -296,7 +296,7 @@ const CreateSale = () => {
       <div className="flex gap-6 items-start">
         {/* Main Form - 70% */}
         <form id="sale-form" onSubmit={handleSubmit} className="flex-1 space-y-6" style={{ width: "70%" }}>
-          
+
           {/* Products Section - First */}
           <Card>
             <CardHeader className="pb-3">
@@ -321,7 +321,7 @@ const CreateSale = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                
+
                 {/* Product Search */}
                 <div className="flex-1">
                   <Popover open={open} onOpenChange={setOpen}>
@@ -359,8 +359,8 @@ const CreateSale = () => {
                                       {/* Product Image */}
                                       <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
                                         {variation.imageUrl ? (
-                                          <img 
-                                            src={variation.imageUrl} 
+                                          <img
+                                            src={variation.imageUrl}
                                             alt={variation.productTitle}
                                             className="h-full w-full object-cover"
                                           />
@@ -378,8 +378,8 @@ const CreateSale = () => {
                                       {/* Stock (filtered by selected stock type) */}
                                       <span className={cn(
                                         "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
-                                        variation.stock > 0 
-                                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
+                                        variation.stock > 0
+                                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                                           : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                                       )}>
                                         {variation.stock}
@@ -455,9 +455,9 @@ const CreateSale = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col items-center">
-                            <Input 
-                              type="number" 
-                              value={product.quantity === 0 ? '' : product.quantity} 
+                            <Input
+                              type="number"
+                              value={product.quantity === 0 ? '' : product.quantity}
                               onChange={(e) => {
                                 const val = e.target.value;
                                 if (val === '') {
@@ -471,9 +471,9 @@ const CreateSale = () => {
                                   updateProduct(index, "quantity", 1);
                                 }
                               }}
-                              min="1" 
+                              min="1"
                               max={product.maxStock}
-                              className="w-16 text-center" 
+                              className="w-16 text-center"
                             />
                             <span className="text-xs text-muted-foreground mt-1">
                               Stock: {product.maxStock}
@@ -505,7 +505,7 @@ const CreateSale = () => {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <User className="w-5 h-5 text-primary" />
-                <CardTitle className="text-lg">Información de la Venta & Cliente</CardTitle>
+                <CardTitle className="text-lg">Información de la Venta</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -543,26 +543,26 @@ const CreateSale = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label>Lista de Precios</Label>
-                    <Input 
-                      value={selectedPriceListName || 'Sin seleccionar'} 
-                      disabled 
-                      className="bg-muted" 
+                    <Input
+                      value={selectedPriceListName || 'Sin seleccionar'}
+                      disabled
+                      className="bg-muted"
                     />
                   </div>
                   <div>
                     <Label>Almacén</Label>
-                    <Input 
-                      value={userWarehouseName || 'Sin asignar'} 
-                      disabled 
-                      className="bg-muted cursor-not-allowed" 
+                    <Input
+                      value={userWarehouseName || 'Sin asignar'}
+                      disabled
+                      className="bg-muted cursor-not-allowed"
                     />
                   </div>
                 </div>
                 <div>
                   <Label>{isPersonaJuridica ? "Razón Social" : "Nombre"}</Label>
-                  <Input 
-                    value={formData.customerName} 
-                    onChange={(e) => handleInputChange("customerName", e.target.value)} 
+                  <Input
+                    value={formData.customerName}
+                    onChange={(e) => handleInputChange("customerName", e.target.value)}
                     disabled={clientFound === true}
                     className={clientFound === true ? "bg-muted" : ""}
                   />
@@ -581,24 +581,24 @@ const CreateSale = () => {
                     <Input type="date" value={formData.saleDate} onChange={(e) => handleInputChange("saleDate", e.target.value)} />
                   </div>
                 </div>
-                
+
                 {/* Lado derecho: Apellidos (solo para persona natural) */}
                 {!isPersonaJuridica && (
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label>Apellido Paterno</Label>
-                      <Input 
-                        value={formData.customerLastname} 
-                        onChange={(e) => handleInputChange("customerLastname", e.target.value)} 
+                      <Input
+                        value={formData.customerLastname}
+                        onChange={(e) => handleInputChange("customerLastname", e.target.value)}
                         disabled={clientFound === true}
                         className={clientFound === true ? "bg-muted" : ""}
                       />
                     </div>
                     <div>
                       <Label>Apellido Materno</Label>
-                      <Input 
-                        value={formData.customerLastname2} 
-                        onChange={(e) => handleInputChange("customerLastname2", e.target.value)} 
+                      <Input
+                        value={formData.customerLastname2}
+                        onChange={(e) => handleInputChange("customerLastname2", e.target.value)}
                         disabled={clientFound === true}
                         className={clientFound === true ? "bg-muted" : ""}
                       />
@@ -733,7 +733,7 @@ const CreateSale = () => {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <Receipt className="w-5 h-5 text-primary" />
-                <CardTitle className="text-lg">Resumen & Pago</CardTitle>
+                <CardTitle className="text-lg">Resumen</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -748,7 +748,8 @@ const CreateSale = () => {
                 </div>
                 <div className="flex justify-between text-sm items-center">
                   <span className="text-muted-foreground">Costo de Envío</span>
-                  <Input type="number" value={formData.shippingCost} onChange={(e) => handleInputChange("shippingCost", e.target.value)} placeholder="0" className="w-20 h-8 text-right" disabled={!formData.withShipping} />
+                  {/* <Input type="number" value={formData.shippingCost} onChange={(e) => handleInputChange("shippingCost", e.target.value)} placeholder="0" className="w-20 h-8 text-right" disabled={!formData.withShipping} /> */}
+                  {formData.shippingCost || 0}
                 </div>
                 <Separator />
                 <div className="flex justify-between font-semibold text-lg">
@@ -772,10 +773,10 @@ const CreateSale = () => {
                           <span className="text-sm">{method?.name || 'Método'}</span>
                           <span className="text-sm font-medium">{formatCurrency(parseFloat(p.amount) || 0)}</span>
                           {p.voucherPreview && (
-                            <Button 
-                              type="button" 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
                               className="h-6 w-6"
                               onClick={() => {
                                 setSelectedVoucherPreview(p.voucherPreview || null);
@@ -813,24 +814,24 @@ const CreateSale = () => {
                     <Input type="number" value={currentPayment.amount} onChange={(e) => handlePaymentChange("amount", e.target.value)} placeholder={total.toFixed(2)} />
                   </div>
                 </div>
-                
+
                 {/* Voucher preview */}
                 {currentPayment.voucherPreview && (
                   <div className="relative group">
                     <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-                      <img 
-                        src={currentPayment.voucherPreview} 
-                        alt="Comprobante" 
+                      <img
+                        src={currentPayment.voucherPreview}
+                        alt="Comprobante"
                         className="h-12 w-12 object-cover rounded"
                       />
                       <span className="text-xs text-muted-foreground flex-1 truncate">
                         {currentPayment.voucherFile?.name}
                       </span>
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6" 
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
                         onClick={removeVoucher}
                       >
                         <X className="w-3 h-3 text-destructive" />
@@ -838,7 +839,7 @@ const CreateSale = () => {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="file"
@@ -853,10 +854,10 @@ const CreateSale = () => {
                       e.target.value = '';
                     }}
                   />
-                  <Button 
-                    type="button" 
-                    variant={currentPayment.voucherPreview ? "default" : "outline"} 
-                    size="sm" 
+                  <Button
+                    type="button"
+                    variant={currentPayment.voucherPreview ? "default" : "outline"}
+                    size="sm"
                     className="w-full"
                     onClick={() => voucherFileInputRef.current?.click()}
                   >
@@ -906,9 +907,9 @@ const CreateSale = () => {
                         )}
                         {note.imagePreview && (
                           <div className="mt-2">
-                            <img 
-                              src={note.imagePreview} 
-                              alt="Imagen adjunta" 
+                            <img
+                              src={note.imagePreview}
+                              alt="Imagen adjunta"
                               className="max-w-full max-h-32 rounded-md object-cover"
                             />
                           </div>
@@ -926,9 +927,9 @@ const CreateSale = () => {
               {/* Image preview before sending */}
               {noteImagePreview && (
                 <div className="relative inline-block">
-                  <img 
-                    src={noteImagePreview} 
-                    alt="Preview" 
+                  <img
+                    src={noteImagePreview}
+                    alt="Preview"
                     className="max-h-16 rounded-md object-cover"
                   />
                   <Button
@@ -972,7 +973,7 @@ const CreateSale = () => {
                 >
                   <Paperclip className="w-4 h-4" />
                 </Button>
-                <div 
+                <div
                   className="flex-1"
                   onClick={() => {
                     if (!orderId) {

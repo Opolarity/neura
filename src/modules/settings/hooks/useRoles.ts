@@ -112,11 +112,8 @@ const useRoles = () => {
 
     const handleApplyFilter = async (newFilters: RolesFilterDraft) => {
         setPagination((prev) => ({ ...prev, p_page: 1 }));
-        setFilters((prev) => {
-            const updatedFilters = { ...newFilters, page: 1, size: prev.size };
-            loadRoles(updatedFilters);
-            return updatedFilters;
-        });
+        setFilters(newFilters);
+        await loadRoles(newFilters);
         handleCloseFilterModal();
     };
 

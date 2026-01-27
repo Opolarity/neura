@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RolesFilters, RolesFilterDraft } from '../../types/Roles.types';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface RolesFilterModalProps {
     filters: RolesFilters;
@@ -47,11 +47,11 @@ const RolesFilterModal = ({
     };
 
     const handleClear = () => {
-        setInternalFilters((prev) => ({
+        setInternalFilters({
             minuser: null,
             maxuser: null,
             is_admin: null,
-        }));
+        });
     };
 
     return (
@@ -111,7 +111,7 @@ const RolesFilterModal = ({
                     <Button variant="outline" onClick={handleClear}>
                         Limpiar
                     </Button>
-                    <Button onClick={() => onApply(internalFilters)}>
+                    <Button onClick={() => onApply({ ...filters, ...internalFilters, page: 1 })}>
                         Aplicar
                     </Button>
                 </DialogFooter>
