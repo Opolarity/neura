@@ -71,9 +71,7 @@ const CreateUser = () => {
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Main Forms (2/3 width) */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Identification */}
+          <div className="lg:col-span-2 space-y-3">
             <Card>
               <CardHeader>
                 <CardTitle>Identificación</CardTitle>
@@ -234,7 +232,7 @@ const CreateUser = () => {
 
                 {/* Roles Multi-select */}
                 <div className="space-y-2 pt-2">
-                  <Label>Roles *</Label>
+                  <Label>Roles </Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -270,9 +268,7 @@ const CreateUser = () => {
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  {formData.role_ids.length === 0 && (
-                    <p className="text-xs text-destructive mt-1">Debe seleccionar al menos un rol</p>
-                  )}
+                  {formData.role_ids.length === 0}
                 </div>
 
                 {/* Account Types Multi-select */}
