@@ -3,10 +3,10 @@
 // Main logic for Create/Edit Sale page
 // =============================================
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import type {
   SaleFormData,
   SaleProduct,
@@ -18,13 +18,16 @@ import type {
   LocalNote,
   PaginatedProductVariation,
   PaginationMeta,
-} from '../types';
+  OrdersSituationsById,
+} from "../types";
 import {
   adaptSalesFormData,
   adaptShippingCosts,
   adaptClientSearchResult,
   adaptPriceLists,
-} from '../adapters';
+  getIdInventoryTypeAdapter,
+  getOrdersSituationsByIdAdapter,
+} from "../adapters";
 import {
   fetchSalesFormData,
   fetchShippingCosts,
@@ -44,48 +47,50 @@ import {
   fetchSaleProducts,
   uploadPaymentVoucher,
   updatePaymentVoucherUrl,
-} from '../services';
+  getIdInventoryTypeApi,
+  getOrdersSituationsById,
+} from "../services";
 import {
   calculateSubtotal,
   calculateDiscountAmount,
   calculateTotal,
   filterShippingCostsByLocation,
   getTodayDate,
-} from '../utils';
+} from "../utils";
 
 const INITIAL_FORM_DATA: SaleFormData = {
-  documentType: '',
-  documentNumber: '',
-  customerName: '',
-  customerLastname: '',
-  customerLastname2: '',
-  email: '',
-  phone: '',
-  saleType: '',
-  priceListId: '',
+  documentType: "",
+  documentNumber: "",
+  customerName: "",
+  customerLastname: "",
+  customerLastname2: "",
+  email: "",
+  phone: "",
+  saleType: "",
+  priceListId: "",
   saleDate: getTodayDate(),
-  vendorName: '',
-  shippingMethod: '',
-  shippingCost: '',
-  countryId: '',
-  stateId: '',
-  cityId: '',
-  neighborhoodId: '',
-  address: '',
-  addressReference: '',
-  receptionPerson: '',
-  receptionPhone: '',
+  vendorName: "",
+  shippingMethod: "",
+  shippingCost: "",
+  countryId: "",
+  stateId: "",
+  cityId: "",
+  neighborhoodId: "",
+  address: "",
+  addressReference: "",
+  receptionPerson: "",
+  receptionPhone: "",
   withShipping: false,
   employeeSale: false,
-  notes: '',
+  notes: "",
 };
 
 const createEmptyPayment = (): SalePayment => ({
   id: crypto.randomUUID(),
-  paymentMethodId: '',
-  amount: '',
-  confirmationCode: '',
-  voucherUrl: '',
+  paymentMethodId: "",
+  amount: "",
+  confirmationCode: "",
+  voucherUrl: "",
   voucherFile: undefined,
   voucherPreview: undefined,
 });
@@ -108,42 +113,61 @@ export const useCreateSale = () => {
 
   // User warehouse state
   const [userWarehouseId, setUserWarehouseId] = useState<number | null>(null);
-  const [userWarehouseName, setUserWarehouseName] = useState<string>('');
+  const [userWarehouseName, setUserWarehouseName] = useState<string>("");
 
   // Form data
   const [formData, setFormData] = useState<SaleFormData>(INITIAL_FORM_DATA);
   const [products, setProducts] = useState<SaleProduct[]>([]);
-  const [payments, setPayments] = useState<SalePayment[]>([createEmptyPayment()]);
-  const [currentPayment, setCurrentPayment] = useState<SalePayment>(createEmptyPayment());
-  const [orderSituation, setOrderSituation] = useState<string>('');
+  const [payments, setPayments] = useState<SalePayment[]>([
+    createEmptyPayment(),
+  ]);
+  const [currentPayment, setCurrentPayment] =
+    useState<SalePayment>(createEmptyPayment());
+  const [orderSituation, setOrderSituation] = useState<string>("");
 
   // Dropdown data
-  const [salesData, setSalesData] = useState<SalesFormDataResponse | null>(null);
+  const [salesData, setSalesData] = useState<SalesFormDataResponse | null>(
+    null,
+  );
   const [allShippingCosts, setAllShippingCosts] = useState<ShippingCost[]>([]);
 
   // UI state
   const [clientFound, setClientFound] = useState<boolean | null>(null);
-  const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStockTypeId, setSelectedStockTypeId] = useState<string>('');
+  const [selectedVariation, setSelectedVariation] =
+    useState<ProductVariation | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStockTypeId, setSelectedStockTypeId] = useState<string>("");
 
   // Server-side product pagination state
-  const [paginatedProducts, setPaginatedProducts] = useState<PaginatedProductVariation[]>([]);
+  const [paginatedProducts, setPaginatedProducts] = useState<
+    PaginatedProductVariation[]
+  >([]);
   const [productPage, setProductPage] = useState(1);
-  const [productPagination, setProductPagination] = useState<PaginationMeta>({ page: 1, size: 10, total: 0 });
+  const [productPagination, setProductPagination] = useState<PaginationMeta>({
+    page: 1,
+    size: 10,
+    total: 0,
+  });
   const [productsLoading, setProductsLoading] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Notes state (chat-style)
   const [notes, setNotes] = useState<LocalNote[]>([]);
-  const [newNoteText, setNewNoteText] = useState('');
+  const [newNoteText, setNewNoteText] = useState("");
   const [noteImageFile, setNoteImageFile] = useState<File | null>(null);
   const [noteImagePreview, setNoteImagePreview] = useState<string | null>(null);
+
+  // History modal state
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<number>(null);
+  const [orderSituationTable, setOrderSituationTable] = useState<
+    OrdersSituationsById[]
+  >([]);
 
   // Load initial form data
   useEffect(() => {
     loadFormData();
-    loadProducts(1, ''); // Load initial products
+    loadProducts(1, ""); // Load initial products
     loadUserWarehouse(); // Load user's assigned warehouse
   }, []);
 
@@ -174,7 +198,11 @@ export const useCreateSale = () => {
     }
     searchDebounceRef.current = setTimeout(() => {
       setProductPage(1);
-      loadProducts(1, searchQuery, selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined);
+      loadProducts(
+        1,
+        searchQuery,
+        selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
+      );
     }, 300);
 
     return () => {
@@ -184,9 +212,25 @@ export const useCreateSale = () => {
     };
   }, [searchQuery, selectedStockTypeId]);
 
+  useEffect(() => {
+    const load = async () => {
+      if (createdOrderId) {
+        const data = await getOrdersSituationsById(createdOrderId);
+        const history = getOrdersSituationsByIdAdapter(data);
+        setOrderSituationTable(history);
+      }
+    };
+    load();
+  }, [createdOrderId]);
+
   // Computed: Available shipping costs based on selected location
   const availableShippingCosts = useMemo(() => {
-    if (!formData.countryId || !formData.stateId || !formData.cityId || !formData.neighborhoodId) {
+    if (
+      !formData.countryId ||
+      !formData.stateId ||
+      !formData.cityId ||
+      !formData.neighborhoodId
+    ) {
       return [];
     }
     return filterShippingCostsByLocation(
@@ -194,9 +238,15 @@ export const useCreateSale = () => {
       Number(formData.countryId),
       Number(formData.stateId),
       Number(formData.cityId),
-      Number(formData.neighborhoodId)
+      Number(formData.neighborhoodId),
     );
-  }, [allShippingCosts, formData.countryId, formData.stateId, formData.cityId, formData.neighborhoodId]);
+  }, [
+    allShippingCosts,
+    formData.countryId,
+    formData.stateId,
+    formData.cityId,
+    formData.neighborhoodId,
+  ]);
 
   // Computed: Filtered variations from server-side paginated data (for dropdown display)
   const filteredVariations = useMemo(() => {
@@ -219,35 +269,46 @@ export const useCreateSale = () => {
   // Computed: Filtered states by country
   const filteredStates = useMemo(() => {
     if (!salesData?.states || !formData.countryId) return [];
-    return salesData.states.filter((s) => s.countryId === Number(formData.countryId));
+    return salesData.states.filter(
+      (s) => s.countryId === Number(formData.countryId),
+    );
   }, [salesData?.states, formData.countryId]);
 
   // Computed: Filtered cities by state
   const filteredCities = useMemo(() => {
     if (!salesData?.cities || !formData.stateId) return [];
-    return salesData.cities.filter((c) => c.stateId === Number(formData.stateId));
+    return salesData.cities.filter(
+      (c) => c.stateId === Number(formData.stateId),
+    );
   }, [salesData?.cities, formData.stateId]);
 
   // Computed: Filtered neighborhoods by city
   const filteredNeighborhoods = useMemo(() => {
     if (!salesData?.neighborhoods || !formData.cityId) return [];
-    return salesData.neighborhoods.filter((n) => n.cityId === Number(formData.cityId));
+    return salesData.neighborhoods.filter(
+      (n) => n.cityId === Number(formData.cityId),
+    );
   }, [salesData?.neighborhoods, formData.cityId]);
 
   // Computed: Totals
   const subtotal = useMemo(() => calculateSubtotal(products), [products]);
-  const discountAmount = useMemo(() => calculateDiscountAmount(products), [products]);
-  const shippingCostValue = formData.shippingCost ? parseFloat(formData.shippingCost) : 0;
+  const discountAmount = useMemo(
+    () => calculateDiscountAmount(products),
+    [products],
+  );
+  const shippingCostValue = formData.shippingCost
+    ? parseFloat(formData.shippingCost)
+    : 0;
   const total = useMemo(
     () => calculateTotal(products, shippingCostValue),
-    [products, shippingCostValue]
+    [products, shippingCostValue],
   );
 
   // Computed: Check if selected document type is persona jurídica (company)
   const isPersonaJuridica = useMemo(() => {
     if (!formData.documentType || !salesData?.documentTypes) return false;
     const selectedDocType = salesData.documentTypes.find(
-      (dt) => dt.id.toString() === formData.documentType
+      (dt) => dt.id.toString() === formData.documentType,
     );
     return selectedDocType?.personType === 2;
   }, [formData.documentType, salesData?.documentTypes]);
@@ -257,12 +318,15 @@ export const useCreateSale = () => {
     try {
       const data = await fetchSalesFormData();
       setSalesData(adaptSalesFormData(data));
+      const dataTypeId = await getIdInventoryTypeApi();
+      const tId = getIdInventoryTypeAdapter(dataTypeId);
+      setSelectedStockTypeId(tId.toString());
     } catch (error) {
-      console.error('Error loading form data:', error);
+      console.error("Error loading form data:", error);
       toast({
-        title: 'Error',
-        description: 'No se pudieron cargar los datos del formulario',
-        variant: 'destructive',
+        title: "Error",
+        description: "No se pudieron cargar los datos del formulario",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -273,14 +337,19 @@ export const useCreateSale = () => {
   const loadShippingCosts = async () => {
     try {
       const data = await fetchShippingCosts();
+
       setAllShippingCosts(adaptShippingCosts(data || []));
     } catch (error) {
-      console.error('Error loading shipping costs:', error);
+      console.error("Error loading shipping costs:", error);
     }
   };
 
   // Load products with server-side pagination
-  const loadProducts = async (page: number, search: string, stockTypeId?: number) => {
+  const loadProducts = async (
+    page: number,
+    search: string,
+    stockTypeId?: number,
+  ) => {
     try {
       setProductsLoading(true);
       const result = await fetchSaleProducts({
@@ -289,6 +358,7 @@ export const useCreateSale = () => {
         search: search || undefined,
         stockTypeId,
       });
+
       // Map response with default values for imageUrl and stock
       const mappedProducts = (result.data || []).map((p: any) => ({
         ...p,
@@ -298,11 +368,11 @@ export const useCreateSale = () => {
       setPaginatedProducts(mappedProducts);
       setProductPagination(result.page);
     } catch (error) {
-      console.error('Error loading products:', error);
+      console.error("Error loading products:", error);
       toast({
-        title: 'Error',
-        description: 'No se pudieron cargar los productos',
-        variant: 'destructive',
+        title: "Error",
+        description: "No se pudieron cargar los productos",
+        variant: "destructive",
       });
     } finally {
       setProductsLoading(false);
@@ -310,10 +380,17 @@ export const useCreateSale = () => {
   };
 
   // Handle product page change
-  const handleProductPageChange = useCallback((newPage: number) => {
-    setProductPage(newPage);
-    loadProducts(newPage, searchQuery, selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined);
-  }, [searchQuery, selectedStockTypeId]);
+  const handleProductPageChange = useCallback(
+    (newPage: number) => {
+      setProductPage(newPage);
+      loadProducts(
+        newPage,
+        searchQuery,
+        selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
+      );
+    },
+    [searchQuery, selectedStockTypeId],
+  );
 
   // Load price lists
   const loadPriceLists = async () => {
@@ -322,11 +399,11 @@ export const useCreateSale = () => {
       const data = await fetchPriceLists();
       setPriceLists(adaptPriceLists(data || []));
     } catch (error) {
-      console.error('Error loading price lists:', error);
+      console.error("Error loading price lists:", error);
       toast({
-        title: 'Error',
-        description: 'No se pudieron cargar las listas de precios',
-        variant: 'destructive',
+        title: "Error",
+        description: "No se pudieron cargar las listas de precios",
+        variant: "destructive",
       });
     } finally {
       setPriceListsLoading(false);
@@ -337,33 +414,35 @@ export const useCreateSale = () => {
   const loadUserWarehouse = async () => {
     try {
       setLoadingWarehouse(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        console.error('No user logged in');
+        console.error("No user logged in");
         return;
       }
 
       const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('warehouse_id, warehouses(id, name)')
-        .eq('UID', user.id)
+        .from("profiles")
+        .select("warehouse_id, warehouses(id, name)")
+        .eq("UID", user.id)
         .single();
 
       if (error) {
-        console.error('Error fetching user profile:', error);
+        console.error("Error fetching user profile:", error);
         return;
       }
 
       if (profile?.warehouse_id) {
         setUserWarehouseId(profile.warehouse_id);
         // Handle the warehouses relation (could be an object or array)
-        const warehouse = Array.isArray(profile.warehouses) 
-          ? profile.warehouses[0] 
+        const warehouse = Array.isArray(profile.warehouses)
+          ? profile.warehouses[0]
           : profile.warehouses;
-        setUserWarehouseName(warehouse?.name || '');
+        setUserWarehouseName(warehouse?.name || "");
       }
     } catch (error) {
-      console.error('Error loading user warehouse:', error);
+      console.error("Error loading user warehouse:", error);
     } finally {
       setLoadingWarehouse(false);
     }
@@ -380,47 +459,56 @@ export const useCreateSale = () => {
     try {
       setLoading(true);
       const order = await fetchOrderById(id);
-
       // Set form data
       setFormData({
-        documentType: order.document_type?.toString() || '',
-        documentNumber: order.document_number || '',
-        customerName: order.customer_name || '',
-        customerLastname: order.customer_lastname || '',
-        customerLastname2: '',
-        email: order.email || '',
-        phone: order.phone?.toString() || '',
-        saleType: order.sale_type_id?.toString() || '',
-        priceListId: '',
-        saleDate: order.date?.split('T')[0] || getTodayDate(),
-        vendorName: '',
-        shippingMethod: order.shipping_method_code?.toString() || '',
-        shippingCost: '',
-        countryId: order.country_id?.toString() || '',
-        stateId: order.state_id?.toString() || '',
-        cityId: order.city_id?.toString() || '',
-        neighborhoodId: order.neighborhood_id?.toString() || '',
-        address: order.address || '',
-        addressReference: order.address_reference || '',
-        receptionPerson: order.reception_person || '',
-        receptionPhone: order.reception_phone?.toString() || '',
+        documentType: order.document_type?.toString() || "",
+        documentNumber: order.document_number || "",
+        customerName: order.customer_name || "",
+        customerLastname: order.customer_lastname || "",
+        customerLastname2: "",
+        email: order.email || "",
+        phone: order.phone?.toString() || "",
+        saleType: order.sale_type_id?.toString() || "",
+        priceListId: "",
+        saleDate: order.date?.split("T")[0] || getTodayDate(),
+        vendorName: "",
+        shippingMethod: order.shipping_method_code?.toString() || "",
+        shippingCost: "",
+        countryId: order.country_id?.toString() || "",
+        stateId: order.state_id?.toString() || "",
+        cityId: order.city_id?.toString() || "",
+        neighborhoodId: order.neighborhood_id?.toString() || "",
+        address: order.address || "",
+        addressReference: order.address_reference || "",
+        receptionPerson: order.reception_person || "",
+        receptionPhone: order.reception_phone?.toString() || "",
         withShipping: !!order.shipping_method_code,
         employeeSale: false,
-        notes: '',
+        notes: "",
       });
 
       // Load products
-      const variationIds = (order.order_products || []).map((op: any) => op.product_variation_id);
+      const variationIds = (order.order_products || []).map(
+        (op: any) => op.product_variation_id,
+      );
       if (variationIds.length > 0) {
         const variationsData = await fetchVariationsByIds(variationIds);
-        const productIds = Array.from(new Set((variationsData || []).map((v: any) => v.product_id)));
+        const productIds = Array.from(
+          new Set((variationsData || []).map((v: any) => v.product_id)),
+        );
         const productsData = await fetchProductsByIds(productIds as number[]);
         const vtData = await fetchVariationTerms(variationIds);
-        const termIds = Array.from(new Set((vtData || []).map((vt: any) => vt.term_id)));
+        const termIds = Array.from(
+          new Set((vtData || []).map((vt: any) => vt.term_id)),
+        );
         const termsData = await fetchTermsByIds(termIds as number[]);
 
-        const productMap = new Map((productsData || []).map((p: any) => [p.id, p.title]));
-        const termsMap = new Map((termsData || []).map((t: any) => [t.id, t.name]));
+        const productMap = new Map(
+          (productsData || []).map((p: any) => [p.id, p.title]),
+        );
+        const termsMap = new Map(
+          (termsData || []).map((t: any) => [t.id, t.name]),
+        );
         const termsByVariation = new Map<number, string[]>();
         (vtData || []).forEach((vt: any) => {
           const name = termsMap.get(vt.term_id);
@@ -430,29 +518,35 @@ export const useCreateSale = () => {
           termsByVariation.set(vt.product_variation_id, arr);
         });
 
-        const loadedProducts: SaleProduct[] = (order.order_products || []).map((op: any) => {
-          const v = (variationsData || []).find((vv: any) => vv.id === op.product_variation_id);
-          const productTitle = v ? (productMap.get(v.product_id) || '') : '';
-          const termsNames = termsByVariation.get(op.product_variation_id)?.join(' / ') || '';
-          
-          // Discount amount is stored per unit in the database
-          const discountAmount = op.quantity > 0 
-            ? parseFloat(op.product_discount) / op.quantity 
-            : 0;
+        const loadedProducts: SaleProduct[] = (order.order_products || []).map(
+          (op: any) => {
+            const v = (variationsData || []).find(
+              (vv: any) => vv.id === op.product_variation_id,
+            );
+            const productTitle = v ? productMap.get(v.product_id) || "" : "";
+            const termsNames =
+              termsByVariation.get(op.product_variation_id)?.join(" / ") || "";
 
-          return {
-            variationId: op.product_variation_id,
-            productName: productTitle,
-            variationName: termsNames || (v?.sku || ''),
-            sku: v?.sku || '',
-            quantity: op.quantity,
-            price: parseFloat(op.product_price),
-            discountAmount: Math.round(discountAmount * 100) / 100,
-            stockTypeId: op.stock_type_id || 0, // Default when loading existing orders
-            stockTypeName: '', // Will be resolved from salesData if needed
-            maxStock: op.quantity, // For existing orders, set maxStock to current quantity
-          };
-        });
+            // Discount amount is stored per unit in the database
+            const discountAmount =
+              op.quantity > 0
+                ? parseFloat(op.product_discount) / op.quantity
+                : 0;
+
+            return {
+              variationId: op.product_variation_id,
+              productName: productTitle,
+              variationName: termsNames || v?.sku || "",
+              sku: v?.sku || "",
+              quantity: op.quantity,
+              price: parseFloat(op.product_price),
+              discountAmount: Math.round(discountAmount * 100) / 100,
+              stockTypeId: op.stock_type_id || 0, // Default when loading existing orders
+              stockTypeName: "", // Will be resolved from salesData if needed
+              maxStock: op.quantity, // For existing orders, set maxStock to current quantity
+            };
+          },
+        );
         setProducts(loadedProducts);
       }
 
@@ -461,14 +555,16 @@ export const useCreateSale = () => {
       // Load payment
       const paymentData = await fetchOrderPayment(id);
       if (paymentData) {
-        setPayments([{
-          id: crypto.randomUUID(),
-          paymentMethodId: paymentData.payment_method_id?.toString() || '',
-          amount: paymentData.amount?.toString() || '',
-          confirmationCode: paymentData.gateway_confirmation_code || '',
-          voucherUrl: paymentData.voucher_url || '',
-          voucherPreview: paymentData.voucher_url || undefined,
-        }]);
+        setPayments([
+          {
+            id: crypto.randomUUID(),
+            paymentMethodId: paymentData.payment_method_id?.toString() || "",
+            amount: paymentData.amount?.toString() || "",
+            confirmationCode: paymentData.gateway_confirmation_code || "",
+            voucherUrl: paymentData.voucher_url || "",
+            voucherPreview: paymentData.voucher_url || undefined,
+          },
+        ]);
       }
 
       // Load situation
@@ -477,11 +573,11 @@ export const useCreateSale = () => {
         setOrderSituation(situationData.situation_id.toString());
       }
     } catch (error) {
-      console.error('Error loading order:', error);
+      console.error("Error loading order:", error);
       toast({
-        title: 'Error',
-        description: 'No se pudo cargar la venta',
-        variant: 'destructive',
+        title: "Error",
+        description: "No se pudo cargar la venta",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -489,50 +585,66 @@ export const useCreateSale = () => {
   };
 
   // Handle form input changes
-  const handleInputChange = useCallback((field: keyof SaleFormData, value: string | boolean) => {
-    // When document type changes to persona jurídica, clear lastname fields
-    if (field === 'documentType' && typeof value === 'string') {
-      const selectedDocType = salesData?.documentTypes.find(
-        (dt) => dt.id.toString() === value
-      );
-      if (selectedDocType?.personType === 2) {
-        // Persona jurídica: clear lastnames
+  const handleInputChange = useCallback(
+    (field: keyof SaleFormData, value: string | boolean) => {
+      // When document type changes to persona jurídica, clear lastname fields
+      if (field === "documentType" && typeof value === "string") {
+        const selectedDocType = salesData?.documentTypes.find(
+          (dt) => dt.id.toString() === value,
+        );
+        if (selectedDocType?.personType === 2) {
+          // Persona jurídica: clear lastnames
+          setFormData((prev) => ({
+            ...prev,
+            [field]: value,
+            customerLastname: "",
+            customerLastname2: "",
+          }));
+          return;
+        }
+      }
+
+      setFormData((prev) => ({ ...prev, [field]: value }));
+
+      // When shipping method changes, update the cost
+      if (field === "shippingMethod" && value) {
+        const selectedCost = allShippingCosts.find(
+          (sc) => sc.id.toString() === value,
+        );
+        if (selectedCost) {
+          setFormData((prev) => ({
+            ...prev,
+            shippingCost: selectedCost.cost.toString(),
+          }));
+        }
+      }
+
+      // Reset child fields when parent location changes
+      if (field === "countryId") {
         setFormData((prev) => ({
           ...prev,
-          [field]: value,
-          customerLastname: '',
-          customerLastname2: '',
+          stateId: "",
+          cityId: "",
+          neighborhoodId: "",
         }));
-        return;
       }
-    }
-
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
-    // When shipping method changes, update the cost
-    if (field === 'shippingMethod' && value) {
-      const selectedCost = allShippingCosts.find((sc) => sc.id.toString() === value);
-      if (selectedCost) {
-        setFormData((prev) => ({ ...prev, shippingCost: selectedCost.cost.toString() }));
+      if (field === "stateId") {
+        setFormData((prev) => ({ ...prev, cityId: "", neighborhoodId: "" }));
       }
-    }
-
-    // Reset child fields when parent location changes
-    if (field === 'countryId') {
-      setFormData((prev) => ({ ...prev, stateId: '', cityId: '', neighborhoodId: '' }));
-    }
-    if (field === 'stateId') {
-      setFormData((prev) => ({ ...prev, cityId: '', neighborhoodId: '' }));
-    }
-    if (field === 'cityId') {
-      setFormData((prev) => ({ ...prev, neighborhoodId: '' }));
-    }
-  }, [allShippingCosts, salesData?.documentTypes]);
+      if (field === "cityId") {
+        setFormData((prev) => ({ ...prev, neighborhoodId: "" }));
+      }
+    },
+    [allShippingCosts, salesData?.documentTypes],
+  );
 
   // Handle current payment changes
-  const handlePaymentChange = useCallback((field: keyof SalePayment, value: string) => {
-    setCurrentPayment((prev) => ({ ...prev, [field]: value }));
-  }, []);
+  const handlePaymentChange = useCallback(
+    (field: keyof SalePayment, value: string) => {
+      setCurrentPayment((prev) => ({ ...prev, [field]: value }));
+    },
+    [],
+  );
 
   // Handle voucher file selection
   const handleVoucherSelect = useCallback((file: File) => {
@@ -560,9 +672,9 @@ export const useCreateSale = () => {
   const addPayment = useCallback(() => {
     if (!currentPayment.paymentMethodId || !currentPayment.amount) {
       toast({
-        title: 'Error',
-        description: 'Seleccione método de pago y monto',
-        variant: 'destructive',
+        title: "Error",
+        description: "Seleccione método de pago y monto",
+        variant: "destructive",
       });
       return;
     }
@@ -570,14 +682,17 @@ export const useCreateSale = () => {
     const amount = parseFloat(currentPayment.amount);
     if (isNaN(amount) || amount <= 0) {
       toast({
-        title: 'Monto inválido',
-        description: 'El monto del pago debe ser mayor a cero',
-        variant: 'destructive',
+        title: "Monto inválido",
+        description: "El monto del pago debe ser mayor a cero",
+        variant: "destructive",
       });
       return;
     }
 
-    setPayments((prev) => [...prev, { ...currentPayment, id: crypto.randomUUID() }]);
+    setPayments((prev) => [
+      ...prev,
+      { ...currentPayment, id: crypto.randomUUID() },
+    ]);
     setCurrentPayment(createEmptyPayment());
   }, [currentPayment, toast]);
 
@@ -587,143 +702,160 @@ export const useCreateSale = () => {
   }, []);
 
   // Update payment in list
-  const updatePaymentInList = useCallback((paymentId: string, field: keyof SalePayment, value: string) => {
-    setPayments((prev) =>
-      prev.map((p) => (p.id === paymentId ? { ...p, [field]: value } : p))
-    );
-  }, []);
+  const updatePaymentInList = useCallback(
+    (paymentId: string, field: keyof SalePayment, value: string) => {
+      setPayments((prev) =>
+        prev.map((p) => (p.id === paymentId ? { ...p, [field]: value } : p)),
+      );
+    },
+    [],
+  );
 
   // Search client by document
-  const handleSearchClient = useCallback(async (overrideDocumentType?: string) => {
-    const docType = overrideDocumentType || formData.documentType;
-    if (!docType || !formData.documentNumber) return;
+  const handleSearchClient = useCallback(
+    async (overrideDocumentType?: string) => {
+      const docType = overrideDocumentType || formData.documentType;
+      if (!docType || !formData.documentNumber) return;
 
-    setSearchingClient(true);
-    try {
-      // First, search in accounts table
-      const data = await searchClientByDocument(
-        parseInt(docType),
-        formData.documentNumber
-      );
-      const client = adaptClientSearchResult(data);
-
-      if (client) {
-        // Client exists in database
-        setClientFound(true);
-        setFormData((prev) => ({
-          ...prev,
-          customerName: client.name,
-          customerLastname: client.lastName,
-          customerLastname2: client.lastName2 || '',
-        }));
-      } else {
-        // Client not found - check document type code
-        const selectedDocType = salesData?.documentTypes.find(
-          (dt) => dt.id.toString() === docType
+      setSearchingClient(true);
+      try {
+        // First, search in accounts table
+        const data = await searchClientByDocument(
+          parseInt(docType),
+          formData.documentNumber,
         );
-        const docTypeCode = selectedDocType?.code?.toUpperCase();
+        const client = adaptClientSearchResult(data);
 
-        if (docTypeCode === 'DNI' || docTypeCode === 'RUC') {
-          // Query external API for DNI/RUC
-          try {
-            const lookupResult = await lookupDocument(docTypeCode, formData.documentNumber);
+        if (client) {
+          // Client exists in database
+          setClientFound(true);
+          setFormData((prev) => ({
+            ...prev,
+            customerName: client.name,
+            customerLastname: client.lastName,
+            customerLastname2: client.lastName2 || "",
+          }));
+        } else {
+          // Client not found - check document type code
+          const selectedDocType = salesData?.documentTypes.find(
+            (dt) => dt.id.toString() === docType,
+          );
+          const docTypeCode = selectedDocType?.code?.toUpperCase();
 
-            if (lookupResult?.found) {
-              setClientFound(true); // Lock fields when data found from external API
-              
-              // Check if persona jurídica (RUC) - use razón social
-              if (docTypeCode === 'RUC') {
-                setFormData((prev) => ({
-                  ...prev,
-                  customerName: lookupResult.razonSocial || lookupResult.nombres || '',
-                  customerLastname: '',
-                  customerLastname2: '',
-                }));
+          if (docTypeCode === "DNI" || docTypeCode === "RUC") {
+            // Query external API for DNI/RUC
+            try {
+              const lookupResult = await lookupDocument(
+                docTypeCode,
+                formData.documentNumber,
+              );
+
+              if (lookupResult?.found) {
+                setClientFound(true); // Lock fields when data found from external API
+
+                // Check if persona jurídica (RUC) - use razón social
+                if (docTypeCode === "RUC") {
+                  setFormData((prev) => ({
+                    ...prev,
+                    customerName:
+                      lookupResult.razonSocial || lookupResult.nombres || "",
+                    customerLastname: "",
+                    customerLastname2: "",
+                  }));
+                } else {
+                  // Persona natural (DNI) - use nombres y apellidos
+                  setFormData((prev) => ({
+                    ...prev,
+                    customerName: lookupResult.nombres || "",
+                    customerLastname: lookupResult.apellidoPaterno || "",
+                    customerLastname2: lookupResult.apellidoMaterno || "",
+                  }));
+                }
+                toast({
+                  title: "Datos encontrados",
+                  description:
+                    docTypeCode === "RUC"
+                      ? "Se encontraron datos de la empresa en SUNAT"
+                      : "Se encontraron datos del documento en RENIEC",
+                });
               } else {
-                // Persona natural (DNI) - use nombres y apellidos
+                // DNI/RUC not found in external API
+                setClientFound(false);
                 setFormData((prev) => ({
                   ...prev,
-                  customerName: lookupResult.nombres || '',
-                  customerLastname: lookupResult.apellidoPaterno || '',
-                  customerLastname2: lookupResult.apellidoMaterno || '',
+                  customerName: "",
+                  customerLastname: "",
+                  customerLastname2: "",
                 }));
+                toast({
+                  title: "Documento no encontrado",
+                  description: "No se encontraron datos para este documento",
+                  variant: "destructive",
+                });
               }
-              toast({
-                title: 'Datos encontrados',
-                description: docTypeCode === 'RUC' 
-                  ? 'Se encontraron datos de la empresa en SUNAT'
-                  : 'Se encontraron datos del documento en RENIEC',
-              });
-            } else {
-              // DNI/RUC not found in external API
+            } catch (lookupError) {
+              console.error("Error looking up document:", lookupError);
+              // On API error, still allow manual input
               setClientFound(false);
               setFormData((prev) => ({
                 ...prev,
-                customerName: '',
-                customerLastname: '',
-                customerLastname2: '',
+                customerName: "",
+                customerLastname: "",
+                customerLastname2: "",
               }));
               toast({
-                title: 'Documento no encontrado',
-                description: 'No se encontraron datos para este documento',
-                variant: 'destructive',
+                title: "Error de consulta",
+                description:
+                  "No se pudo consultar el documento. Ingrese los datos manualmente.",
+                variant: "destructive",
               });
             }
-          } catch (lookupError) {
-            console.error('Error looking up document:', lookupError);
-            // On API error, still allow manual input
+          } else {
+            // Other document types (Passport, etc.) - enable manual input
             setClientFound(false);
             setFormData((prev) => ({
               ...prev,
-              customerName: '',
-              customerLastname: '',
-              customerLastname2: '',
+              customerName: "",
+              customerLastname: "",
+              customerLastname2: "",
             }));
-            toast({
-              title: 'Error de consulta',
-              description: 'No se pudo consultar el documento. Ingrese los datos manualmente.',
-              variant: 'destructive',
-            });
           }
-        } else {
-          // Other document types (Passport, etc.) - enable manual input
-          setClientFound(false);
-          setFormData((prev) => ({
-            ...prev,
-            customerName: '',
-            customerLastname: '',
-            customerLastname2: '',
-          }));
         }
+      } catch (error) {
+        console.error("Error searching client:", error);
+        toast({
+          title: "Error",
+          description: "No se pudo buscar el cliente",
+          variant: "destructive",
+        });
+      } finally {
+        setSearchingClient(false);
       }
-    } catch (error) {
-      console.error('Error searching client:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo buscar el cliente',
-        variant: 'destructive',
-      });
-    } finally {
-      setSearchingClient(false);
-    }
-  }, [formData.documentType, formData.documentNumber, salesData?.documentTypes, toast]);
+    },
+    [
+      formData.documentType,
+      formData.documentNumber,
+      salesData?.documentTypes,
+      toast,
+    ],
+  );
 
   // Add product to list
   const addProduct = useCallback(() => {
     if (!selectedVariation) {
       toast({
-        title: 'Error',
-        description: 'Seleccione una variación',
-        variant: 'destructive',
+        title: "Error",
+        description: "Seleccione una variación",
+        variant: "destructive",
       });
       return;
     }
 
     if (!selectedStockTypeId) {
       toast({
-        title: 'Error',
-        description: 'Seleccione un tipo de inventario',
-        variant: 'destructive',
+        title: "Error",
+        description: "Seleccione un tipo de inventario",
+        variant: "destructive",
       });
       return;
     }
@@ -732,24 +864,30 @@ export const useCreateSale = () => {
     const availableStock = selectedVariation.stock || 0;
     if (availableStock <= 0) {
       toast({
-        title: 'Sin stock',
-        description: 'Este producto no tiene stock disponible para el tipo de inventario seleccionado',
-        variant: 'destructive',
+        title: "Sin stock",
+        description:
+          "Este producto no tiene stock disponible para el tipo de inventario seleccionado",
+        variant: "destructive",
       });
       return;
     }
 
     // Find price for selected price list
-    const priceListId = formData.priceListId ? parseInt(formData.priceListId) : null;
+    const priceListId = formData.priceListId
+      ? parseInt(formData.priceListId)
+      : null;
     const priceEntry = priceListId
       ? selectedVariation.prices.find((p) => p.priceListId === priceListId)
       : selectedVariation.prices[0];
-    
+
     const price = priceEntry?.salePrice || priceEntry?.price || 0;
-    const termsNames = selectedVariation.terms.map((t) => t.name).join(' / ');
+    const termsNames = selectedVariation.terms.map((t) => t.name).join(" / ");
 
     // Get stock type name
-    const stockTypeName = salesData?.stockTypes?.find(st => st.id === parseInt(selectedStockTypeId))?.name || '';
+    const stockTypeName =
+      salesData?.stockTypes?.find(
+        (st) => st.id === parseInt(selectedStockTypeId),
+      )?.name || "";
 
     setProducts((prev) => [
       ...prev,
@@ -767,7 +905,7 @@ export const useCreateSale = () => {
       },
     ]);
 
-    setSearchQuery('');
+    setSearchQuery("");
     setSelectedVariation(null);
   }, [selectedVariation, formData.priceListId, selectedStockTypeId, toast]);
 
@@ -777,22 +915,25 @@ export const useCreateSale = () => {
   }, []);
 
   // Update product in list
-  const updateProduct = useCallback((index: number, field: keyof SaleProduct, value: any) => {
-    setProducts((prev) => {
-      const updated = [...prev];
-      const product = updated[index];
-      
-      // For quantity, allow 0 temporarily (for editing), but clamp to maxStock
-      if (field === 'quantity') {
-        const newQuantity = Math.min(Math.max(0, value), product.maxStock);
-        updated[index] = { ...product, quantity: newQuantity };
-      } else {
-        updated[index] = { ...product, [field]: value };
-      }
-      
-      return updated;
-    });
-  }, []);
+  const updateProduct = useCallback(
+    (index: number, field: keyof SaleProduct, value: any) => {
+      setProducts((prev) => {
+        const updated = [...prev];
+        const product = updated[index];
+
+        // For quantity, allow 0 temporarily (for editing), but clamp to maxStock
+        if (field === "quantity") {
+          const newQuantity = Math.min(Math.max(0, value), product.maxStock);
+          updated[index] = { ...product, quantity: newQuantity };
+        } else {
+          updated[index] = { ...product, [field]: value };
+        }
+
+        return updated;
+      });
+    },
+    [],
+  );
 
   // Add a note to the list (chat-style)
   const addNote = useCallback(() => {
@@ -806,11 +947,11 @@ export const useCreateSale = () => {
       imageFile: noteImageFile || undefined,
       imagePreview: noteImagePreview || undefined,
       createdAt: new Date(),
-      userName: 'Usuario', // TODO: Get from auth context
+      userName: "Usuario", // TODO: Get from auth context
     };
 
     setNotes((prev) => [...prev, newNote]);
-    setNewNoteText('');
+    setNewNoteText("");
     setNoteImageFile(null);
     setNoteImagePreview(null);
   }, [newNoteText, noteImageFile, noteImagePreview]);
@@ -837,136 +978,161 @@ export const useCreateSale = () => {
   }, []);
 
   // Handle form submission
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    if (products.length === 0) {
-      toast({
-        title: 'Error',
-        description: 'Agregue al menos un producto',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!orderSituation) {
-      toast({
-        title: 'Error',
-        description: 'Seleccione un estado para el pedido',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setSaving(true);
-
-    try {
-      const orderData = {
-        documentType: formData.documentType,
-        documentNumber: formData.documentNumber,
-        customerName: formData.customerName,
-        customerLastname: formData.customerLastname,
-        customerLastname2: formData.customerLastname2 || null,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        saleType: formData.saleType,
-        priceListId: formData.priceListId || null,
-        shippingMethod: formData.shippingMethod || null,
-        shippingCost: formData.shippingCost ? parseFloat(formData.shippingCost) : null,
-        countryId: formData.countryId || null,
-        stateId: formData.stateId || null,
-        cityId: formData.cityId || null,
-        neighborhoodId: formData.neighborhoodId || null,
-        address: formData.address || null,
-        addressReference: formData.addressReference || null,
-        receptionPerson: formData.receptionPerson || null,
-        receptionPhone: formData.receptionPhone || null,
-        withShipping: formData.withShipping,
-        employeeSale: formData.employeeSale,
-        notes: formData.notes || null,
-        subtotal,
-        discount: discountAmount,
-        total,
-        products: products.map((p) => ({
-          variationId: p.variationId,
-          quantity: p.quantity,
-          price: p.price,
-          discountAmount: p.discountAmount,
-        })),
-        payments: payments
-          .filter((p) => p.paymentMethodId && p.amount)
-          .map((p) => ({
-            paymentMethodId: parseInt(p.paymentMethodId),
-            amount: parseFloat(p.amount) || 0,
-            date: new Date().toISOString(),
-            confirmationCode: p.confirmationCode || null,
-            voucherUrl: p.voucherUrl || null,
-          })),
-        initialSituationId: parseInt(orderSituation),
-      };
-
-      let createdOrderId = orderId ? parseInt(orderId) : null;
-      let createdPayments: Array<{ id: number; localIndex: number }> = [];
-
-      if (orderId) {
-        await updateOrder(parseInt(orderId), orderData);
-      } else {
-        const response = await createOrder(orderData);
-        if (response?.order?.id) {
-          createdOrderId = response.order.id;
-        }
-        if (response?.payments) {
-          createdPayments = response.payments;
-        }
+      if (products.length === 0) {
+        toast({
+          title: "Error",
+          description: "Agregue al menos un producto",
+          variant: "destructive",
+        });
+        return;
       }
 
-      // Upload vouchers to storage after order is created
-      if (createdOrderId && createdPayments.length > 0) {
-        const paymentsWithVouchers = payments.filter((p) => p.paymentMethodId && p.amount && p.voucherFile);
-        
-        for (const payment of paymentsWithVouchers) {
-          // Find the corresponding created payment by index
-          const paymentIndex = payments.findIndex((p) => p.id === payment.id);
-          const createdPayment = createdPayments.find((cp) => cp.localIndex === paymentIndex);
-          
-          if (createdPayment && payment.voucherFile) {
-            try {
-              const voucherUrl = await uploadPaymentVoucher(
-                createdOrderId,
-                createdPayment.id,
-                payment.voucherFile
-              );
-              await updatePaymentVoucherUrl(createdPayment.id, voucherUrl);
-            } catch (voucherError) {
-              console.error('Error uploading voucher:', voucherError);
-              // Continue with other vouchers even if one fails
+      if (!orderSituation) {
+        toast({
+          title: "Error",
+          description: "Seleccione un estado para el pedido",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSaving(true);
+
+      try {
+        const orderData = {
+          documentType: formData.documentType,
+          documentNumber: formData.documentNumber,
+          customerName: formData.customerName,
+          customerLastname: formData.customerLastname,
+          customerLastname2: formData.customerLastname2 || null,
+          email: formData.email || null,
+          phone: formData.phone || null,
+          saleType: formData.saleType,
+          priceListId: formData.priceListId || null,
+          shippingMethod: formData.shippingMethod || null,
+          shippingCost: formData.shippingCost
+            ? parseFloat(formData.shippingCost)
+            : null,
+          countryId: formData.countryId || null,
+          stateId: formData.stateId || null,
+          cityId: formData.cityId || null,
+          neighborhoodId: formData.neighborhoodId || null,
+          address: formData.address || null,
+          addressReference: formData.addressReference || null,
+          receptionPerson: formData.receptionPerson || null,
+          receptionPhone: formData.receptionPhone || null,
+          withShipping: formData.withShipping,
+          employeeSale: formData.employeeSale,
+          notes: formData.notes || null,
+          subtotal,
+          discount: discountAmount,
+          total,
+          products: products.map((p) => ({
+            variationId: p.variationId,
+            quantity: p.quantity,
+            price: p.price,
+            discountAmount: p.discountAmount,
+          })),
+          payments: payments
+            .filter((p) => p.paymentMethodId && p.amount)
+            .map((p) => ({
+              paymentMethodId: parseInt(p.paymentMethodId),
+              amount: parseFloat(p.amount) || 0,
+              date: new Date().toISOString(),
+              confirmationCode: p.confirmationCode || null,
+              voucherUrl: p.voucherUrl || null,
+            })),
+          initialSituationId: parseInt(orderSituation),
+        };
+
+        let createdOrderId = orderId ? parseInt(orderId) : null;
+        let createdPayments: Array<{ id: number; localIndex: number }> = [];
+
+        if (orderId) {
+          await updateOrder(parseInt(orderId), orderData);
+        } else {
+          const response = await createOrder(orderData);
+          if (response?.order?.id) {
+            createdOrderId = response.order.id;
+            setCreatedOrderId(createdOrderId);
+          }
+          if (response?.payments) {
+            createdPayments = response.payments;
+          }
+        }
+
+        // Upload vouchers to storage after order is created
+        if (createdOrderId && createdPayments.length > 0) {
+          const paymentsWithVouchers = payments.filter(
+            (p) => p.paymentMethodId && p.amount && p.voucherFile,
+          );
+
+          for (const payment of paymentsWithVouchers) {
+            // Find the corresponding created payment by index
+            const paymentIndex = payments.findIndex((p) => p.id === payment.id);
+            const createdPayment = createdPayments.find(
+              (cp) => cp.localIndex === paymentIndex,
+            );
+
+            if (createdPayment && payment.voucherFile) {
+              try {
+                const voucherUrl = await uploadPaymentVoucher(
+                  createdOrderId,
+                  createdPayment.id,
+                  payment.voucherFile,
+                );
+                await updatePaymentVoucherUrl(createdPayment.id, voucherUrl);
+              } catch (voucherError) {
+                console.error("Error uploading voucher:", voucherError);
+                // Continue with other vouchers even if one fails
+              }
             }
           }
         }
+
+        // Update order situation
+        if (orderSituation && createdOrderId) {
+          await updateOrderSituation(createdOrderId, parseInt(orderSituation));
+        }
+
+        toast({
+          title: "Éxito",
+          description: orderId
+            ? "Venta actualizada correctamente"
+            : "Venta creada correctamente",
+        });
+
+        navigate("/sales/list");
+      } catch (error) {
+        console.error("Error saving sale:", error);
+        toast({
+          title: "Error",
+          description: orderId
+            ? "No se pudo actualizar la venta"
+            : "No se pudo crear la venta",
+          variant: "destructive",
+        });
+      } finally {
+        setSaving(false);
       }
-
-      // Update order situation
-      if (orderSituation && createdOrderId) {
-        await updateOrderSituation(createdOrderId, parseInt(orderSituation));
-      }
-
-      toast({
-        title: 'Éxito',
-        description: orderId ? 'Venta actualizada correctamente' : 'Venta creada correctamente',
-      });
-
-      navigate('/sales/list');
-    } catch (error) {
-      console.error('Error saving sale:', error);
-      toast({
-        title: 'Error',
-        description: orderId ? 'No se pudo actualizar la venta' : 'No se pudo crear la venta',
-        variant: 'destructive',
-      });
-    } finally {
-      setSaving(false);
-    }
-  }, [formData, products, payments, orderSituation, orderId, subtotal, discountAmount, total, toast, navigate]);
+    },
+    [
+      formData,
+      products,
+      payments,
+      orderSituation,
+      orderId,
+      subtotal,
+      discountAmount,
+      total,
+      toast,
+      navigate,
+    ],
+  );
 
   return {
     // State
@@ -983,27 +1149,27 @@ export const useCreateSale = () => {
     selectedVariation,
     searchQuery,
     selectedStockTypeId,
-    
+
     // Server-side pagination state
     productPage,
     productPagination,
     productsLoading,
-    
+
     // Notes state (chat-style)
     notes,
     newNoteText,
     noteImagePreview,
-    
+
     // Price list modal
     showPriceListModal,
     priceLists,
     priceListsLoading,
-    
+
     // User warehouse
     userWarehouseId,
     userWarehouseName,
     loadingWarehouse,
-    
+
     // Computed
     availableShippingCosts,
     filteredVariations,
@@ -1034,16 +1200,20 @@ export const useCreateSale = () => {
     updateProduct,
     handleSubmit,
     navigate,
-    
+
     // Notes actions
     setNewNoteText,
     addNote,
     removeNote,
     handleNoteImageSelect,
     removeNoteImage,
-    
+
     // Voucher actions
     handleVoucherSelect,
     removeVoucher,
+    historyModalOpen,
+    createdOrderId,
+    orderSituationTable,
+    setHistoryModalOpen,
   };
 };

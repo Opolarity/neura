@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Function {
   id: number;
@@ -28,12 +28,12 @@ export const useFunctions = () => {
     const fetchFunctions = async () => {
       try {
         const { data, error } = await supabase
-          .from('functions')
-          .select('*')
-          .eq('active', true)
-          .order('order', { ascending: true, nullsFirst: false });
+          .from("functions")
+          .select("*")
+          .eq("active", true)
+          .order("order", { ascending: true, nullsFirst: false });
 
-        console.log(data);
+        //console.log(data);
 
         if (error) throw error;
 
@@ -42,7 +42,7 @@ export const useFunctions = () => {
 
         setFunctions(transformedFunctions);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
       }
@@ -57,13 +57,13 @@ export const useFunctions = () => {
 const transformToMenuStructure = (functions: Function[]): MenuFunction[] => {
   // Get all parent functions (those without parent_function) and sort by order
   const parentFunctions = functions
-    .filter(f => f.parent_function === null)
+    .filter((f) => f.parent_function === null)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-  return parentFunctions.map(parent => {
+  return parentFunctions.map((parent) => {
     // Check if this parent has children
     const children = functions
-      .filter(f => f.parent_function === parent.id)
+      .filter((f) => f.parent_function === parent.id)
       .sort((a, b) => (a.order || 0) - (b.order || 0));
 
     if (children.length === 0) {
@@ -71,49 +71,55 @@ const transformToMenuStructure = (functions: Function[]): MenuFunction[] => {
     }
 
     // Find children that have their own children (Level 2 items with grandchildren)
-    const groups = children.filter(child => {
-      const grandchildren = functions.filter(f => f.parent_function === child.id);
+    const groups = children.filter((child) => {
+      const grandchildren = functions.filter(
+        (f) => f.parent_function === child.id,
+      );
       return grandchildren.length > 0;
     });
 
     // Find children without children (direct items with location)
-    const directItems = children.filter(child => {
-      const grandchildren = functions.filter(f => f.parent_function === child.id);
+    const directItems = children.filter((child) => {
+      const grandchildren = functions.filter(
+        (f) => f.parent_function === child.id,
+      );
       return grandchildren.length === 0;
     });
 
     // If we have groups (children with grandchildren), create hierarchical structure
     if (groups.length > 0) {
-      const subItems = groups.map(group => ({
+      const subItems = groups.map((group) => ({
         label: group.name,
         items: functions
-          .filter(f => f.parent_function === group.id)
-          .sort((a, b) => (a.order || 0) - (b.order || 0))
+          .filter((f) => f.parent_function === group.id)
+          .sort((a, b) => (a.order || 0) - (b.order || 0)),
       }));
 
       // If there are also direct items, add them as a group with the parent name
       if (directItems.length > 0) {
         subItems.unshift({
           label: parent.name,
-          items: directItems
+          items: directItems,
         });
       }
 
       return {
         ...parent,
-        subItems
+        subItems,
       };
     }
 
     // If no groups, create simple structure with parent name as label
-    const subItems = [{
-      label: parent.name,
-      items: directItems
-    }];
+    const subItems = [
+      {
+        label: parent.name,
+        items: directItems,
+      },
+    ];
 
     return {
       ...parent,
-      subItems
+      subItems,
     };
   });
 };
