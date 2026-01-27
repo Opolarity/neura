@@ -17,7 +17,6 @@ export interface UsersApiResponse {
       warehouse_id: number;
       document_number: string;
       document_type_id: number;
-      type_name: string;
     }>;
     page: {
       page: number;
@@ -35,7 +34,6 @@ export interface Users {
   branches: string;
   role: string;
   created_at: string;
-  profiles_id: string;
 }
 
 export interface UsersFilters {
@@ -45,9 +43,9 @@ export interface UsersFilters {
   warehouses?: number | null;
   branches?: number;
   order?: string;
-  search?: string | null;
-  page?: number;
-  size?: number;
+  search?: string;
+  page?: Number;
+  size?: Number;
 }
 
 export interface UsersFilterDraft {
@@ -57,24 +55,4 @@ export interface UsersFilterDraft {
   warehouses?: number | null;
   branches?: number;
   order?: string;
-}
-
-export interface FilterOption {
-  id: number;
-  name: string;
-  warehouse_id?: number;
-}
-
-export interface DocumentLookupPayload {
-  documentType: string;
-  documentNumber: string;
-}
-
-export interface DocumentLookupResponse {
-  found: boolean;
-  nombres: string;
-  apellidoPaterno: string;
-  apellidoMaterno: string;
-  razonSocial?: string;
-  error?: string;
 }

@@ -1,27 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { ListFilter, Search } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface UsersFilterBarProps {
   search: string;
   handleSearchChange: (text: string) => void;
-  onFilterClick: () => void;
-  order: string | undefined;
-  onOrderChange: (value: string) => void;
+  onOpen: () => void;
 }
 
 const UsersFilterBar = ({
   search,
   handleSearchChange,
-  onFilterClick,
-  order,
-  onOrderChange,
+  onOpen,
 }: UsersFilterBarProps) => {
   return (
     <div className="flex items-center gap-2">
@@ -36,21 +25,10 @@ const UsersFilterBar = ({
         />
       </div>
 
-      <Button className="gap-2" variant="outline" onClick={onFilterClick}>
+      <Button className="gap-2" onClick={onOpen}>
         <ListFilter className="w-4 h-4" />
         Filtrar
       </Button>
-
-      <Select value={order || "none"} onValueChange={onOrderChange}>
-        <SelectTrigger className="w-auto">
-          <SelectValue placeholder="Ordenar por" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="none">Sin orden</SelectItem>
-          <SelectItem value="alp-asc">Nombre (A-Z)</SelectItem>
-          <SelectItem value="alp-dsc">Nombre (Z-A)</SelectItem>
-        </SelectContent>
-      </Select>
     </div>
   );
 };

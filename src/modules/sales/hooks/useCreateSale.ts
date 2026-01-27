@@ -27,7 +27,6 @@ import {
   adaptPriceLists,
   getIdInventoryTypeAdapter,
   getOrdersSituationsByIdAdapter,
-  adaptSaleById,
 } from "../adapters";
 import {
   fetchSalesFormData,
@@ -37,13 +36,19 @@ import {
   createOrder,
   updateOrder,
   updateOrderSituation,
+  fetchOrderById,
+  fetchOrderPayment,
+  fetchOrderSituation,
+  fetchVariationsByIds,
+  fetchProductsByIds,
+  fetchVariationTerms,
+  fetchTermsByIds,
   fetchPriceLists,
   fetchSaleProducts,
   uploadPaymentVoucher,
   updatePaymentVoucherUrl,
   getIdInventoryTypeApi,
   getOrdersSituationsById,
-  fetchSaleById,
 } from "../services";
 import {
   calculateSubtotal,
@@ -128,7 +133,6 @@ export const useCreateSale = () => {
 
   // UI state
   const [clientFound, setClientFound] = useState<boolean | null>(null);
-  const [isExistingClient, setIsExistingClient] = useState<boolean>(false); // true only if found in accounts table
   const [selectedVariation, setSelectedVariation] =
     useState<ProductVariation | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -457,23 +461,120 @@ export const useCreateSale = () => {
   const loadOrderData = async (id: number) => {
     try {
       setLoading(true);
-      
-      // Single call to get all data
-      const data = await fetchSaleById(id);
-      const adapted = adaptSaleById(data);
-      
-      // Set all state at once
-      setFormData(adapted.formData);
-      setProducts(adapted.products);
-      setPayments(
-        adapted.payments.length > 0
-          ? adapted.payments
-          : [createEmptyPayment()]
+      const order = await fetchOrderById(id);
+      // Set form data
+      setFormData({
+        documentType: order.document_type?.toString() || "",
+        documentNumber: order.document_number || "",
+        customerName: order.customer_name || "",
+        customerLastname: order.customer_lastname || "",
+        customerLastname2: "",
+        email: order.email || "",
+        phone: order.phone?.toString() || "",
+        saleType: order.sale_type_id?.toString() || "",
+        priceListId: "",
+        saleDate: order.date?.split("T")[0] || getTodayDate(),
+        vendorName: "",
+        shippingMethod: order.shipping_method_code?.toString() || "",
+        shippingCost: "",
+        countryId: order.country_id?.toString() || "",
+        stateId: order.state_id?.toString() || "",
+        cityId: order.city_id?.toString() || "",
+        neighborhoodId: order.neighborhood_id?.toString() || "",
+        address: order.address || "",
+        addressReference: order.address_reference || "",
+        receptionPerson: order.reception_person || "",
+        receptionPhone: order.reception_phone?.toString() || "",
+        withShipping: !!order.shipping_method_code,
+        employeeSale: false,
+        notes: "",
+      });
+
+      // Load products
+      const variationIds = (order.order_products || []).map(
+        (op: any) => op.product_variation_id,
       );
-      setOrderSituation(adapted.currentSituation);
+      if (variationIds.length > 0) {
+        const variationsData = await fetchVariationsByIds(variationIds);
+        const productIds = Array.from(
+          new Set((variationsData || []).map((v: any) => v.product_id)),
+        );
+        const productsData = await fetchProductsByIds(productIds as number[]);
+        const vtData = await fetchVariationTerms(variationIds);
+        const termIds = Array.from(
+          new Set((vtData || []).map((vt: any) => vt.term_id)),
+        );
+        const termsData = await fetchTermsByIds(termIds as number[]);
+
+        const productMap = new Map(
+          (productsData || []).map((p: any) => [p.id, p.title]),
+        );
+        const termsMap = new Map(
+          (termsData || []).map((t: any) => [t.id, t.name]),
+        );
+        const termsByVariation = new Map<number, string[]>();
+        (vtData || []).forEach((vt: any) => {
+          const name = termsMap.get(vt.term_id);
+          if (!name) return;
+          const arr = termsByVariation.get(vt.product_variation_id) || [];
+          arr.push(name);
+          termsByVariation.set(vt.product_variation_id, arr);
+        });
+
+        const loadedProducts: SaleProduct[] = (order.order_products || []).map(
+          (op: any) => {
+            const v = (variationsData || []).find(
+              (vv: any) => vv.id === op.product_variation_id,
+            );
+            const productTitle = v ? productMap.get(v.product_id) || "" : "";
+            const termsNames =
+              termsByVariation.get(op.product_variation_id)?.join(" / ") || "";
+
+            // Discount amount is stored per unit in the database
+            const discountAmount =
+              op.quantity > 0
+                ? parseFloat(op.product_discount) / op.quantity
+                : 0;
+
+            return {
+              variationId: op.product_variation_id,
+              productName: productTitle,
+              variationName: termsNames || v?.sku || "",
+              sku: v?.sku || "",
+              quantity: op.quantity,
+              price: parseFloat(op.product_price),
+              discountAmount: Math.round(discountAmount * 100) / 100,
+              stockTypeId: op.stock_type_id || 0, // Default when loading existing orders
+              stockTypeName: "", // Will be resolved from salesData if needed
+              maxStock: op.quantity, // For existing orders, set maxStock to current quantity
+            };
+          },
+        );
+        setProducts(loadedProducts);
+      }
+
       setClientFound(true);
-      setCreatedOrderId(id);
-      
+
+      // Load payment
+      const paymentData = await fetchOrderPayment(id);
+      if (paymentData) {
+        setPayments([
+          {
+            id: crypto.randomUUID(),
+            paymentMethodId: paymentData.payment_method_id?.toString() || "",
+            amount: paymentData.amount?.toString() || "",
+            confirmationCode: paymentData.gateway_confirmation_code || "",
+            voucherUrl: paymentData.voucher_url || "",
+            voucherPreview: paymentData.voucher_url || undefined,
+          },
+        ]);
+      }
+
+      // Load situation
+      const situationData = await fetchOrderSituation(id);
+      if (situationData) {
+        setOrderSituation(situationData.situation_id.toString());
+      }
     } catch (error) {
       console.error("Error loading order:", error);
       toast({
@@ -631,7 +732,6 @@ export const useCreateSale = () => {
         if (client) {
           // Client exists in database
           setClientFound(true);
-          setIsExistingClient(true); // Found in accounts table
           setFormData((prev) => ({
             ...prev,
             customerName: client.name,
@@ -639,7 +739,6 @@ export const useCreateSale = () => {
             customerLastname2: client.lastName2 || "",
           }));
         } else {
-          setIsExistingClient(false); // Not in accounts table
           // Client not found - check document type code
           const selectedDocType = salesData?.documentTypes.find(
             (dt) => dt.id.toString() === docType,
@@ -935,13 +1034,11 @@ export const useCreateSale = () => {
           subtotal,
           discount: discountAmount,
           total,
-          isExistingClient, // true if client was found in accounts table
           products: products.map((p) => ({
             variationId: p.variationId,
             quantity: p.quantity,
             price: p.price,
             discountAmount: p.discountAmount,
-            stockTypeId: p.stockTypeId,
           })),
           payments: payments
             .filter((p) => p.paymentMethodId && p.amount)
@@ -962,7 +1059,6 @@ export const useCreateSale = () => {
           await updateOrder(parseInt(orderId), orderData);
         } else {
           const response = await createOrder(orderData);
-          
           if (response?.order?.id) {
             createdOrderId = response.order.id;
             setCreatedOrderId(createdOrderId);
@@ -974,20 +1070,15 @@ export const useCreateSale = () => {
 
         // Upload vouchers to storage after order is created
         if (createdOrderId && createdPayments.length > 0) {
-          // Get the filtered payments that were actually sent to the API
-          const validPayments = payments.filter(
-            (p) => p.paymentMethodId && p.amount,
+          const paymentsWithVouchers = payments.filter(
+            (p) => p.paymentMethodId && p.amount && p.voucherFile,
           );
-          
-          for (let i = 0; i < validPayments.length; i++) {
-            const payment = validPayments[i];
-            
-            // Skip if no voucher file
-            if (!payment.voucherFile) continue;
-            
-            // Find the corresponding created payment by localIndex (which matches the filtered array index)
+
+          for (const payment of paymentsWithVouchers) {
+            // Find the corresponding created payment by index
+            const paymentIndex = payments.findIndex((p) => p.id === payment.id);
             const createdPayment = createdPayments.find(
-              (cp) => cp.localIndex === i,
+              (cp) => cp.localIndex === paymentIndex,
             );
 
             if (createdPayment && payment.voucherFile) {
@@ -1006,8 +1097,8 @@ export const useCreateSale = () => {
           }
         }
 
-        // Update order situation - only in edit mode (creation handles it in sp_create_order)
-        if (orderId && orderSituation && createdOrderId) {
+        // Update order situation
+        if (orderSituation && createdOrderId) {
           await updateOrderSituation(createdOrderId, parseInt(orderSituation));
         }
 
@@ -1041,7 +1132,6 @@ export const useCreateSale = () => {
       subtotal,
       discountAmount,
       total,
-      isExistingClient,
       toast,
       navigate,
     ],
