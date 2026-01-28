@@ -46,7 +46,7 @@ const Movements = () => {
         </CardHeader>
 
         <CardContent className="p-0">
-          <MovementsTable movements={movements} loading={loading} />
+          <MovementsTable movements={movements} />
         </CardContent>
 
         <CardFooter>
