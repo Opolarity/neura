@@ -325,7 +325,10 @@ export const useCreateSale = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      // Only set loading to false if NOT editing (orderId will trigger loadOrderData)
+      if (!orderId) {
+        setLoading(false);
+      }
     }
   };
 
