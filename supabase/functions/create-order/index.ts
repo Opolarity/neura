@@ -96,6 +96,9 @@ serve(async (req) => {
       voucher_url: p.voucher_url
     }));
 
+    // Determine if we need to create the client (if not existing)
+    const isExistingClient = input.is_existing_client === true;
+
     // Call the transactional RPC
     const { data, error } = await supabase.rpc("sp_create_order", {
       p_user_id: user.id,
@@ -104,7 +107,8 @@ serve(async (req) => {
       p_order_data: orderData,
       p_products: products,
       p_payments: payments,
-      p_initial_situation_id: input.initial_situation_id
+      p_initial_situation_id: input.initial_situation_id,
+      p_is_existing_client: isExistingClient
     });
 
     if (error) {
