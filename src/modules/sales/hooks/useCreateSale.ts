@@ -1036,6 +1036,7 @@ export const useCreateSale = () => {
             quantity: p.quantity,
             price: p.price,
             discountAmount: p.discountAmount,
+            stockTypeId: p.stockTypeId,
           })),
           payments: payments
             .filter((p) => p.paymentMethodId && p.amount)

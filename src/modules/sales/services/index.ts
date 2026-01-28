@@ -71,6 +71,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
         quantity: p.quantity,
         price: p.price,
         discount_amount: p.discountAmount,
+        stock_type_id: p.stockTypeId,
       })),
       payments: orderData.payments.map((p) => ({
         payment_method_id: p.paymentMethodId,
@@ -124,6 +125,7 @@ export const updateOrder = async (
         quantity: p.quantity,
         price: p.price,
         discount_amount: p.discountAmount,
+        stock_type_id: p.stockTypeId,
       })),
       payments: orderData.payments.map((p) => ({
         payment_method_id: p.paymentMethodId,
