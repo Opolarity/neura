@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_types: {
+        Row: {
+          account_id: number
+          account_type_id: number
+          created_at: string
+          id: number
+        }
+        Insert: {
+          account_id: number
+          account_type_id: number
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          account_id?: number
+          account_type_id?: number
+          created_at?: string
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_types_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_types_account_type_id_fkey"
+            columns: ["account_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       accounts: {
         Row: {
           created_at: string
@@ -353,7 +389,6 @@ export type Database = {
           id: number
           module_id: number
           name: string
-          type_id: number
         }
         Insert: {
           code: string
@@ -361,7 +396,6 @@ export type Database = {
           id?: number
           module_id: number
           name: string
-          type_id: number
         }
         Update: {
           code?: string
@@ -369,7 +403,6 @@ export type Database = {
           id?: number
           module_id?: number
           name?: string
-          type_id?: number
         }
         Relationships: [
           {
@@ -377,13 +410,6 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "classes_type_id_fkey"
-            columns: ["type_id"]
-            isOneToOne: false
-            referencedRelation: "types"
             referencedColumns: ["id"]
           },
         ]
@@ -650,7 +676,7 @@ export type Database = {
             foreignKeyName: "movements_movement_class_id_fkey"
             columns: ["movement_class_id"]
             isOneToOne: false
-            referencedRelation: "types"
+            referencedRelation: "classes"
             referencedColumns: ["id"]
           },
           {
@@ -2388,6 +2414,7 @@ export type Database = {
           created_by: string
           id: number
           last_row: boolean
+          measurement_unit: string
           message: string | null
           module_id: number
           price: number | null
@@ -2402,6 +2429,7 @@ export type Database = {
           created_by?: string
           id?: number
           last_row: boolean
+          measurement_unit: string
           message?: string | null
           module_id: number
           price?: number | null
@@ -2416,6 +2444,7 @@ export type Database = {
           created_by?: string
           id?: number
           last_row?: boolean
+          measurement_unit?: string
           message?: string | null
           module_id?: number
           price?: number | null
@@ -2579,19 +2608,16 @@ export type Database = {
           id: number
           spplier_class_id: number
           supplier_id: number
-          supplier_type_id: number
         }
         Insert: {
           id?: number
           spplier_class_id: number
           supplier_id: number
-          supplier_type_id: number
         }
         Update: {
           id?: number
           spplier_class_id?: number
           supplier_id?: number
-          supplier_type_id?: number
         }
         Relationships: [
           {
@@ -2606,13 +2632,6 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers_profile"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supplier_types_supplier_type_id_fkey"
-            columns: ["supplier_type_id"]
-            isOneToOne: false
-            referencedRelation: "types"
             referencedColumns: ["id"]
           },
         ]
@@ -3003,6 +3022,17 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_accounts: {
+        Args: {
+          p_account_type?: number
+          p_order?: string
+          p_page?: number
+          p_search?: string
+          p_show?: boolean
+          p_size?: number
+        }
+        Returns: Json
+      }
       sp_get_branches: {
         Args: {
           p_cities?: number
@@ -3082,6 +3112,18 @@ export type Database = {
           p_search?: string
           p_size?: number
           p_variation?: number
+        }
+        Returns: Json
+      }
+      sp_get_returns: {
+        Args: {
+          p_end_date?: string
+          p_maxtotal?: number
+          p_mintotal?: number
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_start_date?: string
         }
         Returns: Json
       }
