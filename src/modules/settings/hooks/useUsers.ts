@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
-import { Users, UsersFilters } from "../types/Users.types";
-import { UsersApi } from "../services/Users.services";
+import { FilterOption, Users, UsersFilters } from "../types/Users.types";
+import {
+  UsersApi,
+  createUserApi,
+  deleteUserApi,
+  updateUserApi,
+  getRolesListApi,
+  getWarehousesListApi,
+  getBranchesListApi,
+} from "../services/Users.services";
 import { UsersAdapter } from "../adapters/Users.adapters";
 import { useToast } from "@/shared/hooks";
 import { useDebounce } from "@/shared/hooks/useDebounce";
@@ -25,6 +33,13 @@ const useUsers = () => {
     total: 0,
   });
   const [isOpenFilterModal, setIsOpenFilterModal] = useState(false);
+
+  const [rolesOptions, setRolesOptions] = useState<FilterOption[]>([]);
+  const [warehousesOptions, setWarehousesOptions] = useState<FilterOption[]>(
+    [],
+  );
+  const [branchesOptions, setBranchesOptions] = useState<FilterOption[]>([]);
+
   const { toast } = useToast();
 
   const loadUsers = async (filtersObj: UsersFilters) => {
@@ -35,7 +50,7 @@ const useUsers = () => {
       setUsers(data);
       setPagination(paginationData);
     } catch (error) {
-      console.error("Error fetching roles:", error);
+      console.error("Error fetching users:", error);
       toast({
         title: "Error",
         description: "No se pudieron cargar los usuarios",
@@ -46,8 +61,24 @@ const useUsers = () => {
     }
   };
 
+  const fetchFilterOptions = async () => {
+    try {
+      const [roles, warehouses, branches] = await Promise.all([
+        getRolesListApi(),
+        getWarehousesListApi(),
+        getBranchesListApi(),
+      ]);
+      setRolesOptions(roles);
+      setWarehousesOptions(warehouses);
+      setBranchesOptions(branches);
+    } catch (error) {
+      console.error("Error fetching filter options:", error);
+    }
+  };
+
   useEffect(() => {
     loadUsers(filters);
+    fetchFilterOptions();
   }, []);
 
   const debouncedSearch = useDebounce(search, 500);
@@ -77,9 +108,53 @@ const useUsers = () => {
     setIsOpenFilterModal(false);
   };
 
-  const handleDeleteRole = async (roleId: number) => {
-    // Implementation pending
-    console.log("Delete role", roleId);
+  const handleCreateUser = async (userData: any) => {
+    try {
+      await createUserApi(userData);
+      toast({ title: "Éxito", description: "Usuario creado correctamente" });
+      loadUsers(filters);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo crear el usuario",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateUser = async (
+    userId: number,
+    uid: string,
+    userData: any,
+  ) => {
+    try {
+      await updateUserApi(userId, uid, userData);
+      toast({
+        title: "Éxito",
+        description: "Usuario actualizado correctamente",
+      });
+      loadUsers(filters);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el usuario",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await deleteUserApi(userId);
+      toast({ title: "Éxito", description: "Usuario eliminado correctamente" });
+      loadUsers(filters);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el usuario",
+        variant: "destructive",
+      });
+    }
   };
 
   const handlePageChange = async (page: number) => {
@@ -109,7 +184,12 @@ const useUsers = () => {
     search,
     pagination,
     isOpenFilterModal,
-    handleDeleteRole,
+    rolesOptions,
+    warehousesOptions,
+    branchesOptions,
+    handleCreateUser,
+    handleUpdateUser,
+    handleDeleteUser,
     handleSearchChange,
     handleOpenFilterModal,
     handleCloseFilterModal,
