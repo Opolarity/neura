@@ -18,6 +18,7 @@ export const UsersAdapter = (response: UsersApiResponse) => {
       branches: item.branches,
       role: item.role,
       created_at: item.created_at,
+      profiles_id: item.profiles_id,
     };
   });
 

@@ -14,6 +14,9 @@ serve(async (req)=>{
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+    }
     const supabase = createClient(supabaseUrl, supabaseKey);
     // Get user from auth header
     const authHeader = req.headers.get("authorization")?.split(" ")[1];
@@ -214,9 +217,10 @@ serve(async (req)=>{
     });
   } catch (error) {
     console.error("Error in create-order:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return new Response(JSON.stringify({
       error: "Internal server error",
-      details: error.message
+      details: errorMessage
     }), {
       status: 500,
       headers: {
