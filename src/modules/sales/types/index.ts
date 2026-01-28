@@ -204,6 +204,7 @@ export interface CreateOrderRequest {
   subtotal: number;
   discount: number;
   total: number;
+  isExistingClient: boolean; // true if client exists in accounts table
   products: Array<{
     variationId: number;
     quantity: number;
