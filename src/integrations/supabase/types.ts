@@ -3008,6 +3008,18 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_create_order: {
+        Args: {
+          p_branch_id: number
+          p_initial_situation_id: number
+          p_order_data: Json
+          p_payments: Json
+          p_products: Json
+          p_user_id: string
+          p_warehouse_id: number
+        }
+        Returns: Json
+      }
       sp_create_product: {
         Args: {
           p_active: boolean
