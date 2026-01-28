@@ -242,7 +242,7 @@ export const adaptSaleById = (data: any) => ({
     addressReference: data.order.address_reference || "",
     receptionPerson: data.order.reception_person || "",
     receptionPhone: data.order.reception_phone?.toString() || "",
-    withShipping: !!data.order.shipping_method_code,
+    withShipping: data.order.shipping_cost != null,
     employeeSale: false,
     notes: "",
   },
