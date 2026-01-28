@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client"
+import { buildEndpoint } from "@/shared/utils/utils";
 import { CategoryApiResponse, CategoryFilters, CategoryPayload, SimpleCategory } from "../types/Categories.types"
 
 export const categoriesListApi = async (): Promise<SimpleCategory[]> => {
@@ -10,21 +11,10 @@ export const categoriesListApi = async (): Promise<SimpleCategory[]> => {
     return data ?? [];
 };
 
-
 export const categoryApi = async (
     filters: CategoryFilters = {}
 ): Promise<CategoryApiResponse> => {
-    const queryParams = new URLSearchParams(
-        Object.entries(filters)
-            .filter(
-                ([, value]) => value !== undefined && value !== null && value !== ""
-            )
-            .map(([key, value]) => [key, String(value)])
-    );
-
-    const endpoint = queryParams.toString()
-        ? `get-categories-product-count?${queryParams.toString()}`
-        : "get-categories-product-count";
+    const endpoint = buildEndpoint("get-categories-product-count", filters);
 
     const { data, error } = await supabase.functions.invoke(
         endpoint,

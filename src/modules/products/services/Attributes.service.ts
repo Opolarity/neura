@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { buildEndpoint } from "@/shared/utils/utils";
 import { AttributesApiResponse, AttributeFormValues, TermFormValues, TermGroupOption } from "../types/Attributes.types";
 
 export interface GetAttributesParams {
@@ -13,17 +14,7 @@ export interface GetAttributesParams {
 export const getAttributesApi = async (
   params: GetAttributesParams = {}
 ): Promise<AttributesApiResponse> => {
-  const queryParams = new URLSearchParams(
-    Object.entries(params)
-      .filter(
-        ([, value]) => value !== undefined && value !== null && value !== ""
-      )
-      .map(([key, value]) => [key, String(value)])
-  );
-
-  const endpoint = queryParams.toString()
-    ? `get-terms?${queryParams.toString()}`
-    : "get-terms";
+  const endpoint = buildEndpoint("get-terms", params);
 
   const { data, error } = await supabase.functions.invoke(endpoint, {
     method: "GET",

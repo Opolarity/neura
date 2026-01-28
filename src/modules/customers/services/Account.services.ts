@@ -1,19 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
+import { buildEndpoint } from "@/shared/utils/utils";
 import { AccountsApiResponse, AccountsFilters, AccountsTypesApiResponse } from "../types/accounts.types";
 
 export const accountsApi = async (
   filters: AccountsFilters
 ): Promise<AccountsApiResponse> => {
-
-  const queryParams = new URLSearchParams(
-    Object.entries(filters)
-      .filter(([, value]) => value !== undefined && value !== null && value !== "")
-      .map(([key, value]) => [key, String(value)])
-  );
-
-  const endpoint = queryParams.toString()
-    ? `get-accounts?${queryParams.toString()}`
-    : "get-accounts";
+  const endpoint = buildEndpoint("get-accounts", filters);
 
   const { data, error } = await supabase.functions.invoke(endpoint, {
     method: "GET",

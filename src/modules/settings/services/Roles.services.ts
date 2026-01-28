@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { buildEndpoint } from "@/shared/utils/utils";
 import {
   RolesApiResponse,
   RolesFilters,
@@ -8,17 +9,7 @@ import {
 export const rolesApi = async (
   filters: RolesFilters,
 ): Promise<RolesApiResponse> => {
-  const queryParams = new URLSearchParams(
-    Object.entries(filters)
-      .filter(
-        ([, value]) => value !== undefined && value !== null && value !== "",
-      )
-      .map(([key, value]) => [key, String(value)]),
-  );
-
-  const endpoint = queryParams.toString()
-    ? `get-roles?${queryParams.toString()}`
-    : "get-roles";
+  const endpoint = buildEndpoint("get-roles", filters);
 
   const { data, error } = await supabase.functions.invoke(endpoint, {
     method: "GET",
