@@ -4,6 +4,9 @@
 
 import type { SaleProduct, ShippingCost } from '../types';
 
+// Re-export shared utilities for backwards compatibility
+export { formatCurrency, getTodayDate, formatDateDisplay } from '@/shared/utils/utils';
+
 // Calculate subtotal from products
 export const calculateSubtotal = (products: SaleProduct[]): number => {
   return products.reduce((sum, p) => sum + p.quantity * p.price, 0);
@@ -68,25 +71,5 @@ export const filterShippingCostsByLocation = (
     }
     // Global shipping (no location specified)
     return false;
-  });
-};
-
-// Format currency for display
-export const formatCurrency = (amount: number): string => {
-  return `S/ ${amount.toFixed(2)}`;
-};
-
-// Get today's date in YYYY-MM-DD format
-export const getTodayDate = (): string => {
-  return new Date().toISOString().split('T')[0];
-};
-
-// Format date for display (DD/MM/YYYY)
-export const formatDateDisplay = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('es-PE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
   });
 };

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { buildEndpoint } from "@/shared/utils/utils";
 import {
   InventoryApiResponse,
   InventoryFilters,
@@ -19,17 +20,7 @@ export const wareHouseListApi = async (): Promise<Warehouse[]> => {
 export const inventoryApi = async (
   filters: InventoryFilters = {},
 ): Promise<InventoryApiResponse> => {
-  const queryParams = new URLSearchParams(
-    Object.entries(filters)
-      .filter(
-        ([, value]) => value !== undefined && value !== null && value !== "",
-      )
-      .map(([key, value]) => [key, String(value)]),
-  );
-
-  const endpoint = queryParams.toString()
-    ? `get-inventory?${queryParams.toString()}`
-    : "get-inventory";
+  const endpoint = buildEndpoint("get-inventory", filters);
 
   const { data, error } = await supabase.functions.invoke(endpoint, {
     method: "GET",

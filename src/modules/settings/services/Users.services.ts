@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { buildEndpoint } from "@/shared/utils/utils";
 import {
   UsersApiResponse,
   UsersFilters,
@@ -9,17 +10,7 @@ import {
 export const UsersApi = async (
   filters: UsersFilters,
 ): Promise<UsersApiResponse> => {
-  const queryParams = new URLSearchParams(
-    Object.entries(filters)
-      .filter(
-        ([, value]) => value !== undefined && value !== null && value !== "",
-      )
-      .map(([key, value]) => [key, String(value)]),
-  );
-
-  const endpoint = queryParams.toString()
-    ? `get-users?${queryParams.toString()}`
-    : "get-users";
+  const endpoint = buildEndpoint("get-users", filters);
 
   const { data, error } = await supabase.functions.invoke(endpoint, {
     method: "GET",

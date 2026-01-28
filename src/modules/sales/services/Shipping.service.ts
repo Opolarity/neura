@@ -1,30 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
+import { buildEndpoint } from "@/shared/utils/utils";
 import { ShippingApiResponse, ShippingFilters } from "../types/Shipping.types";
-
-
-
-
 
 export const ShippingApi = async (
   filters: ShippingFilters = {}
 ): Promise<ShippingApiResponse> => {
-
-  const queryParams = new URLSearchParams(
-    Object.entries(filters)
-      .filter(
-        ([, value]) => value !== undefined && value !== null && value !== ""
-      )
-      .map(([key, value]) => [key, String(value)])
-  );
-
-  const endpoint = queryParams.toString()
-    ? `get-shipping-methods?${queryParams.toString()}`
-    : "get-shipping-methods";
+  const endpoint = buildEndpoint("get-shipping-methods", filters);
 
   const { data, error } = await supabase.functions.invoke(endpoint, {
     method: "GET",
   });
-
 
   if (error) {
     console.error("Invoke error:", error);

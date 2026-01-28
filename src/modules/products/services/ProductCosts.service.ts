@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { buildEndpoint } from "@/shared/utils/utils";
 import {
   ProductCostsApiResponse,
   ProductCostsFilters,
@@ -7,17 +8,7 @@ import {
 export const productCostsApi = async (
   filters: ProductCostsFilters = {}
 ): Promise<ProductCostsApiResponse> => {
-  const queryParams = new URLSearchParams(
-    Object.entries(filters)
-      .filter(
-        ([, value]) => value !== undefined && value !== null && value !== ""
-      )
-      .map(([key, value]) => [key, String(value)])
-  );
-
-  const endpoint = queryParams.toString()
-    ? `get-product-costs?${queryParams.toString()}`
-    : "get-product-costs";
+  const endpoint = buildEndpoint("get-product-costs", filters);
 
   const { data, error } = await supabase.functions.invoke(endpoint);
 
