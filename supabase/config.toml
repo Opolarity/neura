@@ -54,5 +54,8 @@ verify_jwt = false
 [functions.get-sale-products]
 verify_jwt = true
 
+[functions.update-order]
+verify_jwt = true
+
 [functions.update-order-situation]
 verify_jwt = true
