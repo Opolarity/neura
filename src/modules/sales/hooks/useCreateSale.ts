@@ -133,6 +133,7 @@ export const useCreateSale = () => {
 
   // UI state
   const [clientFound, setClientFound] = useState<boolean | null>(null);
+  const [isExistingClient, setIsExistingClient] = useState<boolean>(false); // true only if found in accounts table
   const [selectedVariation, setSelectedVariation] =
     useState<ProductVariation | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -729,6 +730,7 @@ export const useCreateSale = () => {
         if (client) {
           // Client exists in database
           setClientFound(true);
+          setIsExistingClient(true); // Found in accounts table
           setFormData((prev) => ({
             ...prev,
             customerName: client.name,
@@ -736,6 +738,7 @@ export const useCreateSale = () => {
             customerLastname2: client.lastName2 || "",
           }));
         } else {
+          setIsExistingClient(false); // Not in accounts table
           // Client not found - check document type code
           const selectedDocType = salesData?.documentTypes.find(
             (dt) => dt.id.toString() === docType,
@@ -1031,6 +1034,7 @@ export const useCreateSale = () => {
           subtotal,
           discount: discountAmount,
           total,
+          isExistingClient, // true if client was found in accounts table
           products: products.map((p) => ({
             variationId: p.variationId,
             quantity: p.quantity,
@@ -1130,6 +1134,7 @@ export const useCreateSale = () => {
       subtotal,
       discountAmount,
       total,
+      isExistingClient,
       toast,
       navigate,
     ],
