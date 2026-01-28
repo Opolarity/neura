@@ -59,3 +59,6 @@ verify_jwt = true
 
 [functions.update-order-situation]
 verify_jwt = true
+
+[functions.get-sales-list]
+verify_jwt = false
