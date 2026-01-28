@@ -959,6 +959,7 @@ export const useCreateSale = () => {
           await updateOrder(parseInt(orderId), orderData);
         } else {
           const response = await createOrder(orderData);
+          
           if (response?.order?.id) {
             createdOrderId = response.order.id;
             setCreatedOrderId(createdOrderId);
@@ -970,15 +971,20 @@ export const useCreateSale = () => {
 
         // Upload vouchers to storage after order is created
         if (createdOrderId && createdPayments.length > 0) {
-          const paymentsWithVouchers = payments.filter(
-            (p) => p.paymentMethodId && p.amount && p.voucherFile,
+          // Get the filtered payments that were actually sent to the API
+          const validPayments = payments.filter(
+            (p) => p.paymentMethodId && p.amount,
           );
-
-          for (const payment of paymentsWithVouchers) {
-            // Find the corresponding created payment by index
-            const paymentIndex = payments.findIndex((p) => p.id === payment.id);
+          
+          for (let i = 0; i < validPayments.length; i++) {
+            const payment = validPayments[i];
+            
+            // Skip if no voucher file
+            if (!payment.voucherFile) continue;
+            
+            // Find the corresponding created payment by localIndex (which matches the filtered array index)
             const createdPayment = createdPayments.find(
-              (cp) => cp.localIndex === paymentIndex,
+              (cp) => cp.localIndex === i,
             );
 
             if (createdPayment && payment.voucherFile) {
