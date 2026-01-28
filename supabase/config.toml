@@ -62,3 +62,6 @@ verify_jwt = true
 
 [functions.get-sales-list]
 verify_jwt = false
+
+[functions.get-sale-by-id]
+verify_jwt = false

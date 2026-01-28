@@ -27,6 +27,7 @@ import {
   adaptPriceLists,
   getIdInventoryTypeAdapter,
   getOrdersSituationsByIdAdapter,
+  adaptSaleById,
 } from "../adapters";
 import {
   fetchSalesFormData,
@@ -36,19 +37,13 @@ import {
   createOrder,
   updateOrder,
   updateOrderSituation,
-  fetchOrderById,
-  fetchOrderPayment,
-  fetchOrderSituation,
-  fetchVariationsByIds,
-  fetchProductsByIds,
-  fetchVariationTerms,
-  fetchTermsByIds,
   fetchPriceLists,
   fetchSaleProducts,
   uploadPaymentVoucher,
   updatePaymentVoucherUrl,
   getIdInventoryTypeApi,
   getOrdersSituationsById,
+  fetchSaleById,
 } from "../services";
 import {
   calculateSubtotal,
@@ -455,124 +450,27 @@ export const useCreateSale = () => {
     setShowPriceListModal(false);
   }, []);
 
-  // Load order data for editing
+  // Load order data for editing (using consolidated Edge Function)
   const loadOrderData = async (id: number) => {
     try {
       setLoading(true);
-      const order = await fetchOrderById(id);
-      // Set form data
-      setFormData({
-        documentType: order.document_type?.toString() || "",
-        documentNumber: order.document_number || "",
-        customerName: order.customer_name || "",
-        customerLastname: order.customer_lastname || "",
-        customerLastname2: "",
-        email: order.email || "",
-        phone: order.phone?.toString() || "",
-        saleType: order.sale_type_id?.toString() || "",
-        priceListId: "",
-        saleDate: order.date?.split("T")[0] || getTodayDate(),
-        vendorName: "",
-        shippingMethod: order.shipping_method_code?.toString() || "",
-        shippingCost: "",
-        countryId: order.country_id?.toString() || "",
-        stateId: order.state_id?.toString() || "",
-        cityId: order.city_id?.toString() || "",
-        neighborhoodId: order.neighborhood_id?.toString() || "",
-        address: order.address || "",
-        addressReference: order.address_reference || "",
-        receptionPerson: order.reception_person || "",
-        receptionPhone: order.reception_phone?.toString() || "",
-        withShipping: !!order.shipping_method_code,
-        employeeSale: false,
-        notes: "",
-      });
-
-      // Load products
-      const variationIds = (order.order_products || []).map(
-        (op: any) => op.product_variation_id,
+      
+      // Single call to get all data
+      const data = await fetchSaleById(id);
+      const adapted = adaptSaleById(data);
+      
+      // Set all state at once
+      setFormData(adapted.formData);
+      setProducts(adapted.products);
+      setPayments(
+        adapted.payments.length > 0
+          ? adapted.payments
+          : [createEmptyPayment()]
       );
-      if (variationIds.length > 0) {
-        const variationsData = await fetchVariationsByIds(variationIds);
-        const productIds = Array.from(
-          new Set((variationsData || []).map((v: any) => v.product_id)),
-        );
-        const productsData = await fetchProductsByIds(productIds as number[]);
-        const vtData = await fetchVariationTerms(variationIds);
-        const termIds = Array.from(
-          new Set((vtData || []).map((vt: any) => vt.term_id)),
-        );
-        const termsData = await fetchTermsByIds(termIds as number[]);
-
-        const productMap = new Map(
-          (productsData || []).map((p: any) => [p.id, p.title]),
-        );
-        const termsMap = new Map(
-          (termsData || []).map((t: any) => [t.id, t.name]),
-        );
-        const termsByVariation = new Map<number, string[]>();
-        (vtData || []).forEach((vt: any) => {
-          const name = termsMap.get(vt.term_id);
-          if (!name) return;
-          const arr = termsByVariation.get(vt.product_variation_id) || [];
-          arr.push(name);
-          termsByVariation.set(vt.product_variation_id, arr);
-        });
-
-        const loadedProducts: SaleProduct[] = (order.order_products || []).map(
-          (op: any) => {
-            const v = (variationsData || []).find(
-              (vv: any) => vv.id === op.product_variation_id,
-            );
-            const productTitle = v ? productMap.get(v.product_id) || "" : "";
-            const termsNames =
-              termsByVariation.get(op.product_variation_id)?.join(" / ") || "";
-
-            // Discount amount is stored per unit in the database
-            const discountAmount =
-              op.quantity > 0
-                ? parseFloat(op.product_discount) / op.quantity
-                : 0;
-
-            return {
-              variationId: op.product_variation_id,
-              productName: productTitle,
-              variationName: termsNames || v?.sku || "",
-              sku: v?.sku || "",
-              quantity: op.quantity,
-              price: parseFloat(op.product_price),
-              discountAmount: Math.round(discountAmount * 100) / 100,
-              stockTypeId: op.stock_type_id || 0, // Default when loading existing orders
-              stockTypeName: "", // Will be resolved from salesData if needed
-              maxStock: op.quantity, // For existing orders, set maxStock to current quantity
-            };
-          },
-        );
-        setProducts(loadedProducts);
-      }
-
+      setOrderSituation(adapted.currentSituation);
       setClientFound(true);
-
-      // Load payment
-      const paymentData = await fetchOrderPayment(id);
-      if (paymentData) {
-        setPayments([
-          {
-            id: crypto.randomUUID(),
-            paymentMethodId: paymentData.payment_method_id?.toString() || "",
-            amount: paymentData.amount?.toString() || "",
-            confirmationCode: paymentData.gateway_confirmation_code || "",
-            voucherUrl: paymentData.voucher_url || "",
-            voucherPreview: paymentData.voucher_url || undefined,
-          },
-        ]);
-      }
-
-      // Load situation
-      const situationData = await fetchOrderSituation(id);
-      if (situationData) {
-        setOrderSituation(situationData.situation_id.toString());
-      }
+      setCreatedOrderId(id);
+      
     } catch (error) {
       console.error("Error loading order:", error);
       toast({
