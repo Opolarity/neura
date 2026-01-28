@@ -1,85 +1,69 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
-serve(async (req)=>{
-  // Handle CORS preflight
+
+serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: corsHeaders
-    });
+    return new Response(null, { headers: corsHeaders });
   }
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error("Missing environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+      throw new Error("Missing environment variables");
     }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
+
     // Get user from auth header
     const authHeader = req.headers.get("authorization")?.split(" ")[1];
     if (!authHeader) {
-      return new Response(JSON.stringify({
-        error: "No authorization header"
-      }), {
+      return new Response(JSON.stringify({ error: "No authorization header" }), {
         status: 401,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
+
     const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader);
     if (authError || !user) {
-      return new Response(JSON.stringify({
-        error: "Unauthorized"
-      }), {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
+
     // Get user profile for branch and warehouse
-    const { data: profile, error: profileError } = await supabase.from("profiles").select("branch_id, warehouse_id").eq("UID", user.id).single();
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("branch_id, warehouse_id")
+      .eq("UID", user.id)
+      .single();
+
     if (profileError || !profile) {
-      return new Response(JSON.stringify({
-        error: "User profile not found"
-      }), {
+      return new Response(JSON.stringify({ error: "User profile not found" }), {
         status: 400,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
+
     const input = await req.json();
-    // Get the default status for the module
-    const { data: statusData, error: statusError } = await supabase.from("situations").select("id, status_id").eq("id", input.initial_situation_id).single();
-    if (statusError || !statusData) {
-      return new Response(JSON.stringify({
-        error: "Invalid situation ID"
-      }), {
-        status: 400,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
-      });
-    }
-    // Create the order
-    const { data: order, error: orderError } = await supabase.from("orders").insert({
+
+    // Build order data object
+    const orderData = {
       document_type: input.document_type,
       document_number: input.document_number,
       customer_name: input.customer_name,
       customer_lastname: input.customer_lastname,
       email: input.email,
-      phone: input.phone ? parseInt(input.phone) : null,
-      sale_type_id: input.sale_type,
-      shipping_method_code: input.shipping_method,
+      phone: input.phone,
+      sale_type: input.sale_type,
+      shipping_method: input.shipping_method,
       shipping_cost: input.shipping_cost,
       country_id: input.country_id,
       state_id: input.state_id,
@@ -88,145 +72,63 @@ serve(async (req)=>{
       address: input.address,
       address_reference: input.address_reference,
       reception_person: input.reception_person,
-      reception_phone: input.reception_phone ? parseInt(input.reception_phone) : null,
+      reception_phone: input.reception_phone,
       subtotal: input.subtotal,
       discount: input.discount,
-      total: input.total,
-      user_id: user.id,
-      branch_id: profile.branch_id,
-      date: new Date().toISOString()
-    }).select("id").single();
-    if (orderError || !order) {
-      console.error("Error creating order:", orderError);
-      return new Response(JSON.stringify({
-        error: "Failed to create order",
-        details: orderError
-      }), {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
-      });
-    }
-    // Get stock movement type ID (VENTA)
-    const { data: movementType } = await supabase.from("types").select("id").eq("code", "VEN").single();
-    const movementTypeId = movementType?.id || 1;
-    // Insert order products and create stock movements
-    // stock_type_id is now provided per product from frontend
-    for (const product of input.products){
-      // Calculate total line discount (discount per unit * quantity)
-      const lineDiscount = product.discount_amount * product.quantity;
-      // Use stock_type_id from the product (sent from frontend)
-      const productStockTypeId = product.stock_type_id;
-      // Create stock movement (negative for sales)
-      const { data: stockMovement, error: smError } = await supabase.from("stock_movements").insert({
-        product_variation_id: product.variation_id,
-        quantity: -product.quantity,
-        warehouse_id: profile.warehouse_id,
-        movement_type: movementTypeId,
-        stock_type_id: productStockTypeId,
-        completed: true,
-        created_by: user.id
-      }).select("id").single();
-      if (smError) {
-        console.error("Error creating stock movement:", smError);
-        continue;
-      }
-      // Insert order product
-      await supabase.from("order_products").insert({
-        order_id: order.id,
-        product_variation_id: product.variation_id,
-        quantity: product.quantity,
-        product_price: product.price,
-        product_discount: lineDiscount,
-        warehouses_id: profile.warehouse_id,
-        stock_movement_id: stockMovement?.id || 0
-      });
-      // Update product stock using the stock_type_id from the product
-      const { data: existingStock } = await supabase.from("product_stock").select("id, stock").eq("product_variation_id", product.variation_id).eq("warehouse_id", profile.warehouse_id).eq("stock_type_id", productStockTypeId).single();
-      if (existingStock) {
-        await supabase.from("product_stock").update({
-          stock: existingStock.stock - product.quantity
-        }).eq("id", existingStock.id);
-      }
-    }
-    // Get movement class for income (INGRESO)
-    const { data: movementClass } = await supabase.from("types").select("id").eq("code", "ING").single();
-    const movementClassId = movementClass?.id || 1;
-    // Get movement type for sales (VENTA)
-    const { data: saleMovementType } = await supabase.from("types").select("id").eq("code", "VEN").single();
-    const saleMovementTypeId = saleMovementType?.id || 1;
-    // Insert payments and return their IDs
-    const createdPayments = [];
-    for(let i = 0; i < input.payments.length; i++){
-      const payment = input.payments[i];
-      // Get payment method to find business account
-      const { data: paymentMethod } = await supabase.from("payment_methods").select("business_account_id").eq("id", payment.payment_method_id).single();
-      // Create financial movement
-      const { data: movement, error: movError } = await supabase.from("movements").insert({
-        amount: payment.amount,
-        branch_id: profile.branch_id,
-        business_account_id: paymentMethod?.business_account_id || 1,
-        movement_class_id: movementClassId,
-        movement_type_id: saleMovementTypeId,
-        payment_method_id: payment.payment_method_id,
-        movement_date: payment.date,
-        user_id: user.id,
-        description: `Pago de orden #${order.id}`
-      }).select("id").single();
-      if (movError) {
-        console.error("Error creating movement:", movError);
-        continue;
-      }
-      // Insert order payment
-      const { data: orderPayment, error: opError } = await supabase.from("order_payment").insert({
-        order_id: order.id,
-        payment_method_id: payment.payment_method_id,
-        amount: payment.amount,
-        date: payment.date,
-        gateway_confirmation_code: payment.confirmation_code,
-        voucher_url: payment.voucher_url,
-        movement_id: movement?.id || 0
-      }).select("id").single();
-      if (!opError && orderPayment) {
-        createdPayments.push({
-          id: orderPayment.id,
-          localIndex: i
-        });
-      }
-    }
-    // Create order situation
-    await supabase.from("order_situations").insert({
-      order_id: order.id,
-      situation_id: input.initial_situation_id,
-      status_id: statusData.status_id,
-      last_row: true
+      total: input.total
+    };
+
+    // Build products array
+    const products = input.products.map((p: any) => ({
+      variation_id: p.variation_id,
+      quantity: p.quantity,
+      price: p.price,
+      discount_amount: p.discount_amount || 0,
+      stock_type_id: p.stock_type_id
+    }));
+
+    // Build payments array
+    const payments = input.payments.map((p: any) => ({
+      payment_method_id: p.payment_method_id,
+      amount: p.amount,
+      date: p.date,
+      confirmation_code: p.confirmation_code,
+      voucher_url: p.voucher_url
+    }));
+
+    // Call the transactional RPC
+    const { data, error } = await supabase.rpc("sp_create_order", {
+      p_user_id: user.id,
+      p_branch_id: profile.branch_id,
+      p_warehouse_id: profile.warehouse_id,
+      p_order_data: orderData,
+      p_products: products,
+      p_payments: payments,
+      p_initial_situation_id: input.initial_situation_id
     });
+
+    if (error) {
+      console.error("Error calling sp_create_order:", error);
+      return new Response(JSON.stringify({ error: "Failed to create order", details: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
     return new Response(JSON.stringify({
       success: true,
-      order: {
-        id: order.id
-      },
-      payments: createdPayments
+      order: { id: data.order_id },
+      payments: data.payments
     }), {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      }
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
+
   } catch (error) {
     console.error("Error in create-order:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({
-      error: "Internal server error",
-      details: errorMessage
-    }), {
+    return new Response(JSON.stringify({ error: "Internal server error", details: errorMessage }), {
       status: 500,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      }
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   }
 });
