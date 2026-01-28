@@ -209,6 +209,7 @@ export interface CreateOrderRequest {
     quantity: number;
     price: number;
     discountAmount: number;
+    stockTypeId: number;
   }>;
   payments: Array<{
     paymentMethodId: number;
