@@ -89,13 +89,6 @@ Deno.serve(async (req) => {
       .single();
     const movementTypeId = movementType?.id || 1;
 
-    const { data: stockType } = await supabase
-      .from("types")
-      .select("id")
-      .eq("code", "PRD")
-      .single();
-    const defaultStockTypeId = stockType?.id || 9;
-
     // Get reversal movement type (AJUSTE or similar)
     const { data: reversalType } = await supabase
       .from("types")
@@ -104,7 +97,7 @@ Deno.serve(async (req) => {
       .single();
     const reversalTypeId = reversalType?.id || movementTypeId;
 
-    // Step 1: Get existing order products and their stock movements
+    // Step 1: Get existing order products and their stock movements (including stock_type_id from the movement)
     const { data: existingProducts } = await supabase
       .from("order_products")
       .select("id, product_variation_id, quantity, warehouses_id, stock_movement_id")
@@ -112,25 +105,34 @@ Deno.serve(async (req) => {
 
     // Step 2: Reverse stock movements for existing products
     for (const product of existingProducts || []) {
+      // Get the original stock_type_id from the stock movement
+      const { data: originalMovement } = await supabase
+        .from("stock_movements")
+        .select("stock_type_id")
+        .eq("id", product.stock_movement_id)
+        .single();
+
+      const originalStockTypeId = originalMovement?.stock_type_id || 9;
+
       // Create reverse stock movement (positive to restore stock)
       await supabase.from("stock_movements").insert({
         product_variation_id: product.product_variation_id,
         quantity: product.quantity, // Positive to restore
         warehouse_id: product.warehouses_id,
         movement_type: reversalTypeId,
-        stock_type_id: defaultStockTypeId,
+        stock_type_id: originalStockTypeId,
         completed: true,
         created_by: user.id,
         vinculated_movement_id: product.stock_movement_id,
       });
 
-      // Restore product stock
+      // Restore product stock using the original stock_type_id
       const { data: existingStock } = await supabase
         .from("product_stock")
         .select("id, stock")
         .eq("product_variation_id", product.product_variation_id)
         .eq("warehouse_id", product.warehouses_id)
-        .eq("stock_type_id", defaultStockTypeId)
+        .eq("stock_type_id", originalStockTypeId)
         .single();
 
       if (existingStock) {
@@ -180,8 +182,10 @@ Deno.serve(async (req) => {
     }
 
     // Step 5: Insert new order products and create stock movements
+    // stock_type_id is now provided per product from frontend
     for (const product of input.products || []) {
       const lineDiscount = product.discount_amount * product.quantity;
+      const productStockTypeId = product.stock_type_id;
 
       // Create stock movement (negative for sales)
       const { data: stockMovement, error: smError } = await supabase
@@ -191,7 +195,7 @@ Deno.serve(async (req) => {
           quantity: -product.quantity,
           warehouse_id: profile.warehouse_id,
           movement_type: movementTypeId,
-          stock_type_id: defaultStockTypeId,
+          stock_type_id: productStockTypeId,
           completed: true,
           created_by: user.id,
         })
@@ -214,13 +218,13 @@ Deno.serve(async (req) => {
         stock_movement_id: stockMovement?.id || 0,
       });
 
-      // Update product stock
+      // Update product stock using the stock_type_id from the product
       const { data: currentStock } = await supabase
         .from("product_stock")
         .select("id, stock")
         .eq("product_variation_id", product.variation_id)
         .eq("warehouse_id", profile.warehouse_id)
-        .eq("stock_type_id", defaultStockTypeId)
+        .eq("stock_type_id", productStockTypeId)
         .single();
 
       if (currentStock) {

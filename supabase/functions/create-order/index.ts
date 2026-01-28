@@ -112,20 +112,20 @@ serve(async (req)=>{
     // Get stock movement type ID (VENTA)
     const { data: movementType } = await supabase.from("types").select("id").eq("code", "VEN").single();
     const movementTypeId = movementType?.id || 1;
-    // Get default stock type ID (PRD - Producto disponible)
-    const { data: stockType } = await supabase.from("types").select("id").eq("code", "PRD").single();
-    const defaultStockTypeId = stockType?.id || 9;
     // Insert order products and create stock movements
+    // stock_type_id is now provided per product from frontend
     for (const product of input.products){
       // Calculate total line discount (discount per unit * quantity)
       const lineDiscount = product.discount_amount * product.quantity;
+      // Use stock_type_id from the product (sent from frontend)
+      const productStockTypeId = product.stock_type_id;
       // Create stock movement (negative for sales)
       const { data: stockMovement, error: smError } = await supabase.from("stock_movements").insert({
         product_variation_id: product.variation_id,
         quantity: -product.quantity,
         warehouse_id: profile.warehouse_id,
         movement_type: movementTypeId,
-        stock_type_id: defaultStockTypeId,
+        stock_type_id: productStockTypeId,
         completed: true,
         created_by: user.id
       }).select("id").single();
@@ -143,8 +143,8 @@ serve(async (req)=>{
         warehouses_id: profile.warehouse_id,
         stock_movement_id: stockMovement?.id || 0
       });
-      // Update product stock
-      const { data: existingStock } = await supabase.from("product_stock").select("id, stock").eq("product_variation_id", product.variation_id).eq("warehouse_id", profile.warehouse_id).eq("stock_type_id", defaultStockTypeId).single();
+      // Update product stock using the stock_type_id from the product
+      const { data: existingStock } = await supabase.from("product_stock").select("id, stock").eq("product_variation_id", product.variation_id).eq("warehouse_id", profile.warehouse_id).eq("stock_type_id", productStockTypeId).single();
       if (existingStock) {
         await supabase.from("product_stock").update({
           stock: existingStock.stock - product.quantity
