@@ -1,5 +1,4 @@
-import { Edit, Link, Shield, Trash2, UserCheck } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -15,9 +14,11 @@ import { format } from "date-fns";
 interface UsersTableProps {
   users: Users[];
   loading: boolean;
+  onEdit: (user: Users) => void;
+  onDelete: (id: string) => void;
 }
 
-const UsersTable = ({ users, loading }: UsersTableProps) => {
+const UsersTable = ({ users, loading, onEdit, onDelete }: UsersTableProps) => {
   return (
     <Table>
       <TableHeader>
@@ -55,17 +56,23 @@ const UsersTable = ({ users, loading }: UsersTableProps) => {
               <TableCell>{u.branches || "Sin sucursal"}</TableCell>
               <TableCell>{u.role || "Sin roles"}</TableCell>
               <TableCell>
-                {format(
-                  new Date(u.created_at.split("T")[0].replace(/-/g, "/")),
-                  "dd/MM/yyyy",
-                )}
+                {u.created_at
+                  ? format(
+                      new Date(u.created_at.split("T")[0].replace(/-/g, "/")),
+                      "dd/MM/yyyy",
+                    )
+                  : "-"}
               </TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" onClick={() => onEdit(u)}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="destructive" size="icon">
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => onDelete(u.profiles_id)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
