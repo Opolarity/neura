@@ -401,3 +401,12 @@ export const getOrdersSituationsById = async (id: number) => {
 
   return data;
 };
+
+// Fetch sale by ID (consolidated data for editing)
+export const fetchSaleById = async (orderId: number) => {
+  const { data, error } = await supabase.functions.invoke(
+    `get-sale-by-id?id=${orderId}`
+  );
+  if (error) throw error;
+  return data;
+};
