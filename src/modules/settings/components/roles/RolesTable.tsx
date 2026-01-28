@@ -8,9 +8,10 @@ interface RolesTableProps {
     roles: Role[];
     loading: boolean;
     handleDeleteRole: (roleId: number) => void;
+    handleEditRole: (roleId: number) => void;
 }
 
-const RolesTable = ({ roles, loading, handleDeleteRole }: RolesTableProps) => {
+const RolesTable = ({ roles, loading, handleDeleteRole, handleEditRole }: RolesTableProps) => {
     return (
         <Table>
             <TableHeader>
@@ -61,10 +62,8 @@ const RolesTable = ({ roles, loading, handleDeleteRole }: RolesTableProps) => {
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex gap-1">
-                                        <Button variant="ghost" size="sm" asChild>
-                                            <Link to={`/settings/roles/edit/${r.id}`}>
-                                                <Edit className="w-4 h-4" />
-                                            </Link>
+                                        <Button variant="ghost" size="sm" onClick={() => handleEditRole(r.id)}>
+                                            <Edit className="w-4 h-4" />
                                         </Button>
                                         <Button
                                             variant="ghost"

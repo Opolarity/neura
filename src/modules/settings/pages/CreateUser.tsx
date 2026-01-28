@@ -1,19 +1,34 @@
-import React from 'react';
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, ChevronDown, Loader2 } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft, Save, ChevronDown, Loader2 } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import useCreateUser from '../hooks/useCreateUser';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
+import useCreateUser from "../hooks/useCreateUser";
 
 const CreateUser = () => {
   const [searchParams] = useSearchParams();
-  const id = searchParams.get('id');
+  const id = searchParams.get("id");
   const isEdit = !!id;
 
   const {
@@ -39,6 +54,8 @@ const CreateUser = () => {
     showPasswordField,
     setShowPasswordField,
     isRUC,
+    isSearchingDocument,
+    isDocumentFound,
   } = useCreateUser(id, isEdit);
 
   if (fetchingUser) {
@@ -64,7 +81,7 @@ const CreateUser = () => {
             </Button>
           </Link>
           <h1 className="text-2xl font-bold">
-            {isEdit ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
+            {isEdit ? "Editar Usuario" : "Crear Nuevo Usuario"}
           </h1>
         </div>
       </div>
@@ -82,7 +99,9 @@ const CreateUser = () => {
                     <Label>Tipo de Documento</Label>
                     <Select
                       value={formData.document_type_id}
-                      onValueChange={(val) => handleSelectChange('document_type_id', val)}
+                      onValueChange={(val) =>
+                        handleSelectChange("document_type_id", val)
+                      }
                       disabled={isEdit}
                     >
                       <SelectTrigger>
@@ -105,8 +124,14 @@ const CreateUser = () => {
                         placeholder="Ingrese el número"
                         value={formData.document_number}
                         onChange={handleChange}
-                        disabled={isEdit}
+                        disabled={isEdit || !formData.document_type_id}
+                        className={isSearchingDocument ? "pr-10" : ""}
                       />
+                      {isSearchingDocument && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -122,15 +147,17 @@ const CreateUser = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">
-                      {isRUC ? 'Razón Social *' : 'Nombre *'}
+                      {isRUC ? "Razón Social *" : "Nombre *"}
                     </Label>
                     <Input
                       id="name"
-                      placeholder={isRUC ? "Nombre de la empresa" : "Primer nombre"}
+                      placeholder={
+                        isRUC ? "Nombre de la empresa" : "Primer nombre"
+                      }
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      disabled={isEdit}
+                      disabled={isEdit || isDocumentFound}
                     />
                   </div>
 
@@ -144,7 +171,7 @@ const CreateUser = () => {
                           placeholder="Segundo nombre"
                           value={formData.middle_name}
                           onChange={handleChange}
-                          disabled={isEdit}
+                          disabled={isEdit || isDocumentFound}
                         />
                       </div>
                       <div className="space-y-2">
@@ -155,7 +182,7 @@ const CreateUser = () => {
                           value={formData.last_name}
                           onChange={handleChange}
                           required
-                          disabled={isEdit}
+                          disabled={isEdit || isDocumentFound}
                         />
                       </div>
                       <div className="space-y-2">
@@ -165,7 +192,7 @@ const CreateUser = () => {
                           placeholder="Segundo apellido"
                           value={formData.last_name2}
                           onChange={handleChange}
-                          disabled={isEdit}
+                          disabled={isEdit || isDocumentFound}
                         />
                       </div>
                     </>
@@ -195,7 +222,7 @@ const CreateUser = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password">
-                      Contraseña {isEdit ? '(opcional al actualizar)' : '*'}
+                      Contraseña {isEdit ? "(opcional al actualizar)" : "*"}
                     </Label>
                     <div className="flex gap-2">
                       <Input
@@ -212,9 +239,11 @@ const CreateUser = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => setShowPasswordField(!showPasswordField)}
+                          onClick={() =>
+                            setShowPasswordField(!showPasswordField)
+                          }
                         >
-                          {showPasswordField ? 'Cancelar' : 'Cambiar'}
+                          {showPasswordField ? "Cancelar" : "Cambiar"}
                         </Button>
                       )}
                     </div>
@@ -241,13 +270,15 @@ const CreateUser = () => {
                         className="w-full justify-between font-normal"
                       >
                         {formData.role_ids.length > 0
-                          ? `${formData.role_ids.length} seleccionado${formData.role_ids.length > 1 ? 's' : ''}`
-                          : "Seleccionar roles"
-                        }
+                          ? `${formData.role_ids.length} seleccionado${formData.role_ids.length > 1 ? "s" : ""}`
+                          : "Seleccionar roles"}
                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <PopoverContent
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      align="start"
+                    >
                       <Command>
                         <CommandEmpty>No se encontraron roles.</CommandEmpty>
                         <CommandGroup className="max-h-64 overflow-auto">
@@ -282,29 +313,39 @@ const CreateUser = () => {
                         className="w-full justify-between font-normal"
                       >
                         {formData.type_ids.length > 0
-                          ? `${formData.type_ids.length} seleccionado${formData.type_ids.length > 1 ? 's' : ''}`
-                          : "Seleccionar tipos de cuenta"
-                        }
+                          ? `${formData.type_ids.length} seleccionado${formData.type_ids.length > 1 ? "s" : ""}`
+                          : "Seleccionar tipos de cuenta"}
                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <PopoverContent
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      align="start"
+                    >
                       <Command>
                         <CommandEmpty>No se encontraron tipos.</CommandEmpty>
                         <CommandGroup className="max-h-64 overflow-auto">
                           {accountTypes.map((type) => {
-                            const isUseType = type.name?.toUpperCase().includes('USE');
+                            const isUseType = type.name
+                              ?.toUpperCase()
+                              .includes("USE");
                             return (
                               <CommandItem
                                 key={type.id}
                                 onSelect={() => toggleAccountType(type.id)}
-                                className={`cursor-pointer ${isUseType ? 'opacity-50' : ''}`}
-                                disabled={isUseType && formData.type_ids.includes(type.id)}
+                                className={`cursor-pointer ${isUseType ? "opacity-50" : ""}`}
+                                disabled={
+                                  isUseType &&
+                                  formData.type_ids.includes(type.id)
+                                }
                               >
                                 <Checkbox
                                   checked={formData.type_ids.includes(type.id)}
                                   className="mr-2"
-                                  disabled={isUseType && formData.type_ids.includes(type.id)}
+                                  disabled={
+                                    isUseType &&
+                                    formData.type_ids.includes(type.id)
+                                  }
                                 />
                                 {type.name}
                               </CommandItem>
@@ -329,14 +370,19 @@ const CreateUser = () => {
                     <Label>País</Label>
                     <Select
                       value={formData.country_id}
-                      onValueChange={(val) => handleSelectChange('country_id', val)}
+                      onValueChange={(val) =>
+                        handleSelectChange("country_id", val)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar país" />
                       </SelectTrigger>
                       <SelectContent>
                         {countries.map((country) => (
-                          <SelectItem key={country.id} value={country.id.toString()}>
+                          <SelectItem
+                            key={country.id}
+                            value={country.id.toString()}
+                          >
                             {country.name}
                           </SelectItem>
                         ))}
@@ -347,7 +393,9 @@ const CreateUser = () => {
                     <Label>Departamento</Label>
                     <Select
                       value={formData.state_id}
-                      onValueChange={(val) => handleSelectChange('state_id', val)}
+                      onValueChange={(val) =>
+                        handleSelectChange("state_id", val)
+                      }
                       disabled={!formData.country_id}
                     >
                       <SelectTrigger>
@@ -355,7 +403,10 @@ const CreateUser = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {states.map((state) => (
-                          <SelectItem key={state.id} value={state.id.toString()}>
+                          <SelectItem
+                            key={state.id}
+                            value={state.id.toString()}
+                          >
                             {state.name}
                           </SelectItem>
                         ))}
@@ -366,7 +417,9 @@ const CreateUser = () => {
                     <Label>Provincia</Label>
                     <Select
                       value={formData.city_id}
-                      onValueChange={(val) => handleSelectChange('city_id', val)}
+                      onValueChange={(val) =>
+                        handleSelectChange("city_id", val)
+                      }
                       disabled={!formData.state_id}
                     >
                       <SelectTrigger>
@@ -385,7 +438,9 @@ const CreateUser = () => {
                     <Label>Distrito</Label>
                     <Select
                       value={formData.neighborhood_id}
-                      onValueChange={(val) => handleSelectChange('neighborhood_id', val)}
+                      onValueChange={(val) =>
+                        handleSelectChange("neighborhood_id", val)
+                      }
                       disabled={!formData.city_id}
                     >
                       <SelectTrigger>
@@ -393,7 +448,10 @@ const CreateUser = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {neighborhoods.map((neighborhood) => (
-                          <SelectItem key={neighborhood.id} value={neighborhood.id.toString()}>
+                          <SelectItem
+                            key={neighborhood.id}
+                            value={neighborhood.id.toString()}
+                          >
                             {neighborhood.name}
                           </SelectItem>
                         ))}
@@ -410,7 +468,9 @@ const CreateUser = () => {
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="address_reference">Referencia de Dirección</Label>
+                    <Label htmlFor="address_reference">
+                      Referencia de Dirección
+                    </Label>
                     <Input
                       id="address_reference"
                       placeholder="Referencia (ej: cerca al parque)"
@@ -441,7 +501,10 @@ const CreateUser = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {branches.map((branch) => (
-                        <SelectItem key={branch.id} value={branch.id.toString()}>
+                        <SelectItem
+                          key={branch.id}
+                          value={branch.id.toString()}
+                        >
                           {branch.name}
                         </SelectItem>
                       ))}
@@ -452,7 +515,9 @@ const CreateUser = () => {
                   <Label>Almacén *</Label>
                   <Select
                     value={formData.warehouse_id}
-                    onValueChange={(val) => handleSelectChange('warehouse_id', val)}
+                    onValueChange={(val) =>
+                      handleSelectChange("warehouse_id", val)
+                    }
                     disabled={true}
                   >
                     <SelectTrigger>
@@ -460,7 +525,10 @@ const CreateUser = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {warehouses.map((warehouse) => (
-                        <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                        <SelectItem
+                          key={warehouse.id}
+                          value={warehouse.id.toString()}
+                        >
                           {warehouse.name}
                         </SelectItem>
                       ))}
@@ -486,14 +554,13 @@ const CreateUser = () => {
                 ) : (
                   <>
                     <Save className="mr-2 h-4 w-4" />
-                    {isEdit ? 'Actualizar' : 'Crear'} Usuario
+                    {isEdit ? "Actualizar" : "Crear"} Usuario
                   </>
                 )}
               </Button>
             </div>
           </div>
         </div>
-
       </form>
     </div>
   );
