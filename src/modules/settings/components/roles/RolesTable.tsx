@@ -2,7 +2,7 @@ import { Edit, Link, Shield, Trash2, UserCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Role } from '../../types/Roles.types';
+import { Role } from '../types/Roles.types';
 
 interface RolesTableProps {
     roles: Role[];
