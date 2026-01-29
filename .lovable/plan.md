@@ -1,127 +1,213 @@
 
-## Plan: Prevenir duplicados y resaltar productos existentes en Crear Venta
+
+## Plan: Filtrar productos por almacén seleccionado en Crear Venta
 
 ### Resumen
-Cuando el usuario intente agregar un producto que ya está en la tabla de productos agregados (misma variación Y mismo tipo de inventario), el sistema no lo agregará nuevamente. En su lugar, mostrará una notificación y resaltará temporalmente la fila del producto existente.
-
-Si el usuario selecciona el mismo producto pero con un tipo de inventario diferente, se permitirá agregarlo como una nueva fila.
+Actualmente, al buscar productos en la pantalla de crear venta, el stock que se muestra es la suma de todos los almacenes. El usuario necesita que el stock mostrado sea únicamente del almacén seleccionado en el modal inicial (y que se mantiene en el campo "Almacén" de la sección "Información de la Venta").
 
 ---
 
 ### Cambios a implementar
 
-#### 1. Agregar estado para el resaltado de filas
+#### 1. Modificar Edge Function `get-sale-products`
 
-Se agregará un estado en el componente `CreateSale.tsx` para rastrear qué índice de fila debe resaltarse temporalmente.
+**Archivo:** `supabase/functions/get-sale-products/index.ts`
 
-#### 2. Modificar la función `addProduct` en `useCreateSale.ts`
+Agregar un nuevo parámetro `p_warehouse_id` que se pasará al RPC:
 
-**Lógica actual:**
-- Valida que haya una variación seleccionada
-- Valida que haya un tipo de inventario seleccionado
-- Valida que haya stock disponible
-- Agrega el producto directamente
-
-**Nueva lógica:**
-- Antes de agregar, verificar si ya existe un producto con el mismo `variationId` Y `stockTypeId`
-- Si existe: retornar el índice del producto existente (en lugar de agregar)
-- Si no existe: agregar normalmente
-
-La función retornará un objeto con información sobre si se agregó o si ya existía:
 ```typescript
-{ added: true } | { added: false, existingIndex: number }
-```
+const p_warehouse_id = url.searchParams.get("p_warehouse_id") 
+  ? parseInt(url.searchParams.get("p_warehouse_id")!) 
+  : null;
 
-#### 3. Manejar el resaltado en `CreateSale.tsx`
-
-- Capturar el resultado de `addProduct()`
-- Si ya existía, activar el estado de resaltado con el índice correspondiente
-- Aplicar una clase CSS de animación a la fila
-- Después de la animación (ej: 1.5s), limpiar el estado
-
-#### 4. Estilos de animación
-
-Agregar estilos CSS para el efecto de resaltado (flash amarillo/dorado que desaparece gradualmente).
-
----
-
-### Detalles técnicos
-
-**Archivo: `src/modules/sales/hooks/useCreateSale.ts`**
-
-Modificar `addProduct` para:
-```typescript
-const addProduct = useCallback((): { added: boolean; existingIndex?: number } => {
-  // ... validaciones existentes ...
-  
-  // Nueva validación de duplicados
-  const existingIndex = products.findIndex(
-    (p) => p.variationId === selectedVariation.id && 
-           p.stockTypeId === parseInt(selectedStockTypeId)
-  );
-  
-  if (existingIndex !== -1) {
-    // Ya existe con el mismo tipo de inventario
-    toast({
-      title: "Producto ya agregado",
-      description: "Este producto ya está en la lista con el mismo tipo de inventario",
-    });
-    return { added: false, existingIndex };
-  }
-  
-  // Agregar normalmente...
-  return { added: true };
-}, [selectedVariation, formData.priceListId, selectedStockTypeId, products, toast]);
-```
-
-**Archivo: `src/modules/sales/pages/CreateSale.tsx`**
-
-1. Agregar estado:
-```typescript
-const [highlightedRowIndex, setHighlightedRowIndex] = useState<number | null>(null);
-```
-
-2. Modificar el onClick del botón Agregar:
-```typescript
-onClick={() => {
-  const result = addProduct();
-  if (!result.added && result.existingIndex !== undefined) {
-    setHighlightedRowIndex(result.existingIndex);
-    setTimeout(() => setHighlightedRowIndex(null), 1500);
-  }
-}}
-```
-
-3. Agregar clase condicional a TableRow:
-```typescript
-<TableRow 
-  key={index}
-  className={cn(
-    highlightedRowIndex === index && "animate-highlight-row"
-  )}
->
-```
-
-**Archivo: `src/index.css` o `src/App.css`**
-
-Agregar animación:
-```css
-@keyframes highlight-flash {
-  0% { background-color: rgb(234 179 8 / 0.5); }
-  100% { background-color: transparent; }
-}
-
-.animate-highlight-row {
-  animation: highlight-flash 1.5s ease-out;
-}
+const { data, error } = await supabase.rpc("sp_get_sale_products", {
+  p_page,
+  p_size,
+  p_search,
+  p_stock_type_id,
+  p_warehouse_id,  // Nuevo parámetro
+});
 ```
 
 ---
 
-### Comportamiento esperado
+#### 2. Modificar el servicio `fetchSaleProducts`
 
-| Escenario | Resultado |
-|-----------|-----------|
-| Agregar producto nuevo | Se agrega normalmente |
-| Agregar mismo producto + mismo tipo inventario | No se agrega, se muestra toast, se resalta fila existente |
-| Agregar mismo producto + diferente tipo inventario | Se agrega como nueva fila |
+**Archivo:** `src/modules/sales/services/index.ts`
+
+Agregar `warehouseId` a la interfaz de parámetros y al query string:
+
+```typescript
+export interface FetchSaleProductsParams {
+  page?: number;
+  size?: number;
+  search?: string;
+  stockTypeId?: number;
+  warehouseId?: number;  // Nuevo
+}
+
+// En la función:
+if (params.warehouseId)
+  queryParams.set("p_warehouse_id", String(params.warehouseId));
+```
+
+---
+
+#### 3. Modificar la función `loadProducts`
+
+**Archivo:** `src/modules/sales/hooks/useCreateSale.ts`
+
+Agregar el parámetro `warehouseId` a la función y pasarlo al servicio:
+
+```typescript
+const loadProducts = async (
+  page: number,
+  search: string,
+  stockTypeId?: number,
+  warehouseId?: number,  // Nuevo
+) => {
+  // ...
+  const result = await fetchSaleProducts({
+    page,
+    size: 10,
+    search: search || undefined,
+    stockTypeId,
+    warehouseId,  // Pasarlo al servicio
+  });
+  // ...
+};
+```
+
+---
+
+#### 4. Actualizar todas las llamadas a `loadProducts`
+
+Hay 4 lugares donde se llama a `loadProducts`:
+
+1. **useEffect inicial (línea ~166)**:
+   ```typescript
+   loadProducts(1, "", undefined, userWarehouseId || undefined);
+   ```
+   
+2. **useEffect de debounce (línea ~197)**:
+   ```typescript
+   loadProducts(
+     1,
+     searchQuery,
+     selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
+     userWarehouseId || undefined,
+   );
+   ```
+
+3. **handleProductPageChange (línea ~385)**:
+   ```typescript
+   loadProducts(
+     newPage,
+     searchQuery,
+     selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
+     userWarehouseId || undefined,
+   );
+   ```
+
+4. **Llamada inicial**: Debe esperar a que `userWarehouseId` esté cargado antes de cargar productos.
+
+---
+
+#### 5. Ajustar dependencias del useEffect
+
+El useEffect de debounce debe incluir `userWarehouseId` en sus dependencias para recargar cuando cambie:
+
+```typescript
+useEffect(() => {
+  // No cargar si no hay warehouse asignado aún
+  if (!userWarehouseId) return;
+  
+  if (searchDebounceRef.current) {
+    clearTimeout(searchDebounceRef.current);
+  }
+  searchDebounceRef.current = setTimeout(() => {
+    setProductPage(1);
+    loadProducts(
+      1,
+      searchQuery,
+      selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
+      userWarehouseId,
+    );
+  }, 300);
+
+  return () => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+  };
+}, [searchQuery, selectedStockTypeId, userWarehouseId]);
+```
+
+---
+
+#### 6. Modificar el RPC `sp_get_sale_products` en la base de datos
+
+El stored procedure debe ser modificado para aceptar y usar el nuevo parámetro `p_warehouse_id`.
+
+La lógica de filtrado de stock debe cambiar de:
+- Suma de stock en todos los almacenes
+  
+A:
+- Stock solo del almacén especificado (si se proporciona)
+
+---
+
+### Flujo de datos actualizado
+
+```text
+Usuario selecciona almacén en modal
+         ↓
+userWarehouseId se guarda en estado
+         ↓
+Usuario busca productos
+         ↓
+loadProducts(page, search, stockTypeId, warehouseId)
+         ↓
+fetchSaleProducts({ ..., warehouseId })
+         ↓
+GET /get-sale-products?...&p_warehouse_id=X
+         ↓
+RPC sp_get_sale_products(p_warehouse_id)
+         ↓
+Devuelve stock filtrado por almacén
+```
+
+---
+
+### Archivos a modificar
+
+| Archivo | Cambio |
+|---------|--------|
+| `supabase/functions/get-sale-products/index.ts` | Agregar parámetro `p_warehouse_id` |
+| `src/modules/sales/services/index.ts` | Agregar `warehouseId` a interfaz y query params |
+| `src/modules/sales/hooks/useCreateSale.ts` | Modificar `loadProducts` y sus llamadas |
+| **Base de datos (RPC)** | Modificar `sp_get_sale_products` para filtrar por almacén |
+
+---
+
+### Sección técnica
+
+#### Dependencia crítica: Modificación del RPC
+
+El RPC `sp_get_sale_products` debe ser modificado para aceptar el parámetro `p_warehouse_id`. La consulta de stock dentro del RPC actualmente hace algo como:
+
+```sql
+SELECT SUM(stock) FROM product_stock WHERE product_variation_id = ...
+```
+
+Debe cambiar a:
+
+```sql
+SELECT stock FROM product_stock 
+WHERE product_variation_id = ... 
+  AND warehouse_id = p_warehouse_id
+  AND (p_stock_type_id IS NULL OR stock_type_id = p_stock_type_id)
+```
+
+Esta modificación requiere acceso a la base de datos para alterar la función.
+
