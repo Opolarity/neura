@@ -35,6 +35,14 @@ export const WareApi = async (
 };
 
 
+export const GetWarehousesDetails = async (warehouseId: number): Promise<WarehousesApiResponse> => {
+    const { data, error } = await supabase.functions.invoke("get-warehouses-details", {
+        body: { warehouseID: warehouseId },
+    });
+    if (error) throw error;
+    return data ?? [];
+}
+
 export const DeleteWarehouses = async (warehouseId: number): Promise<WarehousesApiResponse> => {
     const { data, error } = await supabase.functions.invoke("delete-warehouses", {
         body: { warehousesID: warehouseId },
@@ -44,7 +52,6 @@ export const DeleteWarehouses = async (warehouseId: number): Promise<WarehousesA
 }
 
 export const CreateWarehouses = async (warehouse: Warehouses): Promise<WarehousesApiResponse> => {
-    // Map to the specific payload structure expected by Deno (including typos)
     const payload = {
         name: warehouse.name,
         countryID: warehouse.countries,
@@ -65,14 +72,6 @@ export const CreateWarehouses = async (warehouse: Warehouses): Promise<Warehouse
 }
 
 export const UpdateWarehouses = async (warehouse: Warehouses): Promise<WarehousesApiResponse> => {
-    // Assuming update follows similar structure or the existing body wrapper.
-    // However, usually update also needs specific fields. 
-    // START ANALYSIS: The prompt didn't show the update code, but standard practice suggests matching the create structure or existing.
-    // The existing code was: body: { warehouse }. 
-    // I will keep it wrapper-based for now unless I see the update code, BUT I should probably map the fields too if the backend changed.
-    // Safer to keep existing wrapper for Update if I haven't seen the code, 
-    // BUT the Create one definitely needs the flat structure shown in user prompt.
-    // Let's stick to the previous pattern for Update but ensure Types match.
 
     const { data, error } = await supabase.functions.invoke("update-warehouse", {
         method: "PUT",
@@ -81,6 +80,8 @@ export const UpdateWarehouses = async (warehouse: Warehouses): Promise<Warehouse
     if (error) throw error;
     return data ?? [];
 }
+
+
 
 export const BranchesAPI = async (): Promise<IdModalResponse[]> => {
     const { data, error } = await supabase

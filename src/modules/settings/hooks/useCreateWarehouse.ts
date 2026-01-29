@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/shared/hooks";
 import {
     CreateWarehouses,
@@ -7,7 +7,8 @@ import {
     CounrtyApi,
     StateApi,
     CityApi,
-    NeighborhoodApi
+    NeighborhoodApi,
+    GetWarehousesDetails
 } from '../services/Warehouses.services';
 import { Warehouses, IdModalResponse } from '../types/Warehouses.types';
 
@@ -29,8 +30,6 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
     // Loading states
     const [loading, setLoading] = useState(false);
     const [optionsLoading, setOptionsLoading] = useState(true);
-
-    // Options state
     const [countries, setCountries] = useState<IdModalResponse[]>([]);
     const [states, setStates] = useState<IdModalResponse[]>([]);
     const [cities, setCities] = useState<IdModalResponse[]>([]);
@@ -45,8 +44,23 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         neighborhoods: null,
         address: '',
         address_reference: '',
-        web: false,
+        web: null,
     });
+    const [initialData, setInitialData] = useState<FormData | null>(null);
+
+    const hasChanges = () => {
+        if (!initialData) return false;
+        return (
+            formData.name !== initialData.name ||
+            Number(formData.countries) !== Number(initialData.countries) ||
+            Number(formData.states) !== Number(initialData.states) ||
+            Number(formData.cities) !== Number(initialData.cities) ||
+            Number(formData.neighborhoods) !== Number(initialData.neighborhoods) ||
+            formData.address !== initialData.address ||
+            formData.address_reference !== initialData.address_reference ||
+            formData.web !== initialData.web
+        );
+    };
 
     // Fetch initial options
     useEffect(() => {
@@ -79,70 +93,61 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         fetchOptions();
     }, []);
 
-    // Load states when country changes
+    // Fetch details if isEdit
     useEffect(() => {
-        const loadStates = async () => {
-            if (formData.countries) {
+        if (isEdit && warehouseId) {
+            const fetchDetails = async () => {
+                setLoading(true);
                 try {
-                    const statesData = await StateApi(formData.countries);
-                    setStates(statesData || []);
-                    // Reset dependent fields
-                    setFormData(prev => ({ ...prev, states: null, cities: null, neighborhoods: null }));
-                    setCities([]);
-                    setNeighborhoods([]);
+                    const response = await GetWarehousesDetails(warehouseId);
+
+                    if (response.warehouse) {
+                        const warehouse = response.warehouse;
+                        const countryId = Number(warehouse.countries);
+                        const stateId = Number(warehouse.states);
+                        const cityId = Number(warehouse.cities);
+                        const neighborhoodId = warehouse.neighborhoods ? Number(warehouse.neighborhoods) : null;
+
+                        // PRIMERO cargar todas las opciones en cascada
+                        const statesData = await StateApi(countryId);
+                        setStates(statesData || []);
+
+                        const citiesData = await CityApi(countryId, stateId);
+                        setCities(citiesData || []);
+
+                        const neighborhoodsData = neighborhoodId
+                            ? await NeighborhoodApi(countryId, stateId, cityId)
+                            : [];
+                        setNeighborhoods(neighborhoodsData || []);
+
+                        const initialFormData = {
+                            name: warehouse.name || "",
+                            countries: countryId,
+                            states: stateId,
+                            cities: cityId,
+                            neighborhoods: neighborhoodId,
+                            address: warehouse.address || "",
+                            address_reference: warehouse.address_reference || "",
+                            web: warehouse.web || false,
+                        };
+                        setFormData(initialFormData);
+                        setInitialData(initialFormData);
+                    }
                 } catch (error) {
-                    console.error('Error loading states:', error);
+                    console.error('Error fetching warehouse details:', error);
+                    toast({
+                        title: "Error",
+                        description: "No se pudieron cargar los detalles del almacén",
+                        variant: "destructive",
+                    });
+                } finally {
+                    setLoading(false);
                 }
-            }
-        };
-
-        if (!optionsLoading) {
-            loadStates();
+            };
+            fetchDetails();
         }
-    }, [formData.countries]);
+    }, [warehouseId, isEdit]);
 
-    // Load cities when state changes
-    useEffect(() => {
-        const loadCities = async () => {
-            if (formData.states && formData.countries) {
-                try {
-                    const citiesData = await CityApi(formData.countries, formData.states);
-                    setCities(citiesData || []);
-                    // Reset dependent fields
-                    setFormData(prev => ({ ...prev, cities: null, neighborhoods: null }));
-                    setNeighborhoods([]);
-                } catch (error) {
-                    console.error('Error loading cities:', error);
-                }
-            }
-        };
-
-        if (!optionsLoading) {
-            loadCities();
-        }
-    }, [formData.states]);
-
-    // Load neighborhoods when city changes
-    useEffect(() => {
-        const loadNeighborhoods = async () => {
-            if (formData.cities && formData.countries && formData.states) {
-                try {
-                    const neighborhoodsData = await NeighborhoodApi(formData.countries, formData.states, formData.cities);
-                    setNeighborhoods(neighborhoodsData || []);
-                    setFormData(prev => ({ ...prev, neighborhoods: null }));
-                } catch (error) {
-                    console.error('Error loading neighborhoods:', error);
-                }
-            }
-        };
-
-        if (!optionsLoading) {
-            loadNeighborhoods();
-        }
-    }, [formData.cities]);
-
-
-    // Handlers
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
         setFormData(prev => ({ ...prev, [id]: value }));
@@ -152,10 +157,65 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         setFormData(prev => ({ ...prev, web: checked }));
     }
 
-    const handleSelectChange = (field: string, value: string) => {
+    const handleSelectChange = async (field: string, value: string) => {
         const numericFields = ['branches', 'countries', 'states', 'cities', 'neighborhoods'];
         const parsedValue = numericFields.includes(field) ? parseInt(value) : value;
-        setFormData(prev => ({ ...prev, [field]: parsedValue }));
+        const numericValue = typeof parsedValue === 'number' ? parsedValue : 0;
+
+        if (field === 'countries') {
+            setFormData(prev => ({
+                ...prev,
+                countries: numericValue,
+                states: null,
+                cities: null,
+                neighborhoods: null
+            }));
+            setStates([]);
+            setCities([]);
+            setNeighborhoods([]);
+
+            try {
+                const statesData = await StateApi(numericValue);
+                setStates(statesData || []);
+            } catch (error) { console.error(error); }
+
+        } else if (field === 'states') {
+            setFormData(prev => ({
+                ...prev,
+                states: numericValue,
+                cities: null,
+                neighborhoods: null
+            }));
+            setCities([]);
+            setNeighborhoods([]);
+
+            // Load cities
+            if (formData.countries) {
+                try {
+                    const citiesData = await CityApi(formData.countries, numericValue);
+                    setCities(citiesData || []);
+                } catch (error) { console.error(error); }
+            }
+
+        } else if (field === 'cities') {
+            setFormData(prev => ({
+                ...prev,
+                cities: numericValue,
+                neighborhoods: null
+            }));
+            setNeighborhoods([]);
+
+            // Load neighborhoods
+            if (formData.countries && formData.states) {
+                try {
+                    const neighborhoodsData = await NeighborhoodApi(formData.countries, formData.states, numericValue);
+                    setNeighborhoods(neighborhoodsData || []);
+                } catch (error) { console.error(error); }
+            }
+        } else {
+            // Normal update
+            setFormData(prev => ({ ...prev, [field]: parsedValue }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -225,6 +285,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         handleSwitchChange,
         handleSelectChange,
         handleSubmit,
+        hasChanges: hasChanges()
     };
 };
 

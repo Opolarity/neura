@@ -71,7 +71,7 @@ const WarehousesTable = ({ warehouses, loading, handleDeleteWarehouse }: Warehou
                                 <TableCell>
                                     <div className="flex gap-1">
                                         <Button variant="outline" size="sm" asChild>
-                                            <Link to={`/settings/warehouses/create?id=${w.id}`}>
+                                            <Link to={`/settings/warehouses/edit/${w.id}`}>
                                                 <Edit className="w-4 h-4" />
                                             </Link>
                                         </Button>

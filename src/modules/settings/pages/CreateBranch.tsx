@@ -4,10 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import useCreateBranch from '../hooks/useCreateBranch'
 
 const CreateBranch = () => {
+    const { id } = useParams();
+    const branchId = id ? Number(id) : null;
+
     const {
         formData,
         loading,
@@ -20,7 +23,8 @@ const CreateBranch = () => {
         handleChange,
         handleSelectChange,
         handleSubmit,
-    } = useCreateBranch()
+        hasChanges,
+    } = useCreateBranch(branchId, !!branchId)
 
     if (optionsLoading) {
         return (
@@ -191,8 +195,8 @@ const CreateBranch = () => {
                                         Cancelar
                                     </Button>
                                 </Link>
-                                <Button type="submit" disabled={loading}>
-                                    {loading ? 'Guardando...' : 'Guardar Sucursal'}
+                                <Button type="submit" disabled={loading || (!!branchId && !hasChanges)}>
+                                    {loading ? (branchId ? 'Actualizando...' : 'Guardando...') : (branchId ? 'Actualizar' : 'Guardar Sucursal')}
                                 </Button>
                             </div>
                         </div>

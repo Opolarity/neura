@@ -5,10 +5,13 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import useCreateWarehouse from '../hooks/useCreateWarehouse'
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 
 const CreateWarehouses = () => {
+    const { id } = useParams();
+    const warehouseId = id ? Number(id) : null;
+
     const {
         formData,
         loading,
@@ -21,7 +24,8 @@ const CreateWarehouses = () => {
         handleSwitchChange,
         handleSelectChange,
         handleSubmit,
-    } = useCreateWarehouse()
+        hasChanges,
+    } = useCreateWarehouse(warehouseId, !!warehouseId)
 
     if (optionsLoading) {
         return (
@@ -35,12 +39,12 @@ const CreateWarehouses = () => {
         <div >
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
-                    <Link to="/settings/branches">
+                    <Link to="/settings/warehouses">
                         <Button variant="ghost" size="icon">
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                     </Link>
-                    <h1 className="text-2xl font-bold">Crear Nueva Sucursal</h1>
+                    <h1 className="text-2xl font-bold">Crear Nuevo Almacén</h1>
                 </div>
             </div>
             <form onSubmit={handleSubmit}>
@@ -180,8 +184,8 @@ const CreateWarehouses = () => {
                                 >
                                     Cancelar
                                 </Button>
-                                <Button type="submit" disabled={loading}>
-                                    {loading ? 'Guardando...' : 'Guardar Almacén'}
+                                <Button type="submit" disabled={loading || (!!warehouseId && !hasChanges)}>
+                                    {loading ? (warehouseId ? 'Actualizando...' : 'Guardando...') : (warehouseId ? 'Actualizar' : 'Guardar Almacén')}
                                 </Button>
                             </div>
                         </div>
