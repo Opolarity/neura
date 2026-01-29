@@ -3,13 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
-import UsersTable from '../components/UsersTable';
+import UsersTable from '../components/users/UsersTable';
 import useUsers from '../hooks/useUsers';
-import UsersFilterBar from '../components/UsersFilterBar';
-import UsersFilterModal from '../components/UsersFilterModal';
+import UsersFilterBar from '../components/users/UsersFilterBar';
+import UsersFilterModal from '../components/users/UsersFilterModal';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import { CardFooter } from '@/components/ui/card';
-import UsersDeleteModal from '../components/UsersDeleteModal';
+import UsersDeleteModal from '../components/users/UsersDeleteModal';
 
 
 const UsersList = () => {
