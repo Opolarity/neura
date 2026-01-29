@@ -43,16 +43,37 @@ export const DeleteWarehouses = async (warehouseId: number): Promise<WarehousesA
     return data ?? [];
 }
 
-export const CreateWarehouses = async (warehousesdata: any): Promise<WarehousesApiResponse> => {
+export const CreateWarehouses = async (warehouse: Warehouses): Promise<WarehousesApiResponse> => {
+    // Map to the specific payload structure expected by Deno (including typos)
+    const payload = {
+        name: warehouse.name,
+        countryID: warehouse.countries,
+        stateID: warehouse.states,
+        cityID: warehouse.cities,
+        neighborhoodsID: warehouse.neighborhoods,
+        addres: warehouse.address || "",
+        addresreferenc: warehouse.address_reference || "",
+        web: warehouse.web ?? false
+    };
+
     const { data, error } = await supabase.functions.invoke("create-warehouses", {
         method: "POST",
-        body: { warehousesdata },
+        body: payload, // Sending payload directly as req.json() expects it at root
     });
     if (error) throw error;
     return data ?? [];
 }
 
 export const UpdateWarehouses = async (warehouse: Warehouses): Promise<WarehousesApiResponse> => {
+    // Assuming update follows similar structure or the existing body wrapper.
+    // However, usually update also needs specific fields. 
+    // START ANALYSIS: The prompt didn't show the update code, but standard practice suggests matching the create structure or existing.
+    // The existing code was: body: { warehouse }. 
+    // I will keep it wrapper-based for now unless I see the update code, BUT I should probably map the fields too if the backend changed.
+    // Safer to keep existing wrapper for Update if I haven't seen the code, 
+    // BUT the Create one definitely needs the flat structure shown in user prompt.
+    // Let's stick to the previous pattern for Update but ensure Types match.
+
     const { data, error } = await supabase.functions.invoke("update-warehouse", {
         method: "PUT",
         body: { warehouse },

@@ -1,11 +1,12 @@
-import { Edit, Link, Shield, Trash2, UserCheck } from 'lucide-react';
+import { Edit, Trash2, } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Warehouses } from '../../types/Warehouses.types';
+import { WarehouseView } from '../../types/Warehouses.types';
 
 interface WarehousesTableProps {
-    warehouses: Warehouses[];
+    warehouses: WarehouseView[];
     loading: boolean;
     handleDeleteWarehouse: (warehouseId: number) => void;
 }
@@ -22,6 +23,7 @@ const WarehousesTable = ({ warehouses, loading, handleDeleteWarehouse }: Warehou
                     <TableHead>Ciudad</TableHead>
                     <TableHead>Provincia</TableHead>
                     <TableHead>Distrito</TableHead>
+                    <TableHead>Web</TableHead>
                     <TableHead>Acciones</TableHead>
                 </TableRow>
             </TableHeader>
@@ -40,12 +42,12 @@ const WarehousesTable = ({ warehouses, loading, handleDeleteWarehouse }: Warehou
                             </TableCell>
                         </TableRow>
                     ) : (
-                        warehouses.map((w) => (
-                            <TableRow key={w.id}>
+                        warehouses.map((w, index) => (
+                            <TableRow key={w.id ? `${w.id}-${index}` : index}>
                                 <TableCell className="font-mono text-sm">{w.id}</TableCell>
                                 <TableCell>{w.name}</TableCell>
                                 <TableCell>
-                                    {w.branches}
+                                    {w.branches?.map(b => b.name).filter(name => name && name.trim() !== "").join(", ") || "Sin sucursales"}
                                 </TableCell>
                                 <TableCell>
                                     {w.countries}
@@ -60,12 +62,20 @@ const WarehousesTable = ({ warehouses, loading, handleDeleteWarehouse }: Warehou
                                     {w.neighborhoods}
                                 </TableCell>
                                 <TableCell>
+                                    {w.web ? (
+                                        <Badge className="bg-green-400 hover:bg-green-400">Activo</Badge>
+                                    ) : (
+                                        <Badge className="bg-red-400 hover:bg-red-400">Inactivo</Badge>
+                                    )}
+                                </TableCell>
+                                <TableCell>
                                     <div className="flex gap-1">
-                                        <Button variant="ghost" size="sm" asChild>
-                                            <Link to={`/settings/warehouses/edit/${w.id}`}>
+                                        <Button variant="outline" size="sm" asChild>
+                                            <Link to={`/settings/warehouses/create?id=${w.id}`}>
                                                 <Edit className="w-4 h-4" />
                                             </Link>
                                         </Button>
+
                                         <Button
                                             variant="destructive"
                                             size="sm"

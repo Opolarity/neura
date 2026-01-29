@@ -2,10 +2,10 @@ import { Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link } from 'react-router-dom';
-import { Branch } from '../../types/Branches.types';
+import { BranchView } from '../../types/Branches.types';
 
 interface BranchesTableProps {
-    branches: Branch[];
+    branches: BranchView[];
     loading: boolean;
     handleDeleteBranch: (branchId: number) => void;
 }
@@ -40,8 +40,8 @@ const BranchesTable = ({ branches, loading, handleDeleteBranch }: BranchesTableP
                             </TableCell>
                         </TableRow>
                     ) : (
-                        branches.map((branch) => (
-                            <TableRow key={branch.id}>
+                        branches.map((branch, index) => (
+                            <TableRow key={branch.id ? `${branch.id}-${index}` : index}>
                                 <TableCell className="font-mono text-sm">{branch.id}</TableCell>
                                 <TableCell>{branch.name}</TableCell>
                                 <TableCell>{branch.warehouse}</TableCell>
@@ -52,7 +52,7 @@ const BranchesTable = ({ branches, loading, handleDeleteBranch }: BranchesTableP
                                 <TableCell>
                                     <div className="flex gap-1">
                                         <Button variant="ghost" size="sm" asChild>
-                                            <Link to={`/settings/branches/edit/${branch.id}`}>
+                                            <Link to={`/settings/branches/create?id=${branch.id}`}>
                                                 <Edit className="w-4 h-4" />
                                             </Link>
                                         </Button>

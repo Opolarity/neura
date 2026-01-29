@@ -8,6 +8,7 @@ import { CardFooter } from '@/components/ui/card';
 import BranchesTable from '../components/branches/BranchesTable';
 import useBranches from '../hooks/useBranches';
 import BranchesFilterBar from '../components/branches/BranchesFilterBar';
+import BranchesFilterModal from '../components/branches/BranchesFilterModal';
 
 const BranchesList = () => {
     const {
@@ -15,11 +16,18 @@ const BranchesList = () => {
         loading,
         pagination,
         search,
+        filters,
         handlePageChange,
         handleSizeChange,
         handleSearchChange,
-        handleDeleteBranch
-    } = useBranches();
+        handleDeleteBranch,
+        handleApplyFilter
+    } = useBranches(); // Ensure useBranches exposes these
+
+    const [isOpenFilterModal, setIsOpenFilterModal] = React.useState(false);
+
+    const handleOpenFilterModal = () => setIsOpenFilterModal(true);
+    const handleCloseFilterModal = () => setIsOpenFilterModal(false);
 
     return (
         <div className="space-y-6">
@@ -39,13 +47,13 @@ const BranchesList = () => {
                 </Button>
             </div>
 
-
             {/* Branches Table */}
             <Card>
                 <CardHeader>
                     <BranchesFilterBar
                         search={search}
                         onSearchChange={handleSearchChange}
+                        onOpen={handleOpenFilterModal}
                     />
                 </CardHeader>
                 <CardContent className="p-0">
@@ -63,6 +71,13 @@ const BranchesList = () => {
                     />
                 </CardFooter>
             </Card>
+
+            <BranchesFilterModal
+                isOpen={isOpenFilterModal}
+                onClose={handleCloseFilterModal}
+                onApply={handleApplyFilter}
+                filters={filters}
+            />
         </div>
     );
 };

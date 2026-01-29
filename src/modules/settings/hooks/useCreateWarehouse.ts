@@ -4,7 +4,6 @@ import { useToast } from "@/shared/hooks";
 import {
     CreateWarehouses,
     UpdateWarehouses,
-    BranchesAPI,
     CounrtyApi,
     StateApi,
     CityApi,
@@ -18,6 +17,9 @@ interface FormData {
     states: number | null;
     cities: number | null;
     neighborhoods: number | null;
+    address: string;
+    address_reference: string;
+    web: boolean;
 }
 
 const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
@@ -41,18 +43,27 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         states: null,
         cities: null,
         neighborhoods: null,
+        address: '',
+        address_reference: '',
+        web: false,
     });
 
     // Fetch initial options
     useEffect(() => {
         const fetchOptions = async () => {
+            setOptionsLoading(true);
             try {
-                setOptionsLoading(true);
-                const [branchesData, countriesData] = await Promise.all([
-                    BranchesAPI(),
+                // Fetch independently to allow partial success
+                const [cRes] = await Promise.allSettled([
                     CounrtyApi()
                 ]);
-                setCountries(countriesData || []);
+
+                if (cRes.status === 'fulfilled') {
+                    setCountries(cRes.value || []);
+                } else {
+                    console.error('Failed to load countries:', cRes.reason);
+                }
+
             } catch (error) {
                 console.error('Error fetching options:', error);
                 toast({
@@ -130,11 +141,16 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         }
     }, [formData.cities]);
 
+
     // Handlers
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
         setFormData(prev => ({ ...prev, [id]: value }));
     };
+
+    const handleSwitchChange = (checked: boolean) => {
+        setFormData(prev => ({ ...prev, web: checked }));
+    }
 
     const handleSelectChange = (field: string, value: string) => {
         const numericFields = ['branches', 'countries', 'states', 'cities', 'neighborhoods'];
@@ -165,6 +181,9 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
                 states: formData.states || 0,
                 cities: formData.cities,
                 neighborhoods: formData.neighborhoods,
+                address: formData.address,
+                address_reference: formData.address_reference,
+                web: formData.web,
             };
 
             if (isEdit && warehouseId) {
@@ -203,6 +222,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         cities,
         neighborhoods,
         handleChange,
+        handleSwitchChange,
         handleSelectChange,
         handleSubmit,
     };

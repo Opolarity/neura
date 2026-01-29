@@ -1,20 +1,24 @@
 export interface BranchesApiResponse {
     branchesdata: {
-        data: Array<{
-            id: number;
-            name: string;
-            warehouse: number;
-            countries: number;
-            states: number;
-            cities: number;
-            neighborhoods?: number | null;
-        }>;
+        data: Array<BranchView>;
         page: {
             page: number;
             size: number;
             total: number;
         };
     };
+}
+
+export interface BranchView {
+    id: number;
+    name: string;
+    warehouse: string;
+    countries: string;
+    states: string;
+    cities: string;
+    neighborhoods: string | null;
+    address?: string;
+    address_reference?: string;
 }
 
 export interface Branch {
@@ -25,6 +29,8 @@ export interface Branch {
     states: number;
     cities: number;
     neighborhoods?: number | null;
+    address?: string;
+    address_reference?: string;
 }
 
 export interface BranchesFilters {

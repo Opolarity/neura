@@ -1,15 +1,6 @@
 export interface WarehousesApiResponse {
     warehousesdata: {
-        data: Array<{
-            id: number;
-            name: string;
-            branches: number;
-            countries: number;
-            states: number;
-            cities: number | null;
-            neighborhoods: number | null;
-
-        }>;
+        data: Array<WarehouseView>;
         page: {
             page: number;
             size: number;
@@ -18,6 +9,21 @@ export interface WarehousesApiResponse {
     };
 }
 
+// Interface for the List View (data comes joined with names)
+export interface WarehouseView {
+    id: number;
+    name: string;
+    branches: { id: number; name: string }[];
+    countries: string; // Changed to string as per SQL query result (co.name)
+    states: string;    // Changed to string (st.name)
+    cities: string | null; // Changed to string (ci.name)
+    neighborhoods: string | null; // Changed to string (ne.name)
+    address?: string;
+    address_reference?: string;
+    web?: boolean;
+}
+
+// Interface for Creating/Editing (using IDs)
 export interface Warehouses {
     id: number;
     name: string;
@@ -25,6 +31,9 @@ export interface Warehouses {
     states: number;
     cities: number | null;
     neighborhoods: number | null;
+    address?: string;
+    address_reference?: string;
+    web?: boolean;
 }
 
 export interface WarehousesFilters {

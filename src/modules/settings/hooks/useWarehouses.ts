@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Warehouses, WarehousesFilters } from '../types/Warehouses.types';
+import { WarehouseView, WarehousesFilters } from '../types/Warehouses.types';
 import { WareApi, DeleteWarehouses } from '../services/Warehouses.services';
 import { WarehousesAdapter } from '../adapters/Warehouses.adapters';
 import { useToast } from '@/shared/hooks';
@@ -7,7 +7,7 @@ import { useDebounce } from '@/shared/hooks/useDebounce';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
 
 const useWarehouses = () => {
-    const [warehouses, setWarehouses] = useState<Warehouses[]>([]);
+    const [warehouses, setWarehouses] = useState<WarehouseView[]>([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState<WarehousesFilters>({
         page: 1,
