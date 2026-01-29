@@ -160,11 +160,10 @@ export const useCreateSale = () => {
     OrdersSituationsById[]
   >([]);
 
-  // Load initial form data
+  // Load initial form data and user warehouse
   useEffect(() => {
     loadFormData();
-    loadProducts(1, ""); // Load initial products
-    loadUserWarehouse(); // Load user's assigned warehouse
+    loadUserWarehouse();
   }, []);
 
   // Load price lists on mount
@@ -187,8 +186,11 @@ export const useCreateSale = () => {
     }
   }, [formData.withShipping]);
 
-  // Debounced search effect - also re-load when stockTypeId changes
+  // Debounced search effect - also re-load when stockTypeId or warehouseId changes
   useEffect(() => {
+    // Don't load products until we have the warehouse ID
+    if (!userWarehouseId) return;
+
     if (searchDebounceRef.current) {
       clearTimeout(searchDebounceRef.current);
     }
@@ -198,6 +200,7 @@ export const useCreateSale = () => {
         1,
         searchQuery,
         selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
+        userWarehouseId,
       );
     }, 300);
 
@@ -206,7 +209,7 @@ export const useCreateSale = () => {
         clearTimeout(searchDebounceRef.current);
       }
     };
-  }, [searchQuery, selectedStockTypeId]);
+  }, [searchQuery, selectedStockTypeId, userWarehouseId]);
 
   useEffect(() => {
     const load = async () => {
@@ -348,6 +351,7 @@ export const useCreateSale = () => {
     page: number,
     search: string,
     stockTypeId?: number,
+    warehouseId?: number,
   ) => {
     try {
       setProductsLoading(true);
@@ -356,6 +360,7 @@ export const useCreateSale = () => {
         size: 10,
         search: search || undefined,
         stockTypeId,
+        warehouseId,
       });
 
       // Map response with default values for imageUrl and stock
@@ -386,9 +391,10 @@ export const useCreateSale = () => {
         newPage,
         searchQuery,
         selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
+        userWarehouseId || undefined,
       );
     },
-    [searchQuery, selectedStockTypeId],
+    [searchQuery, selectedStockTypeId, userWarehouseId],
   );
 
   // Load price lists
