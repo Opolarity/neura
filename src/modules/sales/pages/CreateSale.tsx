@@ -154,6 +154,7 @@ const CreateSale = () => {
   const [selectedVoucherPreview, setSelectedVoucherPreview] = useState<
     string | null
   >(null);
+  const [highlightedRowIndex, setHighlightedRowIndex] = useState<number | null>(null);
   const noteFileInputRef = useRef<HTMLInputElement>(null);
   const voucherFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -515,7 +516,13 @@ const CreateSale = () => {
                 </div>
                 <Button
                   type="button"
-                  onClick={addProduct}
+                  onClick={() => {
+                    const result = addProduct();
+                    if (!result.added && result.existingIndex !== undefined) {
+                      setHighlightedRowIndex(result.existingIndex);
+                      setTimeout(() => setHighlightedRowIndex(null), 1500);
+                    }
+                  }}
                   disabled={!selectedVariation || !selectedStockTypeId}
                 >
                   <Plus className="w-4 h-4 mr-2" /> Agregar
@@ -544,7 +551,12 @@ const CreateSale = () => {
                   </TableHeader>
                   <TableBody>
                     {products.map((product, index) => (
-                      <TableRow key={index}>
+                      <TableRow
+                        key={index}
+                        className={cn(
+                          highlightedRowIndex === index && "animate-highlight-row"
+                        )}
+                      >
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">
