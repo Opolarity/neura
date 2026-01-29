@@ -1,8 +1,7 @@
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { BranchesApiResponse, Branch } from '../types/Branches.types';
 
-
-
+export type BranchListItem = Branch;
 export const BranchesAdapter = (response: BranchesApiResponse) => {
     const formattedBranches: Branch[] = response.branchesdata.data.map(
         (item) => ({

@@ -33,18 +33,12 @@ const WarehousesFilterModal = ({
             if (isOpen) {
                 setLoading(true);
                 try {
-                    const [branchesData, countriesData, statesData, citiesData, neighborhoodsData] = await Promise.all([
+                    const [branchesData, countriesData] = await Promise.all([
                         BranchesAPI(),
                         CounrtyApi(),
-                        StateApi(),
-                        CityApi(),
-                        NeighborhoodApi(),
                     ]);
                     setBranches(branchesData);
                     setCountries(countriesData);
-                    setStates(statesData);
-                    setCities(citiesData);
-                    setNeighborhoods(neighborhoodsData);
                 } catch (error) {
                     console.error('Error loading filter data:', error);
                 } finally {
