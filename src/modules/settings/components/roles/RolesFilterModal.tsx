@@ -1,22 +1,10 @@
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { RolesFilters, RolesFilterDraft } from "../../types/Roles.types";
-import { useEffect, useState } from "react";
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RolesFilters, RolesFilterDraft } from '../../types/Roles.types';
+import { useEffect, useState } from 'react';
 
 interface RolesFilterModalProps {
   filters: RolesFilters;
@@ -31,11 +19,11 @@ const RolesFilterModal = ({
   onClose,
   onApply,
 }: RolesFilterModalProps) => {
-  const [internalFilters, setInternalFilters] = useState<RolesFilterDraft>({
-    minuser: filters.minuser,
-    maxuser: filters.maxuser,
-    is_admin: filters.is_admin,
-  });
+    const [internalFilters, setInternalFilters] = useState<RolesFilterDraft>({
+        minuser: filters.minuser,
+        maxuser: filters.maxuser,
+        is_admin: filters.is_admin,
+    });
 
   const handleIsAdminChange = (value: string) => {
     setInternalFilters((prev) => ({
@@ -58,13 +46,13 @@ const RolesFilterModal = ({
     }));
   };
 
-  const handleClear = () => {
-    setInternalFilters({
-      minuser: null,
-      maxuser: null,
-      is_admin: null,
-    });
-  };
+    const handleClear = () => {
+        setInternalFilters({
+            minuser: null,
+            maxuser: null,
+            is_admin: null,
+        });
+    };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -119,19 +107,17 @@ const RolesFilterModal = ({
           </div>
         </div>
 
-        <DialogFooter className="flex gap-2">
-          <Button variant="outline" onClick={handleClear}>
-            Limpiar
-          </Button>
-          <Button
-            onClick={() => onApply({ ...filters, ...internalFilters, page: 1 })}
-          >
-            Aplicar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+                <DialogFooter className="flex gap-2">
+                    <Button variant="outline" onClick={handleClear}>
+                        Limpiar
+                    </Button>
+                    <Button onClick={() => onApply({ ...filters, ...internalFilters, page: 1 })}>
+                        Aplicar
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
 };
 
 export default RolesFilterModal;

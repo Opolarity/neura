@@ -9,7 +9,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import useCreateRole from "../hooks/useCreateRole";
-import { RolePayload } from "../types/Roles.types";
+import { RolePayload } from '../types/Roles.types';
 
 interface Function {
   id: number;
@@ -30,14 +30,13 @@ const CreateRole = () => {
   const isEdit = Boolean(roleId);
   const { toast } = useToast();
 
-  const { role, createLoading, createRole, updateLoading, updateRole } =
-    useCreateRole();
+  const { role, createLoading, createRole, updateLoading, updateRole } = useCreateRole();
 
   const [formData, setFormData] = useState<RolePayload>({
     id: null,
-    name: "",
+    name: '',
     admin: false,
-    functions: [],
+    functions: []
   });
 
   const [functions, setFunctions] = useState<Function[]>([]);
@@ -98,7 +97,7 @@ const CreateRole = () => {
       setFormData({
         name: roleData.name,
         admin: roleData.admin,
-        functions: roleFunctions.map((rf) => rf.function_id),
+        functions: roleFunctions.map(rf => rf.function_id)
       });
     } catch (error) {
       console.error("Error fetching role:", error);
@@ -162,7 +161,7 @@ const CreateRole = () => {
     }
     setFormData({
       ...formData,
-      functions: Array.from(newSelected),
+      functions: Array.from(newSelected)
     });
   };
 
@@ -275,8 +274,9 @@ const CreateRole = () => {
           </h1>
           <p className="text-muted-foreground mt-2">
             {isEdit
-              ? "Modifica la información del rol y sus funciones asignadas"
-              : "Completa la información para crear un nuevo rol"}
+              ? 'Modifica la información del rol y sus funciones asignadas'
+              : 'Completa la información para crear un nuevo rol'
+            }
           </p>
         </div>
       </div>
@@ -296,9 +296,7 @@ const CreateRole = () => {
                     id="name"
                     placeholder="Ingresa el nombre del rol"
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
                 </div>
@@ -307,9 +305,7 @@ const CreateRole = () => {
                   <Checkbox
                     id="admin"
                     checked={formData.admin}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, admin: checked as boolean })
-                    }
+                    onCheckedChange={(checked) => setFormData({ ...formData, admin: checked as boolean })}
                   />
                   <Label htmlFor="admin">Rol de Administrador</Label>
                 </div>
@@ -342,12 +338,8 @@ const CreateRole = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-sm font-medium">
-                    Funciones seleccionadas:
-                  </p>
-                  <p className="text-2xl font-bold text-primary">
-                    {formData.functions.length}
-                  </p>
+                  <p className="text-sm font-medium">Funciones seleccionadas:</p>
+                  <p className="text-2xl font-bold text-primary">{formData.functions.length}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Tipo de rol:</p>

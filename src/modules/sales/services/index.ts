@@ -66,6 +66,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
       subtotal: orderData.subtotal,
       discount: orderData.discount,
       total: orderData.total,
+      is_existing_client: orderData.isExistingClient,
       products: orderData.products.map((p) => ({
         variation_id: p.variationId,
         quantity: p.quantity,
@@ -398,5 +399,14 @@ export const getOrdersSituationsById = async (id: number) => {
   if (error) throw error;
   if (!data) throw new Error("No data returned from getOrdersSituationsById");
 
+  return data;
+};
+
+// Fetch sale by ID (consolidated data for editing)
+export const fetchSaleById = async (orderId: number) => {
+  const { data, error } = await supabase.functions.invoke(
+    `get-sale-by-id?id=${orderId}`
+  );
+  if (error) throw error;
   return data;
 };
