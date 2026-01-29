@@ -106,7 +106,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
                         const countryId = Number(warehouse.countries);
                         const stateId = Number(warehouse.states);
                         const cityId = Number(warehouse.cities);
-                        const neighborhoodId = warehouse.neighborhoods ? Number(warehouse.neighborhoods) : null;
+                        const neighborhoodId = Number(warehouse.neighborhoods);
 
                         // PRIMERO cargar todas las opciones en cascada
                         const statesData = await StateApi(countryId);
