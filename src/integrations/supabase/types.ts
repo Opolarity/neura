@@ -739,6 +739,7 @@ export type Database = {
       }
       notes: {
         Row: {
+          code: string | null
           created_at: string
           id: number
           image_url: string | null
@@ -746,6 +747,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          code?: string | null
           created_at?: string
           id?: number
           image_url?: string | null
@@ -753,6 +755,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          code?: string | null
           created_at?: string
           id?: number
           image_url?: string | null
@@ -2300,44 +2303,32 @@ export type Database = {
           },
         ]
       }
-      supplier_quotations: {
+      supplier_classes: {
         Row: {
-          created_at: string
-          created_by: string
           id: number
-          price: number | null
-          quantity: number | null
-          request_description: string
+          spplier_class_id: number
           supplier_id: number
         }
         Insert: {
-          created_at?: string
-          created_by?: string
           id?: number
-          price?: number | null
-          quantity?: number | null
-          request_description: string
+          spplier_class_id: number
           supplier_id: number
         }
         Update: {
-          created_at?: string
-          created_by?: string
           id?: number
-          price?: number | null
-          quantity?: number | null
-          request_description?: string
+          spplier_class_id?: number
           supplier_id?: number
         }
         Relationships: [
           {
-            foreignKeyName: "supplier_quotations_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: "supplier_types_spplier_class_id_fkey"
+            columns: ["spplier_class_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["UID"]
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "supplier_quotations_supplier_id_fkey"
+            foreignKeyName: "supplier_types_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers_profile"
@@ -2402,7 +2393,52 @@ export type Database = {
             foreignKeyName: "supplier_quotations_payments_supplier_quotation_id_fkey"
             columns: ["supplier_quotation_id"]
             isOneToOne: false
-            referencedRelation: "supplier_quotations"
+            referencedRelation: "supplier_service_quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_service_quotations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: number
+          price: number | null
+          quantity: number | null
+          request_description: string
+          supplier_id: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          price?: number | null
+          quantity?: number | null
+          request_description: string
+          supplier_id: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          price?: number | null
+          quantity?: number | null
+          request_description?: string
+          supplier_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_quotations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "supplier_quotations_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers_profile"
             referencedColumns: ["id"]
           },
         ]
@@ -2591,7 +2627,7 @@ export type Database = {
             foreignKeyName: "supplier_services_supplier_quotation_id_fkey"
             columns: ["supplier_quotation_id"]
             isOneToOne: false
-            referencedRelation: "supplier_quotations"
+            referencedRelation: "supplier_service_quotations"
             referencedColumns: ["id"]
           },
           {
@@ -2603,57 +2639,27 @@ export type Database = {
           },
         ]
       }
-      supplier_types: {
-        Row: {
-          id: number
-          spplier_class_id: number
-          supplier_id: number
-        }
-        Insert: {
-          id?: number
-          spplier_class_id: number
-          supplier_id: number
-        }
-        Update: {
-          id?: number
-          spplier_class_id?: number
-          supplier_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "supplier_types_spplier_class_id_fkey"
-            columns: ["spplier_class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supplier_types_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers_profile"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       suppliers_profile: {
         Row: {
           created_at: string
           email: string
           id: number
           phone: number
+          supplier_type_id: number
         }
         Insert: {
           created_at?: string
           email?: string
           id: number
           phone: number
+          supplier_type_id: number
         }
         Update: {
           created_at?: string
           email?: string
           id?: number
           phone?: number
+          supplier_type_id?: number
         }
         Relationships: [
           {
@@ -2661,6 +2667,13 @@ export type Database = {
             columns: ["id"]
             isOneToOne: true
             referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suppliers_profile_supplier_type_id_fkey"
+            columns: ["supplier_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
             referencedColumns: ["id"]
           },
         ]
