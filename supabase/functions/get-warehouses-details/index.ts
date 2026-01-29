@@ -37,7 +37,7 @@ serve(async (req) => {
     // Fetch product basic data
     const { data: warehouses, error: warehousesError } = await supabase
       .from('warehouses')
-      .select('id, name, branch_id, country_id, state_id, city_id, neighborhood_id')
+      .select('id, name, branch_id, country_id, state_id, city_id, neighborhood_id', 'address', 'address_reference', 'web')
       .eq('id', warehouseID)
       .single();
 
@@ -54,6 +54,10 @@ serve(async (req) => {
         state_id: warehouses.state_id,
         city_id: warehouses.city_id,
         neighborhood_id: warehouses.neighborhood_id,
+        address: warehouses.address,
+        address_reference: warehouses.address_reference,
+        web: warehouses.web,
+        is_active: true,
       },
 
     };

@@ -37,7 +37,7 @@ serve(async (req) => {
     // Fetch product basic data
     const { data: branches, error: branchesError } = await supabase
       .from('branches')
-      .select('id, name, warehouses_id, country_id, state_id, city_id, neighborhood_id')
+      .select('id, name, warehouses_id, country_id, state_id, city_id, neighborhood_id', 'address', 'address_reference')
       .eq('id', warehouseID)
       .single();
 
@@ -54,6 +54,9 @@ serve(async (req) => {
         state_id: branches.state_id,
         city_id: branches.city_id,
         neighborhood_id: branches.neighborhood_id,
+        address: branches.address,
+        address_reference: branches.address_reference,
+        is_active: true,
       },
 
     };

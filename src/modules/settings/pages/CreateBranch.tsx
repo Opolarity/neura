@@ -31,7 +31,7 @@ const CreateBranch = () => {
     }
 
     return (
-        <div className="container mx-auto p-6 max-w-4xl">
+        <div >
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                     <Link to="/settings/branches">
@@ -159,6 +159,26 @@ const CreateBranch = () => {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="address">Dirección</Label>
+                                <Input
+                                    id="address"
+                                    value={formData.address}
+                                    onChange={handleChange}
+                                    placeholder="Ingrese la dirección"
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="address_reference">Referencia de Dirección</Label>
+                                <Input
+                                    id="address_reference"
+                                    value={formData.address_reference}
+                                    onChange={handleChange}
+                                    placeholder="Ingrese referencia de la dirección"
+                                />
                             </div>
 
                             <div className="flex justify-end gap-2 pt-4">

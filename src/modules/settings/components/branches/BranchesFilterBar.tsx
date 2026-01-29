@@ -5,11 +5,13 @@ import { ListFilter } from "lucide-react";
 interface BranchesFilterBarProps {
     search: string;
     onSearchChange: (text: string) => void;
+    onOpen: () => void;
 }
 
 const BranchesFilterBar = ({
     search,
-    onSearchChange
+    onSearchChange,
+    onOpen
 }: BranchesFilterBarProps) => {
     return (
         <div className="flex items-center gap-2">
@@ -22,11 +24,11 @@ const BranchesFilterBar = ({
                     placeholder="Buscar sucursales..."
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <Button className="gap-2">
-                    <ListFilter className="w-4 h-4" />
-                    Filtrar
-                </Button>
             </div>
+            <Button onClick={onOpen} className="gap-2">
+                <ListFilter className="w-4 h-4" />
+                Filtrar
+            </Button>
         </div>
     )
 }

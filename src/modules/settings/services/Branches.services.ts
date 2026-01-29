@@ -39,10 +39,22 @@ export const DeleteBranch = async (branchesId: number): Promise<BranchesApiRespo
     return data ?? [];
 }
 
-export const CreateBranch = async (branchesdata: any): Promise<BranchesApiResponse> => {
+export const CreateBranch = async (branch: Branch): Promise<BranchesApiResponse> => {
+    // Map to the specific payload structure expected by Deno (including typos)
+    const payload = {
+        name: branch.name,
+        warehouseID: branch.warehouse,
+        contryID: branch.countries, // Typo 'contryID' as per user request/code
+        stateID: branch.states,
+        cityID: branch.cities,
+        neighborhoodsID: branch.neighborhoods,
+        addres: branch.address || "",
+        addresreferenc: branch.address_reference || "",
+    };
+
     const { data, error } = await supabase.functions.invoke("create-branches", {
         method: "POST",
-        body: { branchesdata },
+        body: payload,
     });
     if (error) throw error;
     return data ?? [];

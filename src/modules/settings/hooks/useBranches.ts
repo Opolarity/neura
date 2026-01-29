@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { BranchesFilters } from '../types/Branches.types';
+import { BranchView, BranchesFilters } from '../types/Branches.types';
 import { BranchesApi, DeleteBranch } from '../services/Branches.services';
-import { BranchesAdapter, BranchListItem } from '../adapters/Branches.adapter';
+import { BranchesAdapter } from '../adapters/Branches.adapter';
 import { useToast } from '@/shared/hooks';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
 
 const useBranches = () => {
-    const [branches, setBranches] = useState<BranchListItem[]>([]);
+    const [branches, setBranches] = useState<BranchView[]>([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState<BranchesFilters>({
         page: 1,

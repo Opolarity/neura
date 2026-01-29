@@ -19,6 +19,8 @@ interface FormData {
     states: number | null;
     cities: number | null;
     neighborhoods: number | null;
+    address: string;
+    address_reference: string;
 }
 
 const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
@@ -44,19 +46,33 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
         states: null,
         cities: null,
         neighborhoods: null,
+        address: '',
+        address_reference: '',
     });
 
     // Fetch initial options
     useEffect(() => {
         const fetchOptions = async () => {
+            setOptionsLoading(true);
             try {
-                setOptionsLoading(true);
-                const [warehousesData, countriesData] = await Promise.all([
+                // Fetch independently to allow partial success
+                const [wRes, cRes] = await Promise.allSettled([
                     WarehousesAPI(),
                     CountryApi()
                 ]);
-                setWarehouses(warehousesData || []);
-                setCountries(countriesData || []);
+
+                if (wRes.status === 'fulfilled') {
+                    setWarehouses(wRes.value || []);
+                } else {
+                    console.error('Failed to load warehouses:', wRes.reason);
+                }
+
+                if (cRes.status === 'fulfilled') {
+                    setCountries(cRes.value || []);
+                } else {
+                    console.error('Failed to load countries:', cRes.reason);
+                }
+
             } catch (error) {
                 console.error('Error fetching options:', error);
                 toast({
@@ -170,6 +186,8 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
                 states: Number(formData.states!),
                 cities: Number(formData.cities!),
                 neighborhoods: Number(formData.neighborhoods),
+                address: formData.address,
+                address_reference: formData.address_reference,
             };
 
             console.log("=== Submitting branch payload ===", JSON.stringify(payload, null, 2));
