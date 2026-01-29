@@ -21,6 +21,7 @@ export interface WarehousesApiResponse {
 export interface Warehouses {
     id: number;
     name: string;
+    branches?: number | string;
     countries: number;
     states: number;
     cities: number | null;

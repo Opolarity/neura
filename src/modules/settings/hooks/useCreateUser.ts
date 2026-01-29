@@ -443,6 +443,8 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
         showPasswordField,
         setShowPasswordField,
         isRUC,
+        isSearchingDocument: false,
+        isDocumentFound: false,
     };
 };
 
