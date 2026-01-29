@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Save, ChevronRight, ChevronDown } from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Save, ChevronRight, ChevronDown } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import useCreateRole from "../hooks/useCreateRole";
@@ -55,9 +55,9 @@ const CreateRole = () => {
   const fetchFunctions = async () => {
     try {
       const { data, error } = await supabase
-        .from('functions')
-        .select('*')
-        .order('parent_function', { ascending: true });
+        .from("functions")
+        .select("*")
+        .order("parent_function", { ascending: true });
 
       if (error) throw error;
 
@@ -68,7 +68,7 @@ const CreateRole = () => {
       console.log("functionTree", functionTree);
       setFunctions(functionTree);
     } catch (error) {
-      console.error('Error fetching functions:', error);
+      console.error("Error fetching functions:", error);
       toast({
         title: "Error",
         description: "No se pudieron cargar las funciones",
@@ -80,17 +80,17 @@ const CreateRole = () => {
   const fetchRole = async (id: number) => {
     try {
       const { data: roleData, error: roleError } = await supabase
-        .from('roles')
-        .select('*')
-        .eq('id', id)
+        .from("roles")
+        .select("*")
+        .eq("id", id)
         .single();
 
       if (roleError) throw roleError;
 
       const { data: roleFunctions, error: functionsError } = await supabase
-        .from('role_functions')
-        .select('function_id')
-        .eq('role_id', id);
+        .from("role_functions")
+        .select("function_id")
+        .eq("role_id", id);
 
       if (functionsError) throw functionsError;
 
@@ -100,7 +100,7 @@ const CreateRole = () => {
         functions: roleFunctions.map(rf => rf.function_id)
       });
     } catch (error) {
-      console.error('Error fetching role:', error);
+      console.error("Error fetching role:", error);
       toast({
         title: "Error",
         description: "No se pudo cargar el rol",
@@ -116,12 +116,16 @@ const CreateRole = () => {
     const roots: Function[] = [];
 
     // First pass: create map of all functions
-    functions.forEach(func => {
-      functionMap.set(func.id, { ...func, location: func.location || null, children: [] });
+    functions.forEach((func) => {
+      functionMap.set(func.id, {
+        ...func,
+        location: func.location || null,
+        children: [],
+      });
     });
 
     // Second pass: build tree structure
-    functions.forEach(func => {
+    functions.forEach((func) => {
       const funcWithChildren = functionMap.get(func.id);
       if (!funcWithChildren) return;
 
@@ -162,7 +166,7 @@ const CreateRole = () => {
   };
 
   const renderFunctionTree = (functions: Function[], level = 0) => {
-    return functions.map(func => (
+    return functions.map((func) => (
       <div key={func.id} className={`ml-${level * 4}`}>
         <div className="flex items-center gap-2 py-1">
           {func.children && func.children.length > 0 && (
@@ -195,11 +199,13 @@ const CreateRole = () => {
             {func.name}
           </Label>
         </div>
-        {func.children && func.children.length > 0 && expandedNodes.has(func.id) && (
-          <div className="ml-4">
-            {renderFunctionTree(func.children, level + 1)}
-          </div>
-        )}
+        {func.children &&
+          func.children.length > 0 &&
+          expandedNodes.has(func.id) && (
+            <div className="ml-4">
+              {renderFunctionTree(func.children, level + 1)}
+            </div>
+          )}
       </div>
     ));
   };
@@ -238,9 +244,9 @@ const CreateRole = () => {
         });
       }
 
-      navigate('/settings/roles');
+      navigate("/settings/roles");
     } catch (error) {
-      console.error('Error saving role:', error);
+      console.error("Error saving role:", error);
       toast({
         title: "Error",
         description: "No se pudo guardar el rol",
@@ -264,7 +270,7 @@ const CreateRole = () => {
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            {isEdit ? 'Editar Rol' : 'Crear Rol'}
+            {isEdit ? "Editar Rol" : "Crear Rol"}
           </h1>
           <p className="text-muted-foreground mt-2">
             {isEdit
@@ -338,7 +344,7 @@ const CreateRole = () => {
                 <div>
                   <p className="text-sm font-medium">Tipo de rol:</p>
                   <p className="text-sm text-muted-foreground">
-                    {formData.admin ? 'Administrador' : 'Regular'}
+                    {formData.admin ? "Administrador" : "Regular"}
                   </p>
                 </div>
               </CardContent>
@@ -347,12 +353,10 @@ const CreateRole = () => {
             <div className="flex flex-col gap-2">
               <Button type="submit" className="w-full gap-2">
                 <Save className="w-4 h-4" />
-                {isEdit ? 'Actualizar Rol' : 'Crear Rol'}
+                {isEdit ? "Actualizar Rol" : "Crear Rol"}
               </Button>
               <Button variant="outline" asChild className="w-full">
-                <Link to="/settings/roles">
-                  Cancelar
-                </Link>
+                <Link to="/settings/roles">Cancelar</Link>
               </Button>
             </div>
           </div>
