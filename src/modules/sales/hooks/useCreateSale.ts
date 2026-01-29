@@ -540,6 +540,12 @@ export const useCreateSale = () => {
     [allShippingCosts, salesData?.documentTypes],
   );
 
+  // Handle stock type change - clears selected variation to ensure consistency
+  const handleStockTypeChange = useCallback((value: string) => {
+    setSelectedStockTypeId(value);
+    setSelectedVariation(null);
+  }, []);
+
   // Handle current payment changes
   const handlePaymentChange = useCallback(
     (field: keyof SalePayment, value: string) => {
@@ -1117,7 +1123,7 @@ export const useCreateSale = () => {
     setOrderSituation,
     setSelectedVariation,
     setSearchQuery,
-    setSelectedStockTypeId,
+    handleStockTypeChange,
     handleInputChange,
     handlePaymentChange,
     addPayment,

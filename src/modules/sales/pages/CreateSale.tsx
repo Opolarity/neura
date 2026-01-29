@@ -120,7 +120,7 @@ const CreateSale = () => {
     setOrderSituation,
     setSelectedVariation,
     setSearchQuery,
-    setSelectedStockTypeId,
+    handleStockTypeChange,
     handleInputChange,
     handlePaymentChange,
     addPayment,
@@ -355,7 +355,7 @@ const CreateSale = () => {
                 {/* Stock Type Selector */}
                 <Select
                   value={selectedStockTypeId}
-                  onValueChange={setSelectedStockTypeId}
+                  onValueChange={handleStockTypeChange}
                 >
                   <SelectTrigger className="w-auto min-w-[160px]">
                     <SelectValue placeholder="Tipo inventario" />
