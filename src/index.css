@@ -151,3 +151,13 @@ All colors MUST be HSL.
   border: 1px solid hsl(var(--border));
   color: hsl(var(--foreground));
 }
+
+/* Row highlight animation for duplicate product detection */
+@keyframes highlight-flash {
+  0% { background-color: hsl(45 93% 47% / 0.4); }
+  100% { background-color: transparent; }
+}
+
+.animate-highlight-row {
+  animation: highlight-flash 1.5s ease-out;
+}

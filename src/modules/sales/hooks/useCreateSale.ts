@@ -744,15 +744,15 @@ export const useCreateSale = () => {
     ],
   );
 
-  // Add product to list
-  const addProduct = useCallback(() => {
+  // Add product to list - returns info about whether product was added or already existed
+  const addProduct = useCallback((): { added: boolean; existingIndex?: number } => {
     if (!selectedVariation) {
       toast({
         title: "Error",
         description: "Seleccione una variación",
         variant: "destructive",
       });
-      return;
+      return { added: false };
     }
 
     if (!selectedStockTypeId) {
@@ -761,7 +761,24 @@ export const useCreateSale = () => {
         description: "Seleccione un tipo de inventario",
         variant: "destructive",
       });
-      return;
+      return { added: false };
+    }
+
+    // Check if product with same variation AND same stock type already exists
+    const existingIndex = products.findIndex(
+      (p) =>
+        p.variationId === selectedVariation.id &&
+        p.stockTypeId === parseInt(selectedStockTypeId),
+    );
+
+    if (existingIndex !== -1) {
+      // Product already exists with the same stock type
+      toast({
+        title: "Producto ya agregado",
+        description:
+          "Este producto ya está en la lista con el mismo tipo de inventario",
+      });
+      return { added: false, existingIndex };
     }
 
     // Validate stock is greater than 0
@@ -773,7 +790,7 @@ export const useCreateSale = () => {
           "Este producto no tiene stock disponible para el tipo de inventario seleccionado",
         variant: "destructive",
       });
-      return;
+      return { added: false };
     }
 
     // Find price for selected price list
@@ -811,7 +828,8 @@ export const useCreateSale = () => {
 
     setSearchQuery("");
     setSelectedVariation(null);
-  }, [selectedVariation, formData.priceListId, selectedStockTypeId, toast]);
+    return { added: true };
+  }, [selectedVariation, formData.priceListId, selectedStockTypeId, products, salesData?.stockTypes, toast]);
 
   // Remove product from list
   const removeProduct = useCallback((index: number) => {
