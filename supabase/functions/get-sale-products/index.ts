@@ -26,6 +26,9 @@ Deno.serve(async (req) => {
     const p_stock_type_id = url.searchParams.get("p_stock_type_id") 
       ? parseInt(url.searchParams.get("p_stock_type_id")!) 
       : null;
+    const p_warehouse_id = url.searchParams.get("p_warehouse_id") 
+      ? parseInt(url.searchParams.get("p_warehouse_id")!) 
+      : null;
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -34,6 +37,7 @@ Deno.serve(async (req) => {
       p_size,
       p_search,
       p_stock_type_id,
+      p_warehouse_id,
     });
 
     if (error) {
