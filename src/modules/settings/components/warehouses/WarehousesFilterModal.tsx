@@ -39,22 +39,6 @@ const WarehousesFilterModal = ({
                     ]);
                     setBranches(branchesData);
                     setCountries(countriesData);
-
-                    // If country is selected, load states
-                    if (internalFilters.country) {
-                        const statesData = await StateApi(internalFilters.country);
-                        setStates(statesData);
-                    }
-                    // If state is selected, load cities
-                    if (internalFilters.country && internalFilters.state) {
-                        const citiesData = await CityApi(internalFilters.country, internalFilters.state);
-                        setCities(citiesData);
-                    }
-                    // If city is selected, load neighborhoods
-                    if (internalFilters.country && internalFilters.state && internalFilters.city) {
-                        const neighborhoodsData = await NeighborhoodApi(internalFilters.country, internalFilters.state, internalFilters.city);
-                        setNeighborhoods(neighborhoodsData);
-                    }
                 } catch (error) {
                     console.error('Error loading filter data:', error);
                 } finally {

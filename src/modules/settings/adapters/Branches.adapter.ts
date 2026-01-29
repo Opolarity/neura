@@ -1,17 +1,10 @@
 import { PaginationState } from "@/shared/components/pagination/Pagination";
-import { BranchesApiResponse, BranchView } from '../types/Branches.types';
+import { BranchesApiResponse, Branch } from '../types/Branches.types';
 
+export type BranchListItem = Branch;
 export const BranchesAdapter = (response: BranchesApiResponse) => {
-    // Deduplicate by ID to prevent React "same key" warning
-    const uniqueMap = new Map();
-    response.branchesdata.data.forEach(item => {
-        if (!uniqueMap.has(item.id)) {
-            uniqueMap.set(item.id, item);
-        }
-    });
-
-    const formattedBranches: BranchView[] = Array.from(uniqueMap.values()).map(
-        (item: any) => ({
+    const formattedBranches: Branch[] = response.branchesdata.data.map(
+        (item) => ({
             id: item.id,
             name: item.name,
             warehouse: item.warehouse,
@@ -19,8 +12,6 @@ export const BranchesAdapter = (response: BranchesApiResponse) => {
             states: item.states,
             cities: item.cities,
             neighborhoods: item.neighborhoods,
-            address: item.address,
-            address_reference: item.address_reference,
         })
     );
 

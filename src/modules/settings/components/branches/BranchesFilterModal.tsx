@@ -2,29 +2,30 @@ import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { BranchesFilters, IdNameResponse } from '../../types/Branches.types'
+import { WarehousesFilters, IdModalResponse } from '../../types/Warehouses.types'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { WarehousesAPI, CountryApi, StateApi, CityApi, NeighborhoodApi } from '../../services/Branches.services'
+import { BranchesAPI, CounrtyApi, StateApi, CityApi, NeighborhoodApi } from '../../services/Warehouses.services'
 
-interface BranchesFilterModalProps {
-    filters: BranchesFilters;
+
+interface WarehousesFilterModalProps {
+    filters: WarehousesFilters;
     isOpen: boolean;
     onClose: () => void;
-    onApply?: (filters: BranchesFilters) => void;
+    onApply?: (filters: WarehousesFilters) => void;
 }
 
-const BranchesFilterModal = ({
+const WarehousesFilterModal = ({
     filters,
     isOpen,
     onClose,
     onApply,
-}: BranchesFilterModalProps) => {
-    const [internalFilters, setInternalFilters] = useState<BranchesFilters>(filters);
-    const [warehouses, setWarehouses] = useState<IdNameResponse[]>([]);
-    const [countries, setCountries] = useState<IdNameResponse[]>([]);
-    const [states, setStates] = useState<IdNameResponse[]>([]);
-    const [cities, setCities] = useState<IdNameResponse[]>([]);
-    const [neighborhoods, setNeighborhoods] = useState<IdNameResponse[]>([]);
+}: WarehousesFilterModalProps) => {
+    const [internalFilters, setInternalFilters] = useState<WarehousesFilters>(filters);
+    const [branches, setBranches] = useState<IdModalResponse[]>([]);
+    const [countries, setCountries] = useState<IdModalResponse[]>([]);
+    const [states, setStates] = useState<IdModalResponse[]>([]);
+    const [cities, setCities] = useState<IdModalResponse[]>([]);
+    const [neighborhoods, setNeighborhoods] = useState<IdModalResponse[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -32,29 +33,12 @@ const BranchesFilterModal = ({
             if (isOpen) {
                 setLoading(true);
                 try {
-                    const [warehousesData, countriesData] = await Promise.all([
-                        WarehousesAPI(),
-                        CountryApi(),
+                    const [branchesData, countriesData] = await Promise.all([
+                        BranchesAPI(),
+                        CounrtyApi(),
                     ]);
-                    setWarehouses(warehousesData);
+                    setBranches(branchesData);
                     setCountries(countriesData);
-
-                    // If country is selected, load states
-                    if (internalFilters.country) {
-                        const statesData = await StateApi(internalFilters.country);
-                        setStates(statesData);
-                    }
-                    // If state is selected, load cities
-                    if (internalFilters.country && internalFilters.state) {
-                        const citiesData = await CityApi(internalFilters.country, internalFilters.state);
-                        setCities(citiesData);
-                    }
-                    // If city is selected, load neighborhoods
-                    if (internalFilters.country && internalFilters.state && internalFilters.city) {
-                        const neighborhoodsData = await NeighborhoodApi(internalFilters.country, internalFilters.state, internalFilters.city);
-                        setNeighborhoods(neighborhoodsData);
-                    }
-
                 } catch (error) {
                     console.error('Error loading filter data:', error);
                 } finally {
@@ -65,78 +49,11 @@ const BranchesFilterModal = ({
         loadData();
     }, [isOpen]);
 
-    // Load dependent data when selections change
-    useEffect(() => {
-        const loadStates = async () => {
-            if (internalFilters.country) {
-                try {
-                    const statesData = await StateApi(internalFilters.country);
-                    setStates(statesData || []);
-                } catch (error) {
-                    console.error('Error loading states:', error);
-                }
-            } else {
-                setStates([]);
-                setCities([]);
-                setNeighborhoods([]);
-            }
-        };
-        loadStates();
-    }, [internalFilters.country]);
-
-    useEffect(() => {
-        const loadCities = async () => {
-            if (internalFilters.state && internalFilters.country) {
-                try {
-                    const citiesData = await CityApi(internalFilters.country, internalFilters.state);
-                    setCities(citiesData || []);
-                } catch (error) {
-                    console.error('Error loading cities:', error);
-                }
-            } else {
-                setCities([]);
-                setNeighborhoods([]);
-            }
-        };
-        loadCities();
-    }, [internalFilters.state]);
-
-    useEffect(() => {
-        const loadNeighborhoods = async () => {
-            if (internalFilters.city && internalFilters.country && internalFilters.state) {
-                try {
-                    const neighborhoodsData = await NeighborhoodApi(internalFilters.country, internalFilters.state, internalFilters.city);
-                    setNeighborhoods(neighborhoodsData || []);
-                } catch (error) {
-                    console.error('Error loading neighborhoods:', error);
-                }
-            } else {
-                setNeighborhoods([]);
-            }
-        };
-        loadNeighborhoods();
-    }, [internalFilters.city]);
-
-
-    const handleChange = (field: keyof BranchesFilters, value: string) => {
-        const parsedValue = value ? parseInt(value) : null;
-        setInternalFilters((prev) => {
-            const newFilters = { ...prev, [field]: parsedValue };
-
-            // Reset dependent fields
-            if (field === 'country') {
-                newFilters.state = null;
-                newFilters.city = null;
-                newFilters.neighborhood = null;
-            } else if (field === 'state') {
-                newFilters.city = null;
-                newFilters.neighborhood = null;
-            } else if (field === 'city') {
-                newFilters.neighborhood = null;
-            }
-
-            return newFilters;
-        });
+    const handleChange = (field: keyof WarehousesFilters, value: string) => {
+        setInternalFilters((prev) => ({
+            ...prev,
+            [field]: value ? (field === 'search' ? value : parseInt(value)) : null,
+        }));
     };
 
     const handleClear = () => {
@@ -144,8 +61,8 @@ const BranchesFilterModal = ({
             country: null,
             state: null,
             city: null,
-            neighborhood: null,
-            warehouse: null,
+            neighborhoods: null,
+            branches: null,
             search: null,
             page: 1,
             size: filters.size || 20,
@@ -156,23 +73,23 @@ const BranchesFilterModal = ({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Filtrar Sucursales</DialogTitle>
+                    <DialogTitle>Filtrar Almcenes</DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
                     <div className="grid gap-2">
-                        <Label>Almacén</Label>
+                        <Label>Almacenes</Label>
                         <Select
-                            value={internalFilters.warehouse?.toString()}
-                            onValueChange={(value) => handleChange('warehouse', value)}
+                            value={internalFilters.branches?.toString()}
+                            onValueChange={(value) => handleChange('branches', value)}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar almacén" />
+                                <SelectValue placeholder="Seleccionar almacenes" />
                             </SelectTrigger>
                             <SelectContent>
-                                {warehouses.map((w) => (
-                                    <SelectItem key={w.id} value={w.id.toString()}>
-                                        {w.name}
+                                {branches.map((branch) => (
+                                    <SelectItem key={branch.id} value={branch.id.toString()}>
+                                        {branch.name}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -203,7 +120,6 @@ const BranchesFilterModal = ({
                             <Select
                                 value={internalFilters.state?.toString()}
                                 onValueChange={(value) => handleChange('state', value)}
-                                disabled={!internalFilters.country}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Seleccionar estado" />
@@ -225,7 +141,6 @@ const BranchesFilterModal = ({
                             <Select
                                 value={internalFilters.city?.toString()}
                                 onValueChange={(value) => handleChange('city', value)}
-                                disabled={!internalFilters.state}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Seleccionar ciudad" />
@@ -242,9 +157,8 @@ const BranchesFilterModal = ({
                         <div className="grid gap-2">
                             <Label>Distrito</Label>
                             <Select
-                                value={internalFilters.neighborhood?.toString()}
-                                onValueChange={(value) => handleChange('neighborhood', value)}
-                                disabled={!internalFilters.city}
+                                value={internalFilters.neighborhoods?.toString()}
+                                onValueChange={(value) => handleChange('neighborhoods', value)}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Seleccionar barrio" />
@@ -265,7 +179,7 @@ const BranchesFilterModal = ({
                     <Button variant="outline" onClick={handleClear}>
                         Limpiar
                     </Button>
-                    <Button onClick={() => { onApply?.(internalFilters); onClose(); }}>
+                    <Button onClick={() => onApply?.(internalFilters)}>
                         Aplicar
                     </Button>
                 </DialogFooter>
@@ -274,4 +188,4 @@ const BranchesFilterModal = ({
     )
 }
 
-export default BranchesFilterModal;
+export default WarehousesFilterModal;
