@@ -19,6 +19,7 @@ export const WarehousesAdapter = (response: WarehousesApiResponse) => {
             cities: item.cities,
             neighborhoods: item.neighborhoods,
             web: item.web,
+            is_active: item.is_active,
         })
     );
 

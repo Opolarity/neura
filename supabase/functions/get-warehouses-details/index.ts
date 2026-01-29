@@ -32,44 +32,40 @@ serve(async (req) => {
       throw new Error('warehouse ID is required');
     }
 
-    console.log('Fetching warehouse details for ID:', warehouseID);
 
-    // Fetch product basic data
-    const { data: warehouses, error: warehousesError } = await supabase
+
+    // Fetch warehouse details
+    const { data: warehouse, error: warehouseError } = await supabase
       .from('warehouses')
-      .select('id, name, branch_id, country_id, state_id, city_id, neighborhood_id', 'address', 'address_reference', 'web')
+      .select('id, name, country_id, state_id, city_id, neighborhood_id, address, address_reference , web')
       .eq('id', warehouseID)
       .single();
 
-    if (warehousesError) throw warehousesError;
-    if (!warehouses) throw new Error('Warehouse not found');
-
+    if (warehouseError) throw warehouseError;
+    if (!warehouse) throw new Error('Warehouse not found');
 
     const response = {
       warehouse: {
-        id: warehouses.id,
-        name: warehouses.name,
-        branch_id: warehouses.branch_id,
-        country_id: warehouses.country_id,
-        state_id: warehouses.state_id,
-        city_id: warehouses.city_id,
-        neighborhood_id: warehouses.neighborhood_id,
-        address: warehouses.address,
-        address_reference: warehouses.address_reference,
-        web: warehouses.web,
-        is_active: true,
-      },
-
+        id: warehouse.id,
+        name: warehouse.name || "",
+        countries: warehouse.country_id || null,
+        states: warehouse.state_id || null,
+        cities: warehouse.city_id || null,
+        neighborhoods: warehouse.neighborhood_id || null,
+        address: warehouse.address || "",
+        address_reference: warehouse.address_reference || "",
+        web: warehouse.web || null,
+      }
     };
 
-    console.log('Warehouse details fetched successfully');
+
 
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('Error in get-product-details:', error);
+    console.error('Error in get-warehouses-details:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,

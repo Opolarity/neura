@@ -23,8 +23,10 @@ export const settingsRoutes: RouteObject[] = [
       { path: 'roles/edit/:id', element: <CreateRole /> },
       { path: 'warehouses', element: <WarehousesList /> },
       { path: 'warehouses/create', element: <CreateWarehouses /> },
+      { path: 'warehouses/edit/:id', element: <CreateWarehouses /> },
       { path: 'branches', element: <BranchesList /> },
       { path: 'branches/create', element: <CreateBranch /> },
+      { path: 'branches/edit/:id', element: <CreateBranch /> },
     ]
   },
 ];

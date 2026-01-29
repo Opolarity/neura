@@ -1,5 +1,5 @@
 export interface BranchesApiResponse {
-    branchesdata: {
+    branchesdata?: {
         data: Array<BranchView>;
         page: {
             page: number;
@@ -7,6 +7,7 @@ export interface BranchesApiResponse {
             total: number;
         };
     };
+    branch?: Branch;
 }
 
 export interface BranchView {
@@ -19,6 +20,7 @@ export interface BranchView {
     neighborhoods: string | null;
     address?: string;
     address_reference?: string;
+    is_active?: boolean;
 }
 
 export interface Branch {

@@ -52,7 +52,7 @@ const BranchesTable = ({ branches, loading, handleDeleteBranch }: BranchesTableP
                                 <TableCell>
                                     <div className="flex gap-1">
                                         <Button variant="ghost" size="sm" asChild>
-                                            <Link to={`/settings/branches/create?id=${branch.id}`}>
+                                            <Link to={`/settings/branches/edit/${branch.id}`}>
                                                 <Edit className="w-4 h-4" />
                                             </Link>
                                         </Button>
