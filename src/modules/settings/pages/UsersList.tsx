@@ -1,15 +1,16 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Link, useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
-import UsersTable from "../components/users/UsersTable";
-import useUsers from "../hooks/useUsers";
-import UsersFilterBar from "../components/users/UsersFilterBar";
-import UsersFilterModal from "../components/users/UsersFilterModal";
-import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
-import { CardFooter } from "@/components/ui/card";
-import UsersDeleteModal from "../components/users/UsersDeleteModal";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
+import UsersTable from '../components/users/UsersTable';
+import useUsers from '../hooks/useUsers';
+import UsersFilterBar from '../components/users/UsersFilterBar';
+import UsersFilterModal from '../components/users/UsersFilterModal';
+import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
+import { CardFooter } from '@/components/ui/card';
+import UsersDeleteModal from '../components/users/UsersDeleteModal';
+
 
 const UsersList = () => {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ const UsersList = () => {
     handleDeleteUser,
     rolesOptions,
     warehousesOptions,
-    branchesOptions,
+    branchesOptions
   } = useUsers();
 
   return (
@@ -39,9 +40,7 @@ const UsersList = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Listado de Usuarios
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">Listado de Usuarios</h1>
           <p className="text-muted-foreground mt-2">
             Administra los usuarios del sistema
           </p>
@@ -62,9 +61,7 @@ const UsersList = () => {
             handleSearchChange={handleSearchChange}
             onFilterClick={handleOpenFilterModal}
             order={filters.order}
-            onOrderChange={(val) =>
-              handleApplyFilter({ ...filters, order: val })
-            }
+            onOrderChange={(val) => handleApplyFilter({ ...filters, order: val })}
           />
         </CardHeader>
         <CardContent className="p-0">
