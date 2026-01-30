@@ -33,12 +33,12 @@ export const BranchesApi = async (
 
 export const GetBranchDetails = async (branchId: number): Promise<BranchesApiResponse> => {
     const { data, error } = await supabase.functions.invoke("get-branches-details", {
+        method: "POST", // Forzamos POST porque enviamos body
         body: { branchID: branchId },
     });
     if (error) throw error;
-    return data ?? [];
+    return data ?? {};
 }
-
 
 export const DeleteBranch = async (branchesId: number): Promise<BranchesApiResponse> => {
     const { data, error } = await supabase.functions.invoke("delete-branches", {

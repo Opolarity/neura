@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/shared/hooks";
 import {
     CreateWarehouses,
@@ -44,7 +44,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         neighborhoods: null,
         address: '',
         address_reference: '',
-        web: null,
+        web: false,
     });
     const [initialData, setInitialData] = useState<FormData | null>(null);
 
@@ -62,12 +62,11 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         );
     };
 
-    // Fetch initial options
+    // 1. Cargar opciones iniciales (Países)
     useEffect(() => {
         const fetchOptions = async () => {
             setOptionsLoading(true);
             try {
-                // Fetch independently to allow partial success
                 const [cRes] = await Promise.allSettled([
                     CounrtyApi()
                 ]);
@@ -93,7 +92,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         fetchOptions();
     }, []);
 
-    // Fetch details if isEdit
+    // 2. Cargar detalles si es Edición
     useEffect(() => {
         if (isEdit && warehouseId) {
             const fetchDetails = async () => {
@@ -103,24 +102,36 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
 
                     if (response.warehouse) {
                         const warehouse = response.warehouse;
-                        const countryId = Number(warehouse.countries);
-                        const stateId = Number(warehouse.states);
-                        const cityId = Number(warehouse.cities);
-                        const neighborhoodId = warehouse.neighborhoods ? Number(warehouse.neighborhoods) : null;
 
-                        // PRIMERO cargar todas las opciones en cascada
-                        const statesData = await StateApi(countryId);
-                        setStates(statesData || []);
+                        // Parseo seguro de IDs (evita NaN)
+                        const countryId = warehouse.countries ? Number(warehouse.countries) : null;
+                        const stateId = warehouse.states ? Number(warehouse.states) : null;
+                        const cityId = warehouse.cities ? Number(warehouse.cities) : null;
 
-                        const citiesData = await CityApi(countryId, stateId);
-                        setCities(citiesData || []);
+                        // OJO: Si warehouse.neighborhoods viene null, asignamos null, no NaN ni 0.
+                        const rawNeigh = warehouse.neighborhoods;
+                        const neighborhoodId = (rawNeigh && !isNaN(Number(rawNeigh))) ? Number(rawNeigh) : null;
 
-                        const neighborhoodsData = neighborhoodId
-                            ? await NeighborhoodApi(countryId, stateId, cityId)
-                            : [];
-                        setNeighborhoods(neighborhoodsData || []);
+                        // --- CARGA EN CASCADA ---
+                        // Cargamos las listas basándonos en los padres, no en si el hijo tiene valor.
 
-                        const initialFormData = {
+                        if (countryId) {
+                            const statesData = await StateApi(countryId);
+                            setStates(statesData || []);
+                        }
+
+                        if (countryId && stateId) {
+                            const citiesData = await CityApi(countryId, stateId);
+                            setCities(citiesData || []);
+                        }
+
+                        // CORRECCIÓN CRÍTICA: Cargamos barrios si existe cityId, no solo si existe neighborhoodId
+                        if (countryId && stateId && cityId) {
+                            const neighborhoodsData = await NeighborhoodApi(countryId, stateId, cityId);
+                            setNeighborhoods(neighborhoodsData || []);
+                        }
+
+                        const initialFormData: FormData = {
                             name: warehouse.name || "",
                             countries: countryId,
                             states: stateId,
@@ -130,6 +141,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
                             address_reference: warehouse.address_reference || "",
                             web: warehouse.web || false,
                         };
+
                         setFormData(initialFormData);
                         setInitialData(initialFormData);
                     }
@@ -157,11 +169,25 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         setFormData(prev => ({ ...prev, web: checked }));
     }
 
+    // 3. Manejo de cambios en Selects (Blindado contra NaN)
     const handleSelectChange = async (field: string, value: string) => {
         const numericFields = ['branches', 'countries', 'states', 'cities', 'neighborhoods'];
-        const parsedValue = numericFields.includes(field) ? parseInt(value) : value;
-        const numericValue = typeof parsedValue === 'number' ? parsedValue : 0;
 
+        let numericValue: number | null = null;
+
+        // Parseo seguro
+        if (numericFields.includes(field)) {
+            if (!value || value === "") {
+                numericValue = null;
+            } else {
+                const parsed = Number(value);
+                numericValue = isNaN(parsed) ? null : parsed;
+            }
+        }
+
+        const finalValue = numericFields.includes(field) ? numericValue : value;
+
+        // Lógica de Cascada
         if (field === 'countries') {
             setFormData(prev => ({
                 ...prev,
@@ -174,10 +200,12 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
             setCities([]);
             setNeighborhoods([]);
 
-            try {
-                const statesData = await StateApi(numericValue);
-                setStates(statesData || []);
-            } catch (error) { console.error(error); }
+            if (numericValue) {
+                try {
+                    const statesData = await StateApi(numericValue);
+                    setStates(statesData || []);
+                } catch (error) { console.error(error); }
+            }
 
         } else if (field === 'states') {
             setFormData(prev => ({
@@ -189,8 +217,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
             setCities([]);
             setNeighborhoods([]);
 
-            // Load cities
-            if (formData.countries) {
+            if (formData.countries && numericValue) {
                 try {
                     const citiesData = await CityApi(formData.countries, numericValue);
                     setCities(citiesData || []);
@@ -205,16 +232,16 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
             }));
             setNeighborhoods([]);
 
-            // Load neighborhoods
-            if (formData.countries && formData.states) {
+            // Al cambiar ciudad, cargamos los barrios
+            if (formData.countries && formData.states && numericValue) {
                 try {
                     const neighborhoodsData = await NeighborhoodApi(formData.countries, formData.states, numericValue);
                     setNeighborhoods(neighborhoodsData || []);
                 } catch (error) { console.error(error); }
             }
         } else {
-            // Normal update
-            setFormData(prev => ({ ...prev, [field]: parsedValue }));
+            // Cambio normal (ej: neighborhoods)
+            setFormData(prev => ({ ...prev, [field]: finalValue }));
         }
     };
 
@@ -223,11 +250,11 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         setLoading(true);
 
         try {
-            // Validation: !name || !countryID || !stateID || !cityID || !neighborhoodsID
+            // Validación
             if (!formData.name || !formData.countries || !formData.states || !formData.cities || !formData.neighborhoods) {
                 toast({
                     title: "Campos requeridos",
-                    description: "Por favor complete todos los campos obligatorios: nombre, país, estado, ciudad y vecindario",
+                    description: "Por favor complete todos los campos obligatorios: nombre, país, estado, ciudad y distrito",
                     variant: "destructive",
                 });
                 setLoading(false);

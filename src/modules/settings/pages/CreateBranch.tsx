@@ -104,7 +104,7 @@ const CreateBranch = () => {
                                     </Select>
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label>Ciudad</Label>
+                                    <Label>Estado/Departamento</Label>
                                     <Select
                                         value={formData.states?.toString() || ''}
                                         onValueChange={(value) => handleSelectChange('states', value)}
@@ -126,7 +126,7 @@ const CreateBranch = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
-                                    <Label>Provincia</Label>
+                                    <Label>Ciudad</Label>
                                     <Select
                                         value={formData.cities?.toString() || ''}
                                         onValueChange={(value) => handleSelectChange('cities', value)}
@@ -145,7 +145,7 @@ const CreateBranch = () => {
                                     </Select>
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label>Distrito</Label>
+                                    <Label>Vecindario/Barrio</Label>
                                     <Select
                                         value={formData.neighborhoods?.toString() || ''}
                                         onValueChange={(value) => handleSelectChange('neighborhoods', value)}
