@@ -1,6 +1,6 @@
 import { RouteObject } from "react-router-dom";
-import Movements from "./pages/Movements";
+import MovementsPage from "./pages/MovementsPage";
 
 export const movementsRoutes: RouteObject[] = [
-  { path: "movements", element: <Movements /> },
+  { path: "movements", element: <MovementsPage /> },
 ];
