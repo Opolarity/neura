@@ -14,15 +14,19 @@ export interface WarehouseView {
     id: number;
     name: string;
     branches: { id: number; name: string }[];
-    countries: string;
-    states: string;
-    cities: string | null;
-    neighborhoods: string | null;
+    country_id?: number | null;
+    states: number | null;
+    state_id?: number | null;
+    cities: number | null;
+    city_id?: number | null;
+    neighborhoods: number | null;
+    neighborhood_id?: number | null;
     address?: string;
     address_reference?: string;
     web?: boolean;
     is_active?: boolean;
 }
+
 
 export interface Warehouses {
     id: number;

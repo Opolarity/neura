@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/shared/hooks";
 import {
     CreateBranch,
@@ -24,264 +24,183 @@ interface FormData {
     address_reference: string;
 }
 
-
 const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
     const navigate = useNavigate();
     const { toast } = useToast();
 
-    // Loading states
     const [loading, setLoading] = useState(false);
-    const [optionsLoading, setOptionsLoading] = useState(true);
+    const [isInitializing, setIsInitializing] = useState(true);
 
-    // Options state
     const [warehouses, setWarehouses] = useState<IdNameResponse[]>([]);
     const [countries, setCountries] = useState<IdNameResponse[]>([]);
     const [states, setStates] = useState<IdNameResponse[]>([]);
     const [cities, setCities] = useState<IdNameResponse[]>([]);
     const [neighborhoods, setNeighborhoods] = useState<IdNameResponse[]>([]);
 
-    // Form state
     const [formData, setFormData] = useState<FormData>({
-        name: '',
-        warehouse: null,
-        countries: null,
-        states: null,
-        cities: null,
-        neighborhoods: null,
-        address: '',
-        address_reference: '',
+        name: '', warehouse: null, countries: null, states: null, cities: null, neighborhoods: null, address: '', address_reference: '',
     });
+
     const [initialData, setInitialData] = useState<FormData | null>(null);
 
-    const hasChanges = () => {
-        if (!initialData) return false;
-        return (
-            formData.name !== initialData.name ||
-            Number(formData.warehouse) !== Number(initialData.warehouse) ||
-            Number(formData.countries) !== Number(initialData.countries) ||
-            Number(formData.states) !== Number(initialData.states) ||
-            Number(formData.cities) !== Number(initialData.cities) ||
-            Number(formData.neighborhoods) !== Number(initialData.neighborhoods) ||
-            formData.address !== initialData.address ||
-            formData.address_reference !== initialData.address_reference
-        );
-    };
+    const hasChanges = useCallback(() => {
+        if (!initialData) return true;
+        return JSON.stringify(formData) !== JSON.stringify(initialData);
+    }, [formData, initialData]);
 
-    // Fetch initial options
+    // Effect for loading base options (warehouses, countries)
     useEffect(() => {
-        const fetchOptions = async () => {
-            setOptionsLoading(true);
+        const fetchBaseOptions = async () => {
             try {
-                // Fetch independently to allow partial success
-                const [wRes, cRes] = await Promise.allSettled([
+                const [warehousesRes, countriesRes] = await Promise.all([
                     WarehousesAPI(),
                     CountryApi()
                 ]);
-
-                if (wRes.status === 'fulfilled') {
-                    setWarehouses(wRes.value || []);
-                } else {
-                    console.error('Failed to load warehouses:', wRes.reason);
-                }
-
-                if (cRes.status === 'fulfilled') {
-                    setCountries(cRes.value || []);
-                } else {
-                    console.error('Failed to load countries:', cRes.reason);
-                }
-
+                setWarehouses(warehousesRes || []);
+                setCountries(countriesRes || []);
             } catch (error) {
-                console.error('Error fetching options:', error);
-                toast({
-                    title: "Error",
-                    description: "No se pudieron cargar las opciones del formulario",
-                    variant: "destructive",
-                });
-            } finally {
-                setOptionsLoading(false);
+                console.error("Error loading base options:", error);
+                toast({ title: "Error", description: "Failed to load base options", variant: "destructive" });
             }
         };
+        fetchBaseOptions();
+    }, [toast]);
 
-        fetchOptions();
-    }, []);
-
-    // Fetch details if isEdit
-    // Fetch details if isEdit
+    // Effect for loading branch details in edit mode
     useEffect(() => {
-        if (isEdit && branchId) {
-            const fetchDetails = async () => {
-                setLoading(true);
+        const fetchBranchDetails = async () => {
+            if (isEdit && branchId) {
+                setIsInitializing(true);
                 try {
                     const response = await GetBranchDetails(branchId);
-
                     if (response.branch) {
-                        const branch = response.branch;
-                        const warehouseId = Number(branch.warehouse);
-                        const countryId = Number(branch.countries);
-                        const stateId = Number(branch.states);
-                        const cityId = Number(branch.cities);
-                        const neighborhoodId = branch.neighborhoods ? Number(branch.neighborhoods) : null;
-
-                        const [statesData, citiesData, neighborhoodsData] = await Promise.all([
-                            StateApi(countryId),
-                            CityApi(countryId, stateId),
-                            neighborhoodId ? NeighborhoodApi(countryId, stateId, cityId) : Promise.resolve([])
-                        ]);
-
-                        setStates(statesData);
-                        setCities(citiesData);
-                        setNeighborhoods(neighborhoodsData);
-
-                        const initialFormData = {
-                            name: branch.name || "",
-                            warehouse: branch.warehouse || null,
-                            countries: countryId,
-                            states: stateId,
-                            cities: cityId,
-                            neighborhoods: neighborhoodId,
-                            address: branch.address || "",
-                            address_reference: branch.address_reference || "",
+                        const b = response.branch;
+                        const loadedData = {
+                            name: b.name || '',
+                            warehouse: Number(b.warehouse) || null,
+                            countries: Number(b.countries) || null,
+                            states: Number(b.states) || null,
+                            cities: Number(b.cities) || null,
+                            neighborhoods: b.neighborhoods ? Number(b.neighborhoods) : null,
+                            address: b.address || '',
+                            address_reference: b.address_reference || ''
                         };
-                        setFormData(initialFormData);
-                        setInitialData(initialFormData);
+                        setFormData(loadedData);
+                        setInitialData(loadedData);
                     }
                 } catch (error) {
-                    console.error('Error fetching branch details:', error);
-                    toast({
-                        title: "Error",
-                        description: "No se pudieron cargar los detalles del almacén",
-                        variant: "destructive",
-                    });
+                    console.error("Error fetching branch details:", error);
+                    toast({ title: "Error", description: "Failed to load branch details", variant: "destructive" });
                 } finally {
-                    setLoading(false);
+                    setIsInitializing(false);
                 }
-            };
-            fetchDetails();
-        }
-    }, [branchId, isEdit]);
+            } else {
+                setIsInitializing(false);
+            }
+        };
+        fetchBranchDetails();
+    }, [branchId, isEdit, toast]);
+
+    // Cascading effect for states
+    useEffect(() => {
+        const fetchStates = async () => {
+            if (formData.countries) {
+                setStates([]);
+                setCities([]);
+                setNeighborhoods([]);
+                const res = await StateApi(formData.countries);
+                setStates(res || []);
+            }
+        };
+        fetchStates();
+    }, [formData.countries]);
+
+    // Cascading effect for cities
+    useEffect(() => {
+        const fetchCities = async () => {
+            if (formData.countries && formData.states) {
+                setCities([]);
+                setNeighborhoods([]);
+                const res = await CityApi(formData.countries, formData.states);
+                setCities(res || []);
+            }
+        };
+        fetchCities();
+    }, [formData.states]);
+    
+    // Cascading effect for neighborhoods
+    useEffect(() => {
+        const fetchNeighborhoods = async () => {
+            if (formData.countries && formData.states && formData.cities) {
+                setNeighborhoods([]);
+                const res = await NeighborhoodApi(formData.countries, formData.states, formData.cities);
+                setNeighborhoods(res || []);
+            }
+        };
+        fetchNeighborhoods();
+    }, [formData.cities]);
 
 
-
-    // Handlers
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
         setFormData(prev => ({ ...prev, [id]: value }));
     };
 
-    const handleSelectChange = async (field: string, value: string) => {
-        const numericFields = ['warehouse', 'countries', 'states', 'cities', 'neighborhoods'];
-        const parsedValue = numericFields.includes(field) ? parseInt(value) : value;
-        const numericValue = typeof parsedValue === 'number' ? parsedValue : 0;
+    const handleSelectChange = (field: keyof FormData, value: string) => {
+        const numValue = value ? parseInt(value, 10) : null;
 
-        // Update form state and handle cascading resets
-        if (field === 'countries') {
-            setFormData(prev => ({
-                ...prev,
-                countries: numericValue,
-                states: null,
-                cities: null,
-                neighborhoods: null
-            }));
-            setStates([]);
-            setCities([]);
-            setNeighborhoods([]);
-
-            // Load states
-            try {
-                const statesData = await StateApi(numericValue);
-                setStates(statesData || []);
-            } catch (error) { console.error(error); }
-
-        } else if (field === 'states') {
-            setFormData(prev => ({
-                ...prev,
-                states: numericValue,
-                cities: null,
-                neighborhoods: null
-            }));
-            setCities([]);
-            setNeighborhoods([]);
-
-            // Load cities
-            if (formData.countries && numericValue) {
-                try {
-                    const citiesData = await CityApi(formData.countries, numericValue);
-                    setCities(citiesData || []);
-                } catch (error) { console.error(error); }
+        setFormData(prev => {
+            const newState = { ...prev, [field]: numValue };
+            if (field === 'countries') {
+                newState.states = null;
+                newState.cities = null;
+                newState.neighborhoods = null;
+            } else if (field === 'states') {
+                newState.cities = null;
+                newState.neighborhoods = null;
+            } else if (field === 'cities') {
+                newState.neighborhoods = null;
             }
-
-        } else if (field === 'cities') {
-            setFormData(prev => ({
-                ...prev,
-                cities: numericValue,
-                neighborhoods: null
-            }));
-            setNeighborhoods([]);
-
-            // Load neighborhoods
-            if (formData.countries && formData.states && numericValue) {
-                try {
-                    const neighborhoodsData = await NeighborhoodApi(formData.countries, formData.states, numericValue);
-                    setNeighborhoods(neighborhoodsData || []);
-                } catch (error) { console.error(error); }
-            }
-        } else {
-            // Normal update
-            setFormData(prev => ({ ...prev, [field]: parsedValue }));
-        }
+            return newState;
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-
         try {
-            // Validation: !name || !warehouseID || !countryID || !stateID || !cityID || !neighborhoodsID
-            if (!formData.name || !formData.warehouse || !formData.countries || !formData.states || !formData.cities || !formData.neighborhoods) {
+            if (!formData.name || !formData.warehouse || !formData.countries || !formData.states || !formData.cities) {
                 toast({
-                    title: "Campos requeridos",
-                    description: "Por favor complete todos los campos obligatorios: nombre, almacén, país, estado, ciudad y vecindario",
+                    title: "Validation Error",
+                    description: "Please fill all required fields.",
                     variant: "destructive",
                 });
-                setLoading(false);
                 return;
             }
 
             const payload: Branch = {
-                id: branchId || 0,
+                id: branchId,
                 name: formData.name,
                 warehouse: Number(formData.warehouse),
-                countries: Number(formData.countries!),
-                states: Number(formData.states!),
-                cities: Number(formData.cities!),
-                neighborhoods: Number(formData.neighborhoods),
+                countries: Number(formData.countries),
+                states: Number(formData.states),
+                cities: Number(formData.cities),
+                neighborhoods: formData.neighborhoods ? Number(formData.neighborhoods) : undefined,
                 address: formData.address,
                 address_reference: formData.address_reference,
             };
 
-
-
-            if (isEdit && branchId) {
+            if (isEdit) {
                 await UpdateBranch(payload);
-                toast({
-                    title: "Éxito",
-                    description: "Sucursal actualizada correctamente",
-                });
+                toast({ title: "Success", description: "Branch updated successfully" });
             } else {
                 await CreateBranch(payload);
-                toast({
-                    title: "Éxito",
-                    description: "Sucursal creada correctamente",
-                });
+                toast({ title: "Success", description: "Branch created successfully" });
             }
             navigate('/settings/branches');
         } catch (error: any) {
-            console.error('Error saving branch:', error);
-            toast({
-                title: "Error",
-                description: error.message || "No se pudo guardar la sucursal",
-                variant: "destructive",
-            });
+            console.error(error);
+            toast({ title: "Error", description: error.message || "An error occurred", variant: "destructive" });
         } finally {
             setLoading(false);
         }
@@ -289,14 +208,9 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
 
     return {
         formData,
-        setFormData,
         loading,
-        optionsLoading,
-        warehouses,
-        countries,
-        states,
-        cities,
-        neighborhoods,
+        optionsLoading: isInitializing,
+        warehouses, countries, states, cities, neighborhoods,
         handleChange,
         handleSelectChange,
         handleSubmit,

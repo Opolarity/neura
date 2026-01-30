@@ -1,75 +1,57 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
-
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: { headers: { Authorization: authHeader } }
-      }
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
 
+    // Parseamos el body (asegúrate de que el servicio envíe POST)
     const { branchID } = await req.json();
 
-    if (!branchID) {
-      throw new Error('branch ID is required');
-    }
+    if (!branchID) throw new Error('branchID is required');
 
-
-
-    // Fetch warehouse details
-    const { data: branch, error: branchError } = await supabase
+    const { data: branch, error } = await supabase
       .from('branches')
-      .select('id, name, warehouse_id, country_id, state_id, city_id, neighborhood_id, address, address_reference')
+      .select('id, name, warehouse_id, contry_id, state_id, city_id, neighborhood_id, address, address_reference')
       .eq('id', branchID)
       .single();
 
-    if (branchError) throw branchError;
-    if (!branch) throw new Error('Branch not found');
+    if (error) throw error;
 
     const response = {
       branch: {
         id: branch.id,
-        name: branch.name || "",
+        name: branch.name,
         warehouse: branch.warehouse_id,
-        countries: branch.country_id || null,
-        states: branch.state_id || null,
-        cities: branch.city_id || null,
-        neighborhoods: branch.neighborhood_id || null,
-        address: branch.address || "",
-        address_reference: branch.address_reference || "",
+        countries: branch.country_id,
+        states: branch.state_id,
+        cities: branch.city_id,
+        neighborhoods: branch.neighborhood_id,
+        address: branch.address,
+        address_reference: branch.address_reference
       }
     };
 
-
-
     return new Response(JSON.stringify(response), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200
     });
 
   } catch (error) {
-    console.error('Error in get-warehouses-details:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 400
     });
   }
 });

@@ -120,7 +120,6 @@ const Returns = () => {
                 <TableHead>Documento</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Estado</TableHead>
-                <TableHead>Situación</TableHead>
                 <TableHead>Reembolso</TableHead>
                 <TableHead>Diferencia</TableHead>
                 <TableHead>Fecha</TableHead>
@@ -136,11 +135,6 @@ const Returns = () => {
                   <TableCell>
                     <Badge variant="outline">
                       {returnItem.types?.name || 'N/A'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {returnItem.statuses?.name || 'N/A'}
                     </Badge>
                   </TableCell>
                   <TableCell>
