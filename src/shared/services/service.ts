@@ -1,4 +1,4 @@
-import { Status, Status, Type, Types } from "@/types/index.ts";
+import { Status, Type } from "@/types/index.ts";
 import { City, Country, Neighborhood, State } from "../../types/locations.ts";
 import { supabase } from "../api/supabase";
 
