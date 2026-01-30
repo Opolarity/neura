@@ -748,6 +748,20 @@ export const usePOS = () => {
 
       const result = await createPOSOrder(orderData);
 
+      // Vincular orden con sesión POS
+      if (result.order?.id && POSSessionHook.session?.id) {
+        const { error: linkError } = await supabase
+          .from("pos_session_orders")
+          .insert({
+            pos_session_id: POSSessionHook.session.id,
+            order_id: result.order.id,
+          });
+        
+        if (linkError) {
+          console.error("Error linking order to POS session:", linkError);
+        }
+      }
+
       toast({
         title: "Venta completada",
         description: `Pedido #${result.order.id} creado exitosamente`,
