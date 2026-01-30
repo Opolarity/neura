@@ -27,6 +27,11 @@ const CMovementTypeModal = () => {
   const [typeMovementId, setTypeMovementId] = useState<string | undefined>(
     undefined,
   );
+  const [selectedMovementType, setSelectedMovementType] = useState<{
+    id: number;
+    name: string;
+    code: string;
+  } | null>(null);
 
   //Functions
   const closeModal = () => {
@@ -43,6 +48,9 @@ const CMovementTypeModal = () => {
   //Events
   const handleTypeMovement = (v: string) => {
     setTypeMovementId(v);
+    const findMovementType = types.find((type) => type.id.toString() === v);
+    setSelectedMovementType(findMovementType);
+    console.log(findMovementType);
   };
 
   return (
@@ -78,7 +86,9 @@ const CMovementTypeModal = () => {
         </div>
 
         <DialogFooter>
-          <Button onClick={nextStep}>Continuar</Button>
+          <Button onClick={nextStep} disabled={typeMovementId === undefined}>
+            Continuar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
