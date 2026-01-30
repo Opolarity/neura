@@ -23,26 +23,52 @@ const formatDate = (dateString: string): string => {
   }
 };
 
+interface MovementRawItem {
+  id: number;
+  movement_date: string;
+  type: string;
+  class?: string;
+  description?: string;
+  payment_method?: string;
+  business_account?: string;
+  branches?: string;
+  user?: string;
+  amount: number;
+}
+
+interface MovementsDataType {
+  data: MovementRawItem[];
+  page: { page: number; size: number; total: number };
+}
+
 export const movementAdapter = (response: MovementApiResponse) => {
   const rawData = response.movements;
 
-  // Handle different possible response structures
-  let movementsData: any;
+  // Default empty data
+  let movementsData: MovementsDataType = { 
+    data: [], 
+    page: { page: 1, size: 20, total: 0 } 
+  };
+
   if (rawData && typeof rawData === "object") {
-    if ("movements" in rawData) {
-      movementsData = rawData.movements;
-    } else if ("data" in rawData) {
-      movementsData = rawData;
-    } else if (Array.isArray(rawData)) {
-      movementsData = { data: rawData, page: { page: 1, size: 20, total: rawData.length } };
+    if (Array.isArray(rawData)) {
+      movementsData = { 
+        data: rawData as MovementRawItem[], 
+        page: { page: 1, size: 20, total: rawData.length } 
+      };
     } else {
-      movementsData = rawData;
+      const objData = rawData as Record<string, unknown>;
+      if ("movements" in objData && objData.movements) {
+        movementsData = objData.movements as MovementsDataType;
+      } else if ("data" in objData) {
+        movementsData = objData as unknown as MovementsDataType;
+      } else {
+        movementsData = objData as unknown as MovementsDataType;
+      }
     }
-  } else {
-    movementsData = { data: [], page: { page: 1, size: 20, total: 0 } };
   }
 
-  const dataArray = Array.isArray(movementsData) ? movementsData : (movementsData?.data ?? []);
+  const dataArray = movementsData?.data ?? [];
 
   const formattedMovements: Movement[] = dataArray.map(
     (item) => ({
