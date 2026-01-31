@@ -1,142 +1,179 @@
 
-## Plan: Corregir POS para vincular órdenes con sesión y arreglar errores de build
+## Plan: Corregir flujo de apertura de sesión POS
 
 ### Resumen del problema
 
-El módulo POS tiene varios problemas:
+Al intentar iniciar sesión en la apertura de caja, el sistema falla por múltiples razones:
 
-1. **Problema principal**: Las órdenes creadas desde el POS no se vinculan con la sesión activa en la tabla `pos_session_orders`. Esto significa que al cerrar la caja, no se calculan correctamente las ventas.
-
-2. **Errores de tipos**: El componente POSHeader importa `CashSession` pero el tipo se llama `POSSession`.
-
-3. **Errores de build**: Hay imports duplicados en `service.ts` y props faltantes en otros componentes.
+1. **Nombre de edge function incorrecto**: El servicio llama a `manage-cash-session` pero la función se llama `manage-pos-session`
+2. **Falta campo obligatorio `business_account`**: La tabla `pos_sessions` tiene una columna `business_account` (NOT NULL) que el stored procedure no está insertando
+3. **No hay selector de caja**: El usuario necesita poder elegir la caja (business_accounts con type CHR del módulo BNA)
 
 ---
 
 ### Cambios a implementar
 
-#### 1. Modificar el flujo de creación de orden para vincular con sesión POS
+#### 1. Corregir nombre de edge function en el servicio
 
-**Opción elegida**: Después de crear la orden exitosamente, insertar un registro en `pos_session_orders`.
+**Archivo**: `src/modules/sales/services/POSSession.service.ts`
 
-**Archivo**: `src/modules/sales/hooks/usePOS.ts`
-
-En la función `submitOrder`, después de recibir el `order_id` del resultado:
+Cambiar todas las referencias de `manage-cash-session` a `manage-pos-session`:
 
 ```typescript
-const result = await createPOSOrder(orderData);
+// ANTES
+await supabase.functions.invoke("manage-cash-session", ...)
 
-// Vincular orden con sesión POS
-if (result.order?.id && POSSessionHook.session?.id) {
-  await supabase.from("pos_session_orders").insert({
-    pos_session_id: POSSessionHook.session.id,
-    order_id: result.order.id,
-  });
-}
+// DESPUÉS  
+await supabase.functions.invoke("manage-pos-session", ...)
 ```
 
 ---
 
-#### 2. Corregir tipos de POS
+#### 2. Agregar servicio para obtener las cajas disponibles
 
-**Archivo**: `src/modules/sales/types/POS.types.ts`
+**Archivo**: `src/modules/sales/services/POSSession.service.ts`
 
-Agregar el alias de tipo y el campo userName:
-
-```typescript
-// Agregar userName a POSSession
-export interface POSSession {
-  // ... campos existentes ...
-  userName?: string;  // Nuevo campo
-}
-
-// Alias para compatibilidad
-export type CashSession = POSSession;
-```
-
-**Archivo**: `src/modules/sales/adapters/POS.adapter.ts`
-
-Modificar el adaptador para incluir userName (si está disponible):
+Agregar función para obtener business_accounts tipo "Caja":
 
 ```typescript
-export const adaptPOSSession = (apiResponse: POSSessionApiResponse): POSSession => {
-  return {
-    // ... campos existentes ...
-    userName: apiResponse.user_name ?? null,
-  };
+export const getCashRegisters = async () => {
+  const { data, error } = await supabase
+    .from("business_accounts")
+    .select(`
+      id, 
+      name, 
+      business_account_type:types!business_accounts_business_account_type_id_fkey(
+        id, code, name, module:modules(code)
+      )
+    `)
+    .eq("types.code", "CHR")
+    .eq("types.modules.code", "BNA");
+    
+  if (error) throw error;
+  return data || [];
 };
 ```
 
 ---
 
-#### 3. Modificar Edge Function para devolver datos de usuario
+#### 3. Actualizar tipos para incluir caja seleccionada
+
+**Archivo**: `src/modules/sales/types/POS.types.ts`
+
+Actualizar interface OpenPOSSessionRequest:
+
+```typescript
+export interface OpenPOSSessionRequest {
+  openingAmount: number;
+  businessAccountId: number;  // NUEVO - ID de la caja
+  notes?: string;
+}
+
+export interface CashRegister {
+  id: number;
+  name: string;
+}
+```
+
+---
+
+#### 4. Actualizar modal de apertura para incluir selector de caja
+
+**Archivo**: `src/modules/sales/components/pos/POSSessionModal.tsx`
+
+Agregar:
+- Select para elegir la caja
+- Cargar cajas disponibles al montar el componente
+- Validar que se haya seleccionado una caja antes de enviar
+
+---
+
+#### 5. Actualizar edge function para enviar businessAccountId
 
 **Archivo**: `supabase/functions/manage-pos-session/index.ts`
 
-En la acción `get-active`, incluir el nombre del usuario en la respuesta:
+En la acción `open`, agregar el parámetro:
 
 ```typescript
-if (action === "get-active") {
-  const { data, error } = await supabase
-    .from("pos_sessions")
-    .select(`
-      *,
-      status:statusses(*),
-      user:profiles!pos_sessions_user_id_fkey(
-        account:accounts(name, last_name)
-      )
-    `)
-    // ...
+if (action === "open") {
+  const { openingAmount, notes, businessAccountId } = input;
+
+  const { data, error } = await supabase.rpc("sp_open_pos_session", {
+    p_user_id: user.id,
+    p_warehouse_id: profile.warehouse_id,
+    p_branch_id: profile.branch_id,
+    p_opening_amount: openingAmount || 0,
+    p_business_account_id: businessAccountId,  // NUEVO
+    p_notes: notes || null,
+  });
+  // ...
+}
 ```
 
 ---
 
-#### 4. Corregir errores de build
+#### 6. Actualizar stored procedure para aceptar business_account
 
-**Archivo**: `src/shared/services/service.ts`
+**Migración SQL**:
 
-Corregir import duplicado:
-```typescript
-// ANTES (incorrecto)
-import { Status, Status, Type, Types } from "@/types/index.ts";
+```sql
+CREATE OR REPLACE FUNCTION sp_open_pos_session(
+  p_user_id UUID,
+  p_warehouse_id INTEGER,
+  p_branch_id INTEGER,
+  p_opening_amount NUMERIC DEFAULT 0,
+  p_business_account_id INTEGER,  -- NUEVO PARÁMETRO
+  p_notes TEXT DEFAULT NULL
+)
+RETURNS JSON AS $$
+DECLARE
+  v_existing_session_id INTEGER;
+  v_new_session_id INTEGER;
+  v_open_status_id INTEGER;
+BEGIN
+  -- Get open status id
+  SELECT id INTO v_open_status_id
+  FROM statuses st
+  JOIN modules mo ON st.module_id = mo.id AND mo.code = 'POS'
+  WHERE st.code = 'OPE';
 
-// DESPUÉS (correcto)
-import { Status, Type } from "@/types/index.ts";
-```
+  -- Check if user already has an open session
+  SELECT id INTO v_existing_session_id
+  FROM pos_sessions
+  WHERE user_id = p_user_id
+    AND status_id = v_open_status_id;
 
-**Archivo**: `src/modules/sales/components/pos/POSHeader.tsx`
+  IF v_existing_session_id IS NOT NULL THEN
+    RAISE EXCEPTION 'User already has an open cash session (ID: %)', v_existing_session_id;
+  END IF;
 
-Cambiar import:
-```typescript
-// ANTES
-import type { CashSession } from "../../types/POS.types";
+  -- Create new session (AHORA INCLUYE business_account)
+  INSERT INTO public.pos_sessions (
+    user_id,
+    warehouse_id,
+    branch_id,
+    opening_amount,
+    business_account,  -- NUEVO
+    status_id,
+    notes
+  )
+  VALUES (
+    p_user_id,
+    p_warehouse_id,
+    p_branch_id,
+    p_opening_amount,
+    p_business_account_id,  -- NUEVO
+    v_open_status_id,
+    p_notes
+  )
+  RETURNING id INTO v_new_session_id;
 
-// DESPUÉS
-import type { POSSession } from "../../types/POS.types";
-
-// O mantener CashSession si se agrega como alias
-```
-
-**Archivo**: `src/modules/settings/pages/BranchesList.tsx`
-
-Agregar el prop faltante o hacerlo opcional en el FilterBar.
-
----
-
-### Flujo corregido
-
-```text
-Usuario en POS → Completa venta → Clic en "Finalizar"
-         ↓
-submitOrder() en usePOS.ts
-         ↓
-createPOSOrder() → create-order edge function
-         ↓
-sp_create_order RPC → Retorna order_id
-         ↓
-INSERT INTO pos_session_orders (pos_session_id, order_id)  ← NUEVO
-         ↓
-Toast de éxito + Reset para nueva venta
+  RETURN json_build_object(
+    'session_id', v_new_session_id,
+    'opened_at', NOW()
+  );
+END;
+$$ LANGUAGE plpgsql;
 ```
 
 ---
@@ -145,50 +182,47 @@ Toast de éxito + Reset para nueva venta
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/modules/sales/hooks/usePOS.ts` | Agregar INSERT a pos_session_orders después de crear orden |
-| `src/modules/sales/types/POS.types.ts` | Agregar userName y alias CashSession |
-| `src/modules/sales/adapters/POS.adapter.ts` | Adaptar userName del API response |
-| `supabase/functions/manage-pos-session/index.ts` | Incluir datos de usuario en get-active |
-| `src/shared/services/service.ts` | Corregir imports duplicados |
-| `src/modules/sales/components/pos/POSHeader.tsx` | Corregir import de tipo |
-| `src/modules/settings/pages/BranchesList.tsx` | Corregir prop faltante |
-| `src/modules/settings/components/branches/BranchesFilterBar.tsx` | Hacer onOpen opcional |
+| `src/modules/sales/services/POSSession.service.ts` | Corregir nombre de función, agregar getCashRegisters |
+| `src/modules/sales/types/POS.types.ts` | Agregar businessAccountId a request, tipo CashRegister |
+| `src/modules/sales/components/pos/POSSessionModal.tsx` | Agregar selector de caja |
+| `src/modules/sales/hooks/usePOSSession.ts` | Cargar cajas disponibles |
+| `supabase/functions/manage-pos-session/index.ts` | Pasar businessAccountId al RPC |
+| **Base de datos** | Actualizar sp_open_pos_session |
 
 ---
 
-### Sección técnica: RLS para pos_session_orders
+### Flujo corregido
 
-La tabla `pos_session_orders` no tiene políticas RLS configuradas. Se necesitará agregar políticas para permitir inserts:
-
-```sql
--- Permitir a usuarios autenticados insertar vínculos de sus propias órdenes
-CREATE POLICY "Users can link their orders to POS sessions"
-ON pos_session_orders FOR INSERT
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM pos_sessions ps
-    WHERE ps.id = pos_session_orders.pos_session_id
-    AND ps.user_id = auth.uid()
-  )
-);
-
--- Permitir lectura para calcular totales
-CREATE POLICY "Users can view their session orders"
-ON pos_session_orders FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM pos_sessions ps
-    WHERE ps.id = pos_session_orders.pos_session_id
-    AND ps.user_id = auth.uid()
-  )
-);
+```text
+Usuario entra a /pos
+         ↓
+Se muestra modal "Apertura de Caja"
+         ↓
+Se cargan las cajas disponibles (business_accounts type CHR)
+         ↓
+Usuario selecciona caja + ingresa monto inicial
+         ↓
+openSession({ openingAmount, businessAccountId, notes })
+         ↓
+POST /manage-pos-session (action: "open")
+         ↓
+sp_open_pos_session(p_business_account_id: X, ...)
+         ↓
+INSERT INTO pos_sessions (business_account = X, ...)
+         ↓
+Sesión creada exitosamente
 ```
 
 ---
 
-### Dependencias
+### Cajas disponibles en la base de datos
 
-1. Primero: Agregar RLS a `pos_session_orders`
-2. Segundo: Modificar tipos y adaptadores
-3. Tercero: Modificar usePOS.ts para vincular órdenes
-4. Cuarto: Corregir errores de build restantes
+Las cajas actualmente configuradas son:
+
+| ID | Nombre |
+|----|--------|
+| 5 | Caja 1 |
+| 6 | Caja 2 |
+| 7 | Caja 3 |
+
+Estas son las que aparecerán en el selector del modal de apertura.
