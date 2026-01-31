@@ -157,7 +157,6 @@ serve(async (req) => {
     // ACTION: GET-ACTIVE - Get the active cash session
     // =============================================    
     if (action === "get-active") {
-
       const { data, error } = await supabase
         .from("pos_sessions")
         .select("*, status:statuses(*)")
@@ -165,7 +164,7 @@ serve(async (req) => {
         .eq("warehouse_id", profile.warehouse_id)
         .eq("user_id", user.id)
         .eq("status_id", input.openTypeId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error getting active cash session:", error);
@@ -181,6 +180,7 @@ serve(async (req) => {
         );
       }
 
+      // Return null session if no active session found (this is valid)
       return new Response(JSON.stringify({ success: true, session: data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
