@@ -1048,7 +1048,7 @@ export const useCreateSale = () => {
             : "Venta creada correctamente",
         });
 
-        navigate("/sales/list");
+        navigate("/sales");
       } catch (error) {
         console.error("Error saving sale:", error);
         toast({
