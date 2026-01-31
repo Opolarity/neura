@@ -3334,25 +3334,15 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_close_pos_session:
-        | {
-            Args: {
-              p_closing_amount: number
-              p_notes?: string
-              p_session_id: number
-              p_user_id: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_closing_amount: number
-              p_notes?: string
-              p_session_id: number
-              p_user_id: string
-            }
-            Returns: Json
-          }
+      sp_close_pos_session: {
+        Args: {
+          p_closing_amount: number
+          p_notes?: string
+          p_session_id: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
       sp_create_order: {
         Args: {
           p_branch_id: number
