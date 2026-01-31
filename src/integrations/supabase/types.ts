@@ -3581,6 +3581,7 @@ export type Database = {
           p_max_cost?: number
           p_min_cost?: number
           p_neighborhoods?: number
+          p_order?: string
           p_page?: number
           p_search?: string
           p_size?: number

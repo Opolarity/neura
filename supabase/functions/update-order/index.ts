@@ -82,37 +82,42 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Determine stock movement flags based on situation code
+    // Get the CURRENT situation of the order to determine stock movement flags
     let stockIsActive = true;
     let stockCompleted = true;
 
-    if (situationId) {
-      const { data: situation } = await supabase
-        .from("situations")
-        .select("code")
-        .eq("id", situationId)
-        .single();
+    // Always fetch the current situation from order_situations (not from input)
+    const { data: currentSituation } = await supabase
+      .from("order_situations")
+      .select("situation_id, situations(code)")
+      .eq("order_id", orderId)
+      .eq("last_row", true)
+      .single();
 
-      if (situation?.code) {
-        switch (situation.code) {
-          case "PHY":
-            stockIsActive = true;
-            stockCompleted = true;
-            break;
-          case "HDN":
-            stockIsActive = false;
-            stockCompleted = false;
-            break;
-          case "VIR":
-            stockIsActive = true;
-            stockCompleted = false;
-            break;
-          default:
-            stockIsActive = true;
-            stockCompleted = true;
-        }
+    const currentSituationCode = currentSituation?.situations?.code;
+    console.log("Current order situation code:", currentSituationCode);
+
+    if (currentSituationCode) {
+      switch (currentSituationCode) {
+        case "PHY":
+          stockIsActive = true;
+          stockCompleted = true;
+          break;
+        case "HDN":
+          stockIsActive = false;
+          stockCompleted = false;
+          break;
+        case "VIR":
+          stockIsActive = true;
+          stockCompleted = false;
+          break;
+        default:
+          stockIsActive = true;
+          stockCompleted = true;
       }
     }
+
+    console.log("Stock movement flags - is_active:", stockIsActive, "completed:", stockCompleted);
 
     // Get movement type IDs
     const { data: movementType } = await supabase
