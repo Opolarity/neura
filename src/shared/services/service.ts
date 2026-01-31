@@ -1,3 +1,4 @@
+import { Status, Type } from "@/types/index.ts";
 import { City, Country, Neighborhood, State } from "../../types/locations.ts";
 import { supabase } from "../api/supabase";
 
@@ -42,4 +43,28 @@ export const getNeighborhoodsByCityIdApi = async (cityId: number, stateId: numbe
     .order("name");
   if (error) throw error;
   return data ?? [];
+};
+
+export const typesByModuleCode = async (moduleCode: string): Promise<Type[]> => {
+  const { data, error } = await supabase
+    .from("modules")
+    .select("types(*)")
+    .eq("code", moduleCode)
+    .order("name")
+    .single();
+
+  if (error) throw error;
+  return data?.types ?? [];
+};
+
+export const statussesByModuleCode = async (moduleCode: string): Promise<Status[]> => {
+  const { data, error } = await supabase
+    .from("modules")
+    .select("statuses(*)")
+    .eq("code", moduleCode)
+    .order("name")
+    .single();
+
+  if (error) throw error;
+  return data?.statuses ?? [];
 };

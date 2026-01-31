@@ -177,6 +177,7 @@ export type Database = {
       }
       business_accounts: {
         Row: {
+          account_id: number
           account_number: number | null
           bank: string
           business_account_type_id: number
@@ -186,6 +187,7 @@ export type Database = {
           total_amount: number
         }
         Insert: {
+          account_id?: number
           account_number?: number | null
           bank: string
           business_account_type_id: number
@@ -195,6 +197,7 @@ export type Database = {
           total_amount: number
         }
         Update: {
+          account_id?: number
           account_number?: number | null
           bank?: string
           business_account_type_id?: number
@@ -204,6 +207,13 @@ export type Database = {
           total_amount?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "business_accounts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "business_accounts_business_account_type_id_fkey"
             columns: ["business_account_type_id"]
@@ -509,56 +519,190 @@ export type Database = {
           },
         ]
       }
-      invoice: {
+      invoice_history: {
         Row: {
-          crated_at: string
+          created_at: string
+          detail: string | null
+          event_situation: string
           id: number
-          invoice_type_id: number
-          order_id: number
+          invoice_id: number
+          last_row: boolean
         }
         Insert: {
-          crated_at: string
-          id: number
-          invoice_type_id: number
-          order_id: number
+          created_at?: string
+          detail?: string | null
+          event_situation: string
+          id?: number
+          invoice_id: number
+          last_row?: boolean
         }
         Update: {
-          crated_at?: string
+          created_at?: string
+          detail?: string | null
+          event_situation?: string
           id?: number
-          invoice_type_id?: number
-          order_id?: number
+          invoice_id?: number
+          last_row?: boolean
         }
         Relationships: [
           {
-            foreignKeyName: "fk_invoice_invoice_type_id_invoice_type_id"
-            columns: ["invoice_type_id"]
+            foreignKeyName: "invoices_history_invoice_id_fkey"
+            columns: ["invoice_id"]
             isOneToOne: false
-            referencedRelation: "invoice_type"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_invoice_order_id_orders_id"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]
       }
-      invoice_type: {
+      invoice_items: {
         Row: {
+          created_at: string
+          description: string
+          discount: number | null
           id: number
-          name: string
+          igv: number
+          invoice_id: number
+          measurement_unit: string
+          quantity: number
+          total: number
+          unit_price: number
         }
         Insert: {
-          id: number
-          name: string
+          created_at?: string
+          description: string
+          discount?: number | null
+          id?: number
+          igv: number
+          invoice_id: number
+          measurement_unit: string
+          quantity: number
+          total: number
+          unit_price: number
         }
         Update: {
+          created_at?: string
+          description?: string
+          discount?: number | null
           id?: number
-          name?: string
+          igv?: number
+          invoice_id?: number
+          measurement_unit?: string
+          quantity?: number
+          total?: number
+          unit_price?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_series: {
+        Row: {
+          account_id: number
+          created_at: string
+          id: number
+          invoice_type_id: number
+          is_active: boolean
+          next_number: number
+          serie: string
+          user_id: string
+        }
+        Insert: {
+          account_id: number
+          created_at?: string
+          id?: number
+          invoice_type_id: number
+          is_active?: boolean
+          next_number: number
+          serie: string
+          user_id?: string
+        }
+        Update: {
+          account_id?: number
+          created_at?: string
+          id?: number
+          invoice_type_id?: number
+          is_active?: boolean
+          next_number?: number
+          serie?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_series_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_series_invoice_type_id_fkey"
+            columns: ["invoice_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_series_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          cdr_url: string | null
+          created_at: string
+          created_by: string
+          declared: boolean
+          id: number
+          invoice_type_id: number
+          pdf_url: string | null
+          xml_url: string | null
+        }
+        Insert: {
+          cdr_url?: string | null
+          created_at?: string
+          created_by?: string
+          declared?: boolean
+          id?: number
+          invoice_type_id: number
+          pdf_url?: string | null
+          xml_url?: string | null
+        }
+        Update: {
+          cdr_url?: string | null
+          created_at?: string
+          created_by?: string
+          declared?: boolean
+          id?: number
+          invoice_type_id?: number
+          pdf_url?: string | null
+          xml_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "invoices_invoice_type_id_fkey"
+            columns: ["invoice_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       linked_stock_movement_requests: {
         Row: {
@@ -769,6 +913,42 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["UID"]
+          },
+        ]
+      }
+      order_invoices: {
+        Row: {
+          created_at: string
+          id: number
+          invoice_id: number
+          order_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          invoice_id: number
+          order_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          invoice_id?: number
+          order_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_invoices_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1165,6 +1345,132 @@ export type Database = {
           },
         ]
       }
+      pos_session_orders: {
+        Row: {
+          created_at: string
+          id: number
+          order_id: number
+          pos_session_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          order_id: number
+          pos_session_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          order_id?: number
+          pos_session_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_session_orders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_session_orders_pos_session_id_fkey"
+            columns: ["pos_session_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_sessions: {
+        Row: {
+          branch_id: number
+          business_account: number
+          closed_at: string | null
+          "closing_amount number": number | null
+          created_at: string
+          difference: number | null
+          expected_amount: number | null
+          id: number
+          notes: string | null
+          opened_at: string
+          opening_amount: number
+          status_id: number
+          total_sales: number | null
+          user_id: string
+          warehouse_id: number
+        }
+        Insert: {
+          branch_id: number
+          business_account: number
+          closed_at?: string | null
+          "closing_amount number"?: number | null
+          created_at?: string
+          difference?: number | null
+          expected_amount?: number | null
+          id?: number
+          notes?: string | null
+          opened_at?: string
+          opening_amount: number
+          status_id: number
+          total_sales?: number | null
+          user_id?: string
+          warehouse_id: number
+        }
+        Update: {
+          branch_id?: number
+          business_account?: number
+          closed_at?: string | null
+          "closing_amount number"?: number | null
+          created_at?: string
+          difference?: number | null
+          expected_amount?: number | null
+          id?: number
+          notes?: string | null
+          opened_at?: string
+          opening_amount?: number
+          status_id?: number
+          total_sales?: number | null
+          user_id?: string
+          warehouse_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_sessions_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sessions_business_account_fkey"
+            columns: ["business_account"]
+            isOneToOne: false
+            referencedRelation: "business_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sessions_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "pos_sessions_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_list: {
         Row: {
           code: string | null
@@ -1482,6 +1788,13 @@ export type Database = {
           warehouse_id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_branch_id_fkey"
             columns: ["branch_id"]
@@ -3021,6 +3334,15 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_close_pos_session: {
+        Args: {
+          p_closing_amount: number
+          p_notes?: string
+          p_session_id: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
       sp_create_order: {
         Args: {
           p_branch_id: number
@@ -3164,26 +3486,16 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_get_sale_products:
-        | {
-            Args: {
-              p_page?: number
-              p_search?: string
-              p_size?: number
-              p_stock_type_id?: number
-              p_warehouse_id?: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_page?: number
-              p_search?: string
-              p_size?: number
-              p_stock_type_id?: number
-            }
-            Returns: Json
-          }
+      sp_get_sale_products: {
+        Args: {
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_stock_type_id?: number
+          p_warehouse_id?: number
+        }
+        Returns: Json
+      }
       sp_get_sales_list: {
         Args: {
           p_end_date?: string
@@ -3260,6 +3572,17 @@ export type Database = {
           p_search?: string
           p_size?: number
           p_states?: number
+        }
+        Returns: Json
+      }
+      sp_open_pos_session: {
+        Args: {
+          p_branch_id: number
+          p_business_account_id?: number
+          p_notes?: string
+          p_opening_amount?: number
+          p_user_id: string
+          p_warehouse_id: number
         }
         Returns: Json
       }

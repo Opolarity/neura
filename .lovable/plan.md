@@ -1,180 +1,179 @@
 
+## Plan: Corregir flujo de apertura de sesión POS
 
-## Plan: Filtrar productos por almacén seleccionado en Crear Venta
+### Resumen del problema
 
-### Resumen
-Actualmente, al buscar productos en la pantalla de crear venta, el stock que se muestra es la suma de todos los almacenes. El usuario necesita que el stock mostrado sea únicamente del almacén seleccionado en el modal inicial (y que se mantiene en el campo "Almacén" de la sección "Información de la Venta").
+Al intentar iniciar sesión en la apertura de caja, el sistema falla por múltiples razones:
+
+1. **Nombre de edge function incorrecto**: El servicio llama a `manage-cash-session` pero la función se llama `manage-pos-session`
+2. **Falta campo obligatorio `business_account`**: La tabla `pos_sessions` tiene una columna `business_account` (NOT NULL) que el stored procedure no está insertando
+3. **No hay selector de caja**: El usuario necesita poder elegir la caja (business_accounts con type CHR del módulo BNA)
 
 ---
 
 ### Cambios a implementar
 
-#### 1. Modificar Edge Function `get-sale-products`
+#### 1. Corregir nombre de edge function en el servicio
 
-**Archivo:** `supabase/functions/get-sale-products/index.ts`
+**Archivo**: `src/modules/sales/services/POSSession.service.ts`
 
-Agregar un nuevo parámetro `p_warehouse_id` que se pasará al RPC:
+Cambiar todas las referencias de `manage-cash-session` a `manage-pos-session`:
 
 ```typescript
-const p_warehouse_id = url.searchParams.get("p_warehouse_id") 
-  ? parseInt(url.searchParams.get("p_warehouse_id")!) 
-  : null;
+// ANTES
+await supabase.functions.invoke("manage-cash-session", ...)
 
-const { data, error } = await supabase.rpc("sp_get_sale_products", {
-  p_page,
-  p_size,
-  p_search,
-  p_stock_type_id,
-  p_warehouse_id,  // Nuevo parámetro
-});
+// DESPUÉS  
+await supabase.functions.invoke("manage-pos-session", ...)
 ```
 
 ---
 
-#### 2. Modificar el servicio `fetchSaleProducts`
+#### 2. Agregar servicio para obtener las cajas disponibles
 
-**Archivo:** `src/modules/sales/services/index.ts`
+**Archivo**: `src/modules/sales/services/POSSession.service.ts`
 
-Agregar `warehouseId` a la interfaz de parámetros y al query string:
-
-```typescript
-export interface FetchSaleProductsParams {
-  page?: number;
-  size?: number;
-  search?: string;
-  stockTypeId?: number;
-  warehouseId?: number;  // Nuevo
-}
-
-// En la función:
-if (params.warehouseId)
-  queryParams.set("p_warehouse_id", String(params.warehouseId));
-```
-
----
-
-#### 3. Modificar la función `loadProducts`
-
-**Archivo:** `src/modules/sales/hooks/useCreateSale.ts`
-
-Agregar el parámetro `warehouseId` a la función y pasarlo al servicio:
+Agregar función para obtener business_accounts tipo "Caja":
 
 ```typescript
-const loadProducts = async (
-  page: number,
-  search: string,
-  stockTypeId?: number,
-  warehouseId?: number,  // Nuevo
-) => {
-  // ...
-  const result = await fetchSaleProducts({
-    page,
-    size: 10,
-    search: search || undefined,
-    stockTypeId,
-    warehouseId,  // Pasarlo al servicio
-  });
-  // ...
+export const getCashRegisters = async () => {
+  const { data, error } = await supabase
+    .from("business_accounts")
+    .select(`
+      id, 
+      name, 
+      business_account_type:types!business_accounts_business_account_type_id_fkey(
+        id, code, name, module:modules(code)
+      )
+    `)
+    .eq("types.code", "CHR")
+    .eq("types.modules.code", "BNA");
+    
+  if (error) throw error;
+  return data || [];
 };
 ```
 
 ---
 
-#### 4. Actualizar todas las llamadas a `loadProducts`
+#### 3. Actualizar tipos para incluir caja seleccionada
 
-Hay 4 lugares donde se llama a `loadProducts`:
+**Archivo**: `src/modules/sales/types/POS.types.ts`
 
-1. **useEffect inicial (línea ~166)**:
-   ```typescript
-   loadProducts(1, "", undefined, userWarehouseId || undefined);
-   ```
-   
-2. **useEffect de debounce (línea ~197)**:
-   ```typescript
-   loadProducts(
-     1,
-     searchQuery,
-     selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
-     userWarehouseId || undefined,
-   );
-   ```
-
-3. **handleProductPageChange (línea ~385)**:
-   ```typescript
-   loadProducts(
-     newPage,
-     searchQuery,
-     selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
-     userWarehouseId || undefined,
-   );
-   ```
-
-4. **Llamada inicial**: Debe esperar a que `userWarehouseId` esté cargado antes de cargar productos.
-
----
-
-#### 5. Ajustar dependencias del useEffect
-
-El useEffect de debounce debe incluir `userWarehouseId` en sus dependencias para recargar cuando cambie:
+Actualizar interface OpenPOSSessionRequest:
 
 ```typescript
-useEffect(() => {
-  // No cargar si no hay warehouse asignado aún
-  if (!userWarehouseId) return;
-  
-  if (searchDebounceRef.current) {
-    clearTimeout(searchDebounceRef.current);
-  }
-  searchDebounceRef.current = setTimeout(() => {
-    setProductPage(1);
-    loadProducts(
-      1,
-      searchQuery,
-      selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
-      userWarehouseId,
-    );
-  }, 300);
+export interface OpenPOSSessionRequest {
+  openingAmount: number;
+  businessAccountId: number;  // NUEVO - ID de la caja
+  notes?: string;
+}
 
-  return () => {
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-    }
-  };
-}, [searchQuery, selectedStockTypeId, userWarehouseId]);
+export interface CashRegister {
+  id: number;
+  name: string;
+}
 ```
 
 ---
 
-#### 6. Modificar el RPC `sp_get_sale_products` en la base de datos
+#### 4. Actualizar modal de apertura para incluir selector de caja
 
-El stored procedure debe ser modificado para aceptar y usar el nuevo parámetro `p_warehouse_id`.
+**Archivo**: `src/modules/sales/components/pos/POSSessionModal.tsx`
 
-La lógica de filtrado de stock debe cambiar de:
-- Suma de stock en todos los almacenes
-  
-A:
-- Stock solo del almacén especificado (si se proporciona)
+Agregar:
+- Select para elegir la caja
+- Cargar cajas disponibles al montar el componente
+- Validar que se haya seleccionado una caja antes de enviar
 
 ---
 
-### Flujo de datos actualizado
+#### 5. Actualizar edge function para enviar businessAccountId
 
-```text
-Usuario selecciona almacén en modal
-         ↓
-userWarehouseId se guarda en estado
-         ↓
-Usuario busca productos
-         ↓
-loadProducts(page, search, stockTypeId, warehouseId)
-         ↓
-fetchSaleProducts({ ..., warehouseId })
-         ↓
-GET /get-sale-products?...&p_warehouse_id=X
-         ↓
-RPC sp_get_sale_products(p_warehouse_id)
-         ↓
-Devuelve stock filtrado por almacén
+**Archivo**: `supabase/functions/manage-pos-session/index.ts`
+
+En la acción `open`, agregar el parámetro:
+
+```typescript
+if (action === "open") {
+  const { openingAmount, notes, businessAccountId } = input;
+
+  const { data, error } = await supabase.rpc("sp_open_pos_session", {
+    p_user_id: user.id,
+    p_warehouse_id: profile.warehouse_id,
+    p_branch_id: profile.branch_id,
+    p_opening_amount: openingAmount || 0,
+    p_business_account_id: businessAccountId,  // NUEVO
+    p_notes: notes || null,
+  });
+  // ...
+}
+```
+
+---
+
+#### 6. Actualizar stored procedure para aceptar business_account
+
+**Migración SQL**:
+
+```sql
+CREATE OR REPLACE FUNCTION sp_open_pos_session(
+  p_user_id UUID,
+  p_warehouse_id INTEGER,
+  p_branch_id INTEGER,
+  p_opening_amount NUMERIC DEFAULT 0,
+  p_business_account_id INTEGER,  -- NUEVO PARÁMETRO
+  p_notes TEXT DEFAULT NULL
+)
+RETURNS JSON AS $$
+DECLARE
+  v_existing_session_id INTEGER;
+  v_new_session_id INTEGER;
+  v_open_status_id INTEGER;
+BEGIN
+  -- Get open status id
+  SELECT id INTO v_open_status_id
+  FROM statuses st
+  JOIN modules mo ON st.module_id = mo.id AND mo.code = 'POS'
+  WHERE st.code = 'OPE';
+
+  -- Check if user already has an open session
+  SELECT id INTO v_existing_session_id
+  FROM pos_sessions
+  WHERE user_id = p_user_id
+    AND status_id = v_open_status_id;
+
+  IF v_existing_session_id IS NOT NULL THEN
+    RAISE EXCEPTION 'User already has an open cash session (ID: %)', v_existing_session_id;
+  END IF;
+
+  -- Create new session (AHORA INCLUYE business_account)
+  INSERT INTO public.pos_sessions (
+    user_id,
+    warehouse_id,
+    branch_id,
+    opening_amount,
+    business_account,  -- NUEVO
+    status_id,
+    notes
+  )
+  VALUES (
+    p_user_id,
+    p_warehouse_id,
+    p_branch_id,
+    p_opening_amount,
+    p_business_account_id,  -- NUEVO
+    v_open_status_id,
+    p_notes
+  )
+  RETURNING id INTO v_new_session_id;
+
+  RETURN json_build_object(
+    'session_id', v_new_session_id,
+    'opened_at', NOW()
+  );
+END;
+$$ LANGUAGE plpgsql;
 ```
 
 ---
@@ -183,31 +182,47 @@ Devuelve stock filtrado por almacén
 
 | Archivo | Cambio |
 |---------|--------|
-| `supabase/functions/get-sale-products/index.ts` | Agregar parámetro `p_warehouse_id` |
-| `src/modules/sales/services/index.ts` | Agregar `warehouseId` a interfaz y query params |
-| `src/modules/sales/hooks/useCreateSale.ts` | Modificar `loadProducts` y sus llamadas |
-| **Base de datos (RPC)** | Modificar `sp_get_sale_products` para filtrar por almacén |
+| `src/modules/sales/services/POSSession.service.ts` | Corregir nombre de función, agregar getCashRegisters |
+| `src/modules/sales/types/POS.types.ts` | Agregar businessAccountId a request, tipo CashRegister |
+| `src/modules/sales/components/pos/POSSessionModal.tsx` | Agregar selector de caja |
+| `src/modules/sales/hooks/usePOSSession.ts` | Cargar cajas disponibles |
+| `supabase/functions/manage-pos-session/index.ts` | Pasar businessAccountId al RPC |
+| **Base de datos** | Actualizar sp_open_pos_session |
 
 ---
 
-### Sección técnica
+### Flujo corregido
 
-#### Dependencia crítica: Modificación del RPC
-
-El RPC `sp_get_sale_products` debe ser modificado para aceptar el parámetro `p_warehouse_id`. La consulta de stock dentro del RPC actualmente hace algo como:
-
-```sql
-SELECT SUM(stock) FROM product_stock WHERE product_variation_id = ...
+```text
+Usuario entra a /pos
+         ↓
+Se muestra modal "Apertura de Caja"
+         ↓
+Se cargan las cajas disponibles (business_accounts type CHR)
+         ↓
+Usuario selecciona caja + ingresa monto inicial
+         ↓
+openSession({ openingAmount, businessAccountId, notes })
+         ↓
+POST /manage-pos-session (action: "open")
+         ↓
+sp_open_pos_session(p_business_account_id: X, ...)
+         ↓
+INSERT INTO pos_sessions (business_account = X, ...)
+         ↓
+Sesión creada exitosamente
 ```
 
-Debe cambiar a:
+---
 
-```sql
-SELECT stock FROM product_stock 
-WHERE product_variation_id = ... 
-  AND warehouse_id = p_warehouse_id
-  AND (p_stock_type_id IS NULL OR stock_type_id = p_stock_type_id)
-```
+### Cajas disponibles en la base de datos
 
-Esta modificación requiere acceso a la base de datos para alterar la función.
+Las cajas actualmente configuradas son:
 
+| ID | Nombre |
+|----|--------|
+| 5 | Caja 1 |
+| 6 | Caja 2 |
+| 7 | Caja 3 |
+
+Estas son las que aparecerán en el selector del modal de apertura.

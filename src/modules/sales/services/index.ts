@@ -95,7 +95,8 @@ export const updateOrder = async (
 ) => {
   const { data, error } = await supabase.functions.invoke("update-order", {
     body: {
-      orderId,
+      order_id: orderId,
+      situation_id: orderData.initialSituationId,
       document_type: orderData.documentType,
       document_number: orderData.documentNumber,
       customer_name: orderData.customerName,
@@ -303,6 +304,8 @@ export interface SaleProductsResponse {
     productTitle: string;
     variationId: number;
     sku: string;
+    imageUrl: string | null;
+    stock: number;
     terms: Array<{ id: number; name: string }>;
     prices: Array<{
       price_list_id: number;
