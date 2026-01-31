@@ -95,7 +95,8 @@ export const updateOrder = async (
 ) => {
   const { data, error } = await supabase.functions.invoke("update-order", {
     body: {
-      orderId,
+      order_id: orderId,
+      situation_id: orderData.initialSituationId,
       document_type: orderData.documentType,
       document_number: orderData.documentNumber,
       customer_name: orderData.customerName,
