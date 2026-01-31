@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -9,11 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Plus, Trash2, Search, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/shared/utils/utils';
+import { useDebounce } from '@/shared/hooks/useDebounce';
 
 interface OrderProduct {
   id: number;
@@ -45,6 +44,25 @@ interface NewProduct {
   quantity: number;
   price: number;
   discount: number;
+  imageUrl?: string;
+  stock?: number;
+}
+
+interface SearchProduct {
+  sku: string;
+  stock: number;
+  terms: Array<{ id: number; name: string }>;
+  prices: Array<{ price: number; sale_price: number | null; price_list_id: number }>;
+  imageUrl: string;
+  productId: number;
+  variationId: number;
+  productTitle: string;
+}
+
+interface ProductSearchPagination {
+  page: number;
+  size: number;
+  total: number;
 }
 
 const EditReturn = () => {
@@ -70,10 +88,12 @@ const EditReturn = () => {
   const [returnProducts, setReturnProducts] = useState<ReturnProduct[]>([]);
   const [newProducts, setNewProducts] = useState<NewProduct[]>([]);
   
-  // Product search
+  // Product search with pagination
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedVariation, setSelectedVariation] = useState<any>(null);
-  const [open, setOpen] = useState(false);
+  const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchPagination, setSearchPagination] = useState<ProductSearchPagination>({ page: 1, size: 10, total: 0 });
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   useEffect(() => {
     loadReturnData();
@@ -231,23 +251,52 @@ const EditReturn = () => {
     }
   };
 
-  const allVariations = useMemo(() => {
-    return products.map(variation => ({
-      value: variation.id.toString(),
-      label: `${variation.products?.title || 'Sin nombre'} - ${variation.sku || 'Sin SKU'}`,
-      price: variation.product_price?.[0]?.sale_price || variation.product_price?.[0]?.price || 0,
-      product_name: variation.products?.title || 'Sin nombre',
-      variation_name: variation.sku || 'Sin SKU'
-    }));
-  }, [products]);
+  // Fetch products for exchange search
+  const fetchSearchProducts = useCallback(async (page: number = 1, search: string = '') => {
+    setSearchLoading(true);
+    try {
+      const params = new URLSearchParams({
+        p_page: page.toString(),
+        p_size: '10',
+      });
+      if (search) params.append('p_search', search);
 
-  const filteredVariations = useMemo(() => {
-    if (!searchQuery) return allVariations;
-    const query = searchQuery.toLowerCase();
-    return allVariations.filter(v => 
-      v.label.toLowerCase().includes(query)
-    );
-  }, [allVariations, searchQuery]);
+      // Use the existing get-sale-products endpoint
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-sale-products?${params.toString()}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error('Error fetching products');
+
+      const result = await response.json();
+      setSearchProducts(result.data || []);
+      setSearchPagination(result.page || { page: 1, size: 10, total: 0 });
+    } catch (error) {
+      console.error('Error fetching search products:', error);
+      setSearchProducts([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, []);
+
+  // Trigger search when debounced query changes
+  useEffect(() => {
+    if (returnTypeCode === 'CAM' && debouncedSearch) {
+      fetchSearchProducts(1, debouncedSearch);
+    }
+  }, [debouncedSearch, returnTypeCode, fetchSearchProducts]);
+
+  const handleSearchPageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= Math.ceil(searchPagination.total / searchPagination.size)) {
+      fetchSearchProducts(newPage, debouncedSearch);
+    }
+  };
 
   const addReturnProduct = (orderProduct: OrderProduct) => {
     const existingProduct = returnProducts.find(
@@ -290,14 +339,9 @@ const EditReturn = () => {
     setReturnProducts(updated);
   };
 
-  const addNewProduct = () => {
-    if (!selectedVariation) {
-      toast.error('Debe seleccionar un producto');
-      return;
-    }
-
+  const addProductFromSearch = (product: SearchProduct) => {
     const existingProduct = newProducts.find(
-      np => np.variation_id === Number(selectedVariation.value)
+      np => np.variation_id === product.variationId
     );
 
     if (existingProduct) {
@@ -305,19 +349,20 @@ const EditReturn = () => {
       return;
     }
 
+    const price = product.prices?.[0]?.sale_price || product.prices?.[0]?.price || 0;
     const newProduct: NewProduct = {
-      variation_id: Number(selectedVariation.value),
-      product_name: selectedVariation.product_name,
-      variation_name: selectedVariation.variation_name,
+      variation_id: product.variationId,
+      product_name: product.productTitle,
+      variation_name: product.terms.map(t => t.name).join(' / ') || product.sku,
       quantity: 1,
-      price: selectedVariation.price,
-      discount: 0
+      price: price,
+      discount: 0,
+      imageUrl: product.imageUrl,
+      stock: product.stock
     };
 
     setNewProducts([...newProducts, newProduct]);
-    setSelectedVariation(null);
-    setSearchQuery('');
-    setOpen(false);
+    toast.success('Producto agregado');
   };
 
   const removeNewProduct = (index: number) => {
@@ -624,12 +669,8 @@ const EditReturn = () => {
 
             <div>
               <Label htmlFor="returnType">Tipo de Devolución/Cambio</Label>
-              <Select value={selectedReturnType} onValueChange={(value) => {
-                setSelectedReturnType(value);
-                const type = returnTypes.find(t => t.id.toString() === value);
-                setReturnTypeCode(type?.code || '');
-              }}>
-                <SelectTrigger id="returnType">
+              <Select value={selectedReturnType} disabled>
+                <SelectTrigger id="returnType" className="bg-muted">
                   <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -640,6 +681,7 @@ const EditReturn = () => {
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground mt-1">El tipo no puede ser modificado</p>
             </div>
 
             <div>
@@ -781,53 +823,139 @@ const EditReturn = () => {
               <CardTitle>Productos de Cambio</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Search bar */}
               <div>
                 <Label>Buscar Producto</Label>
-                <div className="flex gap-2">
-                  <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={open}
-                        className="flex-1 justify-between"
-                      >
-                        {selectedVariation ? selectedVariation.label : "Seleccionar producto..."}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
-                      <Command>
-                        <CommandInput 
-                          placeholder="Buscar producto..." 
-                          value={searchQuery}
-                          onValueChange={setSearchQuery}
-                        />
-                        <CommandList>
-                          <CommandEmpty>No se encontraron productos.</CommandEmpty>
-                          <CommandGroup>
-                            {filteredVariations.map((variation) => (
-                              <CommandItem
-                                key={variation.value}
-                                value={variation.value}
-                                onSelect={() => {
-                                  setSelectedVariation(variation);
-                                  setOpen(false);
-                                }}
-                              >
-                                {variation.label}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <Button onClick={addNewProduct}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Agregar
-                  </Button>
+                <div className="flex gap-2 mt-2">
+                  <div className="flex-1 relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Buscar por nombre, SKU o atributos..."
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
               </div>
+
+              {/* Products table */}
+              <div className="border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Producto</TableHead>
+                      <TableHead className="text-center">Stock</TableHead>
+                      <TableHead className="text-right">Precio</TableHead>
+                      <TableHead className="w-20"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {searchLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8">
+                          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Buscando productos...
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : searchProducts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                          {searchQuery
+                            ? "No se encontraron productos"
+                            : "Ingrese un término de búsqueda"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      searchProducts.map((product) => (
+                        <TableRow key={product.variationId}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              {product.imageUrl ? (
+                                <img
+                                  src={product.imageUrl}
+                                  alt={product.productTitle}
+                                  className="w-10 h-10 rounded object-cover"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
+                                  <ShoppingCart className="w-4 h-4 text-muted-foreground" />
+                                </div>
+                              )}
+                              <div>
+                                <div className="font-medium text-sm">
+                                  {product.productTitle}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {product.terms.map((t) => t.name).join(" / ") ||
+                                    product.sku}
+                                </div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span
+                              className={
+                                product.stock > 0
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                              }
+                            >
+                              {product.stock}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            ${(product.prices?.[0]?.sale_price || product.prices?.[0]?.price || 0).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => addProductFromSearch(product)}
+                              disabled={product.stock <= 0}
+                              className="text-primary hover:text-primary/80"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {searchPagination.total > 0 && (
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-muted-foreground">
+                    Mostrando {searchProducts.length} de {searchPagination.total} productos
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSearchPageChange(searchPagination.page - 1)}
+                      disabled={searchPagination.page <= 1}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <span className="text-sm">
+                      Página {searchPagination.page} de {Math.ceil(searchPagination.total / searchPagination.size)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSearchPageChange(searchPagination.page + 1)}
+                      disabled={searchPagination.page >= Math.ceil(searchPagination.total / searchPagination.size)}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {newProducts.length > 0 && (
                 <div className="border rounded-lg">
