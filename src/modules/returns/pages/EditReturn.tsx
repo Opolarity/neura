@@ -130,26 +130,27 @@ const EditReturn = () => {
         .from('document_types')
         .select('*');
 
-      // Load situations
+      // Load situations for returns module (RTU)
       const { data: moduleData } = await supabase
         .from('modules')
         .select('id')
-        .eq('code', 'CAM')
+        .eq('code', 'RTU')
         .single();
 
       if (moduleData) {
         const { data: situationsData } = await supabase
           .from('situations')
-          .select('*')
+          .select('*, statuses(id, name, code)')
           .eq('module_id', moduleData.id);
         setSituations(situationsData || []);
-      }
 
-      // Load return types
-      const { data: typesData } = await supabase
-        .from('types')
-        .select('*')
-        .eq('module_id', moduleData?.id || 0);
+        // Load return types from the same module
+        const { data: typesData } = await supabase
+          .from('types')
+          .select('*')
+          .eq('module_id', moduleData.id);
+        setReturnTypes(typesData || []);
+      }
 
       // Load all products for exchange
       const { data: productsData } = await supabase
@@ -179,7 +180,6 @@ const EditReturn = () => {
       setOrderProducts(orderProductsData || []);
       setProducts(productsData || []);
       setDocumentTypes(docTypesData || []);
-      setReturnTypes(typesData || []);
 
       // Set return products based on return type
       if (returnData.types?.code === 'DVT') {
