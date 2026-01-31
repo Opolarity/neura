@@ -936,6 +936,9 @@ export const useCreateSale = () => {
 
       setSaving(true);
 
+      // Debug: Log saleType value being sent
+      console.log("[CreateSale] Submitting with saleType:", formData.saleType);
+
       try {
         const orderData = {
           documentType: formData.documentType,
