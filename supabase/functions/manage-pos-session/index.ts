@@ -69,13 +69,24 @@ serve(async (req) => {
     // ACTION: OPEN - Open a new cash session
     // =============================================
     if (action === "open") {
-      const { openingAmount, notes } = input;
+      const { openingAmount, notes, businessAccountId } = input;
+
+      if (!businessAccountId) {
+        return new Response(
+          JSON.stringify({ error: "businessAccountId is required" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
 
       const { data, error } = await supabase.rpc("sp_open_pos_session", {
         p_user_id: user.id,
         p_warehouse_id: profile.warehouse_id,
         p_branch_id: profile.branch_id,
         p_opening_amount: openingAmount || 0,
+        p_business_account_id: businessAccountId,
         p_notes: notes || null,
       });
 

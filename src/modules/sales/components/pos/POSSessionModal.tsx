@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,8 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, DollarSign, Store } from "lucide-react";
-import type { OpenPOSSessionRequest } from "../../types/POS.types";
+import type { OpenPOSSessionRequest, CashRegister } from "../../types/POS.types";
+import { getCashRegisters } from "../../services/POSSession.service";
 
 interface POSSessionModalProps {
   isOpen: boolean;
@@ -26,12 +34,48 @@ export default function POSSessionModal({
 }: POSSessionModalProps) {
   const [openingAmount, setOpeningAmount] = useState<string>("0");
   const [notes, setNotes] = useState<string>("");
+  const [selectedCashRegisterId, setSelectedCashRegisterId] = useState<string>("");
+  const [cashRegisters, setCashRegisters] = useState<CashRegister[]>([]);
+  const [loadingCashRegisters, setLoadingCashRegisters] = useState(true);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadCashRegisters();
+    }
+  }, [isOpen]);
+
+  const loadCashRegisters = async () => {
+    try {
+      setLoadingCashRegisters(true);
+      const data = await getCashRegisters();
+      setCashRegisters(data);
+      // Auto-select first cash register if only one exists
+      if (data.length === 1) {
+        setSelectedCashRegisterId(String(data[0].id));
+      }
+    } catch (error) {
+      console.error("Error loading cash registers:", error);
+    } finally {
+      setLoadingCashRegisters(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!selectedCashRegisterId) {
+      return;
+    }
+    
     const amount = parseFloat(openingAmount) || 0;
-    await onOpen({ openingAmount: amount, notes: notes || undefined });
+    await onOpen({ 
+      openingAmount: amount, 
+      businessAccountId: parseInt(selectedCashRegisterId),
+      notes: notes || undefined 
+    });
   };
+
+  const isFormValid = selectedCashRegisterId && !loadingCashRegisters;
 
   return (
     <Dialog open={isOpen}>
@@ -42,13 +86,13 @@ export default function POSSessionModal({
       >        
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-blue-100 rounded-full">
-              <Store className="w-6 h-6 text-blue-600" />
+            <div className="p-3 bg-primary/10 rounded-full">
+              <Store className="w-6 h-6 text-primary" />
             </div>
             <div>
               <DialogTitle>Apertura de Caja</DialogTitle>
               <DialogDescription>
-                Ingrese el monto inicial para comenzar la sesion
+                Seleccione la caja e ingrese el monto inicial
               </DialogDescription>
             </div>
           </div>
@@ -56,9 +100,40 @@ export default function POSSessionModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="cashRegister">Caja *</Label>
+            {loadingCashRegisters ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Cargando cajas...
+              </div>
+            ) : (
+              <Select
+                value={selectedCashRegisterId}
+                onValueChange={setSelectedCashRegisterId}
+              >
+                <SelectTrigger id="cashRegister">
+                  <SelectValue placeholder="Seleccione una caja" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cashRegisters.map((register) => (
+                    <SelectItem key={register.id} value={String(register.id)}>
+                      {register.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {cashRegisters.length === 0 && !loadingCashRegisters && (
+              <p className="text-xs text-destructive">
+                No hay cajas disponibles
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="openingAmount">Monto Inicial</Label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="openingAmount"
                 type="number"
@@ -68,10 +143,9 @@ export default function POSSessionModal({
                 onChange={(e) => setOpeningAmount(e.target.value)}
                 className="pl-10 text-lg"
                 placeholder="0.00"
-                autoFocus
               />
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Ingrese el dinero en efectivo con el que inicia la caja
             </p>
           </div>
@@ -89,8 +163,8 @@ export default function POSSessionModal({
 
           <Button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700"
-            disabled={isOpening}
+            className="w-full"
+            disabled={isOpening || !isFormValid}
           >
             {isOpening ? (
               <>
