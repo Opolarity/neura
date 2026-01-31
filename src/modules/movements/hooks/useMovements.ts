@@ -199,13 +199,23 @@ export const useMovements = () => {
     loadMovements(filters);
   };
 
+  const hasActiveFilters = !!(
+    filters.type ||
+    filters.class ||
+    filters.bussines_account ||
+    filters.payment_method ||
+    filters.start_date ||
+    filters.end_date ||
+    filters.branches
+  );
+
   return {
     movements,
     pagination,
     summary,
     loading,
     error,
-
+    hasActiveFilters,
     search,
     filters,
     isOpenFilterModal,

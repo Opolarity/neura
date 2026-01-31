@@ -21,6 +21,7 @@ const MovementsPage = () => {
     search,
     filters,
     isOpenFilterModal,
+    hasActiveFilters,
 
     movementTypes,
     categories,
@@ -44,15 +45,6 @@ const MovementsPage = () => {
     goToMovementDetail,
   } = useMovements();
 
-  const hasActiveFilters = !!(
-    filters.type ||
-    filters.class ||
-    filters.bussines_account ||
-    filters.payment_method ||
-    filters.start_date ||
-    filters.end_date ||
-    filters.branches
-  );
 
   return (
     <div className="space-y-6">

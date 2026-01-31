@@ -37,69 +37,77 @@ export const useShipping = () => {
 
   const navigate = useNavigate();
 
-    const loadData = async (filters?: ShippingFilters) => {
-      setLoading(true);
-      setError(null);
-  
-      try {
-        const dataShippings = await ShippingApi(filters);
-        const { shippings, pagination } = shippingAdapter(dataShippings);
-        setShippings(shippings);
-        setPagination(pagination);
-      } catch (error) {
-        console.error(error);
-        setError("Ocurrió un error al cargar los métodos de envío");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadData = async (filters?: ShippingFilters) => {
+    setLoading(true);
+    setError(null);
 
-    const onSearchChange = (value: string) => {
-        setSearch(value);
-    };
+    try {
+      const dataShippings = await ShippingApi(filters);
+      const { shippings, pagination } = shippingAdapter(dataShippings);
+      setShippings(shippings);
+      setPagination(pagination);
+    } catch (error) {
+      console.error(error);
+      setError("Ocurrió un error al cargar los métodos de envío");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const debouncedSearch = useDebounce(search, 500);
+  const onSearchChange = (value: string) => {
+    setSearch(value);
+  };
+
+  const debouncedSearch = useDebounce(search, 500);
 
 
-    useEffect(() => {
-        if (debouncedSearch !== filters.search) {
-        const newFilters = { ...filters, search: debouncedSearch, page: 1 };
-        setFilters(newFilters);
-        loadData(newFilters);
-        }
-    }, [debouncedSearch]);
+  useEffect(() => {
+    if (debouncedSearch !== filters.search) {
+      const newFilters = { ...filters, search: debouncedSearch, page: 1 };
+      setFilters(newFilters);
+      loadData(newFilters);
+    }
+  }, [debouncedSearch]);
 
-    const onPageChange = (page: number) => {
-        const newFilters = { ...filters, page };
-        setFilters(newFilters);
-        loadData(newFilters);
-    };
+  const onPageChange = (page: number) => {
+    const newFilters = { ...filters, page };
+    setFilters(newFilters);
+    loadData(newFilters);
+  };
 
-    const onOrderChange = (order: string) => {
-        const newFilters = { ...filters, order };
-        setFilters(newFilters);
-        loadData(newFilters);
-    };
+  const onOrderChange = (order: string) => {
+    const newFilters = { ...filters, order };
+    setFilters(newFilters);
+    loadData(newFilters);
+  };
 
-    const handlePageSizeChange = (size: number) => {
-        const newFilters = { ...filters, size, page: 1 };
-        setFilters(newFilters);
-        loadData(newFilters);
-    };
+  const handlePageSizeChange = (size: number) => {
+    const newFilters = { ...filters, size, page: 1 };
+    setFilters(newFilters);
+    loadData(newFilters);
+  };
 
-    const onOpenFilterModal = () => {
-        setIsOpenFilterModal(true);
-    };
-    const onCloseFilterModal = () => {
-        setIsOpenFilterModal(false);
-    };
+  const onOpenFilterModal = () => {
+    setIsOpenFilterModal(true);
+  };
+  const onCloseFilterModal = () => {
+    setIsOpenFilterModal(false);
+  };
 
-    const onApplyFilter = (newFilters: ShippingFilters) => {
-        const updatedFilters = { ...newFilters, page: 1, size: filters.size };
-        setFilters(updatedFilters);
-        loadData(updatedFilters);
-        setIsOpenFilterModal(false);
-    };
+  const onApplyFilter = (newFilters: ShippingFilters) => {
+    const updatedFilters = { ...newFilters, page: 1, size: filters.size };
+    setFilters(updatedFilters);
+    loadData(updatedFilters);
+    setIsOpenFilterModal(false);
+  };
+
+  const hasActiveFilters =
+    filters.mincost !== null ||
+    filters.maxcost !== null ||
+    filters.countrie !== null ||
+    filters.state !== null ||
+    filters.city !== null ||
+    filters.neighborhood !== null;
 
   return {
     shippings,
@@ -109,6 +117,7 @@ export const useShipping = () => {
     search,
     isOpenFilterModal,
     filters,
+    hasActiveFilters,
     onPageChange,
     handlePageSizeChange,
     onSearchChange,

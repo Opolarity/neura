@@ -28,6 +28,7 @@ const Categories = () => {
     pagination,
     isOpenFilterModal,
     filters,
+    hasActiveFilters,
     onSearchChange,
     onPageChange,
     handlePageSizeChange,
@@ -234,6 +235,7 @@ const Categories = () => {
             onOpen={onOpenFilterModal}
             order={filters.order}
             onOrderChange={onOrderChange}
+            hasActiveFilters={hasActiveFilters}
           />
         </CardHeader>
 

@@ -14,6 +14,7 @@ interface AttributesFilterBarProps {
   onOpen: () => void;
   order?: string | null;
   onOrderChange: (value: string) => void;
+  hasActiveFilters?: boolean;
 }
 
 export default function AttributesFilterBar({
@@ -22,6 +23,7 @@ export default function AttributesFilterBar({
   onOpen,
   order,
   onOrderChange,
+  hasActiveFilters,
 }: AttributesFilterBarProps) {
   return (
     <div className="flex items-center gap-2">
@@ -36,7 +38,7 @@ export default function AttributesFilterBar({
         />
       </div>
 
-      <Button onClick={onOpen} className="gap-2">
+      <Button onClick={onOpen} variant={hasActiveFilters ? "default" : "outline"} className="gap-2">
         <ListFilter className="w-4 h-4" />
         Filtrar
       </Button>

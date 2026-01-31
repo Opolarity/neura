@@ -184,6 +184,8 @@ export const useProductCosts = () => {
         }
     };
 
+    const hasActiveFilters = filters.mincost !== null || filters.maxcost !== null || filters.cost !== null;
+
     return {
         products,
         pagination,
@@ -195,6 +197,7 @@ export const useProductCosts = () => {
         isEditing,
         isSaving,
         hasChanges,
+        hasActiveFilters,
         onPageChange,
         handlePageSizeChange,
         onSearchChange,

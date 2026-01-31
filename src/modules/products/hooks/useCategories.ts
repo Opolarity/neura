@@ -148,6 +148,13 @@ export const useCategories = () => {
     await loadCategoriesList(); // Reload list for parent dropdown
   };
 
+  const hasActiveFilters =
+    filters.description !== null ||
+    filters.parentcategory !== null ||
+    filters.minproducts !== null ||
+    filters.maxproducts !== null ||
+    filters.image !== null;
+
   return {
     categories,
     categoriesList,
@@ -157,6 +164,7 @@ export const useCategories = () => {
     pagination,
     isOpenFilterModal,
     filters,
+    hasActiveFilters,
     onSearchChange,
     onPageChange,
     handlePageSizeChange,

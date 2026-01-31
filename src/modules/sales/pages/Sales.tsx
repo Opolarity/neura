@@ -51,6 +51,7 @@ const Sales = () => {
     isOpenFilterModal,
     filters,
     selectedSales,
+    hasActiveFilters,
     onSearchChange,
     onPageChange,
     onOrderChange,
@@ -77,6 +78,7 @@ const Sales = () => {
             onOpen={onOpenFilterModal}
             order={filters.order}
             onOrderChange={onOrderChange}
+            hasActiveFilters={hasActiveFilters}
           />
         </CardHeader>
 

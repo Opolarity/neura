@@ -17,13 +17,15 @@ import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import ShippingFilterModal from '../components/shipping/ShippingFilterModal';
 
 
-const Shipping = () => {  const {
+const Shipping = () => {
+  const {
     shippings,
     loading,
     search,
     pagination,
     isOpenFilterModal,
     filters,
+    hasActiveFilters,
     handlePageSizeChange,
     onOpenFilterModal,
     onCloseFilterModal,
@@ -51,6 +53,7 @@ const Shipping = () => {  const {
             onOpen={onOpenFilterModal}
             order={filters.order}
             onOrderChange={onOrderChange}
+            hasActiveFilters={hasActiveFilters}
           />
         </CardHeader>
         <CardContent className="p-0">    <Table>
@@ -72,7 +75,6 @@ const Shipping = () => {  const {
               <TableHead className="min-w-[150px]">Nombre</TableHead>
               <TableHead className="min-w-[100px]">Precio</TableHead>
               <TableHead className="min-w-[200px]">Zonas</TableHead>
-              <TableHead className="min-w-[150px]">Cantidad de zonas</TableHead>
               <TableHead className="min-w-[120px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -113,14 +115,14 @@ const Shipping = () => {  const {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {}}
+                        onClick={() => { }}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => {}}
+                        onClick={() => { }}
                       >
                         <Trash className="w-4 h-4" />
                       </Button>

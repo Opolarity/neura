@@ -23,6 +23,7 @@ const UsersList = () => {
     search,
     isOpenFilterModal,
     pagination,
+    hasActiveFilters,
     handleSizeChange,
     handlePageChange,
     handleSearchChange,
@@ -62,6 +63,7 @@ const UsersList = () => {
             onFilterClick={handleOpenFilterModal}
             order={filters.order}
             onOrderChange={(val) => handleApplyFilter({ ...filters, order: val })}
+            hasActiveFilters={hasActiveFilters}
           />
         </CardHeader>
         <CardContent className="p-0">
