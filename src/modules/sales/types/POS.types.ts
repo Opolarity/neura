@@ -43,7 +43,9 @@ export interface POSSession {
 }
 
 export interface POSSessionApiResponse {
-  session_id: number;
+  // API returns "id" from get-active query, "session_id" from RPC
+  id?: number;
+  session_id?: number;
   user_id: string;
   warehouse_id: number;
   branch_id: number;
@@ -56,7 +58,7 @@ export interface POSSessionApiResponse {
   opened_at: string;
   closed_at?: string | null;
   notes?: string | null;
-  status: Type;
+  status?: Type;
 }
 
 export interface OpenPOSSessionRequest {

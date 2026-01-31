@@ -9,7 +9,8 @@ export const adaptPOSSession = (
   apiResponse: POSSessionApiResponse
 ): POSSession => {
   return {
-    id: apiResponse.session_id,
+    // Handle both "id" (from get-active) and "session_id" (from open/close)
+    id: apiResponse.id ?? apiResponse.session_id,
     userId: apiResponse.user_id,
     warehouseId: apiResponse.warehouse_id,
     branchId: apiResponse.branch_id,
