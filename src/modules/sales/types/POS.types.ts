@@ -61,7 +61,13 @@ export interface POSSessionApiResponse {
 
 export interface OpenPOSSessionRequest {
   openingAmount: number;
+  businessAccountId: number;
   notes?: string;
+}
+
+export interface CashRegister {
+  id: number;
+  name: string;
 }
 
 export interface ClosePOSSessionRequest {

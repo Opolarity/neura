@@ -1384,6 +1384,7 @@ export type Database = {
       pos_sessions: {
         Row: {
           branch_id: number
+          business_account: number
           closed_at: string | null
           "closing_amount number": number | null
           created_at: string
@@ -1400,6 +1401,7 @@ export type Database = {
         }
         Insert: {
           branch_id: number
+          business_account: number
           closed_at?: string | null
           "closing_amount number"?: number | null
           created_at?: string
@@ -1416,6 +1418,7 @@ export type Database = {
         }
         Update: {
           branch_id?: number
+          business_account?: number
           closed_at?: string | null
           "closing_amount number"?: number | null
           created_at?: string
@@ -1436,6 +1439,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sessions_business_account_fkey"
+            columns: ["business_account"]
+            isOneToOne: false
+            referencedRelation: "business_accounts"
             referencedColumns: ["id"]
           },
           {
