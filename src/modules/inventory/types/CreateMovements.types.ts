@@ -38,6 +38,10 @@ export interface CMProductsFilter {
   p_warehouse_id?: number | null;
 }
 
+export interface CMovementsFilters {
+  p_warehouse_id?: number | null;
+}
+
 export interface UserSummaryApiResponse {
   warehouse_id: number;
   warehouses: {
