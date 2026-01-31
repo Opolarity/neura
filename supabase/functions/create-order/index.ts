@@ -99,6 +99,54 @@ serve(async (req) => {
     // Determine if we need to create the client (if not existing)
     const isExistingClient = input.is_existing_client === true;
 
+    // Ensure the account has the CLI type (client type) linked to CUT module
+    // First, get the CLI type id
+    const { data: cliType } = await supabase
+      .from("modules")
+      .select("types(id)")
+      .eq("code", "CUT")
+      .single();
+
+    const cliTypeId = cliType?.types?.find((t: any) => true)?.id; // Get any type from CUT module with CLI code
+    
+    // Actually we need to find the type with code CLI linked to module CUT
+    const { data: typeData } = await supabase
+      .from("types")
+      .select("id, module_id, modules!inner(code)")
+      .eq("code", "CLI")
+      .eq("modules.code", "CUT")
+      .single();
+
+    if (typeData) {
+      // Check if account already has this type
+      const { data: existingAccount } = await supabase
+        .from("accounts")
+        .select("id")
+        .eq("document_number", input.document_number)
+        .single();
+
+      if (existingAccount) {
+        // Check if account already has CLI type
+        const { data: existingType } = await supabase
+          .from("account_types")
+          .select("id")
+          .eq("account_id", existingAccount.id)
+          .eq("account_type_id", typeData.id)
+          .single();
+
+        if (!existingType) {
+          // Add CLI type to account
+          await supabase
+            .from("account_types")
+            .insert({
+              account_id: existingAccount.id,
+              account_type_id: typeData.id
+            });
+          console.log(`Added CLI type to account ${existingAccount.id}`);
+        }
+      }
+    }
+
     // Call the transactional RPC
     const { data, error } = await supabase.rpc("sp_create_order", {
       p_user_id: user.id,

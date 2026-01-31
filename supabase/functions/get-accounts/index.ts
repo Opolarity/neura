@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
 
     const offset = (page - 1) * size;
 
-    // Build base query for accounts with stats
+    // Build base query for accounts with stats - use inner join to only get accounts with types
     let query = supabase
       .from("accounts")
       .select(`
@@ -38,8 +38,8 @@ Deno.serve(async (req) => {
         document_type_id,
         document_number,
         show,
-        account_types(
-          types(name)
+        account_types!inner(
+          types!inner(name)
         )
       `, { count: "exact" });
 
@@ -49,27 +49,7 @@ Deno.serve(async (req) => {
     }
 
     if (accountType) {
-      // Use inner join only when filtering by account type
-      query = supabase
-        .from("accounts")
-        .select(`
-          id,
-          name,
-          middle_name,
-          last_name,
-          last_name2,
-          document_type_id,
-          document_number,
-          show,
-          account_types!inner(
-            types(name)
-          )
-        `, { count: "exact" })
-        .eq("account_types.account_type_id", parseInt(accountType));
-      
-      if (showParam !== null && showParam !== "") {
-        query = query.eq("show", showParam === "true");
-      }
+      query = query.eq("account_types.account_type_id", parseInt(accountType));
     }
 
     if (search) {
