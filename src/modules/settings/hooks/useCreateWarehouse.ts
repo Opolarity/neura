@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from "@/shared/hooks";
+import { useToast } from "@/hooks/use-toast";
 import {
     CreateWarehouses,
     UpdateWarehouses,
@@ -30,6 +30,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
     // Loading states
     const [loading, setLoading] = useState(false);
     const [optionsLoading, setOptionsLoading] = useState(true);
+    const [isInitializing, setIsInitializing] = useState(true);
     const [countries, setCountries] = useState<IdModalResponse[]>([]);
     const [states, setStates] = useState<IdModalResponse[]>([]);
     const [cities, setCities] = useState<IdModalResponse[]>([]);
@@ -96,6 +97,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
     useEffect(() => {
         if (isEdit && warehouseId) {
             const fetchDetails = async () => {
+                setIsInitializing(true);
                 setLoading(true);
                 try {
                     const response = await GetWarehousesDetails(warehouseId);
@@ -113,22 +115,24 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
                         const neighborhoodId = (rawNeigh && !isNaN(Number(rawNeigh))) ? Number(rawNeigh) : null;
 
                         // --- CARGA EN CASCADA ---
-                        // Cargamos las listas basándonos en los padres, no en si el hijo tiene valor.
-
+                        // Load location data in cascade BEFORE setting form data
                         if (countryId) {
-                            const statesData = await StateApi(countryId);
-                            setStates(statesData || []);
-                        }
+                            try {
+                                const statesData = await StateApi(countryId);
+                                setStates(statesData || []);
 
-                        if (countryId && stateId) {
-                            const citiesData = await CityApi(countryId, stateId);
-                            setCities(citiesData || []);
-                        }
+                                if (stateId) {
+                                    const citiesData = await CityApi(countryId, stateId);
+                                    setCities(citiesData || []);
 
-                        // CORRECCIÓN CRÍTICA: Cargamos barrios si existe cityId, no solo si existe neighborhoodId
-                        if (countryId && stateId && cityId) {
-                            const neighborhoodsData = await NeighborhoodApi(countryId, stateId, cityId);
-                            setNeighborhoods(neighborhoodsData || []);
+                                    if (cityId) {
+                                        const neighborhoodsData = await NeighborhoodApi(countryId, stateId, cityId);
+                                        setNeighborhoods(neighborhoodsData || []);
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error loading location data:', error);
+                            }
                         }
 
                         const initialFormData: FormData = {
@@ -144,6 +148,11 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
 
                         setFormData(initialFormData);
                         setInitialData(initialFormData);
+
+                        toast({
+                            title: "Almacén cargado",
+                            description: "Los datos del almacén se han cargado correctamente"
+                        });
                     }
                 } catch (error) {
                     console.error('Error fetching warehouse details:', error);
@@ -154,9 +163,12 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
                     });
                 } finally {
                     setLoading(false);
+                    setIsInitializing(false);
                 }
             };
             fetchDetails();
+        } else {
+            setIsInitializing(false);
         }
     }, [warehouseId, isEdit]);
 
@@ -303,7 +315,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
         formData,
         setFormData,
         loading,
-        optionsLoading,
+        optionsLoading: isInitializing || optionsLoading,
         countries,
         states,
         cities,

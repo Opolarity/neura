@@ -73,7 +73,7 @@ export const CreateWarehouses = async (warehouse: Warehouses): Promise<Warehouse
 
 export const UpdateWarehouses = async (warehouse: Warehouses): Promise<WarehousesApiResponse> => {
 
-    const { data, error } = await supabase.functions.invoke("update-warehouse", {
+    const { data, error } = await supabase.functions.invoke("update-warehouses", {
         method: "PUT",
         body: { warehouse },
     });

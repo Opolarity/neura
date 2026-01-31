@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { WarehouseView, WarehousesFilters } from '../types/Warehouses.types';
 import { WareApi, DeleteWarehouses } from '../services/Warehouses.services';
 import { WarehousesAdapter } from '../adapters/Warehouses.adapters';
-import { useToast } from '@/shared/hooks';
+import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
 
@@ -79,10 +79,6 @@ const useWarehouses = () => {
     };
 
     const handleDeleteWarehouse = async (warehouseId: number) => {
-        if (!window.confirm('¿Estás seguro de que deseas eliminar este almacén?')) {
-            return;
-        }
-
         try {
             await DeleteWarehouses(warehouseId);
 

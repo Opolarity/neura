@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from "@/shared/hooks";
+import { useToast } from "@/hooks/use-toast";
 import {
     createUserApi,
     updateUserApi,
@@ -227,7 +227,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
 
     // Load states when country changes
     useEffect(() => {
-        if (formData.country_id && userDataLoaded) {
+        if (formData.country_id && (!isEdit || userDataLoaded)) {
             getStatesListApi(parseInt(formData.country_id)).then(data => {
                 setStates(data.states || data || []);
             });
@@ -241,7 +241,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
 
     // Load cities when state changes
     useEffect(() => {
-        if (formData.country_id && formData.state_id && userDataLoaded) {
+        if (formData.country_id && formData.state_id && (!isEdit || userDataLoaded)) {
             getCitiesListApi(parseInt(formData.country_id), parseInt(formData.state_id)).then(data => {
                 setCities(data.cities || data || []);
             });
@@ -254,7 +254,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
 
     // Load neighborhoods when city changes
     useEffect(() => {
-        if (formData.country_id && formData.state_id && formData.city_id && userDataLoaded) {
+        if (formData.country_id && formData.state_id && formData.city_id && (!isEdit || userDataLoaded)) {
             getNeighborhoodsListApi(
                 parseInt(formData.country_id),
                 parseInt(formData.state_id),

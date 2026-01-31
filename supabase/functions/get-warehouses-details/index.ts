@@ -37,7 +37,7 @@ serve(async (req) => {
     // Fetch warehouse details
     const { data: warehouse, error: warehouseError } = await supabase
       .from('warehouses')
-      .select('id, name, country_id, state_id, city_id, neighborhood_id, address, address_reference , web')
+      .select('id, name, country_id, state_id, city_id, neighborhood_id, address, address_reference, web')
       .eq('id', warehouseID)
       .single();
 
@@ -54,7 +54,7 @@ serve(async (req) => {
         neighborhoods: warehouse.neighborhood_id || null,
         address: warehouse.address || "",
         address_reference: warehouse.address_reference || "",
-        web: warehouse.web || null,
+        web: warehouse.web || false,
       }
     };
 
