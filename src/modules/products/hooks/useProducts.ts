@@ -175,6 +175,15 @@ export const useProducts = () => {
     setIsOpenFilterModal(false);
   };
 
+  const hasActiveFilters =
+    filters.minprice !== null ||
+    filters.maxprice !== null ||
+    filters.category !== null ||
+    filters.status !== null ||
+    filters.web !== null ||
+    filters.minstock !== null ||
+    filters.maxstock !== null ||
+    filters.order !== null;
   return {
     products,
     categories,
@@ -185,6 +194,7 @@ export const useProducts = () => {
     isOpenFilterModal,
     filters,
     selectedProducts,
+    hasActiveFilters,
     toggleSelectAll,
     toggleProductSelection,
     deleteSelectedsProduct,

@@ -125,6 +125,14 @@ const useWarehouses = () => {
 
     };
 
+    const hasActiveFilters = !!(
+        filters.country ||
+        filters.state ||
+        filters.city ||
+        filters.neighborhoods ||
+        filters.branches
+    );
+
     return {
         warehouses,
         loading,
@@ -132,6 +140,7 @@ const useWarehouses = () => {
         search,
         pagination,
         isOpenFilterModal,
+        hasActiveFilters,
         handleDeleteWarehouse,
         handleSearchChange,
         handleOpenFilterModal,

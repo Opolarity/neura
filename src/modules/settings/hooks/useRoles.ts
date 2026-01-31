@@ -117,6 +117,12 @@ const useRoles = () => {
     handleCloseFilterModal();
   };
 
+  const hasActiveFilters = !!(
+    filters.is_admin ||
+    filters.minuser ||
+    filters.maxuser
+  );
+
   return {
     roles,
     loading,
@@ -126,6 +132,7 @@ const useRoles = () => {
     isOpenFilterModal,
     isOpenDeleteModal,
     deleting,
+    hasActiveFilters,
     handleEditRole,
     handleDeleteRole,
     handleDeleteConfirm,

@@ -6,13 +6,12 @@ import { getHeaderUserData } from '@/shared/services/service';
 import { supabase } from '@/integrations/supabase/client';
 
 interface HeaderProps {
-  toggleSidebar: () => void;
   onSignOut: () => void;
   accountName?: string;
   roleName?: string;
 }
 
-const Header = ({ toggleSidebar, onSignOut }: HeaderProps) => {
+const Header = ({ onSignOut }: HeaderProps) => {
   const [userData, setUserData] = useState({ account: 'Cargando...', role: 'Sin Rol' });
 
   useEffect(() => {

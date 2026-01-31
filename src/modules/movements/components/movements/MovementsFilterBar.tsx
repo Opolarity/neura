@@ -40,12 +40,9 @@ export default function MovementsFilterBar({
         />
       </div>
 
-      <Button onClick={onOpenFilterModal} variant="outline" className="gap-2">
+      <Button onClick={onOpenFilterModal} variant={hasActiveFilters ? "default" : "outline"} className="gap-2">
         <ListFilter className="w-4 h-4" />
         Filtros
-        {hasActiveFilters && (
-          <span className="ml-1 w-2 h-2 bg-blue-500 rounded-full" />
-        )}
       </Button>
 
       {hasActiveFilters && onClearFilters && (

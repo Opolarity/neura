@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, ListFilter } from "lucide-react";
 
 interface SalesFilterBarProps {
   search: string;
@@ -15,6 +15,7 @@ interface SalesFilterBarProps {
   onOpen: () => void;
   order: string;
   onOrderChange: (value: string) => void;
+  hasActiveFilters?: boolean;
 }
 
 const SalesFilterBar = ({
@@ -23,6 +24,7 @@ const SalesFilterBar = ({
   onOpen,
   order,
   onOrderChange,
+  hasActiveFilters,
 }: SalesFilterBarProps) => {
   return (
     <div className="flex flex-wrap gap-4 items-center justify-between">
@@ -36,8 +38,8 @@ const SalesFilterBar = ({
             className="pl-10"
           />
         </div>
-        <Button variant="outline" onClick={onOpen}>
-          <SlidersHorizontal className="w-4 h-4 mr-2" />
+        <Button variant={hasActiveFilters ? "default" : "outline"} onClick={onOpen} className="gap-2">
+          <ListFilter className="w-4 h-4" />
           Filtrar
         </Button>
       </div>

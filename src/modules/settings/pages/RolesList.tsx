@@ -17,6 +17,7 @@ const RolesList = () => {
     pagination,
     isOpenDeleteModal,
     deleting,
+    hasActiveFilters,
     handleCloseDeleteModal,
     handleDeleteConfirm,
     handleDeleteRole,
@@ -39,6 +40,7 @@ const RolesList = () => {
             search={search}
             onSearchChange={handleSearchChange}
             onOpen={handleOpenFilterModal}
+            hasActiveFilters={hasActiveFilters}
           />
         </CardHeader>
         <CardContent className="p-0">

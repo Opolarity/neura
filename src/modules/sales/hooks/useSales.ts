@@ -182,6 +182,12 @@ export const useSales = () => {
     navigate(`/sales/edit/${id}`);
   };
 
+  const hasActiveFilters =
+    filters.status !== null ||
+    filters.saleType !== null ||
+    filters.startDate !== null ||
+    filters.endDate !== null;
+
   return {
     sales,
     saleTypes,
@@ -193,6 +199,7 @@ export const useSales = () => {
     isOpenFilterModal,
     filters,
     selectedSales,
+    hasActiveFilters,
     onSearchChange,
     onPageChange,
     onOrderChange,

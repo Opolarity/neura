@@ -175,6 +175,10 @@ export const useMovements = () => {
         loadMovements(resetFilters);
     };
 
+    const hasActiveFilters =
+        filters.start_date !== null ||
+        filters.end_date !== null;
+
     return {
         movements,
         movementsTypes,
@@ -185,6 +189,7 @@ export const useMovements = () => {
         pagination,
         isOpenFilterModal,
         filters,
+        hasActiveFilters,
         onOpenFilterModal,
         onCloseFilterModal,
         onSearchChange,

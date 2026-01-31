@@ -8,6 +8,7 @@ interface InventoryFilterBarProps {
     onOpen: () => void;
     order?: string | null;
     onOrderChange: (value: string) => void;
+    hasActiveFilters?: boolean;
 }
 
 export default function InventoryFilterBar({
@@ -16,6 +17,7 @@ export default function InventoryFilterBar({
     onSearchChange,
     onOpen,
     onOrderChange,
+    hasActiveFilters,
 }: InventoryFilterBarProps) {
     return (
         <div className="flex items-center gap-2">
@@ -30,7 +32,7 @@ export default function InventoryFilterBar({
                 />
             </div>
 
-            <Button onClick={onOpen} className="gap-2">
+            <Button onClick={onOpen} variant={hasActiveFilters ? "default" : "outline"} className="gap-2">
                 <ListFilter className="w-4 h-4" />
                 Filtrar
             </Button>

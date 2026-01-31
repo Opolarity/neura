@@ -299,6 +299,11 @@ export const useInventory = () => {
     setIsOpenFilterModal(false);
   };
 
+  const hasActiveFilters =
+    filters.minstock !== null ||
+    filters.maxstock !== null ||
+    filters.warehouse !== null ||
+    filters.types !== null;
   return {
     inventory,
     warehouses,
@@ -313,6 +318,7 @@ export const useInventory = () => {
     pagination,
     isOpenFilterModal,
     filters,
+    hasActiveFilters,
     onSearchChange,
     onPageChange,
     handlePageSizeChange,
