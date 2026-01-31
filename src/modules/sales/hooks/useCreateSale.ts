@@ -495,6 +495,11 @@ export const useCreateSale = () => {
   // Handle form input changes
   const handleInputChange = useCallback(
     (field: keyof SaleFormData, value: string | boolean) => {
+      // Debug: Log when saleType changes
+      if (field === "saleType") {
+        console.log("[CreateSale] handleInputChange saleType:", value);
+      }
+      
       // When document type changes to persona jurídica, clear lastname fields
       if (field === "documentType" && typeof value === "string") {
         const selectedDocType = salesData?.documentTypes.find(
