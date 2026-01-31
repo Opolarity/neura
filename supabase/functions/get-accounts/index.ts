@@ -38,8 +38,8 @@ Deno.serve(async (req) => {
         document_type_id,
         document_number,
         show,
-        account_types!inner(
-          types!inner(name)
+        account_types(
+          types(name)
         )
       `, { count: "exact" });
 
@@ -49,7 +49,27 @@ Deno.serve(async (req) => {
     }
 
     if (accountType) {
-      query = query.eq("account_types.account_type_id", parseInt(accountType));
+      // Use inner join only when filtering by account type
+      query = supabase
+        .from("accounts")
+        .select(`
+          id,
+          name,
+          middle_name,
+          last_name,
+          last_name2,
+          document_type_id,
+          document_number,
+          show,
+          account_types!inner(
+            types(name)
+          )
+        `, { count: "exact" })
+        .eq("account_types.account_type_id", parseInt(accountType));
+      
+      if (showParam !== null && showParam !== "") {
+        query = query.eq("show", showParam === "true");
+      }
     }
 
     if (search) {
@@ -96,7 +116,7 @@ Deno.serve(async (req) => {
     });
 
     // Format response
-    const formattedAccounts = accounts?.map((account) => {
+    const formattedAccounts = accounts?.map((account: any) => {
       const typeName = account.account_types?.[0]?.types?.name || "";
       const stats = statsMap[account.document_number] || { total_purchases: 0, total_spent: 0 };
 
@@ -129,10 +149,11 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error in get-accounts:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
