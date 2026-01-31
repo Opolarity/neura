@@ -119,21 +119,19 @@ Deno.serve(async (req) => {
 
     console.log("Stock movement flags - is_active:", stockIsActive, "completed:", stockCompleted);
 
-    // Get movement type IDs
+    // Get movement type IDs - use ORD for sales (not VEN)
     const { data: movementType } = await supabase
       .from("types")
-      .select("id")
-      .eq("code", "VEN")
+      .select("id, module_id, modules!inner(code)")
+      .eq("code", "ORD")
+      .eq("modules.code", "STM")
       .single();
-    const movementTypeId = movementType?.id || 1;
+    const movementTypeId = movementType?.id || 4;
+    console.log("Movement type for sales (ORD):", movementTypeId);
 
-    // Get reversal movement type (AJUSTE or similar)
-    const { data: reversalType } = await supabase
-      .from("types")
-      .select("id")
-      .eq("code", "AJU")
-      .single();
-    const reversalTypeId = reversalType?.id || movementTypeId;
+    // For reversal, we use the same sale type (ORD) with positive quantity
+    // This represents the reversal of the original sale movement
+    const reversalTypeId = movementTypeId;
 
     // Step 1: Get existing order products and their stock movements (including stock_type_id from the movement)
     const { data: existingProducts } = await supabase
