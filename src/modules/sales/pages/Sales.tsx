@@ -96,7 +96,6 @@ const Sales = () => {
                 <TableHead>Fecha</TableHead>
                 <TableHead>Documento</TableHead>
                 <TableHead>Cliente</TableHead>
-                <TableHead>Canal</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead className="text-center">Acciones</TableHead>
@@ -105,7 +104,7 @@ const Sales = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Cargando ventas...
@@ -115,7 +114,7 @@ const Sales = () => {
               ) : sales.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={8}
                     className="text-center py-8 text-muted-foreground"
                   >
                     {search
@@ -142,7 +141,6 @@ const Sales = () => {
                     <TableCell>
                       {sale.customerName} {sale.customerLastname}
                     </TableCell>
-                    <TableCell>{sale.saleTypeName || "-"}</TableCell>
                     <TableCell>
                       {sale.situationName ? (
                         <Badge
