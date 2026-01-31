@@ -160,7 +160,7 @@ serve(async (req) => {
 
       const { data, error } = await supabase
         .from("pos_sessions")
-        .select("*, status:statusses(*)")
+        .select("*, status:statuses(*)")
         .eq("branch_id", profile.branch_id)
         .eq("warehouse_id", profile.warehouse_id)
         .eq("user_id", user.id)
