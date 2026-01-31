@@ -9,7 +9,9 @@ export interface AccountsApiResponse {
       document_type_id: number;
       document_number: string;
       show: boolean;
-      types_name: string
+      types_name: string;
+      total_purchases: number;
+      total_spent: number;
     }>;
     page: {
       page: number;
@@ -38,6 +40,8 @@ export interface Account {
   typeName: string;
   show?: boolean;
   documentTypeId?: number;
+  totalPurchases: number;
+  totalSpent: number;
 }
 
 export interface AccountsFilters {
