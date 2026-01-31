@@ -45,12 +45,13 @@ interface PaymentMethod {
   };
 }
 
-interface MovementCategory {
+interface MovementClass {
   id: number;
   name: string;
+  code: string;
 }
 
-interface Profile {
+interface CurrentUserProfile {
   UID: string;
   name: string;
   last_name: string;
@@ -61,8 +62,8 @@ export default function AddExpense() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [categories, setCategories] = useState<MovementCategory[]>([]);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [classes, setClasses] = useState<MovementClass[]>([]);
+  const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfile | null>(null);
   const [selectedBusinessAccount, setSelectedBusinessAccount] =
     useState<string>("");
   const [userWarehouseId, setUserWarehouseId] = useState<number | null>(null);
@@ -115,38 +116,42 @@ export default function AddExpense() {
       if (pmError) throw pmError;
       setPaymentMethods(pmData || []);
 
-      // Fetch movement categories
-      const { data: catData, error: catError } = await (supabase as any)
-        .from("movement_categories")
-        .select("id, name")
+      // Fetch classes for module 'MOV'
+      const { data: moduleData, error: moduleError } = await (supabase as any)
+        .from("modules")
+        .select("id")
+        .eq("code", "MOV")
+        .single();
+
+      if (moduleError) throw moduleError;
+
+      const { data: classesData, error: classesError } = await (supabase as any)
+        .from("classes")
+        .select("id, name, code")
+        .eq("module_id", moduleData.id)
         .order("name");
 
-      if (catError) throw catError;
-      setCategories(catData || []);
+      if (classesError) throw classesError;
+      setClasses(classesData || []);
 
-      // Fetch all profiles (users) with account info
-      const { data: profilesData, error: profilesError } = await (supabase as any)
+      // Fetch current user's profile with account info and warehouse
+      const { data: userProfile, error: userProfileError } = await (supabase as any)
         .from("profiles")
-        .select("UID, accounts:account_id(name, last_name)")
-        .eq("is_active", true);
-
-      if (profilesError) throw profilesError;
-      const mappedProfiles = (profilesData || []).map((p: any) => ({
-        UID: p.UID,
-        name: p.accounts?.name || '',
-        last_name: p.accounts?.last_name || ''
-      }));
-      setProfiles(mappedProfiles);
-
-      // Fetch current user's warehouse
-      const { data: userProfile, error: userProfileError } = await supabase
-        .from("profiles")
-        .select("warehouse_id")
+        .select("UID, warehouse_id, accounts:account_id(name, last_name)")
         .eq("UID", user.id)
         .single();
 
       if (userProfileError) throw userProfileError;
+      
+      setCurrentUserProfile({
+        UID: userProfile.UID,
+        name: userProfile.accounts?.name || '',
+        last_name: userProfile.accounts?.last_name || ''
+      });
       setUserWarehouseId(userProfile?.warehouse_id || null);
+      
+      // Set user_id to current user
+      setValue("user_id", user.id);
     } catch (error: any) {
       console.error("Error fetching data:", error);
       toast({
@@ -321,7 +326,7 @@ export default function AddExpense() {
                 />
               </div>
 
-              {/* Categoría */}
+              {/* Categoría (Classes del módulo MOV) */}
               <div className="space-y-2">
                 <Label htmlFor="movement_category_id">Categoría *</Label>
                 <Select
@@ -333,12 +338,12 @@ export default function AddExpense() {
                     <SelectValue placeholder="Seleccionar categoría" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
+                    {classes.map((cls) => (
                       <SelectItem
-                        key={category.id}
-                        value={category.id.toString()}
+                        key={cls.id}
+                        value={cls.id.toString()}
                       >
-                        {category.name}
+                        {cls.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -350,21 +355,15 @@ export default function AddExpense() {
                 )}
               </div>
 
-              {/* Usuario (Opcional) */}
+              {/* Usuario (Bloqueado - Usuario actual) */}
               <div className="space-y-2">
-                <Label htmlFor="user_id">Usuario (Opcional)</Label>
-                <Select onValueChange={(value) => setValue("user_id", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sin asignar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {profiles.map((profile) => (
-                      <SelectItem key={profile.UID} value={profile.UID}>
-                        {profile.name} {profile.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="user_id">Usuario</Label>
+                <Input
+                  id="user_id"
+                  value={currentUserProfile ? `${currentUserProfile.name} ${currentUserProfile.last_name}` : 'Cargando...'}
+                  disabled
+                  className="bg-muted"
+                />
               </div>
             </div>
 
