@@ -68,3 +68,32 @@ export const statussesByModuleCode = async (moduleCode: string): Promise<Status[
   if (error) throw error;
   return data?.statuses ?? [];
 };
+
+export const getHeaderUserData = async (userUID: string) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(`
+      UID,
+      accounts!inner (
+        name
+      ),
+      user_roles (
+        roles (
+          name
+        )
+      )
+    `)
+    .eq("UID", userUID)
+    .single();
+
+  if (error) {
+    console.error("Error al obtener datos del Header:", error);
+    return null;
+  }
+
+  return {
+    accountName: data.accounts?.name || "Sin Cuenta",
+    // Mapeamos los roles: si no hay, devolvemos 'Sin Rol'
+    roleName: data.user_roles?.[0]?.roles?.name || "Sin Rol"
+  };
+};
