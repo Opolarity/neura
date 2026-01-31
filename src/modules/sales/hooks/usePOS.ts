@@ -815,9 +815,56 @@ export const usePOS = () => {
     });
   }, []);
 
-  const exitPOS = useCallback(() => {
-    navigate("/sales");
-  }, [navigate]);
+  // State for close session modal
+  const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
+  const [sessionTotalSales, setSessionTotalSales] = useState(0);
+
+  // Calculate session total sales from linked orders
+  const loadSessionTotalSales = useCallback(async () => {
+    if (!POSSessionHook.session?.id) {
+      setSessionTotalSales(0);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("pos_session_orders")
+        .select("order_id, orders(total)")
+        .eq("pos_session_id", POSSessionHook.session.id);
+
+      if (error) throw error;
+
+      const total = data?.reduce((sum, item) => {
+        const order = Array.isArray(item.orders) ? item.orders[0] : item.orders;
+        return sum + ((order as { total?: number })?.total || 0);
+      }, 0) || 0;
+
+      setSessionTotalSales(total);
+    } catch (error) {
+      console.error("Error loading session sales:", error);
+      setSessionTotalSales(0);
+    }
+  }, [POSSessionHook.session?.id]);
+
+  const exitPOS = useCallback(async () => {
+    // Load session total sales and show close modal
+    await loadSessionTotalSales();
+    setShowCloseSessionModal(true);
+  }, [loadSessionTotalSales]);
+
+  const handleCloseSession = useCallback(async (request: { sessionId: number; closingAmount: number; notes?: string }) => {
+    try {
+      await POSSessionHook.closeSession(request);
+      setShowCloseSessionModal(false);
+      navigate("/sales");
+    } catch {
+      // Error is already handled in hook with toast
+    }
+  }, [POSSessionHook, navigate]);
+
+  const cancelCloseSession = useCallback(() => {
+    setShowCloseSessionModal(false);
+  }, []);
 
   // =============================================
   // RETURN
@@ -912,5 +959,11 @@ export const usePOS = () => {
     submitOrder,
     resetForNewSale,
     exitPOS,
+    
+    // Close session modal
+    showCloseSessionModal,
+    sessionTotalSales,
+    handleCloseSession,
+    cancelCloseSession,
   };
 };

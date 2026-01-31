@@ -40,7 +40,7 @@ export default function POSHeader({ session, onExit }: POSHeaderProps) {
           onClick={onExit}
         >
           <LogOut className="w-4 h-4" />
-          Salir del POS
+          Cerrar Sesión
         </Button>
       </div>
     </header>
