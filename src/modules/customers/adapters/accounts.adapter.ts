@@ -17,6 +17,8 @@ export const accountsAdapter = (response: AccountsApiResponse) => {
             typeName: item.types_name,
             show: item.show,
             documentTypeId: item.document_type_id,
+            totalPurchases: item.total_purchases || 0,
+            totalSpent: item.total_spent || 0,
         };
     });
 
