@@ -5,6 +5,7 @@ import POSStepIndicator from "../components/pos/POSStepIndicator";
 import POSWizardNavigation from "../components/pos/POSWizardNavigation";
 import POSSummary from "../components/pos/POSSummary";
 import POSSessionModal from "../components/pos/POSSessionModal";
+import POSCloseSessionModal from "../components/pos/POSCloseSessionModal";
 import ConfigurationStep from "../components/pos/steps/ConfigurationStep";
 import ProductsStep from "../components/pos/steps/ProductsStep";
 import CustomerDataStep from "../components/pos/steps/CustomerDataStep";
@@ -157,6 +158,16 @@ export default function POS() {
           onFinalize={pos.submitOrder}
         />
       )}
+
+      {/* Close session modal */}
+      <POSCloseSessionModal
+        isOpen={pos.showCloseSessionModal}
+        session={pos.session}
+        totalSales={pos.sessionTotalSales}
+        isClosing={pos.closingSession}
+        onClose={pos.handleCloseSession}
+        onCancel={pos.cancelCloseSession}
+      />
     </div>
   );
 }
