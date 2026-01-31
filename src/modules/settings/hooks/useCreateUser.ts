@@ -141,20 +141,16 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
                     }
 
                     const user = response.user || response;
-                    console.log("=== User Data ===", JSON.stringify(user, null, 2));
 
                     const profileData = user.profiles || user.profile;
                     const profile = Array.isArray(profileData) ? profileData[0] : profileData;
-                    console.log("=== Profile Data ===", JSON.stringify(profile, null, 2));
 
                     const accountTypesData = user.account_types || [];
                     const accountTypesValues = accountTypesData.map((at: any) =>
                         at.account_type_id || at.id
                     );
-                    console.log("=== Account Types ===", accountTypesValues);
 
                     const roleIds = user.role_ids || user.roles?.map((r: any) => r.id) || [];
-                    console.log("=== Role IDs ===", roleIds);
 
                     const newFormData = {
                         name: user.name || '',
