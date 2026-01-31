@@ -32,14 +32,14 @@ serve(async (req) => {
     const response = {
       branch: {
         id: branch.id,
-        name: branch.name,
-        warehouse: branch.warehouse_id,
-        countries: branch.country_id,
-        states: branch.state_id,
-        cities: branch.city_id,
-        neighborhoods: branch.neighborhood_id,
-        address: branch.address,
-        address_reference: branch.address_reference
+        name: branch.name || "",
+        warehouse: branch.warehouse_id || null,
+        countries: branch.contry_id || null,
+        states: branch.state_id || null,
+        cities: branch.city_id || null,
+        neighborhoods: branch.neighborhood_id || null,
+        address: branch.address || "",
+        address_reference: branch.address_reference || ""
       }
     };
 

@@ -49,11 +49,78 @@ const WarehousesFilterModal = ({
         loadData();
     }, [isOpen]);
 
+    // Load states when country changes
+    useEffect(() => {
+        const loadStates = async () => {
+            if (internalFilters.country) {
+                try {
+                    const statesData = await StateApi(internalFilters.country);
+                    setStates(statesData || []);
+                } catch (error) {
+                    console.error('Error loading states:', error);
+                }
+            } else {
+                setStates([]);
+            }
+        };
+        loadStates();
+    }, [internalFilters.country]);
+
+    // Load cities when state changes
+    useEffect(() => {
+        const loadCities = async () => {
+            if (internalFilters.country && internalFilters.state) {
+                try {
+                    const citiesData = await CityApi(internalFilters.country, internalFilters.state);
+                    setCities(citiesData || []);
+                } catch (error) {
+                    console.error('Error loading cities:', error);
+                }
+            } else {
+                setCities([]);
+            }
+        };
+        loadCities();
+    }, [internalFilters.state, internalFilters.country]);
+
+    // Load neighborhoods when city changes
+    useEffect(() => {
+        const loadNeighborhoods = async () => {
+            if (internalFilters.country && internalFilters.state && internalFilters.city) {
+                try {
+                    const neighborhoodsData = await NeighborhoodApi(internalFilters.country, internalFilters.state, internalFilters.city);
+                    setNeighborhoods(neighborhoodsData || []);
+                } catch (error) {
+                    console.error('Error loading neighborhoods:', error);
+                }
+            } else {
+                setNeighborhoods([]);
+            }
+        };
+        loadNeighborhoods();
+    }, [internalFilters.city, internalFilters.state, internalFilters.country]);
+
     const handleChange = (field: keyof WarehousesFilters, value: string) => {
-        setInternalFilters((prev) => ({
-            ...prev,
-            [field]: value ? (field === 'search' ? value : parseInt(value)) : null,
-        }));
+        setInternalFilters((prev) => {
+            const newFilters = {
+                ...prev,
+                [field]: value ? (field === 'search' ? value : parseInt(value)) : null,
+            };
+
+            // Reset dependent fields when parent changes
+            if (field === 'country') {
+                newFilters.state = null;
+                newFilters.city = null;
+                newFilters.neighborhoods = null;
+            } else if (field === 'state') {
+                newFilters.city = null;
+                newFilters.neighborhoods = null;
+            } else if (field === 'city') {
+                newFilters.neighborhoods = null;
+            }
+
+            return newFilters;
+        });
     };
 
     const handleClear = () => {

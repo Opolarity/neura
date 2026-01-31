@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { BranchView, BranchesFilters } from '../types/Branches.types';
 import { BranchesApi, DeleteBranch } from '../services/Branches.services';
 import { BranchesAdapter } from '../adapters/Branches.adapter';
-import { useToast } from '@/shared/hooks';
+import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
 
@@ -79,10 +79,6 @@ const useBranches = () => {
     };
 
     const handleDeleteBranch = async (branchId: number) => {
-        if (!window.confirm('¿Estás seguro de que deseas eliminar esta sucursal?')) {
-            return;
-        }
-
         try {
             await DeleteBranch(branchId);
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from "@/shared/hooks";
+import { useToast } from "@/hooks/use-toast";
 import {
     CreateBranch,
     UpdateBranch,
@@ -60,7 +60,7 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
                 setCountries(countriesRes || []);
             } catch (error) {
                 console.error("Error loading base options:", error);
-                toast({ title: "Error", description: "Failed to load base options", variant: "destructive" });
+                toast({ title: "Error", description: "No se pudieron cargar las opciones del formulario", variant: "destructive" });
             }
         };
         fetchBaseOptions();
@@ -85,12 +85,38 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
                             address: b.address || '',
                             address_reference: b.address_reference || ''
                         };
+
+                        // Load location data in cascade BEFORE setting form data
+                        if (loadedData.countries) {
+                            try {
+                                const statesData = await StateApi(loadedData.countries);
+                                setStates(statesData || []);
+
+                                if (loadedData.states) {
+                                    const citiesData = await CityApi(loadedData.countries, loadedData.states);
+                                    setCities(citiesData || []);
+
+                                    if (loadedData.cities) {
+                                        const neighborhoodsData = await NeighborhoodApi(loadedData.countries, loadedData.states, loadedData.cities);
+                                        setNeighborhoods(neighborhoodsData || []);
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error loading location data:', error);
+                            }
+                        }
+
                         setFormData(loadedData);
                         setInitialData(loadedData);
+
+                        toast({
+                            title: "Sucursal cargada",
+                            description: "Los datos de la sucursal se han cargado correctamente"
+                        });
                     }
                 } catch (error) {
                     console.error("Error fetching branch details:", error);
-                    toast({ title: "Error", description: "Failed to load branch details", variant: "destructive" });
+                    toast({ title: "Error", description: "No se pudieron cargar los detalles de la sucursal", variant: "destructive" });
                 } finally {
                     setIsInitializing(false);
                 }
@@ -104,7 +130,7 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
     // Cascading effect for states
     useEffect(() => {
         const fetchStates = async () => {
-            if (formData.countries) {
+            if (formData.countries && !isInitializing) {
                 setStates([]);
                 setCities([]);
                 setNeighborhoods([]);
@@ -113,12 +139,12 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
             }
         };
         fetchStates();
-    }, [formData.countries]);
+    }, [formData.countries, isInitializing]);
 
     // Cascading effect for cities
     useEffect(() => {
         const fetchCities = async () => {
-            if (formData.countries && formData.states) {
+            if (formData.countries && formData.states && !isInitializing) {
                 setCities([]);
                 setNeighborhoods([]);
                 const res = await CityApi(formData.countries, formData.states);
@@ -126,19 +152,19 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
             }
         };
         fetchCities();
-    }, [formData.states]);
+    }, [formData.states, isInitializing]);
     
     // Cascading effect for neighborhoods
     useEffect(() => {
         const fetchNeighborhoods = async () => {
-            if (formData.countries && formData.states && formData.cities) {
+            if (formData.countries && formData.states && formData.cities && !isInitializing) {
                 setNeighborhoods([]);
                 const res = await NeighborhoodApi(formData.countries, formData.states, formData.cities);
                 setNeighborhoods(res || []);
             }
         };
         fetchNeighborhoods();
-    }, [formData.cities]);
+    }, [formData.cities, isInitializing]);
 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -171,8 +197,8 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
         try {
             if (!formData.name || !formData.warehouse || !formData.countries || !formData.states || !formData.cities) {
                 toast({
-                    title: "Validation Error",
-                    description: "Please fill all required fields.",
+                    title: "Campos requeridos",
+                    description: "Por favor complete todos los campos obligatorios.",
                     variant: "destructive",
                 });
                 return;
@@ -192,15 +218,15 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
 
             if (isEdit) {
                 await UpdateBranch(payload);
-                toast({ title: "Success", description: "Branch updated successfully" });
+                toast({ title: "Éxito", description: "Sucursal actualizada correctamente" });
             } else {
                 await CreateBranch(payload);
-                toast({ title: "Success", description: "Branch created successfully" });
+                toast({ title: "Éxito", description: "Sucursal creada correctamente" });
             }
             navigate('/settings/branches');
         } catch (error: any) {
             console.error(error);
-            toast({ title: "Error", description: error.message || "An error occurred", variant: "destructive" });
+            toast({ title: "Error", description: error.message || "No se pudo guardar la sucursal", variant: "destructive" });
         } finally {
             setLoading(false);
         }
