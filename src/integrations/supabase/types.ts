@@ -1839,6 +1839,71 @@ export type Database = {
           },
         ]
       }
+      return_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          id: number
+          movement_id: number
+          payment_date: string
+          payment_method_id: number
+          return_id: number
+          voucher_url: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string
+          id?: number
+          movement_id: number
+          payment_date?: string
+          payment_method_id: number
+          return_id: number
+          voucher_url?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          id?: number
+          movement_id?: number
+          payment_date?: string
+          payment_method_id?: number
+          return_id?: number
+          voucher_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "return_payments_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_payments_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_payments_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "returns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       return_situations: {
         Row: {
           created_at: string
