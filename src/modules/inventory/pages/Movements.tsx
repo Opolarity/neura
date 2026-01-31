@@ -17,6 +17,7 @@ const Movements = () => {
     pagination,
     filters,
     isOpenFilterModal,
+    hasActiveFilters,
     onOpenFilterModal,
     onCloseFilterModal,
     onApplyFilterModal,
@@ -42,6 +43,7 @@ const Movements = () => {
             search={search}
             onSearchChange={onSearchChange}
             onOpen={onOpenFilterModal}
+            hasActiveFilters={hasActiveFilters}
           />
         </CardHeader>
 

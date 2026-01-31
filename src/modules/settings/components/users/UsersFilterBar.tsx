@@ -14,6 +14,7 @@ interface UsersFilterBarProps {
   onFilterClick: () => void;
   order: string | undefined;
   onOrderChange: (value: string) => void;
+  hasActiveFilters?: boolean;
 }
 
 const UsersFilterBar = ({
@@ -22,6 +23,7 @@ const UsersFilterBar = ({
   onFilterClick,
   order,
   onOrderChange,
+  hasActiveFilters,
 }: UsersFilterBarProps) => {
   return (
     <div className="flex items-center gap-2">
@@ -36,7 +38,7 @@ const UsersFilterBar = ({
         />
       </div>
 
-      <Button className="gap-2" variant="outline" onClick={onFilterClick}>
+      <Button className="gap-2" variant={hasActiveFilters ? "default" : "outline"} onClick={onFilterClick}>
         <ListFilter className="w-4 h-4" />
         Filtrar
       </Button>

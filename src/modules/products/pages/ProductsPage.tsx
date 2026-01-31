@@ -21,6 +21,7 @@ const Products = () => {
     isOpenFilterModal,
     filters,
     selectedProducts,
+    hasActiveFilters,
     handlePageSizeChange,
     toggleSelectAll,
     toggleProductSelection,
@@ -52,6 +53,7 @@ const Products = () => {
             onOpen={onOpenFilterModal}
             order={filters.order}
             onOrderChange={onOrderChange}
+            hasActiveFilters={hasActiveFilters}
           />
         </CardHeader>
         <CardContent className="p-0">

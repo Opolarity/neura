@@ -5,12 +5,14 @@ interface WarehousesFilterBarProps {
     search: string;
     onSearchChange: (text: string) => void;
     onOpen: () => void;
+    hasActiveFilters?: boolean;
 }
 
 const WarehousesFilterBar = ({
     search,
     onSearchChange,
-    onOpen
+    onOpen,
+    hasActiveFilters
 }: WarehousesFilterBarProps) => {
     return (
         <div className="flex items-center gap-2">
@@ -25,7 +27,7 @@ const WarehousesFilterBar = ({
                 />
             </div>
 
-            <Button onClick={onOpen} className="gap-2">
+            <Button onClick={onOpen} variant={hasActiveFilters ? "default" : "outline"} className="gap-2">
                 <ListFilter className="w-4 h-4" />
                 Filtrar
             </Button>

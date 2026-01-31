@@ -43,7 +43,7 @@ interface DeleteConfirmation {
 
 const AttributesPage = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState<DeleteConfirmation | null>(null);
-  
+
   const {
     attributes,
     loading,
@@ -64,6 +64,7 @@ const AttributesPage = () => {
     saving,
     loadingEdit,
     editingAttribute,
+    hasActiveFilters,
     onOpenNewAttribute,
     onCloseFormModal,
     onEditAttribute,
@@ -105,7 +106,7 @@ const AttributesPage = () => {
 
   const handleConfirmDelete = async () => {
     if (!deleteConfirmation) return;
-    
+
     if (deleteConfirmation.type === "group") {
       await onDeleteAttribute(deleteConfirmation.id);
     } else {
@@ -152,6 +153,7 @@ const AttributesPage = () => {
             onOpen={onOpenFilterModal}
             order={filters.order}
             onOrderChange={onOrderChange}
+            hasActiveFilters={hasActiveFilters}
           />
         </CardHeader>
 
@@ -179,7 +181,7 @@ const AttributesPage = () => {
                 </TableRow>
               ) : (
                 attributes.map((row) => (
-                  <TableRow 
+                  <TableRow
                     key={`${row.type}-${row.id}`}
                     className={
                       row.type === "group"
@@ -285,7 +287,7 @@ const AttributesPage = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleConfirmDelete}
               disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

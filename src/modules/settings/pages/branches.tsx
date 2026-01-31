@@ -17,6 +17,7 @@ const BranchesList = () => {
         pagination,
         search,
         filters,
+        hasActiveFilters,
         handlePageChange,
         handleSizeChange,
         handleSearchChange,
@@ -54,6 +55,7 @@ const BranchesList = () => {
                         search={search}
                         onSearchChange={handleSearchChange}
                         onOpen={handleOpenFilterModal}
+                        hasActiveFilters={hasActiveFilters}
                     />
                 </CardHeader>
                 <CardContent className="p-0">

@@ -5,12 +5,14 @@ interface RolesFilterBarProps {
     search: string;
     onSearchChange: (text: string) => void;
     onOpen: () => void;
+    hasActiveFilters?: boolean;
 }
 
 const RolesFilterBar = ({
     search,
     onSearchChange,
-    onOpen
+    onOpen,
+    hasActiveFilters
 }: RolesFilterBarProps) => {
     return (
         <div className="flex items-center gap-2">
@@ -25,7 +27,7 @@ const RolesFilterBar = ({
                 />
             </div>
 
-            <Button onClick={onOpen} className="gap-2">
+            <Button onClick={onOpen} variant={hasActiveFilters ? "default" : "outline"} className="gap-2">
                 <ListFilter className="w-4 h-4" />
                 Filtrar
             </Button>

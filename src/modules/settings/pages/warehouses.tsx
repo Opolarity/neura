@@ -13,7 +13,7 @@ import WarehouserFilterModal from '../components/warehouses/WarehousesFilterModa
 
 
 const WarehousesList = () => {
-    const { warehouses, loading, pagination, search, filters, isOpenFilterModal, handleCloseFilterModal, handleOpenFilterModal, handlePageChange, handleSizeChange, handleSearchChange, handleApplyFilter, handleDeleteWarehouse } = useWarehouses();
+    const { warehouses, loading, pagination, search, filters, isOpenFilterModal, hasActiveFilters, handleCloseFilterModal, handleOpenFilterModal, handlePageChange, handleSizeChange, handleSearchChange, handleApplyFilter, handleDeleteWarehouse } = useWarehouses();
 
     return (
         <div className="space-y-6">
@@ -49,6 +49,7 @@ const WarehousesList = () => {
                         search={search}
                         onSearchChange={handleSearchChange}
                         onOpen={handleOpenFilterModal}
+                        hasActiveFilters={hasActiveFilters}
                     />
                 </CardHeader>
                 <CardContent className="p-0">

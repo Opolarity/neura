@@ -8,13 +8,13 @@ import {
   TermFormValues,
   TermGroupOption,
 } from "../types/Attributes.types";
-import { 
-  getAttributesApi, 
+import {
+  getAttributesApi,
   createTermGroup,
   getTermGroupById,
   updateTermGroup,
   deleteTermGroup,
-  getTermGroupsForSelect, 
+  getTermGroupsForSelect,
   createTerm,
   getTermById,
   updateTerm,
@@ -55,7 +55,7 @@ export const useAttributes = () => {
   const [savingTerm, setSavingTerm] = useState(false);
   const [editingTerm, setEditingTerm] = useState<TermFormValues | null>(null);
   const [termGroups, setTermGroups] = useState<TermGroupOption[]>([]);
-  
+
   // Delete state
   const [deleting, setDeleting] = useState(false);
 
@@ -294,6 +294,14 @@ export const useAttributes = () => {
     }
   };
 
+
+  const hasActiveFilters =
+    filters.minProducts !== null ||
+    filters.maxProducts !== null ||
+    filters.group !== null;
+
+
+
   return {
     attributes,
     loading,
@@ -302,6 +310,7 @@ export const useAttributes = () => {
     pagination,
     filters,
     isOpenFilterModal,
+    hasActiveFilters,
     onSearchChange,
     onPageChange,
     handlePageSizeChange,

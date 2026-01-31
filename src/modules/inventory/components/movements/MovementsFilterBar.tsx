@@ -5,12 +5,14 @@ interface MovementsFilterBarProps {
     search: string;
     onSearchChange: (text: string) => void;
     onOpen: () => void;
+    hasActiveFilters?: boolean;
 }
 
 const MovementsFilterBar = ({
     search,
     onSearchChange,
-    onOpen
+    onOpen,
+    hasActiveFilters
 }: MovementsFilterBarProps) => {
     return (
         <div className="flex items-center gap-2">
@@ -25,7 +27,7 @@ const MovementsFilterBar = ({
                 />
             </div>
 
-            <Button onClick={onOpen} className="gap-2">
+            <Button onClick={onOpen} variant={hasActiveFilters ? "default" : "outline"} className="gap-2">
                 <ListFilter className="w-4 h-4" />
                 Filtrar
             </Button>

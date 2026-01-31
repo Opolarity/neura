@@ -148,6 +148,13 @@ const useUsers = () => {
         handleCloseFilterModal();
     };
 
+    const hasActiveFilters = !!(
+        filters.person_type ||
+        filters.role ||
+        filters.warehouses ||
+        filters.branches
+    );
+
     return {
         users,
         loading,
@@ -158,6 +165,7 @@ const useUsers = () => {
         rolesOptions,
         warehousesOptions,
         branchesOptions,
+        hasActiveFilters,
         handleCreateUser,
         handleUpdateUser,
         handleDeleteUser,

@@ -123,6 +123,14 @@ const useBranches = () => {
         handleCloseFilterModal();
     };
 
+    const hasActiveFilters = !!(
+        filters.country ||
+        filters.state ||
+        filters.city ||
+        filters.neighborhood ||
+        filters.warehouse
+    );
+
 
     return {
         branches,
@@ -131,6 +139,7 @@ const useBranches = () => {
         search,
         pagination,
         isOpenFilterModal,
+        hasActiveFilters,
         handleDeleteBranch,
         handleSearchChange,
         handleOpenFilterModal,

@@ -6,12 +6,14 @@ interface BranchesFilterBarProps {
     search: string;
     onSearchChange: (text: string) => void;
     onOpen?: () => void;
+    hasActiveFilters?: boolean;
 }
 
 const BranchesFilterBar = ({
     search,
     onSearchChange,
-    onOpen
+    onOpen,
+    hasActiveFilters
 }: BranchesFilterBarProps) => {
     return (
         <div className="flex items-center gap-2">
@@ -26,7 +28,7 @@ const BranchesFilterBar = ({
                 />
             </div>
             {onOpen && (
-                <Button onClick={onOpen} className="gap-2">
+                <Button onClick={onOpen} variant={hasActiveFilters ? "default" : "outline"} className="gap-2">
                     <ListFilter className="w-4 h-4" />
                     Filtrar
                 </Button>
