@@ -82,7 +82,7 @@ export default function POSSessionModal({
   };
 
   const handleCancel = () => {
-    navigate("/ventas");
+    navigate("/sales");
   };
 
   const isAmountValid = openingAmount !== "" && !isNaN(parseFloat(openingAmount)) && parseFloat(openingAmount) >= 0;
