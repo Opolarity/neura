@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface HeaderProps {
   onSignOut: () => void;
+  toggleSidebar?: () => void;
   accountName?: string;
   roleName?: string;
 }

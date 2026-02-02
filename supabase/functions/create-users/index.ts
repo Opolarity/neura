@@ -75,10 +75,12 @@ serve(async (req) => {
         // 2. Create Auth User (Admin API)
         const { data: authData, error: authError } = await supabase.auth.admin.createUser({
             email,
-            display_name: `${name} ${middle_name ? middle_name + ' ' : ''}${last_name} ${last_name2 ? last_name2 : ''}`.trim(),
             password,
             phone,
             email_confirm: true, // Auto-confirm email for convenience
+            user_metadata: {
+                display_name: `${name} ${middle_name ? middle_name + ' ' : ''}${last_name} ${last_name2 ? last_name2 : ''}`.trim(),
+            }
         });
 
         if (authError || !authData.user) {
@@ -208,8 +210,9 @@ serve(async (req) => {
 
     } catch (error) {
         console.error('Error in user creation workflow:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
         return new Response(
-            JSON.stringify({ error: error.message }),
+            JSON.stringify({ error: errorMessage }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
         );
     }

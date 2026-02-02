@@ -32,7 +32,7 @@ serve(async (req) => {
       throw new Error('Role ID is required');
     }
 
-    console.log('Fetching product details for ID:', productId);
+    console.log('Fetching role details for ID:', roleId);
 
     // Fetch product basic data
     const { data: roles, error: rolesError } = await supabase

@@ -249,7 +249,7 @@ serve(async (req) => {
           .from('products')
           .getPublicUrl(rawPath);
         imageUrl = publicUrl;
-        needsRename = rawPath && rawPath.includes('products-images/tmp/');
+        needsRename = Boolean(rawPath && rawPath.includes('products-images/tmp/'));
       }
 
       // Insert the image record first to get the DB ID
