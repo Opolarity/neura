@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +33,8 @@ export default function POSSessionModal({
   isOpening,
   onOpen,
 }: POSSessionModalProps) {
-  const [openingAmount, setOpeningAmount] = useState<string>("0");
+  const navigate = useNavigate();
+  const [openingAmount, setOpeningAmount] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [selectedCashRegisterId, setSelectedCashRegisterId] = useState<string>("");
   const [cashRegisters, setCashRegisters] = useState<CashRegister[]>([]);
@@ -63,11 +65,15 @@ export default function POSSessionModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedCashRegisterId) {
+    if (!selectedCashRegisterId || openingAmount === "" || openingAmount === null) {
       return;
     }
     
-    const amount = parseFloat(openingAmount) || 0;
+    const amount = parseFloat(openingAmount);
+    if (isNaN(amount) || amount < 0) {
+      return;
+    }
+    
     await onOpen({ 
       openingAmount: amount, 
       businessAccountId: parseInt(selectedCashRegisterId),
@@ -75,12 +81,17 @@ export default function POSSessionModal({
     });
   };
 
-  const isFormValid = selectedCashRegisterId && !loadingCashRegisters;
+  const handleCancel = () => {
+    navigate("/ventas");
+  };
+
+  const isAmountValid = openingAmount !== "" && !isNaN(parseFloat(openingAmount)) && parseFloat(openingAmount) >= 0;
+  const isFormValid = selectedCashRegisterId && isAmountValid && !loadingCashRegisters;
 
   return (
     <Dialog open={isOpen}>
       <DialogContent 
-        className="sm:max-w-md" 
+        className="sm:max-w-md [&>button]:hidden" 
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >        
@@ -110,6 +121,7 @@ export default function POSSessionModal({
               <Select
                 value={selectedCashRegisterId}
                 onValueChange={setSelectedCashRegisterId}
+                required
               >
                 <SelectTrigger id="cashRegister">
                   <SelectValue placeholder="Seleccione una caja" />
@@ -131,7 +143,7 @@ export default function POSSessionModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="openingAmount">Monto Inicial</Label>
+            <Label htmlFor="openingAmount">Monto Inicial *</Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
                 S/
@@ -145,6 +157,7 @@ export default function POSSessionModal({
                 onChange={(e) => setOpeningAmount(e.target.value)}
                 className="pl-10"
                 placeholder="0.00"
+                required
               />
             </div>
             <p className="text-xs text-muted-foreground">
@@ -163,20 +176,31 @@ export default function POSSessionModal({
             />
           </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isOpening || !isFormValid}
-          >
-            {isOpening ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Abriendo caja...
-              </>
-            ) : (
-              "Iniciar Sesion"
-            )}
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={handleCancel}
+              disabled={isOpening}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1"
+              disabled={isOpening || !isFormValid}
+            >
+              {isOpening ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Abriendo...
+                </>
+              ) : (
+                "Iniciar Sesión"
+              )}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
