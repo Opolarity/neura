@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
     // Get the situation details including code
     const { data: situation, error: situationError } = await supabase
       .from('situations')
-      .select('id, status_id, code, statuses(code)')
+      .select('id, status_id, code, statuses!inner(code)')
       .eq('id', situationId)
       .single();
 
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     }
 
     const situationCode = situation.code;
-    const statusCode = situation.statuses?.code;
+    const statusCode = (situation.statuses as { code: string })?.code;
     console.log('Situation code:', situationCode, 'Status code:', statusCode);
 
     // Determine stock movement flags based on situation code
@@ -81,13 +81,13 @@ Deno.serve(async (req) => {
     // Get previous situation for this order
     const { data: previousSituation } = await supabase
       .from('order_situations')
-      .select('situation_id, situations(code, statuses(code))')
+      .select('situation_id, situations!inner(code, statuses!inner(code))')
       .eq('order_id', orderId)
       .eq('last_row', true)
       .maybeSingle();
 
-    const previousSituationCode = previousSituation?.situations?.code;
-    const previousStatusCode = previousSituation?.situations?.statuses?.code;
+    const previousSituationCode = (previousSituation?.situations as { code: string; statuses: { code: string } } | null)?.code;
+    const previousStatusCode = (previousSituation?.situations as { code: string; statuses: { code: string } } | null)?.statuses?.code;
     console.log('Previous situation code:', previousSituationCode, 'Previous status code:', previousStatusCode);
 
     // Mark previous record as not last_row
@@ -212,8 +212,9 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Error updating order situation:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400

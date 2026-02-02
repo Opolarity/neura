@@ -178,9 +178,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('=== Error in get-users-details ===', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    const errorDetails = error instanceof Error ? error.toString() : String(error);
     return new Response(JSON.stringify({
-      error: error.message || 'Internal server error',
-      details: error.toString()
+      error: errorMessage,
+      details: errorDetails
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

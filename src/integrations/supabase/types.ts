@@ -3337,7 +3337,55 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vw_product_stock_virtual: {
+        Row: {
+          id: number | null
+          product_variation_id: number | null
+          stock: number | null
+          stock_type_id: number | null
+          virtual_stock: number | null
+          warehouse_id: number | null
+        }
+        Insert: {
+          id?: number | null
+          product_variation_id?: number | null
+          stock?: number | null
+          stock_type_id?: number | null
+          virtual_stock?: never
+          warehouse_id?: number | null
+        }
+        Update: {
+          id?: number | null
+          product_variation_id?: number | null
+          stock?: number | null
+          stock_type_id?: number | null
+          virtual_stock?: never
+          warehouse_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_product_stock_product_variation_id_product_variations_id"
+            columns: ["product_variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_product_stock_warehouse_id_warehouses_id"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_stock_stock_type_id_fkey"
+            columns: ["stock_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       comprueba_variacion: {

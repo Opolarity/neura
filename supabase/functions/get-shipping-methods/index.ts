@@ -26,6 +26,9 @@ Deno.serve(async (req)=>{
     if (!authHeader) {
       throw new Error("No authorization header");
     }
+    if (!supabaseUrl || !anonKey) {
+      throw new Error("Missing environment variables");
+    }
     console.log("Authorization header:", authHeader);
     const supabase = createClient(supabaseUrl, anonKey, {
       global: {
@@ -70,8 +73,9 @@ Deno.serve(async (req)=>{
     });
   } catch (error) {
     console.error("Error fetching products list:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return new Response(JSON.stringify({
-      error: error.message
+      error: errorMessage
     }), {
       status: 500,
       headers: {

@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, DollarSign, Store } from "lucide-react";
+import { Loader2, Store } from "lucide-react";
 import type { OpenPOSSessionRequest, CashRegister } from "../../types/POS.types";
 import { getCashRegisters } from "../../services/POSSession.service";
 
@@ -133,7 +133,9 @@ export default function POSSessionModal({
           <div className="space-y-2">
             <Label htmlFor="openingAmount">Monto Inicial</Label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+                S/
+              </span>
               <Input
                 id="openingAmount"
                 type="number"
@@ -141,7 +143,7 @@ export default function POSSessionModal({
                 min="0"
                 value={openingAmount}
                 onChange={(e) => setOpeningAmount(e.target.value)}
-                className="pl-10 text-lg"
+                className="pl-10"
                 placeholder="0.00"
               />
             </div>

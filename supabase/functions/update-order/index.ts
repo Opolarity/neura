@@ -89,12 +89,12 @@ Deno.serve(async (req) => {
     // Always fetch the current situation from order_situations (not from input)
     const { data: currentSituation } = await supabase
       .from("order_situations")
-      .select("situation_id, situations(code)")
+      .select("situation_id, situations!inner(code)")
       .eq("order_id", orderId)
       .eq("last_row", true)
       .single();
 
-    const currentSituationCode = currentSituation?.situations?.code;
+    const currentSituationCode = (currentSituation?.situations as { code: string } | null)?.code;
     console.log("Current order situation code:", currentSituationCode);
 
     if (currentSituationCode) {
