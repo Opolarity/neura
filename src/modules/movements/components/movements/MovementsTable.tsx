@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { Movement } from "../../types/Movements.types";
+import { format } from "date-fns";
 
 interface MovementsTableProps {
   movements: Movement[];
@@ -47,9 +48,9 @@ const MovementsTable = ({
           <TableHead>Fecha</TableHead>
           <TableHead>Tipo</TableHead>
           <TableHead>Categoria</TableHead>
-          <TableHead>Descripcion</TableHead>
           <TableHead>Metodo de Pago</TableHead>
           <TableHead>Cuenta</TableHead>
+          <TableHead>Sucursal</TableHead>
           <TableHead>Usuario</TableHead>
           <TableHead className="text-right">Monto</TableHead>
           <TableHead className="w-16">Acciones</TableHead>
@@ -94,7 +95,7 @@ const MovementsTable = ({
                   }
                   className="gap-1"
                 >
-                  {movement.type === "Ingreso" ? (
+                  {movement.type === "Egreso" ? (
                     <TrendingUp className="w-3 h-3" />
                   ) : (
                     <TrendingDown className="w-3 h-3" />
@@ -105,27 +106,21 @@ const MovementsTable = ({
 
               <TableCell>{movement.category}</TableCell>
 
-              <TableCell
-                className="max-w-xs truncate"
-                title={movement.description}
-              >
-                {movement.description}
-              </TableCell>
-
               <TableCell>{movement.paymentMethod}</TableCell>
 
               <TableCell>{movement.businessAccount}</TableCell>
 
+              <TableCell>{movement.branch}</TableCell>
+
               <TableCell>{movement.user}</TableCell>
 
               <TableCell
-                className={`text-right font-semibold whitespace-nowrap ${
-                  movement.type === "Ingreso"
-                    ? "text-green-600"
-                    : "text-red-600"
-                }`}
+                className={`text-right font-semibold whitespace-nowrap ${movement.type === "Ingreso"
+                  ? "text-green-600"
+                  : "text-red-600"
+                  }`}
               >
-                {movement.type === "Ingreso" ? "+" : "-"}$
+                {movement.type === "Ingreso" ? "+" : "-"}
                 {movement.formattedAmount}
               </TableCell>
 

@@ -9,7 +9,9 @@ import {
 } from "../types/Movements.types";
 
 const formatCurrency = (amount: number): string => {
-  return amount.toLocaleString("es-CO", {
+  return amount.toLocaleString("es-PE", {
+    style: "currency",
+    currency: "PEN",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -17,11 +19,13 @@ const formatCurrency = (amount: number): string => {
 
 const formatDate = (dateString: string): string => {
   try {
-    return format(new Date(dateString), "dd/MM/yyyy", { locale: es });
+    return format(new Date(dateString.replace(/-/g, '/')), "dd/MM/yyyy");
   } catch {
     return dateString;
   }
 };
+
+
 
 interface MovementRawItem {
   id: number;
@@ -45,16 +49,16 @@ export const movementAdapter = (response: MovementApiResponse) => {
   const rawData = response.movements;
 
   // Default empty data
-  let movementsData: MovementsDataType = { 
-    data: [], 
-    page: { page: 1, size: 20, total: 0 } 
+  let movementsData: MovementsDataType = {
+    data: [],
+    page: { page: 1, size: 20, total: 0 }
   };
 
   if (rawData && typeof rawData === "object") {
     if (Array.isArray(rawData)) {
-      movementsData = { 
-        data: rawData as MovementRawItem[], 
-        page: { page: 1, size: 20, total: rawData.length } 
+      movementsData = {
+        data: rawData as MovementRawItem[],
+        page: { page: 1, size: 20, total: rawData.length }
       };
     } else {
       const objData = rawData as Record<string, unknown>;
