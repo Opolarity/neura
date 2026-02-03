@@ -28,6 +28,7 @@ export interface SaleFormData {
   withShipping: boolean;
   employeeSale: boolean;
   notes: string;
+  isAnonymousPurchase: boolean;
 }
 
 export interface SaleProduct {
