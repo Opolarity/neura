@@ -10,7 +10,6 @@ import { shippingRoutes } from "@/modules/shipping";
 import { invoicesRoutes } from "@/modules/invoices";
 import { posRoutes } from "@/modules/pos";
 import { movementsRoutes } from "@/modules/movements";
-import { expensesRoutes } from "@/modules/expenses";
 import { reportsRoutes } from "@/modules/reports";
 import { settingsRoutes } from "@/modules/settings";
 import NotFound from "@/shared/components/NotFound";
@@ -33,7 +32,6 @@ const AppRouter = () => {
         ...invoicesRoutes,
         ...posRoutes,
         ...movementsRoutes,
-        ...expensesRoutes,
         ...reportsRoutes,
         ...settingsRoutes,
       ],

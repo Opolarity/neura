@@ -108,3 +108,55 @@ export interface MovementSummary {
   totalExpense: number;
   balance: number;
 }
+
+// =============================================================================
+// TIPOS PARA FORMULARIOS
+// =============================================================================
+
+export interface MovementFormData {
+  amount: string;
+  movement_date: string;
+  description?: string;
+  payment_method_id: string;
+  movement_class_id: string;
+  user_id?: string;
+}
+
+export interface PaymentMethodWithAccount {
+  id: number;
+  name: string;
+  business_account_id: number;
+  business_accounts: {
+    name: string;
+  };
+}
+
+export interface MovementClass {
+  id: number;
+  name: string;
+  code: string;
+}
+
+export interface CurrentUserProfile {
+  UID: string;
+  name: string;
+  last_name: string;
+}
+
+// =============================================================================
+// TIPOS PARA CREAR MOVIMIENTOS (Edge Function)
+// =============================================================================
+
+export interface CreateMovementPayload {
+  amount: number;
+  movement_date: string;
+  description?: string;
+  payment_method_id: number;
+  movement_type_id: number;
+  movement_class_id: number;
+}
+
+export interface CreateMovementResponse {
+  success: boolean;
+  movement: any;
+}
