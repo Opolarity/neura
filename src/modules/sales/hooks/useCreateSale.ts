@@ -964,13 +964,14 @@ export const useCreateSale = () => {
         // Use anonymous values if anonymous purchase is enabled
         const finalDocumentType = formData.isAnonymousPurchase ? "0" : formData.documentType;
         const finalDocumentNumber = formData.isAnonymousPurchase ? " " : formData.documentNumber;
+        const finalCustomerName = formData.isAnonymousPurchase ? "No especificado" : formData.customerName;
 
         const orderData = {
           documentType: finalDocumentType,
           documentNumber: finalDocumentNumber,
-          customerName: formData.customerName,
-          customerLastname: formData.customerLastname,
-          customerLastname2: formData.customerLastname2 || null,
+          customerName: finalCustomerName,
+          customerLastname: formData.isAnonymousPurchase ? null : formData.customerLastname,
+          customerLastname2: formData.isAnonymousPurchase ? null : (formData.customerLastname2 || null),
           email: formData.email || null,
           phone: formData.phone || null,
           saleType: formData.saleType,
