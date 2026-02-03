@@ -963,7 +963,7 @@ export const useCreateSale = () => {
       try {
         // Use anonymous values if anonymous purchase is enabled
         const finalDocumentType = formData.isAnonymousPurchase ? "0" : formData.documentType;
-        const finalDocumentNumber = formData.isAnonymousPurchase ? "0" : formData.documentNumber;
+        const finalDocumentNumber = formData.isAnonymousPurchase ? " " : formData.documentNumber;
 
         const orderData = {
           documentType: finalDocumentType,
