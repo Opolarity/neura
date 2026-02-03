@@ -97,7 +97,23 @@ serve(async (req) => {
     }));
 
     // Determine if we need to create the client (if not existing)
-    const isExistingClient = input.is_existing_client === true;
+    // For anonymous purchases (document_type = 0), always check if the anonymous client already exists
+    let isExistingClient = input.is_existing_client === true;
+    
+    // Check if anonymous client already exists
+    if (input.document_type === "0" || input.document_type === 0) {
+      const { data: existingAnonymous } = await supabase
+        .from("accounts")
+        .select("id")
+        .eq("document_type_id", 0)
+        .eq("document_number", input.document_number)
+        .single();
+      
+      if (existingAnonymous) {
+        isExistingClient = true;
+        console.log("Anonymous client already exists, reusing account:", existingAnonymous.id);
+      }
+    }
 
     // Ensure the account has the CLI type (client type) linked to CUT module
     // First, get the CLI type id
