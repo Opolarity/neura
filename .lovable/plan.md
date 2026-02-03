@@ -1,228 +1,99 @@
 
-## Plan: Corregir flujo de apertura de sesión POS
+# Plan: Agregar Checkbox "Compra Anónima" en Crear Venta
 
-### Resumen del problema
-
-Al intentar iniciar sesión en la apertura de caja, el sistema falla por múltiples razones:
-
-1. **Nombre de edge function incorrecto**: El servicio llama a `manage-cash-session` pero la función se llama `manage-pos-session`
-2. **Falta campo obligatorio `business_account`**: La tabla `pos_sessions` tiene una columna `business_account` (NOT NULL) que el stored procedure no está insertando
-3. **No hay selector de caja**: El usuario necesita poder elegir la caja (business_accounts con type CHR del módulo BNA)
+## Resumen
+Se agregará un checkbox "Compra anónima" al lado del checkbox "Requiere Envío" en la sección "Información de la Venta". Al activarlo, se bloquearán y vaciarán los campos de datos del cliente, y al crear la venta se enviará internamente tipo de documento = 0 y número de documento = "0".
 
 ---
 
-### Cambios a implementar
+## Cambios en la Interfaz
 
-#### 1. Corregir nombre de edge function en el servicio
+### Ubicación del nuevo checkbox
+El checkbox se agregará en la línea 813-829 del archivo `CreateSale.tsx`, dentro del contenedor `<div className="flex items-center space-x-4 pt-2">` que ya contiene el checkbox "Requiere Envío".
 
-**Archivo**: `src/modules/sales/services/POSSession.service.ts`
-
-Cambiar todas las referencias de `manage-cash-session` a `manage-pos-session`:
-
-```typescript
-// ANTES
-await supabase.functions.invoke("manage-cash-session", ...)
-
-// DESPUÉS  
-await supabase.functions.invoke("manage-pos-session", ...)
-```
+### Comportamiento visual
+- **Checkbox desactivado**: Los campos funcionan normalmente
+- **Checkbox activado**: 
+  - Los campos Tipo Doc., Número, Nombre, Apellido Paterno y Apellido Materno se deshabilitan
+  - Los campos se muestran vacíos con estilo `bg-muted`
+  - Los valores se limpian automáticamente
 
 ---
 
-#### 2. Agregar servicio para obtener las cajas disponibles
+## Archivos a Modificar
 
-**Archivo**: `src/modules/sales/services/POSSession.service.ts`
+### 1. `src/modules/sales/types/index.ts`
+- Agregar campo `isAnonymousPurchase: boolean` a la interfaz `SaleFormData`
 
-Agregar función para obtener business_accounts tipo "Caja":
+### 2. `src/modules/sales/hooks/useCreateSale.ts`
+- Agregar `isAnonymousPurchase: false` al `INITIAL_FORM_DATA`
+- Modificar `handleInputChange` para limpiar campos del cliente cuando se activa compra anónima
+- Modificar `handleSubmit` para enviar `documentType: "0"` y `documentNumber: "0"` cuando es compra anónima
+- Exponer `isAnonymousPurchase` desde el hook (ya está disponible via `formData.isAnonymousPurchase`)
 
-```typescript
-export const getCashRegisters = async () => {
-  const { data, error } = await supabase
-    .from("business_accounts")
-    .select(`
-      id, 
-      name, 
-      business_account_type:types!business_accounts_business_account_type_id_fkey(
-        id, code, name, module:modules(code)
-      )
-    `)
-    .eq("types.code", "CHR")
-    .eq("types.modules.code", "BNA");
-    
-  if (error) throw error;
-  return data || [];
-};
-```
+### 3. `src/modules/sales/pages/CreateSale.tsx`
+- Agregar checkbox "Compra anónima" junto a "Requiere Envío"
+- Deshabilitar campos del cliente cuando `formData.isAnonymousPurchase` es `true`
+- Aplicar estilo `bg-muted` a los campos deshabilitados
 
 ---
 
-#### 3. Actualizar tipos para incluir caja seleccionada
+## Detalles Técnicos
 
-**Archivo**: `src/modules/sales/types/POS.types.ts`
-
-Actualizar interface OpenPOSSessionRequest:
-
+### Nuevo campo en SaleFormData
 ```typescript
-export interface OpenPOSSessionRequest {
-  openingAmount: number;
-  businessAccountId: number;  // NUEVO - ID de la caja
-  notes?: string;
-}
-
-export interface CashRegister {
-  id: number;
-  name: string;
+export interface SaleFormData {
+  // ... campos existentes
+  isAnonymousPurchase: boolean; // Nuevo campo
 }
 ```
 
----
+### Lógica al activar "Compra anónima"
+Cuando se cambia `isAnonymousPurchase` a `true`:
+1. Limpiar `documentType`, `documentNumber`, `customerName`, `customerLastname`, `customerLastname2`
+2. Resetear `clientFound` a `null`
 
-#### 4. Actualizar modal de apertura para incluir selector de caja
-
-**Archivo**: `src/modules/sales/components/pos/POSSessionModal.tsx`
-
-Agregar:
-- Select para elegir la caja
-- Cargar cajas disponibles al montar el componente
-- Validar que se haya seleccionado una caja antes de enviar
-
----
-
-#### 5. Actualizar edge function para enviar businessAccountId
-
-**Archivo**: `supabase/functions/manage-pos-session/index.ts`
-
-En la acción `open`, agregar el parámetro:
-
+### Lógica al enviar la venta
+En `handleSubmit`, antes de construir `orderData`:
 ```typescript
-if (action === "open") {
-  const { openingAmount, notes, businessAccountId } = input;
+const finalDocumentType = formData.isAnonymousPurchase ? "0" : formData.documentType;
+const finalDocumentNumber = formData.isAnonymousPurchase ? "0" : formData.documentNumber;
+```
 
-  const { data, error } = await supabase.rpc("sp_open_pos_session", {
-    p_user_id: user.id,
-    p_warehouse_id: profile.warehouse_id,
-    p_branch_id: profile.branch_id,
-    p_opening_amount: openingAmount || 0,
-    p_business_account_id: businessAccountId,  // NUEVO
-    p_notes: notes || null,
-  });
-  // ...
-}
+### UI del checkbox
+```tsx
+<div className="flex items-center space-x-2">
+  <Checkbox
+    id="anonymousPurchase"
+    checked={formData.isAnonymousPurchase}
+    onCheckedChange={(checked) =>
+      handleInputChange("isAnonymousPurchase", checked as boolean)
+    }
+  />
+  <Label htmlFor="anonymousPurchase" className="cursor-pointer font-medium">
+    Compra Anónima
+  </Label>
+</div>
+```
+
+### Campos a deshabilitar
+Los siguientes campos se deshabilitarán cuando `isAnonymousPurchase === true`:
+- Select "Tipo Doc." (línea 691-708)
+- Input "Número" (línea 713-718)
+- Input "Nombre" / "Razón Social" (línea 749-756)
+- Input "Apellido Paterno" (línea 789-796)
+- Input "Apellido Materno" (línea 800-807)
+
+Condición combinada de deshabilitado:
+```typescript
+disabled={formData.isAnonymousPurchase || clientFound === true}
 ```
 
 ---
 
-#### 6. Actualizar stored procedure para aceptar business_account
+## Consideraciones
 
-**Migración SQL**:
+1. **Edición de ventas**: Si se edita una venta anónima, el checkbox debe reflejar el estado (verificar si `documentType === "0"`)
+2. **Validación**: No se requiere validación de campos de cliente si es compra anónima
+3. **Backend**: No requiere cambios - ya acepta `document_type: 0` y `document_number: "0"`
 
-```sql
-CREATE OR REPLACE FUNCTION sp_open_pos_session(
-  p_user_id UUID,
-  p_warehouse_id INTEGER,
-  p_branch_id INTEGER,
-  p_opening_amount NUMERIC DEFAULT 0,
-  p_business_account_id INTEGER,  -- NUEVO PARÁMETRO
-  p_notes TEXT DEFAULT NULL
-)
-RETURNS JSON AS $$
-DECLARE
-  v_existing_session_id INTEGER;
-  v_new_session_id INTEGER;
-  v_open_status_id INTEGER;
-BEGIN
-  -- Get open status id
-  SELECT id INTO v_open_status_id
-  FROM statuses st
-  JOIN modules mo ON st.module_id = mo.id AND mo.code = 'POS'
-  WHERE st.code = 'OPE';
-
-  -- Check if user already has an open session
-  SELECT id INTO v_existing_session_id
-  FROM pos_sessions
-  WHERE user_id = p_user_id
-    AND status_id = v_open_status_id;
-
-  IF v_existing_session_id IS NOT NULL THEN
-    RAISE EXCEPTION 'User already has an open cash session (ID: %)', v_existing_session_id;
-  END IF;
-
-  -- Create new session (AHORA INCLUYE business_account)
-  INSERT INTO public.pos_sessions (
-    user_id,
-    warehouse_id,
-    branch_id,
-    opening_amount,
-    business_account,  -- NUEVO
-    status_id,
-    notes
-  )
-  VALUES (
-    p_user_id,
-    p_warehouse_id,
-    p_branch_id,
-    p_opening_amount,
-    p_business_account_id,  -- NUEVO
-    v_open_status_id,
-    p_notes
-  )
-  RETURNING id INTO v_new_session_id;
-
-  RETURN json_build_object(
-    'session_id', v_new_session_id,
-    'opened_at', NOW()
-  );
-END;
-$$ LANGUAGE plpgsql;
-```
-
----
-
-### Archivos a modificar
-
-| Archivo | Cambio |
-|---------|--------|
-| `src/modules/sales/services/POSSession.service.ts` | Corregir nombre de función, agregar getCashRegisters |
-| `src/modules/sales/types/POS.types.ts` | Agregar businessAccountId a request, tipo CashRegister |
-| `src/modules/sales/components/pos/POSSessionModal.tsx` | Agregar selector de caja |
-| `src/modules/sales/hooks/usePOSSession.ts` | Cargar cajas disponibles |
-| `supabase/functions/manage-pos-session/index.ts` | Pasar businessAccountId al RPC |
-| **Base de datos** | Actualizar sp_open_pos_session |
-
----
-
-### Flujo corregido
-
-```text
-Usuario entra a /pos
-         ↓
-Se muestra modal "Apertura de Caja"
-         ↓
-Se cargan las cajas disponibles (business_accounts type CHR)
-         ↓
-Usuario selecciona caja + ingresa monto inicial
-         ↓
-openSession({ openingAmount, businessAccountId, notes })
-         ↓
-POST /manage-pos-session (action: "open")
-         ↓
-sp_open_pos_session(p_business_account_id: X, ...)
-         ↓
-INSERT INTO pos_sessions (business_account = X, ...)
-         ↓
-Sesión creada exitosamente
-```
-
----
-
-### Cajas disponibles en la base de datos
-
-Las cajas actualmente configuradas son:
-
-| ID | Nombre |
-|----|--------|
-| 5 | Caja 1 |
-| 6 | Caja 2 |
-| 7 | Caja 3 |
-
-Estas son las que aparecerán en el selector del modal de apertura.
