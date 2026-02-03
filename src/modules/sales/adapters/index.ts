@@ -245,6 +245,7 @@ export const adaptSaleById = (data: any) => ({
     withShipping: data.order.shipping_cost != null,
     employeeSale: false,
     notes: "",
+    isAnonymousPurchase: data.order.document_type === 0 && data.order.document_number === "0",
   },
   products: (data.products || []).map((p: any) => ({
     variationId: p.variation_id,

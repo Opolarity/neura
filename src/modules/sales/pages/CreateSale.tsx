@@ -694,8 +694,9 @@ const CreateSale = () => {
                         handleInputChange("documentType", v);
                         if (formData.documentNumber) handleSearchClient(v);
                       }}
+                      disabled={formData.isAnonymousPurchase}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={formData.isAnonymousPurchase ? "bg-muted" : ""}>
                         <SelectValue placeholder="Seleccione" />
                       </SelectTrigger>
                       <SelectContent>
@@ -716,6 +717,8 @@ const CreateSale = () => {
                           handleInputChange("documentNumber", e.target.value)
                         }
                         onBlur={() => handleSearchClient()}
+                        disabled={formData.isAnonymousPurchase}
+                        className={formData.isAnonymousPurchase ? "bg-muted" : ""}
                       />
                       {searchingClient && (
                         <Loader2 className="w-5 h-5 animate-spin self-center" />
@@ -751,8 +754,8 @@ const CreateSale = () => {
                     onChange={(e) =>
                       handleInputChange("customerName", e.target.value)
                     }
-                    disabled={clientFound === true}
-                    className={clientFound === true ? "bg-muted" : ""}
+                    disabled={formData.isAnonymousPurchase || clientFound === true}
+                    className={formData.isAnonymousPurchase || clientFound === true ? "bg-muted" : ""}
                   />
                 </div>
               </div>
@@ -791,8 +794,8 @@ const CreateSale = () => {
                         onChange={(e) =>
                           handleInputChange("customerLastname", e.target.value)
                         }
-                        disabled={clientFound === true}
-                        className={clientFound === true ? "bg-muted" : ""}
+                        disabled={formData.isAnonymousPurchase || clientFound === true}
+                        className={formData.isAnonymousPurchase || clientFound === true ? "bg-muted" : ""}
                       />
                     </div>
                     <div>
@@ -802,8 +805,8 @@ const CreateSale = () => {
                         onChange={(e) =>
                           handleInputChange("customerLastname2", e.target.value)
                         }
-                        disabled={clientFound === true}
-                        className={clientFound === true ? "bg-muted" : ""}
+                        disabled={formData.isAnonymousPurchase || clientFound === true}
+                        className={formData.isAnonymousPurchase || clientFound === true ? "bg-muted" : ""}
                       />
                     </div>
                   </div>
@@ -824,6 +827,21 @@ const CreateSale = () => {
                     className="cursor-pointer font-medium"
                   >
                     Requiere Envío
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="anonymousPurchase"
+                    checked={formData.isAnonymousPurchase}
+                    onCheckedChange={(checked) =>
+                      handleInputChange("isAnonymousPurchase", checked as boolean)
+                    }
+                  />
+                  <Label
+                    htmlFor="anonymousPurchase"
+                    className="cursor-pointer font-medium"
+                  >
+                    Compra Anónima
                   </Label>
                 </div>
               </div>

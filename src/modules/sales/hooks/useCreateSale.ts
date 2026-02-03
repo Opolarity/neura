@@ -78,6 +78,7 @@ const INITIAL_FORM_DATA: SaleFormData = {
   withShipping: false,
   employeeSale: false,
   notes: "",
+  isAnonymousPurchase: false,
 };
 
 const createEmptyPayment = (): SalePayment => ({
@@ -498,6 +499,21 @@ export const useCreateSale = () => {
       // Debug: Log when saleType changes
       if (field === "saleType") {
         console.log("[CreateSale] handleInputChange saleType:", value);
+      }
+
+      // When anonymous purchase is activated, clear customer fields
+      if (field === "isAnonymousPurchase" && value === true) {
+        setFormData((prev) => ({
+          ...prev,
+          isAnonymousPurchase: true,
+          documentType: "",
+          documentNumber: "",
+          customerName: "",
+          customerLastname: "",
+          customerLastname2: "",
+        }));
+        setClientFound(null);
+        return;
       }
       
       // When document type changes to persona jurídica, clear lastname fields
@@ -945,9 +961,13 @@ export const useCreateSale = () => {
       console.log("[CreateSale] Submitting with saleType:", formData.saleType);
 
       try {
+        // Use anonymous values if anonymous purchase is enabled
+        const finalDocumentType = formData.isAnonymousPurchase ? "0" : formData.documentType;
+        const finalDocumentNumber = formData.isAnonymousPurchase ? "0" : formData.documentNumber;
+
         const orderData = {
-          documentType: formData.documentType,
-          documentNumber: formData.documentNumber,
+          documentType: finalDocumentType,
+          documentNumber: finalDocumentNumber,
           customerName: formData.customerName,
           customerLastname: formData.customerLastname,
           customerLastname2: formData.customerLastname2 || null,
