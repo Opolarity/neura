@@ -72,7 +72,7 @@ import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
 import { useToast } from "@/hooks/use-toast";
-import { VoucherPreviewModal } from "../components/VoucherPreviewModal";
+import { VoucherPreviewModal } from "../components/sales/VoucherPreviewModal";
 import { SalesHistoryModal } from "../components/SalesHistoryModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
@@ -218,7 +218,7 @@ const CreateSale = () => {
   return (
     <div className="space-y-6">
       {/* Sale Settings Modal */}
-      <Dialog open={showPriceListModal} onOpenChange={() => {}}>
+      <Dialog open={showPriceListModal} onOpenChange={() => { }}>
         <DialogContent
           className="sm:max-w-md"
           onPointerDownOutside={(e) => e.preventDefault()}
