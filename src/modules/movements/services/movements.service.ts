@@ -50,8 +50,16 @@ export const movementsApi = async (
 export const movementTypesApi = async (): Promise<MovementType[]> => {
   const { data, error } = await (supabase as any)
     .from("types")
-    .select("id, name")
-    .order("name");
+    .select(
+      `
+    id,
+    name,
+    modules!inner (
+      id
+    )
+  `,
+    )
+    .eq("modules.code", "MOV");
 
   if (error) throw error;
   return data ?? [];
