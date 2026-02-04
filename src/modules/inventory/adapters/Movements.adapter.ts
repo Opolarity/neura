@@ -4,11 +4,9 @@ import {
   MovementsApiResponse,
   MovementsTypes,
   MovementsTypesApiResponse,
+  ProductSalesApiResponse,
+  UserSummaryApiResponse
 } from "../types/Movements.types";
-import {
-  CMovementsProductsApiResponse,
-  UserSummaryApiResponse,
-} from "../types/CreateMovements.types";
 
 export const movementsAdapter = (response: MovementsApiResponse) => {
   const formattedMovements: Movements[] = response.movementsstock.data.map(
@@ -52,7 +50,9 @@ export const movementsTypesAdapter = (
   return types;
 };
 
-export const cMovementsUserWarehouseAdapter = (
+
+// CREATE MOVEMENT 
+export const getUserWarehouseAdapter = (
   response: UserSummaryApiResponse,
 ) => {
   return {
@@ -64,8 +64,8 @@ export const cMovementsUserWarehouseAdapter = (
   };
 };
 
-export const cMovementsProductsAdapter = (
-  response: CMovementsProductsApiResponse,
+export const getProductSalesAdapter = (
+  response: ProductSalesApiResponse,
 ) => {
   const formattedProducts = response.data.map((item) => ({
     sku: item.sku,

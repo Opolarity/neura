@@ -25,7 +25,7 @@ const CMovementSummary = ({
             placeholder="Intercambio de tipo"
             disabled
             type="text"
-            value={movementType}
+            value={movementType || ""}
           />
         </div>
         <div className="flex-1 flex flex-col gap-2">
@@ -35,7 +35,7 @@ const CMovementSummary = ({
             placeholder="Kevin"
             disabled
             type="text"
-            value={userName}
+            value={userName || ""}
           />
         </div>
       </div>
@@ -48,7 +48,7 @@ const CMovementSummary = ({
             placeholder="Almacén"
             disabled
             type="text"
-            value={warehouseName}
+            value={warehouseName || ""}
           />
         </div>
         <div className="flex-1 flex flex-col gap-2">
@@ -61,7 +61,7 @@ const CMovementSummary = ({
             value={format(
               new Date(currentDate.replace(/-/g, "/")),
               "dd/MM/yyyy",
-            )}
+            ) || ""}
           />
         </div>
       </div>

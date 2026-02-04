@@ -5,11 +5,9 @@ import {
   MovementsTypesApiResponse,
   SimpleUsers,
   SimpleWarehouses,
+  ProductSalesApiResponse,
+  ProductSalesFilter,
 } from "../types/Movements.types";
-import {
-  CMProductsFilter,
-  type CMovementsProductsApiResponse,
-} from "../types/CreateMovements.types";
 import { buildEndpoint } from "@/shared/utils/utils";
 
 export const getStockMovementsApi = async (
@@ -26,10 +24,6 @@ export const getStockMovementsApi = async (
   const endpoint = queryParams.toString()
     ? `get-stock-movements?${queryParams.toString()}`
     : "get-stock-movements";
-
-  //const endpoint = "get-stock-movements?page=1&size=20&start_date=2026-01-19&end_date=2026-01-19"
-
-  //const endpoint = "get-stock-movements?page=1"
 
   const { data, error } = await supabase.functions.invoke(endpoint);
 
@@ -79,8 +73,8 @@ export const usersListApi = async (): Promise<SimpleUsers[]> => {
 };
 
 export const getSaleProducts = async (
-  filters: CMProductsFilter = {},
-): Promise<CMovementsProductsApiResponse> => {
+  filters: ProductSalesFilter = {},
+): Promise<ProductSalesApiResponse> => {
   const endpoint = buildEndpoint("get-sale-products", filters);
 
   const { data, error } = await supabase.functions.invoke(endpoint, {
@@ -147,23 +141,65 @@ export const getMovementsTypesByModule = async () => {
   return data;
 };
 
-export interface TypesApiResponse {
-  types: Array<{
-    id: number;
-    name: string;
-    code: string;
+export const getStockByVariationAndTypeApi = async (
+  productVariationId: number,
+  stockTypeId: number,
+  warehouseId: number,
+) => {
+
+  const endpoint = buildEndpoint("get-stock-by-variation-and-type", {
+    productVariationId,
+    stockTypeId,
+    warehouseId,
+  });
+  const { data, error } = await supabase.functions.invoke(endpoint, {
+    method: "GET",
+  });
+
+  if (error) throw error;
+  return data;
+};
+
+interface MovementPayload {
+  product_variation_id: number;
+  quantity: number;
+  stock_type_id: number;
+  movements_type_id: number;
+  warehouse_id: number;
+}
+
+export const createStockMovementsEntranceApi = async (newMovement: MovementPayload[]) => {
+  const { data, error } = await supabase.functions.invoke("create-stock-movements-entrance", {
+    method: "POST",
+    body: newMovement
+  });
+
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+interface MovementPayload2 {
+  warehouse_id: number;
+  products: Array<{
+    product_variation_id: number;
+    quantity: number;
+    origin_stock_type_code: string;
+    destination_stock_type_code: string;
   }>;
 }
 
-export const getTypes = async (code: string): Promise<TypesApiResponse[]> => {
-  const { data, error } = await supabase
-    .from("modules")
-    .select("types(id,name,code)")
-    .eq("code", code)
-    .order("name");
+export const createMovementsTypeStockApi = async (newMovement: MovementPayload2) => {
+  const { data, error } = await supabase.functions.invoke("create-movements-type-stock", {
+    method: "POST",
+    body: newMovement
+  });
+
   if (error) throw error;
-  return data ?? [];
-};
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
 /*
 export const getUserWarehouse = async () => {
   const { data, error: authError } = await supabase.auth.getUser();

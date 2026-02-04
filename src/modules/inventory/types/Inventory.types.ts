@@ -1,3 +1,4 @@
+// CAMBIAR NOMBRES PORQUE SON POCO DESCRIPTIVOS, NO MENCIONAR INVENTORY EN NINGUNO
 export interface WarehouseApiResponse {
   warehouse_id: number;
   warehouse_name: string;
