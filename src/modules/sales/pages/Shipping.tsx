@@ -15,6 +15,7 @@ import ShippingFilterBar from '../components/shipping/ShippingFilterBar';
 import { Checkbox } from '@radix-ui/react-checkbox';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import ShippingFilterModal from '../components/shipping/ShippingFilterModal';
+import { Link } from 'react-router-dom';
 
 
 const Shipping = () => {
@@ -41,6 +42,14 @@ const Shipping = () => {
         <div>
           <h1 className="text-3xl font-bold">Métodos de Envío</h1>
           <p className="text-muted-foreground">Gestiona los métodos de envío y sus costos por zona</p>
+        </div>
+        <div>
+          <Link to="/sales/shipping/create" >
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Agregar Método de Envío
+            </Button>
+          </Link>
         </div>
 
       </div>

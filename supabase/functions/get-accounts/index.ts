@@ -1,143 +1,95 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      headers: corsHeaders
+    });
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     const url = new URL(req.url);
-    const page = parseInt(url.searchParams.get("page") || "1");
-    const size = parseInt(url.searchParams.get("size") || "20");
-    const search = url.searchParams.get("search") || "";
-    const showParam = url.searchParams.get("show");
-    const accountType = url.searchParams.get("account_type");
-    const order = url.searchParams.get("order") || "desc";
+    const search = url.searchParams.get("search") || null;
+    const page = Number(url.searchParams.get("page")) || 1;
+    const size = Number(url.searchParams.get("size")) || 20;
+    const show = url.searchParams.get("show") || null;
+    const account_type = Number(url.searchParams.get("account_type")) || null;
+    const order = url.searchParams.get("order") || null;
 
-    const offset = (page - 1) * size;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const authHeader = req.headers.get("Authorization");
 
-    // Build base query for accounts with stats - use inner join to only get accounts with types
-    let query = supabase
-      .from("accounts")
-      .select(`
-        id,
-        name,
-        middle_name,
-        last_name,
-        last_name2,
-        document_type_id,
-        document_number,
-        show,
-        account_types!inner(
-          types!inner(name)
-        )
-      `, { count: "exact" });
-
-    // Apply filters
-    if (showParam !== null && showParam !== "") {
-      query = query.eq("show", showParam === "true");
+    if (!authHeader) {
+      throw new Error("No authorization header");
     }
 
-    if (accountType) {
-      query = query.eq("account_types.account_type_id", parseInt(accountType));
+    if (!supabaseUrl || !anonKey) {
+      throw new Error("Missing environment variables");
     }
 
-    if (search) {
-      query = query.or(
-        `name.ilike.%${search}%,document_number.ilike.%${search}%,last_name.ilike.%${search}%`
-      );
-    }
+    console.log("Authorization header:", authHeader);
 
-    // Apply ordering
-    query = query.order("id", { ascending: order === "asc" });
-
-    // Apply pagination
-    query = query.range(offset, offset + size - 1);
-
-    const { data: accounts, error: accountsError, count } = await query;
-
-    if (accountsError) {
-      console.error("Error fetching accounts:", accountsError);
-      throw accountsError;
-    }
-
-    // Get purchase stats for all accounts
-    const accountIds = accounts?.map((a) => a.id) || [];
-    const documentNumbers = accounts?.map((a) => a.document_number) || [];
-
-    // Get order stats by document_number
-    const { data: orderStats, error: statsError } = await supabase
-      .from("orders")
-      .select("document_number, total")
-      .in("document_number", documentNumbers);
-
-    if (statsError) {
-      console.error("Error fetching order stats:", statsError);
-    }
-
-    // Calculate stats per document_number
-    const statsMap: Record<string, { total_purchases: number; total_spent: number }> = {};
-    orderStats?.forEach((order) => {
-      if (!statsMap[order.document_number]) {
-        statsMap[order.document_number] = { total_purchases: 0, total_spent: 0 };
+    const supabase = createClient(supabaseUrl, anonKey, {
+      global: {
+        headers: {
+          Authorization: authHeader
+        }
       }
-      statsMap[order.document_number].total_purchases += 1;
-      statsMap[order.document_number].total_spent += parseFloat(order.total) || 0;
     });
 
-    // Format response
-    const formattedAccounts = accounts?.map((account: any) => {
-      const typeName = account.account_types?.[0]?.types?.name || "";
-      const stats = statsMap[account.document_number] || { total_purchases: 0, total_spent: 0 };
+    // Validar el token
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
 
-      return {
-        id: account.id,
-        name: account.name,
-        middle_name: account.middle_name,
-        last_name: account.last_name,
-        last_name2: account.last_name2,
-        document_type_id: account.document_type_id,
-        document_number: account.document_number,
-        show: account.show,
-        types_name: typeName,
-        total_purchases: stats.total_purchases,
-        total_spent: stats.total_spent,
-      };
-    }) || [];
+    if (claimsError || !claimsData?.claims) {
+      console.error("Auth error:", claimsError);
+      return new Response(JSON.stringify({
+        error: "Unauthorized"
+      }), {
+        status: 401,
+        headers: corsHeaders
+      });
+    }
 
-    const response = {
-      accountsdata: {
-        data: formattedAccounts,
-        page: {
-          page,
-          size,
-          total: count || 0,
-        },
-      },
-    };
+    const userId = claimsData.claims.sub;
+    console.log("Authenticated user:", userId);
 
-    return new Response(JSON.stringify(response), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const { data: accountsData, error: accountsError } = await supabase.rpc("sp_get_accounts", {
+      p_search: search,
+      p_page: page,
+      p_size: size,
+      p_show: show,
+      p_account_type: account_type,
+      p_order: order
     });
-  } catch (error: unknown) {
-    console.error("Error in get-accounts:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+    if (accountsError) throw accountsError;
+
+    return new Response(JSON.stringify({
+      accountsdata: accountsData
+    }), {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
       }
-    );
+    });
+  } catch (error) {
+    console.error("Error fetching accounts list:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({
+      error: errorMessage
+    }), {
+      status: 500,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
+    });
   }
 });
