@@ -16,22 +16,18 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { TypesStock } from "@/shared/types/type";
 
-const CMovementTypeModal = () => {
+interface CMovementTypeModalProps {
+  types: TypesStock[];
+  onTypeStock: (typeStock: TypesStock | null) => void;
+}
+
+const CMovementTypeModal = ({ types, onTypeStock }: CMovementTypeModalProps) => {
   const [isOpen, setIsOpen] = useState(true);
   const [isConfirm, setIsConfirm] = useState(false);
-  const types = [
-    { id: 13, name: "Intercambio de tipo", code: "TRS" },
-    { id: 14, name: "Ingreso de mercadería", code: "TRS" },
-  ];
-  const [typeMovementId, setTypeMovementId] = useState<string | undefined>(
-    undefined,
-  );
-  const [selectedMovementType, setSelectedMovementType] = useState<{
-    id: number;
-    name: string;
-    code: string;
-  } | null>(null);
+  const [typeMovementId, setTypeMovementId] = useState<string>("");
+  const [selectedMovementType, setSelectedMovementType] = useState<TypesStock | null>(null);
 
   //Functions
   const closeModal = () => {
@@ -43,6 +39,7 @@ const CMovementTypeModal = () => {
     if (typeMovementId === undefined) return;
     setIsOpen(false);
     setIsConfirm(true);
+    onTypeStock(selectedMovementType);
   };
 
   //Events
@@ -50,8 +47,9 @@ const CMovementTypeModal = () => {
     setTypeMovementId(v);
     const findMovementType = types.find((type) => type.id.toString() === v);
     setSelectedMovementType(findMovementType);
-    console.log(findMovementType);
   };
+
+  const typesMovement = types.filter((type) => type.code === "TRS" || type.code === "MER");
 
   return (
     <Dialog open={isOpen} onOpenChange={closeModal}>
@@ -75,18 +73,22 @@ const CMovementTypeModal = () => {
                 <SelectValue placeholder="Seleccione un tipo"></SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {types.map((type, index) => (
-                  <SelectItem key={index} value={type.id.toString()}>
-                    {type.name}
-                  </SelectItem>
-                ))}
+                {typesMovement && typesMovement.length > 0 ? (
+                  typesMovement.map((type, index) => (
+                    <SelectItem key={index} value={type.id.toString()}>
+                      {type.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="loading" disabled>Cargando...</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <DialogFooter>
-          <Button onClick={nextStep} disabled={typeMovementId === undefined}>
+          <Button onClick={nextStep} disabled={typeMovementId === ""}>
             Continuar
           </Button>
         </DialogFooter>

@@ -1,6 +1,7 @@
 import { Status, Type } from "@/types/index.ts";
 import { City, Country, Neighborhood, State } from "../../types/locations.ts";
 import { supabase } from "../api/supabase";
+import { TypesApiResponse } from "../types/type.ts";
 
 export const CountriesApi = async (): Promise<Country[]> => {
   const { data, error } = await supabase
@@ -96,4 +97,15 @@ export const getHeaderUserData = async (userUID: string) => {
     // Mapeamos los roles: si no hay, devolvemos 'Sin Rol'
     roleName: data.user_roles?.[0]?.roles?.name || "Sin Rol"
   };
+};
+
+
+export const getTypes = async (code: string): Promise<TypesApiResponse[]> => {
+  const { data, error } = await supabase
+    .from("modules")
+    .select("types(id,name,code)")
+    .eq("code", code)
+    .order("name");
+  if (error) throw error;
+  return data ?? [];
 };
