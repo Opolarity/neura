@@ -93,7 +93,7 @@ const MovementsTable = ({
                   variant={
                     movement.type === "Ingreso" ? "default" : "destructive"
                   }
-                  className="gap-1"
+                  className={movement.type === "Ingreso" ? "bg-green-500" : "bg-red-500"}
                 >
                   {movement.type === "Egreso" ? (
                     <TrendingUp className="w-3 h-3" />

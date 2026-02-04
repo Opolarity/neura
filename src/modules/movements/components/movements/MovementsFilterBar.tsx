@@ -45,17 +45,6 @@ export default function MovementsFilterBar({
         Filtros
       </Button>
 
-      {hasActiveFilters && onClearFilters && (
-        <Button
-          onClick={onClearFilters}
-          variant="ghost"
-          size="sm"
-          className="gap-1"
-        >
-          <X className="w-4 h-4" />
-          Limpiar
-        </Button>
-      )}
 
       <Select
         value={order || "none"}
@@ -66,10 +55,8 @@ export default function MovementsFilterBar({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="none">Sin orden</SelectItem>
-          <SelectItem value="date-desc">Fecha (mas reciente)</SelectItem>
+          <SelectItem value="date-dsc">Fecha (mas reciente)</SelectItem>
           <SelectItem value="date-asc">Fecha (mas antigua)</SelectItem>
-          <SelectItem value="amount-desc">Monto (mayor a menor)</SelectItem>
-          <SelectItem value="amount-asc">Monto (menor a mayor)</SelectItem>
         </SelectContent>
       </Select>
     </div>
