@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { PaginationState, Shipping, ShippingFilters } from "../types/Shipping.types";
+import { Shipping, ShippingFilters } from "../types/Shipping.types";
+import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { ShippingApi } from "../services/Shipping.service";
 import { productAdapter } from "@/modules/products/adapters/Product.adapter";
 import { shippingAdapter } from "../adapters/Shipping.adapter";

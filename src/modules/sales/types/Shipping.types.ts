@@ -1,6 +1,6 @@
 
 interface ShippingData {
-   data: Array<{
+  data: Array<{
     id: number;
     name_shipping: string;
     cost: number | null;
@@ -31,14 +31,62 @@ export interface ShippingFilters {
 }
 
 export interface Shipping {
-    id: number;
-    name: string;
-    cost: number;
-    zones: string;
+  id: number;
+  name: string;
+  cost: number;
+  zones: string;
 }
 
-export interface PaginationState {
-  p_page: number | null;
-  p_size: number | null;
-  total: number | null;
+//LOCATION
+export interface Countrie {
+  id: number;
+  name: string;
+}
+
+export interface State {
+  id: number;
+  name: string;
+  country_id?: number;
+}
+
+export interface City {
+  id: number;
+  name: string;
+  country_id?: number;
+  state_id?: number;
+}
+
+export interface Neighborhood {
+  id: number;
+  name: string;
+  country_id?: number;
+  state_id?: number;
+  city_id?: number;
+}
+
+//SHIPING CREATE
+export interface ShippingCost {
+  id: string,
+  name: string;
+  cost: number | "";
+  country_id: number | null;
+  state_id: number | null;
+  city_id: number | null;
+  neighborhood_id: number | null;
+  states?: State[];
+  cities?: City[];
+  neighborhoods?: Neighborhood[];
+}
+
+export interface ShippingPayload {
+  name: string;
+  code: string;
+  cost: Array<{
+    name: string;
+    cost: number;
+    country_id: number | null;
+    state_id: number | null;
+    city_id: number | null;
+    neighborhood_id: number | null;
+  }>;
 }
