@@ -44,7 +44,7 @@ const Shipping = () => {
           <p className="text-muted-foreground">Gestiona los métodos de envío y sus costos por zona</p>
         </div>
         <div>
-          <Link to="/sales/shipping/create" >
+          <Link to="/shipping/create" >
             <Button>
               <Plus className="w-4 h-4 mr-2" />
               Agregar Método de Envío
@@ -121,13 +121,14 @@ const Shipping = () => {
                   <TableCell>{shipping.zones}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => { }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                      <Link to={`/shipping/edit/${shipping.id}`}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </Link>
                       <Button
                         variant="destructive"
                         size="sm"

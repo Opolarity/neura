@@ -6,7 +6,6 @@ import { inventoryRoutes } from "@/modules/inventory/routes";
 import { salesRoutes } from "@/modules/sales";
 import { customersRoutes } from "@/modules/customers";
 import { returnsRoutes } from "@/modules/returns";
-import { shippingRoutes } from "@/modules/shipping";
 import { invoicesRoutes } from "@/modules/invoices";
 import { posRoutes } from "@/modules/pos";
 import { movementsRoutes } from "@/modules/movements";
@@ -28,7 +27,6 @@ const AppRouter = () => {
         ...salesRoutes,
         ...customersRoutes,
         ...returnsRoutes,
-        ...shippingRoutes,
         ...invoicesRoutes,
         ...posRoutes,
         ...movementsRoutes,

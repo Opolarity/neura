@@ -1,5 +1,5 @@
-import { PaginationState, Shipping, ShippingApiResponse } from "../types/Shipping.types";
-
+import { Shipping, ShippingApiResponse } from "../types/Shipping.types";
+import { PaginationState } from "@/shared/components/pagination/Pagination";
 
 export const shippingAdapter = (response?: ShippingApiResponse) => {
   const shippingdata = response?.shippingMethods;
@@ -21,3 +21,4 @@ export const shippingAdapter = (response?: ShippingApiResponse) => {
 
   return { shippings: formattedShipping, pagination };
 };
+
