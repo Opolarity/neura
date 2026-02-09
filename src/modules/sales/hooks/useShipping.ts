@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shipping, ShippingFilters } from "../types/Shipping.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
-import { ShippingApi } from "../services/Shipping.service";
+import { deleteShippingMethodApi, ShippingApi } from "../services/Shipping.service";
 import { productAdapter } from "@/modules/products/adapters/Product.adapter";
 import { shippingAdapter } from "../adapters/Shipping.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
@@ -102,6 +102,16 @@ export const useShipping = () => {
     setIsOpenFilterModal(false);
   };
 
+  const onDeleteShipping = async (id: number) => {
+    try {
+      await deleteShippingMethodApi(id);
+      loadData(filters);
+    } catch (error) {
+      console.error(error);
+      setError("Ocurrió un error al eliminar el método de envío");
+    }
+  };
+
   const hasActiveFilters =
     filters.mincost !== null ||
     filters.maxcost !== null ||
@@ -126,6 +136,7 @@ export const useShipping = () => {
     onCloseFilterModal,
     onApplyFilter,
     onOrderChange,
+    onDeleteShipping,
   };
 
 };

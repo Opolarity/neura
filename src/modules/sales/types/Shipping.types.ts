@@ -1,4 +1,3 @@
-
 interface ShippingData {
   data: Array<{
     id: number;
@@ -66,7 +65,7 @@ export interface Neighborhood {
 
 //SHIPING CREATE
 export interface ShippingCost {
-  id: string,
+  id: number;
   name: string;
   cost: number | "";
   country_id: number | null;
@@ -88,5 +87,51 @@ export interface ShippingPayload {
     state_id: number | null;
     city_id: number | null;
     neighborhood_id: number | null;
+  }>;
+}
+
+export interface ShippingEdit {
+  id: number;
+  name: string;
+  code: string;
+  costs: Array<{
+    name: string;
+    cost: number;
+    country_id: number | null;
+    state_id: number | null;
+    city_id: number | null;
+    neighborhood_id: number | null;
+  }>;
+}
+
+export interface ShippingDetailsApiResponse {
+  shipping_method: {
+    id: number;
+    name: string;
+    code: string;
+    shipping_costs: Array<{
+      id: number;
+      name: string;
+      country_id: number | null;
+      state_id: number | null;
+      city_id: number | null;
+      neighborhood_id: number | null;
+      cost: number;
+    }>;
+  };
+}
+
+export interface ShippingDetails {
+  id: number;
+  name: string;
+  code: string;
+  costs: Array<{
+    id: number;
+    name: string;
+    country_id: number | null;
+    state_id: number | null;
+    city_id: number | null;
+    neighborhood_id: number | null;
+    cost: number;
   }>;
 }

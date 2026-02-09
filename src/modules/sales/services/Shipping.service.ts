@@ -1,9 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/utils";
-import { Countrie, State, ShippingApiResponse, ShippingFilters, City, Neighborhood, ShippingPayload } from "../types/Shipping.types";
+import {
+  Countrie,
+  State,
+  ShippingApiResponse,
+  ShippingFilters,
+  City,
+  Neighborhood,
+  ShippingPayload,
+  ShippingDetailsApiResponse,
+  ShippingEdit,
+} from "../types/Shipping.types";
 
 export const ShippingApi = async (
-  filters: ShippingFilters = {}
+  filters: ShippingFilters = {},
 ): Promise<ShippingApiResponse> => {
   const endpoint = buildEndpoint("get-shipping-methods", filters);
 
@@ -18,19 +28,18 @@ export const ShippingApi = async (
 
   console.log("ShippingApi payload:", data);
 
-  return data ?? {
-    shippingMethods: {
-      data: [],
-      page: { page: 1, size: 20, total: 0 },
-    },
-  };
+  return (
+    data ?? {
+      shippingMethods: {
+        data: [],
+        page: { page: 1, size: 20, total: 0 },
+      },
+    }
+  );
 };
 
 export async function getCountries(): Promise<Countrie[]> {
-  let query = supabase
-    .from("countries")
-    .select("id, name")
-    .order("name");
+  let query = supabase.from("countries").select("id, name").order("name");
 
   const { data, error } = await query;
 
@@ -39,7 +48,7 @@ export async function getCountries(): Promise<Countrie[]> {
 }
 
 export async function getStatesByCountryIdApi(
-  countryId: number
+  countryId: number,
 ): Promise<State[]> {
   const { data, error } = await supabase
     .from("states")
@@ -54,7 +63,7 @@ export async function getStatesByCountryIdApi(
 
 export async function getCitiesByStateIdApi(
   countryId: number,
-  stateId: number
+  stateId: number,
 ): Promise<City[]> {
   const { data, error } = await supabase
     .from("cities")
@@ -71,7 +80,7 @@ export async function getCitiesByStateIdApi(
 export async function getDistrictsByCityIdApi(
   countryId: number,
   stateId: number,
-  cityId: number
+  cityId: number,
 ): Promise<Neighborhood[]> {
   const { data, error } = await supabase
     .from("neighborhoods")
@@ -87,35 +96,68 @@ export async function getDistrictsByCityIdApi(
 }
 
 export async function createShippingMethodApi(
-  payload: ShippingPayload
+  payload: ShippingPayload,
 ): Promise<void> {
-  const { data, error } = await supabase.functions.invoke("create-shipping-method", {
-    method: "POST",
-    body: payload,
-  });
+  const { data, error } = await supabase.functions.invoke(
+    "create-shipping-method",
+    {
+      method: "POST",
+      body: payload,
+    },
+  );
 
   if (error) {
     console.error("Invoke error:", error);
     throw error;
   }
 }
+export async function updateShippingMethodApi(
+  payload: ShippingEdit,
+): Promise<void> {
+  const { data, error } = await supabase.functions.invoke(
+    "update-shipping-method",
+    {
+      body: payload,
+    },
+  );
 
-export async function getShippingById(id: string): Promise<ShippingApiResponse> {
-  const { data, error } = await supabase.functions.invoke("get-details-shipping-method", {
-    body: { shippingmethodID: Number(id) },
-  });
+  if (error) {
+    console.error("Invoke error (update-shipping-method):", error);
+    throw error;
+  }
+}
+
+export async function getShippingById(
+  id: string,
+): Promise<ShippingDetailsApiResponse> {
+  const { data, error } = await supabase.functions.invoke(
+    "get-details-shipping-method",
+    {
+      body: { shippingmethodID: Number(id) },
+    },
+  );
 
   if (error) {
     console.error("Invoke error:", error);
     throw error;
   }
 
-  console.log("ShippingApi payload:", data);
+  return data;
+}
 
-  return data ?? {
-    shippingMethods: {
-      data: [],
-      page: { page: 1, size: 20, total: 0 },
+export async function deleteShippingMethodApi(id: number): Promise<void> {
+  const { data, error } = await supabase.functions.invoke(
+    "delete-shipping-method",
+    {
+      body: {
+        methodID: id,
+      },
     },
-  };
+  );
+
+  if (error) {
+    console.error("Invoke error:", error);
+    throw error;
+  }
+  return data;
 }

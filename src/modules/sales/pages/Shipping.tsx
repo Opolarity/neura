@@ -34,6 +34,7 @@ const Shipping = () => {
     onPageChange,
     onSearchChange,
     onOrderChange,
+    onDeleteShipping,
   } = useShipping();
 
   return (
@@ -132,7 +133,7 @@ const Shipping = () => {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => { }}
+                        onClick={() => onDeleteShipping(shipping.id)}
                       >
                         <Trash className="w-4 h-4" />
                       </Button>
