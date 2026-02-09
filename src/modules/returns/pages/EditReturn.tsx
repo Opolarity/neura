@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,603 +8,49 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, ArrowLeft, Plus, Trash2, Search, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/shared/utils/utils';
-import { useDebounce } from '@/shared/hooks/useDebounce';
-
-interface OrderProduct {
-  id: number;
-  product_variation_id: number;
-  quantity: number;
-  product_price: number;
-  product_discount: number;
-  variations: {
-    sku: string;
-    products: {
-      title: string;
-    };
-  };
-}
-
-interface ReturnProduct {
-  product_variation_id: number;
-  quantity: number;
-  product_name: string;
-  sku: string;
-  price: number;
-  output: boolean;
-}
-
-interface NewProduct {
-  variation_id: number;
-  product_name: string;
-  variation_name: string;
-  quantity: number;
-  price: number;
-  discount: number;
-  imageUrl?: string;
-  stock?: number;
-}
-
-interface SearchProduct {
-  sku: string;
-  stock: number;
-  terms: Array<{ id: number; name: string }>;
-  prices: Array<{ price: number; sale_price: number | null; price_list_id: number }>;
-  imageUrl: string;
-  productId: number;
-  variationId: number;
-  productTitle: string;
-}
-
-interface ProductSearchPagination {
-  page: number;
-  size: number;
-  total: number;
-}
+import { Loader2, ArrowLeft, Plus, Search, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
+import { useEditReturn } from '../hooks/useEditReturn';
+import { formatCurrency } from '@/shared/utils/currency';
 
 const EditReturn = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [situations, setSituations] = useState<any[]>([]);
-  const [documentTypes, setDocumentTypes] = useState<any[]>([]);
-  const [returnTypes, setReturnTypes] = useState<any[]>([]);
-  const [selectedReturnType, setSelectedReturnType] = useState<string>('');
-  const [returnTypeCode, setReturnTypeCode] = useState<string>('');
-  const [orderProducts, setOrderProducts] = useState<OrderProduct[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [orderId, setOrderId] = useState<number>(0);
-  
-  // Form fields
-  const [reason, setReason] = useState('');
-  const [documentType, setDocumentType] = useState('');
-  const [documentNumber, setDocumentNumber] = useState('');
-  const [shippingReturn, setShippingReturn] = useState(false);
-  const [situationId, setSituationId] = useState('');
-  const [returnProducts, setReturnProducts] = useState<ReturnProduct[]>([]);
-  const [newProducts, setNewProducts] = useState<NewProduct[]>([]);
-  
-  // Product search with pagination
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchPagination, setSearchPagination] = useState<ProductSearchPagination>({ page: 1, size: 10, total: 0 });
-  const debouncedSearch = useDebounce(searchQuery, 300);
-
-  useEffect(() => {
-    loadReturnData();
-  }, [id]);
-
-  const loadReturnData = async () => {
-    try {
-      // Load return data
-      const { data: returnData, error: returnError } = await supabase
-        .from('returns')
-        .select(`
-          *,
-          types(id, name, code)
-        `)
-        .eq('id', Number(id))
-        .single();
-
-      if (returnError) throw returnError;
-
-      // Load return products
-      const { data: returnProductsData, error: returnProductsError } = await supabase
-        .from('returns_products')
-        .select(`
-          *,
-          variations (
-            sku,
-            products (
-              title
-            )
-          )
-        `)
-        .eq('return_id', Number(id));
-
-      if (returnProductsError) throw returnProductsError;
-
-      // Load order products
-      const { data: orderProductsData, error: orderProductsError } = await supabase
-        .from('order_products')
-        .select(`
-          *,
-          variations (
-            sku,
-            products (
-              title
-            )
-          )
-        `)
-        .eq('order_id', returnData.order_id);
-
-      if (orderProductsError) throw orderProductsError;
-
-      // Load document types
-      const { data: docTypesData } = await supabase
-        .from('document_types')
-        .select('*');
-
-      // Load situations for returns module (RTU)
-      const { data: moduleData } = await supabase
-        .from('modules')
-        .select('id')
-        .eq('code', 'RTU')
-        .single();
-
-      if (moduleData) {
-        const { data: situationsData } = await supabase
-          .from('situations')
-          .select('*, statuses(id, name, code)')
-          .eq('module_id', moduleData.id);
-        setSituations(situationsData || []);
-
-        // Load return types from the same module
-        const { data: typesData } = await supabase
-          .from('types')
-          .select('*')
-          .eq('module_id', moduleData.id);
-        setReturnTypes(typesData || []);
-      }
-
-      // Load all products for exchange
-      const { data: productsData } = await supabase
-        .from('variations')
-        .select(`
-          id,
-          sku,
-          products (
-            id,
-            title
-          ),
-          product_price (
-            price,
-            sale_price
-          )
-        `);
-
-      // Set data
-      setOrderId(returnData.order_id);
-      setReason(returnData.reason || '');
-      setDocumentType(returnData.customer_document_type_id?.toString() || '');
-      setDocumentNumber(returnData.customer_document_number);
-      setShippingReturn(returnData.shipping_return);
-      setSituationId(returnData.situation_id.toString());
-      setSelectedReturnType(returnData.return_type_id.toString());
-      setReturnTypeCode(returnData.types?.code || '');
-      setOrderProducts(orderProductsData || []);
-      setProducts(productsData || []);
-      setDocumentTypes(docTypesData || []);
-
-      // Set return products based on return type
-      if (returnData.types?.code === 'DVT') {
-        // For total return, all order products are automatically returned
-        const allOrderProducts = orderProductsData?.map(op => ({
-          product_variation_id: op.product_variation_id,
-          quantity: op.quantity,
-          product_name: op.variations.products.title,
-          sku: op.variations.sku,
-          price: op.product_price,
-          output: true
-        })) || [];
-        setReturnProducts(allOrderProducts);
-      } else {
-        // For partial return or exchange, load the selected products
-        const formattedReturnProducts = returnProductsData?.filter(rp => rp.output).map(rp => ({
-          product_variation_id: rp.product_variation_id,
-          quantity: rp.quantity,
-          product_name: rp.variations.products.title,
-          sku: rp.variations.sku,
-          price: rp.product_amount || 0,
-          output: rp.output
-        })) || [];
-        setReturnProducts(formattedReturnProducts);
-      }
-
-      // If it's an exchange, load the new products (they would be returns_products with output=false)
-      if (returnData.types?.code === 'CAM') {
-        const newProds = returnProductsData?.filter(rp => !rp.output).map(rp => {
-          const variation = productsData?.find(p => p.id === rp.product_variation_id);
-          return {
-            variation_id: rp.product_variation_id,
-            product_name: variation?.products?.title || '',
-            variation_name: variation?.sku || '',
-            quantity: rp.quantity,
-            price: rp.product_amount || 0,
-            discount: 0
-          };
-        }) || [];
-        setNewProducts(newProds);
-      }
-
-    } catch (error: any) {
-      console.error('Error loading return:', error);
-      toast.error('Error al cargar la devolución');
-      navigate('/returns');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch products for exchange search
-  const fetchSearchProducts = useCallback(async (page: number = 1, search: string = '') => {
-    setSearchLoading(true);
-    try {
-      const params = new URLSearchParams({
-        p_page: page.toString(),
-        p_size: '10',
-      });
-      if (search) params.append('p_search', search);
-
-      // Use the existing get-sale-products endpoint
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-sale-products?${params.toString()}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error('Error fetching products');
-
-      const result = await response.json();
-      setSearchProducts(result.data || []);
-      setSearchPagination(result.page || { page: 1, size: 10, total: 0 });
-    } catch (error) {
-      console.error('Error fetching search products:', error);
-      setSearchProducts([]);
-    } finally {
-      setSearchLoading(false);
-    }
-  }, []);
-
-  // Trigger search when debounced query changes
-  useEffect(() => {
-    if (returnTypeCode === 'CAM' && debouncedSearch) {
-      fetchSearchProducts(1, debouncedSearch);
-    }
-  }, [debouncedSearch, returnTypeCode, fetchSearchProducts]);
-
-  const handleSearchPageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= Math.ceil(searchPagination.total / searchPagination.size)) {
-      fetchSearchProducts(newPage, debouncedSearch);
-    }
-  };
-
-  const addReturnProduct = (orderProduct: OrderProduct) => {
-    const existingProduct = returnProducts.find(
-      rp => rp.product_variation_id === orderProduct.product_variation_id
-    );
-
-    if (existingProduct) {
-      toast.error('Este producto ya fue agregado');
-      return;
-    }
-
-    const newReturnProduct: ReturnProduct = {
-      product_variation_id: orderProduct.product_variation_id,
-      quantity: 1,
-      product_name: orderProduct.variations.products.title,
-      sku: orderProduct.variations.sku,
-      price: orderProduct.product_price,
-      output: true
-    };
-
-    setReturnProducts([...returnProducts, newReturnProduct]);
-  };
-
-  const removeReturnProduct = (index: number) => {
-    setReturnProducts(returnProducts.filter((_, i) => i !== index));
-  };
-
-  const updateReturnProductQuantity = (index: number, quantity: number) => {
-    const orderProduct = orderProducts.find(
-      op => op.product_variation_id === returnProducts[index].product_variation_id
-    );
-    
-    if (orderProduct && quantity > orderProduct.quantity) {
-      toast.error(`La cantidad no puede exceder ${orderProduct.quantity}`);
-      return;
-    }
-
-    const updated = [...returnProducts];
-    updated[index].quantity = quantity;
-    setReturnProducts(updated);
-  };
-
-  const addProductFromSearch = (product: SearchProduct) => {
-    const existingProduct = newProducts.find(
-      np => np.variation_id === product.variationId
-    );
-
-    if (existingProduct) {
-      toast.error('Este producto ya fue agregado');
-      return;
-    }
-
-    const price = product.prices?.[0]?.sale_price || product.prices?.[0]?.price || 0;
-    const newProduct: NewProduct = {
-      variation_id: product.variationId,
-      product_name: product.productTitle,
-      variation_name: product.terms.map(t => t.name).join(' / ') || product.sku,
-      quantity: 1,
-      price: price,
-      discount: 0,
-      imageUrl: product.imageUrl,
-      stock: product.stock
-    };
-
-    setNewProducts([...newProducts, newProduct]);
-    toast.success('Producto agregado');
-  };
-
-  const removeNewProduct = (index: number) => {
-    setNewProducts(newProducts.filter((_, i) => i !== index));
-  };
-
-  const updateNewProductQuantity = (index: number, quantity: number) => {
-    const updated = [...newProducts];
-    updated[index].quantity = quantity;
-    setNewProducts(updated);
-  };
-
-  const updateNewProductDiscount = (index: number, discount: number) => {
-    const updated = [...newProducts];
-    updated[index].discount = discount;
-    setNewProducts(updated);
-  };
-
-  const calculateTotals = () => {
-    let returnTotal = 0;
-
-    if (returnTypeCode === 'DVT') {
-      // For total return, sum all order products
-      returnTotal = orderProducts.reduce((sum, product) => {
-        return sum + (product.product_price * product.quantity);
-      }, 0);
-    } else {
-      // For partial return or exchange, sum selected products
-      returnTotal = returnProducts.reduce((sum, product) => {
-        return sum + (product.price * product.quantity);
-      }, 0);
-    }
-
-    const newTotal = newProducts.reduce((sum, product) => {
-      return sum + ((product.price - product.discount) * product.quantity);
-    }, 0);
-
-    return {
-      returnTotal,
-      newTotal,
-      difference: newTotal - returnTotal
-    };
-  };
-
-  const handleSave = async () => {
-    // Validation based on return type
-    if (returnTypeCode === 'DVP' && returnProducts.length === 0) {
-      toast.error('Debe agregar al menos un producto a devolver');
-      return;
-    }
-
-    if (!situationId) {
-      toast.error('Debe seleccionar una situación');
-      return;
-    }
-
-    if (returnTypeCode === 'CAM') {
-      if (returnProducts.length === 0) {
-        toast.error('Debe seleccionar productos a devolver');
-        return;
-      }
-      if (newProducts.length === 0) {
-        toast.error('Debe agregar productos de cambio');
-        return;
-      }
-    }
-
-    setSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuario no autenticado');
-
-      const totals = calculateTotals();
-      
-      // Update return
-      const { error: returnError } = await supabase
-        .from('returns')
-        .update({
-          order_id: orderId,
-          return_type_id: Number(selectedReturnType),
-          customer_document_type_id: documentType ? Number(documentType) : null,
-          customer_document_number: documentNumber,
-          reason: reason || null,
-          shipping_return: shippingReturn,
-          situation_id: Number(situationId),
-          status_id: situations.find(s => s.id === Number(situationId))?.status_id,
-          total_refund_amount: (returnTypeCode === 'DVT' || returnTypeCode === 'DVP') ? totals.returnTotal : null,
-          total_exchange_difference: returnTypeCode === 'CAM' ? totals.difference : null,
-        })
-        .eq('id', Number(id));
-
-      if (returnError) throw returnError;
-
-      // Delete existing return products
-      const { error: deleteError } = await supabase
-        .from('returns_products')
-        .delete()
-        .eq('return_id', Number(id));
-
-      if (deleteError) throw deleteError;
-
-      // Prepare return products based on type
-      let returnProductsToInsert = [];
-      
-      if (returnTypeCode === 'DVT') {
-        // For total return, insert all order products
-        returnProductsToInsert = orderProducts.map(p => ({
-          return_id: Number(id),
-          product_variation_id: p.product_variation_id,
-          quantity: p.quantity,
-          product_amount: p.product_price,
-          output: true
-        }));
-      } else {
-        // For partial return or exchange, insert selected products
-        returnProductsToInsert = returnProducts.map(product => ({
-          return_id: Number(id),
-          product_variation_id: product.product_variation_id,
-          quantity: product.quantity,
-          product_amount: product.price,
-          output: true
-        }));
-      }
-
-      const { error: insertReturnError } = await (supabase as any)
-        .from('returns_products')
-        .insert(returnProductsToInsert);
-
-      if (insertReturnError) throw insertReturnError;
-
-      // If exchange, insert new products (output = false)
-      if (returnTypeCode === 'CAM' && newProducts.length > 0) {
-        const newProductsToInsert = newProducts.map(product => ({
-          return_id: Number(id),
-          product_variation_id: product.variation_id,
-          quantity: product.quantity,
-          product_amount: product.price - product.discount,
-          output: false
-        }));
-
-        const { error: insertNewError } = await (supabase as any)
-          .from('returns_products')
-          .insert(newProductsToInsert);
-
-        if (insertNewError) throw insertNewError;
-      }
-
-      // Check if situation has status "CFM" to update stock
-      const selectedSituation = situations.find(s => s.id === Number(situationId));
-      if (selectedSituation) {
-        const { data: statusData } = await supabase
-          .from('statuses')
-          .select('code')
-          .eq('id', selectedSituation.status_id)
-          .single();
-
-        if (statusData?.code === 'CFM') {
-          // Prepare all products for stock movements
-          let allReturnProducts = [];
-          
-          if (returnTypeCode === 'DVT') {
-            // For total return, use all order products
-            allReturnProducts = orderProducts.map(p => ({
-              product_variation_id: p.product_variation_id,
-              quantity: p.quantity,
-              output: false
-            }));
-          } else {
-            // For partial return or exchange, use selected products
-            allReturnProducts = returnProducts.map(p => ({
-              product_variation_id: p.product_variation_id,
-              quantity: p.quantity,
-              output: false
-            }));
-          }
-
-          // Add new products for exchanges
-          if (returnTypeCode === 'CAM' && newProducts.length > 0) {
-            allReturnProducts = [
-              ...allReturnProducts,
-              ...newProducts.map(p => ({
-                product_variation_id: p.variation_id,
-                quantity: p.quantity,
-                output: true
-              }))
-            ];
-          }
-
-          // Create stock movements and update stock
-          for (const product of allReturnProducts) {
-            // Get movement type for returns
-            const { data: returnMovementType } = await supabase
-              .from('types')
-              .select('id')
-              .eq('module_id', 3) // Stock movements module
-              .limit(1)
-              .single();
-
-            // Create stock movement
-            const { error: movementError } = await (supabase as any)
-              .from('stock_movements')
-              .insert({
-                product_variation_id: product.product_variation_id,
-                quantity: product.output ? -product.quantity : product.quantity,
-                created_by: user.id,
-                movement_type: returnMovementType?.id || 1,
-                warehouse_id: 1,
-                completed: true,
-              });
-
-            if (movementError) {
-              console.error('Error creating stock movement:', movementError);
-            }
-
-            // Update stock - get current stock for warehouse 1
-            const { data: currentStock } = await supabase
-              .from('product_stock')
-              .select('stock')
-              .eq('product_variation_id', product.product_variation_id)
-              .eq('warehouse_id', 1)
-              .single();
-
-            if (currentStock) {
-              const newStock = currentStock.stock + (product.output ? -product.quantity : product.quantity);
-              await supabase
-                .from('product_stock')
-                .update({ stock: newStock })
-                .eq('product_variation_id', product.product_variation_id)
-                .eq('warehouse_id', 1);
-            }
-          }
-        }
-      }
-
-      toast.success('Devolución actualizada exitosamente');
-      navigate('/returns');
-    } catch (error: any) {
-      console.error('Error updating return:', error);
-      toast.error('Error al actualizar la devolución');
-    } finally {
-      setSaving(false);
-    }
-  };
+  const {
+    loading,
+    saving,
+    situations,
+    documentTypes,
+    returnTypes,
+    selectedReturnType,
+    returnTypeCode,
+    orderProducts,
+    reason,
+    setReason,
+    documentType,
+    setDocumentType,
+    documentNumber,
+    setDocumentNumber,
+    shippingReturn,
+    setShippingReturn,
+    situationId,
+    setSituationId,
+    returnProducts,
+    newProducts,
+    searchQuery,
+    setSearchQuery,
+    searchProducts,
+    searchLoading,
+    searchPagination,
+    handleSearchPageChange,
+    addReturnProduct,
+    removeReturnProduct,
+    updateReturnProductQuantity,
+    addProductFromSearch,
+    removeNewProduct,
+    updateNewProductQuantity,
+    updateNewProductDiscount,
+    calculateTotals,
+    handleSave
+  } = useEditReturn();
 
   if (loading) {
     return (
@@ -681,7 +126,6 @@ const EditReturn = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground mt-1">El tipo no puede ser modificado</p>
             </div>
 
             <div>
@@ -721,7 +165,6 @@ const EditReturn = () => {
           </CardContent>
         </Card>
 
-        {/* Products to Return - Only for DVP and CAM */}
         {(returnTypeCode === 'DVP' || returnTypeCode === 'CAM') && (
           <Card>
             <CardHeader>
@@ -748,7 +191,7 @@ const EditReturn = () => {
                             <TableCell>{product.variations.products.title}</TableCell>
                             <TableCell>{product.variations.sku}</TableCell>
                             <TableCell>{product.quantity}</TableCell>
-                            <TableCell>${product.product_price.toFixed(2)}</TableCell>
+                            <TableCell>{formatCurrency(product.product_price)}</TableCell>
                             <TableCell className="text-right">
                               <Button
                                 variant="outline"
@@ -794,8 +237,8 @@ const EditReturn = () => {
                                   className="w-20"
                                 />
                               </TableCell>
-                              <TableCell>${product.price.toFixed(2)}</TableCell>
-                              <TableCell>${(product.price * product.quantity).toFixed(2)}</TableCell>
+                              <TableCell>{formatCurrency(product.price)}</TableCell>
+                              <TableCell>{formatCurrency(product.price * product.quantity)}</TableCell>
                               <TableCell className="text-right">
                                 <Button
                                   variant="ghost"
@@ -823,150 +266,89 @@ const EditReturn = () => {
               <CardTitle>Productos de Cambio</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Search bar */}
-              <div>
-                <Label>Buscar Producto</Label>
-                <div className="flex gap-2 mt-2">
-                  <div className="flex-1 relative">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Buscar por nombre, SKU o atributos..."
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar productos por nombre o SKU..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
 
-              {/* Products table */}
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Producto</TableHead>
-                      <TableHead className="text-center">Stock</TableHead>
-                      <TableHead className="text-right">Precio</TableHead>
-                      <TableHead className="w-20"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {searchLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8">
-                          <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Buscando productos...
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : searchProducts.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                          {searchQuery
-                            ? "No se encontraron productos"
-                            : "Ingrese un término de búsqueda"}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      searchProducts.map((product) => (
+              {searchLoading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                </div>
+              ) : searchQuery && searchProducts.length > 0 ? (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableBody>
+                      {searchProducts.map((product) => (
                         <TableRow key={product.variationId}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              {product.imageUrl ? (
-                                <img
-                                  src={product.imageUrl}
-                                  alt={product.productTitle}
-                                  className="w-10 h-10 rounded object-cover"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
-                                  <ShoppingCart className="w-4 h-4 text-muted-foreground" />
-                                </div>
-                              )}
-                              <div>
-                                <div className="font-medium text-sm">
-                                  {product.productTitle}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {product.terms.map((t) => t.name).join(" / ") ||
-                                    product.sku}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <span
-                              className={
-                                product.stock > 0
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                              }
-                            >
-                              {product.stock}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            ${(product.prices?.[0]?.sale_price || product.prices?.[0]?.price || 0).toFixed(2)}
+                          <TableCell className="w-12">
+                            {product.imageUrl && (
+                              <img src={product.imageUrl} alt={product.productTitle} className="w-10 h-10 object-cover rounded" />
+                            )}
                           </TableCell>
                           <TableCell>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => addProductFromSearch(product)}
-                              disabled={product.stock <= 0}
-                              className="text-primary hover:text-primary/80"
-                            >
-                              <Plus className="w-4 h-4" />
+                            <div className="font-medium">{product.productTitle}</div>
+                            <div className="text-xs text-muted-foreground">{product.sku}</div>
+                          </TableCell>
+                          <TableCell>{product.terms.map(t => t.name).join(' / ')}</TableCell>
+                          <TableCell>{formatCurrency(product.prices?.[0]?.sale_price || product.prices?.[0]?.price || 0)}</TableCell>
+                          <TableCell>Stock: {product.stock}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" onClick={() => addProductFromSearch(product)}>
+                              <Plus className="w-4 h-4 mr-1" /> Agregar
                             </Button>
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Pagination */}
-              {searchPagination.total > 0 && (
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground">
-                    Mostrando {searchProducts.length} de {searchPagination.total} productos
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSearchPageChange(searchPagination.page - 1)}
-                      disabled={searchPagination.page <= 1}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <span className="text-sm">
-                      Página {searchPagination.page} de {Math.ceil(searchPagination.total / searchPagination.size)}
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <div className="flex items-center justify-between p-2 border-t bg-muted/50">
+                    <span className="text-xs text-muted-foreground">
+                      Total: {searchPagination.total} productos
                     </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSearchPageChange(searchPagination.page + 1)}
-                      disabled={searchPagination.page >= Math.ceil(searchPagination.total / searchPagination.size)}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={searchPagination.page === 1}
+                        onClick={() => handleSearchPageChange(searchPagination.page - 1)}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-xs">
+                        Página {searchPagination.page} de {Math.ceil(searchPagination.total / searchPagination.size)}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={searchPagination.page >= Math.ceil(searchPagination.total / searchPagination.size)}
+                        onClick={() => handleSearchPageChange(searchPagination.page + 1)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
+              ) : searchQuery && !searchLoading && (
+                <p className="text-center py-4 text-sm text-muted-foreground">No se encontraron productos</p>
               )}
 
               {newProducts.length > 0 && (
-                <div className="border rounded-lg">
+                <div className="border rounded-lg mt-4">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Producto</TableHead>
-                        <TableHead>Variación</TableHead>
                         <TableHead>Cantidad</TableHead>
                         <TableHead>Precio</TableHead>
-                        <TableHead>Descuento</TableHead>
+                        <TableHead>Desc.</TableHead>
                         <TableHead>Total</TableHead>
                         <TableHead className="text-right">Acción</TableHead>
                       </TableRow>
@@ -974,8 +356,10 @@ const EditReturn = () => {
                     <TableBody>
                       {newProducts.map((product, index) => (
                         <TableRow key={index}>
-                          <TableCell>{product.product_name}</TableCell>
-                          <TableCell>{product.variation_name}</TableCell>
+                          <TableCell>
+                            <div className="font-medium">{product.product_name}</div>
+                            <div className="text-xs text-muted-foreground">{product.variation_name}</div>
+                          </TableCell>
                           <TableCell>
                             <Input
                               type="number"
@@ -985,7 +369,7 @@ const EditReturn = () => {
                               className="w-20"
                             />
                           </TableCell>
-                          <TableCell>${product.price.toFixed(2)}</TableCell>
+                          <TableCell>{formatCurrency(product.price)}</TableCell>
                           <TableCell>
                             <Input
                               type="number"
@@ -995,9 +379,7 @@ const EditReturn = () => {
                               className="w-20"
                             />
                           </TableCell>
-                          <TableCell>
-                            ${((product.price - product.discount) * product.quantity).toFixed(2)}
-                          </TableCell>
+                          <TableCell>{formatCurrency((product.price - product.discount) * product.quantity)}</TableCell>
                           <TableCell className="text-right">
                             <Button
                               variant="ghost"
@@ -1019,45 +401,33 @@ const EditReturn = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Resumen</CardTitle>
+            <CardTitle>Resumen de Totales</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Total a Devolver:</span>
-                <span className="font-medium">${totals.returnTotal.toFixed(2)}</span>
+          <CardContent className="space-y-2">
+            <div className="flex justify-between py-2 border-b">
+              <span>Total Devolución:</span>
+              <span className="font-medium text-destructive">{formatCurrency(totals.returnTotal)}</span>
+            </div>
+            {returnTypeCode === 'CAM' && (
+              <div className="flex justify-between py-2 border-b">
+                <span>Total Productos Cambio:</span>
+                <span className="font-medium text-green-600">{formatCurrency(totals.newTotal)}</span>
               </div>
-              {returnTypeCode === 'CAM' && (
-                <>
-                  <div className="flex justify-between">
-                    <span>Total Productos Nuevos:</span>
-                    <span className="font-medium">${totals.newTotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold border-t pt-2">
-                    <span>Diferencia:</span>
-                    <span className={totals.difference >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      ${Math.abs(totals.difference).toFixed(2)}
-                      {totals.difference >= 0 ? ' (A favor del cliente)' : ' (A pagar)'}
-                    </span>
-                  </div>
-                </>
-              )}
-              {returnTypeCode === 'DEV' && (
-                <div className="flex justify-between text-lg font-bold border-t pt-2">
-                  <span>Total a Reembolsar:</span>
-                  <span className="text-green-600">${totals.returnTotal.toFixed(2)}</span>
-                </div>
-              )}
+            )}
+            <div className="flex justify-between py-2 text-lg font-bold">
+              <span>
+                {totals.difference === 0 ? 'Diferencia:' :
+                  totals.difference > 0 ? 'Diferencia a Pagar:' : 'A Reembolsar:'}
+              </span>
+              <span className={totals.difference > 0 ? 'text-green-600' : totals.difference < 0 ? 'text-destructive' : ''}>
+                {formatCurrency(Math.abs(totals.difference))}
+              </span>
             </div>
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-4">
-          <Button
-            variant="outline"
-            onClick={() => navigate('/returns')}
-            disabled={saving}
-          >
+        <div className="flex justify-end gap-3 mt-4">
+          <Button variant="outline" onClick={() => navigate('/returns')}>
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={saving}>

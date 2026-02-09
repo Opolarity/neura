@@ -19,7 +19,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Edit, Eye } from "lucide-react";
+import { Loader2, SquarePen, Eye } from "lucide-react";
 import { format } from "date-fns";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useNavigate } from "react-router-dom";
@@ -165,14 +165,14 @@ const Sales = () => {
                     <TableCell className="text-center">
                       <div className="flex gap-2 justify-center">
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => goToSaleDetail(sale.id)}
                         >
-                          <Edit className="w-4 h-4" />
+                          <SquarePen className="w-4 h-4" />
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => navigate(`/sales/${sale.id}`)}
                         >
