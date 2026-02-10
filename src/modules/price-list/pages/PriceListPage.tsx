@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -13,12 +14,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign } from "lucide-react";
+import { DollarSign, Pencil, Trash2 } from "lucide-react";
 import { usePriceList } from "../hooks/usePriceList";
+import { PriceListEditDialog } from "../components/PriceListEditDialog";
+import type { PriceListItem } from "../types/PriceList.types";
 
 const PriceListPage = () => {
-  const { priceLists, loading } = usePriceList();
+  const { priceLists, loading, refetch } = usePriceList();
+  const [editingItem, setEditingItem] = useState<PriceListItem | null>(null);
 
   return (
     <div className="p-6">
@@ -48,13 +53,14 @@ const PriceListPage = () => {
                 <TableHead>Código</TableHead>
                 <TableHead className="text-center">Ubicación</TableHead>
                 <TableHead className="text-center">Web</TableHead>
+                <TableHead className="text-center w-28">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 5 }).map((_, j) => (
+                    {Array.from({ length: 6 }).map((_, j) => (
                       <TableCell key={j}>
                         <Skeleton className="h-4 w-full" />
                       </TableCell>
@@ -63,7 +69,7 @@ const PriceListPage = () => {
                 ))
               ) : priceLists.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                     No se encontraron listas de precios
                   </TableCell>
                 </TableRow>
@@ -89,6 +95,26 @@ const PriceListPage = () => {
                         {item.web ? "Sí" : "No"}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setEditingItem(item)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {}}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -96,6 +122,16 @@ const PriceListPage = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <PriceListEditDialog
+        item={editingItem}
+        open={!!editingItem}
+        onOpenChange={(open) => !open && setEditingItem(null)}
+        onSaved={() => {
+          setEditingItem(null);
+          refetch();
+        }}
+      />
     </div>
   );
 };
