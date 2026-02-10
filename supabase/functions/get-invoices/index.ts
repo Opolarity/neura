@@ -15,14 +15,14 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const search = url.searchParams.get("search") || null;
+    const search = url.searchParams.get("search");
     const page = Number(url.searchParams.get("page")) || 1;
     const size = Number(url.searchParams.get("size")) || 20;
-    const order = url.searchParams.get("order") || null;
-    const declared = url.searchParams.get("declared") || false;
-    const min_mount = Number(url.searchParams.get("min_mount")) || null;
-    const max_mount = Number(url.searchParams.get("max_mount")) || null;
-    const type = Number(url.searchParams.get("type")) || null;
+    const order = url.searchParams.get("order");
+    const declared = url.searchParams.get("declared");
+    const min_mount = Number(url.searchParams.get("min_mount"));
+    const max_mount = Number(url.searchParams.get("max_mount"));
+    const type = Number(url.searchParams.get("type"));
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     if (invoicesError) throw invoicesError;
 
     return new Response(JSON.stringify({
-      invoicesData
+      invoicesData 
     }), {
       headers: {
         ...corsHeaders,
