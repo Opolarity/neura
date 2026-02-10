@@ -1,10 +1,10 @@
-project_id = "wwcdntjnpoaacarmmzir"
+project_id = "cfcknckeakyzqtwwihzi"
 
 [functions.create-order]
 verify_jwt = true
 
 [functions.create-product]
-verify_jwt = true
+verify_jwt = false
 
 [functions.delete-product]
 verify_jwt = true
@@ -13,10 +13,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.get-product-details]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-product-form-data]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-products-list]
 verify_jwt = false

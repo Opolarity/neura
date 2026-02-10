@@ -1,58 +1,34 @@
 import { supabase } from "@/integrations/supabase/client";
 import { SalesFilters, SalesApiResponse } from "../types/Sales.types";
-
-const SUPABASE_URL = "https://wwcdntjnpoaacarmmzir.supabase.co";
+import { buildEndpoint } from "@/shared/utils/utils";
 
 export const fetchSalesList = async (
   filters: SalesFilters
 ): Promise<SalesApiResponse> => {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
+  const params: Record<string, string> = {
+    page: String(filters.page),
+    size: String(filters.size),
+  };
 
-  if (!token) {
-    throw new Error("No authentication token available");
-  }
+  if (filters.search) params.search = filters.search;
+  if (filters.status) params.status = filters.status;
+  if (filters.saleType) params.sale_type = String(filters.saleType);
+  if (filters.startDate) params.start_date = filters.startDate;
+  if (filters.endDate) params.end_date = filters.endDate;
+  if (filters.order) params.order = filters.order;
 
-  const params = new URLSearchParams();
-  params.append("page", String(filters.page));
-  params.append("size", String(filters.size));
+  const endpoint = buildEndpoint("get-sales-list", params);
 
-  if (filters.search) {
-    params.append("search", filters.search);
-  }
-  if (filters.status) {
-    params.append("status", filters.status);
-  }
-  if (filters.saleType) {
-    params.append("sale_type", String(filters.saleType));
-  }
-  if (filters.startDate) {
-    params.append("start_date", filters.startDate);
-  }
-  if (filters.endDate) {
-    params.append("end_date", filters.endDate);
-  }
-  if (filters.order) {
-    params.append("order", filters.order);
+  const { data, error } = await supabase.functions.invoke(endpoint, {
+    method: "GET",
+  });
+
+  if (error) {
+    console.error("Invoke error:", error);
+    throw error;
   }
 
-  const response = await fetch(
-    `${SUPABASE_URL}/functions/v1/get-sales-list?${params.toString()}`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Error al obtener ventas");
-  }
-
-  return response.json();
+  return data;
 };
 
 export const fetchSaleTypes = async (): Promise<{ id: number; name: string }[]> => {

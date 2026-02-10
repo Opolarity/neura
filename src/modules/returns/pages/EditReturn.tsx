@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, ArrowLeft, Plus, Search, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
+import { Loader2, ArrowLeft, Plus, Search, ChevronLeft, ChevronRight, ShoppingCart, Trash2 } from 'lucide-react';
 import { useEditReturn } from '../hooks/useEditReturn';
 import { formatCurrency } from '@/shared/utils/currency';
 

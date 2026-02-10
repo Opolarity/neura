@@ -658,7 +658,7 @@ export type Database = {
       }
       invoices: {
         Row: {
-          account_id: number
+          account: number
           cdr_url: string | null
           created_at: string
           created_by: string
@@ -671,7 +671,7 @@ export type Database = {
           xml_url: string | null
         }
         Insert: {
-          account_id: number
+          account: number
           cdr_url?: string | null
           created_at?: string
           created_by?: string
@@ -684,7 +684,7 @@ export type Database = {
           xml_url?: string | null
         }
         Update: {
-          account_id?: number
+          account?: number
           cdr_url?: string | null
           created_at?: string
           created_by?: string
@@ -699,7 +699,7 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "invoices_account_fkey"
-            columns: ["account_id"]
+            columns: ["account"]
             isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["id"]
@@ -1494,7 +1494,6 @@ export type Database = {
           id: number
           location: number
           name: string
-          web: boolean
         }
         Insert: {
           code?: string | null
@@ -1502,7 +1501,6 @@ export type Database = {
           id?: number
           location?: number
           name: string
-          web?: boolean
         }
         Update: {
           code?: string | null
@@ -1510,7 +1508,6 @@ export type Database = {
           id?: number
           location?: number
           name?: string
-          web?: boolean
         }
         Relationships: []
       }
@@ -3579,19 +3576,6 @@ export type Database = {
           p_size?: number
           p_types?: number
           p_warehouse?: number
-        }
-        Returns: Json
-      }
-      sp_get_invoices: {
-        Args: {
-          p_declared?: boolean
-          p_max_mount?: number
-          p_min_mount?: number
-          p_order?: string
-          p_page?: number
-          p_search?: string
-          p_size?: number
-          p_type?: number
         }
         Returns: Json
       }

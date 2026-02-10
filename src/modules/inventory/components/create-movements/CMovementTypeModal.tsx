@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { TypesStock } from "@/shared/types/type";
+import { Types as TypesStock } from "@/shared/types/type";
 
 interface CMovementTypeModalProps {
   types: TypesStock[];
