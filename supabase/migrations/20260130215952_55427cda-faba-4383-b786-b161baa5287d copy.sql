@@ -27,6 +27,7 @@ BEGIN
               'total_amount', q.total_amount,
               'declared', q.declared,
               'name', q.name
+              'nombre_cliente', q.name_client
         )), '[]'::jsonb)
     ) INTO result
 FROM (
@@ -36,11 +37,14 @@ FROM (
     i.serie, 
     i.total_amount, 
     i.declared, 
-    t.name 
+    t.name,
+    a.name,
+    a.last_name,
+    CONCAT(a.name, ' ', a.last_name) AS name_client
   FROM 
-    invoices i JOIN types t 
-  ON 
-    i.invoice_type_id = t.id AND (p_type IS NULL OR p_type = t.id);
+    invoices i 
+    JOIN types t ON i.invoice_type_id = t.id AND (p_type IS NULL OR p_type = t.id);
+    JOIN accounts a ON i.account_id = a.id
   WHERE 
    (p_declared IS NULL OR p_declared = i.declared) AND ((p_min_mount IS NULL OR p_max_mount IS NULL) OR (p_min_mount IS NOT NULL AND p_max_mount IS NULL AND COALESCE(i.total_amount , 0)  >= p_min_mount ) OR (p_min_mount IS NULL AND p_max_mount IS NOT NULL AND COALESCE(i.total_amount , 0)<= p_max_mount) OR (p_min_mount IS NOT NULL AND p_max_mount IS NOT NULL AND COALESCE(i.total_amount, 0) BETWEEN p_min_mount AND p_max_mount)) AND (p_search IS NULL OR (i.serie ILIKE '%' || p_search|| '%') OR (i.id ILIKE '%' || p_search || '%')) AND (
     ORDER BY 
