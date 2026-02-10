@@ -11,6 +11,7 @@ import { posRoutes } from "@/modules/pos";
 import { movementsRoutes } from "@/modules/movements";
 import { reportsRoutes } from "@/modules/reports";
 import { settingsRoutes } from "@/modules/settings";
+import { priceListRoutes } from "@/modules/price-list";
 import NotFound from "@/shared/components/NotFound";
 import { ProtectedLayout } from "./ProtectedLayout";
 
@@ -32,6 +33,7 @@ const AppRouter = () => {
         ...movementsRoutes,
         ...reportsRoutes,
         ...settingsRoutes,
+        ...priceListRoutes,
       ],
     },
     { path: "*", element: <NotFound /> },
