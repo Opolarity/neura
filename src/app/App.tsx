@@ -4,18 +4,21 @@ import { AuthProvider } from "@/modules/auth";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { QueryProvider } from "./providers/QueryProvider";
 
 const App = () => {
   return (
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRouter />
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+    <QueryProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRouter />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryProvider>
   );
 };
 
