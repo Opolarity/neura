@@ -15,14 +15,22 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const search = url.searchParams.get("search");
+    const search = url.searchParams.get("search") || null;
     const page = Number(url.searchParams.get("page")) || 1;
     const size = Number(url.searchParams.get("size")) || 20;
-    const order = url.searchParams.get("order");
-    const declared = url.searchParams.get("declared");
-    const min_mount = Number(url.searchParams.get("min_mount"));
-    const max_mount = Number(url.searchParams.get("max_mount"));
-    const type = Number(url.searchParams.get("type"));
+    const order = url.searchParams.get("order") || null;
+    const declaredParam = url.searchParams.get("declared");
+    const declared = (declaredParam === "true" || declaredParam === "false") 
+      ? declaredParam === "true" 
+      : null; 
+    const getNumParam = (name: string) => {
+      const val = url.searchParams.get(name);
+      return (val !== null && val !== "") ? Number(val) : null;
+    };
+
+    const min_mount = getNumParam("min_mount");
+    const max_mount = getNumParam("max_mount");
+    const type = getNumParam("type");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
