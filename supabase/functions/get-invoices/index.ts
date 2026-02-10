@@ -14,29 +14,15 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url);
-    const search = url.searchParams.get("search") || null;
-    console.log("Search parameter:", search);
-    const order = url.searchParams.get("order") || null;
-    console.log("Order parameter:", order);
-    const getNum = (key: string) => {
-        const val = url.searchParams.get(key);
-        return (val !== null && val !== "" && !isNaN(Number(val))) ? Number(val) : null;
-    };
-    const page = getNum("page") ?? 1;
-    console.log("Page parameter:", page);
-    const size = getNum("size") ?? 20;
-    console.log("Size parameter:", size);
-    const min_mount = getNum("min_mount");
-    console.log("Min mount parameter:", min_mount);
-    const max_mount = getNum("max_mount");
-    console.log("Max mount parameter:", max_mount);
-    const type = getNum("type");
-    console.log("Type parameter:", type);
-    const rawDeclared = url.searchParams.get("declared");
-    console.log("Declared parameter (raw):", rawDeclared);
-    const declared = rawDeclared === "true" ? true : rawDeclared === "false" ? false : null;
-    console.log("Declared parameter (parsed):", declared);
+    //const url = new URL(req.url);
+    //const search = url.searchParams.get("search") || null;
+    //const page = Number(url.searchParams.get("page")) || 1;
+    //const size = Number(url.searchParams.get("size")) || 20;
+    //const order = url.searchParams.get("order") || null;
+    //const declared = url.searchParams.get("declared") || false;
+    //const min_mount = Number(url.searchParams.get("min_mount")) || null;
+    //const max_mount = Number(url.searchParams.get("max_mount")) || null;
+    //const type = Number(url.searchParams.get("type")) || null;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -78,14 +64,14 @@ Deno.serve(async (req) => {
     console.log("Authenticated user:", userId);
 
     const { data: invoicesData, error: invoicesError } = await supabase.rpc("sp_get_invoices", {
-      p_page: page,
-      p_size: size,
-      p_type: type,
-      p_declared: declared,
-      p_order: order,
-      p_min_mount: min_mount,
-      p_max_mount: max_mount,
-      p_search: search
+      //p_page: page,
+      //p_size: size,
+      //p_type: type,
+      //p_declared: declared,
+      //p_order: order,
+      //p_min_mount: min_mount,
+      //p_max_mount: max_mount,
+      //p_search: search
     });
 
     if (invoicesError) throw invoicesError;
