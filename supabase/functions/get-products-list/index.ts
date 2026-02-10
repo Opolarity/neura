@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-<<<<<<< HEAD
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
 
@@ -46,10 +45,10 @@ Deno.serve(async (req) => {
     const p_web = url.searchParams.get("web") !== null
       ? url.searchParams.get("web") === "true"
       : null;
-    const p_minprice = url.searchParams.get("minprice")
+    const p_min_price = url.searchParams.get("minprice")
       ? parseFloat(url.searchParams.get("minprice")!)
       : null;
-    const p_maxprice = url.searchParams.get("maxprice")
+    const p_max_price = url.searchParams.get("maxprice")
       ? parseFloat(url.searchParams.get("maxprice")!)
       : null;
     const p_minstock = url.searchParams.get("minstock")
@@ -67,8 +66,8 @@ Deno.serve(async (req) => {
       p_category,
       p_status,
       p_web,
-      p_minprice,
-      p_maxprice,
+      p_min_price,
+      p_max_price,
       p_minstock,
       p_maxstock,
       p_order,
@@ -82,7 +81,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({ productsdata: data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
@@ -91,72 +90,6 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-=======
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("No authorization header");
-    }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: { headers: { Authorization: authHeader } },
-      }
-    );
-
-    const url = new URL(req.url);
-
-    const params = {
-      p_page: parseInt(url.searchParams.get("page") || "1"),
-      p_size: parseInt(url.searchParams.get("size") || "20"),
-      p_search: url.searchParams.get("search") || null,
-      p_category: url.searchParams.get("category")
-        ? parseInt(url.searchParams.get("category")!)
-        : null,
-      p_status: url.searchParams.get("status") !== null
-        ? url.searchParams.get("status") === "true"
-        : null,
-      p_web: url.searchParams.get("web") !== null
-        ? url.searchParams.get("web") === "true"
-        : null,
-      p_min_price: url.searchParams.get("minprice")
-        ? parseFloat(url.searchParams.get("minprice")!)
-        : null,
-      p_max_price: url.searchParams.get("maxprice")
-        ? parseFloat(url.searchParams.get("maxprice")!)
-        : null,
-      p_minstock: url.searchParams.get("minstock")
-        ? parseInt(url.searchParams.get("minstock")!)
-        : null,
-      p_maxstock: url.searchParams.get("maxstock")
-        ? parseInt(url.searchParams.get("maxstock")!)
-        : null,
-      p_order: url.searchParams.get("order") || null,
-    };
-
-    console.log("Calling get_products_list with params:", params);
-
-    const { data, error } = await supabase.rpc("get_products_list", params);
-
-    if (error) {
-      console.error("RPC Error:", error);
-      throw error;
-    }
-
-    return new Response(JSON.stringify({ productsdata: data }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error("Edge function error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Internal server error";
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
->>>>>>> 39dbd4b (get product list)
     );
   }
 });
