@@ -67,3 +67,5 @@ FROM (
   RETURN result;
 END;
 $$;
+
+select sp_get_invoices()
