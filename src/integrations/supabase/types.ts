@@ -658,6 +658,7 @@ export type Database = {
       }
       invoices: {
         Row: {
+          account_id: number
           cdr_url: string | null
           created_at: string
           created_by: string
@@ -665,9 +666,12 @@ export type Database = {
           id: number
           invoice_type_id: number
           pdf_url: string | null
+          serie: string | null
+          total_amount: number
           xml_url: string | null
         }
         Insert: {
+          account_id: number
           cdr_url?: string | null
           created_at?: string
           created_by?: string
@@ -675,9 +679,12 @@ export type Database = {
           id?: number
           invoice_type_id: number
           pdf_url?: string | null
+          serie?: string | null
+          total_amount: number
           xml_url?: string | null
         }
         Update: {
+          account_id?: number
           cdr_url?: string | null
           created_at?: string
           created_by?: string
@@ -685,9 +692,18 @@ export type Database = {
           id?: number
           invoice_type_id?: number
           pdf_url?: string | null
+          serie?: string | null
+          total_amount?: number
           xml_url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "invoices_account_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invoices_created_by_fkey"
             columns: ["created_by"]
@@ -1478,6 +1494,7 @@ export type Database = {
           id: number
           location: number
           name: string
+          web: boolean
         }
         Insert: {
           code?: string | null
@@ -1485,6 +1502,7 @@ export type Database = {
           id?: number
           location?: number
           name: string
+          web?: boolean
         }
         Update: {
           code?: string | null
@@ -1492,6 +1510,7 @@ export type Database = {
           id?: number
           location?: number
           name?: string
+          web?: boolean
         }
         Relationships: []
       }
@@ -3456,6 +3475,23 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_create_movement: {
+        Args: {
+          p_amount: number
+          p_branch_id: number
+          p_description: string
+          p_movement_class_id: number
+          p_movement_date: string
+          p_movement_type_id: number
+          p_payment_method_id: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      sp_create_movements_type_stock: {
+        Args: { p_created_by: string; p_items: Json; p_warehouse_id: number }
+        Returns: Json
+      }
       sp_create_order: {
         Args: {
           p_branch_id: number
@@ -3480,6 +3516,18 @@ export type Database = {
           p_title: string
           p_variations: Json
           p_web: boolean
+        }
+        Returns: Json
+      }
+      sp_create_return: {
+        Args: { p_payload: Json; p_user_id: string }
+        Returns: Json
+      }
+      sp_create_stock_movements_entrance: {
+        Args: {
+          p_created_by: string
+          p_items: Json
+          p_user_warehouse_id?: number
         }
         Returns: Json
       }
@@ -3534,6 +3582,19 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_invoices: {
+        Args: {
+          p_declared?: boolean
+          p_max_mount?: number
+          p_min_mount?: number
+          p_order?: string
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_type?: number
+        }
+        Returns: Json
+      }
       sp_get_list_orders: {
         Args: {
           p_channel?: number
@@ -3554,6 +3615,7 @@ export type Database = {
           p_bussines_account?: number
           p_class?: number
           p_end_date?: string
+          p_order?: string
           p_page?: number
           p_payment_method?: number
           p_search?: string
@@ -3637,6 +3699,14 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_stock_byvariation_and_type: {
+        Args: {
+          p_product_variation_id?: number
+          p_stock_type_id?: number
+          p_warehouse_id?: number
+        }
+        Returns: number
+      }
       sp_get_stock_movements: {
         Args: {
           p_end_date?: string
@@ -3697,6 +3767,17 @@ export type Database = {
           p_opening_amount?: number
           p_user_id: string
           p_warehouse_id: number
+        }
+        Returns: Json
+      }
+      sp_update_state_returns: {
+        Args: {
+          p_apply_stock: boolean
+          p_module_id: number
+          p_return_id: number
+          p_situation_id: number
+          p_status_id: number
+          p_user_id: string
         }
         Returns: Json
       }
