@@ -1030,35 +1030,35 @@ const CreateSale = () => {
           style={{ width: "30%" }}
         >
           {/* Order Status */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Estado del Pedido</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={orderSituation} onValueChange={setOrderSituation}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredSituations.map((s) => (
-                    <SelectItem key={s.id} value={s.id.toString()}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-            <CardFooter>
-              {createdOrderId && (
-                <em
-                  className="italic text-sm underline cursor-pointer"
-                  onClick={() => setHistoryModalOpen(true)}
-                >
-                  Ver Historial
-                </em>
-              )}
-            </CardFooter>
-          </Card>
+           <Card>
+             <CardHeader className="pb-2">
+               <CardTitle className="text-lg">Estado del Pedido</CardTitle>
+             </CardHeader>
+             <CardContent className="pb-2">
+               <Select value={orderSituation} onValueChange={setOrderSituation}>
+                 <SelectTrigger>
+                   <SelectValue placeholder="Seleccionar estado" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {filteredSituations.map((s) => (
+                     <SelectItem key={s.id} value={s.id.toString()}>
+                       {s.name}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
+             </CardContent>
+             <CardFooter>
+               {createdOrderId && (
+                 <em
+                   className="italic text-sm underline cursor-pointer"
+                   onClick={() => setHistoryModalOpen(true)}
+                 >
+                   ver historial
+                 </em>
+               )}
+             </CardFooter>
+           </Card>
 
           {/* Summary & Payment */}
           <Card>
