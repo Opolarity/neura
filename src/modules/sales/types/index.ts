@@ -90,6 +90,7 @@ export interface PaymentMethod {
 export interface Situation {
   id: number;
   name: string;
+  code: string | null;
 }
 
 export interface StockType {
