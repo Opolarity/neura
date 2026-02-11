@@ -74,6 +74,7 @@ import { formatCurrency, calculateLineSubtotal } from "../utils";
 import { useToast } from "@/hooks/use-toast";
 import { VoucherPreviewModal } from "../components/sales/VoucherPreviewModal";
 import { SalesHistoryModal } from "../components/SalesHistoryModal";
+import { SalesInvoicesModal } from "../components/SalesInvoicesModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 
@@ -154,6 +155,7 @@ const CreateSale = () => {
   } = useCreateSale();
 
   const [open, setOpen] = useState(false);
+  const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
   const [tempPriceListId, setTempPriceListId] = useState<string>("");
   const [voucherModalOpen, setVoucherModalOpen] = useState(false);
   const [selectedVoucherPreview, setSelectedVoucherPreview] = useState<
@@ -1091,16 +1093,24 @@ const CreateSale = () => {
                   </Select>
                 </div>
              </CardContent>
-             <CardFooter>
-               {createdOrderId && (
-                 <em
-                   className="italic text-sm underline cursor-pointer"
-                   onClick={() => setHistoryModalOpen(true)}
-                 >
-                   ver historial
-                 </em>
-               )}
-             </CardFooter>
+              <CardFooter>
+                {createdOrderId && (
+                  <div className="flex gap-4">
+                    <em
+                      className="italic text-sm underline cursor-pointer"
+                      onClick={() => setHistoryModalOpen(true)}
+                    >
+                      ver historial
+                    </em>
+                    <em
+                      className="italic text-sm underline cursor-pointer"
+                      onClick={() => setInvoicesModalOpen(true)}
+                    >
+                      ver comprobantes
+                    </em>
+                  </div>
+                )}
+              </CardFooter>
            </Card>
 
           {/* Summary & Payment */}
@@ -1480,6 +1490,14 @@ const CreateSale = () => {
         open={historyModalOpen}
         onOpenChange={setHistoryModalOpen}
       />
+
+      {createdOrderId && (
+        <SalesInvoicesModal
+          orderId={createdOrderId}
+          open={invoicesModalOpen}
+          onOpenChange={setInvoicesModalOpen}
+        />
+      )}
     </div>
   );
 };

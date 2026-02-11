@@ -3627,6 +3627,10 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_invoices_series: {
+        Args: { p_page?: number; p_search?: string; p_size?: number }
+        Returns: Json
+      }
       sp_get_list_orders: {
         Args: {
           p_channel?: number
