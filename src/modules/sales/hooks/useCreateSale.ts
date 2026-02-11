@@ -321,6 +321,15 @@ export const useCreateSale = () => {
     return currentSituation?.code === "PHY";
   }, [orderSituation, salesData?.situations]);
 
+  // Computed: Check if current situation has COM code (completed - no payment edits allowed)
+  const isComSituation = useMemo(() => {
+    if (!orderSituation || !salesData?.situations) return false;
+    const currentSituation = salesData.situations.find(
+      (s) => s.id.toString() === orderSituation,
+    );
+    return currentSituation?.code === "COM";
+  }, [orderSituation, salesData?.situations]);
+
   // Load form data from API
   const loadFormData = async () => {
     try {
@@ -1142,6 +1151,7 @@ export const useCreateSale = () => {
     orderId,
     isPersonaJuridica,
     isPhySituation,
+    isComSituation,
 
     // Actions
     setOrderSituation,

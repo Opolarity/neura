@@ -109,6 +109,7 @@ const CreateSale = () => {
     orderId,
     isPersonaJuridica,
     isPhySituation,
+    isComSituation,
     // Server-side pagination
     productPage,
     productPagination,
@@ -1141,14 +1142,16 @@ const CreateSale = () => {
                               </Button>
                             )}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => removePayment(p.id)}
-                          >
-                            <Trash2 className="w-3 h-3 text-destructive" />
-                          </Button>
+                          {!isComSituation && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => removePayment(p.id)}
+                            >
+                              <Trash2 className="w-3 h-3 text-destructive" />
+                            </Button>
+                          )}
                         </div>
                       );
                     })}
@@ -1156,7 +1159,7 @@ const CreateSale = () => {
               )}
 
               {/* Formulario para agregar nuevo pago */}
-              <div className="space-y-3 p-3 border rounded-md bg-muted/30">
+              <div className={cn("space-y-3 p-3 border rounded-md bg-muted/30", isComSituation && "opacity-50 pointer-events-none")}>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label>Método de Pago</Label>
