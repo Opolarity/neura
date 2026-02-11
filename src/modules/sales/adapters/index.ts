@@ -212,11 +212,18 @@ export const getIdInventoryTypeAdapter = (
 export const getOrdersSituationsByIdAdapter = (
   response: OrdersSituationsByIdApiResponse[],
 ): OrdersSituationsById[] => {
-  return response.map((item) => ({
-    situation_name: item.situations.name,
-    statuses_name: item.statuses.name,
-    created_at: item.created_at,
-  }));
+  return response.map((item) => {
+    const profile = item.profiles;
+    const userName = profile?.accounts
+      ? [profile.accounts.name, profile.accounts.last_name].filter(Boolean).join(" ")
+      : "";
+    return {
+      situation_name: item.situations.name,
+      statuses_name: item.statuses.name,
+      created_at: item.created_at,
+      created_by_name: userName,
+    };
+  });
 };
 
 // Adapt sale by ID response for CreateSale form
