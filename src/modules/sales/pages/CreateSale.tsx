@@ -352,11 +352,6 @@ const CreateSale = () => {
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isPhySituation && (
-                <div className="bg-muted/50 border border-border rounded-md p-3 text-sm text-muted-foreground">
-                  Esta sección no se puede editar porque el pedido ya tiene un estado físico.
-                </div>
-              )}
               <div className={cn("flex gap-3", isPhySituation && "opacity-50 pointer-events-none")}>
                 {/* Stock Type Selector */}
                 <Select
