@@ -118,7 +118,8 @@ export const useCreateSale = () => {
   ]);
   const [currentPayment, setCurrentPayment] =
     useState<SalePayment>(createEmptyPayment());
-  const [orderSituation, setOrderSituation] = useState<string>("");
+   const [orderSituation, setOrderSituation] = useState<string>("");
+  const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
 
   // Dropdown data
   const [salesData, setSalesData] = useState<SalesFormDataResponse | null>(
@@ -321,14 +322,10 @@ export const useCreateSale = () => {
     return currentSituation?.code === "PHY";
   }, [orderSituation, salesData?.situations]);
 
-  // Computed: Check if current situation has COM code (completed - no payment edits allowed)
+  // Computed: Check if current status has COM code (completed - no payment edits allowed)
   const isComSituation = useMemo(() => {
-    if (!orderSituation || !salesData?.situations) return false;
-    const currentSituation = salesData.situations.find(
-      (s) => s.id.toString() === orderSituation,
-    );
-    return currentSituation?.code === "COM";
-  }, [orderSituation, salesData?.situations]);
+    return currentStatusCode === "COM";
+  }, [currentStatusCode]);
 
   // Load form data from API
   const loadFormData = async () => {
@@ -495,6 +492,7 @@ export const useCreateSale = () => {
           : [createEmptyPayment()]
       );
       setOrderSituation(adapted.currentSituation);
+      setCurrentStatusCode(adapted.currentStatusCode || "");
       setClientFound(true);
       setCreatedOrderId(id);
       
