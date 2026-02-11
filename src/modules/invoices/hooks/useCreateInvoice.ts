@@ -1,9 +1,9 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { createInvoiceApi } from "../services/Invoices.services";
-import type { InvoiceItemForm, InvoiceFormData } from "../types/Invoices.types";
+import type { InvoiceItemForm, InvoiceFormData, DocumentType } from "../types/Invoices.types";
 
 const createEmptyItem = (): InvoiceItemForm => ({
   id: crypto.randomUUID(),
@@ -27,9 +27,10 @@ const recalcItem = (item: InvoiceItemForm): InvoiceItemForm => {
 const INITIAL_FORM: InvoiceFormData = {
   invoiceTypeId: "",
   serie: "",
+  documentTypeId: "",
+  clientDocument: "",
   accountId: "",
   clientName: "",
-  clientDocument: "",
 };
 
 export const useCreateInvoice = () => {
@@ -40,12 +41,34 @@ export const useCreateInvoice = () => {
   const [items, setItems] = useState<InvoiceItemForm[]>([createEmptyItem()]);
   const [saving, setSaving] = useState(false);
   const [searchingClient, setSearchingClient] = useState(false);
+  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
 
   // Invoice types (hardcoded from DB)
   const invoiceTypes = [
     { id: "34", name: "Boleta" },
     { id: "36", name: "Factura" },
   ];
+
+  // Load document types on mount
+  useEffect(() => {
+    const loadDocTypes = async () => {
+      const { data } = await supabase
+        .from("document_types")
+        .select("id, name, code, person_type")
+        .order("id");
+      if (data) {
+        setDocumentTypes(
+          data.map((d) => ({
+            id: d.id,
+            name: d.name,
+            code: d.code || "",
+            personType: d.person_type,
+          }))
+        );
+      }
+    };
+    loadDocTypes();
+  }, []);
 
   const totalAmount = useMemo(
     () => +items.reduce((sum, i) => sum + i.total, 0).toFixed(2),
@@ -83,40 +106,70 @@ export const useCreateInvoice = () => {
     []
   );
 
-  // Search client by document number
-  const searchClient = useCallback(async (doc: string) => {
-    if (!doc || doc.length < 3) return;
+  // Search client by document type + number using document-lookup then accounts
+  const searchClient = useCallback(async () => {
+    const doc = formData.clientDocument;
+    const docTypeId = formData.documentTypeId;
+    if (!doc || doc.length < 3 || !docTypeId) {
+      toast({ title: "Ingresa tipo y número de documento", variant: "destructive" });
+      return;
+    }
+
     setSearchingClient(true);
     try {
-      const { data, error } = await supabase
+      // First check if account exists in DB
+      const { data: account } = await supabase
         .from("accounts")
         .select("id, name, last_name, document_number")
         .eq("document_number", doc)
+        .eq("document_type_id", parseInt(docTypeId))
         .limit(1)
         .single();
 
-      if (error || !data) {
-        toast({ title: "Cliente no encontrado", variant: "destructive" });
-        setFormData((prev) => ({ ...prev, accountId: "", clientName: "" }));
+      if (account) {
+        setFormData((prev) => ({
+          ...prev,
+          accountId: account.id.toString(),
+          clientName: [account.name, account.last_name].filter(Boolean).join(" "),
+        }));
         return;
       }
-      setFormData((prev) => ({
-        ...prev,
-        accountId: data.id.toString(),
-        clientName: [data.name, data.last_name].filter(Boolean).join(" "),
-        clientDocument: data.document_number,
-      }));
+
+      // If not found, try document-lookup API
+      const selectedDocType = documentTypes.find((d) => d.id.toString() === docTypeId);
+      if (selectedDocType) {
+        const { data: lookupData, error: lookupError } = await supabase.functions.invoke(
+          `document-lookup?document_type=${selectedDocType.code}&document_number=${doc}`,
+          { method: "GET" }
+        );
+
+        if (!lookupError && lookupData) {
+          const name = lookupData.razon_social || 
+            [lookupData.nombres, lookupData.apellidoPaterno, lookupData.apellidoMaterno].filter(Boolean).join(" ");
+          setFormData((prev) => ({
+            ...prev,
+            accountId: "",
+            clientName: name || "No encontrado",
+          }));
+          if (name) {
+            toast({ title: "Cliente encontrado vía consulta externa (no registrado en sistema)" });
+          }
+          return;
+        }
+      }
+
+      toast({ title: "Cliente no encontrado", variant: "destructive" });
+      setFormData((prev) => ({ ...prev, accountId: "", clientName: "" }));
     } catch {
       toast({ title: "Error buscando cliente", variant: "destructive" });
     } finally {
       setSearchingClient(false);
     }
-  }, [toast]);
+  }, [formData.clientDocument, formData.documentTypeId, documentTypes, toast]);
 
   const handleSave = useCallback(async () => {
-    // Validations
     if (!formData.invoiceTypeId || !formData.accountId) {
-      toast({ title: "Completa tipo de comprobante y cliente", variant: "destructive" });
+      toast({ title: "Completa tipo de comprobante y cliente (debe estar registrado)", variant: "destructive" });
       return;
     }
     if (items.some((i) => !i.description || i.quantity <= 0 || i.unitPrice <= 0)) {
@@ -157,6 +210,7 @@ export const useCreateInvoice = () => {
     saving,
     searchingClient,
     invoiceTypes,
+    documentTypes,
     totalAmount,
     handleFormChange,
     addItem,
