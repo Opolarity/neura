@@ -268,4 +268,5 @@ export const adaptSaleById = (data: any) => ({
     voucherPreview: p.voucher_url || undefined,
   })),
   currentSituation: data.current_situation?.situation_id?.toString() || "",
+  currentStatusCode: data.current_situation?.statuses?.code || "",
 });

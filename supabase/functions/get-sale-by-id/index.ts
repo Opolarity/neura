@@ -109,10 +109,10 @@ Deno.serve(async (req) => {
       .select("*")
       .eq("order_id", parseInt(orderId));
 
-    // 6. Fetch current situation
+    // 6. Fetch current situation with status code
     const { data: situation } = await supabase
       .from("order_situations")
-      .select("situation_id, status_id")
+      .select("situation_id, status_id, statuses(code)")
       .eq("order_id", parseInt(orderId))
       .eq("last_row", true)
       .maybeSingle();
