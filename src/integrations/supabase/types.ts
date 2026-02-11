@@ -1124,6 +1124,7 @@ export type Database = {
       order_situations: {
         Row: {
           created_at: string
+          created_by: string
           id: number
           last_row: boolean
           order_id: number
@@ -1132,6 +1133,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string
           id?: number
           last_row: boolean
           order_id: number
@@ -1140,6 +1142,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string
           id?: number
           last_row?: boolean
           order_id?: number
@@ -1153,6 +1156,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_situations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
           },
           {
             foreignKeyName: "order_situations_situation_id_fkey"

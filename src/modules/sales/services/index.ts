@@ -393,6 +393,13 @@ export const getOrdersSituationsById = async (id: number) => {
     ),
     statuses (
       name
+    ),
+    profiles!order_situations_created_by_fkey (
+      account_id,
+      accounts (
+        name,
+        last_name
+      )
     )
   `,
     )

@@ -29,7 +29,7 @@ export const SalesHistoryModal = ({
 }: SalesHistoryModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>Historial de ventas</DialogTitle>
           <DialogDescription>
@@ -42,6 +42,7 @@ export const SalesHistoryModal = ({
               <TableHead>#</TableHead>
               <TableHead>Situación</TableHead>
               <TableHead>Estado</TableHead>
+              <TableHead>Usuario</TableHead>
               <TableHead>Fecha</TableHead>
             </TableHeader>
             <TableBody>
@@ -50,6 +51,7 @@ export const SalesHistoryModal = ({
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{order.situation_name}</TableCell>
                   <TableCell>{order.statuses_name}</TableCell>
+                  <TableCell>{order.created_by_name}</TableCell>
                   <TableCell>
                     {format(
                       new Date(
