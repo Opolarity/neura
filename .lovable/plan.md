@@ -1,87 +1,78 @@
 
 
-## Checkbox "Compra Anonima" junto a "Requiere Envio"
+## Guardar apellidos correctamente en orders y accounts
 
 ### Resumen
-Se agregara un nuevo checkbox "Compra anónima" al lado del checkbox "Requiere Envio". Al activarlo, los campos de cliente (tipo de documento, numero de documento, nombre, apellido paterno y materno) se limpiaran y deshabilitaran. Al crear o actualizar la orden, se enviara `document_type = "0"`, `document_number = " "` (espacio en blanco), y los campos de nombre/apellidos como `null`.
+Actualmente `customer_lastname` en la tabla `orders` solo guarda el apellido paterno. Se necesita que guarde ambos apellidos (paterno + materno) juntos separados por un espacio. Al crear el account (cuando el cliente no existe), se debe guardar apellido paterno en `last_name` y apellido materno en `last_name2`.
 
-### Cambios
+### Cambios necesarios
 
-#### 1. Hook `useCreateSale.ts`
-- Agregar estado `isAnonymousPurchase` (boolean, default `false`) y su setter `setIsAnonymousPurchase`.
-- Crear un handler `handleAnonymousToggle` que al activarse:
-  - Limpie `documentType`, `documentNumber`, `customerName`, `customerLastname`, `customerLastname2` del `formData`.
-  - Resetee `clientFound` a `false`.
-- En `handleSubmit`, cuando `isAnonymousPurchase` sea `true`, sobreescribir los campos del `orderData`:
-  - `documentType: "0"`
-  - `documentNumber: " "` (un espacio)
-  - `customerName: null`
-  - `customerLastname: null`
-  - `customerLastname2: null`
-- Exponer `isAnonymousPurchase` y `setIsAnonymousPurchase` / `handleAnonymousToggle` en el return del hook.
-- Al cargar una orden existente (modo edicion), detectar si la orden tiene `document_type = 0` y `document_number = " "` para inicializar `isAnonymousPurchase = true`.
+#### 1. Frontend - Servicio `src/modules/sales/services/index.ts`
+- En `createOrder`: enviar un nuevo campo `customer_lastname2` (ya se envia) para que el edge function lo use al crear el account.
+- Cambiar `customer_lastname` para que concatene ambos apellidos: `customerLastname + " " + customerLastname2`.
 
-#### 2. Pagina `CreateSale.tsx`
-- Junto al checkbox "Requiere Envio" (linea ~820-836), agregar un segundo checkbox "Compra anonima".
-- Cuando `isAnonymousPurchase` sea `true`, deshabilitar y aplicar estilos `opacity-50 pointer-events-none` a los campos de:
-  - Tipo de documento (Select)
-  - Numero de documento (Input)
-  - Nombre (Input)
-  - Apellido paterno (Input)
-  - Apellido materno (Input)
+#### 2. Frontend - Servicio `src/modules/sales/services/index.ts` (updateOrder)
+- Mismo cambio: `customer_lastname` debe enviar la concatenacion de ambos apellidos.
 
-### Detalles tecnicos
+#### 3. Edge Function `create-order/index.ts`
+- Pasar `customer_lastname2` como campo separado dentro de `p_order_data` para que el RPC lo use al crear el account.
+- El campo `customer_lastname` ya llegara concatenado para guardarse en la tabla `orders`.
 
-**En `useCreateSale.ts`:**
+#### 4. Migracion SQL - Modificar `sp_create_order`
+- En el INSERT a `accounts` (STEP 0), cambiar:
+  - `last_name` = `p_order_data->>'customer_lastname_first'` (apellido paterno solamente)
+  - `last_name2` = `p_order_data->>'customer_lastname2'` (apellido materno)
+- Se enviara un campo adicional `customer_lastname_first` con solo el apellido paterno para uso exclusivo del account.
+
+#### 5. Adapter `src/modules/sales/adapters/index.ts` - `adaptSaleById`
+- Al cargar una orden para edicion, `customer_lastname` contiene ambos apellidos juntos. Se debe separar: tomar la primera palabra como `customerLastname` y el resto como `customerLastname2`.
+
+### Detalle tecnico
+
+**En `src/modules/sales/services/index.ts` (createOrder y updateOrder):**
 ```typescript
-const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
+// Concatenar apellidos para orders.customer_lastname
+const fullLastname = [orderData.customerLastname, orderData.customerLastname2]
+  .filter(Boolean)
+  .join(" ");
 
-const handleAnonymousToggle = useCallback((checked: boolean) => {
-  setIsAnonymousPurchase(checked);
-  if (checked) {
-    setFormData(prev => ({
-      ...prev,
-      documentType: "",
-      documentNumber: "",
-      customerName: "",
-      customerLastname: "",
-      customerLastname2: "",
-    }));
-    setClientFound(false);
-  }
-}, []);
+// Enviar al edge function
+customer_lastname: fullLastname,
+customer_lastname_first: orderData.customerLastname,  // solo paterno, para accounts
+customer_lastname2: orderData.customerLastname2,       // solo materno, para accounts
 ```
 
-**En handleSubmit, antes de enviar:**
+**En `create-order/index.ts`:**
 ```typescript
-const orderData = {
-  documentType: isAnonymousPurchase ? "0" : formData.documentType,
-  documentNumber: isAnonymousPurchase ? " " : formData.documentNumber,
-  customerName: isAnonymousPurchase ? null : formData.customerName,
-  customerLastname: isAnonymousPurchase ? null : formData.customerLastname,
-  customerLastname2: isAnonymousPurchase ? null : (formData.customerLastname2 || null),
-  // ... resto igual
-};
+// Pasar customer_lastname_first y customer_lastname2 en p_order_data
+// customer_lastname ya viene concatenado para la tabla orders
 ```
 
-**En `CreateSale.tsx`:**
-```tsx
-<div className="flex items-center space-x-4 pt-2">
-  <div className="flex items-center space-x-2">
-    <Checkbox id="withShipping" ... />
-    <Label htmlFor="withShipping">Requiere Envio</Label>
-  </div>
-  <div className="flex items-center space-x-2">
-    <Checkbox
-      id="anonymousPurchase"
-      checked={isAnonymousPurchase}
-      onCheckedChange={handleAnonymousToggle}
-    />
-    <Label htmlFor="anonymousPurchase" className="cursor-pointer font-medium">
-      Compra anonima
-    </Label>
-  </div>
-</div>
+**Migracion SQL (sp_create_order):**
+```sql
+-- En el INSERT a accounts, usar los campos separados
+INSERT INTO accounts (document_type_id, document_number, name, last_name, last_name2, ...)
+VALUES (
+  ...,
+  p_order_data->>'customer_name',
+  p_order_data->>'customer_lastname_first',  -- solo paterno
+  p_order_data->>'customer_lastname2',       -- solo materno
+  ...
+);
 ```
 
-Los campos de cliente tendran la condicion `disabled={isAnonymousPurchase || clientFound}` para que se bloqueen cuando la compra es anonima.
+**En `adaptSaleById`:**
+```typescript
+// Separar customer_lastname en paterno y materno
+const fullLastname = data.order.customer_lastname || "";
+const lastnameParts = fullLastname.split(" ");
+const customerLastname = lastnameParts[0] || "";
+const customerLastname2 = lastnameParts.slice(1).join(" ") || "";
+```
+
+### Archivos a modificar
+- `src/modules/sales/services/index.ts` - concatenar apellidos al enviar
+- `supabase/functions/create-order/index.ts` - pasar campos separados al RPC
+- `supabase/functions/update-order/index.ts` - concatenar apellidos en el UPDATE a orders
+- Migracion SQL para actualizar `sp_create_order` - usar campos separados para accounts
+- `src/modules/sales/adapters/index.ts` - separar apellidos al cargar orden
