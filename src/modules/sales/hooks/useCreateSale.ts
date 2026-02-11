@@ -589,14 +589,29 @@ export const useCreateSale = () => {
   );
 
   // Handle anonymous purchase toggle
-  const handleAnonymousToggle = useCallback((checked: boolean) => {
+  const handleAnonymousToggle = useCallback(async (checked: boolean) => {
     setIsAnonymousPurchase(checked);
     if (checked) {
+      // Fetch the anonymous account name (document_type_id=0, document_number=' ')
+      let anonymousName = "No especificado";
+      try {
+        const { data: anonAccount } = await supabase
+          .from("accounts")
+          .select("name, middle_name, last_name, last_name2")
+          .eq("document_type_id", 0)
+          .eq("document_number", " ")
+          .single();
+        if (anonAccount) {
+          anonymousName = [anonAccount.name, anonAccount.middle_name, anonAccount.last_name, anonAccount.last_name2].filter(Boolean).join(" ");
+        }
+      } catch (e) {
+        console.error("Error fetching anonymous account:", e);
+      }
       setFormData(prev => ({
         ...prev,
         documentType: "",
         documentNumber: "",
-        customerName: "",
+        customerName: anonymousName,
         customerLastname: "",
         customerLastname2: "",
       }));
