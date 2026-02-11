@@ -615,7 +615,8 @@ export const useCreateSale = () => {
         customerLastname: "",
         customerLastname2: "",
       }));
-      setClientFound(false);
+      setClientFound(true);
+      setIsExistingClient(true);
     }
   }, []);
 
