@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +31,29 @@ interface InvoiceType {
   id: number;
   name: string;
   code: string;
+}
+
+interface InvoiceItem {
+  id: number;
+  description: string;
+  quantity: number;
+  measurement_unit: string;
+  unit_price: number;
+  discount: number | null;
+  igv: number;
+  total: number;
+}
+
+interface Invoice {
+  id: number;
+  serie: string | null;
+  total_amount: number;
+  created_at: string;
+  customer_document_number: string;
+  customer_document_type_id: number;
+  invoice_type_id: number;
+  declared: boolean;
+  invoice_items?: InvoiceItem[];
 }
 
 interface OrderInvoice {
@@ -49,6 +72,119 @@ interface SalesInvoicesModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Componente de vista previa del comprobante
+const InvoicePreviewModal = ({
+  invoice,
+  open,
+  onOpenChange,
+}: {
+  invoice: Invoice | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) => {
+  if (!invoice) return null;
+
+  const subtotal = (invoice.invoice_items || []).reduce(
+    (sum, item) => sum + (item.unit_price * item.quantity - (item.discount || 0)),
+    0
+  );
+  const totalIgv = (invoice.invoice_items || []).reduce(
+    (sum, item) => sum + item.igv,
+    0
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Vista previa del comprobante</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Información general */}
+          <div className="grid grid-cols-2 gap-4 p-4 bg-secondary rounded-lg">
+            <div>
+              <p className="text-xs text-muted-foreground">Serie</p>
+              <p className="font-semibold">{invoice.serie || "-"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="font-semibold">{formatCurrency(invoice.total_amount)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Cliente</p>
+              <p className="font-semibold">{invoice.customer_document_number}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Fecha</p>
+              <p className="font-semibold">
+                {format(new Date(invoice.created_at), "dd/MM/yyyy HH:mm")}
+              </p>
+            </div>
+          </div>
+
+          {/* Tabla de items */}
+          <div>
+            <h4 className="font-semibold mb-3">Ítems del comprobante</h4>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>Descripción</TableHead>
+                  <TableHead className="text-right">Cantidad</TableHead>
+                  <TableHead className="text-right">P.U.</TableHead>
+                  <TableHead className="text-right">Dcto.</TableHead>
+                  <TableHead className="text-right">IGV</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(invoice.invoice_items || []).map((item, index) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {item.description}
+                    </TableCell>
+                    <TableCell className="text-right">{item.quantity}</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.unit_price)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {item.discount ? formatCurrency(item.discount) : "-"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.igv)}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {formatCurrency(item.total)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Resumen de totales */}
+          <div className="space-y-2 p-4 bg-secondary rounded-lg text-sm">
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>IGV (18%):</span>
+              <span>{formatCurrency(totalIgv)}</span>
+            </div>
+            <div className="flex justify-between font-semibold text-base pt-2 border-t">
+              <span>Total:</span>
+              <span>{formatCurrency(invoice.total_amount)}</span>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export const SalesInvoicesModal = ({
   orderId,
   open,
@@ -58,6 +194,8 @@ export const SalesInvoicesModal = ({
   const [invoiceTypes, setInvoiceTypes] = useState<InvoiceType[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { toast } = useToast();
 
   const fetchInvoices = useCallback(async () => {
@@ -148,6 +286,49 @@ export const SalesInvoicesModal = ({
     }
   }, []);
 
+  const handleViewInvoice = useCallback(
+    async (invoiceId: number) => {
+      try {
+        const { data, error } = await supabase
+          .from("invoices")
+          .select(`
+            id,
+            serie,
+            total_amount,
+            created_at,
+            customer_document_number,
+            customer_document_type_id,
+            invoice_type_id,
+            declared,
+            invoice_items (
+              id,
+              description,
+              quantity,
+              measurement_unit,
+              unit_price,
+              discount,
+              igv,
+              total
+            )
+          `)
+          .eq("id", invoiceId)
+          .single();
+
+        if (error) throw error;
+        setSelectedInvoice(data as Invoice);
+        setPreviewOpen(true);
+      } catch (err) {
+        console.error("Error fetching invoice:", err);
+        toast({
+          title: "Error",
+          description: "No se pudo cargar los detalles del comprobante",
+          variant: "destructive",
+        });
+      }
+    },
+    [toast]
+  );
+
   useEffect(() => {
     if (open) {
       fetchInvoices();
@@ -165,7 +346,8 @@ export const SalesInvoicesModal = ({
         .eq("id", orderId)
         .single();
 
-      if (orderError || !order) throw orderError || new Error("Orden no encontrada");
+      if (orderError || !order)
+        throw orderError || new Error("Orden no encontrada");
 
       // Build invoice items from order products
       const items = (order.order_products || []).map((op: any) => {
@@ -237,81 +419,99 @@ export const SalesInvoicesModal = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[650px]">
-        <DialogHeader>
-          <DialogTitle>Comprobantes de la venta</DialogTitle>
-          <DialogDescription>
-            Comprobantes vinculados a esta orden.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Comprobantes de la venta</DialogTitle>
+            <DialogDescription>
+              Comprobantes vinculados a esta orden.
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="flex justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" disabled={creating}>
-                {creating ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Plus className="w-4 h-4 mr-2" />
-                )}
-                Nuevo comprobante
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {invoiceTypes.map((type) => (
-                <DropdownMenuItem
-                  key={type.id}
-                  onClick={() => handleCreateInvoice(type)}
-                >
-                  {type.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        <div className="py-2">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            </div>
-          ) : invoices.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              No hay comprobantes vinculados a esta orden.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>#</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Serie</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Declarado</TableHead>
-                  <TableHead>Fecha</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((inv, index) => (
-                  <TableRow key={inv.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{inv.typeName}</TableCell>
-                    <TableCell>{inv.serie || "-"}</TableCell>
-                    <TableCell>{formatCurrency(inv.totalAmount)}</TableCell>
-                    <TableCell>{inv.declared ? "Sí" : "No"}</TableCell>
-                    <TableCell>
-                      {inv.createdAt
-                        ? format(new Date(inv.createdAt), "dd/MM/yyyy")
-                        : "-"}
-                    </TableCell>
-                  </TableRow>
+          <div className="flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" disabled={creating}>
+                  {creating ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4 mr-2" />
+                  )}
+                  Nuevo comprobante
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {invoiceTypes.map((type) => (
+                  <DropdownMenuItem
+                    key={type.id}
+                    onClick={() => handleCreateInvoice(type)}
+                  >
+                    {type.name}
+                  </DropdownMenuItem>
                 ))}
-              </TableBody>
-            </Table>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="py-2">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : invoices.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No hay comprobantes vinculados a esta orden.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>#</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Serie</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Declarado</TableHead>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invoices.map((inv, index) => (
+                    <TableRow key={inv.id}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{inv.typeName}</TableCell>
+                      <TableCell>{inv.serie || "-"}</TableCell>
+                      <TableCell>{formatCurrency(inv.totalAmount)}</TableCell>
+                      <TableCell>{inv.declared ? "Sí" : "No"}</TableCell>
+                      <TableCell>
+                        {inv.createdAt
+                          ? format(new Date(inv.createdAt), "dd/MM/yyyy")
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewInvoice(inv.invoiceId)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <InvoicePreviewModal
+        invoice={selectedInvoice}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+      />
+    </>
   );
 };
