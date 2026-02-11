@@ -8,6 +8,8 @@ RETURNS JSONB
 LANGUAGE plpgsql
 AS $$
 DECLARE
+
+
     v_result JSONB;
 BEGIN
     IF p_id IS NULL THEN

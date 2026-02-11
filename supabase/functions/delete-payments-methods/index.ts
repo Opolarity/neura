@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { id, name, business_account_id, active } = body; 
+    const { id} = body; 
 
     if (!id) {
       return new Response(JSON.stringify({ error: "Falta el ID del registro" }), {
@@ -48,20 +48,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!name || !business_account_id || !id) {
-      return new Response(
-        JSON.stringify({
-          error: "Campos requeridos: id, name, business_account_id"
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const { data, error } = await supabase.rpc("sp_update_payment_method", {
+    const { data, error } = await supabase.rpc("sp_delete_payment_method", {
       p_id: id,
-      p_name: name || null, 
-      p_business_account_id: business_account_id || null,
-      p_active: active 
     });
 
     if (error) {
