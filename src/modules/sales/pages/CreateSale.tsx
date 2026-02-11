@@ -1186,7 +1186,7 @@ const CreateSale = () => {
                       onChange={(e) =>
                         handlePaymentChange("amount", e.target.value)
                       }
-                      placeholder={total.toFixed(2)}
+                      placeholder={Math.max(0, total - totalPaid).toFixed(2)}
                     />
                   </div>
                 </div>
