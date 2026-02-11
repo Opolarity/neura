@@ -327,6 +327,21 @@ export const useCreateSale = () => {
     return currentStatusCode === "COM";
   }, [currentStatusCode]);
 
+  // Computed: Filter situations to only show those with order >= current situation's order
+  const filteredSituations = useMemo(() => {
+    if (!salesData?.situations) return [];
+    if (!orderSituation) return salesData.situations;
+    
+    const currentSituation = salesData.situations.find(
+      (s) => s.id.toString() === orderSituation,
+    );
+    if (!currentSituation || currentSituation.order == null) return salesData.situations;
+    
+    return salesData.situations.filter(
+      (s) => s.order != null && s.order >= currentSituation.order,
+    );
+  }, [orderSituation, salesData?.situations]);
+
   // Load form data from API
   const loadFormData = async () => {
     try {
@@ -1150,6 +1165,7 @@ export const useCreateSale = () => {
     isPersonaJuridica,
     isPhySituation,
     isComSituation,
+    filteredSituations,
 
     // Actions
     setOrderSituation,

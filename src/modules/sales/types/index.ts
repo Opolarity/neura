@@ -91,6 +91,7 @@ export interface Situation {
   id: number;
   name: string;
   code: string | null;
+  order: number | null;
 }
 
 export interface StockType {
