@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/query";
-import { InvoiceFilters } from "../types/Invoices.types";
+import { InvoiceFilters, CreateInvoicePayload } from "../types/Invoices.types";
 
 export const getInvoicesApi = async (filters: InvoiceFilters) => {
   const endpoint = buildEndpoint("get-invoices", filters);
@@ -8,5 +8,15 @@ export const getInvoicesApi = async (filters: InvoiceFilters) => {
     method: "GET",
   });
 
+  return data;
+};
+
+export const createInvoiceApi = async (payload: CreateInvoicePayload) => {
+  const { data, error } = await supabase.functions.invoke("create-invoice", {
+    method: "POST",
+    body: payload,
+  });
+
+  if (error) throw error;
   return data;
 };

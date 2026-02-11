@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.get-sale-by-id]
 verify_jwt = false
+
+[functions.create-invoice]
+verify_jwt = false
