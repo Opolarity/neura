@@ -1201,6 +1201,7 @@ export type Database = {
           id: number
           neighborhood_id: number | null
           phone: number | null
+          price_list_code: string
           reception_person: string | null
           reception_phone: number | null
           sale_type_id: number
@@ -1228,6 +1229,7 @@ export type Database = {
           id?: number
           neighborhood_id?: number | null
           phone?: number | null
+          price_list_code?: string
           reception_person?: string | null
           reception_phone?: number | null
           sale_type_id: number
@@ -1255,6 +1257,7 @@ export type Database = {
           id?: number
           neighborhood_id?: number | null
           phone?: number | null
+          price_list_code?: string
           reception_person?: string | null
           reception_phone?: number | null
           sale_type_id?: number
@@ -3518,6 +3521,15 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_create_price_list: {
+        Args: {
+          p_code: string
+          p_location?: number
+          p_name: string
+          p_web?: boolean
+        }
+        Returns: Json
+      }
       sp_create_product: {
         Args: {
           p_active: boolean
@@ -3636,6 +3648,10 @@ export type Database = {
           p_start_date?: string
           p_type?: number
         }
+        Returns: Json
+      }
+      sp_get_price_list: {
+        Args: { p_page?: number; p_size?: number }
         Returns: Json
       }
       sp_get_products_costs: {

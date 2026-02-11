@@ -130,6 +130,7 @@ export const useCreateSale = () => {
   // UI state
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [isExistingClient, setIsExistingClient] = useState<boolean>(false); // true only if found in accounts table
+  const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
   const [selectedVariation, setSelectedVariation] =
     useState<ProductVariation | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -510,6 +511,11 @@ export const useCreateSale = () => {
       setCurrentStatusCode(adapted.currentStatusCode || "");
       setClientFound(true);
       setCreatedOrderId(id);
+
+      // Detect anonymous purchase: document_type = "0" and document_number = " "
+      if (adapted.formData.documentType === "0" && adapted.formData.documentNumber === " ") {
+        setIsAnonymousPurchase(true);
+      }
       
     } catch (error) {
       console.error("Error loading order:", error);
@@ -581,6 +587,22 @@ export const useCreateSale = () => {
     },
     [allShippingCosts, salesData?.documentTypes],
   );
+
+  // Handle anonymous purchase toggle
+  const handleAnonymousToggle = useCallback((checked: boolean) => {
+    setIsAnonymousPurchase(checked);
+    if (checked) {
+      setFormData(prev => ({
+        ...prev,
+        documentType: "",
+        documentNumber: "",
+        customerName: "",
+        customerLastname: "",
+        customerLastname2: "",
+      }));
+      setClientFound(false);
+    }
+  }, []);
 
   // Handle stock type change - clears selected variation to ensure consistency
   const handleStockTypeChange = useCallback((value: string) => {
@@ -977,11 +999,11 @@ export const useCreateSale = () => {
 
       try {
         const orderData = {
-          documentType: formData.documentType,
-          documentNumber: formData.documentNumber,
-          customerName: formData.customerName,
-          customerLastname: formData.customerLastname,
-          customerLastname2: formData.customerLastname2 || null,
+          documentType: isAnonymousPurchase ? "0" : formData.documentType,
+          documentNumber: isAnonymousPurchase ? " " : formData.documentNumber,
+          customerName: isAnonymousPurchase ? null : formData.customerName,
+          customerLastname: isAnonymousPurchase ? null : formData.customerLastname,
+          customerLastname2: isAnonymousPurchase ? null : (formData.customerLastname2 || null),
           email: formData.email || null,
           phone: formData.phone || null,
           saleType: formData.saleType,
@@ -1111,6 +1133,7 @@ export const useCreateSale = () => {
       discountAmount,
       total,
       isExistingClient,
+      isAnonymousPurchase,
       toast,
       navigate,
     ],
@@ -1166,6 +1189,7 @@ export const useCreateSale = () => {
     isPhySituation,
     isComSituation,
     filteredSituations,
+    isAnonymousPurchase,
 
     // Actions
     setOrderSituation,
@@ -1180,6 +1204,7 @@ export const useCreateSale = () => {
     handleSearchClient,
     handleSelectPriceList,
     handleProductPageChange,
+    handleAnonymousToggle,
     addProduct,
     removeProduct,
     updateProduct,
