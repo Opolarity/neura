@@ -3524,6 +3524,14 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_create_payment_method: {
+        Args: {
+          p_active?: boolean
+          p_business_account_id: number
+          p_name: string
+        }
+        Returns: Json
+      }
       sp_create_price_list: {
         Args: {
           p_code: string
@@ -3663,6 +3671,10 @@ export type Database = {
       }
       sp_get_order_chanel_types: {
         Args: { p_page?: number; p_size?: number }
+        Returns: Json
+      }
+      sp_get_payments_methods: {
+        Args: { p_page?: number; p_search?: string; p_size?: number }
         Returns: Json
       }
       sp_get_price_list: {
