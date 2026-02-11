@@ -31,7 +31,7 @@ FROM (
     b.name,
     p.active
   FROM
-    payments_methods p 
+    payment_methods p 
     JOIN business_accounts b ON p.business_account_id = b.id
 
   WHERE
