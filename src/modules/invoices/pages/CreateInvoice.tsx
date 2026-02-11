@@ -79,7 +79,7 @@ const CreateInvoice = () => {
               </SelectTrigger>
               <SelectContent>
                 {invoiceTypes.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
+                  <SelectItem key={t.id} value={t.id.toString()}>
                     {t.name}
                   </SelectItem>
                 ))}

@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { createInvoiceApi } from "../services/Invoices.services";
+import { getTypes } from "@/shared/services/service";
+import { getTypesAdapter } from "@/shared/adapters/adapter";
+import type { Types } from "@/shared/types/type";
 import type { InvoiceItemForm, InvoiceFormData, DocumentType } from "../types/Invoices.types";
 
 const createEmptyItem = (): InvoiceItemForm => ({
@@ -41,17 +44,17 @@ export const useCreateInvoice = () => {
   const [items, setItems] = useState<InvoiceItemForm[]>([createEmptyItem()]);
   const [saving, setSaving] = useState(false);
   const [searchingClient, setSearchingClient] = useState(false);
+  const [invoiceTypes, setInvoiceTypes] = useState<Types[]>([]);
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
 
-  // Invoice types (hardcoded from DB)
-  const invoiceTypes = [
-    { id: "34", name: "Boleta" },
-    { id: "36", name: "Factura" },
-  ];
-
-  // Load document types on mount
+  // Load invoice types and document types on mount
   useEffect(() => {
-    const loadDocTypes = async () => {
+    const loadData = async () => {
+      // Load invoice types from module "INV"
+      const typesResponse = await getTypes("INV");
+      setInvoiceTypes(getTypesAdapter(typesResponse));
+
+      // Load document types
       const { data } = await supabase
         .from("document_types")
         .select("id, name, code, person_type")
@@ -67,7 +70,7 @@ export const useCreateInvoice = () => {
         );
       }
     };
-    loadDocTypes();
+    loadData();
   }, []);
 
   const totalAmount = useMemo(
