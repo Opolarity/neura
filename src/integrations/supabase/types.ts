@@ -1508,6 +1508,7 @@ export type Database = {
           code: string | null
           created_at: string | null
           id: number
+          is_active: boolean
           location: number
           name: string
           web: boolean
@@ -1516,6 +1517,7 @@ export type Database = {
           code?: string | null
           created_at?: string | null
           id?: number
+          is_active?: boolean
           location?: number
           name: string
           web?: boolean
@@ -1524,6 +1526,7 @@ export type Database = {
           code?: string | null
           created_at?: string | null
           id?: number
+          is_active?: boolean
           location?: number
           name?: string
           web?: boolean
