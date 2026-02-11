@@ -3799,6 +3799,16 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_update_price_list: {
+        Args: {
+          p_code: string
+          p_id: number
+          p_location?: number
+          p_name: string
+          p_web?: boolean
+        }
+        Returns: Json
+      }
       sp_update_state_returns: {
         Args: {
           p_apply_stock: boolean

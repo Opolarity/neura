@@ -60,6 +60,8 @@ serve(async (req) => {
       document_number: input.document_number,
       customer_name: input.customer_name,
       customer_lastname: input.customer_lastname,
+      customer_lastname_first: input.customer_lastname_first,
+      customer_lastname2: input.customer_lastname2,
       email: input.email,
       phone: input.phone,
       sale_type: input.sale_type,

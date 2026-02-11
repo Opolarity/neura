@@ -39,12 +39,17 @@ export const searchClientByDocument = async (
 
 // Create new order
 export const createOrder = async (orderData: CreateOrderRequest) => {
+  const fullLastname = [orderData.customerLastname, orderData.customerLastname2]
+    .filter(Boolean)
+    .join(" ");
+
   const { data, error } = await supabase.functions.invoke("create-order", {
     body: {
       document_type: orderData.documentType,
       document_number: orderData.documentNumber,
       customer_name: orderData.customerName,
-      customer_lastname: orderData.customerLastname,
+      customer_lastname: fullLastname,
+      customer_lastname_first: orderData.customerLastname,
       customer_lastname2: orderData.customerLastname2,
       email: orderData.email,
       phone: orderData.phone,
@@ -93,6 +98,10 @@ export const updateOrder = async (
   orderId: number,
   orderData: CreateOrderRequest,
 ) => {
+  const fullLastname = [orderData.customerLastname, orderData.customerLastname2]
+    .filter(Boolean)
+    .join(" ");
+
   const { data, error } = await supabase.functions.invoke("update-order", {
     body: {
       order_id: orderId,
@@ -100,8 +109,7 @@ export const updateOrder = async (
       document_type: orderData.documentType,
       document_number: orderData.documentNumber,
       customer_name: orderData.customerName,
-      customer_lastname: orderData.customerLastname,
-      customer_lastname2: orderData.customerLastname2,
+      customer_lastname: fullLastname,
       email: orderData.email,
       phone: orderData.phone,
       sale_type: orderData.saleType,
