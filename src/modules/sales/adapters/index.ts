@@ -233,8 +233,15 @@ export const adaptSaleById = (data: any) => ({
     documentType: data.order.document_type?.toString() || "",
     documentNumber: data.order.document_number || "",
     customerName: data.order.customer_name || "",
-    customerLastname: data.order.customer_lastname || "",
-    customerLastname2: "",
+    customerLastname: (() => {
+      const full = data.order.customer_lastname || "";
+      return full.split(" ")[0] || "";
+    })(),
+    customerLastname2: (() => {
+      const full = data.order.customer_lastname || "";
+      const parts = full.split(" ");
+      return parts.slice(1).join(" ") || "";
+    })(),
     email: data.order.email || "",
     phone: data.order.phone?.toString() || "",
     saleType: data.order.sale_type_id?.toString() || "",
