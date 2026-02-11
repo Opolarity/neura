@@ -118,7 +118,7 @@ export const useCreateSale = () => {
   ]);
   const [currentPayment, setCurrentPayment] =
     useState<SalePayment>(createEmptyPayment());
-   const [orderSituation, setOrderSituation] = useState<string>("");
+  const [orderSituation, setOrderSituation] = useState<string>("");
   const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
 
   // Dropdown data
