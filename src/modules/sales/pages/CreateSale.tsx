@@ -108,6 +108,7 @@ const CreateSale = () => {
     total,
     orderId,
     isPersonaJuridica,
+    isPhySituation,
     // Server-side pagination
     productPage,
     productPagination,
@@ -351,7 +352,12 @@ const CreateSale = () => {
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-3">
+              {isPhySituation && (
+                <div className="bg-muted/50 border border-border rounded-md p-3 text-sm text-muted-foreground">
+                  Esta sección no se puede editar porque el pedido ya tiene un estado físico.
+                </div>
+              )}
+              <div className={cn("flex gap-3", isPhySituation && "opacity-50 pointer-events-none")}>
                 {/* Stock Type Selector */}
                 <Select
                   value={selectedStockTypeId}
@@ -595,6 +601,7 @@ const CreateSale = () => {
                               min="1"
                               max={product.maxStock}
                               className="w-16 text-center"
+                              disabled={isPhySituation}
                             />
                             <span className="text-xs text-muted-foreground mt-1">
                               Stock: {product.maxStock}
@@ -615,6 +622,7 @@ const CreateSale = () => {
                             min="0"
                             step="0.01"
                             className="w-24"
+                            disabled={isPhySituation}
                           />
                         </TableCell>
                         <TableCell>
@@ -631,6 +639,7 @@ const CreateSale = () => {
                             min="0"
                             step="0.01"
                             className="w-20 text-center"
+                            disabled={isPhySituation}
                           />
                         </TableCell>
                         <TableCell className="text-right font-medium">
@@ -643,6 +652,7 @@ const CreateSale = () => {
                             size="icon"
                             onClick={() => removeProduct(index)}
                             className="text-destructive hover:text-destructive"
+                            disabled={isPhySituation}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -665,7 +675,7 @@ const CreateSale = () => {
                 </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className={cn("space-y-4", isPhySituation && "opacity-50 pointer-events-none")}>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Canal de Venta</Label>
@@ -839,7 +849,7 @@ const CreateSale = () => {
                   <CardTitle className="text-lg">Dirección de Envío</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className={cn("space-y-4", isPhySituation && "opacity-50 pointer-events-none")}>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Método de Envío</Label>

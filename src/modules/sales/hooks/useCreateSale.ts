@@ -312,6 +312,15 @@ export const useCreateSale = () => {
     return selectedDocType?.personType === 2;
   }, [formData.documentType, salesData?.documentTypes]);
 
+  // Computed: Check if current situation has PHY code (physical - no edits allowed)
+  const isPhySituation = useMemo(() => {
+    if (!orderSituation || !salesData?.situations) return false;
+    const currentSituation = salesData.situations.find(
+      (s) => s.id.toString() === orderSituation,
+    );
+    return currentSituation?.code === "PHY";
+  }, [orderSituation, salesData?.situations]);
+
   // Load form data from API
   const loadFormData = async () => {
     try {
@@ -1132,6 +1141,7 @@ export const useCreateSale = () => {
     total,
     orderId,
     isPersonaJuridica,
+    isPhySituation,
 
     // Actions
     setOrderSituation,

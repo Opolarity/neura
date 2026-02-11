@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       supabase.from("cities").select("id, name, state_id, country_id").order("name"),
       supabase.from("neighborhoods").select("id, name, city_id, state_id, country_id").order("name"),
       supabase.from("payment_methods").select("id, name").eq("active", true).order("name"),
-      supabase.from("situations").select("id, name").eq("module_id", 1).order("order"), // Module 1 = Sales
+      supabase.from("situations").select("id, name, code").eq("module_id", 1).order("order"), // Module 1 = Sales
       supabase.from("types").select("id, name, code").eq("module_id", stkModuleId).order("name"), // Stock types
       // Fetch only active products with active variations
       supabase

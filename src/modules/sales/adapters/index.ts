@@ -65,6 +65,7 @@ export const adaptSituations = (data: any[]): Situation[] => {
   return data.map((item) => ({
     id: item.id,
     name: item.name,
+    code: item.code || null,
   }));
 };
 
