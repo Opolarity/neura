@@ -1054,19 +1054,42 @@ const CreateSale = () => {
              <CardHeader className="pb-2">
                <CardTitle className="text-lg">Estado del Pedido</CardTitle>
              </CardHeader>
-             <CardContent className="pb-2">
-               <Select value={orderSituation} onValueChange={setOrderSituation}>
-                 <SelectTrigger>
-                   <SelectValue placeholder="Seleccionar estado" />
-                 </SelectTrigger>
-                 <SelectContent>
-                   {filteredSituations.map((s) => (
-                     <SelectItem key={s.id} value={s.id.toString()}>
-                       {s.name}
-                     </SelectItem>
-                   ))}
-                 </SelectContent>
-               </Select>
+              <CardContent className="pb-2">
+                <div className="flex gap-2">
+                  <Select
+                    value={
+                      (() => {
+                        if (!orderSituation || !filteredSituations) return '';
+                        const sit = filteredSituations.find((s) => s.id.toString() === orderSituation);
+                        return sit?.statusName || '';
+                      })()
+                    }
+                    disabled
+                  >
+                    <SelectTrigger className="flex-1 opacity-70">
+                      <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(() => {
+                        const sit = filteredSituations.find((s) => s.id.toString() === orderSituation);
+                        const name = sit?.statusName || '';
+                        return name ? <SelectItem value={name}>{name}</SelectItem> : null;
+                      })()}
+                    </SelectContent>
+                  </Select>
+                  <Select value={orderSituation} onValueChange={setOrderSituation}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Seleccionar situación" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredSituations.map((s) => (
+                        <SelectItem key={s.id} value={s.id.toString()}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
              </CardContent>
              <CardFooter>
                {createdOrderId && (
