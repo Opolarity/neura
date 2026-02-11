@@ -328,7 +328,7 @@ export const useCreateSale = () => {
     return currentStatusCode === "COM";
   }, [currentStatusCode]);
 
-  // Computed: Filter situations to only show those with order >= current situation's order
+  // Computed: Filter situations to only show those with order > current situation's order
   const filteredSituations = useMemo(() => {
     if (!salesData?.situations) return [];
     if (!orderSituation) return salesData.situations;
@@ -339,7 +339,7 @@ export const useCreateSale = () => {
     if (!currentSituation || currentSituation.order == null) return salesData.situations;
     
     return salesData.situations.filter(
-      (s) => s.order != null && s.order >= currentSituation.order,
+      (s) => s.order != null && s.order > currentSituation.order,
     );
   }, [orderSituation, salesData?.situations]);
 
