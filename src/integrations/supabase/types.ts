@@ -3559,6 +3559,10 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_delete_price_list: {
+        Args: { p_id: number; p_is_active: boolean }
+        Returns: Json
+      }
       sp_get_accounts: {
         Args: {
           p_account_type?: number

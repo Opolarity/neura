@@ -67,6 +67,8 @@ export const adaptSituations = (data: any[]): Situation[] => {
     name: item.name,
     code: item.code || null,
     order: item.order ?? null,
+    statusId: item.status_id ?? null,
+    statusName: item.statuses?.name ?? null,
   }));
 };
 
