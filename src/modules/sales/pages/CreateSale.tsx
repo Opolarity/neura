@@ -110,6 +110,7 @@ const CreateSale = () => {
     isPersonaJuridica,
     isPhySituation,
     isComSituation,
+    filteredSituations,
     // Server-side pagination
     productPage,
     productPagination,
@@ -1039,7 +1040,7 @@ const CreateSale = () => {
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  {salesData?.situations.map((s) => (
+                  {filteredSituations.map((s) => (
                     <SelectItem key={s.id} value={s.id.toString()}>
                       {s.name}
                     </SelectItem>

@@ -658,10 +658,11 @@ export type Database = {
       }
       invoices: {
         Row: {
-          account_id: number
           cdr_url: string | null
           created_at: string
           created_by: string
+          customer_document_number: string
+          customer_document_type_id: number
           declared: boolean
           id: number
           invoice_type_id: number
@@ -671,10 +672,11 @@ export type Database = {
           xml_url: string | null
         }
         Insert: {
-          account_id: number
           cdr_url?: string | null
           created_at?: string
           created_by?: string
+          customer_document_number?: string
+          customer_document_type_id?: number
           declared?: boolean
           id?: number
           invoice_type_id: number
@@ -684,10 +686,11 @@ export type Database = {
           xml_url?: string | null
         }
         Update: {
-          account_id?: number
           cdr_url?: string | null
           created_at?: string
           created_by?: string
+          customer_document_number?: string
+          customer_document_type_id?: number
           declared?: boolean
           id?: number
           invoice_type_id?: number
@@ -698,18 +701,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "invoices_account_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "accounts"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "invoices_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "invoices_customer_document_type_id_fkey"
+            columns: ["customer_document_type_id"]
+            isOneToOne: false
+            referencedRelation: "document_types"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "invoices_invoice_type_id_fkey"
