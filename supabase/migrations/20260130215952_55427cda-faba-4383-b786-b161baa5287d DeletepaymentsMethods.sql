@@ -17,7 +17,9 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'No se encontró el método de pago con ese ID');
     END IF;
 
-    DELETE FROM payment_methods WHERE id = p_id;
+    UPDATE payment_methods
+    SET active = false
+    WHERE id = p_id;
 
     RETURN jsonb_build_object('success', true, 'message', 'Eliminado correctamente');
 
