@@ -1,89 +1,87 @@
 
 
-## Crear vista para agregar comprobantes (Invoices)
+## Checkbox "Compra Anonima" junto a "Requiere Envio"
 
 ### Resumen
-Se creara la pagina `/invoices/add` para crear comprobantes (invoices) con sus items, siguiendo la arquitectura existente del proyecto (types, services, adapters, hooks, pages).
+Se agregara un nuevo checkbox "Compra anónima" al lado del checkbox "Requiere Envio". Al activarlo, los campos de cliente (tipo de documento, numero de documento, nombre, apellido paterno y materno) se limpiaran y deshabilitaran. Al crear o actualizar la orden, se enviara `document_type = "0"`, `document_number = " "` (espacio en blanco), y los campos de nombre/apellidos como `null`.
 
-### Estructura de datos
+### Cambios
 
-**Tabla `invoices`:**
-- `id` (auto)
-- `invoice_type_id` (bigint, requerido)
-- `serie` (text, ej: "F003-233")
-- `account_id` (bigint, requerido - cliente)
-- `total_amount` (numeric, requerido)
-- `declared` (boolean, default false)
-- `created_by` (uuid, default auth.uid())
-- `pdf_url`, `xml_url`, `cdr_url` (opcionales)
+#### 1. Hook `useCreateSale.ts`
+- Agregar estado `isAnonymousPurchase` (boolean, default `false`) y su setter `setIsAnonymousPurchase`.
+- Crear un handler `handleAnonymousToggle` que al activarse:
+  - Limpie `documentType`, `documentNumber`, `customerName`, `customerLastname`, `customerLastname2` del `formData`.
+  - Resetee `clientFound` a `false`.
+- En `handleSubmit`, cuando `isAnonymousPurchase` sea `true`, sobreescribir los campos del `orderData`:
+  - `documentType: "0"`
+  - `documentNumber: " "` (un espacio)
+  - `customerName: null`
+  - `customerLastname: null`
+  - `customerLastname2: null`
+- Exponer `isAnonymousPurchase` y `setIsAnonymousPurchase` / `handleAnonymousToggle` en el return del hook.
+- Al cargar una orden existente (modo edicion), detectar si la orden tiene `document_type = 0` y `document_number = " "` para inicializar `isAnonymousPurchase = true`.
 
-**Tabla `invoice_items`:**
-- `id` (auto)
-- `invoice_id` (bigint, requerido)
-- `description` (text, requerido)
-- `quantity` (numeric, requerido)
-- `measurement_unit` (text, requerido)
-- `unit_price` (numeric, requerido)
-- `discount` (numeric, opcional)
-- `igv` (numeric, requerido)
-- `total` (numeric, requerido)
+#### 2. Pagina `CreateSale.tsx`
+- Junto al checkbox "Requiere Envio" (linea ~820-836), agregar un segundo checkbox "Compra anonima".
+- Cuando `isAnonymousPurchase` sea `true`, deshabilitar y aplicar estilos `opacity-50 pointer-events-none` a los campos de:
+  - Tipo de documento (Select)
+  - Numero de documento (Input)
+  - Nombre (Input)
+  - Apellido paterno (Input)
+  - Apellido materno (Input)
 
-### Archivos a crear/modificar
+### Detalles tecnicos
 
-#### 1. Tipos - `src/modules/invoices/types/Invoices.types.ts`
-- Agregar interfaces: `InvoiceItem`, `CreateInvoicePayload`, `InvoiceFormData`
+**En `useCreateSale.ts`:**
+```typescript
+const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
 
-#### 2. Edge Function - `supabase/functions/create-invoice/index.ts`
-- Recibe: datos del invoice + array de items
-- Inserta en `invoices`, obtiene el ID, luego inserta los items en `invoice_items`
-- Patron igual a `create-order`
-
-#### 3. Servicio - `src/modules/invoices/services/Invoices.services.ts`
-- Agregar funcion `createInvoiceApi` que invoque la edge function `create-invoice`
-
-#### 4. Hook - `src/modules/invoices/hooks/useCreateInvoice.ts`
-- Manejo de estado del formulario (datos del invoice, lista de items)
-- Funciones: agregar item, eliminar item, actualizar item
-- Calculo automatico de IGV (18%) y total por item
-- Calculo del total general
-- Funcion `handleSave` para enviar al backend
-
-#### 5. Pagina - `src/modules/invoices/pages/CreateInvoice.tsx`
-- **Seccion superior**: Datos del comprobante
-  - Serie (input text)
-  - Tipo de comprobante (invoice_type_id) - input numerico o select
-  - Cliente (account_id) - buscador de clientes por documento
-- **Seccion de items**: Tabla editable
-  - Columnas: Descripcion, Cantidad, Unidad Medida, Precio Unitario, Descuento, IGV, Total
-  - Boton "Agregar item" para anadir filas
-  - Boton de eliminar por fila
-  - IGV se calcula automaticamente (18% sobre base imponible)
-  - Total por item = (cantidad * precio_unitario - descuento) + IGV
-- **Resumen inferior**: Total general del comprobante
-- **Botones**: Guardar / Cancelar (volver a `/invoices`)
-
-#### 6. Rutas - `src/modules/invoices/routes.tsx`
-- Agregar ruta `invoices/add` con el componente `CreateInvoice`
-
-#### 7. Config - `supabase/config.toml`
-- Agregar entrada para la nueva edge function `create-invoice`
-
-### Seccion tecnica
-
-**Calculo de items:**
-```text
-base = quantity * unit_price
-base_con_descuento = base - (discount || 0)
-igv = base_con_descuento * 0.18
-total = base_con_descuento + igv
+const handleAnonymousToggle = useCallback((checked: boolean) => {
+  setIsAnonymousPurchase(checked);
+  if (checked) {
+    setFormData(prev => ({
+      ...prev,
+      documentType: "",
+      documentNumber: "",
+      customerName: "",
+      customerLastname: "",
+      customerLastname2: "",
+    }));
+    setClientFound(false);
+  }
+}, []);
 ```
 
-**Flujo de la edge function:**
-1. Validar autenticacion
-2. Insertar registro en `invoices` -> obtener `id`
-3. Mapear items con el `invoice_id` obtenido
-4. Insertar items en `invoice_items`
-5. Retornar invoice creado
+**En handleSubmit, antes de enviar:**
+```typescript
+const orderData = {
+  documentType: isAnonymousPurchase ? "0" : formData.documentType,
+  documentNumber: isAnonymousPurchase ? " " : formData.documentNumber,
+  customerName: isAnonymousPurchase ? null : formData.customerName,
+  customerLastname: isAnonymousPurchase ? null : formData.customerLastname,
+  customerLastname2: isAnonymousPurchase ? null : (formData.customerLastname2 || null),
+  // ... resto igual
+};
+```
 
-**RLS**: Las tablas `invoices` e `invoice_items` actualmente no tienen politicas RLS. La edge function usa `SERVICE_ROLE_KEY` asi que no se ve afectada. Se recomienda agregar RLS en el futuro pero no es bloqueante para esta implementacion.
+**En `CreateSale.tsx`:**
+```tsx
+<div className="flex items-center space-x-4 pt-2">
+  <div className="flex items-center space-x-2">
+    <Checkbox id="withShipping" ... />
+    <Label htmlFor="withShipping">Requiere Envio</Label>
+  </div>
+  <div className="flex items-center space-x-2">
+    <Checkbox
+      id="anonymousPurchase"
+      checked={isAnonymousPurchase}
+      onCheckedChange={handleAnonymousToggle}
+    />
+    <Label htmlFor="anonymousPurchase" className="cursor-pointer font-medium">
+      Compra anonima
+    </Label>
+  </div>
+</div>
+```
 
+Los campos de cliente tendran la condicion `disabled={isAnonymousPurchase || clientFound}` para que se bloqueen cuando la compra es anonima.
