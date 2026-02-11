@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -18,11 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DollarSign, Pencil, Trash2 } from "lucide-react";
 import { usePriceList } from "../hooks/usePriceList";
-import { PriceListEditDialog } from "../components/PriceListEditDialog";
+import { PriceListEditDialog } from "../components/list-price/PriceListEditDialog";
 import type { PriceListItem } from "../types/PriceList.types";
 
 const PriceListPage = () => {
-  const { priceLists, loading, refetch } = usePriceList();
+  const { priceLists, loading } = usePriceList();
   const [editingItem, setEditingItem] = useState<PriceListItem | null>(null);
 
   return (
@@ -69,7 +64,10 @@ const PriceListPage = () => {
                 ))
               ) : priceLists.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-10 text-muted-foreground"
+                  >
                     No se encontraron listas de precios
                   </TableCell>
                 </TableRow>
@@ -89,7 +87,9 @@ const PriceListPage = () => {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-center">{item.location}</TableCell>
+                    <TableCell className="text-center">
+                      {item.location}
+                    </TableCell>
                     <TableCell className="text-center">
                       <Badge variant={item.web ? "default" : "secondary"}>
                         {item.web ? "Sí" : "No"}

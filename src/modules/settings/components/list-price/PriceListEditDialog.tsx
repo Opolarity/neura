@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import type { PriceListItem } from "../types/PriceList.types";
+import type { PriceListItem } from "../../types/PriceList.types";
 
 interface PriceListEditDialogProps {
   item: PriceListItem | null;
@@ -66,7 +66,9 @@ export const PriceListEditDialog = ({
       toast.success("Lista de precios actualizada");
       onSaved();
     } catch (err: any) {
-      toast.error("Error al actualizar: " + (err.message || "Error desconocido"));
+      toast.error(
+        "Error al actualizar: " + (err.message || "Error desconocido"),
+      );
     } finally {
       setSaving(false);
     }
@@ -110,16 +112,16 @@ export const PriceListEditDialog = ({
 
           <div className="flex items-center justify-between">
             <Label htmlFor="pl-web">Web</Label>
-            <Switch
-              id="pl-web"
-              checked={web}
-              onCheckedChange={setWeb}
-            />
+            <Switch id="pl-web" checked={web} onCheckedChange={setWeb} />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={saving}
+          >
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={saving}>
