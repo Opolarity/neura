@@ -3657,6 +3657,10 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_order_chanel_types: {
+        Args: { p_page?: number; p_size?: number }
+        Returns: Json
+      }
       sp_get_price_list: {
         Args: { p_page?: number; p_size?: number }
         Returns: Json
@@ -3804,10 +3808,6 @@ export type Database = {
           p_user_id: string
           p_warehouse_id: number
         }
-        Returns: Json
-      }
-      sp_order_chanel_types: {
-        Args: { p_page?: number; p_size?: number }
         Returns: Json
       }
       sp_update_price_list: {
