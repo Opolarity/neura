@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
     // Step 3: Delete existing order products
     await supabase.from("order_products").delete().eq("order_id", orderId);
 
-    // Step 4: Update the order
+    // Step 4: Update the order (customer_lastname already arrives concatenated from frontend)
     const { error: updateError } = await supabase
       .from("orders")
       .update({
