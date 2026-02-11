@@ -18,7 +18,7 @@ BEGIN
     END IF;
 
     UPDATE payment_methods
-    SET active = false
+    SET  is_active = false
     WHERE id = p_id;
 
     RETURN jsonb_build_object('success', true, 'message', 'Eliminado correctamente');
