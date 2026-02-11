@@ -146,6 +146,31 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 8. Fetch actual current stock for each product variation
+    const warehouseId = order.order_products?.[0]?.warehouses_id;
+    let productStockMap = new Map<string, number>();
+    if (variationIds.length > 0 && warehouseId) {
+      // Build unique keys: variationId_stockTypeId
+      const stockMovementsMap2 = new Map(stockMovements.map((sm) => [sm.id, sm]));
+      const stockTypeIdsForQuery = (order.order_products || []).map((op: any) => {
+        const sm = stockMovementsMap2.get(op.stock_movement_id);
+        return sm?.stock_type_id || 1;
+      });
+      const uniqueStockTypeIds = [...new Set(stockTypeIdsForQuery)];
+
+      const { data: stockData } = await supabase
+        .from("product_stock")
+        .select("product_variation_id, stock, stock_type_id")
+        .in("product_variation_id", variationIds)
+        .eq("warehouse_id", warehouseId)
+        .in("stock_type_id", uniqueStockTypeIds);
+
+      (stockData || []).forEach((s: any) => {
+        const key = `${s.product_variation_id}_${s.stock_type_id}`;
+        productStockMap.set(key, s.stock);
+      });
+    }
+
     // Build response with enriched product data
     const productsMap = new Map(products.map((p) => [p.id, p.title]));
     const variationsMap = new Map(variations.map((v) => [v.id, v]));
@@ -173,6 +198,10 @@ Deno.serve(async (req) => {
         ? parseFloat(op.product_discount) / op.quantity 
         : 0;
 
+      const stockTypeId = stockMovement?.stock_type_id || 1;
+      const stockKey = `${op.product_variation_id}_${stockTypeId}`;
+      const currentStock = productStockMap.get(stockKey) ?? op.quantity;
+
       return {
         variation_id: op.product_variation_id,
         product_name: productTitle || op.product_name || "",
@@ -181,9 +210,9 @@ Deno.serve(async (req) => {
         quantity: op.quantity,
         price: parseFloat(op.product_price),
         discount_amount: Math.round(discountPerUnit * 100) / 100,
-        stock_type_id: stockMovement?.stock_type_id || 1,
+        stock_type_id: stockTypeId,
         stock_type_name: stockMovement?.stock_type_name || "",
-        max_stock: op.quantity, // For editing, allow at least current quantity
+        max_stock: currentStock,
       };
     });
 
