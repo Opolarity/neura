@@ -34,6 +34,7 @@ const CreateInvoice = () => {
     saving,
     searchingClient,
     invoiceTypes,
+    documentTypes,
     totalAmount,
     handleFormChange,
     addItem,
@@ -65,7 +66,7 @@ const CreateInvoice = () => {
             Datos del Comprobante
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Invoice Type */}
           <div className="space-y-2">
             <Label>Tipo de Comprobante *</Label>
@@ -96,22 +97,42 @@ const CreateInvoice = () => {
             />
           </div>
 
-          {/* Client Search */}
+          {/* Document Type */}
           <div className="space-y-2">
-            <Label>Cliente (Nro. Documento) *</Label>
+            <Label>Tipo de Documento *</Label>
+            <Select
+              value={formData.documentTypeId}
+              onValueChange={(v) => handleFormChange("documentTypeId", v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {documentTypes.map((dt) => (
+                  <SelectItem key={dt.id} value={dt.id.toString()}>
+                    {dt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Document Number + Search */}
+          <div className="space-y-2">
+            <Label>Nro. Documento *</Label>
             <div className="flex gap-2">
               <Input
-                placeholder="Buscar por documento"
+                placeholder="Número de documento"
                 value={formData.clientDocument}
                 onChange={(e) => handleFormChange("clientDocument", e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") searchClient(formData.clientDocument);
+                  if (e.key === "Enter") searchClient();
                 }}
               />
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => searchClient(formData.clientDocument)}
+                onClick={() => searchClient()}
                 disabled={searchingClient}
               >
                 {searchingClient ? (
