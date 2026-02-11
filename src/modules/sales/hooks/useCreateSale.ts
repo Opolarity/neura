@@ -119,6 +119,7 @@ export const useCreateSale = () => {
   const [currentPayment, setCurrentPayment] =
     useState<SalePayment>(createEmptyPayment());
   const [orderSituation, setOrderSituation] = useState<string>("");
+  const [originalSituation, setOriginalSituation] = useState<string>(""); // situation from server, used for filtering
   const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
 
   // Dropdown data
@@ -328,20 +329,21 @@ export const useCreateSale = () => {
     return currentStatusCode === "COM";
   }, [currentStatusCode]);
 
-  // Computed: Filter situations to only show those with order > current situation's order
+  // Computed: Filter situations - show current + those with order > original situation's order
   const filteredSituations = useMemo(() => {
     if (!salesData?.situations) return [];
-    if (!orderSituation) return salesData.situations;
+    // In create mode (no originalSituation), show all
+    if (!originalSituation) return salesData.situations;
     
-    const currentSituation = salesData.situations.find(
-      (s) => s.id.toString() === orderSituation,
+    const serverSituation = salesData.situations.find(
+      (s) => s.id.toString() === originalSituation,
     );
-    if (!currentSituation || currentSituation.order == null) return salesData.situations;
+    if (!serverSituation || serverSituation.order == null) return salesData.situations;
     
     return salesData.situations.filter(
-      (s) => s.order != null && s.order > currentSituation.order,
+      (s) => s.order != null && (s.id.toString() === originalSituation || s.order > serverSituation.order),
     );
-  }, [orderSituation, salesData?.situations]);
+  }, [originalSituation, salesData?.situations]);
 
   // Load form data from API
   const loadFormData = async () => {
@@ -508,6 +510,7 @@ export const useCreateSale = () => {
           : [createEmptyPayment()]
       );
       setOrderSituation(adapted.currentSituation);
+      setOriginalSituation(adapted.currentSituation);
       setCurrentStatusCode(adapted.currentStatusCode || "");
       setClientFound(true);
       setCreatedOrderId(id);
