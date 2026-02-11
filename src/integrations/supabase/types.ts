@@ -3806,6 +3806,10 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_order_chanel_types: {
+        Args: { p_page?: number; p_size?: number }
+        Returns: Json
+      }
       sp_update_price_list: {
         Args: {
           p_code: string

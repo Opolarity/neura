@@ -1017,7 +1017,7 @@ export const useCreateSale = () => {
         const orderData = {
           documentType: isAnonymousPurchase ? "0" : formData.documentType,
           documentNumber: isAnonymousPurchase ? " " : formData.documentNumber,
-          customerName: isAnonymousPurchase ? null : formData.customerName,
+          customerName: formData.customerName,
           customerLastname: isAnonymousPurchase ? null : formData.customerLastname,
           customerLastname2: isAnonymousPurchase ? null : (formData.customerLastname2 || null),
           email: formData.email || null,
