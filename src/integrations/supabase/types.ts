@@ -1353,18 +1353,21 @@ export type Database = {
           active: boolean
           business_account_id: number | null
           id: number
+          is_active: boolean
           name: string
         }
         Insert: {
           active: boolean
           business_account_id?: number | null
           id?: number
+          is_active?: boolean
           name: string
         }
         Update: {
           active?: boolean
           business_account_id?: number | null
           id?: number
+          is_active?: boolean
           name?: string
         }
         Relationships: [
@@ -3567,6 +3570,7 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_delete_payment_method: { Args: { p_id: number }; Returns: Json }
       sp_delete_price_list: {
         Args: { p_id: number; p_is_active: boolean }
         Returns: Json
@@ -3823,6 +3827,15 @@ export type Database = {
           p_opening_amount?: number
           p_user_id: string
           p_warehouse_id: number
+        }
+        Returns: Json
+      }
+      sp_update_payment_method: {
+        Args: {
+          p_active?: boolean
+          p_business_account_id?: number
+          p_id: number
+          p_name?: string
         }
         Returns: Json
       }
