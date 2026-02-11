@@ -111,6 +111,7 @@ const CreateSale = () => {
     isPhySituation,
     isComSituation,
     filteredSituations,
+    isAnonymousPurchase,
     // Server-side pagination
     productPage,
     productPagination,
@@ -131,6 +132,7 @@ const CreateSale = () => {
     handleSearchClient,
     handleSelectPriceList,
     handleProductPageChange,
+    handleAnonymousToggle,
     addProduct,
     removeProduct,
     updateProduct,
@@ -701,8 +703,9 @@ const CreateSale = () => {
                         handleInputChange("documentType", v);
                         if (formData.documentNumber) handleSearchClient(v);
                       }}
+                      disabled={isAnonymousPurchase}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={isAnonymousPurchase ? "opacity-50" : ""}>
                         <SelectValue placeholder="Seleccione" />
                       </SelectTrigger>
                       <SelectContent>
@@ -723,6 +726,8 @@ const CreateSale = () => {
                           handleInputChange("documentNumber", e.target.value)
                         }
                         onBlur={() => handleSearchClient()}
+                        disabled={isAnonymousPurchase}
+                        className={isAnonymousPurchase ? "opacity-50" : ""}
                       />
                       {searchingClient && (
                         <Loader2 className="w-5 h-5 animate-spin self-center" />
@@ -758,8 +763,8 @@ const CreateSale = () => {
                     onChange={(e) =>
                       handleInputChange("customerName", e.target.value)
                     }
-                    disabled={clientFound === true}
-                    className={clientFound === true ? "bg-muted" : ""}
+                    disabled={isAnonymousPurchase || clientFound === true}
+                    className={isAnonymousPurchase || clientFound === true ? "bg-muted" : ""}
                   />
                 </div>
               </div>
@@ -798,8 +803,8 @@ const CreateSale = () => {
                         onChange={(e) =>
                           handleInputChange("customerLastname", e.target.value)
                         }
-                        disabled={clientFound === true}
-                        className={clientFound === true ? "bg-muted" : ""}
+                        disabled={isAnonymousPurchase || clientFound === true}
+                        className={isAnonymousPurchase || clientFound === true ? "bg-muted" : ""}
                       />
                     </div>
                     <div>
@@ -809,8 +814,8 @@ const CreateSale = () => {
                         onChange={(e) =>
                           handleInputChange("customerLastname2", e.target.value)
                         }
-                        disabled={clientFound === true}
-                        className={clientFound === true ? "bg-muted" : ""}
+                        disabled={isAnonymousPurchase || clientFound === true}
+                        className={isAnonymousPurchase || clientFound === true ? "bg-muted" : ""}
                       />
                     </div>
                   </div>
@@ -831,6 +836,21 @@ const CreateSale = () => {
                     className="cursor-pointer font-medium"
                   >
                     Requiere Envío
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="anonymousPurchase"
+                    checked={isAnonymousPurchase}
+                    onCheckedChange={(checked) =>
+                      handleAnonymousToggle(checked as boolean)
+                    }
+                  />
+                  <Label
+                    htmlFor="anonymousPurchase"
+                    className="cursor-pointer font-medium"
+                  >
+                    Compra anónima
                   </Label>
                 </div>
               </div>
