@@ -1,5 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import PaymentMethodsTable from '../components/paymentMethods/PaymentMethodsTable';
 import usePaymentMethods from '../hooks/usePaymentMethods';
@@ -23,6 +26,12 @@ const PaymentMethodsList = () => {
                         Administra los métodos de pago del sistema
                     </p>
                 </div>
+                <Button asChild className="gap-2">
+                    <Link to="/settings/payment-methods/create">
+                        <Plus className="w-4 h-4" />
+                        Crear Método de Pago
+                    </Link>
+                </Button>
             </div>
 
             {/* Payment Methods Table */}

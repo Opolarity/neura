@@ -10,6 +10,7 @@ import CreateWarehouses from './pages/CreateWarehouses';
 import BranchesList from './pages/branches';
 import CreateBranch from './pages/CreateBranch';
 import PaymentMethodsList from './pages/PaymentMethodsList';
+import CreatePaymentMethod from './pages/CreatePaymentMethod';
 
 export const settingsRoutes: RouteObject[] = [
   {
