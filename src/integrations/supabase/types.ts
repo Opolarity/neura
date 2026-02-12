@@ -454,7 +454,6 @@ export type Database = {
           min_length: number | null
           name: string
           person_type: number
-          state_code: string | null
         }
         Insert: {
           code?: string | null
@@ -464,7 +463,6 @@ export type Database = {
           min_length?: number | null
           name: string
           person_type?: number
-          state_code?: string | null
         }
         Update: {
           code?: string | null
@@ -474,7 +472,6 @@ export type Database = {
           min_length?: number | null
           name?: string
           person_type?: number
-          state_code?: string | null
         }
         Relationships: []
       }
@@ -662,9 +659,6 @@ export type Database = {
       invoices: {
         Row: {
           cdr_url: string | null
-          client_address: string | null
-          client_email: string | null
-          client_name: string | null
           created_at: string
           created_by: string
           customer_document_number: string
@@ -675,16 +669,10 @@ export type Database = {
           pdf_url: string | null
           serie: string | null
           total_amount: number
-          total_free: number | null
-          total_others: number | null
-          total_taxes: number | null
           xml_url: string | null
         }
         Insert: {
           cdr_url?: string | null
-          client_address?: string | null
-          client_email?: string | null
-          client_name?: string | null
           created_at?: string
           created_by?: string
           customer_document_number?: string
@@ -695,16 +683,10 @@ export type Database = {
           pdf_url?: string | null
           serie?: string | null
           total_amount: number
-          total_free?: number | null
-          total_others?: number | null
-          total_taxes?: number | null
           xml_url?: string | null
         }
         Update: {
           cdr_url?: string | null
-          client_address?: string | null
-          client_email?: string | null
-          client_name?: string | null
           created_at?: string
           created_by?: string
           customer_document_number?: string
@@ -715,9 +697,6 @@ export type Database = {
           pdf_url?: string | null
           serie?: string | null
           total_amount?: number
-          total_free?: number | null
-          total_others?: number | null
-          total_taxes?: number | null
           xml_url?: string | null
         }
         Relationships: [
@@ -3548,15 +3527,6 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_create_order_chanel_type: {
-        Args: {
-          p_code: string
-          p_module_code: string
-          p_module_id: number
-          p_name: string
-        }
-        Returns: Json
-      }
       sp_create_payment_method: {
         Args: {
           p_active?: boolean
@@ -3703,8 +3673,8 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_get_order_chanel_type: {
-        Args: { p_page: number; p_size: number }
+      sp_get_order_chanel_types: {
+        Args: { p_page?: number; p_size?: number }
         Returns: Json
       }
       sp_get_payments_methods: {
