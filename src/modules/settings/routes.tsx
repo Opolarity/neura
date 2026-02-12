@@ -9,10 +9,12 @@ import WarehousesList from './pages/warehouses';
 import CreateWarehouses from './pages/CreateWarehouses';
 import BranchesList from './pages/branches';
 import CreateBranch from './pages/CreateBranch';
+import PaymentMethodsList from './pages/PaymentMethodsList';
+import CreatePaymentMethod from './pages/CreatePaymentMethod';
 
 export const settingsRoutes: RouteObject[] = [
   {
-    path: 'settings',
+    path: "settings",
     element: <Settings />,
     children: [
       { path: 'users', element: <UsersList /> },
@@ -27,6 +29,7 @@ export const settingsRoutes: RouteObject[] = [
       { path: 'branches', element: <BranchesList /> },
       { path: 'branches/create', element: <CreateBranch /> },
       { path: 'branches/edit/:id', element: <CreateBranch /> },
+      { path: 'payment-methods', element: <PaymentMethodsList /> },
     ]
   },
 ];
