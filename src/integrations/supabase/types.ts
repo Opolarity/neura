@@ -1619,6 +1619,45 @@ export type Database = {
           },
         ]
       }
+      product_locations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: number
+          location: string
+          product_id: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          location: string
+          product_id: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          location?: string
+          product_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_locations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "product_locations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_price: {
         Row: {
           id: number
@@ -3358,6 +3397,57 @@ export type Database = {
           },
         ]
       }
+      visual_edits: {
+        Row: {
+          content_json: Json | null
+          created_at: string
+          created_by: string
+          id: number
+          slug: string
+          title: string
+          type: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          content_json?: Json | null
+          created_at?: string
+          created_by?: string
+          id?: number
+          slug: string
+          title: string
+          type?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          content_json?: Json | null
+          created_at?: string
+          created_by?: string
+          id?: number
+          slug?: string
+          title?: string
+          type?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visual_edits_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "visual_edits_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+        ]
+      }
       warehouses: {
         Row: {
           address: string
@@ -3601,10 +3691,7 @@ export type Database = {
         Returns: Json
       }
       sp_delete_payment_method: { Args: { p_id: number }; Returns: Json }
-      sp_delete_price_list: {
-        Args: { p_id: number; p_is_active: boolean }
-        Returns: Json
-      }
+      sp_delete_price_list: { Args: { p_id: number }; Returns: Json }
       sp_get_accounts: {
         Args: {
           p_account_type?: number
@@ -3707,6 +3794,7 @@ export type Database = {
         Args: { p_page: number; p_size: number }
         Returns: Json
       }
+      sp_get_payment_method_details: { Args: { p_id: number }; Returns: Json }
       sp_get_payments_methods: {
         Args: { p_page?: number; p_search?: string; p_size?: number }
         Returns: Json
@@ -3715,6 +3803,7 @@ export type Database = {
         Args: { p_page?: number; p_size?: number }
         Returns: Json
       }
+      sp_get_price_list_details: { Args: { p_id: number }; Returns: Json }
       sp_get_products_costs: {
         Args: {
           p_cost?: boolean
