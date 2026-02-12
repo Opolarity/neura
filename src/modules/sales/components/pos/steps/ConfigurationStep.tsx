@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Tags, Warehouse, ArrowRight, RefreshCw, Info, Headphones, Zap } from "lucide-react";
+import { Tags, Warehouse, ArrowRight, RefreshCw } from "lucide-react";
 import type { PriceList } from "../../../types";
 
 interface ConfigurationStepProps {
@@ -108,50 +108,6 @@ export default function ConfigurationStep({
         </CardContent>
       </Card>
 
-      {/* Info cards */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="bg-blue-50 border-blue-100">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-3">
-              <Info className="w-5 h-5 text-blue-600 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-blue-900 text-sm">Dato Util</h4>
-                <p className="text-xs text-blue-700 mt-1">
-                  Verifique que la impresora de tickets este encendida antes de proceder al pago.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-50">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-3">
-              <Headphones className="w-5 h-5 text-gray-600 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-gray-900 text-sm">Soporte</h4>
-                <p className="text-xs text-gray-600 mt-1">
-                  Si tiene problemas con el stock, contacte al supervisor de bodega.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-50">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-3">
-              <Zap className="w-5 h-5 text-gray-600 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-gray-900 text-sm">Venta Rapida</h4>
-                <p className="text-xs text-gray-600 mt-1">
-                  Puede usar <kbd className="px-1 py-0.5 bg-gray-200 rounded text-xs">Alt + R</kbd> para repetir la ultima configuracion valida.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
