@@ -31,9 +31,9 @@ Deno.serve(async (req) => {
     });
  
     // Validar método HTTP
-    if (req.method !== "POST") {
+    if (req.method !== "PUT") {
       return new Response(
-        JSON.stringify({ error: "Method not allowed. Use POST" }),
+        JSON.stringify({ error: "Method not allowed. Use PUT" }),
         { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

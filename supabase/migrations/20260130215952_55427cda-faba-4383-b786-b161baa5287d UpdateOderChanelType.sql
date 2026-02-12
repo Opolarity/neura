@@ -5,6 +5,9 @@ CREATE OR REPLACE FUNCTION sp_update_order_channel_type(
     p_name VARCHAR,
     p_code VARCHAR
 )
+RETURNS JSONB 
+LANGUAGE plpgsql
+AS $$
 DECLARE
   v_result JSONB;
   v_id INTEGER;
@@ -17,7 +20,7 @@ BEGIN
    );
   END IF;
  
-  IF p_module_code IS NULL OR p_module_code != 'ORD' THEN
+  IF p_module_code IS NULL OR p_module_code != 'ORD' THEN   
    RETURN jsonb_build_object(
     'sucess',false,
     'error','Codigo del Modulo Incorrecto'
@@ -72,4 +75,6 @@ EXCEPTION
             'success', false,
             'error', SQLERRM
         );
+
 END;
+$$ ;

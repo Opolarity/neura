@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    if (req.method !== "POST") {
+    if (req.method !== "PUT") {
       return new Response(
         JSON.stringify({ error: "Method not allowed. Use POST" }),
         { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
