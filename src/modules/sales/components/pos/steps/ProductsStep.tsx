@@ -209,9 +209,10 @@ export default function ProductsStep({
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm truncate">
                           {item.productName}
+                          {item.isVariable && ` (${item.variationName})`}
                         </div>
                         <div className="text-xs text-gray-500 truncate">
-                          {item.variationName}
+                          {item.stockTypeName}
                         </div>
                         <div className="text-xs text-gray-500">
                           S/ {formatCurrency(item.price)} c/u

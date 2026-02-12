@@ -406,6 +406,7 @@ export const usePOS = () => {
           )?.name || "",
         maxStock: product.stock || 0,
         imageUrl: product.imageUrl || null,
+        isVariable: product.terms.length > 0,
       };
 
       setCart((prev) => [...prev, newItem]);

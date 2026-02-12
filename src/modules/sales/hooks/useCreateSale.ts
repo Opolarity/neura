@@ -908,6 +908,7 @@ export const useCreateSale = () => {
         stockTypeId: parseInt(selectedStockTypeId),
         stockTypeName,
         maxStock: availableStock,
+        isVariable: selectedVariation.terms.length > 0,
       },
     ]);
 
