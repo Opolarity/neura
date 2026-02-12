@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
 
     const ssoToken = await new SignJWT({
       sub: userId,
-      role,
+      roles: [role],
       iss: "neura",
       aud: "ecommerce",
       jti,
