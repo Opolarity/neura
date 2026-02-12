@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -11,28 +17,49 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { usePriceList } from "../hooks/usePriceList";
-import { PriceListEditDialog } from "../components/list-price/PriceListEditDialog";
-import type { PriceListItem } from "../types/PriceList.types";
+import { PriceListFormDialog } from "../components/list-price/PriceListFormDialog";
+import { PriceList } from "../types/PriceList.types";
+import { useCreatePriceList } from "../hooks/useCreatePriceList";
+import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 
 const PriceListPage = () => {
-  const { priceLists, loading } = usePriceList();
-  const [editingItem, setEditingItem] = useState<PriceListItem | null>(null);
+  const {
+    priceLists,
+    loading,
+    openFormModal,
+    saving,
+    pagination,
+    savePriceList,
+    deletePriceList,
+    handleOpenChange,
+  } = usePriceList();
+
+  const [editingItem, setEditingItem] = useState<PriceList | null>(null);
 
   return (
     <div className="p-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
-          <DollarSign className="w-5 h-5 text-white" />
-        </div>
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-bold">Listas de Precios</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold text-foreground">
+            Listas de Precios
+          </h1>
+          <p className="text-muted-foreground">
             Gestiona las listas de precios del sistema
           </p>
         </div>
+
+        <Button
+          onClick={() => {
+            setEditingItem(null);
+            handleOpenChange(true);
+          }}
+          className="gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Nueva Lista de Precios
+        </Button>
       </div>
 
       <Card>
@@ -91,8 +118,8 @@ const PriceListPage = () => {
                       {item.location}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={item.web ? "default" : "secondary"}>
-                        {item.web ? "Sí" : "No"}
+                      <Badge variant={item.isWeb ? "default" : "secondary"}>
+                        {item.isWeb ? "Sí" : "No"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
@@ -101,7 +128,10 @@ const PriceListPage = () => {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => setEditingItem(item)}
+                          onClick={() => {
+                            setEditingItem(item);
+                            handleOpenChange(true);
+                          }}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -109,7 +139,7 @@ const PriceListPage = () => {
                           variant="destructive"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => {}}
+                          onClick={() => deletePriceList(item.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -121,16 +151,22 @@ const PriceListPage = () => {
             </TableBody>
           </Table>
         </CardContent>
+        <CardFooter>
+          <PaginationBar
+            pagination={pagination}
+            onPageChange={() => {}}
+            onPageSizeChange={() => {}}
+          />
+        </CardFooter>
       </Card>
 
-      <PriceListEditDialog
+      <PriceListFormDialog
+        key={editingItem?.id ?? "new"}
+        open={openFormModal}
         item={editingItem}
-        open={!!editingItem}
-        onOpenChange={(open) => !open && setEditingItem(null)}
-        onSaved={() => {
-          setEditingItem(null);
-          refetch();
-        }}
+        saving={saving}
+        onSaved={savePriceList}
+        onOpenChange={handleOpenChange}
       />
     </div>
   );
