@@ -9,7 +9,7 @@ export interface PaymentMethodsApiResponse {
 
 export interface PaymentMethod {
     id: number;
-    business_account_id: number;
+    business_account_id: string;
     name: string;
     active: boolean;
 }

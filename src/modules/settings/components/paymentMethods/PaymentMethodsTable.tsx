@@ -15,7 +15,7 @@ const PaymentMethodsTable = ({ paymentMethods, loading }: PaymentMethodsTablePro
                 <TableRow>
                     <TableHead>ID</TableHead>
                     <TableHead>Nombre</TableHead>
-                    <TableHead>Cuenta de Negocio ID</TableHead>
+                    <TableHead>Cuenta de Negocio </TableHead>
                     <TableHead>Estado</TableHead>
                 </TableRow>
             </TableHeader>

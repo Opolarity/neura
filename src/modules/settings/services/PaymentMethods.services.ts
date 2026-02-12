@@ -23,7 +23,7 @@ export const PaymentMethodsApi = async (
     }
 
     return (
-        data ?? {
+        data?.paymentsMethodsData ?? {
             data: [],
             page: { page: 1, size: 20, total: 0 },
         }
