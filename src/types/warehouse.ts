@@ -1,6 +1,7 @@
 export type Warehouse = {
   id: number;
   name: string;
+  is_active?: boolean;
 };
 
 export type StockType = {
