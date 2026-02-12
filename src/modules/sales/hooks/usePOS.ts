@@ -815,6 +815,23 @@ export const usePOS = () => {
     });
   }, []);
 
+  const resetAll = useCallback(() => {
+    setCurrentStep(1);
+    setConfiguration(null);
+    setCart([]);
+    setCustomer(DEFAULT_CUSTOMER);
+    setShipping(DEFAULT_SHIPPING);
+    setPayments([]);
+    setClientFound(null);
+    setSearchQuery("");
+    setCurrentPayment({
+      id: crypto.randomUUID(),
+      paymentMethodId: "",
+      amount: 0,
+      confirmationCode: "",
+    });
+  }, []);
+
   // State for close session modal
   const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
   const [sessionTotalSales, setSessionTotalSales] = useState(0);
@@ -958,6 +975,7 @@ export const usePOS = () => {
     // Actions
     submitOrder,
     resetForNewSale,
+    resetAll,
     exitPOS,
     
     // Close session modal

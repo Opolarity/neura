@@ -69,6 +69,7 @@ export default function POS() {
                 priceLists={pos.priceLists}
                 userWarehouseName={pos.userWarehouseName}
                 onConfirm={pos.confirmConfiguration}
+                onReset={pos.resetAll}
               />
             )}
 
@@ -156,6 +157,7 @@ export default function POS() {
           onNext={pos.nextStep}
           onBack={pos.prevStep}
           onFinalize={pos.submitOrder}
+          onReset={pos.resetAll}
         />
       )}
 
