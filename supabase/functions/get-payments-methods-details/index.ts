@@ -14,32 +14,21 @@ Deno.serve(async (req) => {
   }
  
   try {
-    const url = new URL(req.url);
-    const idParam = url.searchParams.get("id");
-    
-    if (!idParam) {
-       return new Response(JSON.stringify({ error: "El parámetro ID es obligatorio" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-
-    const id = Number(idParam);
- 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const anonKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const authHeader = req.headers.get("Authorization");
- 
-    if (!authHeader) {
-      throw new Error("No authorization header");
-    }
- 
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+
     if (!supabaseUrl || !anonKey) {
       throw new Error("Missing environment variables");
     }
- 
-    console.log("Authorization header:", authHeader);
- 
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Missing authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, anonKey, {
       global: {
         headers: {
@@ -47,6 +36,25 @@ Deno.serve(async (req) => {
         }
       }
     });
+    
+    if (req.method !== "POST") {
+      return new Response(
+        JSON.stringify({ error: "Method not allowed. Use POST" }),
+        { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const body = await req.json();
+    const { id } = body; 
+
+    if (!id) {
+      return new Response(JSON.stringify({ error: "Falta el ID del registro" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+ 
+    console.log("Authorization header:", authHeader);
  
     // Validar el token
     const token = authHeader.replace("Bearer ", "");
