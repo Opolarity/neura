@@ -11,6 +11,8 @@ import BranchesList from './pages/branches';
 import CreateBranch from './pages/CreateBranch';
 import PaymentMethodsList from './pages/PaymentMethodsList';
 import CreatePaymentMethod from './pages/CreatePaymentMethod';
+import OrderChannelTypesList from './pages/OrderChannelTypesList';
+import CreateOrderChannelType from './pages/CreateOrderChannelType';
 
 export const settingsRoutes: RouteObject[] = [
   {
@@ -30,6 +32,10 @@ export const settingsRoutes: RouteObject[] = [
       { path: 'branches/create', element: <CreateBranch /> },
       { path: 'branches/edit/:id', element: <CreateBranch /> },
       { path: 'payment-methods', element: <PaymentMethodsList /> },
+      { path: 'payment-methods/create', element: <CreatePaymentMethod /> },
+      { path: 'payment-methods/edit/:id', element: <CreatePaymentMethod /> },
+      { path: 'order-channel-types', element: <OrderChannelTypesList /> },
+      { path: 'order-channel-types/create', element: <CreateOrderChannelType /> },
     ]
   },
 ];
