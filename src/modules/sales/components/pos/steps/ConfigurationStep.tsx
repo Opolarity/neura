@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Tags, Warehouse, ArrowRight, RefreshCw } from "lucide-react";
+import { ArrowRight, RefreshCw } from "lucide-react";
 import type { PriceList } from "../../../types";
 
 interface ConfigurationStepProps {
@@ -35,9 +35,6 @@ export default function ConfigurationStep({
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Nueva Venta</h1>
-        <p className="text-gray-500 mt-1">
-          Configure los parametros iniciales para comenzar el proceso.
-        </p>
       </div>
 
       <Card className="mb-6">
@@ -51,12 +48,9 @@ export default function ConfigurationStep({
           <div className="grid grid-cols-2 gap-6">
             {/* Price List */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Tags className="w-4 h-4 text-blue-600" />
-                <Label className="text-xs font-medium text-gray-500 uppercase">
+              <Label className="text-xs font-medium text-gray-500 uppercase">
                   Lista de Precios
                 </Label>
-              </div>
               <Select value={selectedPriceList} onValueChange={setSelectedPriceList}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccione lista de precios..." />
@@ -69,25 +63,16 @@ export default function ConfigurationStep({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500">
-                Los descuentos y promociones se aplicaran segun esta seleccion.
-              </p>
             </div>
 
             {/* Warehouse (auto-assigned) */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Warehouse className="w-4 h-4 text-orange-600" />
-                <Label className="text-xs font-medium text-gray-500 uppercase">
+              <Label className="text-xs font-medium text-gray-500 uppercase">
                   Almacen de Despacho
                 </Label>
-              </div>
               <div className="h-10 px-3 py-2 border rounded-md bg-gray-50 flex items-center text-gray-600">
                 {userWarehouseName || "Sin almacen asignado"}
               </div>
-              <p className="text-xs text-gray-500">
-                Se validara el stock disponible en tiempo real en la ubicacion elegida.
-              </p>
             </div>
           </div>
 
