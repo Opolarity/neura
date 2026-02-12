@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Pause, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Pause, XCircle, RefreshCw } from "lucide-react";
 import type { POSStep } from "../../types/POS.types";
 
 interface POSWizardNavigationProps {
@@ -10,6 +10,7 @@ interface POSWizardNavigationProps {
   onNext: () => void;
   onBack: () => void;
   onFinalize: () => void;
+  onReset: () => void;
   onPause?: () => void;
   onCancel?: () => void;
 }
@@ -22,6 +23,7 @@ export default function POSWizardNavigation({
   onNext,
   onBack,
   onFinalize,
+  onReset,
   onPause,
   onCancel,
 }: POSWizardNavigationProps) {
@@ -44,6 +46,15 @@ export default function POSWizardNavigation({
               Volver
             </Button>
           )}
+          <Button
+            variant="ghost"
+            onClick={onReset}
+            className="gap-2"
+            disabled={saving}
+          >
+            <RefreshCw className="w-4 h-4" />
+            Restablecer
+          </Button>
         </div>
 
         {/* Center - Status info */}

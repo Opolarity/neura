@@ -16,12 +16,14 @@ interface ConfigurationStepProps {
   priceLists: PriceList[];
   userWarehouseName: string;
   onConfirm: (priceListId: string) => void;
+  onReset: () => void;
 }
 
 export default function ConfigurationStep({
   priceLists,
   userWarehouseName,
   onConfirm,
+  onReset,
 }: ConfigurationStepProps) {
   const [selectedPriceList, setSelectedPriceList] = useState<string>("");
 
@@ -77,7 +79,7 @@ export default function ConfigurationStep({
           </div>
 
           <div className="flex items-center justify-between mt-8 pt-6 border-t">
-            <Button variant="ghost" className="gap-2">
+            <Button variant="ghost" className="gap-2" onClick={onReset}>
               <RefreshCw className="w-4 h-4" />
               Restablecer
             </Button>
