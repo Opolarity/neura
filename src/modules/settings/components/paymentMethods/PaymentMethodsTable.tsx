@@ -42,11 +42,11 @@ const PaymentMethodsTable = ({ paymentMethods, loading }: PaymentMethodsTablePro
                                 <TableCell>
                                     {method.active ? (
                                         <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                                            <Check className="w-3 h-3 mr-1" /> Activo
+                                            Activo
                                         </Badge>
                                     ) : (
                                         <Badge variant="destructive">
-                                            <X className="w-3 h-3 mr-1" /> Inactivo
+                                            Inactivo
                                         </Badge>
                                     )}
                                 </TableCell>
