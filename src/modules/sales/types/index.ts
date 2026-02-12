@@ -41,6 +41,7 @@ export interface SaleProduct {
   stockTypeId: number; // tipo de inventario del que se descontará
   stockTypeName: string; // nombre del tipo de inventario
   maxStock: number; // stock disponible para este producto/almacén/tipo
+  isVariable: boolean; // indica si el producto es variable
 }
 
 export interface SalePayment {

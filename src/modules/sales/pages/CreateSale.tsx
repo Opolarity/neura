@@ -567,8 +567,13 @@ const CreateSale = () => {
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">
-                              {product.productName} (
-                              {product.variationName.replace(/ \/ /g, " - ")})
+                              {product.productName}
+                              {product.isVariable && (
+                                <>
+                                  {" "}
+                                  ({product.variationName.replace(/ \/ /g, " - ")})
+                                </>
+                              )}
                             </span>
                             <span className="text-sm text-muted-foreground">
                               {product.stockTypeName}
