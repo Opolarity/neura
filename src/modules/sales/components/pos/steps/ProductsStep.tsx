@@ -26,6 +26,7 @@ interface ProductsStepProps {
   pagination: PaginationMeta;
   onPageChange: (page: number) => void;
   priceListId: string;
+  total: number;
 }
 
 export default function ProductsStep({
@@ -39,6 +40,7 @@ export default function ProductsStep({
   onRemoveFromCart,
   pagination,
   priceListId,
+  total,
 }: ProductsStepProps) {
   const getProductPrice = (product: PaginatedProductVariation): number => {
     const priceEntry = product.prices.find(
@@ -260,6 +262,16 @@ export default function ProductsStep({
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Total acumulado */}
+            {cart.length > 0 && (
+              <div className="border-t pt-3 mt-3 flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">TOTAL</span>
+                <span className="text-lg font-bold text-blue-600">
+                  S/ {formatCurrency(total)}
+                </span>
               </div>
             )}
           </CardContent>
