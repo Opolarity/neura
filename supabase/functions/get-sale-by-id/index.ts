@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
       if (productIds.length > 0) {
         const { data: productsData } = await supabase
           .from("products")
-          .select("id, title")
+          .select("id, title, is_variable")
           .in("id", productIds);
         products = productsData || [];
       }
@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
     }
 
     // Build response with enriched product data
-    const productsMap = new Map(products.map((p) => [p.id, p.title]));
+    const productsMap = new Map(products.map((p) => [p.id, p]));
     const variationsMap = new Map(variations.map((v) => [v.id, v]));
     const termsMap = new Map(terms.map((t) => [t.id, t.name]));
     const stockMovementsMap = new Map(stockMovements.map((sm) => [sm.id, sm]));
@@ -189,7 +189,9 @@ Deno.serve(async (req) => {
 
     const enrichedProducts = (order.order_products || []).map((op: any) => {
       const variation = variationsMap.get(op.product_variation_id);
-      const productTitle = variation ? productsMap.get(variation.product_id) : "";
+      const productData = variation ? productsMap.get(variation.product_id) : null;
+      const productTitle = productData?.title || "";
+      const isVariable = productData?.is_variable ?? false;
       const variationTermNames = termsByVariation.get(op.product_variation_id) || [];
       const stockMovement = stockMovementsMap.get(op.stock_movement_id);
 
@@ -213,6 +215,7 @@ Deno.serve(async (req) => {
         stock_type_id: stockTypeId,
         stock_type_name: stockMovement?.stock_type_name || "",
         max_stock: currentStock,
+        is_variable: isVariable,
       };
     });
 
