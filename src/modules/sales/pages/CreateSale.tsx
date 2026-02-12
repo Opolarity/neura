@@ -74,7 +74,6 @@ import { formatCurrency, calculateLineSubtotal } from "../utils";
 import { useToast } from "@/hooks/use-toast";
 import { VoucherPreviewModal } from "../components/sales/VoucherPreviewModal";
 import { SalesHistoryModal } from "../components/SalesHistoryModal";
-import { SalesInvoicesModal } from "../components/SalesInvoicesModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 
@@ -155,7 +154,6 @@ const CreateSale = () => {
   } = useCreateSale();
 
   const [open, setOpen] = useState(false);
-  const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
   const [tempPriceListId, setTempPriceListId] = useState<string>("");
   const [voucherModalOpen, setVoucherModalOpen] = useState(false);
   const [selectedVoucherPreview, setSelectedVoucherPreview] = useState<
@@ -567,13 +565,8 @@ const CreateSale = () => {
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">
-                              {product.productName}
-                              {product.isVariable && (
-                                <>
-                                  {" "}
-                                  ({product.variationName.replace(/ \/ /g, " - ")})
-                                </>
-                              )}
+                              {product.productName} (
+                              {product.variationName.replace(/ \/ /g, " - ")})
                             </span>
                             <span className="text-sm text-muted-foreground">
                               {product.stockTypeName}
@@ -1061,61 +1054,30 @@ const CreateSale = () => {
              <CardHeader className="pb-2">
                <CardTitle className="text-lg">Estado del Pedido</CardTitle>
              </CardHeader>
-              <CardContent className="pb-2">
-                <div className="flex gap-2">
-                  <Select
-                    value={
-                      (() => {
-                        if (!orderSituation || !filteredSituations) return '';
-                        const sit = filteredSituations.find((s) => s.id.toString() === orderSituation);
-                        return sit?.statusName || '';
-                      })()
-                    }
-                    disabled
-                  >
-                    <SelectTrigger className="flex-1 opacity-70">
-                      <SelectValue placeholder="Estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(() => {
-                        const sit = filteredSituations.find((s) => s.id.toString() === orderSituation);
-                        const name = sit?.statusName || '';
-                        return name ? <SelectItem value={name}>{name}</SelectItem> : null;
-                      })()}
-                    </SelectContent>
-                  </Select>
-                  <Select value={orderSituation} onValueChange={setOrderSituation}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Seleccionar situación" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredSituations.map((s) => (
-                        <SelectItem key={s.id} value={s.id.toString()}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+             <CardContent className="pb-2">
+               <Select value={orderSituation} onValueChange={setOrderSituation}>
+                 <SelectTrigger>
+                   <SelectValue placeholder="Seleccionar estado" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {filteredSituations.map((s) => (
+                     <SelectItem key={s.id} value={s.id.toString()}>
+                       {s.name}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
              </CardContent>
-              <CardFooter>
-                {createdOrderId && (
-                  <div className="flex gap-4">
-                    <em
-                      className="italic text-sm underline cursor-pointer"
-                      onClick={() => setHistoryModalOpen(true)}
-                    >
-                      ver historial
-                    </em>
-                    <em
-                      className="italic text-sm underline cursor-pointer"
-                      onClick={() => setInvoicesModalOpen(true)}
-                    >
-                      ver comprobantes
-                    </em>
-                  </div>
-                )}
-              </CardFooter>
+             <CardFooter>
+               {createdOrderId && (
+                 <em
+                   className="italic text-sm underline cursor-pointer"
+                   onClick={() => setHistoryModalOpen(true)}
+                 >
+                   ver historial
+                 </em>
+               )}
+             </CardFooter>
            </Card>
 
           {/* Summary & Payment */}
@@ -1495,14 +1457,6 @@ const CreateSale = () => {
         open={historyModalOpen}
         onOpenChange={setHistoryModalOpen}
       />
-
-      {createdOrderId && (
-        <SalesInvoicesModal
-          orderId={createdOrderId}
-          open={invoicesModalOpen}
-          onOpenChange={setInvoicesModalOpen}
-        />
-      )}
     </div>
   );
 };

@@ -67,8 +67,6 @@ export const adaptSituations = (data: any[]): Situation[] => {
     name: item.name,
     code: item.code || null,
     order: item.order ?? null,
-    statusId: item.status_id ?? null,
-    statusName: item.statuses?.name ?? null,
   }));
 };
 
@@ -275,7 +273,6 @@ export const adaptSaleById = (data: any) => ({
     stockTypeId: p.stock_type_id,
     stockTypeName: p.stock_type_name,
     maxStock: p.max_stock,
-    isVariable: p.is_variable ?? false,
   })),
   payments: (data.payments || []).map((p: any) => ({
     id: crypto.randomUUID(),

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -29,12 +29,6 @@ interface SaleSidebarProps {
 export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onSituationChange, situations }: SaleSidebarProps) => {
   const { toast } = useToast();
   const [selectedSituation, setSelectedSituation] = useState<string>(externalSituation || '');
-
-  const currentStatusName = useMemo(() => {
-    if (!selectedSituation || !situations) return '';
-    const situation = situations.find((s: any) => s.id.toString() === selectedSituation);
-    return situation?.statusName || '';
-  }, [selectedSituation, situations]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState('');
   const [loadingNotes, setLoadingNotes] = useState(false);
@@ -242,30 +236,18 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
           <CardTitle className="text-lg">Estado del Pedido</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
-            <Select value={currentStatusName} disabled>
-              <SelectTrigger className="flex-1 opacity-70">
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                {currentStatusName && (
-                  <SelectItem value={currentStatusName}>{currentStatusName}</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-            <Select value={selectedSituation} onValueChange={handleSituationChange}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Seleccionar situación" />
-              </SelectTrigger>
-              <SelectContent>
-                {situations?.map((situation) => (
-                  <SelectItem key={situation.id} value={situation.id.toString()}>
-                    {situation.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={selectedSituation} onValueChange={handleSituationChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar estado" />
+            </SelectTrigger>
+            <SelectContent>
+              {situations?.map((situation) => (
+                <SelectItem key={situation.id} value={situation.id.toString()}>
+                  {situation.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 

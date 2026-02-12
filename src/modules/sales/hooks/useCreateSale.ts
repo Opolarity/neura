@@ -119,7 +119,6 @@ export const useCreateSale = () => {
   const [currentPayment, setCurrentPayment] =
     useState<SalePayment>(createEmptyPayment());
   const [orderSituation, setOrderSituation] = useState<string>("");
-  const [originalSituation, setOriginalSituation] = useState<string>(""); // situation from server, used for filtering
   const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
 
   // Dropdown data
@@ -329,21 +328,20 @@ export const useCreateSale = () => {
     return currentStatusCode === "COM";
   }, [currentStatusCode]);
 
-  // Computed: Filter situations - show current + those with order > original situation's order
+  // Computed: Filter situations to only show those with order >= current situation's order
   const filteredSituations = useMemo(() => {
     if (!salesData?.situations) return [];
-    // In create mode (no originalSituation), show all
-    if (!originalSituation) return salesData.situations;
+    if (!orderSituation) return salesData.situations;
     
-    const serverSituation = salesData.situations.find(
-      (s) => s.id.toString() === originalSituation,
+    const currentSituation = salesData.situations.find(
+      (s) => s.id.toString() === orderSituation,
     );
-    if (!serverSituation || serverSituation.order == null) return salesData.situations;
+    if (!currentSituation || currentSituation.order == null) return salesData.situations;
     
     return salesData.situations.filter(
-      (s) => s.order != null && (s.id.toString() === originalSituation || s.order > serverSituation.order),
+      (s) => s.order != null && s.order >= currentSituation.order,
     );
-  }, [originalSituation, salesData?.situations]);
+  }, [orderSituation, salesData?.situations]);
 
   // Load form data from API
   const loadFormData = async () => {
@@ -510,7 +508,6 @@ export const useCreateSale = () => {
           : [createEmptyPayment()]
       );
       setOrderSituation(adapted.currentSituation);
-      setOriginalSituation(adapted.currentSituation);
       setCurrentStatusCode(adapted.currentStatusCode || "");
       setClientFound(true);
       setCreatedOrderId(id);
@@ -618,8 +615,7 @@ export const useCreateSale = () => {
         customerLastname: "",
         customerLastname2: "",
       }));
-      setClientFound(true);
-      setIsExistingClient(true);
+      setClientFound(false);
     }
   }, []);
 
@@ -912,7 +908,6 @@ export const useCreateSale = () => {
         stockTypeId: parseInt(selectedStockTypeId),
         stockTypeName,
         maxStock: availableStock,
-        isVariable: selectedVariation.terms.length > 0,
       },
     ]);
 
@@ -1021,7 +1016,7 @@ export const useCreateSale = () => {
         const orderData = {
           documentType: isAnonymousPurchase ? "0" : formData.documentType,
           documentNumber: isAnonymousPurchase ? " " : formData.documentNumber,
-          customerName: formData.customerName,
+          customerName: isAnonymousPurchase ? null : formData.customerName,
           customerLastname: isAnonymousPurchase ? null : formData.customerLastname,
           customerLastname2: isAnonymousPurchase ? null : (formData.customerLastname2 || null),
           email: formData.email || null,

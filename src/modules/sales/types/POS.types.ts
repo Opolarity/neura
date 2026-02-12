@@ -104,7 +104,6 @@ export interface POSCartItem {
   stockTypeName: string;
   maxStock: number;
   imageUrl: string | null;
-  isVariable: boolean;
 }
 
 // =============================================

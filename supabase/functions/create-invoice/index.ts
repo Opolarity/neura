@@ -46,9 +46,8 @@ serve(async (req) => {
       .insert({
         invoice_type_id: input.invoice_type_id,
         serie: input.serie || null,
+        account_id: input.account_id,
         total_amount: input.total_amount,
-        customer_document_number: input.customer_document_number || " ",
-        customer_document_type_id: input.customer_document_type_id || 0,
         created_by: user.id,
       })
       .select("id")
