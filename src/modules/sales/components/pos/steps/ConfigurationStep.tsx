@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, RefreshCw } from "lucide-react";
+import { Tags, Warehouse, ArrowRight, RefreshCw } from "lucide-react";
 import type { PriceList } from "../../../types";
 
 interface ConfigurationStepProps {
