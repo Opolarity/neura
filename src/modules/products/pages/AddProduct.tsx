@@ -479,49 +479,49 @@ const AddProduct = () => {
                 </div>
                 
                 <div className="border rounded-lg overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="min-w-[150px] sticky left-0 bg-background">Variación</TableHead>
-                        {warehouses.map(wh => (
-                          <TableHead key={wh.id} className="text-center min-w-[120px]">
-                            {wh.name}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {variations.map(variation => (
-                        <TableRow key={variation.id}>
-                          <TableCell className="font-medium sticky left-0 bg-background">
-                            <div className="flex flex-col">
-                              <span>{getVariationLabel(variation)}</span>
-                              {variationSkus[variation.id] && (
-                                <span className="text-xs text-muted-foreground">
-                                  SKU: {variationSkus[variation.id]}
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          {warehouses.map(wh => {
-                            const stockValue = getStockForType(variation, wh.id, selectedStockType);
-                            return (
-                              <TableCell key={wh.id} className="p-2">
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  value={stockValue ?? ''}
-                                  onChange={(e) => updateVariationStock(variation.id, wh.id, e.target.value, selectedStockType || undefined)}
-                                  className="h-8 text-sm"
-                                />
-                              </TableCell>
-                            );
-                          })}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                   <Table>
+                     <TableHeader>
+                       <TableRow>
+                         <TableHead className="min-w-[150px] sticky left-0 bg-background">Variación</TableHead>
+                         {warehouses.filter(wh => wh.is_active).map(wh => (
+                           <TableHead key={wh.id} className="text-center min-w-[120px]">
+                             {wh.name}
+                           </TableHead>
+                         ))}
+                       </TableRow>
+                     </TableHeader>
+                     <TableBody>
+                       {variations.map(variation => (
+                         <TableRow key={variation.id}>
+                           <TableCell className="font-medium sticky left-0 bg-background">
+                             <div className="flex flex-col">
+                               <span>{getVariationLabel(variation)}</span>
+                               {variationSkus[variation.id] && (
+                                 <span className="text-xs text-muted-foreground">
+                                   SKU: {variationSkus[variation.id]}
+                                 </span>
+                               )}
+                             </div>
+                           </TableCell>
+                           {warehouses.filter(wh => wh.is_active).map(wh => {
+                             const stockValue = getStockForType(variation, wh.id, selectedStockType);
+                             return (
+                               <TableCell key={wh.id} className="p-2">
+                                 <Input
+                                   type="number"
+                                   placeholder="0"
+                                   value={stockValue ?? ''}
+                                   onChange={(e) => updateVariationStock(variation.id, wh.id, e.target.value, selectedStockType || undefined)}
+                                   className="h-8 text-sm"
+                                 />
+                               </TableCell>
+                             );
+                           })}
+                         </TableRow>
+                       ))}
+                     </TableBody>
+                   </Table>
+                 </div>
               </TabsContent>
 
               {/* Images Tab */}
