@@ -331,8 +331,8 @@ const AddProduct = () => {
             <div className="space-y-4">
               <Label className="text-base font-semibold">Atributos del producto</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {termGroups.map(group => {
-                  const groupTerms = terms.filter(term => term.term_group_id === group.id);
+                {termGroups.filter(g => g.is_active !== false).map(group => {
+                  const groupTerms = terms.filter(term => term.term_group_id === group.id && term.is_active !== false);
                   const selectedGroupTerms = selectedTerms[group.id] || [];
                   
                   return (
