@@ -11,7 +11,7 @@ export const useEcommerceSso = () => {
     setLoading(true);
     try {
       const { token } = await generateSSOToken();
-      window.location.href = `${ECOMMERCE_SSO_URL}?token=${token}`;
+      window.open(`${ECOMMERCE_SSO_URL}?token=${token}`, '_blank');
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Error al redirigir al ecommerce";
