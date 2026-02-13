@@ -3448,6 +3448,41 @@ export type Database = {
           },
         ]
       }
+      visual_edits_medios: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: number
+          mimetype: string | null
+          name: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          mimetype?: string | null
+          name: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          mimetype?: string | null
+          name?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visual_edits_medios_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+        ]
+      }
       warehouses: {
         Row: {
           address: string
@@ -3898,6 +3933,10 @@ export type Database = {
           p_user?: number
           p_warehouse?: number
         }
+        Returns: Json
+      }
+      sp_get_stock_types: {
+        Args: { p_page?: number; p_size?: number }
         Returns: Json
       }
       sp_get_terms: {
