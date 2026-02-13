@@ -16,7 +16,7 @@ const DashboardLayout = () => {
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar isOpen={sidebarOpen} />
       <div
-        className={`flex-1 transition-all duration-300 ${
+        className={`flex-1 min-w-0 transition-all duration-300 ${
           sidebarOpen ? "ml-64" : "ml-16"
         }`}
       >
@@ -24,7 +24,7 @@ const DashboardLayout = () => {
           toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           onSignOut={handleSignOut}
         />
-        <main className="p-6">
+        <main className="p-6 min-w-0 overflow-hidden">
           <Outlet />
         </main>
       </div>
