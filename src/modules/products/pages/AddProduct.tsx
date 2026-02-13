@@ -320,11 +320,11 @@ const AddProduct = () => {
       </div>
 
       {/* Variation Details Card - Full Width */}
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle>{isVariable ? 'Detalles de variaciones' : 'Detalles del producto'}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 min-w-0">
           
           {/* Attributes Section (only for variable products) */}
           {isVariable && (
