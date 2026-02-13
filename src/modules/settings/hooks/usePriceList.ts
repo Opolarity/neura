@@ -1,24 +1,86 @@
 import { useQuery } from "@tanstack/react-query";
-import { getPriceLists } from "../services/PriceList.service";
+import {
+  createPriceListApi,
+  deletePriceListApi,
+  getPriceLists,
+  updatePriceListApi,
+} from "../services/PriceList.service";
 import { useEffect, useState } from "react";
-import { PriceList, PriceListFilters } from "../types/PriceList.types";
+import {
+  PriceList,
+  PriceListFilters,
+  PriceListPayload,
+} from "../types/PriceList.types";
 import { getPriceListsAdapter } from "../adapters/PriceList.adapter";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
+import { toast } from "sonner";
 
 export const usePriceList = () => {
   const [priceLists, setPriceLists] = useState<PriceList[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [openFormModal, setOpenFormModal] = useState(false);
   const [filters, setFilters] = useState<PriceListFilters>({
     page: 1,
     size: 20,
   });
   const [pagination, setPagination] = useState<PaginationState>({
-    p_page: null,
-    p_size: null,
+    p_page: 1,
+    p_size: 20,
     total: null,
   });
 
-  const loadInitial = async () => {
+  const savePriceList = async (newPriceList: PriceListPayload) => {
+    setSaving(true);
+    try {
+      const isUpdate = newPriceList?.id != null;
+
+      isUpdate
+        ? await updatePriceListApi(newPriceList)
+        : await createPriceListApi(newPriceList);
+
+      await load();
+      toast.success(
+        isUpdate
+          ? "Precio de Lista actualizado correctamente"
+          : "Precio de Lista creado correctamente",
+      );
+    } catch (error) {
+      console.error(error);
+      toast.error("Precio de Lista no creado");
+    } finally {
+      setSaving(false);
+      setOpenFormModal(false);
+    }
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpenFormModal(isOpen);
+  };
+
+  const deletePriceList = async (id: number) => {
+    try {
+      await deletePriceListApi(id);
+      await load();
+      toast.success("Precio de Lista eliminado correctamente");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const load = async (newFilters?: PriceListFilters): Promise<void> => {
+    try {
+      const priceListsRes = newFilters
+        ? await getPriceLists(newFilters)
+        : await getPriceLists(filters);
+      const { data, pagination } = getPriceListsAdapter(priceListsRes);
+      setPriceLists(data);
+      setPagination(pagination);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const loadInitial = async (): Promise<void> => {
     setLoading(true);
     try {
       const priceListsRes = await getPriceLists(filters);
@@ -31,12 +93,42 @@ export const usePriceList = () => {
     }
   };
 
+  // Pagination
+  const handlePageChange = async (page: number) => {
+    const newFilters: PriceListFilters = { ...filters, page };
+    await load(newFilters);
+
+    setPagination((prev) => ({ ...prev, p_page: page }));
+    setFilters((prev) => {
+      const newFilters = { ...prev, page };
+      return newFilters;
+    });
+  };
+
+  const handlePageSizeChange = async (size: number) => {
+    const newFilters: PriceListFilters = { ...filters, size, page: 1 };
+    await load(newFilters);
+    setPagination((prev) => ({ ...prev, p_size: size, p_page: 1 }));
+    setFilters((prev) => {
+      const newFilters = { ...prev, size, page: 1 };
+      return newFilters;
+    });
+  };
+
   useEffect(() => {
     loadInitial();
   }, []);
 
   return {
     priceLists,
+    openFormModal,
     loading,
+    saving,
+    pagination,
+    savePriceList,
+    deletePriceList,
+    handleOpenChange,
+    handlePageChange,
+    handlePageSizeChange,
   };
 };
