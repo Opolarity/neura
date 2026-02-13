@@ -17,7 +17,7 @@ interface PriceListFormDialogProps {
   onOpenChange: (open: boolean) => void;
   item: PriceList | null;
   saving: boolean;
-  onSaved: (newPriceList: PriceListPayload) => void;
+  onSaved: (newPriceList: PriceListPayload) => Promise<void>;
 }
 
 export const PriceListFormDialog = ({
@@ -43,9 +43,19 @@ export const PriceListFormDialog = ({
         },
   });
 
-  const onSubmit = (data: PriceListPayload) => {
-    console.log(data);
-    onSaved(data);
+  const onSubmit = async (newPriceList: PriceListPayload) => {
+    console.log(newPriceList);
+    let payload: PriceListPayload = {
+      name: newPriceList.name,
+      code: newPriceList.code,
+      location: newPriceList.location,
+      web: newPriceList.web,
+    };
+    if (item?.id) {
+      payload.id = item.id;
+    }
+    await onSaved(payload);
+
     reset({
       name: "",
       code: "",

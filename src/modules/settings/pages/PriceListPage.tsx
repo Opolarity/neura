@@ -34,6 +34,8 @@ const PriceListPage = () => {
     savePriceList,
     deletePriceList,
     handleOpenChange,
+    handlePageChange,
+    handlePageSizeChange,
   } = usePriceList();
 
   const [editingItem, setEditingItem] = useState<PriceList | null>(null);
@@ -154,8 +156,8 @@ const PriceListPage = () => {
         <CardFooter>
           <PaginationBar
             pagination={pagination}
-            onPageChange={() => {}}
-            onPageSizeChange={() => {}}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
           />
         </CardFooter>
       </Card>

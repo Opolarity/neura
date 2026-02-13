@@ -35,6 +35,17 @@ export const createPriceListApi = async (newPriceList: PriceListPayload) => {
   return data;
 };
 
+export const updatePriceListApi = async (newPriceList: PriceListPayload) => {
+  const { data, error } = await supabase.functions.invoke("update-price-list", {
+    method: "POST",
+    body: newPriceList,
+  });
+
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data;
+};
+
 export const deletePriceListApi = async (id: number) => {
   const { data, error } = await supabase.functions.invoke("delete-price-list", {
     body: { id },

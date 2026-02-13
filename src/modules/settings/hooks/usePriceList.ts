@@ -3,6 +3,7 @@ import {
   createPriceListApi,
   deletePriceListApi,
   getPriceLists,
+  updatePriceListApi,
 } from "../services/PriceList.service";
 import { useEffect, useState } from "react";
 import {
@@ -32,9 +33,18 @@ export const usePriceList = () => {
   const savePriceList = async (newPriceList: PriceListPayload) => {
     setSaving(true);
     try {
-      await createPriceListApi(newPriceList);
+      const isUpdate = newPriceList?.id != null;
+
+      isUpdate
+        ? await updatePriceListApi(newPriceList)
+        : await createPriceListApi(newPriceList);
+
       await load();
-      toast.success("Precio de Lista creado correctamente");
+      toast.success(
+        isUpdate
+          ? "Precio de Lista actualizado correctamente"
+          : "Precio de Lista creado correctamente",
+      );
     } catch (error) {
       console.error(error);
       toast.error("Precio de Lista no creado");
@@ -57,22 +67,11 @@ export const usePriceList = () => {
       console.error(error);
     }
   };
-  //REPENSAR LÓGICA DE FILTROS FALLARÁ
-
-  const loadFilters = async (filter: number): Promise<void> => {
+  const load = async (newFilters?: PriceListFilters): Promise<void> => {
     try {
-      const priceListsRes = await getPriceLists({ ...filters, page: filter });
-      const { data, pagination } = getPriceListsAdapter(priceListsRes);
-      setPriceLists(data);
-      setPagination(pagination);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const load = async (): Promise<void> => {
-    try {
-      const priceListsRes = await getPriceLists(filters);
+      const priceListsRes = newFilters
+        ? await getPriceLists(newFilters)
+        : await getPriceLists(filters);
       const { data, pagination } = getPriceListsAdapter(priceListsRes);
       setPriceLists(data);
       setPagination(pagination);
@@ -95,8 +94,9 @@ export const usePriceList = () => {
   };
 
   // Pagination
-  const onPageChange = async (page: number) => {
-    await loadFilters(page);
+  const handlePageChange = async (page: number) => {
+    const newFilters: PriceListFilters = { ...filters, page };
+    await load(newFilters);
 
     setPagination((prev) => ({ ...prev, p_page: page }));
     setFilters((prev) => {
@@ -106,7 +106,8 @@ export const usePriceList = () => {
   };
 
   const handlePageSizeChange = async (size: number) => {
-    await loadFilters(size);
+    const newFilters: PriceListFilters = { ...filters, size, page: 1 };
+    await load(newFilters);
     setPagination((prev) => ({ ...prev, p_size: size, p_page: 1 }));
     setFilters((prev) => {
       const newFilters = { ...prev, size, page: 1 };
@@ -127,5 +128,7 @@ export const usePriceList = () => {
     savePriceList,
     deletePriceList,
     handleOpenChange,
+    handlePageChange,
+    handlePageSizeChange,
   };
 };
