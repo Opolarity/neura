@@ -1,87 +1,143 @@
 
-# Plan: Boton "Editar Ecommerce" con SSO Token
+## Galería de Medios - Plan Actualizado
 
-## Resumen
-Agregar un boton "Editar Ecommerce" en el Header que genera un JWT SSO temporal (60s) en backend y redirige al ecommerce.
+### Resumen
+Crear un módulo completo de galería de medios que permita subir, visualizar y gestionar fotos y videos. Los archivos se almacenarán en el bucket "ecommerce" bajo la carpeta "medios/", y los metadatos se guardarán en la tabla existente `visual_edits_medios`.
 
-## 1. Secret: ECOMMERCE_SSO_SECRET
-- Se necesita un secret para firmar el JWT con HS256.
-- Se solicitara al usuario mediante la herramienta de secrets.
-- Este secret debe ser el mismo que usa el proyecto Ecommerce para validar el token.
+**Actualización importante**: La tabla `visual_edits_medios` ya existe en la base de datos, por lo que solo necesitamos implementar la interfaz y la lógica. La ruta será `/medios` (no `/ecommerce/media`).
 
-## 2. Edge Function: `generate-sso-token`
-- Ruta: `supabase/functions/generate-sso-token/index.ts`
-- Configuracion en `config.toml`: `verify_jwt = false`
-- Validacion manual del JWT del usuario via `getClaims()`
-- Genera un JWT HS256 con los campos:
-  - `sub`: user ID del usuario autenticado
-  - `role`: rol obtenido de la tabla `user_roles` / `roles`
-  - `iss`: "neura"
-  - `aud`: "ecommerce"
-  - `exp`: now + 60 segundos
-  - `jti`: UUID unico
-- Retorna `{ token: "..." }` al frontend
-- Usa `ECOMMERCE_SSO_SECRET` de Deno.env
+---
 
-## 3. Frontend (arquitectura por capas)
+### 1. Estructura de Archivos a Crear
 
-### 3a. Tipos: `src/modules/ecommerce/types/sso.types.ts`
+Se crearán los siguientes archivos dentro de `src/modules/ecommerce/`:
+
+**Types:**
+- `types/medios.types.ts` - Tipos TypeScript para el medio (id, name, url, mimetype, created_at, created_by)
+
+**Services:**
+- `services/medios.service.ts` - Funciones para:
+  - `uploadMedio()`: sube el archivo al bucket `ecommerce/medios/{uuid}-{filename}` e inserta el registro en `visual_edits_medios`
+  - `getMedios()`: obtiene la lista de medios del usuario autenticado
+  - `deleteMedio()`: elimina el registro y el archivo del storage
+
+**Hooks:**
+- `hooks/useMedios.ts` - Hook con estado de carga, lista de medios, y funciones de subida/eliminación
+
+**Components:**
+- `components/MediaDropzone.tsx` - Componente de arrastrar y soltar (drag & drop) que acepta imagenes (`image/*`) y videos (`video/*`)
+- `components/MediaGrid.tsx` - Grilla responsive que muestra los medios subidos como tarjetas con miniatura
+- `components/MediaDetailDialog.tsx` - Dialog que al hacer clic en un medio muestra su previsualizacion, URL publica y opciones
+
+**Pages:**
+- `pages/MediaGalleryPage.tsx` - Página principal que compone header, dropzone y grilla
+
+**Routing:**
+- `ecommerce.routes.ts` - Define la ruta `/medios` como ruta principal del módulo
+
+---
+
+### 2. Configuración de la Ruta
+
+La nueva ruta `/medios` se registrará en `src/app/routes/index.tsx` importando `ecommerceRoutes`:
+
 ```typescript
-export interface SSOTokenResponse {
-  token: string;
-}
+import { ecommerceRoutes } from "@/modules/ecommerce";
 ```
 
-### 3b. Servicio: `src/modules/ecommerce/services/sso.service.ts`
-- Llama a la edge function `generate-sso-token` usando `supabase.functions.invoke`
-- Retorna el token
+Y agregándola en el array de rutas dentro del ProtectedLayout:
 
-### 3c. Hook: `src/modules/ecommerce/hooks/useEcommerceSso.ts`
-- Maneja estado `loading` y `error`
-- Funcion `redirectToEcommerce()`:
-  1. Llama al servicio
-  2. Redirige a `https://localhost:3000/sso?token=JWT`
-  3. Maneja errores con toast
+```typescript
+...ecommerceRoutes,
+```
 
-### 3d. Header: `src/components/layout/Header.tsx`
-- Agrega boton "Editar Ecommerce" a la izquierda del icono de notificaciones (Bell)
-- Icono: `ExternalLink` de lucide-react
-- Muestra spinner durante loading
-- Usa el hook `useEcommerceSso`
+---
 
-## 4. Estructura de archivos nuevos
+### 3. Estructura de la Interfaz
 
-```text
+**Dropzone:**
+- Zona con borde punteado y fondo ligero
+- Ícono de subida (upload from `lucide-react`)
+- Texto: "Arrastra y suelta archivos aqui o haz clic para seleccionar"
+- Acepta `image/*` y `video/*`
+- Muestra progreso durante la subida
+
+**Grilla de medios:**
+- Cards responsive en grid (3-4 columnas en desktop, 2 en tablet, 1 en mobile)
+- Cada tarjeta muestra:
+  - Miniatura/preview (imagen renderizada, ícono de video para videos)
+  - Nombre del archivo truncado
+  - Fecha de creación formateada (DD/MM/YYYY)
+  - Botón para eliminar (hover)
+- Clic abre el MediaDetailDialog
+
+**Dialog de Detalle:**
+- Preview del medio (imagen renderizada o video con reproductor)
+- Campo de texto con URL pública y botón "Copiar al portapapeles"
+- Información: nombre, tipo MIME, fecha creada
+- Botón para eliminar el medio con confirmación
+
+---
+
+### 4. Detalles Técnicos
+
+**Upload y Storage:**
+- Archivos se suben con: `supabase.storage.from('ecommerce').upload('medios/{uuid}-{filename}', file)`
+- URL pública se obtiene con: `supabase.storage.from('ecommerce').getPublicUrl(path)`
+- El nombre de archivo incluye UUID para garantizar unicidad
+
+**Base de datos:**
+- La tabla `visual_edits_medios` ya existe con columnas: id, name, url, mimetype, created_at, created_by
+- El RLS debe permitir que usuarios autenticados vean/creen/eliminen solo sus propios medios
+
+**Patrones del Proyecto:**
+- Servicios en `services/` con funciones que usan `supabase` client
+- Hooks en `hooks/` que manejan estado con `useState`/`useEffect` y usan React Query
+- Componentes en `components/` usando componentes shadcn/ui (Card, Dialog, Button, etc.)
+- Ícones de `lucide-react`
+
+---
+
+### 5. Archivo de Índice (index.ts)
+
+Se actualizará o creará `src/modules/ecommerce/index.ts` para exportar:
+- `ecommerceRoutes` desde las rutas
+- Componentes principales si es necesario
+
+---
+
+### 6. Validación de RLS
+
+Antes de implementar, se verificará que existan políticas RLS en `visual_edits_medios` que:
+- Permitan a usuarios autenticados ver/crear sus propios medios
+- Permitan a usuarios autenticados eliminar sus propios medios
+- Usen `auth.uid() = created_by` como condición
+
+Si no existen, se crearán en una migración SQL.
+
+---
+
+### Resumen de Archivos a Crear
+
+```
 src/modules/ecommerce/
-  types/sso.types.ts
-  services/sso.service.ts
-  hooks/useEcommerceSso.ts
-
-supabase/functions/generate-sso-token/
-  index.ts
+├── types/
+│   └── medios.types.ts (nuevo)
+├── services/
+│   └── medios.service.ts (nuevo)
+├── hooks/
+│   ├── useEcommerceSso.ts (existente)
+│   └── useMedios.ts (nuevo)
+├── components/
+│   ├── MediaDropzone.tsx (nuevo)
+│   ├── MediaGrid.tsx (nuevo)
+│   └── MediaDetailDialog.tsx (nuevo)
+├── pages/
+│   └── MediaGalleryPage.tsx (nuevo)
+├── ecommerce.routes.ts (nuevo)
+└── index.ts (nuevo o actualizado)
 ```
 
-## Seccion Tecnica
+**Archivos a Modificar:**
+- `src/app/routes/index.tsx` - Agregar importación y registro de `ecommerceRoutes`
 
-### Edge Function - Pseudocodigo
-```typescript
-// 1. CORS headers
-// 2. Validar auth con getClaims()
-// 3. Consultar rol del usuario desde user_roles/roles
-// 4. Firmar JWT HS256 con jose library (disponible en Deno)
-// 5. Retornar { token }
-```
-
-### Dependencia Deno para JWT
-Se usara `jose` importado desde `https://deno.land/x/jose/` o el modulo nativo de Deno para firmar HS256.
-
-### URL de redireccion
-Se usara `https://localhost:3000/sso?token=JWT` como URL base. Esta puede ser parametrizada despues como variable de entorno si se necesita.
-
-### Flujo
-
-```text
-[Click boton] -> [Hook llama servicio] -> [Servicio invoca edge function]
--> [Edge function valida sesion, consulta rol, firma JWT]
--> [Retorna token] -> [Hook redirige con window.location.href]
-```
