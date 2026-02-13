@@ -15,7 +15,7 @@ export interface OrderChannelTypesApiResponse {
     };
   };
 }
-
+//eliminar este comentario
 export interface OrderChannelTypesFilters {
   page: number;
   size: number;
