@@ -1,4 +1,4 @@
-import { Edit, Link, Shield, Trash2, UserCheck } from 'lucide-react';
+import { Edit, Link, Shield, Trash2, UserCheck, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -27,8 +27,11 @@ const RolesTable = ({ roles, loading, handleDeleteRole, handleEditRole }: RolesT
                 {
                     loading ? (
                         <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground">
-                                Cargando roles...
+                            <TableCell colSpan={5} className="text-center py-8">
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Cargando roles...
+                                </div>
                             </TableCell>
                         </TableRow>
                     ) : roles.length === 0 ? (

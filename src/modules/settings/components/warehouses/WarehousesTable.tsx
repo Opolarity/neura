@@ -1,4 +1,4 @@
-import { Edit, Trash2, } from 'lucide-react';
+import { Edit, Trash2, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,8 +31,11 @@ const WarehousesTable = ({ warehouses, loading, handleDeleteWarehouse }: Warehou
                 {
                     loading ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center text-muted-foreground">
-                                Cargando almacenes...
+                            <TableCell colSpan={8} className="text-center py-8">
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Cargando almacenes...
+                                </div>
                             </TableCell>
                         </TableRow>
                     ) : warehouses.length === 0 ? (

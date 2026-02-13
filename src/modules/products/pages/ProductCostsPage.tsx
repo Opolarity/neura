@@ -41,13 +41,7 @@ const ProductCosts = () => {
     onApplyFilter,
   } = useProductCosts();
 
-  if (loading && !products.length) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+
 
   return (
     <div className="space-y-6">
@@ -138,30 +132,47 @@ const ProductCosts = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((item) => (
-                <TableRow key={item.variation_id}>
-                  <TableCell className="font-mono text-sm">
-                    {item.sku}
-                  </TableCell>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {item.term}
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={getCostValue(item.variation_id, item.cost)}
-                      onChange={(e) =>
-                        handleCostChange(item.variation_id, e.target.value)
-                      }
-                      onWheel={(e) => e.currentTarget.blur()}
-                      disabled={!isEditing}
-                      className="w-32 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Cargando costos de productos...
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : products.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                    No se encontraron productos
+                  </TableCell>
+                </TableRow>
+              ) : (
+                products.map((item) => (
+                  <TableRow key={item.variation_id}>
+                    <TableCell className="font-mono text-sm">
+                      {item.sku}
+                    </TableCell>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {item.term}
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={getCostValue(item.variation_id, item.cost)}
+                        onChange={(e) =>
+                          handleCostChange(item.variation_id, e.target.value)
+                        }
+                        onWheel={(e) => e.currentTarget.blur()}
+                        disabled={!isEditing}
+                        className="w-32 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -6,47 +6,45 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { OrderChannelType } from "../../types/OrderChannelTypes.types";
+import { StockType } from "../../types/StockTypes.types";
 import { Loader2 } from "lucide-react";
 
-interface OrderChannelTypesTableProps {
-    orderChannelTypes: OrderChannelType[];
+interface StockTypesTableProps {
+    stockTypes: StockType[];
     loading: boolean;
 }
 
-const OrderChannelTypesTable = ({ orderChannelTypes, loading }: OrderChannelTypesTableProps) => {
+const StockTypesTable = ({ stockTypes, loading }: StockTypesTableProps) => {
     return (
         <div className="rounded-md border">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[100px]">ID</TableHead>
+                        <TableHead>ID</TableHead>
                         <TableHead>Nombre</TableHead>
-                        <TableHead>Código</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {loading ? (
                         <TableRow>
-                            <TableCell colSpan={3} className="text-center py-8">
+                            <TableCell colSpan={2} className="text-center py-8">
                                 <div className="flex items-center justify-center gap-2">
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                    Cargando tipos de canales...
+                                    Cargando tipos de stock...
                                 </div>
                             </TableCell>
                         </TableRow>
-                    ) : orderChannelTypes.length === 0 ? (
+                    ) : stockTypes.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
-                                No hay tipos de canales de pedido registrados.
+                            <TableCell colSpan={2} className="text-center h-24 text-muted-foreground">
+                                No hay tipos de stock
                             </TableCell>
                         </TableRow>
                     ) : (
-                        orderChannelTypes.map((type) => (
+                        stockTypes.map((type) => (
                             <TableRow key={type.id}>
-                                <TableCell className="font-medium">{type.id}</TableCell>
+                                <TableCell>{type.id}</TableCell>
                                 <TableCell>{type.name}</TableCell>
-                                <TableCell>{type.code}</TableCell>
                             </TableRow>
                         ))
                     )}
@@ -56,6 +54,4 @@ const OrderChannelTypesTable = ({ orderChannelTypes, loading }: OrderChannelType
     );
 };
 
-export default OrderChannelTypesTable;
-
-
+export default StockTypesTable;

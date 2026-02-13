@@ -6,6 +6,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -119,24 +120,7 @@ const AttributesPage = () => {
     setDeleteConfirmation(null);
   };
 
-  const renderSkeletonRows = () => {
-    return Array.from({ length: 8 }).map((_, index) => (
-      <TableRow key={`skeleton-${index}`}>
-        <TableCell>
-          <Skeleton className="h-5 w-40" />
-        </TableCell>
-        <TableCell>
-          <Skeleton className="h-5 w-20" />
-        </TableCell>
-        <TableCell>
-          <Skeleton className="h-5 w-24" />
-        </TableCell>
-        <TableCell>
-          <Skeleton className="h-8 w-20" />
-        </TableCell>
-      </TableRow>
-    ));
-  };
+
 
   return (
     <div className="space-y-6">
@@ -169,7 +153,14 @@ const AttributesPage = () => {
             </TableHeader>
             <TableBody>
               {loading ? (
-                renderSkeletonRows()
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Cargando atributos...
+                    </div>
+                  </TableCell>
+                </TableRow>
               ) : attributes.length === 0 ? (
                 <TableRow>
                   <TableCell

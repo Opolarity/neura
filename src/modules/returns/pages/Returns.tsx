@@ -4,20 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useReturns } from '../hooks/useReturns';
 import { ReturnsTable } from '../components/returns/ReturnsTable';
+import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 
 const Returns = () => {
   const navigate = useNavigate();
-  const { returns, loading, formatDate, formatCurrency } = useReturns();
+  const {
+    returns,
+    loading,
+    pagination,
+    handlePageChange,
+    handlePageSizeChange,
+    formatDate,
+    formatCurrency
+  } = useReturns();
 
-  if (loading) {
-    return (
-      <div className="p-6">
-        <div className="flex justify-center items-center h-64">
-          <p className="text-muted-foreground">Cargando devoluciones...</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="p-6">
@@ -34,17 +35,22 @@ const Returns = () => {
         </Button>
       </div>
 
-      {returns.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No hay devoluciones registradas</p>
-        </div>
-      ) : (
+      <div className="space-y-4">
         <ReturnsTable
           returns={returns}
+          loading={loading}
           formatDate={formatDate}
           formatCurrency={formatCurrency}
         />
-      )}
+
+        {!loading && returns.length > 0 && (
+          <PaginationBar
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        )}
+      </div>
     </div>
   );
 };

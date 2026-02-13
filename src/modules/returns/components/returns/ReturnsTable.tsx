@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -10,17 +11,18 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, SquarePen } from 'lucide-react';
+import { Eye, SquarePen, Loader2 } from 'lucide-react';
 import { ReturnItem } from '../../types/Returns.types';
 
 
 interface ReturnsTableProps {
     returns: ReturnItem[];
+    loading: boolean;
     formatDate: (date: string) => string;
     formatCurrency: (amount: number | null) => string;
 }
 
-export const ReturnsTable = ({ returns, formatDate, formatCurrency }: ReturnsTableProps) => {
+export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency }: ReturnsTableProps) => {
     const navigate = useNavigate();
 
     return (
@@ -41,44 +43,61 @@ export const ReturnsTable = ({ returns, formatDate, formatCurrency }: ReturnsTab
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {returns.map((returnItem) => (
-                        <TableRow key={returnItem.id}>
-                            <TableCell className="font-medium">#{returnItem.id}</TableCell>
-                            <TableCell>#{returnItem.order_id}</TableCell>
-                            <TableCell>
-                                {returnItem.customer_name} {returnItem.customer_lastname}
-                            </TableCell>
-                            <TableCell>{returnItem.customer_document_number}</TableCell>
-                            <TableCell>
-                                <Badge variant="outline">
-                                    {returnItem.types?.name || 'N/A'}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>
-                                <Badge>
-                                    {returnItem.situations?.name || 'N/A'}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>
-                                {formatCurrency(returnItem.total_refund_amount)}
-                            </TableCell>
-                            <TableCell>
-                                {formatCurrency(returnItem.total_exchange_difference)}
-                            </TableCell>
-                            <TableCell>{formatDate(returnItem.created_at)}</TableCell>
-                            <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => navigate(`/returns/edit/${returnItem.id}`)}
-                                    >
-                                        <SquarePen className="w-4 h-4" />
-                                    </Button>
+                    {loading ? (
+                        <TableRow>
+                            <TableCell colSpan={10} className="text-center py-10">
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span className="text-muted-foreground">Cargando devoluciones...</span>
                                 </div>
                             </TableCell>
                         </TableRow>
-                    ))}
+                    ) : returns.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={10} className="text-center h-24 text-muted-foreground">
+                                No hay devoluciones registradas
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        returns.map((returnItem) => (
+                            <TableRow key={returnItem.id}>
+                                <TableCell className="font-medium">#{returnItem.id}</TableCell>
+                                <TableCell>#{returnItem.order_id}</TableCell>
+                                <TableCell>
+                                    {returnItem.customer_name} {returnItem.customer_lastname}
+                                </TableCell>
+                                <TableCell>{returnItem.customer_document_number}</TableCell>
+                                <TableCell>
+                                    <Badge variant="outline">
+                                        {returnItem.types?.name || 'N/A'}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge>
+                                        {returnItem.situations?.name || 'N/A'}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    {formatCurrency(returnItem.total_refund_amount)}
+                                </TableCell>
+                                <TableCell>
+                                    {formatCurrency(returnItem.total_exchange_difference)}
+                                </TableCell>
+                                <TableCell>{formatDate(returnItem.created_at)}</TableCell>
+                                <TableCell className="text-right">
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => navigate(`/returns/edit/${returnItem.id}`)}
+                                        >
+                                            <SquarePen className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    )}
                 </TableBody>
             </Table>
         </div>

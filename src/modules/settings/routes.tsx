@@ -13,6 +13,7 @@ import PaymentMethodsList from './pages/PaymentMethodsList';
 import CreatePaymentMethod from './pages/CreatePaymentMethod';
 import OrderChannelTypesList from './pages/OrderChannelTypesList';
 import CreateOrderChannelType from './pages/CreateOrderChannelType';
+import StockTypesList from './pages/StockTypesList';
 
 export const settingsRoutes: RouteObject[] = [
   {
@@ -36,6 +37,7 @@ export const settingsRoutes: RouteObject[] = [
       { path: 'payment-methods/edit/:id', element: <CreatePaymentMethod /> },
       { path: 'order-channel-types', element: <OrderChannelTypesList /> },
       { path: 'order-channel-types/create', element: <CreateOrderChannelType /> },
+      { path: 'stock-types', element: <StockTypesList /> },
     ]
   },
 ];

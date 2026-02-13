@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PaymentMethod } from '../../types/PaymentMethods.types';
-import { Check, X } from 'lucide-react';
+import { Check, X, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface PaymentMethodsTableProps {
@@ -23,8 +23,11 @@ const PaymentMethodsTable = ({ paymentMethods, loading }: PaymentMethodsTablePro
                 {
                     loading ? (
                         <TableRow>
-                            <TableCell colSpan={4} className="text-center text-muted-foreground">
-                                Cargando métodos de pago...
+                            <TableCell colSpan={4} className="text-center py-8">
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Cargando métodos de pago...
+                                </div>
                             </TableCell>
                         </TableRow>
                     ) : paymentMethods.length === 0 ? (

@@ -2,16 +2,23 @@ import { useState, useEffect } from 'react';
 import { returnsService } from '../services/Returns.service';
 import { ReturnItem } from '../types/Returns.types';
 import { toast } from 'sonner';
+import { PaginationState } from '@/shared/components/pagination/Pagination';
 
 export const useReturns = () => {
     const [returns, setReturns] = useState<ReturnItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [pagination, setPagination] = useState<PaginationState>({
+        p_page: 1,
+        p_size: 10,
+        total: 0
+    });
 
-    const loadReturns = async () => {
+    const loadReturns = async (page: number = pagination.p_page, size: number = pagination.p_size) => {
         setLoading(true);
         try {
-            const data = await returnsService.getReturns();
-            setReturns(data || []);
+            const result = await returnsService.getReturns(page, size);
+            setReturns(result.data);
+            setPagination(result.pagination);
         } catch (error: any) {
             console.error('Error loading returns:', error);
             toast.error('Error al cargar las devoluciones');
@@ -22,7 +29,15 @@ export const useReturns = () => {
 
     useEffect(() => {
         loadReturns();
-    }, []);
+    }, [pagination.p_page, pagination.p_size]);
+
+    const handlePageChange = (newPage: number) => {
+        setPagination(prev => ({ ...prev, p_page: newPage }));
+    };
+
+    const handlePageSizeChange = (newSize: number) => {
+        setPagination(prev => ({ ...prev, p_size: newSize, p_page: 1 }));
+    };
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('es-ES', {
@@ -45,6 +60,9 @@ export const useReturns = () => {
     return {
         returns,
         loading,
+        pagination,
+        handlePageChange,
+        handlePageSizeChange,
         loadReturns,
         formatDate,
         formatCurrency

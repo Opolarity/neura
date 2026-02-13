@@ -105,15 +105,18 @@ export const returnsService = {
         return data;
     },
 
-    async getReturns() {
-        const { data, error } = await supabase.functions.invoke("get-returns");
+    async getReturns(page: number = 1, size: number = 10) {
+        const { data, error } = await supabase.functions.invoke("get-returns", {
+            body: { page, size }
+        });
 
         if (error) throw error;
 
-        // Based on the provided sample, the structure is { returnsdata: { data: [...] } }
+        // The structure is { returnsdata: { data: [...], page: { page, size, total } } }
         const returnsData = data?.returnsdata?.data || [];
+        const paginationInfo = data?.returnsdata?.page || { page, size, total: 0 };
 
-        return returnsData.map((item: any) => ({
+        const mappedData = returnsData.map((item: any) => ({
             id: item.id,
             order_id: item.id_order,
             customer_document_number: item.customer_document_numer,
@@ -126,6 +129,15 @@ export const returnsService = {
             situations: { name: 'Pendiente' },
             total_exchange_difference: 0
         })) as ReturnItem[];
+
+        return {
+            data: mappedData,
+            pagination: {
+                p_page: paginationInfo.page,
+                p_size: paginationInfo.size,
+                total: paginationInfo.total
+            }
+        };
     },
 
     async getReturnById(id: number) {
