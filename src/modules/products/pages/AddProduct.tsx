@@ -76,7 +76,7 @@ const AddProduct = () => {
   }, [categories]);
 
   return (
-    <div className="relative space-y-6">
+    <div className="relative space-y-6 min-w-0 overflow-hidden">
       {isLoadingProduct && <PageLoader message="Cargando datos del producto..." />}
       {/* Reset Variations Confirmation Dialog */}
       <AlertDialog open={showResetVariationsDialog} onOpenChange={(open) => !open && cancelResetVariations()}>
