@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import OrderChannelTypesTable from '../components/orderChannelTypes/OrderChannelTypesTable';
 import useOrderChannelTypes from '../hooks/useOrderChannelTypes';
+import { TableCell, TableHead } from '@/components/ui/table';
 
 const OrderChannelTypesList = () => {
     const {
