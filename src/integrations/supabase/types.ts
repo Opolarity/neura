@@ -3725,8 +3725,13 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_create_stock_type: {
+        Args: { p_code: string; p_name: string }
+        Returns: Json
+      }
       sp_delete_payment_method: { Args: { p_id: number }; Returns: Json }
       sp_delete_price_list: { Args: { p_id: number }; Returns: Json }
+      sp_delete_stock_types: { Args: { p_id: number }; Returns: Json }
       sp_get_accounts: {
         Args: {
           p_account_type?: number
@@ -4016,6 +4021,10 @@ export type Database = {
           p_status_id: number
           p_user_id: string
         }
+        Returns: Json
+      }
+      sp_update_stock_type: {
+        Args: { p_code: string; p_id: number; p_name: string }
         Returns: Json
       }
     }
