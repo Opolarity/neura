@@ -109,6 +109,9 @@ const CreateSale = () => {
     orderId,
     isPersonaJuridica,
     isPhySituation,
+    isComSituation,
+    filteredSituations,
+    isAnonymousPurchase,
     // Server-side pagination
     productPage,
     productPagination,
@@ -129,6 +132,7 @@ const CreateSale = () => {
     handleSearchClient,
     handleSelectPriceList,
     handleProductPageChange,
+    handleAnonymousToggle,
     addProduct,
     removeProduct,
     updateProduct,
@@ -699,8 +703,9 @@ const CreateSale = () => {
                         handleInputChange("documentType", v);
                         if (formData.documentNumber) handleSearchClient(v);
                       }}
+                      disabled={isAnonymousPurchase}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={isAnonymousPurchase ? "opacity-50" : ""}>
                         <SelectValue placeholder="Seleccione" />
                       </SelectTrigger>
                       <SelectContent>
@@ -721,6 +726,8 @@ const CreateSale = () => {
                           handleInputChange("documentNumber", e.target.value)
                         }
                         onBlur={() => handleSearchClient()}
+                        disabled={isAnonymousPurchase}
+                        className={isAnonymousPurchase ? "opacity-50" : ""}
                       />
                       {searchingClient && (
                         <Loader2 className="w-5 h-5 animate-spin self-center" />
@@ -756,8 +763,8 @@ const CreateSale = () => {
                     onChange={(e) =>
                       handleInputChange("customerName", e.target.value)
                     }
-                    disabled={clientFound === true}
-                    className={clientFound === true ? "bg-muted" : ""}
+                    disabled={isAnonymousPurchase || clientFound === true}
+                    className={isAnonymousPurchase || clientFound === true ? "bg-muted" : ""}
                   />
                 </div>
               </div>
@@ -796,8 +803,8 @@ const CreateSale = () => {
                         onChange={(e) =>
                           handleInputChange("customerLastname", e.target.value)
                         }
-                        disabled={clientFound === true}
-                        className={clientFound === true ? "bg-muted" : ""}
+                        disabled={isAnonymousPurchase || clientFound === true}
+                        className={isAnonymousPurchase || clientFound === true ? "bg-muted" : ""}
                       />
                     </div>
                     <div>
@@ -807,8 +814,8 @@ const CreateSale = () => {
                         onChange={(e) =>
                           handleInputChange("customerLastname2", e.target.value)
                         }
-                        disabled={clientFound === true}
-                        className={clientFound === true ? "bg-muted" : ""}
+                        disabled={isAnonymousPurchase || clientFound === true}
+                        className={isAnonymousPurchase || clientFound === true ? "bg-muted" : ""}
                       />
                     </div>
                   </div>
@@ -829,6 +836,21 @@ const CreateSale = () => {
                     className="cursor-pointer font-medium"
                   >
                     Requiere Envío
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="anonymousPurchase"
+                    checked={isAnonymousPurchase}
+                    onCheckedChange={(checked) =>
+                      handleAnonymousToggle(checked as boolean)
+                    }
+                  />
+                  <Label
+                    htmlFor="anonymousPurchase"
+                    className="cursor-pointer font-medium"
+                  >
+                    Compra anónima
                   </Label>
                 </div>
               </div>
@@ -1028,35 +1050,35 @@ const CreateSale = () => {
           style={{ width: "30%" }}
         >
           {/* Order Status */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Estado del Pedido</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={orderSituation} onValueChange={setOrderSituation}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  {salesData?.situations.map((s) => (
-                    <SelectItem key={s.id} value={s.id.toString()}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-            <CardFooter>
-              {createdOrderId && (
-                <em
-                  className="italic text-sm underline cursor-pointer"
-                  onClick={() => setHistoryModalOpen(true)}
-                >
-                  Ver Historial
-                </em>
-              )}
-            </CardFooter>
-          </Card>
+           <Card>
+             <CardHeader className="pb-2">
+               <CardTitle className="text-lg">Estado del Pedido</CardTitle>
+             </CardHeader>
+             <CardContent className="pb-2">
+               <Select value={orderSituation} onValueChange={setOrderSituation}>
+                 <SelectTrigger>
+                   <SelectValue placeholder="Seleccionar estado" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {filteredSituations.map((s) => (
+                     <SelectItem key={s.id} value={s.id.toString()}>
+                       {s.name}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
+             </CardContent>
+             <CardFooter>
+               {createdOrderId && (
+                 <em
+                   className="italic text-sm underline cursor-pointer"
+                   onClick={() => setHistoryModalOpen(true)}
+                 >
+                   ver historial
+                 </em>
+               )}
+             </CardFooter>
+           </Card>
 
           {/* Summary & Payment */}
           <Card>
@@ -1141,14 +1163,16 @@ const CreateSale = () => {
                               </Button>
                             )}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => removePayment(p.id)}
-                          >
-                            <Trash2 className="w-3 h-3 text-destructive" />
-                          </Button>
+                          {!isComSituation && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => removePayment(p.id)}
+                            >
+                              <Trash2 className="w-3 h-3 text-destructive" />
+                            </Button>
+                          )}
                         </div>
                       );
                     })}
@@ -1156,7 +1180,7 @@ const CreateSale = () => {
               )}
 
               {/* Formulario para agregar nuevo pago */}
-              <div className="space-y-3 p-3 border rounded-md bg-muted/30">
+              <div className={cn("space-y-3 p-3 border rounded-md bg-muted/30", isComSituation && "opacity-50 pointer-events-none")}>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label>Método de Pago</Label>

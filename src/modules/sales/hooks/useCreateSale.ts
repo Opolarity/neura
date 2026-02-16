@@ -119,6 +119,7 @@ export const useCreateSale = () => {
   const [currentPayment, setCurrentPayment] =
     useState<SalePayment>(createEmptyPayment());
   const [orderSituation, setOrderSituation] = useState<string>("");
+  const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
 
   // Dropdown data
   const [salesData, setSalesData] = useState<SalesFormDataResponse | null>(
@@ -129,6 +130,7 @@ export const useCreateSale = () => {
   // UI state
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [isExistingClient, setIsExistingClient] = useState<boolean>(false); // true only if found in accounts table
+  const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
   const [selectedVariation, setSelectedVariation] =
     useState<ProductVariation | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -321,6 +323,26 @@ export const useCreateSale = () => {
     return currentSituation?.code === "PHY";
   }, [orderSituation, salesData?.situations]);
 
+  // Computed: Check if current status has COM code (completed - no payment edits allowed)
+  const isComSituation = useMemo(() => {
+    return currentStatusCode === "COM";
+  }, [currentStatusCode]);
+
+  // Computed: Filter situations to only show those with order >= current situation's order
+  const filteredSituations = useMemo(() => {
+    if (!salesData?.situations) return [];
+    if (!orderSituation) return salesData.situations;
+    
+    const currentSituation = salesData.situations.find(
+      (s) => s.id.toString() === orderSituation,
+    );
+    if (!currentSituation || currentSituation.order == null) return salesData.situations;
+    
+    return salesData.situations.filter(
+      (s) => s.order != null && s.order >= currentSituation.order,
+    );
+  }, [orderSituation, salesData?.situations]);
+
   // Load form data from API
   const loadFormData = async () => {
     try {
@@ -486,8 +508,14 @@ export const useCreateSale = () => {
           : [createEmptyPayment()]
       );
       setOrderSituation(adapted.currentSituation);
+      setCurrentStatusCode(adapted.currentStatusCode || "");
       setClientFound(true);
       setCreatedOrderId(id);
+
+      // Detect anonymous purchase: document_type = "0" and document_number = " "
+      if (adapted.formData.documentType === "0" && adapted.formData.documentNumber === " ") {
+        setIsAnonymousPurchase(true);
+      }
       
     } catch (error) {
       console.error("Error loading order:", error);
@@ -559,6 +587,37 @@ export const useCreateSale = () => {
     },
     [allShippingCosts, salesData?.documentTypes],
   );
+
+  // Handle anonymous purchase toggle
+  const handleAnonymousToggle = useCallback(async (checked: boolean) => {
+    setIsAnonymousPurchase(checked);
+    if (checked) {
+      // Fetch the anonymous account name (document_type_id=0, document_number=' ')
+      let anonymousName = "No especificado";
+      try {
+        const { data: anonAccount } = await supabase
+          .from("accounts")
+          .select("name, middle_name, last_name, last_name2")
+          .eq("document_type_id", 0)
+          .eq("document_number", " ")
+          .single();
+        if (anonAccount) {
+          anonymousName = [anonAccount.name, anonAccount.middle_name, anonAccount.last_name, anonAccount.last_name2].filter(Boolean).join(" ");
+        }
+      } catch (e) {
+        console.error("Error fetching anonymous account:", e);
+      }
+      setFormData(prev => ({
+        ...prev,
+        documentType: "",
+        documentNumber: "",
+        customerName: anonymousName,
+        customerLastname: "",
+        customerLastname2: "",
+      }));
+      setClientFound(false);
+    }
+  }, []);
 
   // Handle stock type change - clears selected variation to ensure consistency
   const handleStockTypeChange = useCallback((value: string) => {
@@ -955,11 +1014,11 @@ export const useCreateSale = () => {
 
       try {
         const orderData = {
-          documentType: formData.documentType,
-          documentNumber: formData.documentNumber,
-          customerName: formData.customerName,
-          customerLastname: formData.customerLastname,
-          customerLastname2: formData.customerLastname2 || null,
+          documentType: isAnonymousPurchase ? "0" : formData.documentType,
+          documentNumber: isAnonymousPurchase ? " " : formData.documentNumber,
+          customerName: isAnonymousPurchase ? null : formData.customerName,
+          customerLastname: isAnonymousPurchase ? null : formData.customerLastname,
+          customerLastname2: isAnonymousPurchase ? null : (formData.customerLastname2 || null),
           email: formData.email || null,
           phone: formData.phone || null,
           saleType: formData.saleType,
@@ -1089,6 +1148,7 @@ export const useCreateSale = () => {
       discountAmount,
       total,
       isExistingClient,
+      isAnonymousPurchase,
       toast,
       navigate,
     ],
@@ -1142,6 +1202,9 @@ export const useCreateSale = () => {
     orderId,
     isPersonaJuridica,
     isPhySituation,
+    isComSituation,
+    filteredSituations,
+    isAnonymousPurchase,
 
     // Actions
     setOrderSituation,
@@ -1156,6 +1219,7 @@ export const useCreateSale = () => {
     handleSearchClient,
     handleSelectPriceList,
     handleProductPageChange,
+    handleAnonymousToggle,
     addProduct,
     removeProduct,
     updateProduct,

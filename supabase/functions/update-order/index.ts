@@ -186,7 +186,18 @@ Deno.serve(async (req) => {
     // Step 3: Delete existing order products
     await supabase.from("order_products").delete().eq("order_id", orderId);
 
-    // Step 4: Update the order
+    // Resolve price_list_code from price_list_id
+    let priceListCode: string | null = null;
+    if (input.price_list_id) {
+      const { data: priceListData } = await supabase
+        .from("price_list")
+        .select("code")
+        .eq("id", parseInt(input.price_list_id))
+        .single();
+      priceListCode = priceListData?.code || null;
+    }
+
+    // Step 4: Update the order (customer_lastname already arrives concatenated from frontend)
     const { error: updateError } = await supabase
       .from("orders")
       .update({
@@ -197,6 +208,7 @@ Deno.serve(async (req) => {
         email: input.email,
         phone: input.phone ? parseInt(input.phone) : null,
         sale_type_id: input.sale_type,
+        price_list_code: priceListCode,
         shipping_method_code: input.shipping_method,
         shipping_cost: input.shipping_cost,
         country_id: input.country_id,

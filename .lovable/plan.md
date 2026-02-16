@@ -1,89 +1,78 @@
 
 
-## Crear vista para agregar comprobantes (Invoices)
+## Guardar apellidos correctamente en orders y accounts
 
 ### Resumen
-Se creara la pagina `/invoices/add` para crear comprobantes (invoices) con sus items, siguiendo la arquitectura existente del proyecto (types, services, adapters, hooks, pages).
+Actualmente `customer_lastname` en la tabla `orders` solo guarda el apellido paterno. Se necesita que guarde ambos apellidos (paterno + materno) juntos separados por un espacio. Al crear el account (cuando el cliente no existe), se debe guardar apellido paterno en `last_name` y apellido materno en `last_name2`.
 
-### Estructura de datos
+### Cambios necesarios
 
-**Tabla `invoices`:**
-- `id` (auto)
-- `invoice_type_id` (bigint, requerido)
-- `serie` (text, ej: "F003-233")
-- `account_id` (bigint, requerido - cliente)
-- `total_amount` (numeric, requerido)
-- `declared` (boolean, default false)
-- `created_by` (uuid, default auth.uid())
-- `pdf_url`, `xml_url`, `cdr_url` (opcionales)
+#### 1. Frontend - Servicio `src/modules/sales/services/index.ts`
+- En `createOrder`: enviar un nuevo campo `customer_lastname2` (ya se envia) para que el edge function lo use al crear el account.
+- Cambiar `customer_lastname` para que concatene ambos apellidos: `customerLastname + " " + customerLastname2`.
 
-**Tabla `invoice_items`:**
-- `id` (auto)
-- `invoice_id` (bigint, requerido)
-- `description` (text, requerido)
-- `quantity` (numeric, requerido)
-- `measurement_unit` (text, requerido)
-- `unit_price` (numeric, requerido)
-- `discount` (numeric, opcional)
-- `igv` (numeric, requerido)
-- `total` (numeric, requerido)
+#### 2. Frontend - Servicio `src/modules/sales/services/index.ts` (updateOrder)
+- Mismo cambio: `customer_lastname` debe enviar la concatenacion de ambos apellidos.
 
-### Archivos a crear/modificar
+#### 3. Edge Function `create-order/index.ts`
+- Pasar `customer_lastname2` como campo separado dentro de `p_order_data` para que el RPC lo use al crear el account.
+- El campo `customer_lastname` ya llegara concatenado para guardarse en la tabla `orders`.
 
-#### 1. Tipos - `src/modules/invoices/types/Invoices.types.ts`
-- Agregar interfaces: `InvoiceItem`, `CreateInvoicePayload`, `InvoiceFormData`
+#### 4. Migracion SQL - Modificar `sp_create_order`
+- En el INSERT a `accounts` (STEP 0), cambiar:
+  - `last_name` = `p_order_data->>'customer_lastname_first'` (apellido paterno solamente)
+  - `last_name2` = `p_order_data->>'customer_lastname2'` (apellido materno)
+- Se enviara un campo adicional `customer_lastname_first` con solo el apellido paterno para uso exclusivo del account.
 
-#### 2. Edge Function - `supabase/functions/create-invoice/index.ts`
-- Recibe: datos del invoice + array de items
-- Inserta en `invoices`, obtiene el ID, luego inserta los items en `invoice_items`
-- Patron igual a `create-order`
+#### 5. Adapter `src/modules/sales/adapters/index.ts` - `adaptSaleById`
+- Al cargar una orden para edicion, `customer_lastname` contiene ambos apellidos juntos. Se debe separar: tomar la primera palabra como `customerLastname` y el resto como `customerLastname2`.
 
-#### 3. Servicio - `src/modules/invoices/services/Invoices.services.ts`
-- Agregar funcion `createInvoiceApi` que invoque la edge function `create-invoice`
+### Detalle tecnico
 
-#### 4. Hook - `src/modules/invoices/hooks/useCreateInvoice.ts`
-- Manejo de estado del formulario (datos del invoice, lista de items)
-- Funciones: agregar item, eliminar item, actualizar item
-- Calculo automatico de IGV (18%) y total por item
-- Calculo del total general
-- Funcion `handleSave` para enviar al backend
+**En `src/modules/sales/services/index.ts` (createOrder y updateOrder):**
+```typescript
+// Concatenar apellidos para orders.customer_lastname
+const fullLastname = [orderData.customerLastname, orderData.customerLastname2]
+  .filter(Boolean)
+  .join(" ");
 
-#### 5. Pagina - `src/modules/invoices/pages/CreateInvoice.tsx`
-- **Seccion superior**: Datos del comprobante
-  - Serie (input text)
-  - Tipo de comprobante (invoice_type_id) - input numerico o select
-  - Cliente (account_id) - buscador de clientes por documento
-- **Seccion de items**: Tabla editable
-  - Columnas: Descripcion, Cantidad, Unidad Medida, Precio Unitario, Descuento, IGV, Total
-  - Boton "Agregar item" para anadir filas
-  - Boton de eliminar por fila
-  - IGV se calcula automaticamente (18% sobre base imponible)
-  - Total por item = (cantidad * precio_unitario - descuento) + IGV
-- **Resumen inferior**: Total general del comprobante
-- **Botones**: Guardar / Cancelar (volver a `/invoices`)
-
-#### 6. Rutas - `src/modules/invoices/routes.tsx`
-- Agregar ruta `invoices/add` con el componente `CreateInvoice`
-
-#### 7. Config - `supabase/config.toml`
-- Agregar entrada para la nueva edge function `create-invoice`
-
-### Seccion tecnica
-
-**Calculo de items:**
-```text
-base = quantity * unit_price
-base_con_descuento = base - (discount || 0)
-igv = base_con_descuento * 0.18
-total = base_con_descuento + igv
+// Enviar al edge function
+customer_lastname: fullLastname,
+customer_lastname_first: orderData.customerLastname,  // solo paterno, para accounts
+customer_lastname2: orderData.customerLastname2,       // solo materno, para accounts
 ```
 
-**Flujo de la edge function:**
-1. Validar autenticacion
-2. Insertar registro en `invoices` -> obtener `id`
-3. Mapear items con el `invoice_id` obtenido
-4. Insertar items en `invoice_items`
-5. Retornar invoice creado
+**En `create-order/index.ts`:**
+```typescript
+// Pasar customer_lastname_first y customer_lastname2 en p_order_data
+// customer_lastname ya viene concatenado para la tabla orders
+```
 
-**RLS**: Las tablas `invoices` e `invoice_items` actualmente no tienen politicas RLS. La edge function usa `SERVICE_ROLE_KEY` asi que no se ve afectada. Se recomienda agregar RLS en el futuro pero no es bloqueante para esta implementacion.
+**Migracion SQL (sp_create_order):**
+```sql
+-- En el INSERT a accounts, usar los campos separados
+INSERT INTO accounts (document_type_id, document_number, name, last_name, last_name2, ...)
+VALUES (
+  ...,
+  p_order_data->>'customer_name',
+  p_order_data->>'customer_lastname_first',  -- solo paterno
+  p_order_data->>'customer_lastname2',       -- solo materno
+  ...
+);
+```
 
+**En `adaptSaleById`:**
+```typescript
+// Separar customer_lastname en paterno y materno
+const fullLastname = data.order.customer_lastname || "";
+const lastnameParts = fullLastname.split(" ");
+const customerLastname = lastnameParts[0] || "";
+const customerLastname2 = lastnameParts.slice(1).join(" ") || "";
+```
+
+### Archivos a modificar
+- `src/modules/sales/services/index.ts` - concatenar apellidos al enviar
+- `supabase/functions/create-order/index.ts` - pasar campos separados al RPC
+- `supabase/functions/update-order/index.ts` - concatenar apellidos en el UPDATE a orders
+- Migracion SQL para actualizar `sp_create_order` - usar campos separados para accounts
+- `src/modules/sales/adapters/index.ts` - separar apellidos al cargar orden

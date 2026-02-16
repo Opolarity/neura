@@ -69,6 +69,7 @@ export default function POS() {
                 priceLists={pos.priceLists}
                 userWarehouseName={pos.userWarehouseName}
                 onConfirm={pos.confirmConfiguration}
+                onReset={pos.resetAll}
               />
             )}
 
@@ -85,6 +86,7 @@ export default function POS() {
                 pagination={pos.productPagination}
                 onPageChange={pos.handleProductPageChange}
                 priceListId={pos.configuration?.priceListId || ""}
+                total={pos.total}
               />
             )}
 
@@ -130,8 +132,8 @@ export default function POS() {
             )}
           </div>
 
-          {/* Summary sidebar - visible from step 2 */}
-          {pos.currentStep >= 2 && pos.currentStep < 5 && (
+          {/* Summary sidebar - visible from step 3 */}
+          {pos.currentStep >= 3 && pos.currentStep < 5 && (
             <div className="p-6 pl-0">
               <POSSummary
                 cart={pos.cart}
@@ -156,6 +158,7 @@ export default function POS() {
           onNext={pos.nextStep}
           onBack={pos.prevStep}
           onFinalize={pos.submitOrder}
+          onReset={pos.resetAll}
         />
       )}
 

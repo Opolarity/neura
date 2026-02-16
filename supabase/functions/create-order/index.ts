@@ -54,15 +54,29 @@ serve(async (req) => {
 
     const input = await req.json();
 
+    // Resolve price_list_code from price_list_id
+    let priceListCode: string | null = null;
+    if (input.price_list_id) {
+      const { data: priceListData } = await supabase
+        .from("price_list")
+        .select("code")
+        .eq("id", parseInt(input.price_list_id))
+        .single();
+      priceListCode = priceListData?.code || null;
+    }
+
     // Build order data object
     const orderData = {
       document_type: input.document_type,
       document_number: input.document_number,
       customer_name: input.customer_name,
       customer_lastname: input.customer_lastname,
+      customer_lastname_first: input.customer_lastname_first,
+      customer_lastname2: input.customer_lastname2,
       email: input.email,
       phone: input.phone,
       sale_type: input.sale_type,
+      price_list_code: priceListCode,
       shipping_method: input.shipping_method,
       shipping_cost: input.shipping_cost,
       country_id: input.country_id,

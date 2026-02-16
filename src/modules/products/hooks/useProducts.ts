@@ -182,9 +182,7 @@ export const useProducts = () => {
     filters.status !== null ||
     filters.web !== null ||
     filters.minstock !== null ||
-    filters.maxstock !== null ||
-    filters.order !== null;
-
+    filters.maxstock !== null;
   return {
     products,
     categories,

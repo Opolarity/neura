@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { id} = body; 
+    const { id } = body;
 
     if (!id) {
       return new Response(JSON.stringify({ error: "Falta el ID del registro" }), {

@@ -3,24 +3,21 @@ import { PaginationState } from "@/shared/components/pagination/Pagination";
 import Pagination from "@/shared/components/pagination/Pagination";
 
 interface PaginationBarProps {
-    pagination: PaginationState;
-    onPageChange: (page: number) => void;
-    onPageSizeChange: (size: number) => void;
+  pagination: PaginationState;
+  onPageChange: (page: number) => Promise<void>;
+  onPageSizeChange: (size: number) => Promise<void>;
 }
 
 export default function PaginationBar({
-    pagination,
-    onPageChange,
-    onPageSizeChange,
+  pagination,
+  onPageChange,
+  onPageSizeChange,
 }: PaginationBarProps) {
-    return (
-        <div className="w-full flex flex-row justify-center gap-2 p-6">
-            <PageLimit
-                size={pagination.p_size}
-                onPageSizeChange={onPageSizeChange}
-            />
+  return (
+    <div className="w-full flex flex-row justify-center gap-2 p-6">
+      <PageLimit size={pagination.p_size} onPageSizeChange={onPageSizeChange} />
 
-            <Pagination pagination={pagination} onPageChange={onPageChange} />
-        </div>
-    );
+      <Pagination pagination={pagination} onPageChange={onPageChange} />
+    </div>
+  );
 }

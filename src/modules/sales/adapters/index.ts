@@ -66,6 +66,7 @@ export const adaptSituations = (data: any[]): Situation[] => {
     id: item.id,
     name: item.name,
     code: item.code || null,
+    order: item.order ?? null,
   }));
 };
 
@@ -212,11 +213,18 @@ export const getIdInventoryTypeAdapter = (
 export const getOrdersSituationsByIdAdapter = (
   response: OrdersSituationsByIdApiResponse[],
 ): OrdersSituationsById[] => {
-  return response.map((item) => ({
-    situation_name: item.situations.name,
-    statuses_name: item.statuses.name,
-    created_at: item.created_at,
-  }));
+  return response.map((item) => {
+    const profile = item.profiles;
+    const userName = profile?.accounts
+      ? [profile.accounts.name, profile.accounts.last_name].filter(Boolean).join(" ")
+      : "";
+    return {
+      situation_name: item.situations.name,
+      statuses_name: item.statuses.name,
+      created_at: item.created_at,
+      created_by_name: userName,
+    };
+  });
 };
 
 // Adapt sale by ID response for CreateSale form
@@ -225,8 +233,15 @@ export const adaptSaleById = (data: any) => ({
     documentType: data.order.document_type?.toString() || "",
     documentNumber: data.order.document_number || "",
     customerName: data.order.customer_name || "",
-    customerLastname: data.order.customer_lastname || "",
-    customerLastname2: "",
+    customerLastname: (() => {
+      const full = data.order.customer_lastname || "";
+      return full.split(" ")[0] || "";
+    })(),
+    customerLastname2: (() => {
+      const full = data.order.customer_lastname || "";
+      const parts = full.split(" ");
+      return parts.slice(1).join(" ") || "";
+    })(),
     email: data.order.email || "",
     phone: data.order.phone?.toString() || "",
     saleType: data.order.sale_type_id?.toString() || "",
@@ -268,4 +283,5 @@ export const adaptSaleById = (data: any) => ({
     voucherPreview: p.voucher_url || undefined,
   })),
   currentSituation: data.current_situation?.situation_id?.toString() || "",
+  currentStatusCode: data.current_situation?.statuses?.code || "",
 });

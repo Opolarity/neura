@@ -36,10 +36,10 @@ serve(async (req) => {
       stockModuleResult
     ] = await Promise.all([
       supabase.from('categories').select('id, name, parent_category').order('name'),
-      supabase.from('term_groups').select('id, name').order('name'),
-      supabase.from('terms').select('id, name, term_group_id').order('name'),
+      supabase.from('term_groups').select('id, name, is_active').order('name'),
+      supabase.from('terms').select('id, name, term_group_id, is_active').order('name'),
       supabase.from('price_list').select('id, name, code').order('id'),
-      supabase.from('warehouses').select('id, name').order('id'),
+      supabase.from('warehouses').select('id, name').eq('is_active', true).order('id'),
       // Get the inventory module ID by code 'STK'
       supabase.from('modules').select('id').eq('code', 'STK').single()
     ]);

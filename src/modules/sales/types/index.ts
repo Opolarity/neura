@@ -91,6 +91,7 @@ export interface Situation {
   id: number;
   name: string;
   code: string | null;
+  order: number | null;
 }
 
 export interface StockType {
@@ -280,10 +281,18 @@ export interface OrdersSituationsByIdApiResponse {
   statuses: {
     name: string;
   };
+  profiles?: {
+    account_id: number;
+    accounts: {
+      name: string;
+      last_name: string | null;
+    };
+  } | null;
 }
 
 export interface OrdersSituationsById {
   situation_name: string;
   statuses_name: string;
   created_at: string;
+  created_by_name: string;
 }
