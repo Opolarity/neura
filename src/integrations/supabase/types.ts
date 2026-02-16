@@ -445,6 +445,41 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_profile: {
+        Row: {
+          account_id: number
+          activity: string | null
+          amount_spent: number | null
+          id: number
+          orders_quantity: number | null
+          points: number | null
+        }
+        Insert: {
+          account_id: number
+          activity?: string | null
+          amount_spent?: number | null
+          id?: number
+          orders_quantity?: number | null
+          points?: number | null
+        }
+        Update: {
+          account_id?: number
+          activity?: string | null
+          amount_spent?: number | null
+          id?: number
+          orders_quantity?: number | null
+          points?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profile_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_types: {
         Row: {
           code: string | null
@@ -3575,9 +3610,26 @@ export type Database = {
       }
     }
     Functions: {
+      add_to_cart: {
+        Args: {
+          p_cart_id?: string
+          p_product_id: string
+          p_quantity: number
+          p_variation_id: string
+        }
+        Returns: Json
+      }
       comprueba_variacion: {
         Args: { p_term_ids: number[]; p_variation_id: number }
         Returns: boolean
+      }
+      get_cart_details: {
+        Args: { p_cart_id: string }
+        Returns: {
+          cart_items: Json
+          total_amount: number
+          total_count: number
+        }[]
       }
       get_clients_list: {
         Args: {
@@ -3732,6 +3784,44 @@ export type Database = {
       sp_delete_payment_method: { Args: { p_id: number }; Returns: Json }
       sp_delete_price_list: { Args: { p_id: number }; Returns: Json }
       sp_delete_stock_types: { Args: { p_id: number }; Returns: Json }
+      sp_ec_get_customer_orders: { Args: { p_user_id: string }; Returns: Json }
+      sp_ec_get_order_details: {
+        Args: { p_order_id: number; p_user_id: string }
+        Returns: Json
+      }
+      sp_ec_get_product_detail: {
+        Args: { p_product_id: number }
+        Returns: Json
+      }
+      sp_ec_get_product_ids: {
+        Args: {
+          p_category_id?: number
+          p_product_ids?: number[]
+          p_sale_price?: boolean
+          p_search?: string
+          p_size?: number
+        }
+        Returns: Json
+      }
+      sp_ec_get_product_list: {
+        Args: {
+          p_category_id?: number
+          p_sale_price?: boolean
+          p_search?: string
+          p_size?: number
+        }
+        Returns: Json
+      }
+      sp_ec_get_shipping_methods: {
+        Args: {
+          p_city_id?: number
+          p_country_id: number
+          p_neighborhood_id?: number
+          p_state_id?: number
+        }
+        Returns: Json
+      }
+      sp_ec_get_user_profile: { Args: { p_user_id: string }; Returns: Json }
       sp_get_accounts: {
         Args: {
           p_account_type?: number
