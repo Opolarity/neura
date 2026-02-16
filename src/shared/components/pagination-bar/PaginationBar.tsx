@@ -4,8 +4,8 @@ import Pagination from "@/shared/components/pagination/Pagination";
 
 interface PaginationBarProps {
   pagination: PaginationState;
-  onPageChange: (page: number) => Promise<void>;
-  onPageSizeChange: (size: number) => Promise<void>;
+  onPageChange: (page: number) => void | Promise<void>;
+  onPageSizeChange: (size: number) => void | Promise<void>;
 }
 
 export default function PaginationBar({
