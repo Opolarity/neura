@@ -3646,6 +3646,15 @@ export type Database = {
         }
         Returns: Json
       }
+      get_pos_sessions_list: {
+        Args: {
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_status_id?: number
+        }
+        Returns: Json
+      }
       get_product_attribute_groups: {
         Args: { p_product_id: number }
         Returns: Json
