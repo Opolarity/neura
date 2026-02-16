@@ -1485,6 +1485,7 @@ export type Database = {
           notes: string | null
           opened_at: string
           opening_amount: number
+          opening_difference: number
           status_id: number
           total_sales: number | null
           user_id: string
@@ -1502,6 +1503,7 @@ export type Database = {
           notes?: string | null
           opened_at?: string
           opening_amount: number
+          opening_difference?: number
           status_id: number
           total_sales?: number | null
           user_id?: string
@@ -1519,6 +1521,7 @@ export type Database = {
           notes?: string | null
           opened_at?: string
           opening_amount?: number
+          opening_difference?: number
           status_id?: number
           total_sales?: number | null
           user_id?: string
