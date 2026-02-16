@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.get-pos-sessions-list]
 verify_jwt = false
+
+[functions.get-pos-session-detail]
+verify_jwt = false
