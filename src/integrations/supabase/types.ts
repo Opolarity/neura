@@ -647,7 +647,7 @@ export type Database = {
           invoice_type_id: number
           is_active: boolean
           next_number: number
-          serie: string
+          tax_serie: string
           user_id: string
         }
         Insert: {
@@ -657,7 +657,7 @@ export type Database = {
           invoice_type_id: number
           is_active?: boolean
           next_number: number
-          serie: string
+          tax_serie: string
           user_id?: string
         }
         Update: {
@@ -667,7 +667,7 @@ export type Database = {
           invoice_type_id?: number
           is_active?: boolean
           next_number?: number
-          serie?: string
+          tax_serie?: string
           user_id?: string
         }
         Relationships: [
@@ -708,7 +708,7 @@ export type Database = {
           id: number
           invoice_type_id: number
           pdf_url: string | null
-          serie: string | null
+          tax_serie: string | null
           total_amount: number
           total_free: number | null
           total_others: number | null
@@ -728,7 +728,7 @@ export type Database = {
           id?: number
           invoice_type_id: number
           pdf_url?: string | null
-          serie?: string | null
+          tax_serie?: string | null
           total_amount: number
           total_free?: number | null
           total_others?: number | null
@@ -748,7 +748,7 @@ export type Database = {
           id?: number
           invoice_type_id?: number
           pdf_url?: string | null
-          serie?: string | null
+          tax_serie?: string | null
           total_amount?: number
           total_free?: number | null
           total_others?: number | null
@@ -3784,6 +3784,18 @@ export type Database = {
       sp_delete_payment_method: { Args: { p_id: number }; Returns: Json }
       sp_delete_price_list: { Args: { p_id: number }; Returns: Json }
       sp_delete_stock_types: { Args: { p_id: number }; Returns: Json }
+      sp_ec_create_account_profile: {
+        Args: {
+          p_auth_uid: string
+          p_dni: string
+          p_lastname1: string
+          p_lastname2: string
+          p_nickname: string
+          p_nombre: string
+          p_tipo_documento_id: number
+        }
+        Returns: Json
+      }
       sp_ec_get_customer_orders: { Args: { p_user_id: string }; Returns: Json }
       sp_ec_get_order_details: {
         Args: { p_order_id: number; p_user_id: string }
