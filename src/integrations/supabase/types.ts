@@ -3649,6 +3649,7 @@ export type Database = {
         }
         Returns: Json
       }
+      get_pos_session_detail: { Args: { p_session_id: number }; Returns: Json }
       get_pos_sessions_list: {
         Args: {
           p_page?: number
