@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +35,16 @@ const POSSessionDetailDialog = ({
   const [orders, setOrders] = useState<POSSessionOrder[]>([]);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (open && sessionId) {
+      loadDetail(sessionId);
+    }
+    if (!open) {
+      setSession(null);
+      setOrders([]);
+    }
+  }, [open, sessionId]);
+
   const loadDetail = async (id: number) => {
     setLoading(true);
     try {
@@ -47,17 +57,6 @@ const POSSessionDetailDialog = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen && sessionId) {
-      loadDetail(sessionId);
-    }
-    if (!isOpen) {
-      setSession(null);
-      setOrders([]);
-    }
-    onOpenChange(isOpen);
   };
 
   const formatDate = (dateString: string) => {
@@ -80,7 +79,7 @@ const POSSessionDetailDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
