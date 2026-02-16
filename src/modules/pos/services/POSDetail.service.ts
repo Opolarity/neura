@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { buildEndpoint } from "@/shared/utils/utils";
+import { buildEndpoint } from "@/shared/utils/query";
 import type { POSSessionDetailApiResponse } from "../types/POSDetail.types";
 
 export const getPOSSessionDetail = async (
