@@ -44,7 +44,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
           <TableHead>ID</TableHead>
           <TableHead>Usuario</TableHead>
           <TableHead>Sucursal</TableHead>
-          <TableHead>Almacén</TableHead>
+          
           <TableHead>Monto Apertura</TableHead>
           <TableHead>Ventas</TableHead>
           <TableHead>Monto Cierre</TableHead>
@@ -57,7 +57,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={11} className="text-center py-8">
+            <TableCell colSpan={10} className="text-center py-8">
               <div className="flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Cargando sesiones...
@@ -66,7 +66,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
           </TableRow>
         ) : sessions.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+            <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
               {search
                 ? "No se encontraron sesiones"
                 : "No hay sesiones registradas"}
@@ -78,7 +78,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
               <TableCell className="font-medium">{session.id}</TableCell>
               <TableCell>{session.userName}</TableCell>
               <TableCell>{session.branchName}</TableCell>
-              <TableCell>{session.warehouseName}</TableCell>
+              
               <TableCell>S/ {formatCurrency(session.openingAmount)}</TableCell>
               <TableCell>
                 {session.totalSales !== null
