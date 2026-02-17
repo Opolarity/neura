@@ -183,6 +183,7 @@ export type Database = {
           business_account_type_id: number
           created_at: string
           id: number
+          is_active: boolean
           name: string
           total_amount: number
         }
@@ -193,6 +194,7 @@ export type Database = {
           business_account_type_id: number
           created_at?: string
           id?: number
+          is_active?: boolean
           name: string
           total_amount: number
         }
@@ -203,6 +205,7 @@ export type Database = {
           business_account_type_id?: number
           created_at?: string
           id?: number
+          is_active?: boolean
           name?: string
           total_amount?: number
         }
@@ -3847,6 +3850,24 @@ export type Database = {
         Returns: Json
       }
       sp_ec_get_user_profile: { Args: { p_user_id: string }; Returns: Json }
+      sp_ec_level_up_crew: {
+        Args: { p_account_id: number; p_order_id: number }
+        Returns: Json
+      }
+      sp_ec_update_user_profile: {
+        Args: {
+          p_address?: string
+          p_city_id?: number
+          p_country_id?: number
+          p_email?: string
+          p_last_name: string
+          p_name: string
+          p_neighborhood_id?: number
+          p_state_id?: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
       sp_get_accounts: {
         Args: {
           p_account_type?: number
