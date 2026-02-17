@@ -3921,6 +3921,7 @@ export type Database = {
       sp_ec_get_product_ids: {
         Args: {
           p_category_id?: number
+          p_order?: string
           p_product_ids?: number[]
           p_sale_price?: boolean
           p_search?: string
