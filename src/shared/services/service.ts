@@ -272,3 +272,30 @@ export const classesByModuleCode = async (moduleCode: string): Promise<Class[]> 
   return data?.classes ?? [];
 };
 
+//GET USERS LIST IS_ACTIVE TRUE AND TYPE USER//
+
+export const getAccountsByModuleCodeAndTypeUser = async () => {
+  const { data, error } = await supabase
+    .from("accounts")
+    .select(`
+      *,
+      account_types!inner(
+        *,
+        types!inner(
+          id,
+          code,
+          module_id,
+          modules!inner(
+            id,
+            code
+          )
+        )
+      )
+    `)
+    .eq("is_active", true)
+    .eq("account_types.types.code", "COL")
+    .eq("account_types.types.modules.code", "CUT");
+
+  if (error) throw error;
+  return data ?? [];
+};
