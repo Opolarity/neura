@@ -14,36 +14,37 @@ import { statussesByModuleCode } from "@/shared/services/service";
 
 // Get cash registers (business_accounts with type CHR from module BNA)
 export const getCashRegisters = async (): Promise<CashRegister[]> => {
-  const { data, error } = await supabase
-    .from("business_accounts")
-    .select(`
-      id, 
-      name, 
-      business_account_type_id,
-      total_amount
-    `);
+  // Fetch business accounts, CHR type IDs, open status, and open sessions in parallel
+  const [baResult, typesResult, statusesResult] = await Promise.all([
+    supabase.from("business_accounts").select("id, name, business_account_type_id, total_amount"),
+    supabase.from("types").select("id, code, module:modules!inner(code)").eq("code", "CHR").eq("modules.code", "BNA"),
+    statussesByModuleCode("POS"),
+  ]);
 
-  if (error) throw error;
-  
-  // Filter by type CHR from module BNA
-  const { data: types, error: typesError } = await supabase
-    .from("types")
-    .select(`
-      id,
-      code,
-      module:modules!inner(code)
-    `)
-    .eq("code", "CHR")
-    .eq("modules.code", "BNA");
+  if (baResult.error) throw baResult.error;
+  if (typesResult.error) throw typesResult.error;
 
-  if (typesError) throw typesError;
+  const openStatus = statusesResult.find(s => s.code === "OPE");
   
-  const chrTypeIds = types?.map(t => t.id) || [];
-  
-  const filtered = (data || []).filter(ba => 
-    chrTypeIds.includes(ba.business_account_type_id)
+  // Get business_account IDs from currently open sessions
+  let occupiedIds: number[] = [];
+  if (openStatus) {
+    const { data: openSessions, error: sessError } = await supabase
+      .from("pos_sessions")
+      .select("business_account")
+      .eq("status_id", openStatus.id);
+    
+    if (!sessError && openSessions) {
+      occupiedIds = openSessions.map(s => s.business_account);
+    }
+  }
+
+  const chrTypeIds = typesResult.data?.map(t => t.id) || [];
+
+  const filtered = (baResult.data || []).filter(ba =>
+    chrTypeIds.includes(ba.business_account_type_id) && !occupiedIds.includes(ba.id)
   );
-  
+
   return filtered.map(ba => ({
     id: ba.id,
     name: ba.name,
