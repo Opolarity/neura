@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { getStockMovementsApi, movementsTypesApi, usersListApi, warehousesListApi } from "../services/Movements.service";
+import { getStockMovementsApi, movementsTypesApi, usersListApi } from "../services/Movements.service";
 import { movementsAdapter, movementsTypesAdapter } from "../adapters/Movements.adapter";
 import {
     Movements,
@@ -11,6 +11,7 @@ import {
 } from "../types/Movements.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks/useDebounce";
+import { getWarehousesIsActiveTrue } from "@/shared/services/service";
 
 export const useMovements = () => {
     const [movements, setMovements] = useState<Movements[]>([]);
@@ -43,7 +44,7 @@ export const useMovements = () => {
             const types = movementsTypesAdapter(dataTypes);
             setMovementsTypes(types);
 
-            const dataWarehouses = await warehousesListApi();
+            const dataWarehouses = await getWarehousesIsActiveTrue();
             setWarehouses(dataWarehouses);
 
             const dataUsers = await usersListApi();
