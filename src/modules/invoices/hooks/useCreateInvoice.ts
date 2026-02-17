@@ -29,11 +29,12 @@ const recalcItem = (item: InvoiceItemForm): InvoiceItemForm => {
 
 const INITIAL_FORM: InvoiceFormData = {
   invoiceTypeId: "",
-  serie: "",
+  taxSerie: "",
   documentTypeId: "",
   clientDocument: "",
-  accountId: "",
   clientName: "",
+  clientEmail: "",
+  clientAddress: "",
 };
 
 export const useCreateInvoice = () => {
@@ -50,11 +51,9 @@ export const useCreateInvoice = () => {
   // Load invoice types and document types on mount
   useEffect(() => {
     const loadData = async () => {
-      // Load invoice types from module "INV"
       const typesResponse = await getTypes("INV");
       setInvoiceTypes(getTypesAdapter(typesResponse));
 
-      // Load document types
       const { data } = await supabase
         .from("document_types")
         .select("id, name, code, person_type")
@@ -109,7 +108,7 @@ export const useCreateInvoice = () => {
     []
   );
 
-  // Search client by document type + number using document-lookup then accounts
+  // Search client by document type + number
   const searchClient = useCallback(async () => {
     const doc = formData.clientDocument;
     const docTypeId = formData.documentTypeId;
@@ -132,7 +131,6 @@ export const useCreateInvoice = () => {
       if (account) {
         setFormData((prev) => ({
           ...prev,
-          accountId: account.id.toString(),
           clientName: [account.name, account.last_name].filter(Boolean).join(" "),
         }));
         return;
@@ -151,7 +149,6 @@ export const useCreateInvoice = () => {
             [lookupData.nombres, lookupData.apellidoPaterno, lookupData.apellidoMaterno].filter(Boolean).join(" ");
           setFormData((prev) => ({
             ...prev,
-            accountId: "",
             clientName: name || "No encontrado",
           }));
           if (name) {
@@ -162,7 +159,7 @@ export const useCreateInvoice = () => {
       }
 
       toast({ title: "Cliente no encontrado", variant: "destructive" });
-      setFormData((prev) => ({ ...prev, accountId: "", clientName: "" }));
+      setFormData((prev) => ({ ...prev, clientName: "" }));
     } catch {
       toast({ title: "Error buscando cliente", variant: "destructive" });
     } finally {
@@ -171,8 +168,8 @@ export const useCreateInvoice = () => {
   }, [formData.clientDocument, formData.documentTypeId, documentTypes, toast]);
 
   const handleSave = useCallback(async () => {
-    if (!formData.invoiceTypeId || !formData.accountId) {
-      toast({ title: "Completa tipo de comprobante y cliente (debe estar registrado)", variant: "destructive" });
+    if (!formData.invoiceTypeId || !formData.documentTypeId || !formData.clientDocument) {
+      toast({ title: "Completa tipo de comprobante, tipo de documento y número de documento", variant: "destructive" });
       return;
     }
     if (items.some((i) => !i.description || i.quantity <= 0 || i.unitPrice <= 0)) {
@@ -182,11 +179,18 @@ export const useCreateInvoice = () => {
 
     setSaving(true);
     try {
+      const totalTaxes = +items.reduce((s, i) => s + i.igv, 0).toFixed(2);
+
       await createInvoiceApi({
         invoice_type_id: parseInt(formData.invoiceTypeId),
-        serie: formData.serie,
-        account_id: parseInt(formData.accountId),
+        tax_serie: formData.taxSerie || undefined,
+        customer_document_type_id: parseInt(formData.documentTypeId),
+        customer_document_number: formData.clientDocument,
+        client_name: formData.clientName || undefined,
+        client_email: formData.clientEmail || undefined,
+        client_address: formData.clientAddress || undefined,
         total_amount: totalAmount,
+        total_taxes: totalTaxes,
         items: items.map((i) => ({
           description: i.description,
           quantity: i.quantity,

@@ -66,7 +66,7 @@ const CreateInvoice = () => {
             Datos del Comprobante
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Invoice Type */}
           <div className="space-y-2">
             <Label>Tipo de Comprobante *</Label>
@@ -87,13 +87,13 @@ const CreateInvoice = () => {
             </Select>
           </div>
 
-          {/* Serie */}
+          {/* Serie Tributaria */}
           <div className="space-y-2">
-            <Label>Serie</Label>
+            <Label>Serie Tributaria</Label>
             <Input
               placeholder="Ej: F003-233"
-              value={formData.serie}
-              onChange={(e) => handleFormChange("serie", e.target.value)}
+              value={formData.taxSerie}
+              onChange={(e) => handleFormChange("taxSerie", e.target.value)}
             />
           </div>
 
@@ -147,6 +147,27 @@ const CreateInvoice = () => {
                 Cliente: <span className="font-medium text-foreground">{formData.clientName}</span>
               </p>
             )}
+          </div>
+
+          {/* Client Email */}
+          <div className="space-y-2">
+            <Label>Email del Cliente</Label>
+            <Input
+              type="email"
+              placeholder="cliente@email.com"
+              value={formData.clientEmail}
+              onChange={(e) => handleFormChange("clientEmail", e.target.value)}
+            />
+          </div>
+
+          {/* Client Address */}
+          <div className="space-y-2">
+            <Label>Dirección del Cliente</Label>
+            <Input
+              placeholder="Dirección"
+              value={formData.clientAddress}
+              onChange={(e) => handleFormChange("clientAddress", e.target.value)}
+            />
           </div>
         </CardContent>
       </Card>
