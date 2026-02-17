@@ -35,6 +35,7 @@ export const useMovements = () => {
         search: null,
         start_date: null,
         end_date: null,
+        order: null,
     });
 
     const loadInitial = async () => {
@@ -150,6 +151,12 @@ export const useMovements = () => {
         });
     };
 
+    const onOrderChange = (order: string) => {
+        const newFilters = { ...filters, order };
+        setFilters(newFilters);
+        loadMovements(newFilters);
+    };
+
     const onDateChange = (type: "start" | "end", value: string) => {
         const dateValue = value || null;
         setFilters((prev) => {
@@ -171,6 +178,7 @@ export const useMovements = () => {
             search: null,
             start_date: null,
             end_date: null,
+            order: null,
         };
         setFilters(resetFilters);
         loadMovements(resetFilters);
@@ -178,7 +186,11 @@ export const useMovements = () => {
 
     const hasActiveFilters =
         filters.start_date !== null ||
-        filters.end_date !== null;
+        filters.end_date !== null ||
+        filters.warehouse !== undefined && filters.warehouse !== null ||
+        filters.origin !== undefined && filters.origin !== null ||
+        filters.user !== undefined && filters.user !== null ||
+        filters.in_out !== undefined && filters.in_out !== null;
 
     return {
         movements,
@@ -199,6 +211,7 @@ export const useMovements = () => {
         onDateChange,
         clearFilters,
         onApplyFilterModal,
+        onOrderChange,
     };
 };
 

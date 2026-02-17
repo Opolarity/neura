@@ -18,6 +18,7 @@ const Movements = () => {
     filters,
     isOpenFilterModal,
     hasActiveFilters,
+    onOrderChange,
     onOpenFilterModal,
     onCloseFilterModal,
     onApplyFilterModal,
@@ -44,6 +45,8 @@ const Movements = () => {
             onSearchChange={onSearchChange}
             onOpen={onOpenFilterModal}
             hasActiveFilters={hasActiveFilters}
+            order={filters.order || "none"}
+            onOrderChange={onOrderChange}
           />
         </CardHeader>
 
