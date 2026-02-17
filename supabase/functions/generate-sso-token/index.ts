@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
       sub: userId,
       roles: [role],
       iss: "neura",
-      aud: "ecommerce",
+      aud: "ecommerce-ovtk-min",
       jti,
     })
       .setProtectedHeader({ alg: "HS256" })
