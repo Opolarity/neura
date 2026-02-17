@@ -4,7 +4,6 @@ import {
   inventoryApi,
   inventoryTypesApi,
   updateInventoryApi,
-  wareHouseListApi,
 } from "../services/Inventory.service";
 import {
   inventoryAdapter,
@@ -19,6 +18,7 @@ import {
 } from "../types/Inventory.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks/useDebounce";
+import { getWarehousesIsActiveTrue } from "@/shared/services/service";
 
 export const useInventory = () => {
   const [inventory, setInventory] = useState<Inventory[]>([]);
@@ -56,7 +56,7 @@ export const useInventory = () => {
   const loadInitial = async () => {
     setLoading(true);
     try {
-      const dataWareHouses = await wareHouseListApi();
+      const dataWareHouses = await getWarehousesIsActiveTrue();
       setWarehouses(dataWareHouses);
       const dataTypes = await inventoryTypesApi();
       const types = inventoryTypesAdapter(dataTypes);
