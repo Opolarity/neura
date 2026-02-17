@@ -92,87 +92,7 @@ export default function PaymentStep({
         Finaliza el proceso de venta revisando los detalles y seleccionando el metodo de pago.
       </p>
 
-      <div className="grid grid-cols-2 gap-6">
-        {/* Left column - Order details */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4" />
-                Articulos Seleccionados
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Producto</TableHead>
-                    <TableHead className="text-center">Cant.</TableHead>
-                    <TableHead className="text-right">Subtotal</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {cart.map((item) => (
-                    <TableRow key={`${item.variationId}-${item.stockTypeId}`}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {item.imageUrl ? (
-                            <img
-                              src={item.imageUrl}
-                              alt={item.productName}
-                              className="w-8 h-8 rounded object-cover"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 bg-gray-100 rounded" />
-                          )}
-                          <div>
-                            <div className="font-medium text-sm truncate max-w-[150px]">
-                              {item.productName}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {item.variationName}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">{item.quantity}</TableCell>
-                      <TableCell className="text-right">
-                        S/ {formatCurrency(item.quantity * item.price)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              {/* Totals */}
-              <div className="mt-4 pt-4 border-t space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span>S/ {formatCurrency(subtotal)}</span>
-                </div>
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Descuentos</span>
-                    <span>- S/ {formatCurrency(discountAmount)}</span>
-                  </div>
-                )}
-                {shippingCost > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Envio</span>
-                    <span>S/ {formatCurrency(shippingCost)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between pt-2 border-t text-lg font-bold">
-                  <span>TOTAL A PAGAR</span>
-                  <span>S/ {formatCurrency(total)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right column - Payment */}
-        <div className="space-y-6">
+      <div className="max-w-xl mx-auto space-y-6">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -359,7 +279,6 @@ export default function PaymentStep({
               )}
             </CardContent>
           </Card>
-        </div>
       </div>
     </div>
   );
