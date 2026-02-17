@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -18,9 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Store } from "lucide-react";
+import { Loader2, Store, AlertTriangle } from "lucide-react";
 import type { OpenPOSSessionRequest, CashRegister } from "../../types/POS.types";
 import { getCashRegisters } from "../../services/POSSession.service";
+import { formatCurrency } from "../../adapters/POS.adapter";
 
 interface POSSessionModalProps {
   isOpen: boolean;
@@ -51,7 +52,6 @@ export default function POSSessionModal({
       setLoadingCashRegisters(true);
       const data = await getCashRegisters();
       setCashRegisters(data);
-      // Auto-select first cash register if only one exists
       if (data.length === 1) {
         setSelectedCashRegisterId(String(data[0].id));
       }
@@ -61,6 +61,17 @@ export default function POSSessionModal({
       setLoadingCashRegisters(false);
     }
   };
+
+  const selectedRegister = useMemo(() => {
+    if (!selectedCashRegisterId) return null;
+    return cashRegisters.find(r => String(r.id) === selectedCashRegisterId) || null;
+  }, [selectedCashRegisterId, cashRegisters]);
+
+  const expectedAmount = selectedRegister?.totalAmount ?? 0;
+
+  const parsedAmount = openingAmount !== "" ? parseFloat(openingAmount) : null;
+  const difference = parsedAmount !== null && !isNaN(parsedAmount) ? parsedAmount - expectedAmount : null;
+  const hasNegativeDifference = difference !== null && difference < 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +88,7 @@ export default function POSSessionModal({
     await onOpen({ 
       openingAmount: amount, 
       businessAccountId: parseInt(selectedCashRegisterId),
+      openingDifference: difference ?? 0,
       notes: notes || undefined 
     });
   };
@@ -143,7 +155,14 @@ export default function POSSessionModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="openingAmount">Monto Inicial *</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="openingAmount">Monto Inicial *</Label>
+              {selectedRegister && (
+                <span className="text-sm text-muted-foreground">
+                  Saldo en sistema: <span className="font-semibold text-foreground">S/ {formatCurrency(expectedAmount)}</span>
+                </span>
+              )}
+            </div>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
                 S/
@@ -164,6 +183,22 @@ export default function POSSessionModal({
               Ingrese el dinero en efectivo con el que inicia la caja
             </p>
           </div>
+
+          {/* Difference display */}
+          {difference !== null && difference !== 0 && selectedRegister && (
+            <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-3 space-y-1">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Diferencia</span>
+                <span className="font-semibold text-destructive">
+                  {difference > 0 ? '+' : ''} S/ {formatCurrency(difference)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-destructive">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>El monto inicial no coincide con el saldo registrado en el sistema. Esta diferencia se guardará.</span>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notas (opcional)</Label>
