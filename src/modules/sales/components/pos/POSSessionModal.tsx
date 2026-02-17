@@ -185,20 +185,18 @@ export default function POSSessionModal({
           </div>
 
           {/* Difference display */}
-          {difference !== null && selectedRegister && (
-            <div className={`rounded-lg border p-3 space-y-1 ${hasNegativeDifference ? 'border-destructive/50 bg-destructive/5' : 'border-border bg-muted/30'}`}>
+          {difference !== null && difference !== 0 && selectedRegister && (
+            <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-3 space-y-1">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Diferencia</span>
-                <span className={`font-semibold ${hasNegativeDifference ? 'text-destructive' : difference > 0 ? 'text-green-600' : 'text-foreground'}`}>
+                <span className="font-semibold text-destructive">
                   {difference > 0 ? '+' : ''} S/ {formatCurrency(difference)}
                 </span>
               </div>
-              {hasNegativeDifference && (
-                <div className="flex items-center gap-2 text-xs text-destructive">
-                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span>El monto inicial es menor al saldo registrado en el sistema. Esta diferencia se guardará.</span>
-                </div>
-              )}
+              <div className="flex items-center gap-2 text-xs text-destructive">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>El monto inicial no coincide con el saldo registrado en el sistema. Esta diferencia se guardará.</span>
+              </div>
             </div>
           )}
 
