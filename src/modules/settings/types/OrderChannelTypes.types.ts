@@ -15,7 +15,17 @@ export interface OrderChannelTypesApiResponse {
     };
   };
 }
-//eliminar este comentario
+
+export interface OrderChannelType {
+  id: number;
+  name: string;
+  code: string;
+  module_id?: number;
+  module_code?: string;
+  created_at?: string;
+}
+
+
 export interface OrderChannelTypesFilters {
   page: number;
   size: number;
