@@ -14,14 +14,13 @@ import {
   movementsApi,
   movementTypesApi,
   movementCategoriesApi,
-  paymentMethodsApi,
-  businessAccountsApi,
 } from "../services/movements.service";
 import {
   movementAdapter,
   calculateMovementSummary,
 } from "../adapters/Movement.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
+import { getBusinessAccountIsActiveTrue, getPaymentMethodsIsActiveTrue } from "@/shared/services/service";
 
 const DEFAULT_FILTERS: MovementFilters = {
   search: null,
@@ -98,8 +97,8 @@ export const useMovements = () => {
         const [types, cats, payments, accounts] = await Promise.all([
           movementTypesApi(),
           movementCategoriesApi(),
-          paymentMethodsApi(),
-          businessAccountsApi(),
+          getPaymentMethodsIsActiveTrue(),
+          getBusinessAccountIsActiveTrue(),
         ]);
 
         setMovementTypes(types);
