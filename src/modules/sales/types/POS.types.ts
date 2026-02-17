@@ -64,12 +64,14 @@ export interface POSSessionApiResponse {
 export interface OpenPOSSessionRequest {
   openingAmount: number;
   businessAccountId: number;
+  openingDifference: number;
   notes?: string;
 }
 
 export interface CashRegister {
   id: number;
   name: string;
+  totalAmount: number;
 }
 
 export interface ClosePOSSessionRequest {

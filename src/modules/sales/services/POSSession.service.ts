@@ -19,7 +19,8 @@ export const getCashRegisters = async (): Promise<CashRegister[]> => {
     .select(`
       id, 
       name, 
-      business_account_type_id
+      business_account_type_id,
+      total_amount
     `);
 
   if (error) throw error;
@@ -45,7 +46,8 @@ export const getCashRegisters = async (): Promise<CashRegister[]> => {
   
   return filtered.map(ba => ({
     id: ba.id,
-    name: ba.name
+    name: ba.name,
+    totalAmount: ba.total_amount,
   }));
 };
 
@@ -59,6 +61,7 @@ export const openPOSSession = async (
         action: "open",
         openingAmount: request.openingAmount,
         businessAccountId: request.businessAccountId,
+        openingDifference: request.openingDifference,
         notes: request.notes || null,
       },
     }
