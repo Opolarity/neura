@@ -187,20 +187,18 @@ Deno.serve(async (req) => {
     await supabase.from("order_products").delete().eq("order_id", orderId);
 
     // Resolve price_list_code from price_list_id
-    let priceListCode: string | null = null;
+    let priceListCode: string | undefined = undefined;
     if (input.price_list_id) {
       const { data: priceListData } = await supabase
         .from("price_list")
         .select("code")
         .eq("id", parseInt(input.price_list_id))
         .single();
-      priceListCode = priceListData?.code || null;
+      priceListCode = priceListData?.code ?? undefined;
     }
 
-    // Step 4: Update the order (customer_lastname already arrives concatenated from frontend)
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({
+    // Build update payload, only include price_list_code if resolved
+    const orderUpdate: Record<string, unknown> = {
         document_type: input.document_type,
         document_number: input.document_number,
         customer_name: input.customer_name,
@@ -208,7 +206,6 @@ Deno.serve(async (req) => {
         email: input.email,
         phone: input.phone ? parseInt(input.phone) : null,
         sale_type_id: input.sale_type,
-        price_list_code: priceListCode,
         shipping_method_code: input.shipping_method,
         shipping_cost: input.shipping_cost,
         country_id: input.country_id,
@@ -222,7 +219,16 @@ Deno.serve(async (req) => {
         subtotal: input.subtotal,
         discount: input.discount,
         total: input.total,
-      })
+    };
+
+    if (priceListCode !== undefined) {
+      orderUpdate.price_list_code = priceListCode;
+    }
+
+    // Step 4: Update the order (customer_lastname already arrives concatenated from frontend)
+    const { error: updateError } = await supabase
+      .from("orders")
+      .update(orderUpdate)
       .eq("id", orderId);
 
     if (updateError) {
