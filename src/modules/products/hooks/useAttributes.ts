@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
-  AttributeRow,
+  AttributeGroup,
   AttributeFilters,
   AttributePaginationState,
   AttributeFormValues,
@@ -24,7 +24,8 @@ import { attributesAdapter } from "../adapters/Attributes.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 
 export const useAttributes = () => {
-  const [attributes, setAttributes] = useState<AttributeRow[]>([]);
+  const [attributes, setAttributes] = useState<AttributeGroup[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -77,6 +78,8 @@ export const useAttributes = () => {
 
       setAttributes(adaptedAttributes);
       setPagination(adaptedPagination);
+      // Collapse all groups when data reloads
+      setExpandedGroups(new Set());
     } catch (err) {
       console.error(err);
       setError("Ocurrió un error al cargar los atributos");
@@ -108,6 +111,18 @@ export const useAttributes = () => {
     loadData();
     loadTermGroups();
   }, []);
+
+  const toggleGroup = (groupId: number) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  };
 
   const onSearchChange = (value: string) => {
     setSearch(value);
@@ -291,6 +306,8 @@ export const useAttributes = () => {
 
   return {
     attributes,
+    expandedGroups,
+    toggleGroup,
     loading,
     error,
     search,
