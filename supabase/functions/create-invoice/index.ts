@@ -45,9 +45,16 @@ serve(async (req) => {
       .from("invoices")
       .insert({
         invoice_type_id: input.invoice_type_id,
-        serie: input.serie || null,
-        account_id: input.account_id,
+        tax_serie: input.tax_serie || null,
+        customer_document_type_id: input.customer_document_type_id || 0,
+        customer_document_number: input.customer_document_number || ' ',
+        client_name: input.client_name || null,
+        client_email: input.client_email || null,
+        client_address: input.client_address || null,
         total_amount: input.total_amount,
+        total_taxes: input.total_taxes || null,
+        total_free: input.total_free || null,
+        total_others: input.total_others || null,
         created_by: user.id,
       })
       .select("id")
