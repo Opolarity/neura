@@ -30,7 +30,6 @@ import {
   adaptSalesFormData,
   adaptShippingCosts,
   adaptClientSearchResult,
-  adaptPriceLists,
   getIdInventoryTypeAdapter,
 } from "../adapters";
 import {
@@ -38,10 +37,10 @@ import {
   fetchShippingCosts,
   searchClientByDocument,
   lookupDocument,
-  fetchPriceLists,
   fetchSaleProducts,
   getIdInventoryTypeApi,
 } from "../services";
+import { getPriceListIsActiveTrue } from "@/shared/services/service";
 import { createPOSOrder } from "../services/POS.service";
 import { filterShippingCostsByLocation } from "../utils";
 
@@ -168,13 +167,13 @@ export const usePOS = () => {
       const [salesFormData, priceListsData, shippingCostsData, stockTypeData] =
         await Promise.all([
           fetchSalesFormData(),
-          fetchPriceLists(),
+          getPriceListIsActiveTrue(),
           fetchShippingCosts(),
           getIdInventoryTypeApi(),
         ]);
 
       setFormData(adaptSalesFormData(salesFormData));
-      setPriceLists(adaptPriceLists(priceListsData || []));
+      setPriceLists(priceListsData);
       setAllShippingCosts(adaptShippingCosts(shippingCostsData || []));
       setSelectedStockTypeId(
         getIdInventoryTypeAdapter(stockTypeData).toString()
