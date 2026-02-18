@@ -3774,6 +3774,7 @@ export type Database = {
         }
         Returns: Json
       }
+      get_user_functions: { Args: { p_user_id: string }; Returns: Json }
       get_variation_by_terms: {
         Args: { p_product_id: number; terms_id: number[] }
         Returns: Json
@@ -3800,6 +3801,17 @@ export type Database = {
           p_notes?: string
           p_session_id: number
           p_user_id: string
+        }
+        Returns: Json
+      }
+      sp_create_business_account: {
+        Args: {
+          p_account_id: number
+          p_account_number: number
+          p_bank: string
+          p_business_account_type_id: number
+          p_name: string
+          p_total_amount: number
         }
         Returns: Json
       }
@@ -3890,21 +3902,36 @@ export type Database = {
         Args: { p_code: string; p_name: string }
         Returns: Json
       }
+      sp_delete_business_account: { Args: { p_id: number }; Returns: Json }
       sp_delete_payment_method: { Args: { p_id: number }; Returns: Json }
       sp_delete_price_list: { Args: { p_id: number }; Returns: Json }
       sp_delete_stock_types: { Args: { p_id: number }; Returns: Json }
-      sp_ec_create_account_profile: {
-        Args: {
-          p_auth_uid: string
-          p_dni: string
-          p_lastname1: string
-          p_lastname2: string
-          p_nickname: string
-          p_nombre: string
-          p_tipo_documento_id: number
-        }
-        Returns: Json
-      }
+      sp_ec_create_account_profile:
+        | {
+            Args: {
+              p_auth_uid: string
+              p_dni: string
+              p_lastname1: string
+              p_lastname2: string
+              p_nickname: string
+              p_nombre: string
+              p_tipo_documento_id: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_auth_uid: string
+              p_dni: string
+              p_email: string
+              p_lastname1: string
+              p_lastname2: string
+              p_nickname: string
+              p_nombre: string
+              p_tipo_documento_id: number
+            }
+            Returns: Json
+          }
       sp_ec_get_categories_ids: {
         Args: { p_categories_ids?: number[] }
         Returns: Json
@@ -3988,6 +4015,10 @@ export type Database = {
           p_states?: number
           p_warehouse?: number
         }
+        Returns: Json
+      }
+      sp_get_business_accounts: {
+        Args: { p_page?: number; p_size?: number }
         Returns: Json
       }
       sp_get_categories_product_count: {
@@ -4184,6 +4215,7 @@ export type Database = {
           p_group?: number
           p_max_pr?: number
           p_min_pr?: number
+          p_order?: string
           p_page?: number
           p_search?: string
           p_size?: number
@@ -4228,6 +4260,28 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_update_business_account: {
+        Args: {
+          p_account_number: number
+          p_bank: string
+          p_business_account_type_id: number
+          p_id: number
+          p_name: string
+          p_total_amount: number
+        }
+        Returns: Json
+      }
+      sp_update_order_chanel_type: {
+        Args: {
+          p_code: string
+          p_id: number
+          p_module_code?: string
+          p_module_id?: number
+          p_name: string
+          p_payment_methods?: number[]
+        }
+        Returns: Json
+      }
       sp_update_payment_method: {
         Args: {
           p_active?: boolean
@@ -4246,6 +4300,23 @@ export type Database = {
           p_web?: boolean
         }
         Returns: Json
+      }
+      sp_update_product: {
+        Args: {
+          p_description: string
+          p_is_active: boolean
+          p_is_variable: boolean
+          p_is_web: boolean
+          p_product_id: number
+          p_product_images: Json
+          p_product_name: string
+          p_reset_variations: boolean
+          p_selected_categories: number[]
+          p_short_description: string
+          p_user_id: string
+          p_variations: Json
+        }
+        Returns: Record<string, unknown>
       }
       sp_update_state_returns: {
         Args: {

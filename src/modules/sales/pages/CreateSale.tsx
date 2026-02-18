@@ -74,6 +74,7 @@ import { formatCurrency, calculateLineSubtotal } from "../utils";
 import { useToast } from "@/hooks/use-toast";
 import { VoucherPreviewModal } from "../components/sales/VoucherPreviewModal";
 import { SalesHistoryModal } from "../components/SalesHistoryModal";
+import { SalesInvoicesModal } from "../components/SalesInvoicesModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 
@@ -152,6 +153,8 @@ const CreateSale = () => {
     orderSituationTable,
     setHistoryModalOpen,
   } = useCreateSale();
+
+  const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
 
   const [open, setOpen] = useState(false);
   const [tempPriceListId, setTempPriceListId] = useState<string>("");
@@ -1077,12 +1080,20 @@ const CreateSale = () => {
             </CardContent>
             <CardFooter>
               {createdOrderId && (
-                <em
-                  className="italic text-sm underline cursor-pointer"
-                  onClick={() => setHistoryModalOpen(true)}
-                >
-                  ver historial
-                </em>
+                <div className="flex gap-3">
+                  <em
+                    className="italic text-sm underline cursor-pointer"
+                    onClick={() => setHistoryModalOpen(true)}
+                  >
+                    ver historial
+                  </em>
+                  <em
+                    className="italic text-sm underline cursor-pointer"
+                    onClick={() => setInvoicesModalOpen(true)}
+                  >
+                    ver comprobantes
+                  </em>
+                </div>
               )}
             </CardFooter>
           </Card>
@@ -1464,6 +1475,13 @@ const CreateSale = () => {
         open={historyModalOpen}
         onOpenChange={setHistoryModalOpen}
       />
+      {createdOrderId && (
+        <SalesInvoicesModal
+          orderId={createdOrderId}
+          open={invoicesModalOpen}
+          onOpenChange={setInvoicesModalOpen}
+        />
+      )}
     </div>
   );
 };
