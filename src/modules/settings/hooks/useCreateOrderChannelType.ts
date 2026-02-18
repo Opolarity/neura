@@ -2,11 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { CreateOrderChannelType, GetModules } from '../services/OrderChannelTypes.services';
+import { getPaymentMethodsIsActiveTrueAndActiveTrue } from '@/shared/services/service';
 
 interface FormData {
     name: string;
     code: string;
-    moduleId: string; // Storing as string for Select value
+}
+
+interface PaymentMethodOption {
+    id: number;
+    name: string;
+    business_accounts?: { name: string };
 }
 
 const useCreateOrderChannelType = () => {
@@ -15,24 +21,30 @@ const useCreateOrderChannelType = () => {
 
     const [loading, setLoading] = useState(false);
     const [optionsLoading, setOptionsLoading] = useState(true);
-    const [modules, setModules] = useState<{ id: number; name: string; code: string }[]>([]);
+    const [ordModule, setOrdModule] = useState<{ id: number; code: string } | null>(null);
+    const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOption[]>([]);
+    const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<Set<number>>(new Set());
 
     const [formData, setFormData] = useState<FormData>({
         name: '',
         code: '',
-        moduleId: '',
     });
 
     useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const modulesData = await GetModules();
-                setModules(modulesData);
+                const [modulesData, paymentMethodsData] = await Promise.all([
+                    GetModules(),
+                    getPaymentMethodsIsActiveTrueAndActiveTrue(),
+                ]);
+                const ord = modulesData.find(m => m.code === 'ORD') ?? null;
+                setOrdModule(ord);
+                setPaymentMethods(paymentMethodsData);
             } catch (error) {
-                console.error("Error loading modules:", error);
+                console.error("Error loading options:", error);
                 toast({
                     title: "Error",
-                    description: "No se pudieron cargar los módulos",
+                    description: "No se pudieron cargar las opciones",
                     variant: "destructive"
                 });
             } finally {
@@ -47,15 +59,23 @@ const useCreateOrderChannelType = () => {
         setFormData(prev => ({ ...prev, [id]: value }));
     };
 
-    const handleSelectChange = (value: string) => {
-        setFormData(prev => ({ ...prev, moduleId: value }));
+    const togglePaymentMethod = (id: number) => {
+        setSelectedPaymentMethods(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        if (!formData.name || !formData.code || !formData.moduleId) {
+        if (!formData.name || !formData.code) {
             toast({
                 title: "Error",
                 description: "Por favor complete todos los campos requeridos",
@@ -65,11 +85,10 @@ const useCreateOrderChannelType = () => {
             return;
         }
 
-        const selectedModule = modules.find(m => m.id.toString() === formData.moduleId);
-        if (!selectedModule) {
+        if (!ordModule) {
             toast({
                 title: "Error",
-                description: "Módulo seleccionado inválido",
+                description: "No se encontró el módulo ORD",
                 variant: "destructive"
             });
             setLoading(false);
@@ -80,8 +99,9 @@ const useCreateOrderChannelType = () => {
             await CreateOrderChannelType({
                 name: formData.name,
                 code: formData.code,
-                moduleID: selectedModule.id,
-                moduleCode: selectedModule.code,
+                moduleID: ordModule.id,
+                moduleCode: ordModule.code,
+                paymentMethods: Array.from(selectedPaymentMethods),
             });
             toast({ title: "Éxito", description: "Tipo de canal creado correctamente" });
             navigate('/settings/order-channel-types');
@@ -101,9 +121,10 @@ const useCreateOrderChannelType = () => {
         formData,
         loading,
         optionsLoading,
-        modules,
+        paymentMethods,
+        selectedPaymentMethods,
         handleChange,
-        handleSelectChange,
+        togglePaymentMethod,
         handleSubmit
     };
 };
