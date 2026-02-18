@@ -152,6 +152,10 @@ const CreateRole = () => {
     setExpandedNodes(newExpanded);
   };
 
+  const getAllFunctionIds = (funcs: Function[]): number[] => {
+    return funcs.flatMap((f) => [f.id, ...getAllFunctionIds(f.children || [])]);
+  };
+
   const toggleFunction = (functionId: number) => {
     const newSelected = new Set(formData.functions);
     if (newSelected.has(functionId)) {
@@ -191,6 +195,7 @@ const CreateRole = () => {
             id={`function-${func.id}`}
             checked={formData.functions.includes(func.id)}
             onCheckedChange={() => toggleFunction(func.id)}
+            disabled={formData.admin}
           />
           <Label
             htmlFor={`function-${func.id}`}
@@ -305,7 +310,14 @@ const CreateRole = () => {
                   <Checkbox
                     id="admin"
                     checked={formData.admin}
-                    onCheckedChange={(checked) => setFormData({ ...formData, admin: checked as boolean })}
+                    onCheckedChange={(checked) => {
+                      const isAdmin = checked as boolean;
+                      setFormData({
+                        ...formData,
+                        admin: isAdmin,
+                        functions: isAdmin ? getAllFunctionIds(functions) : [],
+                      });
+                    }}
                   />
                   <Label htmlFor="admin">Rol de Administrador</Label>
                 </div>
