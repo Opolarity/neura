@@ -1,23 +1,24 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
- 
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
- 
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
- 
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
- 
+
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error("Missing environment variables");
     }
- 
+
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -25,50 +26,37 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
- 
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
- 
-    // Validar método HTTP
+
     if (req.method !== "POST") {
       return new Response(
         JSON.stringify({ error: "Method not allowed. Use POST" }),
         { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
- 
-    // Obtener datos del body
+
     const body = await req.json();
-    const { id, name, code, moduleID, moduleCode } = body;
- 
-    if (!id) {
-      return new Response(JSON.stringify({ error: "Falta el ID del registro a editar" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+    const { id, name, code, moduleID, moduleCode, paymentMethods } = body;
+
+    if (!id || !name || !code) {
+      return new Response(
+        JSON.stringify({ error: "Campos requeridos: id, name, code" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    if (!moduleID || !moduleCode) {
-      return new Response(JSON.stringify({ error: "Faltan datos de seguridad (moduleID, moduleCode)" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-
-    if (!name || !code) {
-      return new Response(JSON.stringify({ error: "El nombre y el código son requeridos" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
- 
-    // Llamar al stored procedure
-    const { data, error } = await supabase.rpc("sp_update_order_channel_type", {    
+    const { data, error } = await supabase.rpc("sp_update_order_chanel_type", {
       p_id: id,
       p_name: name,
       p_code: code,
       p_module_id: moduleID,
       p_module_code: moduleCode,
+      p_payment_methods: paymentMethods ?? null,
     });
- 
+
     if (error) {
       console.error("RPC Error:", error);
       return new Response(
@@ -76,22 +64,21 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
- 
-    // Verificar si el SP retornó un error
+
     if (data && data.success === false) {
       return new Response(
         JSON.stringify({ error: data.error }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
- 
+
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 201,
+      status: 200,
     });
- 
+
   } catch (error) {
-    console.error("Error in create-order-chanel-type:", error);
+    console.error("Error in update-order-chanel-type:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return new Response(
       JSON.stringify({ error: errorMessage }),

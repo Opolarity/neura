@@ -40,6 +40,10 @@ export const settingsRoutes: RouteObject[] = [
         path: "order-channel-types/create",
         element: <CreateOrderChannelType />,
       },
+      {
+        path: "order-channel-types/edit/:id",
+        element: <CreateOrderChannelType />,
+      },
       { path: "price-list", element: <PriceListPage /> },
       { path: "stock-types", element: <StockTypePage /> },
       { path: "business-accounts", element: <BusinessAccountPage /> },

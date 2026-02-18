@@ -39,3 +39,7 @@ export interface CreateOrderChannelPayload {
   moduleCode: string;
   paymentMethods?: number[];
 }
+
+export interface UpdateOrderChannelPayload extends CreateOrderChannelPayload {
+  id: number;
+}

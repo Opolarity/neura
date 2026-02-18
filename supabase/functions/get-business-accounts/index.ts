@@ -36,17 +36,14 @@ Deno.serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const account_id = url.searchParams.get("account_id");
+    const page = Number(url.searchParams.get("page")) || 1;
+    const size = Number(url.searchParams.get("size")) || 20;
 
-    if (!account_id) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Falta el parámetro account_id en la URL" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+
 
     const { data, error } = await supabase.rpc("sp_get_business_accounts", {
-      p_account_id: parseInt(account_id, 10)
+      p_page: page,
+      p_size: size
     });
 
     if (error) {
@@ -56,9 +53,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    return new Response(JSON.stringify(data), { 
-      status: 200, 
-      headers: { ...corsHeaders, "Content-Type": "application/json" } 
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
 
   } catch (error: any) {
