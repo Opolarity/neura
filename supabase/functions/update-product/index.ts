@@ -105,10 +105,10 @@ serve(async (req) => {
       resetVariations = false,
     } = body;
 
-    console.log("Calling SP update_product for product:", productId);
+    console.log("Calling SP sp_update_product for product:", productId);
 
     // ── Llamar al Stored Procedure ────────────────────────────
-    const { data: spResult, error: spError } = await supabaseAdmin.rpc("update_product", {
+    const { data: spResult, error: spError } = await supabaseAdmin.rpc("sp_update_product", {
       p_product_id: productId,
       p_product_name: productName,
       p_short_description: shortDescription,
