@@ -1007,6 +1007,15 @@ export const useCreateSale = () => {
         return;
       }
 
+      if (!formData.saleType) {
+        toast({
+          title: "Error",
+          description: "Seleccione un canal de venta",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setSaving(true);
 
       // Debug: Log saleType value being sent
@@ -1041,7 +1050,7 @@ export const useCreateSale = () => {
           subtotal,
           discount: discountAmount,
           total,
-          isExistingClient, // true if client was found in accounts table
+          isExistingClient: isAnonymousPurchase ? true : isExistingClient, // anonymous purchase always uses existing account
           products: products.map((p) => ({
             variationId: p.variationId,
             quantity: p.quantity,
