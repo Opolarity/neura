@@ -152,6 +152,16 @@ export const useProductCosts = () => {
                 })
             );
 
+            // Client-side validation for negative costs
+            if (costUpdates.some(update => update.product_cost !== null && update.product_cost < 0)) {
+                toast({
+                    title: "Error",
+                    description: "no se permiten costos negativos",
+                    variant: "destructive",
+                });
+                return;
+            }
+
 
             const { error } = await supabase.functions.invoke(
                 "update-product-costs",
@@ -174,9 +184,15 @@ export const useProductCosts = () => {
             await loadData();
         } catch (error: any) {
             console.error("Error saving costs:", error);
+
+            // Check if error is due to negative cost from server
+            const description = error.message?.includes("negative")
+                ? "no se permiten costos negativos"
+                : "No se pudo actualizar los costos";
+
             toast({
                 title: "Error",
-                description: "No se pudo actualizar los costos",
+                description,
                 variant: "destructive",
             });
         } finally {

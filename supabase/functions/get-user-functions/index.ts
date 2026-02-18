@@ -42,7 +42,7 @@ serve(async (req) => {
     // 3. Cliente service role para llamar al SP
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
-    const { data, error } = await supabaseAdmin.rpc("get_user_role_and_functions", {
+    const { data, error } = await supabaseAdmin.rpc("get_user_functions", {
       p_user_id: user.id,
     });
 
