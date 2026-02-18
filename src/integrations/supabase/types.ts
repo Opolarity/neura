@@ -4018,7 +4018,7 @@ export type Database = {
         Returns: Json
       }
       sp_get_business_accounts: {
-        Args: { p_account_id: number }
+        Args: { p_page?: number; p_size?: number }
         Returns: Json
       }
       sp_get_categories_product_count: {
