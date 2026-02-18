@@ -32,7 +32,7 @@ export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {loading ? (
+                {loading && accounts.length === 0 ? (
                     <TableRow>
                         <TableCell colSpan={7} className="text-center py-8">
                             <div className="flex items-center justify-center gap-2">

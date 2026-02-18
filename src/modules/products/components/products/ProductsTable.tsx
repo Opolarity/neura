@@ -57,7 +57,7 @@ const ProductsTable = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {loading ? (
+        {loading && products.length === 0 ? (
           <TableRow>
             <TableCell colSpan={9} className="text-center py-8">
               <div className="flex items-center justify-center gap-2">
