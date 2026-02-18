@@ -127,6 +127,7 @@ const CategoriesFilterModal = ({
                                 placeholder="Mínimo"
                                 min={0}
                                 value={internalFilters.minproducts ?? ""}
+                                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                 onChange={handleMinProductsChange}
                             />
                             <Input
@@ -134,6 +135,7 @@ const CategoriesFilterModal = ({
                                 placeholder="Máximo"
                                 min={0}
                                 value={internalFilters.maxproducts ?? ""}
+                                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                 onChange={handleMaxProductsChange}
                             />
                         </div>

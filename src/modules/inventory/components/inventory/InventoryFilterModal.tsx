@@ -114,6 +114,7 @@ const InventoryFilterModal = ({
                 placeholder="Mínimo"
                 min={0}
                 value={internalFilters.minstock ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMinStockChange}
               />
               <Input
@@ -121,6 +122,7 @@ const InventoryFilterModal = ({
                 placeholder="Máximo"
                 min={0}
                 value={internalFilters.maxstock ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMaxStockChange}
               />
             </div>

@@ -246,6 +246,7 @@ const ShippingFilterModal = ({
                 placeholder="Mínimo"
                 min={0}
                 value={internalFilters.mincost ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMinCostChange}
               />
               <Input
@@ -253,6 +254,7 @@ const ShippingFilterModal = ({
                 placeholder="Máximo"
                 min={0}
                 value={internalFilters.maxcost ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMaxCostChange}
               />
             </div>

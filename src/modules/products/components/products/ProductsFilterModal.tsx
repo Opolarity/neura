@@ -136,6 +136,7 @@ const ProductsFilterModal = ({
                 placeholder="Mínimo"
                 min={0}
                 value={internalFilters.minprice ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMinPriceChange}
               />
               <Input
@@ -143,6 +144,7 @@ const ProductsFilterModal = ({
                 placeholder="Máximo"
                 min={0}
                 value={internalFilters.maxprice ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMaxPriceChange}
               />
             </div>
@@ -155,6 +157,7 @@ const ProductsFilterModal = ({
                 placeholder="Mínimo"
                 min={0}
                 value={internalFilters.minstock ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMinStockChange}
               />
               <Input
@@ -162,6 +165,7 @@ const ProductsFilterModal = ({
                 placeholder="Máximo"
                 min={0}
                 value={internalFilters.maxstock ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMaxStockChange}
               />
             </div>
