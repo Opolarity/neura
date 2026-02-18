@@ -171,13 +171,13 @@ const Sales = () => {
                         >
                           <SquarePen className="w-4 h-4" />
                         </Button>
-                        <Button
+                        {/*<Button
                           variant="outline"
                           size="sm"
                           onClick={() => navigate(`/sales/${sale.id}`)}
                         >
                           <Eye className="w-4 h-4" />
-                        </Button>
+                        </Button>*/}
                       </div>
                     </TableCell>
                   </TableRow>
