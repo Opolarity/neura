@@ -1,21 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getUserFunctionsApi } from '@/layouts/services/layout.service';
+import { UserFunction } from '@/layouts/types/layout.types';
 
-interface Function {
-  id: number;
-  name: string;
-  code: string | null;
-  icon: string | null;
-  location: string | null;
-  parent_function: number | null;
-  active: boolean;
-  order: number | null;
-}
-
-interface MenuFunction extends Function {
+interface MenuFunction extends UserFunction {
   subItems?: {
     label: string;
-    items: Function[];
+    items: UserFunction[];
   }[];
 }
 
@@ -27,18 +18,32 @@ export const useFunctions = () => {
   useEffect(() => {
     const fetchFunctions = async () => {
       try {
-        const { data, error } = await supabase
-          .from('functions')
-          .select('*')
-          .eq('active', true)
-          .order('order', { ascending: true, nullsFirst: false });
+        // 1. Get allowed functions (permissions) from Edge Function
+        const response = await getUserFunctionsApi();
 
-        if (error) throw error;
+        if (response.success && response.session?.functions) {
+          const allowedIds = response.session.functions.map((f: any) => f.id);
 
-        // Transform the flat functions data into a hierarchical structure
-        const transformedFunctions = transformToMenuStructure(data || []);
-        setFunctions(transformedFunctions);
+          // 2. Get full metadata for all active functions from the table
+          const { data: allFunctions, error: tableError } = await supabase
+            .from('functions')
+            .select('*')
+            .eq('active', true)
+            .order('order', { ascending: true, nullsFirst: false });
+
+          if (tableError) throw tableError;
+
+          // 3. Filter full list by allowed IDs
+          const filteredFunctions = (allFunctions || []).filter(f => allowedIds.includes(f.id));
+
+          // 4. Transform to hierarchical structure
+          const transformedFunctions = transformToMenuStructure(filteredFunctions as UserFunction[]);
+          setFunctions(transformedFunctions);
+        } else if (response.error) {
+          throw new Error(response.error);
+        }
       } catch (err) {
+        console.error("Error in useFunctions:", err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
@@ -51,7 +56,7 @@ export const useFunctions = () => {
   return { functions, loading, error };
 };
 
-const transformToMenuStructure = (functions: Function[]): MenuFunction[] => {
+const transformToMenuStructure = (functions: UserFunction[]): MenuFunction[] => {
   // Get all parent functions (those without parent_function) and sort by order
   const parentFunctions = functions
     .filter(f => f.parent_function === null)

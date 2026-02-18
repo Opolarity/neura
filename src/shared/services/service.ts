@@ -215,6 +215,24 @@ export const getPaymentMethodsIsActiveTrue = async (): Promise<PaymentMethod[]> 
 };
 
 
+//GET PAYMENT METHODS IS_ACTIVE TRUE AND ACTIVE TRUE//
+
+export const getPaymentMethodsIsActiveTrueAndActiveTrue = async (): Promise<(PaymentMethod & { business_accounts?: { name: string } })[]> => {
+  const { data, error } = await supabase
+    .from("payment_methods")
+    .select("*, business_accounts(name)")
+    .eq("is_active", true)
+    .eq("active", true);
+
+  if (error) {
+    console.error("Error fetching active payment methods:", error.message);
+    return [];
+  }
+
+  return (data as any) || [];
+};
+
+
 //GET TERMS GROUP IS ACTIVE TRUE//
 
 export const getTermsGroupIsActiveTrue = async () => {
