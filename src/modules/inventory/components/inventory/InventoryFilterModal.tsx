@@ -51,14 +51,18 @@ const InventoryFilterModal = ({
     }));
   };
 
+  const parsePositive = (raw: string) => {
+    if (!raw) return null;
+    const clean = raw.replace(/-/g, "");
+    return clean ? Number(clean) : null;
+  };
+
   const handleMinStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value ? Number(e.target.value) : null;
-    setInternalFilters((prev) => ({ ...prev, minstock: value }));
+    setInternalFilters((prev) => ({ ...prev, minstock: parsePositive(e.target.value) }));
   };
 
   const handleMaxStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value ? Number(e.target.value) : null;
-    setInternalFilters((prev) => ({ ...prev, maxstock: value }));
+    setInternalFilters((prev) => ({ ...prev, maxstock: parsePositive(e.target.value) }));
   };
 
   const handleClear = () => {
@@ -108,12 +112,14 @@ const InventoryFilterModal = ({
               <Input
                 type="number"
                 placeholder="Mínimo"
+                min={0}
                 value={internalFilters.minstock ?? ""}
                 onChange={handleMinStockChange}
               />
               <Input
                 type="number"
                 placeholder="Máximo"
+                min={0}
                 value={internalFilters.maxstock ?? ""}
                 onChange={handleMaxStockChange}
               />

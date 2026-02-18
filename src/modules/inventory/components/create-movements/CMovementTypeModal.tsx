@@ -55,9 +55,9 @@ const CMovementTypeModal = ({ types, onTypeStock }: CMovementTypeModalProps) => 
     <Dialog open={isOpen} onOpenChange={closeModal}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Eliminar elemento</DialogTitle>
+          <DialogTitle>Crear Movimiento</DialogTitle>
           <DialogDescription>
-            Esta acción no se puede deshacer.
+            Selecciona el tipo de movimiento que deseas crear.
           </DialogDescription>
         </DialogHeader>
 
