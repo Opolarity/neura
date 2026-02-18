@@ -21,7 +21,7 @@ import {
 } from "../../types/BusinessAccount.types";
 import { useForm, Controller } from "react-hook-form";
 import { useEffect, useState } from "react";
-import { getBusinessAccountTypesApi } from "../../services/BusinessAccount.services";
+import { typesByModuleCode } from "@/shared/services/service";
 
 interface BusinessAccountFormDialogProps {
   open: boolean;
@@ -65,7 +65,7 @@ export const BusinessAccountFormDialog = ({
   useEffect(() => {
     if (!open) return;
     setTypesLoading(true);
-    getBusinessAccountTypesApi()
+    typesByModuleCode("BNA")
       .then(setAccountTypes)
       .catch(console.error)
       .finally(() => setTypesLoading(false));
