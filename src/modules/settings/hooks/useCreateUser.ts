@@ -12,6 +12,7 @@ import {
     getUserDocumentApi
 } from '../services/Users.services';
 import { FilterOption, DocumentLookupPayload } from '../types/Users.types';
+import { typesByModuleCode } from '@/shared/services/service';
 
 interface FormData {
     name: string;
@@ -92,17 +93,21 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
         const fetchOptions = async () => {
             try {
                 setOptionsLoading(true);
-                const data = await getUsersFormDataApi();
+                const [data, accountTypesData] = await Promise.all([
+                    getUsersFormDataApi(),
+                    typesByModuleCode("CUT"),
+                ]);
                 setRoles(data.roles || []);
                 setWarehouses(data.warehouses || []);
                 setDocumentTypes(data.documentTypes || []);
-                setAccountTypes(data.accountTypes || []);
                 setCountries(data.countries || []);
                 setBranches(data.branches || []);
 
+                setAccountTypes(accountTypesData);
+
                 // Auto-select USE account type if not in edit mode
-                if (!isEdit && data.accountTypes && data.accountTypes.length > 0) {
-                    const useType = data.accountTypes.find((t: any) => t.name?.toUpperCase().includes('USE'));
+                if (!isEdit && accountTypesData.length > 0) {
+                    const useType = accountTypesData.find(t => t.name?.toUpperCase().includes('USE'));
                     if (useType) {
                         setFormData(prev => ({
                             ...prev,
@@ -354,7 +359,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
             }
 
             const missingFields = Object.entries(requiredFields)
-                .filter(([key, value]) => !value)
+                .filter(([, value]) => !value)
                 .map(([key]) => key);
 
             if (missingFields.length > 0) {
