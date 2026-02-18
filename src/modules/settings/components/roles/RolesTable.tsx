@@ -25,7 +25,7 @@ const RolesTable = ({ roles, loading, handleDeleteRole, handleEditRole }: RolesT
             </TableHeader>
             <TableBody>
                 {
-                    loading ? (
+                    loading && roles.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={5} className="text-center py-8">
                                 <div className="flex items-center justify-center gap-2">

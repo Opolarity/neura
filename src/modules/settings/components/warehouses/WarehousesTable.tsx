@@ -29,7 +29,7 @@ const WarehousesTable = ({ warehouses, loading, handleDeleteWarehouse }: Warehou
             </TableHeader>
             <TableBody>
                 {
-                    loading ? (
+                    loading && warehouses.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={8} className="text-center py-8">
                                 <div className="flex items-center justify-center gap-2">

@@ -46,7 +46,7 @@ const MovementsTable = ({ movements, loading }: MovementsTableProps) => {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {loading ? (
+                {loading && movements.length === 0 ? (
                     <TableRow>
                         <TableCell colSpan={8} className="text-center py-8">
                             <div className="flex items-center justify-center gap-2">

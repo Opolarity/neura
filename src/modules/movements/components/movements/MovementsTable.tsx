@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { Movement } from "../../types/Movements.types";
-import { format } from "date-fns";
 
 interface MovementsTableProps {
   movements: Movement[];
@@ -53,11 +52,11 @@ const MovementsTable = ({
           <TableHead>Sucursal</TableHead>
           <TableHead>Usuario</TableHead>
           <TableHead className="text-right">Monto</TableHead>
-          <TableHead className="w-16">Acciones</TableHead>
+          {/* <TableHead className="w-16">Acciones</TableHead> */}
         </TableRow>
       </TableHeader>
       <TableBody>
-        {loading ? (
+        {loading && movements.length === 0 ? (
           <TableRow>
             <TableCell colSpan={10} className="text-center py-8">
               <div className="flex items-center justify-center gap-2">
@@ -124,7 +123,7 @@ const MovementsTable = ({
                 {movement.formattedAmount}
               </TableCell>
 
-              <TableCell>
+              {/* <TableCell>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -133,7 +132,7 @@ const MovementsTable = ({
                 >
                   <Eye className="w-4 h-4" />
                 </Button>
-              </TableCell>
+              </TableCell> */}
             </TableRow>
           ))
         )}
