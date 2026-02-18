@@ -41,13 +41,13 @@ Deno.serve(async (req) => {
 
     // Obtener datos del body
     const body = await req.json();
-    const { name, code, moduleID, moduleCode } = body;
+    const { name, code, moduleID, moduleCode, paymentMethods } = body;
 
     // Validaciones básicas
     if (!name || !code) {
       return new Response(
         JSON.stringify({
-          error: "Campos requeridos:is, name, code"
+          error: "Campos requeridos: name, code"
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
       p_code: code,
       p_module_id: moduleID,
       p_module_code: moduleCode,
+      p_payment_methods: paymentMethods ?? null,
     });
 
     if (error) {

@@ -37,4 +37,5 @@ export interface CreateOrderChannelPayload {
   code: string;
   moduleID: number;
   moduleCode: string;
+  paymentMethods?: number[];
 }
