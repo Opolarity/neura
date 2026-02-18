@@ -14,6 +14,7 @@ const CreateOrderChannelType = () => {
         optionsLoading,
         paymentMethods,
         selectedPaymentMethods,
+        isEdit,
         handleChange,
         togglePaymentMethod,
         handleSubmit,
@@ -33,9 +34,13 @@ const CreateOrderChannelType = () => {
                     </Link>
                 </Button>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Crear Tipo de Canal de Pedido</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">
+                        {isEdit ? 'Editar Tipo de Canal de Pedido' : 'Crear Tipo de Canal de Pedido'}
+                    </h1>
                     <p className="text-muted-foreground mt-2">
-                        Completa la información para crear un nuevo tipo de canal
+                        {isEdit
+                            ? 'Modifica la información del tipo de canal'
+                            : 'Completa la información para crear un nuevo tipo de canal'}
                     </p>
                 </div>
             </div>
@@ -132,7 +137,9 @@ const CreateOrderChannelType = () => {
                         <div className="flex flex-col gap-2">
                             <Button type="submit" className="w-full gap-2" disabled={loading}>
                                 <Save className="w-4 h-4" />
-                                {loading ? 'Creando...' : 'Crear Canal'}
+                                {loading
+                                    ? (isEdit ? 'Actualizando...' : 'Creando...')
+                                    : (isEdit ? 'Actualizar Canal' : 'Crear Canal')}
                             </Button>
                             <Button variant="outline" asChild className="w-full">
                                 <Link to="/settings/order-channel-types">Cancelar</Link>

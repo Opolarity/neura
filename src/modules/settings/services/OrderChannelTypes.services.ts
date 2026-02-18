@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { OrderChannelTypesApiResponse, OrderChannelTypesFilters, CreateOrderChannelPayload } from "../types/OrderChannelTypes.types";
+import { OrderChannelTypesApiResponse, OrderChannelTypesFilters, CreateOrderChannelPayload, UpdateOrderChannelPayload } from "../types/OrderChannelTypes.types";
 
 export const GetOrderChannelTypes = async (
     filters: OrderChannelTypesFilters
@@ -43,12 +43,24 @@ export const CreateOrderChannelType = async (payload: CreateOrderChannelPayload)
     return data;
 };
 
-// Placeholder for now as we haven't seen update-order-chanel-type
-export const UpdateOrderChannelType = async (payload: any): Promise<any> => {
-    // Assuming update function might exist or be created later. 
-    // If not found, this might need adjustment.
-    // I'll leave it simple for now or commented out until verified.
-    throw new Error("Update function not implemented yet");
+export const GetOrderChannelTypeDetails = async (id: number): Promise<any> => {
+    const { data, error } = await supabase.functions.invoke("get-order-chanel-type-details", {
+        method: "POST",
+        body: { chanelTypeId: id },
+    });
+
+    if (error) throw error;
+    return data;
+};
+
+export const UpdateOrderChannelType = async (payload: UpdateOrderChannelPayload): Promise<any> => {
+    const { data, error } = await supabase.functions.invoke("update-order-chanel-type", {
+        method: "POST",
+        body: payload,
+    });
+
+    if (error) throw error;
+    return data;
 };
 
 export const GetModules = async (): Promise<{ id: number; name: string; code: string }[]> => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Edit, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,11 +21,10 @@ const OrderChannelTypesTable = ({
   orderChannelTypes,
   loading,
 }: OrderChannelTypesTableProps) => {
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   const handleEdit = (id: number) => {
-    setEditingId(id);
-    console.log("Editar tipo de canal:", id);
+    navigate(`/settings/order-channel-types/edit/${id}`);
   };
 
   return (
