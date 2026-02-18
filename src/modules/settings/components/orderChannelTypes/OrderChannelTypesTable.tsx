@@ -66,8 +66,8 @@ const OrderChannelTypesTable = ({
                 <Badge variant="outline">{type.code}</Badge>
               </TableCell>
               <TableCell>
-                <Button size="sm" onClick={() => handleEdit(type.id)}>
-                  <Edit className="w-4 h-4">Editar</Edit>
+                <Button variant="outline" size="sm" onClick={() => handleEdit(type.id)}>
+                  <Edit >Editar</Edit>
                 </Button>
               </TableCell>
             </TableRow>

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { Edit, Loader2, Trash2 } from "lucide-react";
 import { PriceList } from "../../types/PriceList.types";
 
 interface PriceListTableProps {
@@ -90,7 +90,7 @@ const PriceListTable = ({
                       onOpenChange(true);
                     }}
                   >
-                    <Pencil className="h-4 w-4" />
+                    <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="destructive"

@@ -61,14 +61,14 @@ const UsersTable = ({ users, loading, onEdit, onDeleteClick }: UsersTableProps) 
               <TableCell>
                 {u.created_at
                   ? format(
-                      new Date(u.created_at.split("T")[0].replace(/-/g, "/")),
-                      "dd/MM/yyyy",
-                    )
+                    new Date(u.created_at.split("T")[0].replace(/-/g, "/")),
+                    "dd/MM/yyyy",
+                  )
                   : "-"}
               </TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => onEdit(u)}>
+                  <Button variant="outline" size="icon" onClick={() => onEdit(u)}>
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
