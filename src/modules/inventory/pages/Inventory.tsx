@@ -4,7 +4,6 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
 import { useInventory } from "../hooks/useInventory";
 import InventoryTable from "../components/inventory/InventoryTable";
 import InventoryHeader from "../components/inventory/InventoryHeader";
@@ -42,14 +41,6 @@ const Inventory = () => {
     onApplyFilter, // Available if we need it
   } = useInventory();
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <InventoryHeader
@@ -76,6 +67,7 @@ const Inventory = () => {
           <InventoryTable
             inventory={inventory}
             warehouses={warehouses}
+            loading={loading}
             isEditing={isEditing}
             getStockValue={getStockValue}
             handleStockChange={handleStockChange}

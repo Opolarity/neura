@@ -94,7 +94,7 @@ const Shipping = () => {
                 <TableCell colSpan={9} className="text-center py-8">
                   <div className="flex items-center justify-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Cargando productos...
+                    Cargando métodos de envío...
                   </div>
                 </TableCell>
               </TableRow>

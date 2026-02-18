@@ -8,8 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { PriceList } from "../../types/PriceList.types";
 
 interface PriceListTableProps {
@@ -41,15 +40,14 @@ const PriceListTable = ({
       </TableHeader>
       <TableBody>
         {loading ? (
-          Array.from({ length: 5 }).map((_, i) => (
-            <TableRow key={i}>
-              {Array.from({ length: 6 }).map((_, j) => (
-                <TableCell key={j}>
-                  <Skeleton className="h-4 w-full" />
-                </TableCell>
-              ))}
-            </TableRow>
-          ))
+          <TableRow>
+            <TableCell colSpan={6} className="text-center py-8">
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Cargando listas de precios...
+              </div>
+            </TableCell>
+          </TableRow>
         ) : prices.length === 0 ? (
           <TableRow>
             <TableCell

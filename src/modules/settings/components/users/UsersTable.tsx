@@ -1,4 +1,4 @@
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -36,8 +36,11 @@ const UsersTable = ({ users, loading, onEdit, onDelete }: UsersTableProps) => {
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={8} className="text-center">
-              Cargando usuarios...
+            <TableCell colSpan={8} className="text-center py-8">
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Cargando usuarios...
+              </div>
             </TableCell>
           </TableRow>
         ) : users.length === 0 ? (
