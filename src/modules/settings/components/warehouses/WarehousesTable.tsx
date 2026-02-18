@@ -8,10 +8,10 @@ import { WarehouseView } from '../../types/Warehouses.types';
 interface WarehousesTableProps {
     warehouses: WarehouseView[];
     loading: boolean;
-    handleDeleteWarehouse: (warehouseId: number) => void;
+    onDeleteClick: (warehouse: WarehouseView) => void;
 }
 
-const WarehousesTable = ({ warehouses, loading, handleDeleteWarehouse }: WarehousesTableProps) => {
+const WarehousesTable = ({ warehouses, loading, onDeleteClick }: WarehousesTableProps) => {
     return (
         <Table>
             <TableHeader>
@@ -82,7 +82,7 @@ const WarehousesTable = ({ warehouses, loading, handleDeleteWarehouse }: Warehou
                                         <Button
                                             variant="destructive"
                                             size="sm"
-                                            onClick={() => handleDeleteWarehouse(w.id)}
+                                            onClick={() => onDeleteClick(w)}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>

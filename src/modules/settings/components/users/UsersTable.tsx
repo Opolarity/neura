@@ -15,10 +15,10 @@ interface UsersTableProps {
   users: Users[];
   loading: boolean;
   onEdit: (user: Users) => void;
-  onDelete: (id: string) => void;
+  onDeleteClick: (user: Users) => void;
 }
 
-const UsersTable = ({ users, loading, onEdit, onDelete }: UsersTableProps) => {
+const UsersTable = ({ users, loading, onEdit, onDeleteClick }: UsersTableProps) => {
   return (
     <Table>
       <TableHeader>
@@ -74,7 +74,7 @@ const UsersTable = ({ users, loading, onEdit, onDelete }: UsersTableProps) => {
                   <Button
                     variant="destructive"
                     size="icon"
-                    onClick={() => onDelete(u.profiles_id)}
+                    onClick={() => onDeleteClick(u)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

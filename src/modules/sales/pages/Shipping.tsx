@@ -1,24 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Trash2, Edit, Trash } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash } from 'lucide-react';
 import { useShipping } from '../hooks/useShipping';
 import ShippingFilterBar from '../components/shipping/ShippingFilterBar';
-import { Checkbox } from '@radix-ui/react-checkbox';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import ShippingFilterModal from '../components/shipping/ShippingFilterModal';
+import { ShippingDeleteDialog } from '../components/shipping/ShippingDeleteDialog';
+import type { Shipping } from '../types/Shipping.types';
 import { Link } from 'react-router-dom';
 
 
 const Shipping = () => {
+  const [shippingToDelete, setShippingToDelete] = useState<Shipping | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const {
     shippings,
     loading,
@@ -36,6 +33,18 @@ const Shipping = () => {
     onOrderChange,
     onDeleteShipping,
   } = useShipping();
+
+  const handleDeleteClick = (shipping: Shipping) => {
+    setShippingToDelete(shipping);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!shippingToDelete) return;
+    setIsDeleting(true);
+    await onDeleteShipping(shippingToDelete.id);
+    setIsDeleting(false);
+    setShippingToDelete(null);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -133,7 +142,7 @@ const Shipping = () => {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => onDeleteShipping(shipping.id)}
+                        onClick={() => handleDeleteClick(shipping)}
                       >
                         <Trash className="w-4 h-4" />
                       </Button>
@@ -158,6 +167,13 @@ const Shipping = () => {
         filters={filters}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}
+      />
+      <ShippingDeleteDialog
+        open={!!shippingToDelete}
+        onOpenChange={(open) => !open && setShippingToDelete(null)}
+        shipping={shippingToDelete}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );

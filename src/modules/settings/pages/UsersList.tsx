@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Link, useNavigate } from 'react-router-dom';
@@ -9,13 +9,15 @@ import UsersFilterBar from '../components/users/UsersFilterBar';
 import UsersFilterModal from '../components/users/UsersFilterModal';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import { CardFooter } from '@/components/ui/card';
-import UsersDeleteModal from '../components/users/UsersDeleteModal';
+import { UsersDeleteDialog } from '../components/users/UsersDeleteDialog';
+import type { Users } from '../types/Users.types';
 
 
 const UsersList = () => {
   const navigate = useNavigate();
-  const [deleteId, setDeleteId] = React.useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [userToDelete, setUserToDelete] = useState<Users | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const {
     users,
     loading,
@@ -35,6 +37,14 @@ const UsersList = () => {
     warehousesOptions,
     branchesOptions
   } = useUsers();
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
+    await handleDeleteUser(userToDelete.profiles_id);
+    setIsDeleting(false);
+    setUserToDelete(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -71,7 +81,7 @@ const UsersList = () => {
             users={users}
             loading={loading}
             onEdit={(user) => navigate(`/settings/users/create?id=${user.id}`)}
-            onDelete={(id) => setDeleteId(id)}
+            onDeleteClick={setUserToDelete}
           />
         </CardContent>
         <CardFooter>
@@ -93,18 +103,12 @@ const UsersList = () => {
         branchesOptions={branchesOptions}
       />
 
-      <UsersDeleteModal
-        isOpen={!!deleteId}
-        onClose={() => setDeleteId(null)}
-        loading={isDeleting}
-        onConfirm={async () => {
-          if (deleteId) {
-            setIsDeleting(true);
-            await handleDeleteUser(deleteId);
-            setIsDeleting(false);
-            setDeleteId(null);
-          }
-        }}
+      <UsersDeleteDialog
+        open={!!userToDelete}
+        onOpenChange={(open) => !open && setUserToDelete(null)}
+        user={userToDelete}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );

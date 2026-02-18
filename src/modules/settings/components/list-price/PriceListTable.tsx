@@ -16,14 +16,14 @@ interface PriceListTableProps {
   prices: PriceList[];
   onEditItem: (item: PriceList) => void;
   onOpenChange: (open: boolean) => void;
-  onDelete: (id: number) => void;
+  onDeleteClick: (item: PriceList) => void;
 }
 
 const PriceListTable = ({
   loading,
   prices,
   onEditItem,
-  onDelete,
+  onDeleteClick,
   onOpenChange,
 }: PriceListTableProps) => {
   return (
@@ -96,7 +96,7 @@ const PriceListTable = ({
                     variant="destructive"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => onDelete(item.id)}
+                    onClick={() => onDeleteClick(item)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

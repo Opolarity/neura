@@ -5,7 +5,7 @@ import RolesTable from "../components/roles/RolesTable";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import RolesFilterModal from "../components/roles/RolesFilterModal";
 import RolesHeader from "../components/roles/RolesHeader";
-import RolesDeleteModal from "../components/roles/RolesDeleteModal";
+import { RolesDeleteDialog } from "../components/roles/RolesDeleteDialog";
 
 const RolesList = () => {
   const {
@@ -16,6 +16,7 @@ const RolesList = () => {
     isOpenFilterModal,
     pagination,
     isOpenDeleteModal,
+    selectedRole,
     deleting,
     hasActiveFilters,
     handleCloseDeleteModal,
@@ -47,7 +48,7 @@ const RolesList = () => {
           <RolesTable
             roles={roles}
             loading={loading}
-            handleDeleteRole={handleDeleteRole}
+            onDeleteClick={handleDeleteRole}
             handleEditRole={handleEditRole}
           />
           <PaginationBar
@@ -64,11 +65,12 @@ const RolesList = () => {
         filters={filters}
         onApply={handleApplyFilter}
       />
-      <RolesDeleteModal
-        isOpen={isOpenDeleteModal}
-        onClose={handleCloseDeleteModal}
-        deleting={deleting}
-        handleDeleteConfirm={handleDeleteConfirm}
+      <RolesDeleteDialog
+        open={isOpenDeleteModal}
+        onOpenChange={(open) => !open && handleCloseDeleteModal()}
+        role={selectedRole}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={deleting}
       />
     </div>
   );
