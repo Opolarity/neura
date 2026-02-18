@@ -66,6 +66,7 @@ serve(async (req) => {
           product_variation_images(product_image_id)
         `)
         .eq('product_id', productId)
+        .eq('is_active', true)
     ]);
 
     if (categoriesResult.error) throw categoriesResult.error;
