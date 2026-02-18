@@ -8,10 +8,12 @@ import {
 } from "@/components/ui/table";
 import { Inventory, Warehouse } from "../../types/Inventory.types";
 import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
 
 interface InventoryTableProps {
   inventory: Inventory[];
   warehouses: Warehouse[];
+  loading: boolean;
   isEditing: boolean;
   getStockValue: (
     item: Inventory,
@@ -28,6 +30,7 @@ interface InventoryTableProps {
 const InventoryTable = ({
   inventory,
   warehouses,
+  loading,
   isEditing,
   getStockValue,
   handleStockChange,
@@ -46,7 +49,22 @@ const InventoryTable = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {inventory.map((item) => {
+        {loading ? (
+          <TableRow>
+            <TableCell colSpan={warehouses.length + 4} className="text-center py-8">
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Cargando inventario...
+              </div>
+            </TableCell>
+          </TableRow>
+        ) : inventory.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={warehouses.length + 4} className="text-center text-muted-foreground py-8">
+              No se encontraron productos en el inventario
+            </TableCell>
+          </TableRow>
+        ) : inventory.map((item) => {
           const total = warehouses.reduce((sum, warehouse) => {
             const stock = item.stock_by_warehouse.find(
               (s) => s.id === warehouse.id

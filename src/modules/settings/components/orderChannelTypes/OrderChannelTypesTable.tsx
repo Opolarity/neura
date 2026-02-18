@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Edit, Link } from "lucide-react";
+import { Edit, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -27,30 +27,6 @@ const OrderChannelTypesTable = ({
     setEditingId(id);
     console.log("Editar tipo de canal:", id);
   };
-  if (loading) {
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Código</TableHead>
-            <TableHead>Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <TableRow>
-            <TableCell
-              colSpan={4}
-              className="text-center text-muted-foreground"
-            >
-              Cargando tipos de canales...
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    );
-  }
 
   return (
     <Table>
@@ -63,7 +39,16 @@ const OrderChannelTypesTable = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {orderChannelTypes.length === 0 ? (
+        {loading ? (
+          <TableRow>
+            <TableCell colSpan={4} className="text-center py-8">
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Cargando tipos de canales...
+              </div>
+            </TableCell>
+          </TableRow>
+        ) : orderChannelTypes.length === 0 ? (
           <TableRow>
             <TableCell
               colSpan={4}

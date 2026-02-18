@@ -15,8 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, Pencil, Trash2 } from "lucide-react";
+import { DollarSign, Loader2, Pencil, Trash2 } from "lucide-react";
 import { usePriceList } from "../hooks/usePriceList";
 import { PriceListEditDialog } from "../components/PriceListEditDialog";
 import type { PriceListItem } from "../types/PriceList.types";
@@ -58,15 +57,14 @@ const PriceListPage = () => {
             </TableHeader>
             <TableBody>
               {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <TableCell key={j}>
-                        <Skeleton className="h-4 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Cargando listas de precios...
+                    </div>
+                  </TableCell>
+                </TableRow>
               ) : priceLists.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">

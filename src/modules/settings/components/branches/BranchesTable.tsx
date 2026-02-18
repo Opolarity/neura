@@ -1,4 +1,4 @@
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link } from 'react-router-dom';
@@ -29,8 +29,11 @@ const BranchesTable = ({ branches, loading, handleDeleteBranch }: BranchesTableP
                 {
                     loading ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center text-muted-foreground">
-                                Cargando sucursales...
+                            <TableCell colSpan={8} className="text-center py-8">
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Cargando sucursales...
+                                </div>
                             </TableCell>
                         </TableRow>
                     ) : branches.length === 0 ? (

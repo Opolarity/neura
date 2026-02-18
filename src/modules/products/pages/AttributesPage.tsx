@@ -26,8 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronRight, ChevronDown, Edit, Trash } from "lucide-react";
+import { ChevronRight, ChevronDown, Edit, Loader2, Trash } from "lucide-react";
 import AttributesHeader from "../components/attributes/AttributesHeader";
 import AttributesFilterBar from "../components/attributes/AttributesFilterBar";
 import AttributesFilterModal from "../components/attributes/AttributesFilterModal";
@@ -109,15 +108,6 @@ const AttributesPage = () => {
     setDeleteConfirmation(null);
   };
 
-  const renderSkeletonRows = () =>
-    Array.from({ length: 6 }).map((_, index) => (
-      <TableRow key={`skeleton-${index}`}>
-        <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-        <TableCell><Skeleton className="h-8 w-20" /></TableCell>
-      </TableRow>
-    ));
 
   return (
     <div className="space-y-6">
@@ -150,7 +140,14 @@ const AttributesPage = () => {
             </TableHeader>
             <TableBody>
               {loading ? (
-                renderSkeletonRows()
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Cargando atributos...
+                    </div>
+                  </TableCell>
+                </TableRow>
               ) : attributes.length === 0 ? (
                 <TableRow>
                   <TableCell

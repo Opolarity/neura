@@ -41,14 +41,6 @@ const ProductCosts = () => {
     onApplyFilter,
   } = useProductCosts();
 
-  if (loading && !products.length) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* ProductCostsHeader */}
@@ -138,7 +130,22 @@ const ProductCosts = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((item) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Cargando costos...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : products.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    No se encontraron productos
+                  </TableCell>
+                </TableRow>
+              ) : products.map((item) => (
                 <TableRow key={item.variation_id}>
                   <TableCell className="font-mono text-sm">
                     {item.sku}

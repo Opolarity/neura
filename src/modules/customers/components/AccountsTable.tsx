@@ -1,5 +1,4 @@
-import { Edit, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
     Table,
@@ -35,8 +34,11 @@ export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
             <TableBody>
                 {loading ? (
                     <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground p-10">
-                            Cargando cuentas...
+                        <TableCell colSpan={7} className="text-center py-8">
+                            <div className="flex items-center justify-center gap-2">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Cargando clientes...
+                            </div>
                         </TableCell>
                     </TableRow>
                 ) : accounts.length === 0 ? (
