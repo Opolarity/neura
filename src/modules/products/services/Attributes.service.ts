@@ -9,6 +9,7 @@ export interface GetAttributesParams {
   min_pr?: number | null;
   max_pr?: number | null;
   group?: number | null;
+  order?: string | null;
 }
 
 export const getAttributesApi = async (
@@ -108,8 +109,8 @@ export const getTermGroupsForSelect = async (): Promise<TermGroupOption[]> => {
 };
 
 // Crear un nuevo término usando la edge function
-export const createTerm = async (data: { 
-  name: string; 
+export const createTerm = async (data: {
+  name: string;
   term_group_id: number | null;
 }) => {
   const { data: result, error } = await supabase.functions.invoke("create-terms", {
