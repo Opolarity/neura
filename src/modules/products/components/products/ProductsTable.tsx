@@ -21,7 +21,7 @@ interface ProductsTableProps {
   onToggleProductSelection: (productId: number) => void;
   onToggleAllProductsSelection: () => void;
   onGoToProductDetail: (id: number) => void;
-  onDeleteSelectedProduct: (id: number) => void;
+  onDeleteClick: (product: Product) => void;
 }
 
 const ProductsTable = ({
@@ -32,7 +32,7 @@ const ProductsTable = ({
   onToggleAllProductsSelection,
   onToggleProductSelection,
   onGoToProductDetail,
-  onDeleteSelectedProduct,
+  onDeleteClick,
 }: ProductsTableProps) => {
   return (
     <Table>
@@ -125,7 +125,7 @@ const ProductsTable = ({
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => onDeleteSelectedProduct(product.id)}
+                    onClick={() => onDeleteClick(product)}
                   >
                     <Trash className="w-4 h-4" />
                   </Button>

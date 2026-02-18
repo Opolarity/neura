@@ -7,11 +7,11 @@ import { Role } from '../../types/Roles.types';
 interface RolesTableProps {
     roles: Role[];
     loading: boolean;
-    handleDeleteRole: (roleId: number) => void;
+    onDeleteClick: (role: Role) => void;
     handleEditRole: (roleId: number) => void;
 }
 
-const RolesTable = ({ roles, loading, handleDeleteRole, handleEditRole }: RolesTableProps) => {
+const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTableProps) => {
     return (
         <Table>
             <TableHeader>
@@ -71,7 +71,7 @@ const RolesTable = ({ roles, loading, handleDeleteRole, handleEditRole }: RolesT
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleDeleteRole(r.id)}
+                                            onClick={() => onDeleteClick(r)}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>

@@ -7,10 +7,10 @@ import { BranchView } from '../../types/Branches.types';
 interface BranchesTableProps {
     branches: BranchView[];
     loading: boolean;
-    handleDeleteBranch: (branchId: number) => void;
+    onDeleteClick: (branch: BranchView) => void;
 }
 
-const BranchesTable = ({ branches, loading, handleDeleteBranch }: BranchesTableProps) => {
+const BranchesTable = ({ branches, loading, onDeleteClick }: BranchesTableProps) => {
     return (
         <Table>
             <TableHeader>
@@ -62,7 +62,7 @@ const BranchesTable = ({ branches, loading, handleDeleteBranch }: BranchesTableP
                                         <Button
                                             variant="destructive"
                                             size="sm"
-                                            onClick={() => handleDeleteBranch(branch.id)}
+                                            onClick={() => onDeleteClick(branch)}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
