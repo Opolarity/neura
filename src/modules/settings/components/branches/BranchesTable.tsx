@@ -54,7 +54,7 @@ const BranchesTable = ({ branches, loading, onDeleteClick }: BranchesTableProps)
                                 <TableCell>{branch.neighborhoods}</TableCell>
                                 <TableCell>
                                     <div className="flex gap-1">
-                                        <Button variant="ghost" size="sm" asChild>
+                                        <Button variant="outline" size="sm" asChild>
                                             <Link to={`/settings/branches/edit/${branch.id}`}>
                                                 <Edit className="w-4 h-4" />
                                             </Link>

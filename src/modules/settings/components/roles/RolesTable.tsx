@@ -65,11 +65,11 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex gap-1">
-                                        <Button variant="ghost" size="sm" onClick={() => handleEditRole(r.id)}>
+                                        <Button variant="outline" size="sm" onClick={() => handleEditRole(r.id)}>
                                             <Edit className="w-4 h-4" />
                                         </Button>
                                         <Button
-                                            variant="ghost"
+                                            variant="destructive"
                                             size="sm"
                                             onClick={() => onDeleteClick(r)}
                                         >
