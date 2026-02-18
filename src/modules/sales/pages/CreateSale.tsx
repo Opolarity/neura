@@ -162,6 +162,7 @@ const CreateSale = () => {
   const [highlightedRowIndex, setHighlightedRowIndex] = useState<number | null>(null);
   const noteFileInputRef = useRef<HTMLInputElement>(null);
   const voucherFileInputRef = useRef<HTMLInputElement>(null);
+  const isAcceptingRef = useRef(false);
   const { toast } = useToast();
 
   // Total pages for product pagination
@@ -223,12 +224,15 @@ const CreateSale = () => {
   return (
     <div className="space-y-6">
       {/* Sale Settings Modal */}
-      <Dialog open={showPriceListModal} onOpenChange={() => { }}>
-        <DialogContent
-          className="sm:max-w-md"
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-        >
+      <Dialog
+        open={showPriceListModal}
+        onOpenChange={(isOpenValue) => {
+          if (!isOpenValue && !isAcceptingRef.current) {
+            navigate("/sales");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Settings className="w-5 h-5 text-primary" />
@@ -303,7 +307,10 @@ const CreateSale = () => {
               Cancelar
             </Button>
             <Button
-              onClick={() => handleSelectPriceList(tempPriceListId)}
+              onClick={() => {
+                isAcceptingRef.current = true;
+                handleSelectPriceList(tempPriceListId);
+              }}
               disabled={!tempPriceListId || !userWarehouseId}
             >
               Aceptar
@@ -1050,35 +1057,35 @@ const CreateSale = () => {
           style={{ width: "30%" }}
         >
           {/* Order Status */}
-           <Card>
-             <CardHeader className="pb-2">
-               <CardTitle className="text-lg">Estado del Pedido</CardTitle>
-             </CardHeader>
-             <CardContent className="pb-2">
-               <Select value={orderSituation} onValueChange={setOrderSituation}>
-                 <SelectTrigger>
-                   <SelectValue placeholder="Seleccionar estado" />
-                 </SelectTrigger>
-                 <SelectContent>
-                   {filteredSituations.map((s) => (
-                     <SelectItem key={s.id} value={s.id.toString()}>
-                       {s.name}
-                     </SelectItem>
-                   ))}
-                 </SelectContent>
-               </Select>
-             </CardContent>
-             <CardFooter>
-               {createdOrderId && (
-                 <em
-                   className="italic text-sm underline cursor-pointer"
-                   onClick={() => setHistoryModalOpen(true)}
-                 >
-                   ver historial
-                 </em>
-               )}
-             </CardFooter>
-           </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Estado del Pedido</CardTitle>
+            </CardHeader>
+            <CardContent className="pb-2">
+              <Select value={orderSituation} onValueChange={setOrderSituation}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredSituations.map((s) => (
+                    <SelectItem key={s.id} value={s.id.toString()}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+            <CardFooter>
+              {createdOrderId && (
+                <em
+                  className="italic text-sm underline cursor-pointer"
+                  onClick={() => setHistoryModalOpen(true)}
+                >
+                  ver historial
+                </em>
+              )}
+            </CardFooter>
+          </Card>
 
           {/* Summary & Payment */}
           <Card>
