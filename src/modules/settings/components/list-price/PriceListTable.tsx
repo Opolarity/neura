@@ -8,8 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Edit, Loader2, Trash2 } from "lucide-react";
 import { PriceList } from "../../types/PriceList.types";
 
 interface PriceListTableProps {
@@ -17,14 +16,14 @@ interface PriceListTableProps {
   prices: PriceList[];
   onEditItem: (item: PriceList) => void;
   onOpenChange: (open: boolean) => void;
-  onDelete: (id: number) => void;
+  onDeleteClick: (item: PriceList) => void;
 }
 
 const PriceListTable = ({
   loading,
   prices,
   onEditItem,
-  onDelete,
+  onDeleteClick,
   onOpenChange,
 }: PriceListTableProps) => {
   return (
@@ -41,15 +40,14 @@ const PriceListTable = ({
       </TableHeader>
       <TableBody>
         {loading ? (
-          Array.from({ length: 5 }).map((_, i) => (
-            <TableRow key={i}>
-              {Array.from({ length: 6 }).map((_, j) => (
-                <TableCell key={j}>
-                  <Skeleton className="h-4 w-full" />
-                </TableCell>
-              ))}
-            </TableRow>
-          ))
+          <TableRow>
+            <TableCell colSpan={6} className="text-center py-8">
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Cargando listas de precios...
+              </div>
+            </TableCell>
+          </TableRow>
         ) : prices.length === 0 ? (
           <TableRow>
             <TableCell
@@ -92,13 +90,13 @@ const PriceListTable = ({
                       onOpenChange(true);
                     }}
                   >
-                    <Pencil className="h-4 w-4" />
+                    <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="destructive"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => onDelete(item.id)}
+                    onClick={() => onDeleteClick(item)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

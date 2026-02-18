@@ -2,12 +2,16 @@ import { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { usePriceList } from "../hooks/usePriceList";
 import { PriceListFormDialog } from "../components/list-price/PriceListFormDialog";
-import { PriceList } from "../types/PriceList.types";
+import { PriceListDeleteDialog } from "../components/list-price/PriceListDeleteDialog";
+import type { PriceList } from "../types/PriceList.types";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import PriceListHeader from "../components/list-price/PriceListHeader";
 import PriceListTable from "../components/list-price/PriceListTable";
 
 const PriceListPage = () => {
+  const [itemToDelete, setItemToDelete] = useState<PriceList | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const {
     priceLists,
     editingItem,
@@ -22,6 +26,14 @@ const PriceListPage = () => {
     handlePageChange,
     handlePageSizeChange,
   } = usePriceList();
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    await deletePriceList(itemToDelete.id);
+    setIsDeleting(false);
+    setItemToDelete(null);
+  };
 
   return (
     <div className="p-6">
@@ -39,7 +51,7 @@ const PriceListPage = () => {
             prices={priceLists}
             onEditItem={handleEditItemChange}
             onOpenChange={handleOpenChange}
-            onDelete={deletePriceList}
+            onDeleteClick={setItemToDelete}
           />
         </CardContent>
         <CardFooter>
@@ -58,6 +70,14 @@ const PriceListPage = () => {
         saving={saving}
         onSaved={savePriceList}
         onOpenChange={handleOpenChange}
+      />
+
+      <PriceListDeleteDialog
+        open={!!itemToDelete}
+        onOpenChange={(open) => !open && setItemToDelete(null)}
+        item={itemToDelete}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );

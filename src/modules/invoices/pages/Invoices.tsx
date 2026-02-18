@@ -35,7 +35,7 @@ const Invoices = () => {
           <InvoicesTable invoice={invoice} />
         </CardContent>
         <CardFooter>
-          <PaginationBar pagination={{p_page:1, p_size:20,total:20 }} onPageChange={() => {}} onPageSizeChange={() => {}} />
+          <PaginationBar pagination={{p_page:1, p_size:20,total:20 }} onPageChange={() => {}} onPageSizeChange={() => {}}></PaginationBar>
         </CardFooter>
       </Card>
     </div>

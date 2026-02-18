@@ -1,4 +1,4 @@
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link } from 'react-router-dom';
@@ -7,10 +7,10 @@ import { BranchView } from '../../types/Branches.types';
 interface BranchesTableProps {
     branches: BranchView[];
     loading: boolean;
-    handleDeleteBranch: (branchId: number) => void;
+    onDeleteClick: (branch: BranchView) => void;
 }
 
-const BranchesTable = ({ branches, loading, handleDeleteBranch }: BranchesTableProps) => {
+const BranchesTable = ({ branches, loading, onDeleteClick }: BranchesTableProps) => {
     return (
         <Table>
             <TableHeader>
@@ -27,10 +27,13 @@ const BranchesTable = ({ branches, loading, handleDeleteBranch }: BranchesTableP
             </TableHeader>
             <TableBody>
                 {
-                    loading ? (
+                    loading && branches.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center text-muted-foreground">
-                                Cargando sucursales...
+                            <TableCell colSpan={8} className="text-center py-8">
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Cargando sucursales...
+                                </div>
                             </TableCell>
                         </TableRow>
                     ) : branches.length === 0 ? (
@@ -51,7 +54,7 @@ const BranchesTable = ({ branches, loading, handleDeleteBranch }: BranchesTableP
                                 <TableCell>{branch.neighborhoods}</TableCell>
                                 <TableCell>
                                     <div className="flex gap-1">
-                                        <Button variant="ghost" size="sm" asChild>
+                                        <Button variant="outline" size="sm" asChild>
                                             <Link to={`/settings/branches/edit/${branch.id}`}>
                                                 <Edit className="w-4 h-4" />
                                             </Link>
@@ -59,7 +62,7 @@ const BranchesTable = ({ branches, loading, handleDeleteBranch }: BranchesTableP
                                         <Button
                                             variant="destructive"
                                             size="sm"
-                                            onClick={() => handleDeleteBranch(branch.id)}
+                                            onClick={() => onDeleteClick(branch)}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>

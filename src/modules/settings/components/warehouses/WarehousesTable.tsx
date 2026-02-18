@@ -1,4 +1,4 @@
-import { Edit, Trash2, } from 'lucide-react';
+import { Edit, Trash2, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,10 @@ import { WarehouseView } from '../../types/Warehouses.types';
 interface WarehousesTableProps {
     warehouses: WarehouseView[];
     loading: boolean;
-    handleDeleteWarehouse: (warehouseId: number) => void;
+    onDeleteClick: (warehouse: WarehouseView) => void;
 }
 
-const WarehousesTable = ({ warehouses, loading, handleDeleteWarehouse }: WarehousesTableProps) => {
+const WarehousesTable = ({ warehouses, loading, onDeleteClick }: WarehousesTableProps) => {
     return (
         <Table>
             <TableHeader>
@@ -29,10 +29,13 @@ const WarehousesTable = ({ warehouses, loading, handleDeleteWarehouse }: Warehou
             </TableHeader>
             <TableBody>
                 {
-                    loading ? (
+                    loading && warehouses.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center text-muted-foreground">
-                                Cargando almacenes...
+                            <TableCell colSpan={8} className="text-center py-8">
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Cargando almacenes...
+                                </div>
                             </TableCell>
                         </TableRow>
                     ) : warehouses.length === 0 ? (
@@ -79,7 +82,7 @@ const WarehousesTable = ({ warehouses, loading, handleDeleteWarehouse }: Warehou
                                         <Button
                                             variant="destructive"
                                             size="sm"
-                                            onClick={() => handleDeleteWarehouse(w.id)}
+                                            onClick={() => onDeleteClick(w)}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>

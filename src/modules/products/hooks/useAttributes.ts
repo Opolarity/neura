@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
-  AttributeRow,
+  AttributeGroup,
   AttributeFilters,
   AttributePaginationState,
   AttributeFormValues,
@@ -24,7 +24,8 @@ import { attributesAdapter } from "../adapters/Attributes.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 
 export const useAttributes = () => {
-  const [attributes, setAttributes] = useState<AttributeRow[]>([]);
+  const [attributes, setAttributes] = useState<AttributeGroup[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -44,19 +45,16 @@ export const useAttributes = () => {
     size: 20,
   });
 
-  // Form modal state for attribute (term_group)
   const [isOpenFormModal, setIsOpenFormModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(false);
   const [editingAttribute, setEditingAttribute] = useState<AttributeFormValues | null>(null);
 
-  // Form modal state for term
   const [isOpenTermModal, setIsOpenTermModal] = useState(false);
   const [savingTerm, setSavingTerm] = useState(false);
   const [editingTerm, setEditingTerm] = useState<TermFormValues | null>(null);
   const [termGroups, setTermGroups] = useState<TermGroupOption[]>([]);
 
-  // Delete state
   const [deleting, setDeleting] = useState(false);
 
   const loadData = async (currentFilters?: AttributeFilters) => {
@@ -72,6 +70,7 @@ export const useAttributes = () => {
         min_pr: filtersToUse.minProducts,
         max_pr: filtersToUse.maxProducts,
         group: filtersToUse.group,
+        order: filtersToUse.order,
       });
 
       const { attributes: adaptedAttributes, pagination: adaptedPagination } =
@@ -79,6 +78,8 @@ export const useAttributes = () => {
 
       setAttributes(adaptedAttributes);
       setPagination(adaptedPagination);
+      // Collapse all groups when data reloads
+      setExpandedGroups(new Set());
     } catch (err) {
       console.error(err);
       setError("Ocurrió un error al cargar los atributos");
@@ -111,6 +112,18 @@ export const useAttributes = () => {
     loadTermGroups();
   }, []);
 
+  const toggleGroup = (groupId: number) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  };
+
   const onSearchChange = (value: string) => {
     setSearch(value);
   };
@@ -133,13 +146,8 @@ export const useAttributes = () => {
     loadData(newFilters);
   };
 
-  const onOpenFilterModal = () => {
-    setIsOpenFilterModal(true);
-  };
-
-  const onCloseFilterModal = () => {
-    setIsOpenFilterModal(false);
-  };
+  const onOpenFilterModal = () => setIsOpenFilterModal(true);
+  const onCloseFilterModal = () => setIsOpenFilterModal(false);
 
   const onApplyFilter = (newFilters: Partial<AttributeFilters>) => {
     const updatedFilters = { ...filters, ...newFilters, page: 1 };
@@ -164,7 +172,6 @@ export const useAttributes = () => {
     setIsOpenFilterModal(false);
   };
 
-  // Form modal handlers for attribute (term_group)
   const onOpenNewAttribute = () => {
     setEditingAttribute(null);
     setIsOpenFormModal(true);
@@ -215,7 +222,6 @@ export const useAttributes = () => {
     }
   };
 
-  // Form modal handlers for term
   const onOpenNewTerm = () => {
     setEditingTerm(null);
     setIsOpenTermModal(true);
@@ -264,7 +270,6 @@ export const useAttributes = () => {
     }
   };
 
-  // Delete handlers
   const onDeleteAttribute = async (id: number) => {
     setDeleting(true);
     try {
@@ -294,16 +299,15 @@ export const useAttributes = () => {
     }
   };
 
-
   const hasActiveFilters =
     filters.minProducts !== null ||
     filters.maxProducts !== null ||
     filters.group !== null;
 
-
-
   return {
     attributes,
+    expandedGroups,
+    toggleGroup,
     loading,
     error,
     search,
@@ -319,7 +323,6 @@ export const useAttributes = () => {
     onCloseFilterModal,
     onApplyFilter,
     onResetFilters,
-    // Form modal for attribute
     isOpenFormModal,
     saving,
     loadingEdit,
@@ -328,7 +331,6 @@ export const useAttributes = () => {
     onCloseFormModal,
     onEditAttribute,
     onSaveAttribute,
-    // Form modal for term
     isOpenTermModal,
     savingTerm,
     editingTerm,
@@ -337,7 +339,6 @@ export const useAttributes = () => {
     onCloseTermModal,
     onEditTerm,
     onSaveTerm,
-    // Delete handlers
     deleting,
     onDeleteAttribute,
     onDeleteTerm,

@@ -50,6 +50,7 @@ export interface MovementsFilters {
     page?: number;
     size?: number;
     search?: string | null;
+    order?: string | null;
 }
 
 export interface MovementsTypesApiResponse {

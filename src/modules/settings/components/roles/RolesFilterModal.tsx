@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RolesFilters, RolesFilterDraft } from '../../types/Roles.types';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface RolesFilterModalProps {
   filters: RolesFilters;
@@ -32,18 +32,18 @@ const RolesFilterModal = ({
     }));
   };
 
+  const parsePositive = (raw: string) => {
+    if (!raw) return null;
+    const clean = raw.replace(/-/g, "");
+    return clean ? parseInt(clean) : null;
+  };
+
   const handleMinUserChange = (value: string) => {
-    setInternalFilters((prev) => ({
-      ...prev,
-      minuser: value ? parseInt(value) : null,
-    }));
+    setInternalFilters((prev) => ({ ...prev, minuser: parsePositive(value) }));
   };
 
   const handleMaxUserChange = (value: string) => {
-    setInternalFilters((prev) => ({
-      ...prev,
-      maxuser: value ? parseInt(value) : null,
-    }));
+    setInternalFilters((prev) => ({ ...prev, maxuser: parsePositive(value) }));
   };
 
     const handleClear = () => {
@@ -90,7 +90,9 @@ const RolesFilterModal = ({
                 id="minuser"
                 type="number"
                 placeholder="0"
+                min={0}
                 value={internalFilters.minuser || ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={(e) => handleMinUserChange(e.target.value)}
               />
             </div>
@@ -100,7 +102,9 @@ const RolesFilterModal = ({
                 id="maxuser"
                 type="number"
                 placeholder="100"
+                min={0}
                 value={internalFilters.maxuser || ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={(e) => handleMaxUserChange(e.target.value)}
               />
             </div>

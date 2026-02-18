@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
@@ -8,8 +8,13 @@ import { CardFooter } from '@/components/ui/card';
 import BranchesTable from '../components/branches/BranchesTable';
 import useBranches from '../hooks/useBranches';
 import BranchesFilterBar from '../components/branches/BranchesFilterBar';
+import { BranchDeleteDialog } from '../components/branches/BranchDeleteDialog';
+import type { BranchView } from '../types/Branches.types';
 
 const BranchesList = () => {
+    const [branchToDelete, setBranchToDelete] = useState<BranchView | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const {
         branches,
         loading,
@@ -20,6 +25,18 @@ const BranchesList = () => {
         handleSearchChange,
         handleDeleteBranch
     } = useBranches();
+
+    const handleDeleteClick = (branch: BranchView) => {
+        setBranchToDelete(branch);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!branchToDelete) return;
+        setIsDeleting(true);
+        await handleDeleteBranch(branchToDelete.id);
+        setIsDeleting(false);
+        setBranchToDelete(null);
+    };
 
     return (
         <div className="space-y-6">
@@ -52,7 +69,7 @@ const BranchesList = () => {
                     <BranchesTable
                         branches={branches}
                         loading={loading}
-                        handleDeleteBranch={handleDeleteBranch}
+                        onDeleteClick={handleDeleteClick}
                     />
                 </CardContent>
                 <CardFooter>
@@ -63,6 +80,14 @@ const BranchesList = () => {
                     />
                 </CardFooter>
             </Card>
+
+            <BranchDeleteDialog
+                open={!!branchToDelete}
+                onOpenChange={(open) => !open && setBranchToDelete(null)}
+                branch={branchToDelete}
+                onConfirm={handleConfirmDelete}
+                isDeleting={isDeleting}
+            />
         </div>
     );
 };

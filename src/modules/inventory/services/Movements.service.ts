@@ -54,14 +54,6 @@ export const movementsTypesApi = async (): Promise<
   return data ?? [];
 };
 
-export const warehousesListApi = async (): Promise<SimpleWarehouses[]> => {
-  const { data, error } = await supabase
-    .from("warehouses")
-    .select("id, name")
-    .order("name");
-  if (error) throw error;
-  return data ?? [];
-};
 
 export const usersListApi = async (): Promise<SimpleUsers[]> => {
   const { data, error } = await supabase

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { getStockMovementsApi, movementsTypesApi, usersListApi, warehousesListApi } from "../services/Movements.service";
+import { getStockMovementsApi, movementsTypesApi } from "../services/Movements.service";
 import { movementsAdapter, movementsTypesAdapter } from "../adapters/Movements.adapter";
 import {
     Movements,
@@ -11,6 +11,7 @@ import {
 } from "../types/Movements.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks/useDebounce";
+import { getAccountsByModuleCodeAndTypeUser, getWarehousesIsActiveTrue } from "@/shared/services/service";
 
 export const useMovements = () => {
     const [movements, setMovements] = useState<Movements[]>([]);
@@ -34,6 +35,7 @@ export const useMovements = () => {
         search: null,
         start_date: null,
         end_date: null,
+        order: null,
     });
 
     const loadInitial = async () => {
@@ -43,10 +45,10 @@ export const useMovements = () => {
             const types = movementsTypesAdapter(dataTypes);
             setMovementsTypes(types);
 
-            const dataWarehouses = await warehousesListApi();
+            const dataWarehouses = await getWarehousesIsActiveTrue();
             setWarehouses(dataWarehouses);
 
-            const dataUsers = await usersListApi();
+            const dataUsers = await getAccountsByModuleCodeAndTypeUser();
             setUsers(dataUsers);
 
             // Initial load uses default filters
@@ -149,6 +151,12 @@ export const useMovements = () => {
         });
     };
 
+    const onOrderChange = (order: string) => {
+        const newFilters = { ...filters, order };
+        setFilters(newFilters);
+        loadMovements(newFilters);
+    };
+
     const onDateChange = (type: "start" | "end", value: string) => {
         const dateValue = value || null;
         setFilters((prev) => {
@@ -170,6 +178,7 @@ export const useMovements = () => {
             search: null,
             start_date: null,
             end_date: null,
+            order: null,
         };
         setFilters(resetFilters);
         loadMovements(resetFilters);
@@ -177,7 +186,11 @@ export const useMovements = () => {
 
     const hasActiveFilters =
         filters.start_date !== null ||
-        filters.end_date !== null;
+        filters.end_date !== null ||
+        filters.warehouse !== undefined && filters.warehouse !== null ||
+        filters.origin !== undefined && filters.origin !== null ||
+        filters.user !== undefined && filters.user !== null ||
+        filters.in_out !== undefined && filters.in_out !== null;
 
     return {
         movements,
@@ -198,6 +211,7 @@ export const useMovements = () => {
         onDateChange,
         clearFilters,
         onApplyFilterModal,
+        onOrderChange,
     };
 };
 

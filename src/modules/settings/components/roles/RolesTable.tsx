@@ -1,4 +1,4 @@
-import { Edit, Link, Shield, Trash2, UserCheck } from 'lucide-react';
+import { Edit, Shield, Trash2, UserCheck, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,11 +7,11 @@ import { Role } from '../../types/Roles.types';
 interface RolesTableProps {
     roles: Role[];
     loading: boolean;
-    handleDeleteRole: (roleId: number) => void;
+    onDeleteClick: (role: Role) => void;
     handleEditRole: (roleId: number) => void;
 }
 
-const RolesTable = ({ roles, loading, handleDeleteRole, handleEditRole }: RolesTableProps) => {
+const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTableProps) => {
     return (
         <Table>
             <TableHeader>
@@ -25,10 +25,13 @@ const RolesTable = ({ roles, loading, handleDeleteRole, handleEditRole }: RolesT
             </TableHeader>
             <TableBody>
                 {
-                    loading ? (
+                    loading && roles.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground">
-                                Cargando roles...
+                            <TableCell colSpan={5} className="text-center py-8">
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Cargando roles...
+                                </div>
                             </TableCell>
                         </TableRow>
                     ) : roles.length === 0 ? (
@@ -62,13 +65,13 @@ const RolesTable = ({ roles, loading, handleDeleteRole, handleEditRole }: RolesT
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex gap-1">
-                                        <Button variant="ghost" size="sm" onClick={() => handleEditRole(r.id)}>
+                                        <Button variant="outline" size="sm" onClick={() => handleEditRole(r.id)}>
                                             <Edit className="w-4 h-4" />
                                         </Button>
                                         <Button
-                                            variant="ghost"
+                                            variant="destructive"
                                             size="sm"
-                                            onClick={() => handleDeleteRole(r.id)}
+                                            onClick={() => onDeleteClick(r)}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>

@@ -61,6 +61,17 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Resolve price_list_id from price_list_code
+    let priceListId: number | null = null;
+    if (order.price_list_code) {
+      const { data: priceListData } = await supabase
+        .from("price_list")
+        .select("id")
+        .eq("code", order.price_list_code)
+        .single();
+      priceListId = priceListData?.id ?? null;
+    }
+
     // 2. Get variation details for products
     const variationIds = (order.order_products || []).map((p: any) => p.product_variation_id);
     
@@ -227,6 +238,8 @@ Deno.serve(async (req) => {
         email: order.email,
         phone: order.phone,
         sale_type_id: order.sale_type_id,
+        price_list_code: order.price_list_code,
+        price_list_id: priceListId,
         shipping_method_code: order.shipping_method_code,
         shipping_cost: order.shipping_cost,
         country_id: order.country_id,

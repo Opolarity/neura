@@ -12,13 +12,17 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const supabase = createClient(supabaseUrl!, supabaseKey!);
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
     }
+
+    // Use anon key with user's JWT so auth.uid() works properly
+    const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
+      global: { headers: { Authorization: authHeader } }
+    });
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
@@ -32,14 +36,6 @@ Deno.serve(async (req) => {
     if (!orderId || !situationId) {
       throw new Error('Order ID and situation ID are required');
     }
-
-    // Get user's warehouse
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('warehouse_id')
-      .eq('UID', user.id)
-      .single();
-    const warehouseId = profile?.warehouse_id || 1;
 
     // Get the situation details including code
     const { data: situation, error: situationError } = await supabase
@@ -99,7 +95,7 @@ Deno.serve(async (req) => {
         .eq('last_row', true);
     }
 
-    // Insert new situation record
+    // Insert new situation record - auth.uid() now works because we use user's JWT
     const { error: insertError } = await supabase
       .from('order_situations')
       .insert({
@@ -111,7 +107,17 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       console.error('Error inserting order situation:', insertError);
-      throw insertError;
+      
+      // Rollback: restore previous last_row if insert fails
+      if (previousSituation) {
+        await supabase
+          .from('order_situations')
+          .update({ last_row: true })
+          .eq('order_id', orderId)
+          .eq('situation_id', previousSituation.situation_id);
+      }
+      
+      throw new Error(insertError.message);
     }
 
     // Get order products with their stock movements
@@ -122,7 +128,7 @@ Deno.serve(async (req) => {
 
     if (productsError) {
       console.error('Error fetching order products:', productsError);
-      throw productsError;
+      throw new Error(productsError.message);
     }
 
     console.log('Order products:', orderProducts);
@@ -153,10 +159,7 @@ Deno.serve(async (req) => {
         .eq('id', product.stock_movement_id);
 
       // Handle stock adjustments based on completed state transitions
-      // If transitioning FROM completed=false TO completed=true: reduce stock
-      // If transitioning FROM completed=true TO completed=false: restore stock
       if (!wasCompleted && stockCompleted) {
-        // Reduce stock (movement is now being applied)
         console.log(`Reducing stock for variation ${product.product_variation_id}`);
         
         const { data: currentStock } = await supabase
@@ -176,7 +179,6 @@ Deno.serve(async (req) => {
           console.log(`Stock reduced: ${currentStock.stock} -> ${currentStock.stock - product.quantity}`);
         }
       } else if (wasCompleted && !stockCompleted) {
-        // Restore stock (movement is being unapplied)
         console.log(`Restoring stock for variation ${product.product_variation_id}`);
         
         const { data: currentStock } = await supabase

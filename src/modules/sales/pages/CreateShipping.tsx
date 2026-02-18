@@ -32,9 +32,12 @@ import { Countrie, ShippingCost, State } from "../types/Shipping.types";
 import { getStatesByCountryIdApi } from "@/shared/services/service";
 import { shippingDetailsAdapter } from "../adapters/Shipping.adapter";
 
+import { useToast } from "@/hooks/use-toast";
+
 let tempId = 0;
 
 const CreateShipping = () => {
+  const { toast } = useToast();
   const [shippingId, setShippingId] = useState<number | null>(null);
   const [shippingName, setShippingName] = useState<string>("");
   const [shippingCode, setShippingCode] = useState<string>("");
@@ -87,10 +90,45 @@ const CreateShipping = () => {
   const handleCost = (e: React.ChangeEvent<HTMLInputElement>, id: number) => {
     setShippingCosts((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, cost: Number(e.target.value) } : item,
+        item.id === id ? { ...item, cost: e.target.value === "" ? "" : Number(e.target.value) } : item,
       ),
     );
   };
+
+  const validateForm = (): boolean => {
+    if (!shippingName.trim()) {
+      toast({
+        title: "Error",
+        description: "El nombre del método de envío es obligatorio",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (shippingCosts.length === 0) {
+      toast({
+        title: "Error",
+        description: "Debe agregar al menos una configuración de costo",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    const hasInvalidCost = shippingCosts.some(
+      (c) => c.cost === "" || Number(c.cost) < 0 || !c.name.trim()
+    );
+
+    if (hasInvalidCost) {
+      toast({
+        title: "Error",
+        description: "Todas las configuraciones deben tener un nombre y un costo válido (no negativo)",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  }
 
   const handleCountry = async (value: string, cost: ShippingCost) => {
     if (value === "none") {
@@ -98,15 +136,15 @@ const CreateShipping = () => {
         prev.map((item) =>
           item.id === cost.id
             ? {
-                ...item,
-                country_id: null,
-                state_id: null,
-                city_id: null,
-                neighborhood_id: null,
-                states: [],
-                cities: [],
-                neighborhoods: [],
-              }
+              ...item,
+              country_id: null,
+              state_id: null,
+              city_id: null,
+              neighborhood_id: null,
+              states: [],
+              cities: [],
+              neighborhoods: [],
+            }
             : item,
         ),
       );
@@ -117,15 +155,15 @@ const CreateShipping = () => {
       prev.map((item) =>
         item.id === cost.id
           ? {
-              ...item,
-              country_id: Number(value),
-              state_id: null,
-              city_id: null,
-              neighborhood_id: null,
-              states: [],
-              cities: [],
-              neighborhoods: [],
-            }
+            ...item,
+            country_id: Number(value),
+            state_id: null,
+            city_id: null,
+            neighborhood_id: null,
+            states: [],
+            cities: [],
+            neighborhoods: [],
+          }
           : item,
       ),
     );
@@ -147,13 +185,13 @@ const CreateShipping = () => {
         prev.map((item) =>
           item.id === cost.id
             ? {
-                ...item,
-                state_id: null,
-                city_id: null,
-                neighborhood_id: null,
-                cities: [],
-                neighborhoods: [],
-              }
+              ...item,
+              state_id: null,
+              city_id: null,
+              neighborhood_id: null,
+              cities: [],
+              neighborhoods: [],
+            }
             : item,
         ),
       );
@@ -187,11 +225,11 @@ const CreateShipping = () => {
         prev.map((item) =>
           item.id === cost.id
             ? {
-                ...item,
-                city_id: null,
-                neighborhood_id: null,
-                neighborhoods: [],
-              }
+              ...item,
+              city_id: null,
+              neighborhood_id: null,
+              neighborhoods: [],
+            }
             : item,
         ),
       );
@@ -229,9 +267,9 @@ const CreateShipping = () => {
         prev.map((item) =>
           item.id === cost.id
             ? {
-                ...item,
-                neighborhood_id: null,
-              }
+              ...item,
+              neighborhood_id: null,
+            }
             : item,
         ),
       );
@@ -268,11 +306,13 @@ const CreateShipping = () => {
   };
 
   const handleCreateShipping = async () => {
+    if (!validateForm()) return;
+
     setLoadingCreate(true);
     try {
       if (id) {
         await updateShippingMethodApi({
-          id: shippingId,
+          id: Number(id),
           name: shippingName,
           code: shippingCode,
           costs: shippingCosts.map((cost) => ({
@@ -283,6 +323,10 @@ const CreateShipping = () => {
             city_id: cost.city_id,
             neighborhood_id: cost.neighborhood_id,
           })),
+        });
+        toast({
+          title: "Éxito",
+          description: "Método de envío actualizado correctamente",
         });
       } else {
         await createShippingMethodApi({
@@ -297,11 +341,20 @@ const CreateShipping = () => {
             neighborhood_id: cost.neighborhood_id,
           })),
         });
+        toast({
+          title: "Éxito",
+          description: "Método de envío creado correctamente",
+        });
       }
 
       navigate("/shipping");
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: error.message || "Ocurrió un error al guardar el método de envío",
+        variant: "destructive",
+      });
     } finally {
       setLoadingCreate(false);
     }
@@ -331,7 +384,7 @@ const CreateShipping = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-foreground">
-          Crear Método de Envío
+          {id ? "Actualizar Método de Envío" : "Crear Método de Envío"}
         </h1>
         <div className="flex gap-3">
           <Link to="/shipping">
@@ -339,7 +392,7 @@ const CreateShipping = () => {
           </Link>
 
           <Button onClick={handleCreateShipping} disabled={loadingCreate}>
-            Crear
+            {id ? "Actualizar" : "Crear"}
           </Button>
         </div>
       </div>
@@ -526,6 +579,8 @@ const CreateShipping = () => {
                       onChange={(e) => handleCost(e, cost.id)}
                       type="number"
                       placeholder="Costo"
+                      min={0}
+                      onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                     />
                   </TableCell>
                   <TableCell>

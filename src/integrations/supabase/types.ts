@@ -642,36 +642,92 @@ export type Database = {
           },
         ]
       }
+      invoice_providers: {
+        Row: {
+          branch_id: number
+          created_at: string
+          default: boolean
+          id: number
+          token: string
+          url: string
+        }
+        Insert: {
+          branch_id: number
+          created_at?: string
+          default?: boolean
+          id?: number
+          token: string
+          url: string
+        }
+        Update: {
+          branch_id?: number
+          created_at?: string
+          default?: boolean
+          id?: number
+          token?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_providers_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_series: {
         Row: {
           account_id: number
+          bol_serie: string
           created_at: string
+          default: boolean
+          fac_serie: string
+          grr_serie: string
+          grt_serie: string
           id: number
-          invoice_type_id: number
+          invoice_provider_id: number
           is_active: boolean
+          ncb_serie: string
+          ncf_serie: string
+          ndb_serie: string
+          ndf_serie: string
           next_number: number
-          tax_serie: string
-          user_id: string
         }
         Insert: {
           account_id: number
+          bol_serie: string
           created_at?: string
+          default?: boolean
+          fac_serie: string
+          grr_serie: string
+          grt_serie: string
           id?: number
-          invoice_type_id: number
+          invoice_provider_id: number
           is_active?: boolean
+          ncb_serie: string
+          ncf_serie: string
+          ndb_serie: string
+          ndf_serie: string
           next_number: number
-          tax_serie: string
-          user_id?: string
         }
         Update: {
           account_id?: number
+          bol_serie?: string
           created_at?: string
+          default?: boolean
+          fac_serie?: string
+          grr_serie?: string
+          grt_serie?: string
           id?: number
-          invoice_type_id?: number
+          invoice_provider_id?: number
           is_active?: boolean
+          ncb_serie?: string
+          ncf_serie?: string
+          ndb_serie?: string
+          ndf_serie?: string
           next_number?: number
-          tax_serie?: string
-          user_id?: string
         }
         Relationships: [
           {
@@ -682,18 +738,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "invoice_series_invoice_type_id_fkey"
-            columns: ["invoice_type_id"]
+            foreignKeyName: "invoice_series_invoice_provider_id_fkey"
+            columns: ["invoice_provider_id"]
             isOneToOne: false
-            referencedRelation: "types"
+            referencedRelation: "invoice_providers"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoice_series_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["UID"]
           },
         ]
       }
@@ -1406,6 +1455,49 @@ export type Database = {
           value?: string
         }
         Relationships: []
+      }
+      payment_method_sale_type: {
+        Row: {
+          id: number
+          payment_method_id: number
+          sale_type_id: number
+          tax_serie_id: number | null
+        }
+        Insert: {
+          id?: number
+          payment_method_id: number
+          sale_type_id: number
+          tax_serie_id?: number | null
+        }
+        Update: {
+          id?: number
+          payment_method_id?: number
+          sale_type_id?: number
+          tax_serie_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_method_sale_type_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_method_sale_type_sale_type_id_fkey"
+            columns: ["sale_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_method_sale_type_tax_serie_id_fkey"
+            columns: ["tax_serie_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_series"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_methods: {
         Row: {
@@ -3747,6 +3839,7 @@ export type Database = {
           p_module_code: string
           p_module_id: number
           p_name: string
+          p_payment_methods: number[]
         }
         Returns: Json
       }
@@ -3812,6 +3905,10 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_ec_get_categories_ids: {
+        Args: { p_categories_ids?: number[] }
+        Returns: Json
+      }
       sp_ec_get_customer_orders: { Args: { p_user_id: string }; Returns: Json }
       sp_ec_get_order_details: {
         Args: { p_order_id: number; p_user_id: string }
@@ -3824,6 +3921,7 @@ export type Database = {
       sp_ec_get_product_ids: {
         Args: {
           p_category_id?: number
+          p_order?: string
           p_product_ids?: number[]
           p_sale_price?: boolean
           p_search?: string
@@ -4066,6 +4164,7 @@ export type Database = {
         Args: {
           p_end_date?: string
           p_in_out?: boolean
+          p_order?: string
           p_origin?: number
           p_page?: number
           p_search?: string

@@ -1,6 +1,8 @@
+import { useState } from "react";
 import ProductHeader from "../components/products/ProductHeader";
 import ProductsTable from "../components/products/ProductsTable";
 import ProductsFilterModal from "../components/products/ProductsFilterModal";
+import { ProductDeleteDialog } from "../components/products/ProductDeleteDialog";
 import { useProducts } from "../hooks/useProducts";
 import {
   Card,
@@ -10,8 +12,12 @@ import {
 } from "@/components/ui/card";
 import ProductsFilterBar from "../components/products/ProductsFilterBar";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
+import { Product } from "../types/Products.types";
 
 const Products = () => {
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const {
     products,
     categories,
@@ -36,6 +42,18 @@ const Products = () => {
     onSearchChange,
     onOrderChange,
   } = useProducts();
+
+  const handleDeleteClick = (product: Product) => {
+    setProductToDelete(product);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
+    setIsDeleting(true);
+    await deleteSelectedProduct(productToDelete.id);
+    setIsDeleting(false);
+    setProductToDelete(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -62,7 +80,7 @@ const Products = () => {
             products={products}
             loading={loading}
             selectedProducts={selectedProducts}
-            onDeleteSelectedProduct={deleteSelectedProduct}
+            onDeleteClick={handleDeleteClick}
             onGoToProductDetail={goToProductDetail}
             onToggleAllProductsSelection={toggleSelectAll}
             onToggleProductSelection={toggleProductSelection}
@@ -83,6 +101,14 @@ const Products = () => {
         filters={filters}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}
+      />
+
+      <ProductDeleteDialog
+        open={!!productToDelete}
+        onOpenChange={(open) => !open && setProductToDelete(null)}
+        product={productToDelete}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );

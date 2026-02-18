@@ -245,7 +245,7 @@ export const adaptSaleById = (data: any) => ({
     email: data.order.email || "",
     phone: data.order.phone?.toString() || "",
     saleType: data.order.sale_type_id?.toString() || "",
-    priceListId: "",
+    priceListId: data.order.price_list_id?.toString() || "",
     saleDate: data.order.date?.split("T")[0] || "",
     vendorName: "",
     shippingMethod: data.order.shipping_method_code || "",

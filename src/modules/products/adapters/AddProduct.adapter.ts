@@ -27,7 +27,15 @@ export const AddProductAdapter = {
       priceLists: data.priceLists || [],
       warehouses: (data.warehouses || []).map((w: any) => ({ 
         id: w.id, 
-        name: String(w.name) 
+        name: String(w.name),
+        country_id: w.country_id ?? 0,
+        state_id: w.state_id ?? 0,
+        city_id: w.city_id ?? 0,
+        neighborhood_id: w.neighborhood_id ?? 0,
+        address: w.address ?? "",
+        address_reference: w.address_reference ?? "",
+        web: w.web ?? false,
+        is_active: w.is_active ?? true,
       })),
       stockTypes: (data.stockTypes || []).map((st: any) => ({
         id: st.id,

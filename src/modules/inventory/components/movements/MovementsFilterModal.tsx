@@ -102,6 +102,8 @@ const MovementsFilterModal = ({
                 page: 1,
                 size: prev.size,
                 search: null,
+                user: null,
+
             }
         ));
     };

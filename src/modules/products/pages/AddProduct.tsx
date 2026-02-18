@@ -85,7 +85,7 @@ const AddProduct = () => {
             <AlertDialogTitle>Resetear variaciones</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                Está a punto de modificar los atributos del producto. Esto reseteará todas las variaciones 
+                Está a punto de modificar los atributos del producto. Esto reseteará todas las variaciones
                 existentes y creará nuevas combinaciones con los campos vacíos.
               </p>
               <p>
@@ -133,10 +133,10 @@ const AddProduct = () => {
 
       {/* Main Grid - 2 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Left Column - 8 columns */}
         <div className="lg:col-span-8 space-y-6">
-          
+
           {/* General Data Card */}
           <Card>
             <CardHeader>
@@ -185,7 +185,7 @@ const AddProduct = () => {
 
         {/* Right Column - 4 columns */}
         <div className="lg:col-span-4 space-y-6">
-          
+
           {/* Sales Channels Card */}
           <Card>
             <CardHeader>
@@ -243,8 +243,8 @@ const AddProduct = () => {
                   {productImages
                     .sort((a, b) => a.order - b.order)
                     .map(image => (
-                      <div 
-                        key={image.id} 
+                      <div
+                        key={image.id}
                         className="relative aspect-square group cursor-move select-none"
                         draggable
                         onDragStart={(e) => handleDragStart(e, image.id)}
@@ -292,8 +292,8 @@ const AddProduct = () => {
             <CardContent>
               <div className="space-y-1 max-h-[300px] overflow-y-auto">
                 {hierarchicalCategories.map(category => (
-                  <div 
-                    key={category.id} 
+                  <div
+                    key={category.id}
                     className="flex items-center space-x-2"
                     style={{ paddingLeft: `${category.level * 16}px` }}
                   >
@@ -302,8 +302,8 @@ const AddProduct = () => {
                       checked={selectedCategories.includes(category.id)}
                       onCheckedChange={() => toggleCategorySelection(category.id)}
                     />
-                    <Label 
-                      htmlFor={`category-${category.id}`} 
+                    <Label
+                      htmlFor={`category-${category.id}`}
                       className="text-sm cursor-pointer flex items-center gap-1"
                     >
                       {category.level > 0 && (
@@ -325,7 +325,7 @@ const AddProduct = () => {
           <CardTitle>{isVariable ? 'Detalles de variaciones' : 'Detalles del producto'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6 min-w-0">
-          
+
           {/* Attributes Section (only for variable products) */}
           {isVariable && (
             <div className="space-y-4">
@@ -334,7 +334,7 @@ const AddProduct = () => {
                 {termGroups.filter(g => g.is_active !== false).map(group => {
                   const groupTerms = terms.filter(term => term.term_group_id === group.id && term.is_active !== false);
                   const selectedGroupTerms = selectedTerms[group.id] || [];
-                  
+
                   return (
                     <div key={group.id} className="space-y-2">
                       <Label className="text-sm font-medium">{group.name}</Label>
@@ -345,7 +345,7 @@ const AddProduct = () => {
                             role="combobox"
                             className="w-full justify-between"
                           >
-                            {selectedGroupTerms.length > 0 
+                            {selectedGroupTerms.length > 0
                               ? `${selectedGroupTerms.length} seleccionado${selectedGroupTerms.length > 1 ? 's' : ''}`
                               : `Seleccionar ${group.name.toLowerCase()}`
                             }
@@ -377,7 +377,7 @@ const AddProduct = () => {
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      
+
                     </div>
                   );
                 })}
@@ -393,7 +393,7 @@ const AddProduct = () => {
                 <TabsTrigger value="inventory">Inventario</TabsTrigger>
                 <TabsTrigger value="images">Imágenes</TabsTrigger>
               </TabsList>
-              
+
               {/* Prices Tab */}
               <TabsContent value="prices" className="mt-4">
                 <div className="border rounded-lg overflow-x-auto">
@@ -433,7 +433,9 @@ const AddProduct = () => {
                                   <Input
                                     type="number"
                                     placeholder="0.00"
+                                    min={0}
                                     value={price?.price || 0}
+                                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                     onChange={(e) => updateVariationPrice(variation.id, pl.id, 'price', e.target.value)}
                                     className="h-8 text-sm"
                                   />
@@ -441,7 +443,9 @@ const AddProduct = () => {
                                 <TableCell className="p-2">
                                   <Input
                                     type="number"
+                                    min={0}
                                     value={price?.sale_price ?? ''}
+                                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                     onChange={(e) => updateVariationPrice(variation.id, pl.id, 'sale_price', e.target.value)}
                                     className="h-8 text-sm"
                                   />
@@ -461,8 +465,8 @@ const AddProduct = () => {
                 {/* Stock Type Filter */}
                 <div className="mb-4 flex items-center gap-3">
                   <Label className="text-sm font-medium">Tipo de Inventario:</Label>
-                  <Select 
-                    value={selectedStockType?.toString() || ''} 
+                  <Select
+                    value={selectedStockType?.toString() || ''}
                     onValueChange={(value) => setSelectedStockType(Number(value))}
                   >
                     <SelectTrigger className="w-[200px]">
@@ -477,7 +481,7 @@ const AddProduct = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="border rounded-lg overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -510,7 +514,9 @@ const AddProduct = () => {
                                 <Input
                                   type="number"
                                   placeholder="0"
+                                  min={0}
                                   value={stockValue ?? ''}
+                                  onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                   onChange={(e) => updateVariationStock(variation.id, wh.id, e.target.value, selectedStockType || undefined)}
                                   className="h-8 text-sm"
                                 />
@@ -561,9 +567,8 @@ const AddProduct = () => {
                                     return (
                                       <div
                                         key={image.id}
-                                        className={`relative w-16 h-16 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
-                                          isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-primary/50'
-                                        }`}
+                                        className={`relative w-16 h-16 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-primary/50'
+                                          }`}
                                         onClick={() => toggleVariationImage(variation.id, image.id)}
                                       >
                                         <img

@@ -6,7 +6,6 @@ import * as z from "zod";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import {
-  paymentMethodsWithAccountApi,
   movementClassesApi,
   currentUserProfileApi,
   createMovementApi,
@@ -18,6 +17,7 @@ import {
   MovementClass,
   CurrentUserProfile,
 } from "../types/Movements.types";
+import { getPaymentMethodsIsActiveTrueAndActiveTrue } from "@/shared/services/service";
 
 const movementSchema = z.object({
   amount: z
@@ -100,13 +100,13 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
 
     try {
       const [pmData, classesData, userProfile, movementTypes] = await Promise.all([
-        paymentMethodsWithAccountApi(),
+        getPaymentMethodsIsActiveTrueAndActiveTrue(),
         movementClassesApi(),
         currentUserProfileApi(user.id),
         movementTypesApi(),
       ]);
 
-      setPaymentMethods(pmData);
+      setPaymentMethods(pmData as any as PaymentMethodWithAccount[]);
       setClasses(classesData);
       setCurrentUserProfile(userProfile);
 
