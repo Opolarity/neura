@@ -151,7 +151,9 @@ const ProductCosts = () => {
                     <Input
                       type="number"
                       step="0.01"
+                      min={0}
                       value={getCostValue(item.variation_id, item.cost)}
+                      onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                       onChange={(e) =>
                         handleCostChange(item.variation_id, e.target.value)
                       }

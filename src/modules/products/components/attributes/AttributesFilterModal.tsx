@@ -64,6 +64,7 @@ export default function AttributesFilterModal({
                 placeholder="Mínimo"
                 min={0}
                 value={minProducts}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={(e) => setMinProducts(parsePositive(e.target.value))}
               />
               <Input
@@ -71,6 +72,7 @@ export default function AttributesFilterModal({
                 placeholder="Máximo"
                 min={0}
                 value={maxProducts}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={(e) => setMaxProducts(parsePositive(e.target.value))}
               />
             </div>

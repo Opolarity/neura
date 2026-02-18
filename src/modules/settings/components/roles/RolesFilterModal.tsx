@@ -92,6 +92,7 @@ const RolesFilterModal = ({
                 placeholder="0"
                 min={0}
                 value={internalFilters.minuser || ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={(e) => handleMinUserChange(e.target.value)}
               />
             </div>
@@ -103,6 +104,7 @@ const RolesFilterModal = ({
                 placeholder="100"
                 min={0}
                 value={internalFilters.maxuser || ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={(e) => handleMaxUserChange(e.target.value)}
               />
             </div>

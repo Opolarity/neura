@@ -433,7 +433,9 @@ const AddProduct = () => {
                                   <Input
                                     type="number"
                                     placeholder="0.00"
+                                    min={0}
                                     value={price?.price || 0}
+                                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                     onChange={(e) => updateVariationPrice(variation.id, pl.id, 'price', e.target.value)}
                                     className="h-8 text-sm"
                                   />
@@ -441,7 +443,9 @@ const AddProduct = () => {
                                 <TableCell className="p-2">
                                   <Input
                                     type="number"
+                                    min={0}
                                     value={price?.sale_price ?? ''}
+                                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                     onChange={(e) => updateVariationPrice(variation.id, pl.id, 'sale_price', e.target.value)}
                                     className="h-8 text-sm"
                                   />
@@ -510,7 +514,9 @@ const AddProduct = () => {
                                 <Input
                                   type="number"
                                   placeholder="0"
+                                  min={0}
                                   value={stockValue ?? ''}
+                                  onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                   onChange={(e) => updateVariationStock(variation.id, wh.id, e.target.value, selectedStockType || undefined)}
                                   className="h-8 text-sm"
                                 />

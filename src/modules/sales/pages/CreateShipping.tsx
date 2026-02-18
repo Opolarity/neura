@@ -579,6 +579,8 @@ const CreateShipping = () => {
                       onChange={(e) => handleCost(e, cost.id)}
                       type="number"
                       placeholder="Costo"
+                      min={0}
+                      onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                     />
                   </TableCell>
                   <TableCell>

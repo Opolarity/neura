@@ -80,6 +80,7 @@ const InventoryTable = ({
                       value={getStockValue(item, warehouse.id, baseValue)}
                       onChange={(e) => handleStockChange(item, warehouse.id, e.target.value)}
                       min="0"
+                      onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                       onWheel={(e) => e.currentTarget.blur()}
                       disabled={!isEditing}
                       className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
