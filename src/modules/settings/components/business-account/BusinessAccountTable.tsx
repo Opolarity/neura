@@ -71,11 +71,11 @@ const BusinessAccountTable = ({
               </TableCell>
               <TableCell className="text-right">
                 {item.total_amount != null
-                  ? new Intl.NumberFormat("es-CO", {
-                      style: "currency",
-                      currency: "COP",
-                      minimumFractionDigits: 0,
-                    }).format(item.total_amount)
+                  ? new Intl.NumberFormat("es-PE", {
+                    style: "currency",
+                    currency: "PEN",
+                    minimumFractionDigits: 0,
+                  }).format(item.total_amount)
                   : "—"}
               </TableCell>
               <TableCell className="text-center">
