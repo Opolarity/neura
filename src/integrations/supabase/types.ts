@@ -4271,6 +4271,17 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_update_order_chanel_type: {
+        Args: {
+          p_code: string
+          p_id: number
+          p_module_code?: string
+          p_module_id?: number
+          p_name: string
+          p_payment_methods?: number[]
+        }
+        Returns: Json
+      }
       sp_update_payment_method: {
         Args: {
           p_active?: boolean
