@@ -4145,16 +4145,27 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_get_sale_products: {
-        Args: {
-          p_page?: number
-          p_search?: string
-          p_size?: number
-          p_stock_type_id?: number
-          p_warehouse_id?: number
-        }
-        Returns: Json
-      }
+      sp_get_sale_products:
+        | {
+            Args: {
+              p_page?: number
+              p_search?: string
+              p_size?: number
+              p_stock_type_id?: number
+              p_warehouse_id?: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_page?: number
+              p_search?: string
+              p_size?: number
+              p_stock_type_id?: number
+              p_warehouse_id?: number
+            }
+            Returns: Json
+          }
       sp_get_sales_list: {
         Args: {
           p_end_date?: string
