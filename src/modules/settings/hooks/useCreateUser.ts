@@ -48,6 +48,8 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
     const [fetchingUser, setFetchingUser] = useState(false);
     const [userDataLoaded, setUserDataLoaded] = useState(false);
     const [showPasswordField, setShowPasswordField] = useState(false);
+    const [isSearchingDocument, setIsSearchingDocument] = useState(false);
+    const [isDocumentFound, setIsDocumentFound] = useState(false);
 
     // Options state
     const [roles, setRoles] = useState<FilterOption[]>([]);
@@ -275,6 +277,46 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
 
 
 
+    // Document lookup
+    const handleDocumentLookup = async (overrideDocTypeId?: string) => {
+        if (isEdit) return;
+        const docTypeId = overrideDocTypeId ?? formData.document_type_id;
+        const docNumber = formData.document_number;
+        if (!docTypeId || !docNumber) return;
+
+        const selectedDocType = documentTypes.find(t => t.id.toString() === docTypeId);
+        const docTypeName = selectedDocType?.name?.toUpperCase();
+
+        setIsSearchingDocument(true);
+        try {
+            const result = await getUserDocumentApi({
+                documentType: docTypeName || '',
+                documentNumber: docNumber,
+            });
+
+            if (result?.found) {
+                setIsDocumentFound(true);
+                if (docTypeName === 'RUC') {
+                    setFormData(prev => ({
+                        ...prev,
+                        name: result.razonSocial || result.nombres || '',
+                    }));
+                } else {
+                    setFormData(prev => ({
+                        ...prev,
+                        name: result.nombres || '',
+                        last_name: result.apellidoPaterno || '',
+                        last_name2: result.apellidoMaterno || '',
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error('Error en document lookup:', error);
+        } finally {
+            setIsSearchingDocument(false);
+        }
+    };
+
     // Handlers
     const toggleRole = (id: number) => {
         setFormData(prev => ({
@@ -444,8 +486,9 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
         showPasswordField,
         setShowPasswordField,
         isRUC,
-        isSearchingDocument: false,
-        isDocumentFound: false,
+        isSearchingDocument,
+        isDocumentFound,
+        handleDocumentLookup,
     };
 };
 
