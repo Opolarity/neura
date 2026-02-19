@@ -10,6 +10,7 @@ export const GetOrderChannelTypes = async (
     let query = supabase
         .from("sale_types")
         .select("*", { count: "exact" })
+        .eq("is_active", true)
         .order("id", { ascending: true })
         .range(from, to);
 
