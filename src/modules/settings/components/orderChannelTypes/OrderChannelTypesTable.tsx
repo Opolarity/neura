@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Edit, Loader2 } from "lucide-react";
+import { Edit, Loader2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -10,16 +10,29 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { OrderChannelType } from "../../types/OrderChannelTypes.types";
 
 interface OrderChannelTypesTableProps {
   orderChannelTypes: OrderChannelType[];
   loading: boolean;
+  onDelete?: (id: number) => void;
 }
 
 const OrderChannelTypesTable = ({
   orderChannelTypes,
   loading,
+  onDelete,
 }: OrderChannelTypesTableProps) => {
   const navigate = useNavigate();
 
@@ -35,14 +48,13 @@ const OrderChannelTypesTable = ({
           <TableHead>Nombre</TableHead>
           <TableHead>Código</TableHead>
           <TableHead>POS</TableHead>
-          <TableHead>Estado</TableHead>
           <TableHead>Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={6} className="text-center py-8">
+            <TableCell colSpan={5} className="text-center py-8">
               <div className="flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Cargando canales de venta...
@@ -51,7 +63,7 @@ const OrderChannelTypesTable = ({
           </TableRow>
         ) : orderChannelTypes.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={6} className="text-center text-muted-foreground">
+            <TableCell colSpan={5} className="text-center text-muted-foreground">
               No hay canales de venta registrados.
             </TableCell>
           </TableRow>
@@ -71,16 +83,35 @@ const OrderChannelTypesTable = ({
                 )}
               </TableCell>
               <TableCell>
-                {type.is_active ? (
-                  <Badge variant="default">Activo</Badge>
-                ) : (
-                  <Badge variant="destructive">Inactivo</Badge>
-                )}
-              </TableCell>
-              <TableCell>
-                <Button variant="outline" size="sm" onClick={() => handleEdit(type.id)}>
-                  <Edit className="w-4 h-4 mr-1" /> Editar
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(type.id)}>
+                    <Edit className="w-4 h-4 mr-1" /> Editar
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>¿Eliminar canal de venta?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Se desactivará el canal "{type.name}". Podrás reactivarlo editándolo posteriormente.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => onDelete?.(type.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Eliminar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </TableCell>
             </TableRow>
           ))
