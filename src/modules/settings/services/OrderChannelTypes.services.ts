@@ -127,10 +127,10 @@ export const UpdateSaleType = async (payload: UpdateOrderChannelPayload): Promis
     return data as OrderChannelType;
 };
 
-export const GetInvoiceSeries = async (): Promise<{ id: number; serie: string | null; invoice_type_id: number; invoice_provider_id: number; type_code: string | null }[]> => {
+export const GetInvoiceSeries = async (): Promise<{ id: number; serie: string | null; invoice_type_id: number; invoice_provider_id: number; type_code: string | null; provider_description: string | null }[]> => {
     const { data, error } = await supabase
         .from("invoice_series")
-        .select("id, serie, invoice_type_id, invoice_provider_id, types:invoice_type_id(code)")
+        .select("id, serie, invoice_type_id, invoice_provider_id, types:invoice_type_id(code), invoice_providers:invoice_provider_id(description)")
         .eq("is_active", true)
         .order("id");
 
@@ -141,6 +141,7 @@ export const GetInvoiceSeries = async (): Promise<{ id: number; serie: string | 
         invoice_type_id: item.invoice_type_id,
         invoice_provider_id: item.invoice_provider_id,
         type_code: item.types?.code || null,
+        provider_description: item.invoice_providers?.description || null,
     }));
 };
 

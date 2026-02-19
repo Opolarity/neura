@@ -101,7 +101,7 @@ const CreateOrderChannelType = () => {
                                                     .filter((s: any) => s.type_code === '1')
                                                     .map((s) => (
                                                         <SelectItem key={s.id} value={String(s.id)}>
-                                                            {s.serie || "-"} (ID: {s.id})
+                                                            {s.serie || "-"} — {s.provider_description || "Sin proveedor"}
                                                         </SelectItem>
                                                     ))}
                                             </SelectContent>
@@ -122,7 +122,7 @@ const CreateOrderChannelType = () => {
                                                     .filter((s: any) => s.type_code === '2')
                                                     .map((s) => (
                                                         <SelectItem key={s.id} value={String(s.id)}>
-                                                            {s.serie || "-"} (ID: {s.id})
+                                                            {s.serie || "-"} — {s.provider_description || "Sin proveedor"}
                                                         </SelectItem>
                                                     ))}
                                             </SelectContent>
