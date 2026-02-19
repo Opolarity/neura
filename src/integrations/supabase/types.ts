@@ -4048,28 +4048,17 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_ec_get_product_list:
-        | {
-            Args: {
-              p_category_id?: number
-              p_order?: string
-              p_page?: number
-              p_sale_price?: boolean
-              p_search?: string
-              p_size?: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_category_id?: number
-              p_page?: number
-              p_sale_price?: boolean
-              p_search?: string
-              p_size?: number
-            }
-            Returns: Json
-          }
+      sp_ec_get_product_list: {
+        Args: {
+          p_category_id?: number
+          p_order?: string
+          p_page?: number
+          p_sale_price?: boolean
+          p_search?: string
+          p_size?: number
+        }
+        Returns: Json
+      }
       sp_ec_get_shipping_methods: {
         Args: {
           p_city_id?: number
