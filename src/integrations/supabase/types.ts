@@ -647,6 +647,7 @@ export type Database = {
           branch_id: number
           created_at: string
           default: boolean
+          description: string | null
           id: number
           token: string
           url: string
@@ -655,6 +656,7 @@ export type Database = {
           branch_id: number
           created_at?: string
           default?: boolean
+          description?: string | null
           id?: number
           token: string
           url: string
@@ -663,6 +665,7 @@ export type Database = {
           branch_id?: number
           created_at?: string
           default?: boolean
+          description?: string | null
           id?: number
           token?: string
           url?: string
