@@ -50,7 +50,8 @@ export const CreateSaleType = async (payload: CreateOrderChannelPayload): Promis
         .insert({
             name: payload.name,
             code: payload.code,
-            tax_serie_id: payload.tax_serie_id,
+            factura_serie_id: payload.factura_serie_id,
+            boleta_serie_id: payload.boleta_serie_id,
             business_acount_id: payload.business_acount_id ?? null,
             pos_sale_type: payload.pos_sale_type,
             is_active: payload.is_active,
@@ -89,7 +90,8 @@ export const UpdateSaleType = async (payload: UpdateOrderChannelPayload): Promis
         .update({
             name: payload.name,
             code: payload.code,
-            tax_serie_id: payload.tax_serie_id,
+            factura_serie_id: payload.factura_serie_id,
+            boleta_serie_id: payload.boleta_serie_id,
             business_acount_id: payload.business_acount_id ?? null,
             pos_sale_type: payload.pos_sale_type,
             is_active: payload.is_active,
@@ -125,15 +127,21 @@ export const UpdateSaleType = async (payload: UpdateOrderChannelPayload): Promis
     return data as OrderChannelType;
 };
 
-export const GetInvoiceSeries = async (): Promise<{ id: number; serie: string | null; invoice_type_id: number; invoice_provider_id: number }[]> => {
+export const GetInvoiceSeries = async (): Promise<{ id: number; serie: string | null; invoice_type_id: number; invoice_provider_id: number; type_code: string | null }[]> => {
     const { data, error } = await supabase
         .from("invoice_series")
-        .select("id, serie, invoice_type_id, invoice_provider_id")
+        .select("id, serie, invoice_type_id, invoice_provider_id, types:invoice_type_id(code)")
         .eq("is_active", true)
         .order("id");
 
     if (error) throw error;
-    return data ?? [];
+    return (data ?? []).map((item: any) => ({
+        id: item.id,
+        serie: item.serie,
+        invoice_type_id: item.invoice_type_id,
+        invoice_provider_id: item.invoice_provider_id,
+        type_code: item.types?.code || null,
+    }));
 };
 
 export const GetWarehouses = async (): Promise<{ id: number; name: string }[]> => {
