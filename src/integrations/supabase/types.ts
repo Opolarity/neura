@@ -761,6 +761,7 @@ export type Database = {
           customer_document_type_id: number
           declared: boolean
           id: number
+          invoice_number: string | null
           invoice_type_id: number
           pdf_url: string | null
           tax_serie: string | null
@@ -768,6 +769,7 @@ export type Database = {
           total_free: number | null
           total_others: number | null
           total_taxes: number | null
+          vinculated_invoice_id: number | null
           xml_url: string | null
         }
         Insert: {
@@ -781,6 +783,7 @@ export type Database = {
           customer_document_type_id?: number
           declared?: boolean
           id?: number
+          invoice_number?: string | null
           invoice_type_id: number
           pdf_url?: string | null
           tax_serie?: string | null
@@ -788,6 +791,7 @@ export type Database = {
           total_free?: number | null
           total_others?: number | null
           total_taxes?: number | null
+          vinculated_invoice_id?: number | null
           xml_url?: string | null
         }
         Update: {
@@ -801,6 +805,7 @@ export type Database = {
           customer_document_type_id?: number
           declared?: boolean
           id?: number
+          invoice_number?: string | null
           invoice_type_id?: number
           pdf_url?: string | null
           tax_serie?: string | null
@@ -808,6 +813,7 @@ export type Database = {
           total_free?: number | null
           total_others?: number | null
           total_taxes?: number | null
+          vinculated_invoice_id?: number | null
           xml_url?: string | null
         }
         Relationships: [
@@ -830,6 +836,13 @@ export type Database = {
             columns: ["invoice_type_id"]
             isOneToOne: false
             referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_vinculated_invoice_id_fkey"
+            columns: ["vinculated_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -1464,19 +1477,16 @@ export type Database = {
           id: number
           payment_method_id: number
           sale_type_id: number
-          tax_serie_id: number | null
         }
         Insert: {
           id?: number
           payment_method_id: number
           sale_type_id: number
-          tax_serie_id?: number | null
         }
         Update: {
           id?: number
           payment_method_id?: number
           sale_type_id?: number
-          tax_serie_id?: number | null
         }
         Relationships: [
           {
@@ -1491,13 +1501,6 @@ export type Database = {
             columns: ["sale_type_id"]
             isOneToOne: false
             referencedRelation: "types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_method_sale_type_tax_serie_id_fkey"
-            columns: ["tax_serie_id"]
-            isOneToOne: false
-            referencedRelation: "invoice_series"
             referencedColumns: ["id"]
           },
         ]
@@ -2472,6 +2475,39 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      sale_type_invoice_series: {
+        Row: {
+          id: number
+          sale_type_id: number
+          tax_serie_id: number
+        }
+        Insert: {
+          id?: number
+          sale_type_id: number
+          tax_serie_id: number
+        }
+        Update: {
+          id?: number
+          sale_type_id?: number
+          tax_serie_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_type_invoice_series_sale_type_id_fkey"
+            columns: ["sale_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_type_invoice_series_tax_serie_id_fkey"
+            columns: ["tax_serie_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_series"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sale_types: {
         Row: {
