@@ -3,7 +3,6 @@ import { useToast } from '@/hooks/use-toast';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
 import { OrderChannelType } from '../types/OrderChannelTypes.types';
 import { GetOrderChannelTypes } from '../services/OrderChannelTypes.services';
-import { OrderChannelTypesAdapter } from '../adapters/OrderChannelTypes.adapter';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 
 export const useOrderChannelTypes = () => {
@@ -21,19 +20,18 @@ export const useOrderChannelTypes = () => {
     const loadOrderChannelTypes = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await GetOrderChannelTypes({
+            const { data, count } = await GetOrderChannelTypes({
                 page: pagination.p_page,
                 size: pagination.p_size,
                 search: debouncedSearch,
             });
-            const { orderChannelTypes: data, pagination: paging } = OrderChannelTypesAdapter(response);
             setOrderChannelTypes(data);
-            setPagination(paging);
+            setPagination(prev => ({ ...prev, total: count }));
         } catch (error) {
-            console.error("Error loading order channel types:", error);
+            console.error("Error loading sale types:", error);
             toast({
                 title: "Error",
-                description: "No se pudieron cargar los tipos de canales de pedido",
+                description: "No se pudieron cargar los canales de venta",
                 variant: "destructive"
             });
         } finally {

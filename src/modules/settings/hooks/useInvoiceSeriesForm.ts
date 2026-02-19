@@ -44,19 +44,19 @@ export const useInvoiceSeriesForm = () => {
 
     if (!channels) return;
 
-    const { data: existing } = await supabase
+    const { data: existing } = await (supabase as any)
       .from("sale_type_invoice_series")
       .select("id, sale_type_id, tax_serie_id");
 
     const existingMap = new Map(
-      (existing || []).map((e: any) => [e.sale_type_id, e])
+      (existing || []).map((e: any) => [e.sale_type_id, e] as [number, any])
     );
 
     const mapped: SaleChannel[] = [];
     const preSelected = new Set<number>();
 
     for (const ch of channels as any[]) {
-      const record = existingMap.get(ch.id);
+      const record = existingMap.get(ch.id) as any;
       if (record) {
         if (isEditing && record.tax_serie_id === parseInt(serieId!)) {
           mapped.push({ id: ch.id, name: ch.name, code: ch.code, linked: true });
@@ -126,7 +126,7 @@ export const useInvoiceSeriesForm = () => {
 
   const saveSaleChannelLinks = async (newSerieId: number) => {
     // Delete existing links for this serie
-    await supabase
+    await (supabase as any)
       .from("sale_type_invoice_series")
       .delete()
       .eq("tax_serie_id", newSerieId);
@@ -138,7 +138,7 @@ export const useInvoiceSeriesForm = () => {
     }));
 
     if (toInsert.length > 0) {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("sale_type_invoice_series")
         .insert(toInsert);
       if (error) throw error;
