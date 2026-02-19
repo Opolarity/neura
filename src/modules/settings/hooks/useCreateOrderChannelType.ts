@@ -71,7 +71,7 @@ const useCreateOrderChannelType = () => {
                     getPaymentMethodsIsActiveTrueAndActiveTrue(),
                     GetInvoiceSeries(),
                     GetBranches(),
-                    GetCajas(),
+                    GetCajas(isEdit && channelTypeId ? parseInt(channelTypeId) : undefined),
                 ];
 
                 if (isEdit && channelTypeId) {
