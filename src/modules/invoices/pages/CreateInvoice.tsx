@@ -79,24 +79,18 @@ const CreateInvoice = () => {
         {isEditing && (pdfUrl || xmlUrl || cdrUrl) && (
           <div className="flex items-center gap-2">
             {pdfUrl && (
-              <Button variant="outline" size="sm" asChild>
-                <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                  <Eye className="h-4 w-4 mr-1" /> PDF
-                </a>
+              <Button variant="outline" size="sm" onClick={() => window.open(pdfUrl, '_blank', 'noopener,noreferrer')}>
+                <Eye className="h-4 w-4 mr-1" /> PDF
               </Button>
             )}
             {xmlUrl && (
-              <Button variant="outline" size="sm" asChild>
-                <a href={xmlUrl} target="_blank" rel="noopener noreferrer">
-                  <FileDown className="h-4 w-4 mr-1" /> XML
-                </a>
+              <Button variant="outline" size="sm" onClick={() => window.open(xmlUrl, '_blank', 'noopener,noreferrer')}>
+                <FileDown className="h-4 w-4 mr-1" /> XML
               </Button>
             )}
             {cdrUrl && (
-              <Button variant="outline" size="sm" asChild>
-                <a href={cdrUrl} target="_blank" rel="noopener noreferrer">
-                  <FileDown className="h-4 w-4 mr-1" /> CDR
-                </a>
+              <Button variant="outline" size="sm" onClick={() => window.open(cdrUrl, '_blank', 'noopener,noreferrer')}>
+                <FileDown className="h-4 w-4 mr-1" /> CDR
               </Button>
             )}
           </div>
