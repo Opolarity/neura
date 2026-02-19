@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { CreateSaleType, GetOrderChannelTypeDetails, UpdateSaleType, GetInvoiceSeries, GetWarehouses, GetCajas } from '../services/OrderChannelTypes.services';
+import { CreateSaleType, GetOrderChannelTypeDetails, UpdateSaleType, GetInvoiceSeries, GetBranches, GetCajas } from '../services/OrderChannelTypes.services';
 import { getPaymentMethodsIsActiveTrueAndActiveTrue } from '@/shared/services/service';
 
 interface FormData {
@@ -29,7 +29,7 @@ interface InvoiceSerieOption {
     provider_description: string | null;
 }
 
-export interface WarehouseOption {
+export interface BranchOption {
     id: number;
     name: string;
 }
@@ -50,8 +50,8 @@ const useCreateOrderChannelType = () => {
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOption[]>([]);
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<Set<number>>(new Set());
     const [invoiceSeries, setInvoiceSeries] = useState<InvoiceSerieOption[]>([]);
-    const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
-    const [selectedWarehouses, setSelectedWarehouses] = useState<number[]>([]);
+    const [branches, setBranches] = useState<BranchOption[]>([]);
+    const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
     const [cajas, setCajas] = useState<CajaOption[]>([]);
 
     const [formData, setFormData] = useState<FormData>({
@@ -70,7 +70,7 @@ const useCreateOrderChannelType = () => {
                 const promises: Promise<any>[] = [
                     getPaymentMethodsIsActiveTrueAndActiveTrue(),
                     GetInvoiceSeries(),
-                    GetWarehouses(),
+                    GetBranches(),
                     GetCajas(),
                 ];
 
@@ -81,16 +81,16 @@ const useCreateOrderChannelType = () => {
                 const results = await Promise.all(promises);
                 const paymentMethodsData = results[0];
                 const invoiceSeriesData = results[1];
-                const warehousesData = results[2];
+                const branchesData = results[2];
                 const cajasData = results[3];
 
                 setPaymentMethods(paymentMethodsData);
                 setInvoiceSeries(invoiceSeriesData);
-                setWarehouses(warehousesData);
+                setBranches(branchesData);
                 setCajas(cajasData);
 
                 if (isEdit && results[4]) {
-                    const { saleType, paymentMethodIds, warehouseIds } = results[4];
+                    const { saleType, paymentMethodIds, branchIds } = results[4];
                     setFormData({
                         name: saleType.name,
                         code: saleType.code ?? '',
@@ -101,7 +101,7 @@ const useCreateOrderChannelType = () => {
                         is_active: saleType.is_active,
                     });
                     setSelectedPaymentMethods(new Set(paymentMethodIds));
-                    setSelectedWarehouses(warehouseIds);
+                    setSelectedBranches(branchIds);
                 }
             } catch (error) {
                 console.error("Error loading options:", error);
@@ -136,23 +136,23 @@ const useCreateOrderChannelType = () => {
         });
     };
 
-    const toggleWarehouse = (id: number) => {
-        setSelectedWarehouses(prev => {
+    const toggleBranch = (id: number) => {
+        setSelectedBranches(prev => {
             if (prev.includes(id)) {
-                return prev.filter(w => w !== id);
+                return prev.filter(b => b !== id);
             }
             return [...prev, id];
         });
     };
 
-    const setSelectedWarehouseSingle = (id: number) => {
-        setSelectedWarehouses([id]);
+    const setSelectedBranchSingle = (id: number) => {
+        setSelectedBranches([id]);
     };
 
     const handlePosToggle = (checked: boolean) => {
         setFormData(prev => ({ ...prev, pos_sale_type: checked }));
-        if (checked && selectedWarehouses.length > 1) {
-            setSelectedWarehouses(prev => prev.length > 0 ? [prev[0]] : []);
+        if (checked && selectedBranches.length > 1) {
+            setSelectedBranches(prev => prev.length > 0 ? [prev[0]] : []);
         }
         if (!checked) {
             setFormData(prev => ({ ...prev, business_acount_id: null }));
@@ -183,7 +183,7 @@ const useCreateOrderChannelType = () => {
                 pos_sale_type: formData.pos_sale_type,
                 is_active: formData.is_active,
                 paymentMethods: Array.from(selectedPaymentMethods),
-                warehouses: selectedWarehouses,
+                branches: selectedBranches,
             };
 
             if (isEdit && channelTypeId) {
@@ -213,14 +213,14 @@ const useCreateOrderChannelType = () => {
         paymentMethods,
         selectedPaymentMethods,
         invoiceSeries,
-        warehouses,
-        selectedWarehouses,
+        branches,
+        selectedBranches,
         cajas,
         isEdit,
         handleChange,
         togglePaymentMethod,
-        toggleWarehouse,
-        setSelectedWarehouseSingle,
+        toggleBranch,
+        setSelectedBranchSingle,
         handlePosToggle,
         handleSubmit,
         setFormData,

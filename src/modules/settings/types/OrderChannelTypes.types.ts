@@ -25,7 +25,7 @@ export interface CreateOrderChannelPayload {
   pos_sale_type: boolean;
   is_active: boolean;
   paymentMethods?: number[];
-  warehouses?: number[];
+  branches?: number[];
 }
 
 export interface UpdateOrderChannelPayload extends CreateOrderChannelPayload {
