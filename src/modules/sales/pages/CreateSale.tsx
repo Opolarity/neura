@@ -1478,6 +1478,8 @@ const CreateSale = () => {
       {createdOrderId && (
         <SalesInvoicesModal
           orderId={createdOrderId}
+          orderTotal={total}
+          saleTypeId={Number(formData.saleType) || 0}
           open={invoicesModalOpen}
           onOpenChange={setInvoicesModalOpen}
         />

@@ -137,14 +137,14 @@ export const useInvoiceSeriesForm = () => {
     if (toUnlink.length > 0) {
       await supabase
         .from("payment_method_sale_type")
-        .update({ tax_serie_id: null })
+        .update({ tax_serie_id: null } as any)
         .in("id", toUnlink);
     }
 
     if (toLink.length > 0) {
       await supabase
         .from("payment_method_sale_type")
-        .update({ tax_serie_id: newSerieId })
+        .update({ tax_serie_id: newSerieId } as any)
         .in("id", toLink);
     }
   };

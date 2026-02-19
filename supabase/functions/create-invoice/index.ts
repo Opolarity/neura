@@ -46,6 +46,8 @@ serve(async (req) => {
       .insert({
         invoice_type_id: input.invoice_type_id,
         tax_serie: input.tax_serie || null,
+        invoice_number: input.invoice_number || null,
+        declared: input.declared ?? false,
         customer_document_type_id: input.customer_document_type_id || 0,
         customer_document_number: input.customer_document_number || ' ',
         client_name: input.client_name || null,
@@ -90,6 +92,21 @@ serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Link invoice to order if order_id is provided
+    if (input.order_id) {
+      const { error: linkError } = await supabase
+        .from("order_invoices")
+        .insert({
+          order_id: input.order_id,
+          invoice_id: invoice.id,
+        });
+
+      if (linkError) {
+        console.error("Error linking invoice to order:", linkError);
+        // Non-fatal: invoice was created, just log the error
+      }
     }
 
     return new Response(JSON.stringify({ success: true, invoice: { id: invoice.id } }), {
