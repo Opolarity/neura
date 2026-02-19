@@ -115,6 +115,7 @@ const CreateSale = () => {
     filteredPaymentMethods,
     isAnonymousPurchase,
     needsBusinessAccountSelect,
+    businessAccounts,
     // Server-side pagination
     productPage,
     productPagination,
@@ -1247,7 +1248,7 @@ const CreateSale = () => {
                         <SelectValue placeholder="Seleccione cuenta" />
                       </SelectTrigger>
                       <SelectContent>
-                        {salesData?.businessAccounts?.map((ba) => (
+                        {businessAccounts?.map((ba) => (
                           <SelectItem key={ba.id} value={ba.id.toString()}>
                             {ba.name} - {ba.bank}
                           </SelectItem>

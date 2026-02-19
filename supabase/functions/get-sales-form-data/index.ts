@@ -126,17 +126,6 @@ Deno.serve(async (req) => {
       })),
     }));
 
-    // Fetch business accounts for manual selection
-    const { data: businessAccountsData, error: baError } = await supabase
-      .from("business_accounts")
-      .select("id, name, bank")
-      .eq("is_active", true)
-      .order("name");
-
-    if (baError) {
-      console.error("Error fetching business accounts:", baError);
-    }
-
     const response = {
       documentTypes: documentTypesRes.data || [],
       saleTypes: saleTypesRes.data || [],
@@ -151,7 +140,6 @@ Deno.serve(async (req) => {
       situations: situationsRes.data || [],
       stockTypes: stockTypesRes.data || [],
       products,
-      businessAccounts: businessAccountsData || [],
     };
 
     return new Response(JSON.stringify(response), {

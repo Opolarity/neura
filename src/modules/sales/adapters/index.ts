@@ -192,11 +192,6 @@ export const adaptSalesFormData = (data: any): SalesFormDataResponse => {
     })),
     situations: adaptSituations(data.situations || []),
     stockTypes: adaptStockTypes(data.stockTypes || []),
-    businessAccounts: (data.businessAccounts || []).map((item: any) => ({
-      id: item.id,
-      name: item.name,
-      bank: item.bank,
-    })),
   };
 };
 
