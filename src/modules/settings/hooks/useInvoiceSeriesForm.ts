@@ -5,6 +5,15 @@ import { useToast } from "@/hooks/use-toast";
 import type { InvoiceSerieForm } from "./useInvoiceSeries";
 import { emptyForm } from "./useInvoiceSeries";
 
+export interface PaymentMethodSaleType {
+  id: number;
+  payment_method_id: number;
+  sale_type_id: number;
+  tax_serie_id: number | null;
+  payment_method_name: string;
+  sale_type_name: string;
+}
+
 export const useInvoiceSeriesForm = () => {
   const { serieId } = useParams<{ serieId: string }>();
   const isEditing = !!serieId;
@@ -14,6 +23,8 @@ export const useInvoiceSeriesForm = () => {
   const [form, setForm] = useState<InvoiceSerieForm>(emptyForm);
   const [accounts, setAccounts] = useState<{ id: number; name: string }[]>([]);
   const [providers, setProviders] = useState<{ id: number; url: string; branch_id: number; description: string | null }[]>([]);
+  const [availableLinks, setAvailableLinks] = useState<PaymentMethodSaleType[]>([]);
+  const [selectedLinkIds, setSelectedLinkIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -25,6 +36,41 @@ export const useInvoiceSeriesForm = () => {
     if (accRes.data) setAccounts(accRes.data);
     if (provRes.data) setProviders(provRes.data);
   }, []);
+
+  const fetchPaymentMethodLinks = useCallback(async () => {
+    // Fetch records where tax_serie_id is null OR equals current serie
+    let query = supabase
+      .from("payment_method_sale_type")
+      .select("id, payment_method_id, sale_type_id, tax_serie_id, payment_methods(name), types:sale_type_id(name)")
+      .order("id");
+
+    if (isEditing) {
+      query = query.or(`tax_serie_id.is.null,tax_serie_id.eq.${serieId}`);
+    } else {
+      query = query.is("tax_serie_id", null);
+    }
+
+    const { data } = await query;
+    if (data) {
+      const mapped: PaymentMethodSaleType[] = data.map((item: any) => ({
+        id: item.id,
+        payment_method_id: item.payment_method_id,
+        sale_type_id: item.sale_type_id,
+        tax_serie_id: item.tax_serie_id,
+        payment_method_name: item.payment_methods?.name || `Método #${item.payment_method_id}`,
+        sale_type_name: item.types?.name || `Canal #${item.sale_type_id}`,
+      }));
+      setAvailableLinks(mapped);
+
+      // Pre-select the ones already linked to this serie
+      if (isEditing) {
+        const linked = new Set(
+          mapped.filter((m) => m.tax_serie_id === parseInt(serieId!)).map((m) => m.id)
+        );
+        setSelectedLinkIds(linked);
+      }
+    }
+  }, [isEditing, serieId]);
 
   const fetchSerie = useCallback(async () => {
     if (!serieId) return;
@@ -62,11 +108,45 @@ export const useInvoiceSeriesForm = () => {
 
   useEffect(() => {
     fetchDropdowns();
+    fetchPaymentMethodLinks();
     if (isEditing) fetchSerie();
-  }, [fetchDropdowns, fetchSerie, isEditing]);
+  }, [fetchDropdowns, fetchPaymentMethodLinks, fetchSerie, isEditing]);
 
   const updateField = (field: keyof InvoiceSerieForm, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const toggleLink = (id: number) => {
+    setSelectedLinkIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const saveLinks = async (newSerieId: number) => {
+    // Unlink: records that were linked but now are not selected
+    const toUnlink = availableLinks
+      .filter((l) => l.tax_serie_id === newSerieId && !selectedLinkIds.has(l.id))
+      .map((l) => l.id);
+
+    // Link: records that are selected
+    const toLink = Array.from(selectedLinkIds);
+
+    if (toUnlink.length > 0) {
+      await supabase
+        .from("payment_method_sale_type")
+        .update({ tax_serie_id: null })
+        .in("id", toUnlink);
+    }
+
+    if (toLink.length > 0) {
+      await supabase
+        .from("payment_method_sale_type")
+        .update({ tax_serie_id: newSerieId })
+        .in("id", toLink);
+    }
   };
 
   const saveSerie = async () => {
@@ -88,18 +168,28 @@ export const useInvoiceSeriesForm = () => {
         default: form.default,
       };
 
+      let savedSerieId: number;
+
       if (isEditing) {
         const { error } = await supabase
           .from("invoice_series")
           .update(payload)
           .eq("id", parseInt(serieId!));
         if (error) throw error;
+        savedSerieId = parseInt(serieId!);
         toast({ title: "Serie actualizada correctamente" });
       } else {
-        const { error } = await supabase.from("invoice_series").insert(payload);
+        const { data, error } = await supabase
+          .from("invoice_series")
+          .insert(payload)
+          .select("id")
+          .single();
         if (error) throw error;
+        savedSerieId = data.id;
         toast({ title: "Serie creada correctamente" });
       }
+
+      await saveLinks(savedSerieId);
 
       navigate("/invoices/series");
     } catch (err: any) {
@@ -113,10 +203,13 @@ export const useInvoiceSeriesForm = () => {
     form,
     accounts,
     providers,
+    availableLinks,
+    selectedLinkIds,
     loading,
     saving,
     isEditing,
     updateField,
+    toggleLink,
     saveSerie,
   };
 };
