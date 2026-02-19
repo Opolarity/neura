@@ -129,16 +129,19 @@ export const useCreateInvoice = () => {
         let providerId = "";
         let serieId = "";
         if (invoice.tax_serie) {
-          const { data: serieData } = await supabase
+          // Extract just the serie prefix (e.g. "F003" from "F003-233")
+          const serieParts = invoice.tax_serie.split("-");
+          const seriePrefix = serieParts.length > 0 ? serieParts[0] : invoice.tax_serie;
+          
+          const { data: serieRows } = await supabase
             .from("invoice_series")
             .select("id, invoice_provider_id, fac_serie, bol_serie, ncf_serie, ncb_serie, ndb_serie, ndf_serie, grr_serie, grt_serie, next_number")
-            .or(`fac_serie.eq.${invoice.tax_serie},bol_serie.eq.${invoice.tax_serie}`)
-            .limit(1)
-            .single();
+            .or(`fac_serie.eq.${seriePrefix},bol_serie.eq.${seriePrefix},fac_serie.eq.${invoice.tax_serie},bol_serie.eq.${invoice.tax_serie},ncf_serie.eq.${seriePrefix},ncb_serie.eq.${seriePrefix},ndf_serie.eq.${seriePrefix},ndb_serie.eq.${seriePrefix},grr_serie.eq.${seriePrefix},grt_serie.eq.${seriePrefix}`)
+            .limit(1);
 
-          if (serieData) {
-            providerId = serieData.invoice_provider_id.toString();
-            serieId = serieData.id.toString();
+          if (serieRows && serieRows.length > 0) {
+            providerId = serieRows[0].invoice_provider_id.toString();
+            serieId = serieRows[0].id.toString();
           }
         }
 
