@@ -1,106 +1,84 @@
-## Plan: Boton "Emitir en SUNAT" en la pagina de edicion de comprobantes
+## Boton "Crear" comprobante en el modal de ventas con asignacion automatica de serie
 
 ### Objetivo
 
-Agregar un boton "Emitir en SUNAT" en la pagina de edicion de comprobantes (`/invoices/edit/:id`) que envie los datos del comprobante a la API de NubeFact para su emision electronica ante SUNAT. La comunicacion con NubeFact se hara desde una Edge Function para proteger las credenciales (url y token del proveedor).
+Agregar un boton dropdown "Crear" en el modal de comprobantes vinculados (`SalesInvoicesModal`) que permita generar comprobantes desde la orden. El boton solo se habilitara cuando la orden este pagada al 100%, es decir la suma de los order_payment es exactamente igual al total de la orden. Al crear el comprobante, el sistema asignara automaticamente la serie correspondiente usando la tabla `sale_type_invoice_series`.  
+  
+NOTA: Antes de comenzar revisar de nuevo las tablas invoices, invoice_items, `sale_type_invoice_series` , invoice_series e invoice_providers ya que han dufrido cambios.
 
-### Flujo general
+### Cambios necesarios
+
+#### 1. SalesInvoicesModal - Agregar boton "Crear" con dropdown
+
+**Archivo:** `src/modules/sales/components/SalesInvoicesModal.tsx`
+
+- Recibir nuevas props: `orderTotal` (monto total de la orden) y `saleTypeId` (tipo de canal de venta de la orden)
+- Al abrir el modal, consultar `order_payment` para sumar los pagos y determinar si esta 100% cancelada, es decir la suma de sus pagos es exactamente igual al total, no más, ni menos.
+- Cargar los tipos de comprobante (tabla `types` con modulo `INV`)
+- Mostrar un `DropdownMenu` con boton "Crear" alineado a la derecha en el header
+- Si no esta pagada al 100%, el boton aparece deshabilitado
+- Al seleccionar un tipo, ejecutar la logica de creacion del comprobante directamente desde el modal
+
+#### 2. Logica de creacion con serie automatica
+
+Cuando el usuario selecciona un tipo de comprobante del dropdown:
+
+1. Consultar `sale_type_invoice_series` filtrando por `sale_type_id` de la orden para obtener el `tax_serie_id` (que referencia a `invoice_series`), hay posibilidad de que no lo encuentre.
+2. Con el registro de `invoice_series` obtenido, seleccionar la columna de serie correcta segun las reglas:
+  - **Factura** (code "1"): usar `fac_serie`
+  - **Boleta** (code "2"): usar `bol_serie`
+  - **Nota de credito** (code "3") o **Nota de debito** (code "4"): depende del comprobante vinculado (si esta vinculado a factura usar `fac_serie`, si a boleta usar `bol_serie`) -- para notas creadas desde ventas, esto no aplica directamente, asi que se omitira la serie por ahora para notas
+  - Si no encuentra o no consigue el registro de `invoice_series` dejar el campo tax_serie en NULL
+  - **Tipo comprobante** (code "INV") (columna code de la table types): automaticamente dejar tax_serie en NULL.
+3. Construir el `tax_serie` con el valor de la columna correspondiente
+4. Dejar la columna invoice_number como NULL (esa columna es nueva en invoices)
+5. La columna declared de invoices colocarla como false.
+6. Cargar datos del cliente y productos de la orden
+7. Llamar a la edge function `create-invoice` con toda la informacion
+8. Insertar el registro en `order_invoices` para vincular el comprobante con la orden
+9. Refrescar la lista de comprobantes en el modal
+
+#### 3. CreateSale - Pasar props adicionales al modal
+
+**Archivo:** `src/modules/sales/pages/CreateSale.tsx`
+
+- Pasar `orderTotal` y `saleTypeId` como props al componente `SalesInvoicesModal`
+
+---
+
+### Detalles tecnicos
+
+**Flujo de obtencion de serie:**
 
 ```text
-[Boton "Emitir en SUNAT"] 
-    --> Edge Function "emit-invoice" (POST)
-        --> Lee invoice + invoice_items de la BD
-        --> Busca la serie en invoice_series para obtener invoice_provider_id
-        --> Lee url y token del invoice_provider vinculado
-        --> Construye el JSON segun formato NubeFact
-        --> Envia POST a la URL del proveedor con el token en Authorization
-        --> Guarda respuesta (pdf_url, xml_url, cdr_url, declared) en invoices
-        --> Retorna resultado al frontend
-    --> Muestra toast de exito/error
+order.sale_type_id
+    |
+    v
+sale_type_invoice_series (sale_type_id -> tax_serie_id)
+    |
+    v
+invoice_series (id = tax_serie_id)
+    |
+    v
+Segun tipo de comprobante:
+  - Factura (code=1) -> fac_serie + "-" + next_number
+  - Boleta (code=2)  -> bol_serie + "-" + next_number
 ```
 
-### Cambios a realizar
+**Datos del comprobante a crear:**
 
-**1. Nueva Edge Function: `supabase/functions/emit-invoice/index.ts**`
+- `invoice_type_id`: ID del tipo seleccionado
+- `tax_serie`: serie obtenida automaticamente o NULL
+- invoice_number: NULL
+- declared: false
+- `customer_document_type_id` y `customer_document_number`: del `orders` (document_type, document_number)
+- `client_name`: del `orders` (customer_name + customer_lastname)
+- `total_amount`: total del orders
+- total_taxes: calculo del total de orders menos el total de orders entre 1.18.
+- Items: productos de `order_products` convertidos a items de comprobante
 
-- Recibe `{ invoice_id: number }` por POST
-- Consulta la tabla `invoices` para obtener los datos del comprobante
-- Consulta `invoice_items` para obtener los items
-- Extrae el prefijo de serie del `tax_serie` (ej: "FPP1" de "FPP1-123") y busca en `invoice_series` para encontrar el `invoice_provider_id`
-- Consulta `invoice_providers` para obtener `url` y `token`
-- Mapea los datos al formato JSON de NubeFact:
-  - `operacion`: "generar_comprobante"
-  - `tipo_de_comprobante`: mapeado desde el `code` del tipo de factura (1=Factura, 2=Boleta, 3=NC, 4=ND)
-  - `serie`: prefijo de tax_serie (ej: "FPP1")
-  - `numero`: sufijo numerico de tax_serie (ej: 123)
-  - `cliente_tipo_de_documento`: mapeado desde document_types.code (DNI->1, RUC->6, CE->4, PAS->7)
-  - `cliente_numero_de_documento`, `cliente_denominacion`, `cliente_direccion`, `cliente_email`
-  - `fecha_de_emision`: formato DD-MM-YYYY
-  - Totales: `total_gravada`, `total_igv`, `total`
-  - `items[]`: cada item con `unidad_de_medida`, `descripcion`, `cantidad`, `valor_unitario` (sin IGV), `precio_unitario` (con IGV), `subtotal`, `tipo_de_igv` (1=Gravado), `igv`, `total`
-  - `enviar_automaticamente_a_la_sunat`: true
-  - `enviar_automaticamente_al_cliente`: false (o true si tiene email)
-- Envia POST a la URL del proveedor con header `Authorization: TOKEN` y `Content-Type: application/json`
-- Al recibir respuesta exitosa, actualiza la tabla `invoices`:
-  - `pdf_url` = `enlace_del_pdf`
-  - `xml_url` = `enlace_del_xml`  
-  - `cdr_url` = `enlace_del_cdr`
-  - `declared` = `aceptada_por_sunat`
-- Retorna la respuesta de NubeFact al frontend
-- Seguridad: las credenciales (url, token) nunca se exponen al frontend, todo se maneja server-side
+**Archivos a modificar:**
 
-**2. Actualizar `supabase/config.toml**`
-
-Agregar configuracion para la nueva funcion:
-
-```toml
-[functions.emit-invoice]
-verify_jwt = false
-```
-
-**3. Modificar `src/modules/invoices/hooks/useCreateInvoice.ts**`
-
-- Agregar funcion `handleEmit` que:
-  - Llama a `supabase.functions.invoke("emit-invoice", { method: "POST", body: { invoice_id } })`
-  - Muestra toast de exito con mensaje de SUNAT o toast de error
-  - Recarga los datos del comprobante tras emision exitosa
-- Exportar `handleEmit` y un estado `emitting` (boolean)
-
-**4. Modificar `src/modules/invoices/pages/CreateInvoice.tsx**`
-
-- Importar y usar `handleEmit` y `emitting` del hook
-- Agregar boton "Emitir en SUNAT" visible solo cuando `isEditing` es true y `declared` es false
-- El boton muestra un spinner mientras emite
-
-### Seguridad
-
-- El token y la URL del proveedor NUNCA se envian al frontend
-- La Edge Function los lee directamente de la base de datos
-- La Edge Function usa el JWT del usuario (patron con ANON_KEY + Authorization header) para respetar el contexto de autenticacion
-- Se valida que el comprobante exista y no haya sido ya declarado antes de emitir
-
-### Mapeo de tipos de documento (sistema -> NubeFact)
-
-### Debe coger la columna "state_code" de la tabla document_types, ese es el codigo que sedebe enviar en el json de nubefact
-
-
-| Sistema (code)          | NubeFact (segun columna state_code de document_types) |
-| ----------------------- | ----------------------------------------------------- |
-| DNI                     | 1                                                     |
-| RUC                     | 6                                                     |
-| CE                      | 4                                                     |
-| PAS                     | 7                                                     |
-| " " (espacio en blanco) | -                                                     |
-
-
-### Mapeo de tipos de comprobante  
-  
-Debe coger la columna "code" de la tabla types, ese es el codigo que sedebe enviar en el json de nubefact
-
-
-| types.code | NubeFact (segun columna code de types) |
-| ---------- | -------------------------------------- |
-| 1          | 1 (Factura)                            |
-| 2          | 2 (Boleta)                             |
-| 3          | 3 (Nota de credito)                    |
-| 4          | 4 (Nota de debito)                     |
+- `src/modules/sales/components/SalesInvoicesModal.tsx` (logica principal)
+- `src/modules/sales/pages/CreateSale.tsx` (pasar props)
+- `supabase/functions/create-invoice/index.ts` (agregar logica para vincular order_invoices y actualizar next_number)
