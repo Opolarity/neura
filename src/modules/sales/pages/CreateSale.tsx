@@ -1261,7 +1261,7 @@ const CreateSale = () => {
                       <SelectContent>
                         {businessAccounts?.map((ba) => (
                           <SelectItem key={ba.id} value={ba.id.toString()}>
-                            {ba.name} - {ba.bank}
+                            {ba.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1446,7 +1446,7 @@ const CreateSale = () => {
                                 <SelectContent>
                                   {businessAccounts?.map((ba) => (
                                     <SelectItem key={ba.id} value={ba.id.toString()}>
-                                      {ba.name} - {ba.bank}
+                                      {ba.name}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
