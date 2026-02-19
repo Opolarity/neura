@@ -20,108 +20,45 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Use service_role to read provider credentials (no RLS on those tables)
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. Get invoice
-    const { data: invoice, error: invErr } = await supabaseAdmin
-      .from("invoices")
-      .select("*")
-      .eq("id", invoice_id)
-      .single();
+    // 1. Get all invoice data via RPC
+    const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc(
+      "sp_get_invoice_for_emit",
+      { p_invoice_id: invoice_id }
+    );
 
-    if (invErr || !invoice) {
-      return new Response(JSON.stringify({ error: "Comprobante no encontrado" }), {
-        status: 404,
+    if (rpcError) {
+      console.error("RPC error:", rpcError);
+      return new Response(JSON.stringify({ error: rpcError.message }), {
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (invoice.declared) {
-      return new Response(JSON.stringify({ error: "El comprobante ya fue emitido en SUNAT" }), {
+    // Check for business logic errors from RPC
+    if (rpcResult?.error) {
+      return new Response(JSON.stringify({ error: rpcResult.error }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 2. Get invoice items
-    const { data: items } = await supabaseAdmin
-      .from("invoice_items")
-      .select("*")
-      .eq("invoice_id", invoice_id)
-      .order("id");
+    const {
+      invoice,
+      items,
+      tipo_de_comprobante,
+      cliente_tipo_de_documento,
+      serie,
+      numero,
+      provider_url,
+      provider_token,
+    } = rpcResult;
 
-    if (!items || items.length === 0) {
-      return new Response(JSON.stringify({ error: "El comprobante no tiene items" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // 3. Get invoice type code from types table
-    const { data: invoiceType } = await supabaseAdmin
-      .from("types")
-      .select("code")
-      .eq("id", invoice.invoice_type_id)
-      .single();
-
-    const tipoDeComprobante = invoiceType?.code ? parseInt(invoiceType.code) : 1;
-
-    // 4. Get document type state_code
-    const { data: docType } = await supabaseAdmin
-      .from("document_types")
-      .select("state_code")
-      .eq("id", invoice.customer_document_type_id)
-      .single();
-
-    const clienteTipoDocumento = docType?.state_code ? parseInt(docType.state_code) : 1;
-
-    // 5. Find invoice_series by tax_serie prefix to get invoice_provider_id
-    const taxSerie = invoice.tax_serie || "";
-    const serieParts = taxSerie.split("-");
-    const seriePrefix = serieParts[0] || "";
-    const serieNumber = serieParts.length > 1 ? parseInt(serieParts[1]) : 1;
-
-    if (!seriePrefix) {
-      return new Response(JSON.stringify({ error: "El comprobante no tiene serie asignada" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { data: serieRows } = await supabaseAdmin
-      .from("invoice_series")
-      .select("id, invoice_provider_id")
-      .or(
-        `fac_serie.eq.${seriePrefix},bol_serie.eq.${seriePrefix},ncf_serie.eq.${seriePrefix},ncb_serie.eq.${seriePrefix},ndf_serie.eq.${seriePrefix},ndb_serie.eq.${seriePrefix},grr_serie.eq.${seriePrefix},grt_serie.eq.${seriePrefix}`
-      )
-      .limit(1);
-
-    if (!serieRows || serieRows.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "No se encontró la serie del comprobante en la configuración" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 6. Get provider url and token
-    const { data: provider } = await supabaseAdmin
-      .from("invoice_providers")
-      .select("url, token")
-      .eq("id", serieRows[0].invoice_provider_id)
-      .single();
-
-    if (!provider) {
-      return new Response(
-        JSON.stringify({ error: "Proveedor de facturación no encontrado" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 7. Build NubeFact JSON
+    // 2. Build NubeFact JSON
     const fechaEmision = new Date(invoice.created_at);
     const fechaFormatted = `${String(fechaEmision.getDate()).padStart(2, "0")}-${String(
       fechaEmision.getMonth() + 1
@@ -159,11 +96,11 @@ Deno.serve(async (req) => {
 
     const nubefactPayload = {
       operacion: "generar_comprobante",
-      tipo_de_comprobante: tipoDeComprobante,
-      serie: seriePrefix,
-      numero: serieNumber,
+      tipo_de_comprobante,
+      serie,
+      numero,
       sunat_transaction: 1,
-      cliente_tipo_de_documento: clienteTipoDocumento,
+      cliente_tipo_de_documento,
       cliente_numero_de_documento: invoice.customer_document_number || "",
       cliente_denominacion: invoice.client_name || "",
       cliente_direccion: invoice.client_address || "",
@@ -208,11 +145,11 @@ Deno.serve(async (req) => {
 
     console.log("Sending to NubeFact:", JSON.stringify(nubefactPayload));
 
-    // 8. Send to NubeFact
-    const nubefactResponse = await fetch(provider.url, {
+    // 3. Send to NubeFact
+    const nubefactResponse = await fetch(provider_url, {
       method: "POST",
       headers: {
-        Authorization: provider.token,
+        Authorization: provider_token,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(nubefactPayload),
@@ -231,18 +168,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 9. Update invoice with response data
-    const updateData: Record<string, any> = {};
-    if (nubefactResult.enlace_del_pdf) updateData.pdf_url = nubefactResult.enlace_del_pdf;
-    if (nubefactResult.enlace_del_xml) updateData.xml_url = nubefactResult.enlace_del_xml;
-    if (nubefactResult.enlace_del_cdr) updateData.cdr_url = nubefactResult.enlace_del_cdr;
-    if (nubefactResult.aceptada_por_sunat !== undefined) {
-      updateData.declared = nubefactResult.aceptada_por_sunat;
-    }
-
-    if (Object.keys(updateData).length > 0) {
-      await supabaseAdmin.from("invoices").update(updateData).eq("id", invoice_id);
-    }
+    // 4. Update invoice via RPC
+    await supabaseAdmin.rpc("sp_update_invoice_sunat_response", {
+      p_invoice_id: invoice_id,
+      p_pdf_url: nubefactResult.enlace_del_pdf || null,
+      p_xml_url: nubefactResult.enlace_del_xml || null,
+      p_cdr_url: nubefactResult.enlace_del_cdr || null,
+      p_declared: nubefactResult.aceptada_por_sunat ?? false,
+    });
 
     return new Response(JSON.stringify(nubefactResult), {
       status: 200,
