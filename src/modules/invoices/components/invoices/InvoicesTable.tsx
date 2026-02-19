@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -14,6 +15,7 @@ interface TableInvoicesProps {
 }
 
 export default function InvoicesTable({ invoice }: TableInvoicesProps) {
+  const navigate = useNavigate();
   return (
     <Table>
       <TableHeader>
@@ -44,7 +46,7 @@ export default function InvoicesTable({ invoice }: TableInvoicesProps) {
               <Button
                 variant="ghost"
                 size="sm"
-              
+                onClick={() => navigate(`/invoices/edit/${item.ID}`)}
               >
                 <Edit className="w-4 h-4" />
               </Button>

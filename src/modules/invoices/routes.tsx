@@ -7,6 +7,7 @@ import InvoiceSeriesFormPage from '@/modules/settings/pages/InvoiceSeriesFormPag
 export const invoicesRoutes: RouteObject[] = [
   { path: 'invoices', element: <Invoices /> },
   { path: 'invoices/add', element: <CreateInvoice /> },
+  { path: 'invoices/edit/:invoiceId', element: <CreateInvoice /> },
   { path: 'invoices/series', element: <InvoiceSeriesPage /> },
   { path: 'invoices/series/add', element: <InvoiceSeriesFormPage /> },
   { path: 'invoices/series/edit/:serieId', element: <InvoiceSeriesFormPage /> },
