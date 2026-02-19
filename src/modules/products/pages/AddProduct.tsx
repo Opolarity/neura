@@ -158,7 +158,7 @@ const AddProduct = () => {
                 value={shortDescription}
                 onChange={setShortDescription}
                 placeholder="Descripción breve del producto"
-                height="120px"
+                height="200px"
                 toolbar="basic"
               />
 
