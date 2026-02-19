@@ -2476,6 +2476,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sale_type_warehouses: {
+        Row: {
+          id: number
+          sale_type_id: number
+          warehouse_id: number
+        }
+        Insert: {
+          id?: number
+          sale_type_id: number
+          warehouse_id: number
+        }
+        Update: {
+          id?: number
+          sale_type_id?: number
+          warehouse_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_type_warehouses_sale_type_id_fkey"
+            columns: ["sale_type_id"]
+            isOneToOne: false
+            referencedRelation: "sale_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_type_warehouses_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sale_types: {
         Row: {
           business_acount_id: number | null
