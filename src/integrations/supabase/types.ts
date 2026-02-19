@@ -3994,6 +3994,7 @@ export type Database = {
       sp_ec_get_product_list: {
         Args: {
           p_category_id?: number
+          p_page?: number
           p_sale_price?: boolean
           p_search?: string
           p_size?: number
