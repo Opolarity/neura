@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Store } from "lucide-react";
+import { AlertTriangle, Loader2, Store } from "lucide-react";
 import type { OpenPOSSessionRequest, POSSaleType } from "../../types/POS.types";
 import { getPosSaleTypesByBranch } from "@/shared/services/service";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +41,7 @@ export default function POSSessionModal({
   const [saleTypes, setSaleTypes] = useState<POSSaleType[]>([]);
   const [loadingSaleTypes, setLoadingSaleTypes] = useState(true);
   const [linkedCashRegisterName, setLinkedCashRegisterName] = useState<string>("");
+  const [expectedAmount, setExpectedAmount] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -51,7 +52,6 @@ export default function POSSessionModal({
   const loadSaleTypes = async () => {
     try {
       setLoadingSaleTypes(true);
-      // Get user's branch from profile
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -68,7 +68,7 @@ export default function POSSessionModal({
 
       if (data.length === 1) {
         setSelectedSaleTypeId(String(data[0].id));
-        loadCashRegisterName(data[0].businessAccountId);
+        loadCashRegisterData(data[0].businessAccountId);
       }
     } catch (error) {
       console.error("Error loading POS sale types:", error);
@@ -77,30 +77,43 @@ export default function POSSessionModal({
     }
   };
 
-  const loadCashRegisterName = async (businessAccountId: number | null) => {
+  const loadCashRegisterData = async (businessAccountId: number | null) => {
     if (!businessAccountId) {
       setLinkedCashRegisterName("");
+      setExpectedAmount(null);
       return;
     }
     const { data } = await supabase
       .from("business_accounts")
-      .select("name")
+      .select("name, total_amount")
       .eq("id", businessAccountId)
       .single();
     setLinkedCashRegisterName(data?.name || "");
+    setExpectedAmount(data?.total_amount ?? 0);
   };
 
   const handleSaleTypeChange = (value: string) => {
     setSelectedSaleTypeId(value);
+    setOpeningAmount("");
     const selected = saleTypes.find((st) => String(st.id) === value);
     if (selected) {
-      loadCashRegisterName(selected.businessAccountId);
+      loadCashRegisterData(selected.businessAccountId);
     } else {
       setLinkedCashRegisterName("");
+      setExpectedAmount(null);
     }
   };
 
   const selectedSaleType = saleTypes.find((st) => String(st.id) === selectedSaleTypeId);
+
+  const openingDifference = useMemo(() => {
+    if (expectedAmount === null || openingAmount === "") return null;
+    const amount = parseFloat(openingAmount);
+    if (isNaN(amount)) return null;
+    return amount - expectedAmount;
+  }, [openingAmount, expectedAmount]);
+
+  const hasDifference = openingDifference !== null && openingDifference !== 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +141,8 @@ export default function POSSessionModal({
 
   const isAmountValid = openingAmount !== "" && !isNaN(parseFloat(openingAmount)) && parseFloat(openingAmount) >= 0;
   const isFormValid = selectedSaleTypeId && selectedSaleType?.businessAccountId && isAmountValid && !loadingSaleTypes;
+
+  const formatCurrency = (value: number) => `S/ ${value.toFixed(2)}`;
 
   return (
     <Dialog open={isOpen}>
@@ -184,7 +199,7 @@ export default function POSSessionModal({
             )}
           </div>
 
-          {/* Caja vinculada - read-only, shown after selecting channel */}
+          {/* Caja vinculada - read-only */}
           {selectedSaleTypeId && (
             <div className="space-y-2">
               <Label htmlFor="cashRegister">Caja *</Label>
@@ -195,6 +210,11 @@ export default function POSSessionModal({
                 disabled
                 className="bg-muted"
               />
+              {expectedAmount !== null && (
+                <p className="text-xs text-muted-foreground">
+                  Saldo registrado: {formatCurrency(expectedAmount)}
+                </p>
+              )}
             </div>
           )}
 
@@ -216,9 +236,29 @@ export default function POSSessionModal({
                 required
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Ingrese el dinero en efectivo con el que inicia la caja
-            </p>
+
+            {/* Difference warning */}
+            {hasDifference && (
+              <div className="flex items-start gap-2 p-2 rounded-md bg-destructive/10 border border-destructive/20">
+                <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+                <div className="text-xs text-destructive">
+                  <p className="font-medium">Diferencia detectada</p>
+                  <p>
+                    Monto esperado: {formatCurrency(expectedAmount!)} — Diferencia:{" "}
+                    <span className="font-semibold">
+                      {openingDifference! > 0 ? "+" : ""}
+                      {formatCurrency(openingDifference!)}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {!hasDifference && openingAmount !== "" && expectedAmount !== null && (
+              <p className="text-xs text-muted-foreground">
+                Monto coincide con el saldo registrado ✓
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

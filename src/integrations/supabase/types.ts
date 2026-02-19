@@ -4357,9 +4357,9 @@ export type Database = {
       sp_open_pos_session: {
         Args: {
           p_branch_id: number
-          p_business_account_id?: number
+          p_business_account_id: number
           p_notes?: string
-          p_opening_amount?: number
+          p_opening_amount: number
           p_user_id: string
           p_warehouse_id: number
         }
