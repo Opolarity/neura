@@ -16,7 +16,7 @@ interface TableInvoicesProps {
   loading: boolean;
 }
 
-export default function InvoicesTable({ invoices, loading }: TableInvoicesProps) {
+export default function InvoicesTable({ invoices = [], loading }: TableInvoicesProps) {
   const navigate = useNavigate();
 
   if (loading) {
