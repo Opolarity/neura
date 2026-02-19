@@ -4194,9 +4194,9 @@ export type Database = {
       }
       sp_get_return_order_and_return: {
         Args: {
-          p_order?: boolean
+          p_order: boolean
           p_page?: number
-          p_return?: boolean
+          p_return: boolean
           p_search?: string
           p_size?: number
         }
@@ -4344,7 +4344,6 @@ export type Database = {
         Args: {
           p_account_number: number
           p_bank: string
-          p_branch_id: number
           p_business_account_type_id: number
           p_id: number
           p_name: string
