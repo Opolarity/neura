@@ -5,13 +5,11 @@ import { useToast } from "@/hooks/use-toast";
 import type { InvoiceSerieForm } from "./useInvoiceSeries";
 import { emptyForm } from "./useInvoiceSeries";
 
-export interface PaymentMethodSaleType {
+export interface SaleChannel {
   id: number;
-  payment_method_id: number;
-  sale_type_id: number;
-  tax_serie_id: number | null;
-  payment_method_name: string;
-  sale_type_name: string;
+  name: string;
+  code: string;
+  linked: boolean;
 }
 
 export const useInvoiceSeriesForm = () => {
@@ -23,8 +21,8 @@ export const useInvoiceSeriesForm = () => {
   const [form, setForm] = useState<InvoiceSerieForm>(emptyForm);
   const [accounts, setAccounts] = useState<{ id: number; name: string }[]>([]);
   const [providers, setProviders] = useState<{ id: number; url: string; branch_id: number; description: string | null }[]>([]);
-  const [availableLinks, setAvailableLinks] = useState<PaymentMethodSaleType[]>([]);
-  const [selectedLinkIds, setSelectedLinkIds] = useState<Set<number>>(new Set());
+  const [saleChannels, setSaleChannels] = useState<SaleChannel[]>([]);
+  const [selectedChannelIds, setSelectedChannelIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -37,39 +35,40 @@ export const useInvoiceSeriesForm = () => {
     if (provRes.data) setProviders(provRes.data);
   }, []);
 
-  const fetchPaymentMethodLinks = useCallback(async () => {
-    let query = supabase
-      .from("payment_method_sale_type")
-      .select("id, payment_method_id, sale_type_id, tax_serie_id, payment_methods!inner(name, is_active), types:sale_type_id(name)")
-      .eq("payment_methods.is_active", true)
+  const fetchSaleChannels = useCallback(async () => {
+    const { data: channels } = await supabase
+      .from("types")
+      .select("id, name, code, modules!inner(code)")
+      .eq("modules.code", "ORD")
       .order("id");
 
-    if (isEditing) {
-      query = query.or(`tax_serie_id.is.null,tax_serie_id.eq.${serieId}`);
-    } else {
-      query = query.is("tax_serie_id", null);
-    }
+    if (!channels) return;
 
-    const { data } = await query;
-    if (data) {
-      const mapped: PaymentMethodSaleType[] = data.map((item: any) => ({
-        id: item.id,
-        payment_method_id: item.payment_method_id,
-        sale_type_id: item.sale_type_id,
-        tax_serie_id: item.tax_serie_id,
-        payment_method_name: item.payment_methods?.name || `Método #${item.payment_method_id}`,
-        sale_type_name: item.types?.name || `Canal #${item.sale_type_id}`,
-      }));
-      setAvailableLinks(mapped);
+    const { data: existing } = await supabase
+      .from("sale_type_invoice_series")
+      .select("id, sale_type_id, tax_serie_id");
 
-      // Pre-select the ones already linked to this serie
-      if (isEditing) {
-        const linked = new Set(
-          mapped.filter((m) => m.tax_serie_id === parseInt(serieId!)).map((m) => m.id)
-        );
-        setSelectedLinkIds(linked);
+    const existingMap = new Map(
+      (existing || []).map((e: any) => [e.sale_type_id, e])
+    );
+
+    const mapped: SaleChannel[] = [];
+    const preSelected = new Set<number>();
+
+    for (const ch of channels as any[]) {
+      const record = existingMap.get(ch.id);
+      if (record) {
+        if (isEditing && record.tax_serie_id === parseInt(serieId!)) {
+          mapped.push({ id: ch.id, name: ch.name, code: ch.code, linked: true });
+          preSelected.add(ch.id);
+        }
+      } else {
+        mapped.push({ id: ch.id, name: ch.name, code: ch.code, linked: false });
       }
     }
+
+    setSaleChannels(mapped);
+    setSelectedChannelIds(preSelected);
   }, [isEditing, serieId]);
 
   const fetchSerie = useCallback(async () => {
@@ -108,16 +107,16 @@ export const useInvoiceSeriesForm = () => {
 
   useEffect(() => {
     fetchDropdowns();
-    fetchPaymentMethodLinks();
+    fetchSaleChannels();
     if (isEditing) fetchSerie();
-  }, [fetchDropdowns, fetchPaymentMethodLinks, fetchSerie, isEditing]);
+  }, [fetchDropdowns, fetchSaleChannels, fetchSerie, isEditing]);
 
   const updateField = (field: keyof InvoiceSerieForm, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const toggleLink = (id: number) => {
-    setSelectedLinkIds((prev) => {
+  const toggleChannel = (id: number) => {
+    setSelectedChannelIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -125,27 +124,24 @@ export const useInvoiceSeriesForm = () => {
     });
   };
 
-  const saveLinks = async (newSerieId: number) => {
-    // Unlink: records that were linked but now are not selected
-    const toUnlink = availableLinks
-      .filter((l) => l.tax_serie_id === newSerieId && !selectedLinkIds.has(l.id))
-      .map((l) => l.id);
+  const saveSaleChannelLinks = async (newSerieId: number) => {
+    // Delete existing links for this serie
+    await supabase
+      .from("sale_type_invoice_series")
+      .delete()
+      .eq("tax_serie_id", newSerieId);
 
-    // Link: records that are selected
-    const toLink = Array.from(selectedLinkIds);
+    // Insert selected channels
+    const toInsert = Array.from(selectedChannelIds).map((saleTypeId) => ({
+      sale_type_id: saleTypeId,
+      tax_serie_id: newSerieId,
+    }));
 
-    if (toUnlink.length > 0) {
-      await supabase
-        .from("payment_method_sale_type")
-        .update({ tax_serie_id: null } as any)
-        .in("id", toUnlink);
-    }
-
-    if (toLink.length > 0) {
-      await supabase
-        .from("payment_method_sale_type")
-        .update({ tax_serie_id: newSerieId } as any)
-        .in("id", toLink);
+    if (toInsert.length > 0) {
+      const { error } = await supabase
+        .from("sale_type_invoice_series")
+        .insert(toInsert);
+      if (error) throw error;
     }
   };
 
@@ -189,7 +185,7 @@ export const useInvoiceSeriesForm = () => {
         toast({ title: "Serie creada correctamente" });
       }
 
-      await saveLinks(savedSerieId);
+      await saveSaleChannelLinks(savedSerieId);
 
       navigate("/invoices/series");
     } catch (err: any) {
@@ -203,13 +199,13 @@ export const useInvoiceSeriesForm = () => {
     form,
     accounts,
     providers,
-    availableLinks,
-    selectedLinkIds,
+    saleChannels,
+    selectedChannelIds,
     loading,
     saving,
     isEditing,
     updateField,
-    toggleLink,
+    toggleChannel,
     saveSerie,
   };
 };
