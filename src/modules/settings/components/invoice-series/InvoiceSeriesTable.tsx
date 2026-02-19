@@ -34,24 +34,17 @@ const InvoiceSeriesTable = ({ loading, series }: InvoiceSeriesTableProps) => {
         <TableRow>
           <TableHead>ID</TableHead>
           <TableHead>Cuenta</TableHead>
-          <TableHead>FAC</TableHead>
-          <TableHead>BOL</TableHead>
-          <TableHead>NCF</TableHead>
-          <TableHead>NCB</TableHead>
-          <TableHead>NDF</TableHead>
-          <TableHead>NDB</TableHead>
-          <TableHead>GRR</TableHead>
-          <TableHead>GRT</TableHead>
+          <TableHead>Tipo de Comprobante</TableHead>
+          <TableHead>Serie</TableHead>
           <TableHead>Siguiente #</TableHead>
           <TableHead>Estado</TableHead>
-          <TableHead>Por defecto</TableHead>
           <TableHead className="w-[60px]"></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {series.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
               No hay series registradas
             </TableCell>
           </TableRow>
@@ -60,22 +53,13 @@ const InvoiceSeriesTable = ({ loading, series }: InvoiceSeriesTableProps) => {
             <TableRow key={item.id}>
               <TableCell>{item.id}</TableCell>
               <TableCell>{item.account_name}</TableCell>
-              <TableCell>{item.fac_serie}</TableCell>
-              <TableCell>{item.bol_serie}</TableCell>
-              <TableCell>{item.ncf_serie}</TableCell>
-              <TableCell>{item.ncb_serie}</TableCell>
-              <TableCell>{item.ndf_serie}</TableCell>
-              <TableCell>{item.ndb_serie}</TableCell>
-              <TableCell>{item.grr_serie}</TableCell>
-              <TableCell>{item.grt_serie}</TableCell>
+              <TableCell>{item.invoice_type_name}</TableCell>
+              <TableCell>{item.serie || "-"}</TableCell>
               <TableCell>{item.next_number}</TableCell>
               <TableCell>
                 <Badge variant={item.is_active ? "default" : "secondary"}>
                   {item.is_active ? "Activo" : "Inactivo"}
                 </Badge>
-              </TableCell>
-              <TableCell>
-                {item.default && <Badge variant="outline">Sí</Badge>}
               </TableCell>
               <TableCell>
                 <Button

@@ -101,12 +101,12 @@ export const useCreateInvoice = () => {
       }
       const { data } = await supabase
         .from("invoice_series")
-        .select("id, fac_serie, bol_serie, ncf_serie, ncb_serie, ndb_serie, ndf_serie, grr_serie, grt_serie, next_number")
+        .select("id, invoice_type_id, serie, next_number, invoice_provider_id")
         .eq("invoice_provider_id", parseInt(formData.invoiceProviderId))
         .eq("is_active", true)
         .order("id");
       if (data) {
-        setInvoiceSeries(data);
+        setInvoiceSeries(data as any);
       }
     };
     loadSeries();
@@ -140,8 +140,8 @@ export const useCreateInvoice = () => {
           
           const { data: serieRows } = await supabase
             .from("invoice_series")
-            .select("id, invoice_provider_id, fac_serie, bol_serie, ncf_serie, ncb_serie, ndb_serie, ndf_serie, grr_serie, grt_serie, next_number")
-            .or(`fac_serie.eq.${seriePrefix},bol_serie.eq.${seriePrefix},fac_serie.eq.${invoice.tax_serie},bol_serie.eq.${invoice.tax_serie},ncf_serie.eq.${seriePrefix},ncb_serie.eq.${seriePrefix},ndf_serie.eq.${seriePrefix},ndb_serie.eq.${seriePrefix},grr_serie.eq.${seriePrefix},grt_serie.eq.${seriePrefix}`)
+            .select("id, invoice_provider_id, invoice_type_id, serie, next_number")
+            .eq("serie", seriePrefix)
             .limit(1);
 
           if (serieRows && serieRows.length > 0) {

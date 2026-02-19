@@ -157,7 +157,7 @@ const CreateInvoice = () => {
                 handleFormChange("invoiceSerieId", v);
                 const serie = invoiceSeries.find((s) => s.id.toString() === v);
                 if (serie) {
-                  handleFormChange("taxSerie", `${serie.fac_serie}`);
+                  handleFormChange("taxSerie", serie.serie || "");
                 }
               }}
               disabled={!formData.invoiceProviderId}
@@ -168,7 +168,7 @@ const CreateInvoice = () => {
               <SelectContent>
                 {invoiceSeries.map((s) => (
                   <SelectItem key={s.id} value={s.id.toString()}>
-                    FAC: {s.fac_serie} | BOL: {s.bol_serie} (#{s.next_number})
+                    {s.serie || "-"} (#{s.next_number})
                   </SelectItem>
                 ))}
               </SelectContent>
