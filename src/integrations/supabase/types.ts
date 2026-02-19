@@ -4051,6 +4051,7 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_invoice_for_emit: { Args: { p_invoice_id: number }; Returns: Json }
       sp_get_invoices: {
         Args: {
           p_declared?: boolean
@@ -4273,6 +4274,16 @@ export type Database = {
           p_total_amount: number
         }
         Returns: Json
+      }
+      sp_update_invoice_sunat_response: {
+        Args: {
+          p_cdr_url?: string
+          p_declared?: boolean
+          p_invoice_id: number
+          p_pdf_url?: string
+          p_xml_url?: string
+        }
+        Returns: undefined
       }
       sp_update_order_chanel_type: {
         Args: {
