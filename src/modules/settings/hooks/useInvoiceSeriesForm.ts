@@ -40,9 +40,8 @@ export const useInvoiceSeriesForm = () => {
   const fetchPaymentMethodLinks = useCallback(async () => {
     let query = supabase
       .from("payment_method_sale_type")
-      .select("id, payment_method_id, sale_type_id, tax_serie_id, payment_methods!inner(name, is_active), types:sale_type_id!inner(name, is_active)")
+      .select("id, payment_method_id, sale_type_id, tax_serie_id, payment_methods!inner(name, is_active), types:sale_type_id(name)")
       .eq("payment_methods.is_active", true)
-      .eq("types.is_active", true)
       .order("id");
 
     if (isEditing) {
