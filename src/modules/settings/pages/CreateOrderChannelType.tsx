@@ -64,68 +64,70 @@ const CreateOrderChannelType = () => {
                                 <CardTitle>Información General</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Nombre</Label>
-                                    <Input
-                                        id="name"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        placeholder="Ej: Tienda Web"
-                                        required
-                                    />
-                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="name">Nombre</Label>
+                                        <Input
+                                            id="name"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            placeholder="Ej: Tienda Web"
+                                            required
+                                        />
+                                    </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="code">Código</Label>
-                                    <Input
-                                        id="code"
-                                        value={formData.code}
-                                        onChange={handleChange}
-                                        placeholder="Ej: WEB"
-                                        required
-                                    />
-                                </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="code">Código</Label>
+                                        <Input
+                                            id="code"
+                                            value={formData.code}
+                                            onChange={handleChange}
+                                            placeholder="Ej: WEB"
+                                            required
+                                        />
+                                    </div>
 
-                                <div className="space-y-2">
-                                    <Label>Serie de Factura</Label>
-                                    <Select
-                                        value={formData.factura_serie_id ? String(formData.factura_serie_id) : ''}
-                                        onValueChange={(val) => setFormData(prev => ({ ...prev, factura_serie_id: Number(val) }))}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccionar serie de factura" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {invoiceSeries
-                                                .filter((s: any) => s.type_code === '1')
-                                                .map((s) => (
-                                                    <SelectItem key={s.id} value={String(s.id)}>
-                                                        {s.serie || "-"} (ID: {s.id})
-                                                    </SelectItem>
-                                                ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                    <div className="space-y-2">
+                                        <Label>Serie de Factura</Label>
+                                        <Select
+                                            value={formData.factura_serie_id ? String(formData.factura_serie_id) : ''}
+                                            onValueChange={(val) => setFormData(prev => ({ ...prev, factura_serie_id: Number(val) }))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Seleccionar serie de factura" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {invoiceSeries
+                                                    .filter((s: any) => s.type_code === '1')
+                                                    .map((s) => (
+                                                        <SelectItem key={s.id} value={String(s.id)}>
+                                                            {s.serie || "-"} (ID: {s.id})
+                                                        </SelectItem>
+                                                    ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
 
-                                <div className="space-y-2">
-                                    <Label>Serie de Boleta</Label>
-                                    <Select
-                                        value={formData.boleta_serie_id ? String(formData.boleta_serie_id) : ''}
-                                        onValueChange={(val) => setFormData(prev => ({ ...prev, boleta_serie_id: Number(val) }))}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccionar serie de boleta" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {invoiceSeries
-                                                .filter((s: any) => s.type_code === '2')
-                                                .map((s) => (
-                                                    <SelectItem key={s.id} value={String(s.id)}>
-                                                        {s.serie || "-"} (ID: {s.id})
-                                                    </SelectItem>
-                                                ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="space-y-2">
+                                        <Label>Serie de Boleta</Label>
+                                        <Select
+                                            value={formData.boleta_serie_id ? String(formData.boleta_serie_id) : ''}
+                                            onValueChange={(val) => setFormData(prev => ({ ...prev, boleta_serie_id: Number(val) }))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Seleccionar serie de boleta" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {invoiceSeries
+                                                    .filter((s: any) => s.type_code === '2')
+                                                    .map((s) => (
+                                                        <SelectItem key={s.id} value={String(s.id)}>
+                                                            {s.serie || "-"} (ID: {s.id})
+                                                        </SelectItem>
+                                                    ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center gap-3">
