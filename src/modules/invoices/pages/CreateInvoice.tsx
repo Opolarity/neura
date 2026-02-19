@@ -35,6 +35,8 @@ const CreateInvoice = () => {
     searchingClient,
     invoiceTypes,
     documentTypes,
+    invoiceProviders,
+    invoiceSeries,
     totalAmount,
     handleFormChange,
     addItem,
@@ -87,14 +89,51 @@ const CreateInvoice = () => {
             </Select>
           </div>
 
-          {/* Serie Tributaria */}
+          {/* Invoice Provider */}
           <div className="space-y-2">
-            <Label>Serie Tributaria</Label>
-            <Input
-              placeholder="Ej: F003-233"
-              value={formData.taxSerie}
-              onChange={(e) => handleFormChange("taxSerie", e.target.value)}
-            />
+            <Label>Proveedor de Facturación *</Label>
+            <Select
+              value={formData.invoiceProviderId}
+              onValueChange={(v) => handleFormChange("invoiceProviderId", v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar proveedor" />
+              </SelectTrigger>
+              <SelectContent>
+                {invoiceProviders.map((p) => (
+                  <SelectItem key={p.id} value={p.id.toString()}>
+                    {p.description || `Proveedor ${p.id}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Invoice Serie */}
+          <div className="space-y-2">
+            <Label>Serie *</Label>
+            <Select
+              value={formData.invoiceSerieId}
+              onValueChange={(v) => {
+                handleFormChange("invoiceSerieId", v);
+                const serie = invoiceSeries.find((s) => s.id.toString() === v);
+                if (serie) {
+                  handleFormChange("taxSerie", `${serie.fac_serie}`);
+                }
+              }}
+              disabled={!formData.invoiceProviderId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={formData.invoiceProviderId ? "Seleccionar serie" : "Seleccione proveedor primero"} />
+              </SelectTrigger>
+              <SelectContent>
+                {invoiceSeries.map((s) => (
+                  <SelectItem key={s.id} value={s.id.toString()}>
+                    FAC: {s.fac_serie} | BOL: {s.bol_serie} (#{s.next_number})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Document Type */}
