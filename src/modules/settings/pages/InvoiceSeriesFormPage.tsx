@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useInvoiceSeriesForm } from "../hooks/useInvoiceSeriesForm";
@@ -20,10 +21,13 @@ const InvoiceSeriesFormPage = () => {
     form,
     accounts,
     providers,
+    availableLinks,
+    selectedLinkIds,
     loading,
     saving,
     isEditing,
     updateField,
+    toggleLink,
     saveSerie,
   } = useInvoiceSeriesForm();
 
@@ -62,12 +66,12 @@ const InvoiceSeriesFormPage = () => {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Datos de la Serie</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Datos de la Serie</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Cuenta</Label>
@@ -211,23 +215,59 @@ const InvoiceSeriesFormPage = () => {
                 <Label>Por defecto</Label>
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate("/invoices/series")}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {isEditing ? "Actualizar" : "Crear"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Canales de Venta - Métodos de Pago</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {availableLinks.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No hay combinaciones disponibles para vincular
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {availableLinks.map((link) => (
+                  <div
+                    key={link.id}
+                    className="flex items-center gap-3 p-3 rounded-md border border-border hover:bg-muted/50 transition-colors"
+                  >
+                    <Checkbox
+                      id={`link-${link.id}`}
+                      checked={selectedLinkIds.has(link.id)}
+                      onCheckedChange={() => toggleLink(link.id)}
+                    />
+                    <label
+                      htmlFor={`link-${link.id}`}
+                      className="flex-1 cursor-pointer text-sm"
+                    >
+                      <span className="font-medium">{link.sale_type_name}</span>
+                      <span className="text-muted-foreground"> — </span>
+                      <span>{link.payment_method_name}</span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/invoices/series")}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={saving}>
+            {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {isEditing ? "Actualizar" : "Crear"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };
