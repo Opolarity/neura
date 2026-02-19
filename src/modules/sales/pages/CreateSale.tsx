@@ -112,6 +112,7 @@ const CreateSale = () => {
     isPhySituation,
     isComSituation,
     filteredSituations,
+    filteredPaymentMethods,
     isAnonymousPurchase,
     // Server-side pagination
     productPage,
@@ -1147,7 +1148,7 @@ const CreateSale = () => {
                   {payments
                     .filter((p) => p.paymentMethodId)
                     .map((p) => {
-                      const method = salesData?.paymentMethods.find(
+                      const method = filteredPaymentMethods.find(
                         (pm) => pm.id.toString() === p.paymentMethodId,
                       );
                       return (
@@ -1212,7 +1213,7 @@ const CreateSale = () => {
                         <SelectValue placeholder="Seleccione" />
                       </SelectTrigger>
                       <SelectContent>
-                        {salesData?.paymentMethods.map((pm) => (
+                        {filteredPaymentMethods.map((pm) => (
                           <SelectItem key={pm.id} value={pm.id.toString()}>
                             {pm.name}
                           </SelectItem>

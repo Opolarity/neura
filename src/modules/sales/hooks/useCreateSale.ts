@@ -343,6 +343,20 @@ export const useCreateSale = () => {
     );
   }, [orderSituation, salesData?.situations]);
 
+  // Computed: Filter payment methods based on selected sale type
+  const filteredPaymentMethods = useMemo(() => {
+    if (!salesData?.paymentMethods) return [];
+    if (!formData.saleType) return salesData.paymentMethods;
+
+    const linkedPmIds = salesData.paymentMethodSaleTypes
+      .filter((pmst) => pmst.saleTypeId.toString() === formData.saleType)
+      .map((pmst) => pmst.paymentMethodId);
+
+    if (linkedPmIds.length === 0) return [];
+
+    return salesData.paymentMethods.filter((pm) => linkedPmIds.includes(pm.id));
+  }, [formData.saleType, salesData?.paymentMethods, salesData?.paymentMethodSaleTypes]);
+
   // Load form data from API
   const loadFormData = async () => {
     try {
@@ -532,9 +546,9 @@ export const useCreateSale = () => {
   // Handle form input changes
   const handleInputChange = useCallback(
     (field: keyof SaleFormData, value: string | boolean) => {
-      // Debug: Log when saleType changes
+      // When saleType changes, reset current payment method selection
       if (field === "saleType") {
-        console.log("[CreateSale] handleInputChange saleType:", value);
+        setCurrentPayment(createEmptyPayment());
       }
       
       // When document type changes to persona jurídica, clear lastname fields
@@ -1213,6 +1227,7 @@ export const useCreateSale = () => {
     isPhySituation,
     isComSituation,
     filteredSituations,
+    filteredPaymentMethods,
     isAnonymousPurchase,
 
     // Actions
