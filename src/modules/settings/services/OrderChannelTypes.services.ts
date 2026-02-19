@@ -27,10 +27,12 @@ export const GetOrderChannelTypes = async (
 export const GetOrderChannelTypeDetails = async (id: number): Promise<{
     saleType: OrderChannelType;
     paymentMethodIds: number[];
+    warehouseIds: number[];
 }> => {
-    const [saleTypeRes, paymentMethodsRes] = await Promise.all([
+    const [saleTypeRes, paymentMethodsRes, warehousesRes] = await Promise.all([
         supabase.from("sale_types").select("*").eq("id", id).single(),
         supabase.from("payment_method_sale_type").select("payment_method_id").eq("sale_type_id", id),
+        supabase.from("sale_type_warehouses").select("warehouse_id").eq("sale_type_id", id),
     ]);
 
     if (saleTypeRes.error) throw saleTypeRes.error;
@@ -38,6 +40,7 @@ export const GetOrderChannelTypeDetails = async (id: number): Promise<{
     return {
         saleType: saleTypeRes.data as OrderChannelType,
         paymentMethodIds: (paymentMethodsRes.data ?? []).map((r: any) => r.payment_method_id),
+        warehouseIds: (warehousesRes.data ?? []).map((r: any) => r.warehouse_id),
     };
 };
 
@@ -65,6 +68,16 @@ export const CreateSaleType = async (payload: CreateOrderChannelPayload): Promis
         }));
         const { error: linkError } = await supabase.from("payment_method_sale_type").insert(links);
         if (linkError) console.error("Error linking payment methods:", linkError);
+    }
+
+    // Save warehouses
+    if (payload.warehouses && payload.warehouses.length > 0) {
+        const links = payload.warehouses.map(wId => ({
+            sale_type_id: data.id,
+            warehouse_id: wId,
+        }));
+        const { error: linkError } = await supabase.from("sale_type_warehouses").insert(links);
+        if (linkError) console.error("Error linking warehouses:", linkError);
     }
 
     return data as OrderChannelType;
@@ -98,6 +111,17 @@ export const UpdateSaleType = async (payload: UpdateOrderChannelPayload): Promis
         if (linkError) console.error("Error linking payment methods:", linkError);
     }
 
+    // Re-sync warehouses
+    await supabase.from("sale_type_warehouses").delete().eq("sale_type_id", payload.id);
+    if (payload.warehouses && payload.warehouses.length > 0) {
+        const links = payload.warehouses.map(wId => ({
+            sale_type_id: payload.id,
+            warehouse_id: wId,
+        }));
+        const { error: linkError } = await supabase.from("sale_type_warehouses").insert(links);
+        if (linkError) console.error("Error linking warehouses:", linkError);
+    }
+
     return data as OrderChannelType;
 };
 
@@ -110,4 +134,31 @@ export const GetInvoiceSeries = async (): Promise<{ id: number; fac_serie: strin
 
     if (error) throw error;
     return data ?? [];
+};
+
+export const GetWarehouses = async (): Promise<{ id: number; name: string }[]> => {
+    const { data, error } = await supabase
+        .from("warehouses")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+
+    if (error) throw error;
+    return data ?? [];
+};
+
+export const GetCajas = async (): Promise<{ id: number; name: string }[]> => {
+    // Business accounts where type code = 'CHR' (cajas)
+    const { data, error } = await supabase
+        .from("business_accounts")
+        .select("id, name, types:business_account_type_id(code)")
+        .eq("is_active", true)
+        .order("name");
+
+    if (error) throw error;
+
+    // Filter by type code CHR
+    return (data ?? [])
+        .filter((ba: any) => ba.types?.code === 'CHR')
+        .map((ba: any) => ({ id: ba.id, name: ba.name }));
 };

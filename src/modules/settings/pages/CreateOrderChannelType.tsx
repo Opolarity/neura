@@ -17,9 +17,15 @@ const CreateOrderChannelType = () => {
         paymentMethods,
         selectedPaymentMethods,
         invoiceSeries,
+        warehouses,
+        selectedWarehouses,
+        cajas,
         isEdit,
         handleChange,
         togglePaymentMethod,
+        toggleWarehouse,
+        setSelectedWarehouseSingle,
+        handlePosToggle,
         handleSubmit,
         setFormData,
     } = useCreateOrderChannelType();
@@ -81,7 +87,7 @@ const CreateOrderChannelType = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label>Serie de Comprobante</Label>
+                                    <Label>Número de serie</Label>
                                     <Select
                                         value={formData.tax_serie_id ? String(formData.tax_serie_id) : ''}
                                         onValueChange={(val) => setFormData(prev => ({ ...prev, tax_serie_id: Number(val) }))}
@@ -103,18 +109,74 @@ const CreateOrderChannelType = () => {
                                     <Switch
                                         id="pos_sale_type"
                                         checked={formData.pos_sale_type}
-                                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, pos_sale_type: checked }))}
+                                        onCheckedChange={handlePosToggle}
                                     />
                                     <Label htmlFor="pos_sale_type">Canal de Punto de Venta (POS)</Label>
                                 </div>
 
-                                <div className="flex items-center gap-3">
-                                    <Switch
-                                        id="is_active"
-                                        checked={formData.is_active}
-                                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
-                                    />
-                                    <Label htmlFor="is_active">Activo</Label>
+                                {/* Caja vinculada - only when POS is active */}
+                                {formData.pos_sale_type && (
+                                    <div className="space-y-2">
+                                        <Label>Caja vinculada</Label>
+                                        <Select
+                                            value={formData.business_acount_id ? String(formData.business_acount_id) : ''}
+                                            onValueChange={(val) => setFormData(prev => ({ ...prev, business_acount_id: Number(val) }))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Seleccionar caja" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {cajas.map((caja) => (
+                                                    <SelectItem key={caja.id} value={String(caja.id)}>
+                                                        {caja.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+
+                                {/* Almacenes */}
+                                <div className="space-y-2">
+                                    <Label>Almacenes</Label>
+                                    {formData.pos_sale_type ? (
+                                        // Single select for POS
+                                        <Select
+                                            value={selectedWarehouses.length > 0 ? String(selectedWarehouses[0]) : ''}
+                                            onValueChange={(val) => setSelectedWarehouseSingle(Number(val))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Seleccionar almacén" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {warehouses.map((w) => (
+                                                    <SelectItem key={w.id} value={String(w.id)}>
+                                                        {w.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    ) : (
+                                        // Multi-select for non-POS
+                                        <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                                            {warehouses.length === 0 ? (
+                                                <p className="text-sm text-muted-foreground">No hay almacenes disponibles</p>
+                                            ) : (
+                                                warehouses.map((w) => (
+                                                    <div key={w.id} className="flex items-center gap-2 py-1">
+                                                        <Checkbox
+                                                            id={`wh-${w.id}`}
+                                                            checked={selectedWarehouses.includes(w.id)}
+                                                            onCheckedChange={() => toggleWarehouse(w.id)}
+                                                        />
+                                                        <Label htmlFor={`wh-${w.id}`} className="text-sm cursor-pointer">
+                                                            {w.name}
+                                                        </Label>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -170,6 +232,12 @@ const CreateOrderChannelType = () => {
                                     <p className="text-sm font-medium">Métodos de pago seleccionados:</p>
                                     <p className="text-2xl font-bold text-primary">
                                         {selectedPaymentMethods.size}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium">Almacenes seleccionados:</p>
+                                    <p className="text-2xl font-bold text-primary">
+                                        {selectedWarehouses.length}
                                     </p>
                                 </div>
                             </CardContent>

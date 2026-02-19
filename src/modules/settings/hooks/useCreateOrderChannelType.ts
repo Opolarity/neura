@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { CreateSaleType, GetOrderChannelTypeDetails, UpdateSaleType, GetInvoiceSeries } from '../services/OrderChannelTypes.services';
+import { CreateSaleType, GetOrderChannelTypeDetails, UpdateSaleType, GetInvoiceSeries, GetWarehouses, GetCajas } from '../services/OrderChannelTypes.services';
 import { getPaymentMethodsIsActiveTrueAndActiveTrue } from '@/shared/services/service';
 
 interface FormData {
@@ -26,6 +26,16 @@ interface InvoiceSerieOption {
     invoice_provider_id: number;
 }
 
+export interface WarehouseOption {
+    id: number;
+    name: string;
+}
+
+export interface CajaOption {
+    id: number;
+    name: string;
+}
+
 const useCreateOrderChannelType = () => {
     const navigate = useNavigate();
     const { id: channelTypeId } = useParams();
@@ -37,6 +47,9 @@ const useCreateOrderChannelType = () => {
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOption[]>([]);
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<Set<number>>(new Set());
     const [invoiceSeries, setInvoiceSeries] = useState<InvoiceSerieOption[]>([]);
+    const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
+    const [selectedWarehouses, setSelectedWarehouses] = useState<number[]>([]);
+    const [cajas, setCajas] = useState<CajaOption[]>([]);
 
     const [formData, setFormData] = useState<FormData>({
         name: '',
@@ -53,6 +66,8 @@ const useCreateOrderChannelType = () => {
                 const promises: Promise<any>[] = [
                     getPaymentMethodsIsActiveTrueAndActiveTrue(),
                     GetInvoiceSeries(),
+                    GetWarehouses(),
+                    GetCajas(),
                 ];
 
                 if (isEdit && channelTypeId) {
@@ -62,12 +77,16 @@ const useCreateOrderChannelType = () => {
                 const results = await Promise.all(promises);
                 const paymentMethodsData = results[0];
                 const invoiceSeriesData = results[1];
+                const warehousesData = results[2];
+                const cajasData = results[3];
 
                 setPaymentMethods(paymentMethodsData);
                 setInvoiceSeries(invoiceSeriesData);
+                setWarehouses(warehousesData);
+                setCajas(cajasData);
 
-                if (isEdit && results[2]) {
-                    const { saleType, paymentMethodIds } = results[2];
+                if (isEdit && results[4]) {
+                    const { saleType, paymentMethodIds, warehouseIds } = results[4];
                     setFormData({
                         name: saleType.name,
                         code: saleType.code ?? '',
@@ -77,6 +96,7 @@ const useCreateOrderChannelType = () => {
                         is_active: saleType.is_active,
                     });
                     setSelectedPaymentMethods(new Set(paymentMethodIds));
+                    setSelectedWarehouses(warehouseIds);
                 }
             } catch (error) {
                 console.error("Error loading options:", error);
@@ -111,6 +131,31 @@ const useCreateOrderChannelType = () => {
         });
     };
 
+    const toggleWarehouse = (id: number) => {
+        setSelectedWarehouses(prev => {
+            if (prev.includes(id)) {
+                return prev.filter(w => w !== id);
+            }
+            return [...prev, id];
+        });
+    };
+
+    const setSelectedWarehouseSingle = (id: number) => {
+        setSelectedWarehouses([id]);
+    };
+
+    const handlePosToggle = (checked: boolean) => {
+        setFormData(prev => ({ ...prev, pos_sale_type: checked }));
+        if (checked && selectedWarehouses.length > 1) {
+            // When switching to POS, keep only the first warehouse
+            setSelectedWarehouses(prev => prev.length > 0 ? [prev[0]] : []);
+        }
+        if (!checked) {
+            // Clear caja when disabling POS
+            setFormData(prev => ({ ...prev, business_acount_id: null }));
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -134,6 +179,7 @@ const useCreateOrderChannelType = () => {
                 pos_sale_type: formData.pos_sale_type,
                 is_active: formData.is_active,
                 paymentMethods: Array.from(selectedPaymentMethods),
+                warehouses: selectedWarehouses,
             };
 
             if (isEdit && channelTypeId) {
@@ -163,9 +209,15 @@ const useCreateOrderChannelType = () => {
         paymentMethods,
         selectedPaymentMethods,
         invoiceSeries,
+        warehouses,
+        selectedWarehouses,
+        cajas,
         isEdit,
         handleChange,
         togglePaymentMethod,
+        toggleWarehouse,
+        setSelectedWarehouseSingle,
+        handlePosToggle,
         handleSubmit,
         setFormData,
     };
