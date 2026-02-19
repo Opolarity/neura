@@ -6,7 +6,7 @@ import { createInvoiceApi } from "../services/Invoices.services";
 import { getTypes } from "@/shared/services/service";
 import { getTypesAdapter } from "@/shared/adapters/adapter";
 import type { Types } from "@/shared/types/type";
-import type { InvoiceItemForm, InvoiceFormData, DocumentType } from "../types/Invoices.types";
+import type { InvoiceItemForm, InvoiceFormData, DocumentType, InvoiceProvider, InvoiceSerie } from "../types/Invoices.types";
 
 const createEmptyItem = (): InvoiceItemForm => ({
   id: crypto.randomUUID(),
@@ -29,6 +29,8 @@ const recalcItem = (item: InvoiceItemForm): InvoiceItemForm => {
 
 const INITIAL_FORM: InvoiceFormData = {
   invoiceTypeId: "",
+  invoiceProviderId: "",
+  invoiceSerieId: "",
   taxSerie: "",
   documentTypeId: "",
   clientDocument: "",
@@ -47,8 +49,10 @@ export const useCreateInvoice = () => {
   const [searchingClient, setSearchingClient] = useState(false);
   const [invoiceTypes, setInvoiceTypes] = useState<Types[]>([]);
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
+  const [invoiceProviders, setInvoiceProviders] = useState<InvoiceProvider[]>([]);
+  const [invoiceSeries, setInvoiceSeries] = useState<InvoiceSerie[]>([]);
 
-  // Load invoice types and document types on mount
+  // Load invoice types, document types, and providers on mount
   useEffect(() => {
     const loadData = async () => {
       const typesResponse = await getTypes("INV");
@@ -68,10 +72,37 @@ export const useCreateInvoice = () => {
           }))
         );
       }
+
+      const { data: providers } = await supabase
+        .from("invoice_providers")
+        .select("id, description")
+        .order("id");
+      if (providers) {
+        setInvoiceProviders(providers);
+      }
     };
     loadData();
   }, []);
 
+  // Load series when provider changes
+  useEffect(() => {
+    const loadSeries = async () => {
+      if (!formData.invoiceProviderId) {
+        setInvoiceSeries([]);
+        return;
+      }
+      const { data } = await supabase
+        .from("invoice_series")
+        .select("id, fac_serie, bol_serie, ncf_serie, ncb_serie, ndb_serie, ndf_serie, grr_serie, grt_serie, next_number")
+        .eq("invoice_provider_id", parseInt(formData.invoiceProviderId))
+        .eq("is_active", true)
+        .order("id");
+      if (data) {
+        setInvoiceSeries(data);
+      }
+    };
+    loadSeries();
+  }, [formData.invoiceProviderId]);
   const totalAmount = useMemo(
     () => +items.reduce((sum, i) => sum + i.total, 0).toFixed(2),
     [items]
@@ -79,7 +110,15 @@ export const useCreateInvoice = () => {
 
   const handleFormChange = useCallback(
     (field: keyof InvoiceFormData, value: string) => {
-      setFormData((prev) => ({ ...prev, [field]: value }));
+      setFormData((prev) => {
+        const updated = { ...prev, [field]: value };
+        // Reset dependent fields
+        if (field === "invoiceProviderId") {
+          updated.invoiceSerieId = "";
+          updated.taxSerie = "";
+        }
+        return updated;
+      });
     },
     []
   );
@@ -218,6 +257,8 @@ export const useCreateInvoice = () => {
     searchingClient,
     invoiceTypes,
     documentTypes,
+    invoiceProviders,
+    invoiceSeries,
     totalAmount,
     handleFormChange,
     addItem,
