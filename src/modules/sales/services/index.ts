@@ -85,6 +85,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
         date: p.date,
         confirmation_code: p.confirmationCode,
         voucher_url: p.voucherUrl,
+        business_account_id: p.businessAccountId || null,
       })),
       initial_situation_id: orderData.initialSituationId,
     },
@@ -143,6 +144,7 @@ export const updateOrder = async (
         date: p.date,
         confirmation_code: p.confirmationCode,
         voucher_url: p.voucherUrl,
+        business_account_id: p.businessAccountId || null,
       })),
     },
   });

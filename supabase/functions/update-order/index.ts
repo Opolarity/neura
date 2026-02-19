@@ -319,18 +319,23 @@ Deno.serve(async (req) => {
       for (let i = 0; i < input.payments.length; i++) {
         const payment = input.payments[i];
 
-        const { data: paymentMethod } = await supabase
-          .from("payment_methods")
-          .select("business_account_id")
-          .eq("id", payment.payment_method_id)
-          .single();
+        // Determine business_account_id: use override from payment if provided, else fallback to payment_method's
+        let resolvedBusinessAccountId = payment.business_account_id;
+        if (!resolvedBusinessAccountId || resolvedBusinessAccountId === 0) {
+          const { data: paymentMethod } = await supabase
+            .from("payment_methods")
+            .select("business_account_id")
+            .eq("id", payment.payment_method_id)
+            .single();
+          resolvedBusinessAccountId = paymentMethod?.business_account_id || 1;
+        }
 
         const { data: movement, error: movError } = await supabase
           .from("movements")
           .insert({
             amount: payment.amount,
             branch_id: profile.branch_id,
-            business_account_id: paymentMethod?.business_account_id || 1,
+            business_account_id: resolvedBusinessAccountId,
             movement_class_id: movementClassId,
             movement_type_id: saleMovementTypeId,
             payment_method_id: payment.payment_method_id,
@@ -356,6 +361,7 @@ Deno.serve(async (req) => {
             gateway_confirmation_code: payment.confirmation_code,
             voucher_url: payment.voucher_url,
             movement_id: movement?.id || 0,
+            business_acount_id: resolvedBusinessAccountId,
           })
           .select("id")
           .single();

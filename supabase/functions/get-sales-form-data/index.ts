@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       supabase.from("states").select("id, name, country_id").order("name"),
       supabase.from("cities").select("id, name, state_id, country_id").order("name"),
       supabase.from("neighborhoods").select("id, name, city_id, state_id, country_id").order("name"),
-      supabase.from("payment_methods").select("id, name").eq("active", true).order("name"),
+      supabase.from("payment_methods").select("id, name, business_account_id").eq("active", true).order("name"),
       supabase.from("payment_method_sale_type").select("payment_method_id, sale_type_id"),
       supabase.from("situations").select("id, name, code, order").eq("module_id", 1).order("order"), // Module 1 = Sales
       supabase.from("types").select("id, name, code").eq("module_id", stkModuleId).order("name"), // Stock types
@@ -126,6 +126,17 @@ Deno.serve(async (req) => {
       })),
     }));
 
+    // Fetch business accounts for manual selection
+    const { data: businessAccountsData, error: baError } = await supabase
+      .from("business_accounts")
+      .select("id, name, bank")
+      .eq("is_active", true)
+      .order("name");
+
+    if (baError) {
+      console.error("Error fetching business accounts:", baError);
+    }
+
     const response = {
       documentTypes: documentTypesRes.data || [],
       saleTypes: saleTypesRes.data || [],
@@ -140,6 +151,7 @@ Deno.serve(async (req) => {
       situations: situationsRes.data || [],
       stockTypes: stockTypesRes.data || [],
       products,
+      businessAccounts: businessAccountsData || [],
     };
 
     return new Response(JSON.stringify(response), {
