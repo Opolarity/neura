@@ -20,7 +20,6 @@ Deno.serve(async (req)=>{
     const states = Number(url.searchParams.get("state")) || null;
     const cities = Number(url.searchParams.get("city")) || null;
     const neighborhoods = Number(url.searchParams.get("neighborhood")) || null;
-    const order = url.searchParams.get("order") || null;
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const authHeader = req.headers.get("Authorization");
@@ -61,8 +60,7 @@ Deno.serve(async (req)=>{
       p_countries: countries,
       p_states: states,
       p_cities: cities,
-      p_neighborhoods: neighborhoods,
-      p_order: order
+      p_neighborhoods: neighborhoods
     });
     if (shippingMethodsError) throw shippingMethodsError;
     return new Response(JSON.stringify({

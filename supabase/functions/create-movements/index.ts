@@ -52,8 +52,8 @@ serve(async (req) => {
 
     const input = await req.json();
 
-    if (!input.amount || input.amount <= 0) {
-      return new Response(JSON.stringify({ error: "El monto debe ser mayor a 0" }), {
+    if (input.amount === undefined || typeof input.amount !== 'number' || input.amount === 0) {
+      return new Response(JSON.stringify({ error: "El monto es inválido o 0" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
@@ -66,29 +66,13 @@ serve(async (req) => {
       });
     }
 
-    if (!input.movement_type_id) {
-      return new Response(JSON.stringify({ error: "Se requiere movement_type_id (INC o GAS)" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-
-    if (!input.movement_class_id) {
-      return new Response(JSON.stringify({ error: "Se requiere movement_class_id" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-
     const { data, error } = await supabase.rpc("sp_create_movement", {
       p_user_id: user.id,                          
       p_branch_id: profile.branch_id,              
       p_amount: input.amount,                      
-      p_movement_date: input.movement_date,        
-      p_description: input.description || null,    
-      p_payment_method_id: input.payment_method_id,
-      p_movement_type_id: input.movement_type_id,  
-      p_movement_class_id: input.movement_class_id 
+      p_movement_date: input.movement_date || new Date().toISOString().split('T')[0],        
+      p_description: input.description || 'Ajuste Manual',    
+      p_payment_method_id: input.payment_method_id 
     });
 
     if (error) {

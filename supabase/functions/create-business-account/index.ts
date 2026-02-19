@@ -34,8 +34,17 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Capturamos los datos
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("branch_id")
+      .eq("UID", user.id)
+      .single();
+    if (profileError || !profile) {
+      return new Response(JSON.stringify({ error: "Perfil de usuario no encontrado" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+}
     const body = await req.json();
     const { 
       name, bank, account_number, total_amount, 
@@ -46,10 +55,12 @@ Deno.serve(async (req) => {
     const { data, error } = await supabase.rpc("sp_create_business_account", {
       p_name: name,
       p_bank: bank,
-      p_account_number: account_number,
-      p_total_amount: total_amount, // Puede ser null
-      p_business_account_type_id: business_account_type_id,
-      p_account_id: account_id
+      p_account_number: account_number, 
+      p_total_amount: Number(total_amount),    
+      p_business_account_type_id: parseInt(business_account_type_id), 
+      p_account_id: parseInt(account_id),  
+      p_user_id: user.id,         
+      p_branch_id: profile.branch_id
     });
 
     if (error) {
