@@ -4,6 +4,7 @@
 // =============================================
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { getPriceListIsActiveTrue } from "@/shared/services/service";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +38,6 @@ import {
   createOrder,
   updateOrder,
   updateOrderSituation,
-  fetchPriceLists,
   fetchSaleProducts,
   uploadPaymentVoucher,
   updatePaymentVoucherUrl,
@@ -432,7 +432,7 @@ export const useCreateSale = () => {
   const loadPriceLists = async () => {
     try {
       setPriceListsLoading(true);
-      const data = await fetchPriceLists();
+      const data = await getPriceListIsActiveTrue();
       setPriceLists(adaptPriceLists(data || []));
     } catch (error) {
       console.error("Error loading price lists:", error);
