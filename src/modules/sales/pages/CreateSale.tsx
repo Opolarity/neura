@@ -1508,7 +1508,7 @@ const CreateSale = () => {
                               onClick={addChangeEntry}
                             >
                               <Plus className="w-4 h-4 mr-0.5" />
-                              Agregar Vuelto
+                              Agregar
                             </Button>
                           </div>
                         </div>
