@@ -48,6 +48,8 @@ export const useCreateInvoice = () => {
   const [formData, setFormData] = useState<InvoiceFormData>(INITIAL_FORM);
   const [items, setItems] = useState<InvoiceItemForm[]>([createEmptyItem()]);
   const [saving, setSaving] = useState(false);
+  const [emitting, setEmitting] = useState(false);
+  const [declared, setDeclared] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchingClient, setSearchingClient] = useState(false);
   const [invoiceTypes, setInvoiceTypes] = useState<Types[]>([]);
@@ -145,6 +147,7 @@ export const useCreateInvoice = () => {
           }
         }
 
+        setDeclared(invoice.declared || false);
         setFormData({
           invoiceTypeId: invoice.invoice_type_id.toString(),
           invoiceProviderId: providerId,
@@ -374,12 +377,42 @@ export const useCreateInvoice = () => {
     }
   }, [formData, items, totalAmount, navigate, toast, isEditing, invoiceId]);
 
+  const handleEmit = useCallback(async () => {
+    if (!invoiceId) return;
+    setEmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("emit-invoice", {
+        method: "POST",
+        body: { invoice_id: parseInt(invoiceId) },
+      });
+
+      if (error) throw error;
+      if (data?.error) {
+        toast({ title: data.error, variant: "destructive" });
+        return;
+      }
+
+      setDeclared(true);
+      toast({
+        title: "Comprobante emitido en SUNAT",
+        description: data?.sunat_description || "Emitido correctamente",
+      });
+    } catch (error: any) {
+      console.error("Error emitting invoice:", error);
+      toast({ title: error?.message || "Error al emitir en SUNAT", variant: "destructive" });
+    } finally {
+      setEmitting(false);
+    }
+  }, [invoiceId, toast]);
+
   return {
     formData,
     items,
     saving,
+    emitting,
     loading,
     isEditing,
+    declared,
     searchingClient,
     invoiceTypes,
     documentTypes,
@@ -392,6 +425,7 @@ export const useCreateInvoice = () => {
     updateItem,
     searchClient,
     handleSave,
+    handleEmit,
     navigate,
   };
 };
