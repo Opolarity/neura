@@ -26,6 +26,7 @@ interface InvoiceSerieOption {
     invoice_type_id: number;
     invoice_provider_id: number;
     type_code: string | null;
+    provider_description: string | null;
 }
 
 export interface WarehouseOption {
