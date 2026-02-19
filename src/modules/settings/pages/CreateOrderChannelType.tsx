@@ -98,7 +98,7 @@ const CreateOrderChannelType = () => {
                                         <SelectContent>
                                             {invoiceSeries.map((s) => (
                                                 <SelectItem key={s.id} value={String(s.id)}>
-                                                    {s.fac_serie} / {s.bol_serie} (ID: {s.id})
+                                                    {s.serie || "-"} (ID: {s.id})
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

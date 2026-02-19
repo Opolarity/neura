@@ -6,52 +6,31 @@ export interface InvoiceSerie {
   id: number;
   account_id: number;
   invoice_provider_id: number;
-  fac_serie: string;
-  bol_serie: string;
-  ncf_serie: string;
-  ncb_serie: string;
-  ndf_serie: string;
-  ndb_serie: string;
-  grr_serie: string;
-  grt_serie: string;
+  invoice_type_id: number;
+  serie: string | null;
   next_number: number;
   is_active: boolean;
-  default: boolean;
   created_at: string;
   account_name?: string;
-  provider_url?: string;
+  invoice_type_name?: string;
 }
 
 export interface InvoiceSerieForm {
   account_id: string;
   invoice_provider_id: string;
-  fac_serie: string;
-  bol_serie: string;
-  ncf_serie: string;
-  ncb_serie: string;
-  ndf_serie: string;
-  ndb_serie: string;
-  grr_serie: string;
-  grt_serie: string;
+  invoice_type_id: string;
+  serie: string;
   next_number: number;
   is_active: boolean;
-  default: boolean;
 }
 
 export const emptyForm: InvoiceSerieForm = {
   account_id: "",
   invoice_provider_id: "",
-  fac_serie: "",
-  bol_serie: "",
-  ncf_serie: "",
-  ncb_serie: "",
-  ndf_serie: "",
-  ndb_serie: "",
-  grr_serie: "",
-  grt_serie: "",
+  invoice_type_id: "",
+  serie: "",
   next_number: 1,
   is_active: true,
-  default: false,
 };
 
 export const useInvoiceSeries = () => {
@@ -64,7 +43,7 @@ export const useInvoiceSeries = () => {
     try {
       const { data, error } = await supabase
         .from("invoice_series")
-        .select("*, accounts(name)")
+        .select("*, accounts(name), types:invoice_type_id(name)")
         .order("id");
 
       if (error) throw error;
@@ -72,6 +51,7 @@ export const useInvoiceSeries = () => {
         (data || []).map((item: any) => ({
           ...item,
           account_name: item.accounts?.name || "-",
+          invoice_type_name: item.types?.name || "-",
         }))
       );
     } catch (err: any) {

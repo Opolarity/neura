@@ -125,10 +125,10 @@ export const UpdateSaleType = async (payload: UpdateOrderChannelPayload): Promis
     return data as OrderChannelType;
 };
 
-export const GetInvoiceSeries = async (): Promise<{ id: number; fac_serie: string; bol_serie: string; invoice_provider_id: number }[]> => {
+export const GetInvoiceSeries = async (): Promise<{ id: number; serie: string | null; invoice_type_id: number; invoice_provider_id: number }[]> => {
     const { data, error } = await supabase
         .from("invoice_series")
-        .select("id, fac_serie, bol_serie, invoice_provider_id")
+        .select("id, serie, invoice_type_id, invoice_provider_id")
         .eq("is_active", true)
         .order("id");
 

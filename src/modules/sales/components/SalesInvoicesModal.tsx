@@ -176,15 +176,10 @@ export const SalesInvoicesModal = ({
 
       if (serieError || !serie) return null;
 
-      // 3. Pick the right column
-      let seriePrefix: string | null = null;
-      if (typeCode === "1") {
-        seriePrefix = serie.fac_serie;
-      } else if (typeCode === "2") {
-        seriePrefix = serie.bol_serie;
-      }
+      // 3. Use the serie column directly
+      const seriePrefix = serie.serie || null;
 
-      return seriePrefix || null;
+      return seriePrefix;
     } catch {
       return null;
     }

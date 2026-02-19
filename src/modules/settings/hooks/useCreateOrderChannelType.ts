@@ -21,8 +21,8 @@ interface PaymentMethodOption {
 
 interface InvoiceSerieOption {
     id: number;
-    fac_serie: string;
-    bol_serie: string;
+    serie: string | null;
+    invoice_type_id: number;
     invoice_provider_id: number;
 }
 

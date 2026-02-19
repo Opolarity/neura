@@ -54,15 +54,10 @@ export interface InvoiceProvider {
 
 export interface InvoiceSerie {
   id: number;
-  fac_serie: string;
-  bol_serie: string;
-  ncf_serie: string;
-  ncb_serie: string;
-  ndb_serie: string;
-  ndf_serie: string;
-  grr_serie: string;
-  grt_serie: string;
+  invoice_type_id: number;
+  serie: string | null;
   next_number: number;
+  invoice_provider_id: number;
 }
 
 export interface DocumentType {

@@ -683,54 +683,33 @@ export type Database = {
       invoice_series: {
         Row: {
           account_id: number
-          bol_serie: string
           created_at: string
-          default: boolean
-          fac_serie: string
-          grr_serie: string
-          grt_serie: string
           id: number
           invoice_provider_id: number
+          invoice_type_id: number
           is_active: boolean
-          ncb_serie: string
-          ncf_serie: string
-          ndb_serie: string
-          ndf_serie: string
           next_number: number
+          serie: string | null
         }
         Insert: {
           account_id: number
-          bol_serie: string
           created_at?: string
-          default?: boolean
-          fac_serie: string
-          grr_serie: string
-          grt_serie: string
           id?: number
           invoice_provider_id: number
+          invoice_type_id: number
           is_active?: boolean
-          ncb_serie: string
-          ncf_serie: string
-          ndb_serie: string
-          ndf_serie: string
           next_number: number
+          serie?: string | null
         }
         Update: {
           account_id?: number
-          bol_serie?: string
           created_at?: string
-          default?: boolean
-          fac_serie?: string
-          grr_serie?: string
-          grt_serie?: string
           id?: number
           invoice_provider_id?: number
+          invoice_type_id?: number
           is_active?: boolean
-          ncb_serie?: string
-          ncf_serie?: string
-          ndb_serie?: string
-          ndf_serie?: string
           next_number?: number
+          serie?: string | null
         }
         Relationships: [
           {
@@ -745,6 +724,13 @@ export type Database = {
             columns: ["invoice_provider_id"]
             isOneToOne: false
             referencedRelation: "invoice_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_series_invoice_type_id_fkey"
+            columns: ["invoice_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
             referencedColumns: ["id"]
           },
         ]
@@ -4344,6 +4330,7 @@ export type Database = {
         Args: {
           p_account_number: number
           p_bank: string
+          p_branch_id: number
           p_business_account_type_id: number
           p_id: number
           p_name: string
