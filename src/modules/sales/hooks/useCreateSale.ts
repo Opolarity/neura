@@ -88,6 +88,7 @@ const createEmptyPayment = (): SalePayment => ({
   voucherUrl: "",
   voucherFile: undefined,
   voucherPreview: undefined,
+  businessAccountId: "",
 });
 
 export const useCreateSale = () => {
@@ -642,9 +643,18 @@ export const useCreateSale = () => {
   // Handle current payment changes
   const handlePaymentChange = useCallback(
     (field: keyof SalePayment, value: string) => {
-      setCurrentPayment((prev) => ({ ...prev, [field]: value }));
+      if (field === "paymentMethodId") {
+        // When payment method changes, auto-assign businessAccountId if non-zero
+        const method = filteredPaymentMethods.find((pm) => pm.id.toString() === value);
+        const autoAccountId = method?.businessAccountId && method.businessAccountId !== 0
+          ? method.businessAccountId.toString()
+          : "";
+        setCurrentPayment((prev) => ({ ...prev, paymentMethodId: value, businessAccountId: autoAccountId }));
+      } else {
+        setCurrentPayment((prev) => ({ ...prev, [field]: value }));
+      }
     },
-    [],
+    [filteredPaymentMethods],
   );
 
   // Handle voucher file selection
@@ -669,12 +679,31 @@ export const useCreateSale = () => {
     }));
   }, []);
 
+  // Check if selected payment method needs manual business account selection
+  const needsBusinessAccountSelect = useMemo(() => {
+    if (!currentPayment.paymentMethodId) return false;
+    const method = filteredPaymentMethods.find(
+      (pm) => pm.id.toString() === currentPayment.paymentMethodId
+    );
+    return method?.businessAccountId === 0 || method?.businessAccountId === null;
+  }, [currentPayment.paymentMethodId, filteredPaymentMethods]);
+
   // Add payment to list
   const addPayment = useCallback(() => {
     if (!currentPayment.paymentMethodId || !currentPayment.amount) {
       toast({
         title: "Error",
         description: "Seleccione método de pago y monto",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate business account selection when needed
+    if (needsBusinessAccountSelect && !currentPayment.businessAccountId) {
+      toast({
+        title: "Error",
+        description: "Seleccione una cuenta de destino para este método de pago",
         variant: "destructive",
       });
       return;
@@ -695,7 +724,7 @@ export const useCreateSale = () => {
       { ...currentPayment, id: crypto.randomUUID() },
     ]);
     setCurrentPayment(createEmptyPayment());
-  }, [currentPayment, toast]);
+  }, [currentPayment, toast, needsBusinessAccountSelect]);
 
   // Remove payment from list
   const removePayment = useCallback((paymentId: string) => {
@@ -1080,6 +1109,7 @@ export const useCreateSale = () => {
               date: new Date().toISOString(),
               confirmationCode: p.confirmationCode || null,
               voucherUrl: p.voucherUrl || null,
+              businessAccountId: p.businessAccountId ? parseInt(p.businessAccountId) : null,
             })),
           initialSituationId: parseInt(orderSituation),
         };
@@ -1229,6 +1259,7 @@ export const useCreateSale = () => {
     filteredSituations,
     filteredPaymentMethods,
     isAnonymousPurchase,
+    needsBusinessAccountSelect,
 
     // Actions
     setOrderSituation,

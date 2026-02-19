@@ -107,7 +107,8 @@ serve(async (req) => {
       amount: p.amount,
       date: p.date,
       confirmation_code: p.confirmation_code,
-      voucher_url: p.voucher_url
+      voucher_url: p.voucher_url,
+      business_account_id: p.business_account_id || null,
     }));
 
     // Determine if we need to create the client (if not existing)

@@ -114,6 +114,7 @@ const CreateSale = () => {
     filteredSituations,
     filteredPaymentMethods,
     isAnonymousPurchase,
+    needsBusinessAccountSelect,
     // Server-side pagination
     productPage,
     productPagination,
@@ -1233,6 +1234,28 @@ const CreateSale = () => {
                     />
                   </div>
                 </div>
+
+                {/* Business Account Select - shown when payment method has business_account_id = 0 */}
+                {needsBusinessAccountSelect && (
+                  <div>
+                    <Label>Cuenta de destino</Label>
+                    <Select
+                      value={currentPayment.businessAccountId || ""}
+                      onValueChange={(v) => handlePaymentChange("businessAccountId" as any, v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione cuenta" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {salesData?.businessAccounts?.map((ba) => (
+                          <SelectItem key={ba.id} value={ba.id.toString()}>
+                            {ba.name} - {ba.bank}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 {/* Voucher preview */}
                 {currentPayment.voucherPreview && (
