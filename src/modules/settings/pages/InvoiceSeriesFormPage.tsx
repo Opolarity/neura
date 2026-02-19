@@ -21,13 +21,13 @@ const InvoiceSeriesFormPage = () => {
     form,
     accounts,
     providers,
-    availableLinks,
-    selectedLinkIds,
+    saleChannels,
+    selectedChannelIds,
     loading,
     saving,
     isEditing,
     updateField,
-    toggleLink,
+    toggleChannel,
     saveSerie,
   } = useInvoiceSeriesForm();
 
@@ -223,29 +223,28 @@ const InvoiceSeriesFormPage = () => {
             <CardTitle>Canales de Venta - Métodos de Pago</CardTitle>
           </CardHeader>
           <CardContent>
-            {availableLinks.length === 0 ? (
+            {saleChannels.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">
-                No hay combinaciones disponibles para vincular
+                No hay canales de venta disponibles para vincular
               </p>
             ) : (
               <div className="space-y-3">
-                {availableLinks.map((link) => (
+                {saleChannels.map((channel) => (
                   <div
-                    key={link.id}
+                    key={channel.id}
                     className="flex items-center gap-3 p-3 rounded-md border border-border hover:bg-muted/50 transition-colors"
                   >
                     <Checkbox
-                      id={`link-${link.id}`}
-                      checked={selectedLinkIds.has(link.id)}
-                      onCheckedChange={() => toggleLink(link.id)}
+                      id={`channel-${channel.id}`}
+                      checked={selectedChannelIds.has(channel.id)}
+                      onCheckedChange={() => toggleChannel(channel.id)}
                     />
                     <label
-                      htmlFor={`link-${link.id}`}
+                      htmlFor={`channel-${channel.id}`}
                       className="flex-1 cursor-pointer text-sm"
                     >
-                      <span className="font-medium">{link.sale_type_name}</span>
-                      <span className="text-muted-foreground"> — </span>
-                      <span>{link.payment_method_name}</span>
+                      <span className="font-medium">{channel.name}</span>
+                      <span className="text-muted-foreground"> ({channel.code})</span>
                     </label>
                   </div>
                 ))}
