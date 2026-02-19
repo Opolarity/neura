@@ -58,13 +58,13 @@ Deno.serve(async (req) => {
       provider_token,
     } = rpcResult;
 
-    // 2. Build NubeFact JSON - NubeFact requires today's date
+    // 2. Build NubeFact JSON - NubeFact requires today's date in Peru timezone
+    // Get current time in Peru (UTC-5)
     const now = new Date();
-    // Use Peru timezone (UTC-5) to ensure correct date
-    const peruDate = new Date(now.getTime() - 5 * 60 * 60 * 1000);
-    const fechaFormatted = `${String(peruDate.getUTCDate()).padStart(2, "0")}-${String(
-      peruDate.getUTCMonth() + 1
-    ).padStart(2, "0")}-${peruDate.getUTCFullYear()}`;
+    const peruTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Lima" }));
+    const fechaFormatted = `${String(peruTime.getDate()).padStart(2, "0")}-${String(
+      peruTime.getMonth() + 1
+    ).padStart(2, "0")}-${peruTime.getFullYear()}`;
 
     const totalGravada = items.reduce((sum: number, item: any) => {
       const base = item.quantity * item.unit_price - (item.discount || 0);
