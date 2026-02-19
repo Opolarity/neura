@@ -166,41 +166,40 @@ export default function POSSessionModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Canal de venta */}
-          <div className="space-y-2">
-            <Label htmlFor="saleType">Canal de venta *</Label>
-            {loadingSaleTypes ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Cargando canales...
-              </div>
-            ) : (
-              <Select
-                value={selectedSaleTypeId}
-                onValueChange={handleSaleTypeChange}
-                required
-              >
-                <SelectTrigger id="saleType">
-                  <SelectValue placeholder="Seleccione un canal de venta" />
-                </SelectTrigger>
-                <SelectContent>
-                  {saleTypes.map((st) => (
-                    <SelectItem key={st.id} value={String(st.id)}>
-                      {st.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {saleTypes.length === 0 && !loadingSaleTypes && (
-              <p className="text-xs text-destructive">
-                No hay canales POS disponibles para su sucursal
-              </p>
-            )}
-          </div>
+          {/* Canal de venta y Caja en dos columnas */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="saleType">Canal de venta *</Label>
+              {loadingSaleTypes ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Cargando...
+                </div>
+              ) : (
+                <Select
+                  value={selectedSaleTypeId}
+                  onValueChange={handleSaleTypeChange}
+                  required
+                >
+                  <SelectTrigger id="saleType">
+                    <SelectValue placeholder="Seleccione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {saleTypes.map((st) => (
+                      <SelectItem key={st.id} value={String(st.id)}>
+                        {st.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {saleTypes.length === 0 && !loadingSaleTypes && (
+                <p className="text-xs text-destructive">
+                  No hay canales POS disponibles
+                </p>
+              )}
+            </div>
 
-          {/* Caja vinculada - read-only */}
-          {selectedSaleTypeId && (
             <div className="space-y-2">
               <Label htmlFor="cashRegister">Caja *</Label>
               <Input
@@ -208,15 +207,16 @@ export default function POSSessionModal({
                 value={linkedCashRegisterName}
                 readOnly
                 disabled
+                placeholder={selectedSaleTypeId ? "" : "Seleccione canal"}
                 className="bg-muted"
               />
               {expectedAmount !== null && (
                 <p className="text-xs text-muted-foreground">
-                  Saldo registrado: {formatCurrency(expectedAmount)}
+                  Saldo: {formatCurrency(expectedAmount)}
                 </p>
               )}
             </div>
-          )}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="openingAmount">Monto Inicial *</Label>
