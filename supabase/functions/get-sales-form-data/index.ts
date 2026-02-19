@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       productsRes,
     ] = await Promise.all([
       supabase.from("document_types").select("id, name, code, person_type").neq("id", 0).order("name"),
-      supabase.from("sale_types").select("id, name").order("name"),
+      supabase.from("sale_types").select("id, name").eq("pos_sale_type", false).eq("is_active", true).order("name"),
       supabase.from("price_list").select("id, code, name").order("name"),
       supabase.from("shipping_methods").select("id, name").order("name"),
       supabase.from("countries").select("id, name").order("name"),
