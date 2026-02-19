@@ -89,7 +89,8 @@ serve(async (req) => {
       reception_phone: input.reception_phone,
       subtotal: input.subtotal,
       discount: input.discount,
-      total: input.total
+      total: input.total,
+      change: input.change || 0
     };
 
     // Build products array
