@@ -87,20 +87,43 @@ const CreateOrderChannelType = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label>Número de serie</Label>
+                                    <Label>Serie de Factura</Label>
                                     <Select
-                                        value={formData.tax_serie_id ? String(formData.tax_serie_id) : ''}
-                                        onValueChange={(val) => setFormData(prev => ({ ...prev, tax_serie_id: Number(val) }))}
+                                        value={formData.factura_serie_id ? String(formData.factura_serie_id) : ''}
+                                        onValueChange={(val) => setFormData(prev => ({ ...prev, factura_serie_id: Number(val) }))}
                                     >
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Seleccionar serie" />
+                                            <SelectValue placeholder="Seleccionar serie de factura" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {invoiceSeries.map((s) => (
-                                                <SelectItem key={s.id} value={String(s.id)}>
-                                                    {s.serie || "-"} (ID: {s.id})
-                                                </SelectItem>
-                                            ))}
+                                            {invoiceSeries
+                                                .filter((s: any) => s.type_code === '1')
+                                                .map((s) => (
+                                                    <SelectItem key={s.id} value={String(s.id)}>
+                                                        {s.serie || "-"} (ID: {s.id})
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Serie de Boleta</Label>
+                                    <Select
+                                        value={formData.boleta_serie_id ? String(formData.boleta_serie_id) : ''}
+                                        onValueChange={(val) => setFormData(prev => ({ ...prev, boleta_serie_id: Number(val) }))}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccionar serie de boleta" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {invoiceSeries
+                                                .filter((s: any) => s.type_code === '2')
+                                                .map((s) => (
+                                                    <SelectItem key={s.id} value={String(s.id)}>
+                                                        {s.serie || "-"} (ID: {s.id})
+                                                    </SelectItem>
+                                                ))}
                                         </SelectContent>
                                     </Select>
                                 </div>

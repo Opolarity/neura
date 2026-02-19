@@ -2497,36 +2497,46 @@ export type Database = {
       }
       sale_types: {
         Row: {
+          boleta_serie_id: number
           business_acount_id: number | null
           code: string | null
           created_at: string
+          factura_serie_id: number
           id: number
           is_active: boolean
           name: string
           pos_sale_type: boolean
-          tax_serie_id: number
         }
         Insert: {
+          boleta_serie_id: number
           business_acount_id?: number | null
           code?: string | null
           created_at?: string
+          factura_serie_id: number
           id?: number
           is_active?: boolean
           name: string
           pos_sale_type?: boolean
-          tax_serie_id: number
         }
         Update: {
+          boleta_serie_id?: number
           business_acount_id?: number | null
           code?: string | null
           created_at?: string
+          factura_serie_id?: number
           id?: number
           is_active?: boolean
           name?: string
           pos_sale_type?: boolean
-          tax_serie_id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "sale_types_boleta_serie_id_fkey"
+            columns: ["boleta_serie_id"]
+            isOneToOne: false
+            referencedRelation: "sale_types"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sale_types_business_acount_id_fkey"
             columns: ["business_acount_id"]
@@ -2535,8 +2545,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "sale_types_tax_serie_id_fkey"
-            columns: ["tax_serie_id"]
+            foreignKeyName: "sale_types_factura_serie_id_fkey"
+            columns: ["factura_serie_id"]
             isOneToOne: false
             referencedRelation: "invoice_series"
             referencedColumns: ["id"]

@@ -7,7 +7,8 @@ import { getPaymentMethodsIsActiveTrueAndActiveTrue } from '@/shared/services/se
 interface FormData {
     name: string;
     code: string;
-    tax_serie_id: number | '';
+    factura_serie_id: number | '';
+    boleta_serie_id: number | '';
     business_acount_id: number | '' | null;
     pos_sale_type: boolean;
     is_active: boolean;
@@ -24,6 +25,7 @@ interface InvoiceSerieOption {
     serie: string | null;
     invoice_type_id: number;
     invoice_provider_id: number;
+    type_code: string | null;
 }
 
 export interface WarehouseOption {
@@ -54,7 +56,8 @@ const useCreateOrderChannelType = () => {
     const [formData, setFormData] = useState<FormData>({
         name: '',
         code: '',
-        tax_serie_id: '',
+        factura_serie_id: '',
+        boleta_serie_id: '',
         business_acount_id: null,
         pos_sale_type: false,
         is_active: true,
@@ -90,7 +93,8 @@ const useCreateOrderChannelType = () => {
                     setFormData({
                         name: saleType.name,
                         code: saleType.code ?? '',
-                        tax_serie_id: saleType.tax_serie_id,
+                        factura_serie_id: saleType.factura_serie_id,
+                        boleta_serie_id: saleType.boleta_serie_id,
                         business_acount_id: saleType.business_acount_id ?? null,
                         pos_sale_type: saleType.pos_sale_type,
                         is_active: saleType.is_active,
@@ -147,11 +151,9 @@ const useCreateOrderChannelType = () => {
     const handlePosToggle = (checked: boolean) => {
         setFormData(prev => ({ ...prev, pos_sale_type: checked }));
         if (checked && selectedWarehouses.length > 1) {
-            // When switching to POS, keep only the first warehouse
             setSelectedWarehouses(prev => prev.length > 0 ? [prev[0]] : []);
         }
         if (!checked) {
-            // Clear caja when disabling POS
             setFormData(prev => ({ ...prev, business_acount_id: null }));
         }
     };
@@ -160,10 +162,10 @@ const useCreateOrderChannelType = () => {
         e.preventDefault();
         setLoading(true);
 
-        if (!formData.name || !formData.code || !formData.tax_serie_id) {
+        if (!formData.name || !formData.code || !formData.factura_serie_id || !formData.boleta_serie_id) {
             toast({
                 title: "Error",
-                description: "Por favor complete todos los campos requeridos (nombre, código y serie)",
+                description: "Por favor complete todos los campos requeridos (nombre, código y series)",
                 variant: "destructive"
             });
             setLoading(false);
@@ -174,7 +176,8 @@ const useCreateOrderChannelType = () => {
             const payload = {
                 name: formData.name,
                 code: formData.code,
-                tax_serie_id: Number(formData.tax_serie_id),
+                factura_serie_id: Number(formData.factura_serie_id),
+                boleta_serie_id: Number(formData.boleta_serie_id),
                 business_acount_id: formData.business_acount_id ? Number(formData.business_acount_id) : null,
                 pos_sale_type: formData.pos_sale_type,
                 is_active: formData.is_active,

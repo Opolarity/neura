@@ -2,7 +2,8 @@ export interface OrderChannelType {
   id: number;
   name: string;
   code: string | null;
-  tax_serie_id: number;
+  factura_serie_id: number;
+  boleta_serie_id: number;
   business_acount_id: number | null;
   pos_sale_type: boolean;
   is_active: boolean;
@@ -18,7 +19,8 @@ export interface OrderChannelTypesFilters {
 export interface CreateOrderChannelPayload {
   name: string;
   code: string;
-  tax_serie_id: number;
+  factura_serie_id: number;
+  boleta_serie_id: number;
   business_acount_id?: number | null;
   pos_sale_type: boolean;
   is_active: boolean;

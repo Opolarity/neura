@@ -157,29 +157,29 @@ export const SalesInvoicesModal = ({
     if (typeCode === "3" || typeCode === "4") return null;
 
     try {
-      // 1. Find invoice_series via sale_type_invoice_series
-      const { data: stis, error: stisError } = await (supabase as any)
-        .from("sale_type_invoice_series")
-        .select("tax_serie_id")
-        .eq("sale_type_id", saleTypeId);
+      // 1. Get the sale_type to find factura_serie_id or boleta_serie_id
+      const { data: saleType, error: stError } = await supabase
+        .from("sale_types")
+        .select("factura_serie_id, boleta_serie_id")
+        .eq("id", saleTypeId)
+        .single();
 
-      if (stisError || !stis || stis.length === 0) return null;
+      if (stError || !saleType) return null;
 
-      const serieId = (stis[0] as any).tax_serie_id;
+      // Pick the right serie based on type code
+      const serieId = typeCode === "1" ? saleType.factura_serie_id : saleType.boleta_serie_id;
+      if (!serieId) return null;
 
       // 2. Get the invoice_series record
       const { data: serie, error: serieError } = await supabase
         .from("invoice_series")
-        .select("*")
+        .select("serie")
         .eq("id", serieId)
         .single();
 
       if (serieError || !serie) return null;
 
-      // 3. Use the serie column directly
-      const seriePrefix = serie.serie || null;
-
-      return seriePrefix;
+      return serie.serie || null;
     } catch {
       return null;
     }
