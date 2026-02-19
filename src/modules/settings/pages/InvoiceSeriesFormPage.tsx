@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useInvoiceSeriesForm } from "../hooks/useInvoiceSeriesForm";
@@ -149,13 +148,6 @@ const InvoiceSeriesFormPage = () => {
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={form.is_active}
-                onCheckedChange={(v) => updateField("is_active", v)}
-              />
-              <Label>Activo</Label>
-            </div>
           </CardContent>
         </Card>
 
