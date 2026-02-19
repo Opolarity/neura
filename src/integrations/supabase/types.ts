@@ -1500,7 +1500,7 @@ export type Database = {
             foreignKeyName: "payment_method_sale_type_sale_type_id_fkey"
             columns: ["sale_type_id"]
             isOneToOne: false
-            referencedRelation: "types"
+            referencedRelation: "sale_types"
             referencedColumns: ["id"]
           },
         ]
@@ -4309,7 +4309,7 @@ export type Database = {
       }
       sp_update_business_account: {
         Args: {
-          p_account_number: string
+          p_account_number: number
           p_bank: string
           p_branch_id: number
           p_business_account_type_id: number
