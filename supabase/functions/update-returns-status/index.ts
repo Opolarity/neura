@@ -35,7 +35,7 @@ interface CreateReturnPayload {
   total_refund_amount: number;
   total_exchange_difference: number;
   return_products: ReturnProduct[];
-  payment_methods?: PaymentMethod[]; // Array de métodos de pago (opcional)
+  payment_methods?: PaymentMethod[];
   business_account_id: number;
   branch_id: number;
   warehouse_id: number;
@@ -63,7 +63,6 @@ Deno.serve(async (req) => {
 
     const payload: CreateReturnPayload = await req.json();
 
-    // Normalizar: si no viene payment_methods o viene vacío, asegurar array vacío
     if (!payload.payment_methods) {
       payload.payment_methods = [];
     }

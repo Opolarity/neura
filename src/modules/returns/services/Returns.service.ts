@@ -96,6 +96,32 @@ export const returnsService = {
         return data;
     },
 
+    async getReturnProductsForDisplay(returnId: number) {
+        const { data, error } = await supabase
+            .from("returns_products")
+            .select(`
+        *,
+        variations (
+          sku,
+          products (
+            title
+          )
+        )
+      `)
+            .eq("return_id", returnId)
+            .eq("output", false);
+
+        if (error) throw error;
+        return (data || []).map((rp: any) => ({
+            id: rp.id,
+            product_variation_id: rp.product_variation_id,
+            quantity: rp.quantity,
+            product_price: rp.product_amount || 0,
+            product_discount: 0,
+            variations: rp.variations,
+        }));
+    },
+
     async createReturn(payload: any) {
         const { data, error } = await supabase.functions.invoke("create-returns", {
             body: payload,

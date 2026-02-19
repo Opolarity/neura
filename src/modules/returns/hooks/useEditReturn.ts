@@ -9,8 +9,15 @@ import {
     ReturnProduct,
     ExchangeProduct as NewProduct,
     SearchProduct,
-    ProductSearchPagination
+    ProductSearchPagination,
+    ReturnPayment,
 } from '../types/Returns.types';
+
+const createEmptyPayment = (): ReturnPayment => ({
+    id: crypto.randomUUID(),
+    paymentMethodId: '',
+    amount: '',
+});
 
 export const useEditReturn = () => {
     const navigate = useNavigate();
@@ -19,12 +26,16 @@ export const useEditReturn = () => {
     const [saving, setSaving] = useState(false);
     const [situations, setSituations] = useState<any[]>([]);
     const [documentTypes, setDocumentTypes] = useState<any[]>([]);
+    const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
     const [returnTypes, setReturnTypes] = useState<any[]>([]);
     const [selectedReturnType, setSelectedReturnType] = useState<string>('');
     const [returnTypeCode, setReturnTypeCode] = useState<string>('');
     const [orderProducts, setOrderProducts] = useState<OrderProduct[]>([]);
-    const [products, setProducts] = useState<any[]>([]);
     const [orderId, setOrderId] = useState<number>(0);
+
+    // Multiple payments (same pattern as CreateReturn)
+    const [payments, setPayments] = useState<ReturnPayment[]>([]);
+    const [currentPayment, setCurrentPayment] = useState<ReturnPayment>(createEmptyPayment());
 
     // Form fields
     const [reason, setReason] = useState('');
@@ -55,24 +66,16 @@ export const useEditReturn = () => {
             const docTypesData = await returnsService.getDocumentTypes();
 
             const moduleData = await returnsService.getModuleInfo('RTU');
-            const situationsData = await returnsService.getSituations(moduleData.id);
-            const typesData = await returnsService.getTypes(moduleData.id);
+            const [situationsData, typesData, paymentMethodsData] = await Promise.all([
+                returnsService.getSituations(moduleData.id),
+                returnsService.getTypes(moduleData.id),
+                returnsService.getPaymentMethods(),
+            ]);
 
-            // Load all products for exchange info (simplified for now as in original)
+            // Load variations for CAM exchange product names
             const { data: productsData } = await supabase
                 .from('variations')
-                .select(`
-          id,
-          sku,
-          products (
-            id,
-            title
-          ),
-          product_price (
-            price,
-            sale_price
-          )
-        `);
+                .select('id, sku, products (id, title)');
 
             setOrderId(returnData.order_id);
             setReason(returnData.reason || '');
@@ -83,11 +86,13 @@ export const useEditReturn = () => {
             setSelectedReturnType(returnData.return_type_id.toString());
             setReturnTypeCode(returnData.types?.code || '');
             setOrderProducts(orderProductsData || []);
-            setProducts(productsData || []);
             setDocumentTypes(docTypesData || []);
             setSituations(situationsData || []);
             setReturnTypes(typesData || []);
+            setPaymentMethods(paymentMethodsData || []);
 
+            // output=false → products being RETURNED (coming back to store)
+            // output=true  → exchange products going OUT to customer
             if (returnData.types?.code === 'DVT') {
                 const allOrderProducts = orderProductsData?.map((op: any) => ({
                     product_variation_id: op.product_variation_id,
@@ -95,35 +100,39 @@ export const useEditReturn = () => {
                     product_name: op.variations.products.title,
                     sku: op.variations.sku,
                     price: op.product_price,
-                    output: true
+                    output: false,
                 })) || [];
                 setReturnProducts(allOrderProducts);
             } else {
-                const formattedReturnProducts = returnProductsData?.filter((rp: any) => rp.output).map((rp: any) => ({
-                    product_variation_id: rp.product_variation_id,
-                    quantity: rp.quantity,
-                    product_name: rp.variations.products.title,
-                    sku: rp.variations.sku,
-                    price: rp.product_amount || 0,
-                    output: rp.output
-                })) || [];
+                const formattedReturnProducts = returnProductsData
+                    ?.filter((rp: any) => !rp.output)
+                    .map((rp: any) => ({
+                        product_variation_id: rp.product_variation_id,
+                        quantity: rp.quantity,
+                        product_name: rp.variations.products.title,
+                        sku: rp.variations.sku,
+                        price: rp.product_amount || 0,
+                        output: false,
+                    })) || [];
                 setReturnProducts(formattedReturnProducts);
             }
 
             if (returnData.types?.code === 'CAM') {
-                const newProds = returnProductsData?.filter((rp: any) => !rp.output).map((rp: any) => {
-                    const variation = productsData?.find((p: any) => p.id === rp.product_variation_id);
-                    return {
-                        variation_id: rp.product_variation_id,
-                        product_name: variation?.products?.title || '',
-                        variation_name: variation?.sku || '',
-                        sku: variation?.sku || '',
-                        quantity: rp.quantity,
-                        price: rp.product_amount || 0,
-                        discount: 0,
-                        linked_return_index: null
-                    };
-                }) || [];
+                const newProds = returnProductsData
+                    ?.filter((rp: any) => rp.output)
+                    .map((rp: any) => {
+                        const variation = productsData?.find((p: any) => p.id === rp.product_variation_id);
+                        return {
+                            variation_id: rp.product_variation_id,
+                            product_name: variation?.products?.title || rp.variations?.products?.title || '',
+                            variation_name: variation?.sku || rp.variations?.sku || '',
+                            sku: variation?.sku || rp.variations?.sku || '',
+                            quantity: rp.quantity,
+                            price: rp.product_amount || 0,
+                            discount: 0,
+                            linked_return_index: null,
+                        };
+                    }) || [];
                 setNewProducts(newProds);
             }
 
@@ -174,6 +183,24 @@ export const useEditReturn = () => {
         }
     }, [debouncedSearch, returnTypeCode, fetchSearchProducts]);
 
+    const addPayment = useCallback(() => {
+        if (!currentPayment.paymentMethodId || !currentPayment.amount) {
+            toast.error('Seleccione un método de pago y monto');
+            return;
+        }
+        const amount = parseFloat(currentPayment.amount);
+        if (isNaN(amount) || amount <= 0) {
+            toast.error('El monto debe ser mayor a cero');
+            return;
+        }
+        setPayments((prev) => [...prev, { ...currentPayment, id: crypto.randomUUID() }]);
+        setCurrentPayment(createEmptyPayment());
+    }, [currentPayment]);
+
+    const removePayment = useCallback((id: string) => {
+        setPayments((prev) => prev.filter((p) => p.id !== id));
+    }, []);
+
     const handleSearchPageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= Math.ceil(searchPagination.total / searchPagination.size)) {
             fetchSearchProducts(newPage, debouncedSearch);
@@ -196,7 +223,7 @@ export const useEditReturn = () => {
             product_name: orderProduct.variations.products.title,
             sku: orderProduct.variations.sku,
             price: orderProduct.product_price,
-            output: true
+            output: false,
         };
 
         setReturnProducts([...returnProducts, newReturnProduct]);
@@ -462,6 +489,12 @@ export const useEditReturn = () => {
         setSituationId,
         returnProducts,
         newProducts,
+        paymentMethods,
+        payments,
+        currentPayment,
+        setCurrentPayment,
+        addPayment,
+        removePayment,
         searchQuery,
         setSearchQuery,
         searchProducts,
@@ -476,6 +509,6 @@ export const useEditReturn = () => {
         updateNewProductQuantity,
         updateNewProductDiscount,
         calculateTotals,
-        handleSave
+        handleSave,
     };
 };

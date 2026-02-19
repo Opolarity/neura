@@ -107,3 +107,9 @@ export interface ProductSearchPagination {
     size: number;
     total: number;
 }
+
+export interface ReturnPayment {
+    id: string;
+    paymentMethodId: string;
+    amount: string;
+}

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, ArrowLeft, Plus, Search, ChevronLeft, ChevronRight, ShoppingCart, Trash2 } from 'lucide-react';
+import {
+  Loader2, ArrowLeft, Plus, Search, ChevronLeft, ChevronRight,
+  Trash2, CreditCard,
+} from 'lucide-react';
 import { useEditReturn } from '../hooks/useEditReturn';
 import { formatCurrency } from '@/shared/utils/currency';
 
@@ -35,6 +37,12 @@ const EditReturn = () => {
     setSituationId,
     returnProducts,
     newProducts,
+    paymentMethods,
+    payments,
+    currentPayment,
+    setCurrentPayment,
+    addPayment,
+    removePayment,
     searchQuery,
     setSearchQuery,
     searchProducts,
@@ -49,7 +57,7 @@ const EditReturn = () => {
     updateNewProductQuantity,
     updateNewProductDiscount,
     calculateTotals,
-    handleSave
+    handleSave,
   } = useEditReturn();
 
   if (loading) {
@@ -65,11 +73,7 @@ const EditReturn = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/returns')}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => navigate('/returns')} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Volver
         </Button>
@@ -80,20 +84,50 @@ const EditReturn = () => {
       </div>
 
       <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Información del Cliente</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+
+        {/* Top row: payment (left, narrow) + info básica (right) */}
+        <div className="grid grid-cols-[700px_1fr] gap-6 items-start">
+
+          {/* ── Información Básica ────────────────────────────────────── */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Información del Cliente</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="documentType">Tipo de Documento</Label>
+                  <Select value={documentType} onValueChange={setDocumentType}>
+                    <SelectTrigger id="documentType">
+                      <SelectValue placeholder="Seleccionar tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {documentTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id.toString()}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="documentNumber">Número de Documento</Label>
+                  <Input
+                    id="documentNumber"
+                    value={documentNumber}
+                    onChange={(e) => setDocumentNumber(e.target.value)}
+                  />
+                </div>
+              </div>
+
               <div>
-                <Label htmlFor="documentType">Tipo de Documento</Label>
-                <Select value={documentType} onValueChange={setDocumentType}>
-                  <SelectTrigger id="documentType">
+                <Label htmlFor="returnType">Tipo de Devolución/Cambio</Label>
+                <Select value={selectedReturnType} disabled>
+                  <SelectTrigger id="returnType" className="bg-muted">
                     <SelectValue placeholder="Seleccionar tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    {documentTypes.map((type) => (
+                    {returnTypes.map((type) => (
                       <SelectItem key={type.id} value={type.id.toString()}>
                         {type.name}
                       </SelectItem>
@@ -103,68 +137,111 @@ const EditReturn = () => {
               </div>
 
               <div>
-                <Label htmlFor="documentNumber">Número de Documento</Label>
-                <Input
-                  id="documentNumber"
-                  value={documentNumber}
-                  onChange={(e) => setDocumentNumber(e.target.value)}
+                <Label htmlFor="reason">Motivo</Label>
+                <Textarea
+                  id="reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Describa el motivo de la devolución/cambio"
                 />
               </div>
-            </div>
 
-            <div>
-              <Label htmlFor="returnType">Tipo de Devolución/Cambio</Label>
-              <Select value={selectedReturnType} disabled>
-                <SelectTrigger id="returnType" className="bg-muted">
-                  <SelectValue placeholder="Seleccionar tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {returnTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id.toString()}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div>
+                <Label htmlFor="situation">Situación *</Label>
+                <Select value={situationId} onValueChange={setSituationId}>
+                  <SelectTrigger id="situation">
+                    <SelectValue placeholder="Seleccionar situación" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {situations.map((situation) => (
+                      <SelectItem key={situation.id} value={situation.id.toString()}>
+                        {situation.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div>
-              <Label htmlFor="reason">Motivo</Label>
-              <Textarea
-                id="reason"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Describa el motivo de la devolución/cambio"
-              />
-            </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="shippingReturn"
+                  checked={shippingReturn}
+                  onCheckedChange={setShippingReturn}
+                />
+                <Label htmlFor="shippingReturn">Envío a devolver</Label>
+              </div>
+            </CardContent>
+          </Card>
 
-            <div>
-              <Label htmlFor="situation">Situación *</Label>
-              <Select value={situationId} onValueChange={setSituationId}>
-                <SelectTrigger id="situation">
-                  <SelectValue placeholder="Seleccionar situación" />
-                </SelectTrigger>
-                <SelectContent>
-                  {situations.map((situation) => (
-                    <SelectItem key={situation.id} value={situation.id.toString()}>
-                      {situation.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* ── Métodos de Pago ───────────────────────────────────────── */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Métodos de Pago</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* Pagos registrados */}
+              {payments.filter((p) => p.paymentMethodId).length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Pagos Registrados</Label>
+                  {payments.filter((p) => p.paymentMethodId).map((p) => {
+                    const method = paymentMethods.find((pm) => pm.id.toString() === p.paymentMethodId);
+                    return (
+                      <div key={p.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm">{method?.name || 'Método'}</span>
+                          <span className="text-sm font-medium">{formatCurrency(parseFloat(p.amount) || 0)}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => removePayment(p.id)}
+                        >
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="shippingReturn"
-                checked={shippingReturn}
-                onCheckedChange={setShippingReturn}
-              />
-              <Label htmlFor="shippingReturn">Envío a devolver</Label>
-            </div>
-          </CardContent>
-        </Card>
+              {/* Agregar nuevo pago */}
+              <div className="space-y-2 p-3 border rounded-md bg-muted/30">
+                <Label className="text-sm font-medium">Método de Pago</Label>
+                <Select
+                  value={currentPayment.paymentMethodId}
+                  onValueChange={(v) => setCurrentPayment((prev) => ({ ...prev, paymentMethodId: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione método" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paymentMethods.map((pm) => (
+                      <SelectItem key={pm.id} value={pm.id.toString()}>
+                        {pm.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={currentPayment.amount}
+                  onChange={(e) => setCurrentPayment((prev) => ({ ...prev, amount: e.target.value }))}
+                  placeholder="Monto"
+                />
+                <Button type="button" variant="secondary" size="sm" className="w-full" onClick={addPayment}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Agregar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
+        {/* ── Productos a Devolver ─────────────────────────────────────── */}
         {(returnTypeCode === 'DVP' || returnTypeCode === 'CAM') && (
           <Card>
             <CardHeader>
@@ -193,11 +270,7 @@ const EditReturn = () => {
                             <TableCell>{product.quantity}</TableCell>
                             <TableCell>{formatCurrency(product.product_price)}</TableCell>
                             <TableCell className="text-right">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => addReturnProduct(product)}
-                              >
+                              <Button variant="outline" size="sm" onClick={() => addReturnProduct(product)}>
                                 <Plus className="w-4 h-4" />
                               </Button>
                             </TableCell>
@@ -210,7 +283,7 @@ const EditReturn = () => {
 
                 {returnProducts.length > 0 && (
                   <div>
-                    <Label>Productos a Devolver</Label>
+                    <Label>Productos Seleccionados</Label>
                     <div className="border rounded-lg mt-2">
                       <Table>
                         <TableHeader>
@@ -240,11 +313,7 @@ const EditReturn = () => {
                               <TableCell>{formatCurrency(product.price)}</TableCell>
                               <TableCell>{formatCurrency(product.price * product.quantity)}</TableCell>
                               <TableCell className="text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeReturnProduct(index)}
-                                >
+                                <Button variant="ghost" size="sm" onClick={() => removeReturnProduct(index)}>
                                   <Trash2 className="w-4 h-4 text-destructive" />
                                 </Button>
                               </TableCell>
@@ -260,6 +329,7 @@ const EditReturn = () => {
           </Card>
         )}
 
+        {/* ── Productos de Cambio ──────────────────────────────────────── */}
         {returnTypeCode === 'CAM' && (
           <Card>
             <CardHeader>
@@ -381,11 +451,7 @@ const EditReturn = () => {
                           </TableCell>
                           <TableCell>{formatCurrency((product.price - product.discount) * product.quantity)}</TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeNewProduct(index)}
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => removeNewProduct(index)}>
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
                           </TableCell>
@@ -399,6 +465,7 @@ const EditReturn = () => {
           </Card>
         )}
 
+        {/* ── Resumen ──────────────────────────────────────────────────── */}
         <Card>
           <CardHeader>
             <CardTitle>Resumen de Totales</CardTitle>
