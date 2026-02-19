@@ -25,7 +25,7 @@ interface InvoiceSeriesFormDialogProps {
   item: InvoiceSerie | null;
   saving: boolean;
   accounts: { id: number; name: string }[];
-  providers: { id: number; url: string; branch_id: number }[];
+  providers: { id: number; url: string; branch_id: number; description: string | null }[];
   onSaved: (form: InvoiceSerieForm) => void;
   onOpenChange: (open: boolean) => void;
 }
@@ -112,7 +112,7 @@ export const InvoiceSeriesFormDialog = ({
                 <SelectContent>
                   {providers.map((p) => (
                     <SelectItem key={p.id} value={p.id.toString()}>
-                      Proveedor #{p.id}
+                      {p.description || `Proveedor #${p.id}`}
                     </SelectItem>
                   ))}
                 </SelectContent>

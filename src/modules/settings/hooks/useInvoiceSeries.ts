@@ -57,7 +57,7 @@ export const emptyForm: InvoiceSerieForm = {
 export const useInvoiceSeries = () => {
   const [series, setSeries] = useState<InvoiceSerie[]>([]);
   const [accounts, setAccounts] = useState<{ id: number; name: string }[]>([]);
-  const [providers, setProviders] = useState<{ id: number; url: string; branch_id: number }[]>([]);
+  const [providers, setProviders] = useState<{ id: number; url: string; branch_id: number; description: string | null }[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [openFormModal, setOpenFormModal] = useState(false);
@@ -89,7 +89,7 @@ export const useInvoiceSeries = () => {
   const fetchDropdowns = useCallback(async () => {
     const [accRes, provRes] = await Promise.all([
       supabase.from("accounts").select("id, name").eq("is_active", true).order("name"),
-      supabase.from("invoice_providers").select("id, url, branch_id").order("id"),
+      supabase.from("invoice_providers").select("id, url, branch_id, description").order("id"),
     ]);
     if (accRes.data) setAccounts(accRes.data);
     if (provRes.data) setProviders(provRes.data);
