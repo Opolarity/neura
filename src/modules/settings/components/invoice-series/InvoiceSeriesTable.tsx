@@ -8,23 +8,18 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil } from "lucide-react";
-import { Loader2 } from "lucide-react";
+import { Pencil, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { InvoiceSerie } from "../../hooks/useInvoiceSeries";
 
 interface InvoiceSeriesTableProps {
   loading: boolean;
   series: InvoiceSerie[];
-  onEditItem: (item: InvoiceSerie) => void;
-  onOpenChange: (open: boolean) => void;
 }
 
-const InvoiceSeriesTable = ({
-  loading,
-  series,
-  onEditItem,
-  onOpenChange,
-}: InvoiceSeriesTableProps) => {
+const InvoiceSeriesTable = ({ loading, series }: InvoiceSeriesTableProps) => {
+  const navigate = useNavigate();
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -86,10 +81,7 @@ const InvoiceSeriesTable = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => {
-                    onEditItem(item);
-                    onOpenChange(true);
-                  }}
+                  onClick={() => navigate(`/invoices/series/edit/${item.id}`)}
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>

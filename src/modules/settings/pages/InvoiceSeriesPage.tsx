@@ -1,23 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useInvoiceSeries } from "../hooks/useInvoiceSeries";
 import InvoiceSeriesTable from "../components/invoice-series/InvoiceSeriesTable";
-import { InvoiceSeriesFormDialog } from "../components/invoice-series/InvoiceSeriesFormDialog";
 
 const InvoiceSeriesPage = () => {
-  const {
-    series,
-    accounts,
-    providers,
-    loading,
-    saving,
-    openFormModal,
-    editingItem,
-    saveSerie,
-    handleEditItemChange,
-    handleOpenChange,
-  } = useInvoiceSeries();
+  const navigate = useNavigate();
+  const { series, loading } = useInvoiceSeries();
 
   return (
     <div className="space-y-6">
@@ -32,10 +22,7 @@ const InvoiceSeriesPage = () => {
         </div>
         <Button
           className="gap-2"
-          onClick={() => {
-            handleEditItemChange(null);
-            handleOpenChange(true);
-          }}
+          onClick={() => navigate("/invoices/series/add")}
         >
           <Plus className="w-4 h-4" />
           Nueva Serie
@@ -47,22 +34,9 @@ const InvoiceSeriesPage = () => {
           <InvoiceSeriesTable
             loading={loading}
             series={series}
-            onEditItem={handleEditItemChange}
-            onOpenChange={handleOpenChange}
           />
         </CardContent>
       </Card>
-
-      <InvoiceSeriesFormDialog
-        key={editingItem?.id ?? "new"}
-        open={openFormModal}
-        item={editingItem}
-        saving={saving}
-        accounts={accounts}
-        providers={providers}
-        onSaved={saveSerie}
-        onOpenChange={handleOpenChange}
-      />
     </div>
   );
 };
