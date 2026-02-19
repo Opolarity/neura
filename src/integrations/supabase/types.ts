@@ -1117,6 +1117,7 @@ export type Database = {
       order_payment: {
         Row: {
           amount: number
+          business_acount_id: number
           date: string
           gateway_confirmation_code: string | null
           id: number
@@ -1127,6 +1128,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          business_acount_id: number
           date: string
           gateway_confirmation_code?: string | null
           id?: number
@@ -1137,6 +1139,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          business_acount_id?: number
           date?: string
           gateway_confirmation_code?: string | null
           id?: number
@@ -1158,6 +1161,13 @@ export type Database = {
             columns: ["payment_method_id"]
             isOneToOne: false
             referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_payment_business_acount_id_fkey"
+            columns: ["business_acount_id"]
+            isOneToOne: false
+            referencedRelation: "business_accounts"
             referencedColumns: ["id"]
           },
           {
