@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { createInvoiceApi } from "../services/Invoices.services";
@@ -41,11 +41,14 @@ const INITIAL_FORM: InvoiceFormData = {
 
 export const useCreateInvoice = () => {
   const navigate = useNavigate();
+  const { invoiceId } = useParams<{ invoiceId: string }>();
   const { toast } = useToast();
+  const isEditing = !!invoiceId;
 
   const [formData, setFormData] = useState<InvoiceFormData>(INITIAL_FORM);
   const [items, setItems] = useState<InvoiceItemForm[]>([createEmptyItem()]);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [searchingClient, setSearchingClient] = useState(false);
   const [invoiceTypes, setInvoiceTypes] = useState<Types[]>([]);
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
@@ -84,7 +87,7 @@ export const useCreateInvoice = () => {
     loadData();
   }, []);
 
-  // Load series when provider changes
+  // Load series when provider changes (skip if loading edit data)
   useEffect(() => {
     const loadSeries = async () => {
       if (!formData.invoiceProviderId) {
@@ -103,6 +106,84 @@ export const useCreateInvoice = () => {
     };
     loadSeries();
   }, [formData.invoiceProviderId]);
+
+  // Load existing invoice for editing
+  useEffect(() => {
+    if (!invoiceId) return;
+    const loadInvoice = async () => {
+      setLoading(true);
+      try {
+        const { data: invoice } = await supabase
+          .from("invoices")
+          .select("*")
+          .eq("id", parseInt(invoiceId))
+          .single();
+
+        if (!invoice) {
+          toast({ title: "Comprobante no encontrado", variant: "destructive" });
+          navigate("/invoices");
+          return;
+        }
+
+        // Find the provider for this invoice's tax_serie
+        let providerId = "";
+        let serieId = "";
+        if (invoice.tax_serie) {
+          const { data: serieData } = await supabase
+            .from("invoice_series")
+            .select("id, invoice_provider_id, fac_serie, bol_serie, ncf_serie, ncb_serie, ndb_serie, ndf_serie, grr_serie, grt_serie, next_number")
+            .or(`fac_serie.eq.${invoice.tax_serie},bol_serie.eq.${invoice.tax_serie}`)
+            .limit(1)
+            .single();
+
+          if (serieData) {
+            providerId = serieData.invoice_provider_id.toString();
+            serieId = serieData.id.toString();
+          }
+        }
+
+        setFormData({
+          invoiceTypeId: invoice.invoice_type_id.toString(),
+          invoiceProviderId: providerId,
+          invoiceSerieId: serieId,
+          taxSerie: invoice.tax_serie || "",
+          documentTypeId: invoice.customer_document_type_id.toString(),
+          clientDocument: invoice.customer_document_number,
+          clientName: invoice.client_name || "",
+          clientEmail: invoice.client_email || "",
+          clientAddress: invoice.client_address || "",
+        });
+
+        // Load items
+        const { data: itemsData } = await supabase
+          .from("invoice_items")
+          .select("*")
+          .eq("invoice_id", parseInt(invoiceId))
+          .order("id");
+
+        if (itemsData && itemsData.length > 0) {
+          setItems(
+            itemsData.map((item) => ({
+              id: item.id.toString(),
+              description: item.description,
+              quantity: item.quantity,
+              measurementUnit: item.measurement_unit,
+              unitPrice: item.unit_price,
+              discount: item.discount || 0,
+              igv: item.igv,
+              total: item.total,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error("Error loading invoice:", error);
+        toast({ title: "Error al cargar comprobante", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadInvoice();
+  }, [invoiceId]);
   const totalAmount = useMemo(
     () => +items.reduce((sum, i) => sum + i.total, 0).toFixed(2),
     [items]
@@ -220,40 +301,82 @@ export const useCreateInvoice = () => {
     try {
       const totalTaxes = +items.reduce((s, i) => s + i.igv, 0).toFixed(2);
 
-      await createInvoiceApi({
-        invoice_type_id: parseInt(formData.invoiceTypeId),
-        tax_serie: formData.taxSerie || undefined,
-        customer_document_type_id: parseInt(formData.documentTypeId),
-        customer_document_number: formData.clientDocument,
-        client_name: formData.clientName || undefined,
-        client_email: formData.clientEmail || undefined,
-        client_address: formData.clientAddress || undefined,
-        total_amount: totalAmount,
-        total_taxes: totalTaxes,
-        items: items.map((i) => ({
-          description: i.description,
-          quantity: i.quantity,
-          measurement_unit: i.measurementUnit,
-          unit_price: i.unitPrice,
-          discount: i.discount,
-          igv: i.igv,
-          total: i.total,
-        })),
-      });
-      toast({ title: "Comprobante creado exitosamente" });
+      if (isEditing && invoiceId) {
+        // Update invoice
+        const { error: invoiceError } = await supabase
+          .from("invoices")
+          .update({
+            invoice_type_id: parseInt(formData.invoiceTypeId),
+            tax_serie: formData.taxSerie || null,
+            customer_document_type_id: parseInt(formData.documentTypeId),
+            customer_document_number: formData.clientDocument,
+            client_name: formData.clientName || null,
+            client_email: formData.clientEmail || null,
+            client_address: formData.clientAddress || null,
+            total_amount: totalAmount,
+            total_taxes: totalTaxes,
+          })
+          .eq("id", parseInt(invoiceId));
+
+        if (invoiceError) throw invoiceError;
+
+        // Delete old items and insert new ones
+        await supabase.from("invoice_items").delete().eq("invoice_id", parseInt(invoiceId));
+
+        const { error: itemsError } = await supabase.from("invoice_items").insert(
+          items.map((i) => ({
+            invoice_id: parseInt(invoiceId),
+            description: i.description,
+            quantity: i.quantity,
+            measurement_unit: i.measurementUnit,
+            unit_price: i.unitPrice,
+            discount: i.discount,
+            igv: i.igv,
+            total: i.total,
+          }))
+        );
+
+        if (itemsError) throw itemsError;
+
+        toast({ title: "Comprobante actualizado exitosamente" });
+      } else {
+        await createInvoiceApi({
+          invoice_type_id: parseInt(formData.invoiceTypeId),
+          tax_serie: formData.taxSerie || undefined,
+          customer_document_type_id: parseInt(formData.documentTypeId),
+          customer_document_number: formData.clientDocument,
+          client_name: formData.clientName || undefined,
+          client_email: formData.clientEmail || undefined,
+          client_address: formData.clientAddress || undefined,
+          total_amount: totalAmount,
+          total_taxes: totalTaxes,
+          items: items.map((i) => ({
+            description: i.description,
+            quantity: i.quantity,
+            measurement_unit: i.measurementUnit,
+            unit_price: i.unitPrice,
+            discount: i.discount,
+            igv: i.igv,
+            total: i.total,
+          })),
+        });
+        toast({ title: "Comprobante creado exitosamente" });
+      }
       navigate("/invoices");
     } catch (error) {
-      console.error("Error creating invoice:", error);
-      toast({ title: "Error al crear comprobante", variant: "destructive" });
+      console.error("Error saving invoice:", error);
+      toast({ title: isEditing ? "Error al actualizar comprobante" : "Error al crear comprobante", variant: "destructive" });
     } finally {
       setSaving(false);
     }
-  }, [formData, items, totalAmount, navigate, toast]);
+  }, [formData, items, totalAmount, navigate, toast, isEditing, invoiceId]);
 
   return {
     formData,
     items,
     saving,
+    loading,
+    isEditing,
     searchingClient,
     invoiceTypes,
     documentTypes,

@@ -32,6 +32,8 @@ const CreateInvoice = () => {
     formData,
     items,
     saving,
+    loading,
+    isEditing,
     searchingClient,
     invoiceTypes,
     documentTypes,
@@ -47,6 +49,14 @@ const CreateInvoice = () => {
     navigate,
   } = useCreateInvoice();
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
       {/* Header */}
@@ -55,8 +65,8 @@ const CreateInvoice = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Nuevo Comprobante</h1>
-          <p className="text-sm text-muted-foreground">Crear un nuevo comprobante de pago</p>
+          <h1 className="text-2xl font-bold text-foreground">{isEditing ? "Editar Comprobante" : "Nuevo Comprobante"}</h1>
+          <p className="text-sm text-muted-foreground">{isEditing ? "Modificar comprobante existente" : "Crear un nuevo comprobante de pago"}</p>
         </div>
       </div>
 
@@ -323,7 +333,7 @@ const CreateInvoice = () => {
         </Button>
         <Button onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          Guardar Comprobante
+          {isEditing ? "Actualizar Comprobante" : "Guardar Comprobante"}
         </Button>
       </div>
     </div>
