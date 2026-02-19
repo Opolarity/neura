@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Trash2, ArrowLeft, Search, FileText } from "lucide-react";
+import { Loader2, Plus, Trash2, ArrowLeft, Search, FileText, Send } from "lucide-react";
 import { useCreateInvoice } from "../hooks/useCreateInvoice";
 
 const CreateInvoice = () => {
@@ -32,8 +32,10 @@ const CreateInvoice = () => {
     formData,
     items,
     saving,
+    emitting,
     loading,
     isEditing,
+    declared,
     searchingClient,
     invoiceTypes,
     documentTypes,
@@ -46,6 +48,7 @@ const CreateInvoice = () => {
     updateItem,
     searchClient,
     handleSave,
+    handleEmit,
     navigate,
   } = useCreateInvoice();
 
@@ -331,6 +334,17 @@ const CreateInvoice = () => {
         <Button variant="outline" onClick={() => navigate("/invoices")}>
           Cancelar
         </Button>
+        {isEditing && !declared && (
+          <Button variant="secondary" onClick={handleEmit} disabled={emitting}>
+            {emitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+            Emitir en SUNAT
+          </Button>
+        )}
+        {isEditing && declared && (
+          <span className="flex items-center text-sm text-primary font-medium px-3">
+            ✓ Emitido en SUNAT
+          </span>
+        )}
         <Button onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
           {isEditing ? "Actualizar Comprobante" : "Guardar Comprobante"}
