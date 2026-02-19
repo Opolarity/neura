@@ -1,84 +1,81 @@
-## Boton "Crear" comprobante en el modal de ventas con asignacion automatica de serie
 
-### Objetivo
 
-Agregar un boton dropdown "Crear" en el modal de comprobantes vinculados (`SalesInvoicesModal`) que permita generar comprobantes desde la orden. El boton solo se habilitara cuando la orden este pagada al 100%, es decir la suma de los order_payment es exactamente igual al total de la orden. Al crear el comprobante, el sistema asignara automaticamente la serie correspondiente usando la tabla `sale_type_invoice_series`.  
-  
-NOTA: Antes de comenzar revisar de nuevo las tablas invoices, invoice_items, `sale_type_invoice_series` , invoice_series e invoice_providers ya que han dufrido cambios.
+# Plan: Mostrar selector de Business Account cuando el metodo de pago tiene business_account_id = 0
 
-### Cambios necesarios
+## Resumen
 
-#### 1. SalesInvoicesModal - Agregar boton "Crear" con dropdown
+Cuando se selecciona un metodo de pago cuyo `business_account_id` es `0` (como "Credito", "Debito", "Efectivo", "Transferencia bancaria"), se mostrara un campo adicional para que el usuario seleccione manualmente a cual cuenta de negocio (business account) asignar el pago. Si el metodo de pago ya tiene un `business_account_id` diferente de `0`, ese valor se usara automaticamente sin mostrar el campo extra.
 
-**Archivo:** `src/modules/sales/components/SalesInvoicesModal.tsx`
+## Cambios necesarios
 
-- Recibir nuevas props: `orderTotal` (monto total de la orden) y `saleTypeId` (tipo de canal de venta de la orden)
-- Al abrir el modal, consultar `order_payment` para sumar los pagos y determinar si esta 100% cancelada, es decir la suma de sus pagos es exactamente igual al total, no más, ni menos.
-- Cargar los tipos de comprobante (tabla `types` con modulo `INV`)
-- Mostrar un `DropdownMenu` con boton "Crear" alineado a la derecha en el header
-- Si no esta pagada al 100%, el boton aparece deshabilitado
-- Al seleccionar un tipo, ejecutar la logica de creacion del comprobante directamente desde el modal
+### 1. Edge Function `get-sales-form-data`
+- Modificar la consulta de `payment_methods` para incluir el campo `business_account_id` en la respuesta (actualmente solo trae `id` y `name`).
+- Agregar una nueva consulta para traer los `business_accounts` activos (id, name, bank) para poblar el dropdown.
 
-#### 2. Logica de creacion con serie automatica
+### 2. Tipos (`src/modules/sales/types/index.ts`)
+- Agregar `businessAccountId` al tipo `PaymentMethod` (actualmente solo tiene `id` y `name`).
+- Agregar `businessAccountId` al tipo `SalePayment` como campo opcional.
+- Agregar tipo `BusinessAccountOption` con `id`, `name`, `bank`.
+- Agregar `businessAccounts` al tipo `SalesFormDataResponse`.
 
-Cuando el usuario selecciona un tipo de comprobante del dropdown:
+### 3. Adaptador (`src/modules/sales/adapters/index.ts`)
+- Actualizar `adaptPaymentMethods` para incluir `businessAccountId`.
+- Agregar adaptador para `businessAccounts`.
+- Actualizar `adaptSalesFormData` para incluir `businessAccounts`.
 
-1. Consultar `sale_type_invoice_series` filtrando por `sale_type_id` de la orden para obtener el `tax_serie_id` (que referencia a `invoice_series`), hay posibilidad de que no lo encuentre.
-2. Con el registro de `invoice_series` obtenido, seleccionar la columna de serie correcta segun las reglas:
-  - **Factura** (code "1"): usar `fac_serie`
-  - **Boleta** (code "2"): usar `bol_serie`
-  - **Nota de credito** (code "3") o **Nota de debito** (code "4"): depende del comprobante vinculado (si esta vinculado a factura usar `fac_serie`, si a boleta usar `bol_serie`) -- para notas creadas desde ventas, esto no aplica directamente, asi que se omitira la serie por ahora para notas
-  - Si no encuentra o no consigue el registro de `invoice_series` dejar el campo tax_serie en NULL
-  - **Tipo comprobante** (code "INV") (columna code de la table types): automaticamente dejar tax_serie en NULL.
-3. Construir el `tax_serie` con el valor de la columna correspondiente
-4. Dejar la columna invoice_number como NULL (esa columna es nueva en invoices)
-5. La columna declared de invoices colocarla como false.
-6. Cargar datos del cliente y productos de la orden
-7. Llamar a la edge function `create-invoice` con toda la informacion
-8. Insertar el registro en `order_invoices` para vincular el comprobante con la orden
-9. Refrescar la lista de comprobantes en el modal
+### 4. Hook (`src/modules/sales/hooks/useCreateSale.ts`)
+- Agregar campo `businessAccountId` al `createEmptyPayment()`.
+- En `handlePaymentChange`, cuando se cambia `paymentMethodId`, verificar si el metodo seleccionado tiene `businessAccountId === 0`. Si no es 0, auto-asignar ese valor. Si es 0, limpiar para que el usuario seleccione.
+- En `addPayment`, validar que si el metodo tiene `businessAccountId === 0`, el usuario haya seleccionado una cuenta.
+- Al enviar los pagos en `handleSubmit`, incluir `business_account_id` en cada pago.
 
-#### 3. CreateSale - Pasar props adicionales al modal
+### 5. Pagina (`src/modules/sales/pages/CreateSale.tsx`)
+- En la seccion de pagos, despues del selector de metodo de pago, agregar condicionalmente un `Select` de "Cuenta de destino" que solo aparece cuando el metodo de pago seleccionado tiene `businessAccountId === 0`.
 
-**Archivo:** `src/modules/sales/pages/CreateSale.tsx`
+### 6. Servicio (`src/modules/sales/services/index.ts`)
+- Incluir `business_account_id` en el mapeo de pagos tanto en `createOrder` como en `updateOrder`.
 
-- Pasar `orderTotal` y `saleTypeId` como props al componente `SalesInvoicesModal`
+### 7. Edge Function `create-order`
+- Pasar `business_account_id` del pago al stored procedure en el array de pagos.
 
----
+### 8. Stored Procedure `sp_create_order`
+- Modificar para usar el `business_account_id` del pago cuando viene en el JSON (override), y solo hacer fallback a `payment_methods.business_account_id` cuando no viene o es null.
+- Agregar `business_acount_id` al INSERT de `order_payment`.
 
-### Detalles tecnicos
+### 9. Edge Function `update-order`
+- Usar el `business_account_id` del pago cuando viene en el input, sino caer al valor del payment_method.
+- Agregar `business_acount_id` al INSERT de `order_payment`.
 
-**Flujo de obtencion de serie:**
+## Seccion Tecnica
+
+### Flujo de datos
 
 ```text
-order.sale_type_id
-    |
-    v
-sale_type_invoice_series (sale_type_id -> tax_serie_id)
-    |
-    v
-invoice_series (id = tax_serie_id)
-    |
-    v
-Segun tipo de comprobante:
-  - Factura (code=1) -> fac_serie + "-" + next_number
-  - Boleta (code=2)  -> bol_serie + "-" + next_number
+UI (Select Business Account)
+  -> SalePayment.businessAccountId
+    -> createOrder/updateOrder service (business_account_id in payment)
+      -> Edge Function (pass through)
+        -> SP / direct insert
+          -> order_payment.business_acount_id
+          -> movements.business_account_id
 ```
 
-**Datos del comprobante a crear:**
+### Logica condicional en UI
 
-- `invoice_type_id`: ID del tipo seleccionado
-- `tax_serie`: serie obtenida automaticamente o NULL
-- invoice_number: NULL
-- declared: false
-- `customer_document_type_id` y `customer_document_number`: del `orders` (document_type, document_number)
-- `client_name`: del `orders` (customer_name + customer_lastname)
-- `total_amount`: total del orders
-- total_taxes: calculo del total de orders menos el total de orders entre 1.18.
-- Items: productos de `order_products` convertidos a items de comprobante
+```text
+SI payment_method.business_account_id === 0:
+  Mostrar Select "Cuenta de destino" con business_accounts activos
+  Guardar seleccion en currentPayment.businessAccountId
+  Validar antes de agregar pago
+SINO:
+  No mostrar campo extra
+  Usar payment_method.business_account_id automaticamente
+```
 
-**Archivos a modificar:**
+### Migracion SQL necesaria
 
-- `src/modules/sales/components/SalesInvoicesModal.tsx` (logica principal)
-- `src/modules/sales/pages/CreateSale.tsx` (pasar props)
-- `supabase/functions/create-invoice/index.ts` (agregar logica para vincular order_invoices y actualizar next_number)
+Actualizar `sp_create_order` para:
+1. Leer `business_account_id` del JSON de cada pago
+2. Usarlo como override cuando esta presente y es distinto de null/0
+3. Insertarlo en `order_payment.business_acount_id` (nota: la columna tiene typo "acount")
+
