@@ -150,6 +150,7 @@ export const GetBranches = async (): Promise<{ id: number; name: string }[]> => 
         .from("branches")
         .select("id, name")
         .eq("is_active", true)
+        .gt("id", 0)
         .order("name");
 
     if (error) throw error;
