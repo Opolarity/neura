@@ -50,6 +50,9 @@ export const useCreateInvoice = () => {
   const [saving, setSaving] = useState(false);
   const [emitting, setEmitting] = useState(false);
   const [declared, setDeclared] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [xmlUrl, setXmlUrl] = useState<string | null>(null);
+  const [cdrUrl, setCdrUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchingClient, setSearchingClient] = useState(false);
   const [invoiceTypes, setInvoiceTypes] = useState<Types[]>([]);
@@ -148,6 +151,9 @@ export const useCreateInvoice = () => {
         }
 
         setDeclared(invoice.declared || false);
+        setPdfUrl(invoice.pdf_url || null);
+        setXmlUrl(invoice.xml_url || null);
+        setCdrUrl(invoice.cdr_url || null);
         setFormData({
           invoiceTypeId: invoice.invoice_type_id.toString(),
           invoiceProviderId: providerId,
@@ -393,6 +399,9 @@ export const useCreateInvoice = () => {
       }
 
       setDeclared(true);
+      if (data?.pdf_url) setPdfUrl(data.pdf_url);
+      if (data?.xml_url) setXmlUrl(data.xml_url);
+      if (data?.cdr_url) setCdrUrl(data.cdr_url);
       toast({
         title: "Comprobante emitido en SUNAT",
         description: data?.sunat_description || "Emitido correctamente",
@@ -413,6 +422,9 @@ export const useCreateInvoice = () => {
     loading,
     isEditing,
     declared,
+    pdfUrl,
+    xmlUrl,
+    cdrUrl,
     searchingClient,
     invoiceTypes,
     documentTypes,

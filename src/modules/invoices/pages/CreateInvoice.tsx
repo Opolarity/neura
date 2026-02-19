@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Trash2, ArrowLeft, Search, FileText, Send } from "lucide-react";
+import { Loader2, Plus, Trash2, ArrowLeft, Search, FileText, Send, FileDown, Eye } from "lucide-react";
 import { useCreateInvoice } from "../hooks/useCreateInvoice";
 
 const CreateInvoice = () => {
@@ -36,6 +36,9 @@ const CreateInvoice = () => {
     loading,
     isEditing,
     declared,
+    pdfUrl,
+    xmlUrl,
+    cdrUrl,
     searchingClient,
     invoiceTypes,
     documentTypes,
@@ -63,14 +66,41 @@ const CreateInvoice = () => {
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/invoices")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{isEditing ? "Editar Comprobante" : "Nuevo Comprobante"}</h1>
-          <p className="text-sm text-muted-foreground">{isEditing ? "Modificar comprobante existente" : "Crear un nuevo comprobante de pago"}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/invoices")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{isEditing ? "Editar Comprobante" : "Nuevo Comprobante"}</h1>
+            <p className="text-sm text-muted-foreground">{isEditing ? "Modificar comprobante existente" : "Crear un nuevo comprobante de pago"}</p>
+          </div>
         </div>
+        {isEditing && declared && (pdfUrl || xmlUrl || cdrUrl) && (
+          <div className="flex items-center gap-2">
+            {pdfUrl && (
+              <Button variant="outline" size="sm" asChild>
+                <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                  <Eye className="h-4 w-4 mr-1" /> PDF
+                </a>
+              </Button>
+            )}
+            {xmlUrl && (
+              <Button variant="outline" size="sm" asChild>
+                <a href={xmlUrl} target="_blank" rel="noopener noreferrer">
+                  <FileDown className="h-4 w-4 mr-1" /> XML
+                </a>
+              </Button>
+            )}
+            {cdrUrl && (
+              <Button variant="outline" size="sm" asChild>
+                <a href={cdrUrl} target="_blank" rel="noopener noreferrer">
+                  <FileDown className="h-4 w-4 mr-1" /> CDR
+                </a>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Invoice Details */}
