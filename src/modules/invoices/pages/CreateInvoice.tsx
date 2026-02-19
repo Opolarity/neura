@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,10 +24,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Trash2, ArrowLeft, Search, FileText, Send, FileDown, Eye } from "lucide-react";
+import { Loader2, Plus, Trash2, ArrowLeft, Search, FileText, Send, FileDown, Eye, Copy } from "lucide-react";
 import { useCreateInvoice } from "../hooks/useCreateInvoice";
+import { useToast } from "@/hooks/use-toast";
 
 const CreateInvoice = () => {
+  const { toast } = useToast();
   const {
     formData,
     items,
@@ -79,19 +81,34 @@ const CreateInvoice = () => {
         {isEditing && (pdfUrl || xmlUrl || cdrUrl) && (
           <div className="flex items-center gap-2">
             {pdfUrl && (
-              <Button variant="outline" size="sm" onClick={() => window.open(pdfUrl, '_blank', 'noopener,noreferrer')}>
-                <Eye className="h-4 w-4 mr-1" /> PDF
-              </Button>
+              <>
+                <Button variant="outline" size="sm" onClick={() => window.open(pdfUrl, '_blank', 'noopener,noreferrer')}>
+                  <Eye className="h-4 w-4 mr-1" /> PDF
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(pdfUrl); toast({ title: "URL del PDF copiada" }); }}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </>
             )}
             {xmlUrl && (
-              <Button variant="outline" size="sm" onClick={() => window.open(xmlUrl, '_blank', 'noopener,noreferrer')}>
-                <FileDown className="h-4 w-4 mr-1" /> XML
-              </Button>
+              <>
+                <Button variant="outline" size="sm" onClick={() => window.open(xmlUrl, '_blank', 'noopener,noreferrer')}>
+                  <FileDown className="h-4 w-4 mr-1" /> XML
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(xmlUrl); toast({ title: "URL del XML copiada" }); }}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </>
             )}
             {cdrUrl && (
-              <Button variant="outline" size="sm" onClick={() => window.open(cdrUrl, '_blank', 'noopener,noreferrer')}>
-                <FileDown className="h-4 w-4 mr-1" /> CDR
-              </Button>
+              <>
+                <Button variant="outline" size="sm" onClick={() => window.open(cdrUrl, '_blank', 'noopener,noreferrer')}>
+                  <FileDown className="h-4 w-4 mr-1" /> CDR
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(cdrUrl); toast({ title: "URL del CDR copiada" }); }}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </>
             )}
           </div>
         )}
