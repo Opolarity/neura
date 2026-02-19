@@ -2462,35 +2462,35 @@ export type Database = {
         }
         Relationships: []
       }
-      sale_type_warehouses: {
+      sale_type_branches: {
         Row: {
+          branch_id: number
           id: number
           sale_type_id: number
-          warehouse_id: number
         }
         Insert: {
+          branch_id: number
           id?: number
           sale_type_id: number
-          warehouse_id: number
         }
         Update: {
+          branch_id?: number
           id?: number
           sale_type_id?: number
-          warehouse_id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "sale_type_branches_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sale_type_warehouses_sale_type_id_fkey"
             columns: ["sale_type_id"]
             isOneToOne: false
             referencedRelation: "sale_types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sale_type_warehouses_warehouse_id_fkey"
-            columns: ["warehouse_id"]
-            isOneToOne: false
-            referencedRelation: "warehouses"
             referencedColumns: ["id"]
           },
         ]

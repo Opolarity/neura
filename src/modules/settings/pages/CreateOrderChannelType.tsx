@@ -17,14 +17,14 @@ const CreateOrderChannelType = () => {
         paymentMethods,
         selectedPaymentMethods,
         invoiceSeries,
-        warehouses,
-        selectedWarehouses,
+        branches,
+        selectedBranches,
         cajas,
         isEdit,
         handleChange,
         togglePaymentMethod,
-        toggleWarehouse,
-        setSelectedWarehouseSingle,
+        toggleBranch,
+        setSelectedBranchSingle,
         handlePosToggle,
         handleSubmit,
         setFormData,
@@ -161,22 +161,22 @@ const CreateOrderChannelType = () => {
                                     </div>
                                 )}
 
-                                {/* Almacenes */}
+                                {/* Sucursales */}
                                 <div className="space-y-2">
-                                    <Label>Almacenes</Label>
+                                    <Label>Sucursales</Label>
                                     {formData.pos_sale_type ? (
                                         // Single select for POS
                                         <Select
-                                            value={selectedWarehouses.length > 0 ? String(selectedWarehouses[0]) : ''}
-                                            onValueChange={(val) => setSelectedWarehouseSingle(Number(val))}
+                                            value={selectedBranches.length > 0 ? String(selectedBranches[0]) : ''}
+                                            onValueChange={(val) => setSelectedBranchSingle(Number(val))}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Seleccionar almacén" />
+                                                <SelectValue placeholder="Seleccionar sucursal" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {warehouses.map((w) => (
-                                                    <SelectItem key={w.id} value={String(w.id)}>
-                                                        {w.name}
+                                                {branches.map((b) => (
+                                                    <SelectItem key={b.id} value={String(b.id)}>
+                                                        {b.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -184,18 +184,18 @@ const CreateOrderChannelType = () => {
                                     ) : (
                                         // Multi-select for non-POS
                                         <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
-                                            {warehouses.length === 0 ? (
-                                                <p className="text-sm text-muted-foreground">No hay almacenes disponibles</p>
+                                            {branches.length === 0 ? (
+                                                <p className="text-sm text-muted-foreground">No hay sucursales disponibles</p>
                                             ) : (
-                                                warehouses.map((w) => (
-                                                    <div key={w.id} className="flex items-center gap-2 py-1">
+                                                branches.map((b) => (
+                                                    <div key={b.id} className="flex items-center gap-2 py-1">
                                                         <Checkbox
-                                                            id={`wh-${w.id}`}
-                                                            checked={selectedWarehouses.includes(w.id)}
-                                                            onCheckedChange={() => toggleWarehouse(w.id)}
+                                                            id={`br-${b.id}`}
+                                                            checked={selectedBranches.includes(b.id)}
+                                                            onCheckedChange={() => toggleBranch(b.id)}
                                                         />
-                                                        <Label htmlFor={`wh-${w.id}`} className="text-sm cursor-pointer">
-                                                            {w.name}
+                                                        <Label htmlFor={`br-${b.id}`} className="text-sm cursor-pointer">
+                                                            {b.name}
                                                         </Label>
                                                     </div>
                                                 ))
@@ -260,9 +260,9 @@ const CreateOrderChannelType = () => {
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium">Almacenes seleccionados:</p>
+                                    <p className="text-sm font-medium">Sucursales seleccionadas:</p>
                                     <p className="text-2xl font-bold text-primary">
-                                        {selectedWarehouses.length}
+                                        {selectedBranches.length}
                                     </p>
                                 </div>
                             </CardContent>
