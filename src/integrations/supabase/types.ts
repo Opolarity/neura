@@ -4416,10 +4416,13 @@ export type Database = {
         }
         Returns: Record<string, unknown>
       }
-      sp_update_state_returns: {
+      sp_update_return_status: {
         Args: {
-          p_apply_stock: boolean
+          p_apply_stock?: boolean
+          p_branch_id?: number
+          p_business_account_id?: number
           p_module_id: number
+          p_payment_methods?: Json
           p_return_id: number
           p_situation_id: number
           p_status_id: number
