@@ -4,7 +4,7 @@
 // =============================================
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { getPriceListIsActiveTrue } from "@/shared/services/service";
+import { getPriceListIsActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +20,7 @@ import type {
   PaginatedProductVariation,
   PaginationMeta,
   OrdersSituationsById,
+  BusinessAccountOption,
 } from "../types";
 import {
   adaptSalesFormData,
@@ -127,6 +128,7 @@ export const useCreateSale = () => {
     null,
   );
   const [allShippingCosts, setAllShippingCosts] = useState<ShippingCost[]>([]);
+  const [businessAccounts, setBusinessAccounts] = useState<BusinessAccountOption[]>([]);
 
   // UI state
   const [clientFound, setClientFound] = useState<boolean | null>(null);
@@ -163,10 +165,11 @@ export const useCreateSale = () => {
     OrdersSituationsById[]
   >([]);
 
-  // Load initial form data and user warehouse
+  // Load initial form data, user warehouse, and business accounts
   useEffect(() => {
     loadFormData();
     loadUserWarehouse();
+    loadBusinessAccounts();
   }, []);
 
   // Load price lists on mount
@@ -458,6 +461,22 @@ export const useCreateSale = () => {
       });
     } finally {
       setPriceListsLoading(false);
+    }
+  };
+
+  // Load business accounts from shared service
+  const loadBusinessAccounts = async () => {
+    try {
+      const data = await getBusinessAccountIsActiveTrue();
+      setBusinessAccounts(
+        (data || []).map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          bank: item.bank,
+        }))
+      );
+    } catch (error) {
+      console.error("Error loading business accounts:", error);
     }
   };
 
@@ -1260,6 +1279,7 @@ export const useCreateSale = () => {
     filteredPaymentMethods,
     isAnonymousPurchase,
     needsBusinessAccountSelect,
+    businessAccounts,
 
     // Actions
     setOrderSituation,

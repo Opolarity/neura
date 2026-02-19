@@ -186,7 +186,7 @@ export interface SalesFormDataResponse {
   paymentMethodSaleTypes: { paymentMethodId: number; saleTypeId: number }[];
   situations: Situation[];
   stockTypes: StockType[];
-  businessAccounts: BusinessAccountOption[];
+  
 }
 
 // Create Order Request
