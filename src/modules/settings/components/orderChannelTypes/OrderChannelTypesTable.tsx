@@ -85,7 +85,7 @@ const OrderChannelTypesTable = ({
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" onClick={() => handleEdit(type.id)}>
-                    <Edit className="w-4 h-4 mr-1" /> Editar
+                    <Edit className="w-4 h-4" />
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
