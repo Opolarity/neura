@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -69,6 +69,8 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   height = '120px',
   toolbar = 'basic',
 }) => {
+  const isInternalChange = useRef(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -87,6 +89,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
     ],
     content: value,
     onUpdate: ({ editor }) => {
+      isInternalChange.current = true;
       onChange(editor.getHTML());
     },
     editorProps: {
@@ -96,6 +99,15 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
       },
     },
   });
+
+  // Sync external value changes (e.g. async product load)
+  
+  useEffect(() => {
+    if (editor && !isInternalChange.current && value !== editor.getHTML()) {
+      editor.commands.setContent(value || '');
+    }
+    isInternalChange.current = false;
+  }, [value, editor]);
 
   const setLink = useCallback(() => {
     if (!editor) return;
