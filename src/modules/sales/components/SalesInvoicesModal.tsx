@@ -106,7 +106,7 @@ export const SalesInvoicesModal = ({
                   <TableHead>#</TableHead>
                   <TableHead>Serie</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Doc. Cliente</TableHead>
+                  
                   <TableHead>Total</TableHead>
                   <TableHead>Fecha</TableHead>
                 </TableRow>
@@ -117,7 +117,7 @@ export const SalesInvoicesModal = ({
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{inv.tax_serie || "-"}</TableCell>
                     <TableCell>{inv.client_name || "-"}</TableCell>
-                    <TableCell>{inv.customer_document_number}</TableCell>
+                    
                     <TableCell>S/ {inv.total_amount.toFixed(2)}</TableCell>
                     <TableCell>
                       {format(new Date(inv.created_at), "dd/MM/yyyy")}
