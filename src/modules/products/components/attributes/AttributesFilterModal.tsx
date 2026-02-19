@@ -33,6 +33,8 @@ export default function AttributesFilterModal({
     filters.maxProducts?.toString() || ""
   );
 
+  const parsePositive = (raw: string) => raw.replace(/-/g, "");
+
   const handleApply = () => {
     onApply({
       minProducts: minProducts ? parseInt(minProducts) : null,
@@ -60,14 +62,18 @@ export default function AttributesFilterModal({
               <Input
                 type="number"
                 placeholder="Mínimo"
+                min={0}
                 value={minProducts}
-                onChange={(e) => setMinProducts(e.target.value)}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                onChange={(e) => setMinProducts(parsePositive(e.target.value))}
               />
               <Input
                 type="number"
                 placeholder="Máximo"
+                min={0}
                 value={maxProducts}
-                onChange={(e) => setMaxProducts(e.target.value)}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                onChange={(e) => setMaxProducts(parsePositive(e.target.value))}
               />
             </div>
           </div>

@@ -11,19 +11,12 @@ export interface AttributeGroup {
 }
 
 export interface AttributesApiResponse {
-  page: number;
-  size: number;
-  total: number;
+  page: {
+    page: number;
+    size: number;
+    total: number;
+  };
   data: AttributeGroup[];
-}
-
-export interface AttributeRow {
-  id: number;
-  type: 'group' | 'term';
-  name: string;
-  products: number;
-  groupId?: number;
-  groupName?: string;
 }
 
 export interface AttributeFilters {

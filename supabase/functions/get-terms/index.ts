@@ -22,6 +22,7 @@ serve(async (req) => {
     const min_pr = Number(url.searchParams.get('min_pr')) || null;
     const max_pr = Number(url.searchParams.get('max_pr')) || null;
     const group = Number(url.searchParams.get('group')) || null;
+    const order = url.searchParams.get('order') || null
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -38,7 +39,8 @@ serve(async (req) => {
       p_search: search,
       p_min_pr: min_pr,
       p_max_pr: max_pr,
-      p_group: group
+      p_group: group,
+      p_order: order
     });
 
     if (terms_error) {

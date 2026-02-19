@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Table,
@@ -10,17 +9,18 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, SquarePen } from 'lucide-react';
+import { Loader2, SquarePen } from 'lucide-react';
 import { ReturnItem } from '../../types/Returns.types';
 
 
 interface ReturnsTableProps {
     returns: ReturnItem[];
+    loading: boolean;
     formatDate: (date: string) => string;
     formatCurrency: (amount: number | null) => string;
 }
 
-export const ReturnsTable = ({ returns, formatDate, formatCurrency }: ReturnsTableProps) => {
+export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency }: ReturnsTableProps) => {
     const navigate = useNavigate();
 
     return (
@@ -41,7 +41,22 @@ export const ReturnsTable = ({ returns, formatDate, formatCurrency }: ReturnsTab
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {returns.map((returnItem) => (
+                    {loading ? (
+                        <TableRow>
+                            <TableCell colSpan={10} className="text-center py-8">
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Cargando devoluciones...
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    ) : returns.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                                No se encontraron devoluciones
+                            </TableCell>
+                        </TableRow>
+                    ) : returns.map((returnItem) => (
                         <TableRow key={returnItem.id}>
                             <TableCell className="font-medium">#{returnItem.id}</TableCell>
                             <TableCell>#{returnItem.order_id}</TableCell>

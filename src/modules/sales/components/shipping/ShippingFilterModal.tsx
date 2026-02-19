@@ -101,14 +101,18 @@ const ShippingFilterModal = ({
     }));
   };
 
+  const parsePositive = (raw: string) => {
+    if (!raw) return null;
+    const clean = raw.replace(/-/g, "");
+    return clean ? Number(clean) : null;
+  };
+
   const handleMinCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value ? Number(e.target.value) : null;
-    setInternalFilters((prev) => ({ ...prev, mincost: value }));
+    setInternalFilters((prev) => ({ ...prev, mincost: parsePositive(e.target.value) }));
   };
 
   const handleMaxCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value ? Number(e.target.value) : null;
-    setInternalFilters((prev) => ({ ...prev, maxcost: value }));
+    setInternalFilters((prev) => ({ ...prev, maxcost: parsePositive(e.target.value) }));
   };
 
   const handleClear = () => {
@@ -240,13 +244,17 @@ const ShippingFilterModal = ({
               <Input
                 type="number"
                 placeholder="Mínimo"
+                min={0}
                 value={internalFilters.mincost ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMinCostChange}
               />
               <Input
                 type="number"
                 placeholder="Máximo"
+                min={0}
                 value={internalFilters.maxcost ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMaxCostChange}
               />
             </div>

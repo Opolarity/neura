@@ -62,6 +62,19 @@ serve(async (req) => {
             }
         }
 
+
+        if (phone) {
+            const { error: authError } = await supabase.auth.admin.updateUserById(
+                uid,
+                { email }
+            );
+            if (authError) {
+                console.error('Error updating auth email:', authError);
+                throw new Error(`Auth update failed: ${authError.message}`);
+            }
+        }
+
+
         // 2. Update Accounts table
         const { error: accountError } = await supabase
             .from('accounts')
@@ -92,8 +105,7 @@ serve(async (req) => {
                 address,
                 address_reference,
                 warehouse_id,
-                branch_id,
-                phone
+                branch_id
             })
             .eq('UID', uid);
 

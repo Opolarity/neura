@@ -75,25 +75,7 @@ export const movementCategoriesApi = async (): Promise<MovementCategory[]> => {
   return data ?? [];
 };
 
-export const paymentMethodsApi = async (): Promise<PaymentMethod[]> => {
-  const { data, error } = await (supabase as any)
-    .from("payment_methods")
-    .select("id, name")
-    .order("name");
 
-  if (error) throw error;
-  return data ?? [];
-};
-
-export const businessAccountsApi = async (): Promise<BusinessAccount[]> => {
-  const { data, error } = await (supabase as any)
-    .from("business_accounts")
-    .select("id, name")
-    .order("name");
-
-  if (error) throw error;
-  return data ?? [];
-};
 
 // =============================================================================
 // SERVICIOS PARA EL FORMULARIO DE MOVIMIENTOS

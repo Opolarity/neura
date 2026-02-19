@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { name, business_account_id, active } = body; 
+    const { name, business_account_id, active } = body;
 
     if (!name || !business_account_id) {
       return new Response(
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     const { data, error } = await supabase.rpc("sp_create_payment_method", {
       p_name: name,
       p_business_account_id: business_account_id,
-      p_active: active ?? true, 
+      p_active: active ?? true,
     });
 
     if (error) {

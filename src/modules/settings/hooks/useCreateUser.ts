@@ -12,6 +12,7 @@ import {
     getUserDocumentApi
 } from '../services/Users.services';
 import { FilterOption, DocumentLookupPayload } from '../types/Users.types';
+import { typesByModuleCode } from '@/shared/services/service';
 
 interface FormData {
     name: string;
@@ -47,6 +48,8 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
     const [fetchingUser, setFetchingUser] = useState(false);
     const [userDataLoaded, setUserDataLoaded] = useState(false);
     const [showPasswordField, setShowPasswordField] = useState(false);
+    const [isSearchingDocument, setIsSearchingDocument] = useState(false);
+    const [isDocumentFound, setIsDocumentFound] = useState(false);
 
     // Options state
     const [roles, setRoles] = useState<FilterOption[]>([]);
@@ -92,17 +95,21 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
         const fetchOptions = async () => {
             try {
                 setOptionsLoading(true);
-                const data = await getUsersFormDataApi();
+                const [data, accountTypesData] = await Promise.all([
+                    getUsersFormDataApi(),
+                    typesByModuleCode("CUT"),
+                ]);
                 setRoles(data.roles || []);
                 setWarehouses(data.warehouses || []);
                 setDocumentTypes(data.documentTypes || []);
-                setAccountTypes(data.accountTypes || []);
                 setCountries(data.countries || []);
                 setBranches(data.branches || []);
 
+                setAccountTypes(accountTypesData);
+
                 // Auto-select USE account type if not in edit mode
-                if (!isEdit && data.accountTypes && data.accountTypes.length > 0) {
-                    const useType = data.accountTypes.find((t: any) => t.name?.toUpperCase().includes('USE'));
+                if (!isEdit && accountTypesData.length > 0) {
+                    const useType = accountTypesData.find(t => t.name?.toUpperCase().includes('USE'));
                     if (useType) {
                         setFormData(prev => ({
                             ...prev,
@@ -270,6 +277,46 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
 
 
 
+    // Document lookup
+    const handleDocumentLookup = async (overrideDocTypeId?: string) => {
+        if (isEdit) return;
+        const docTypeId = overrideDocTypeId ?? formData.document_type_id;
+        const docNumber = formData.document_number;
+        if (!docTypeId || !docNumber) return;
+
+        const selectedDocType = documentTypes.find(t => t.id.toString() === docTypeId);
+        const docTypeName = selectedDocType?.name?.toUpperCase();
+
+        setIsSearchingDocument(true);
+        try {
+            const result = await getUserDocumentApi({
+                documentType: docTypeName || '',
+                documentNumber: docNumber,
+            });
+
+            if (result?.found) {
+                setIsDocumentFound(true);
+                if (docTypeName === 'RUC') {
+                    setFormData(prev => ({
+                        ...prev,
+                        name: result.razonSocial || result.nombres || '',
+                    }));
+                } else {
+                    setFormData(prev => ({
+                        ...prev,
+                        name: result.nombres || '',
+                        last_name: result.apellidoPaterno || '',
+                        last_name2: result.apellidoMaterno || '',
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error('Error en document lookup:', error);
+        } finally {
+            setIsSearchingDocument(false);
+        }
+    };
+
     // Handlers
     const toggleRole = (id: number) => {
         setFormData(prev => ({
@@ -354,7 +401,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
             }
 
             const missingFields = Object.entries(requiredFields)
-                .filter(([key, value]) => !value)
+                .filter(([, value]) => !value)
                 .map(([key]) => key);
 
             if (missingFields.length > 0) {
@@ -439,8 +486,9 @@ const useCreateUser = (id?: string | null, isEdit?: boolean) => {
         showPasswordField,
         setShowPasswordField,
         isRUC,
-        isSearchingDocument: false,
-        isDocumentFound: false,
+        isSearchingDocument,
+        isDocumentFound,
+        handleDocumentLookup,
     };
 };
 

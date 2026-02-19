@@ -50,24 +50,26 @@ const ProductsFilterModal = ({
     }));
   };
 
+  const parsePositive = (raw: string) => {
+    if (!raw) return null;
+    const clean = raw.replace(/-/g, "");
+    return clean ? Number(clean) : null;
+  };
+
   const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value ? Number(e.target.value) : null;
-    setInternalFilters((prev) => ({ ...prev, minprice: value }));
+    setInternalFilters((prev) => ({ ...prev, minprice: parsePositive(e.target.value) }));
   };
 
   const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value ? Number(e.target.value) : null;
-    setInternalFilters((prev) => ({ ...prev, maxprice: value }));
+    setInternalFilters((prev) => ({ ...prev, maxprice: parsePositive(e.target.value) }));
   };
 
   const handleMinStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value ? Number(e.target.value) : null;
-    setInternalFilters((prev) => ({ ...prev, minstock: value }));
+    setInternalFilters((prev) => ({ ...prev, minstock: parsePositive(e.target.value) }));
   };
 
   const handleMaxStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value ? Number(e.target.value) : null;
-    setInternalFilters((prev) => ({ ...prev, maxstock: value }));
+    setInternalFilters((prev) => ({ ...prev, maxstock: parsePositive(e.target.value) }));
   };
 
   const handleStatusChange = (value: string) => {
@@ -132,13 +134,17 @@ const ProductsFilterModal = ({
               <Input
                 type="number"
                 placeholder="Mínimo"
+                min={0}
                 value={internalFilters.minprice ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMinPriceChange}
               />
               <Input
                 type="number"
                 placeholder="Máximo"
+                min={0}
                 value={internalFilters.maxprice ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMaxPriceChange}
               />
             </div>
@@ -149,13 +155,17 @@ const ProductsFilterModal = ({
               <Input
                 type="number"
                 placeholder="Mínimo"
+                min={0}
                 value={internalFilters.minstock ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMinStockChange}
               />
               <Input
                 type="number"
                 placeholder="Máximo"
+                min={0}
                 value={internalFilters.maxstock ?? ""}
+                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 onChange={handleMaxStockChange}
               />
             </div>

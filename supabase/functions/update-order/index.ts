@@ -13,14 +13,13 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error("Missing environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error("Missing environment variables: SUPABASE_URL or SUPABASE_ANON_KEY");
     }
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get user from auth header
-    const authHeader = req.headers.get("authorization")?.split(" ")[1];
+    // Get user from auth header - use anon key with user's JWT so auth.uid() works
+    const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "No authorization header" }),
@@ -28,7 +27,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader);
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      return new Response(
+        JSON.stringify({ error: "No authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
@@ -86,7 +97,6 @@ Deno.serve(async (req) => {
     let stockIsActive = true;
     let stockCompleted = true;
 
-    // Always fetch the current situation from order_situations (not from input)
     const { data: currentSituation } = await supabase
       .from("order_situations")
       .select("situation_id, situations!inner(code)")
@@ -129,11 +139,9 @@ Deno.serve(async (req) => {
     const movementTypeId = movementType?.id || 4;
     console.log("Movement type for sales (ORD):", movementTypeId);
 
-    // For reversal, we use the same sale type (ORD) with positive quantity
-    // This represents the reversal of the original sale movement
     const reversalTypeId = movementTypeId;
 
-    // Step 1: Get existing order products and their stock movements (including stock_type_id from the movement)
+    // Step 1: Get existing order products and their stock movements
     const { data: existingProducts } = await supabase
       .from("order_products")
       .select("id, product_variation_id, quantity, warehouses_id, stock_movement_id")
@@ -141,7 +149,6 @@ Deno.serve(async (req) => {
 
     // Step 2: Reverse stock movements for existing products
     for (const product of existingProducts || []) {
-      // Get the original stock_type_id and completed status from the stock movement
       const { data: originalMovement } = await supabase
         .from("stock_movements")
         .select("stock_type_id, completed")
@@ -151,10 +158,9 @@ Deno.serve(async (req) => {
       const originalStockTypeId = originalMovement?.stock_type_id || 9;
       const wasCompleted = originalMovement?.completed || false;
 
-      // Create reverse stock movement (positive to restore stock)
       await supabase.from("stock_movements").insert({
         product_variation_id: product.product_variation_id,
-        quantity: product.quantity, // Positive to restore
+        quantity: product.quantity,
         warehouse_id: product.warehouses_id,
         movement_type: reversalTypeId,
         stock_type_id: originalStockTypeId,
@@ -164,7 +170,6 @@ Deno.serve(async (req) => {
         vinculated_movement_id: product.stock_movement_id,
       });
 
-      // Restore product stock only if original movement was completed
       if (wasCompleted) {
         const { data: existingStock } = await supabase
           .from("product_stock")
@@ -187,20 +192,18 @@ Deno.serve(async (req) => {
     await supabase.from("order_products").delete().eq("order_id", orderId);
 
     // Resolve price_list_code from price_list_id
-    let priceListCode: string | null = null;
+    let priceListCode: string | undefined = undefined;
     if (input.price_list_id) {
       const { data: priceListData } = await supabase
         .from("price_list")
         .select("code")
         .eq("id", parseInt(input.price_list_id))
         .single();
-      priceListCode = priceListData?.code || null;
+      priceListCode = priceListData?.code ?? undefined;
     }
 
-    // Step 4: Update the order (customer_lastname already arrives concatenated from frontend)
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({
+    // Build update payload
+    const orderUpdate: Record<string, unknown> = {
         document_type: input.document_type,
         document_number: input.document_number,
         customer_name: input.customer_name,
@@ -208,7 +211,6 @@ Deno.serve(async (req) => {
         email: input.email,
         phone: input.phone ? parseInt(input.phone) : null,
         sale_type_id: input.sale_type,
-        price_list_code: priceListCode,
         shipping_method_code: input.shipping_method,
         shipping_cost: input.shipping_cost,
         country_id: input.country_id,
@@ -222,7 +224,16 @@ Deno.serve(async (req) => {
         subtotal: input.subtotal,
         discount: input.discount,
         total: input.total,
-      })
+    };
+
+    if (priceListCode !== undefined) {
+      orderUpdate.price_list_code = priceListCode;
+    }
+
+    // Step 4: Update the order
+    const { error: updateError } = await supabase
+      .from("orders")
+      .update(orderUpdate)
       .eq("id", orderId);
 
     if (updateError) {
@@ -238,7 +249,6 @@ Deno.serve(async (req) => {
       const lineDiscount = product.discount_amount * product.quantity;
       const productStockTypeId = product.stock_type_id;
 
-      // Create stock movement (negative for sales) with appropriate is_active/completed
       const { data: stockMovement, error: smError } = await supabase
         .from("stock_movements")
         .insert({
@@ -259,7 +269,6 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Insert order product
       await supabase.from("order_products").insert({
         order_id: orderId,
         product_variation_id: product.variation_id,
@@ -270,7 +279,6 @@ Deno.serve(async (req) => {
         stock_movement_id: stockMovement?.id || 0,
       });
 
-      // Update product stock only if stock movement is completed
       if (stockCompleted) {
         const { data: currentStock } = await supabase
           .from("product_stock")
@@ -289,9 +297,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Step 6: Handle payments update (optional - only if payments are provided)
+    // Step 6: Handle payments update
     if (input.payments && input.payments.length > 0) {
-      // Get movement class for income (INGRESO)
       const { data: movementClass } = await supabase
         .from("types")
         .select("id")
@@ -299,7 +306,6 @@ Deno.serve(async (req) => {
         .single();
       const movementClassId = movementClass?.id || 1;
 
-      // Get movement type for sales
       const { data: saleMovementType } = await supabase
         .from("types")
         .select("id")
@@ -307,22 +313,18 @@ Deno.serve(async (req) => {
         .single();
       const saleMovementTypeId = saleMovementType?.id || 1;
 
-      // Delete existing payments (movements are kept for audit)
       await supabase.from("order_payment").delete().eq("order_id", orderId);
 
-      // Insert new payments
       const createdPayments = [];
       for (let i = 0; i < input.payments.length; i++) {
         const payment = input.payments[i];
 
-        // Get payment method to find business account
         const { data: paymentMethod } = await supabase
           .from("payment_methods")
           .select("business_account_id")
           .eq("id", payment.payment_method_id)
           .single();
 
-        // Create financial movement
         const { data: movement, error: movError } = await supabase
           .from("movements")
           .insert({
@@ -344,7 +346,6 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Insert order payment
         const { data: orderPayment, error: opError } = await supabase
           .from("order_payment")
           .insert({

@@ -19,14 +19,14 @@ const DashboardLayout = () => {
         onCollapseChange={setIsSidebarCollapsed}
       />
       <div
-        className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "ml-16" : "ml-64"
+        className={`flex-1 min-w-0 transition-all duration-300 ${isSidebarCollapsed ? "ml-16" : "ml-64"
           }`}
       >
         <Header
           toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           onSignOut={handleSignOut}
         />
-        <main className="p-6">
+        <main className="p-6 min-w-0 overflow-hidden">
           <Outlet />
         </main>
       </div>

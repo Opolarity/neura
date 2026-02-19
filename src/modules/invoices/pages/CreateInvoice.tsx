@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,17 +24,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Trash2, ArrowLeft, Search, FileText } from "lucide-react";
+import { Loader2, Plus, Trash2, ArrowLeft, Search, FileText, Send, FileDown, Eye, Copy } from "lucide-react";
 import { useCreateInvoice } from "../hooks/useCreateInvoice";
+import { useToast } from "@/hooks/use-toast";
 
 const CreateInvoice = () => {
+  const { toast } = useToast();
   const {
     formData,
     items,
     saving,
+    emitting,
+    loading,
+    isEditing,
+    declared,
+    pdfUrl,
+    xmlUrl,
+    cdrUrl,
     searchingClient,
     invoiceTypes,
     documentTypes,
+    invoiceProviders,
+    invoiceSeries,
     totalAmount,
     handleFormChange,
     addItem,
@@ -42,20 +53,50 @@ const CreateInvoice = () => {
     updateItem,
     searchClient,
     handleSave,
+    handleEmit,
     navigate,
   } = useCreateInvoice();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/invoices")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Nuevo Comprobante</h1>
-          <p className="text-sm text-muted-foreground">Crear un nuevo comprobante de pago</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/invoices")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{isEditing ? "Editar Comprobante" : "Nuevo Comprobante"}</h1>
+            <p className="text-sm text-muted-foreground">{isEditing ? "Modificar comprobante existente" : "Crear un nuevo comprobante de pago"}</p>
+          </div>
         </div>
+        {isEditing && (pdfUrl || xmlUrl || cdrUrl) && (
+          <div className="flex items-center gap-2">
+            {pdfUrl && (
+              <Button variant="outline" size="sm" onClick={() => window.open(pdfUrl, '_blank', 'noopener,noreferrer')}>
+                <Eye className="h-4 w-4 mr-1" /> PDF
+              </Button>
+            )}
+            {xmlUrl && (
+              <Button variant="outline" size="sm" onClick={() => window.open(xmlUrl, '_blank', 'noopener,noreferrer')}>
+                <FileDown className="h-4 w-4 mr-1" /> XML
+              </Button>
+            )}
+            {cdrUrl && (
+              <Button variant="outline" size="sm" onClick={() => window.open(cdrUrl, '_blank', 'noopener,noreferrer')}>
+                <FileDown className="h-4 w-4 mr-1" /> CDR
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Invoice Details */}
@@ -66,7 +107,7 @@ const CreateInvoice = () => {
             Datos del Comprobante
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Invoice Type */}
           <div className="space-y-2">
             <Label>Tipo de Comprobante *</Label>
@@ -87,14 +128,51 @@ const CreateInvoice = () => {
             </Select>
           </div>
 
-          {/* Serie */}
+          {/* Invoice Provider */}
           <div className="space-y-2">
-            <Label>Serie</Label>
-            <Input
-              placeholder="Ej: F003-233"
-              value={formData.serie}
-              onChange={(e) => handleFormChange("serie", e.target.value)}
-            />
+            <Label>Proveedor de Facturación *</Label>
+            <Select
+              value={formData.invoiceProviderId}
+              onValueChange={(v) => handleFormChange("invoiceProviderId", v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar proveedor" />
+              </SelectTrigger>
+              <SelectContent>
+                {invoiceProviders.map((p) => (
+                  <SelectItem key={p.id} value={p.id.toString()}>
+                    {p.description || `Proveedor ${p.id}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Invoice Serie */}
+          <div className="space-y-2">
+            <Label>Serie *</Label>
+            <Select
+              value={formData.invoiceSerieId}
+              onValueChange={(v) => {
+                handleFormChange("invoiceSerieId", v);
+                const serie = invoiceSeries.find((s) => s.id.toString() === v);
+                if (serie) {
+                  handleFormChange("taxSerie", `${serie.fac_serie}`);
+                }
+              }}
+              disabled={!formData.invoiceProviderId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={formData.invoiceProviderId ? "Seleccionar serie" : "Seleccione proveedor primero"} />
+              </SelectTrigger>
+              <SelectContent>
+                {invoiceSeries.map((s) => (
+                  <SelectItem key={s.id} value={s.id.toString()}>
+                    FAC: {s.fac_serie} | BOL: {s.bol_serie} (#{s.next_number})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Document Type */}
@@ -147,6 +225,27 @@ const CreateInvoice = () => {
                 Cliente: <span className="font-medium text-foreground">{formData.clientName}</span>
               </p>
             )}
+          </div>
+
+          {/* Client Email */}
+          <div className="space-y-2">
+            <Label>Email del Cliente</Label>
+            <Input
+              type="email"
+              placeholder="cliente@email.com"
+              value={formData.clientEmail}
+              onChange={(e) => handleFormChange("clientEmail", e.target.value)}
+            />
+          </div>
+
+          {/* Client Address */}
+          <div className="space-y-2">
+            <Label>Dirección del Cliente</Label>
+            <Input
+              placeholder="Dirección"
+              value={formData.clientAddress}
+              onChange={(e) => handleFormChange("clientAddress", e.target.value)}
+            />
           </div>
         </CardContent>
       </Card>
@@ -261,9 +360,20 @@ const CreateInvoice = () => {
         <Button variant="outline" onClick={() => navigate("/invoices")}>
           Cancelar
         </Button>
+        {isEditing && !declared && (
+          <Button variant="secondary" onClick={handleEmit} disabled={emitting}>
+            {emitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+            Emitir en SUNAT
+          </Button>
+        )}
+        {isEditing && declared && (
+          <span className="flex items-center text-sm text-primary font-medium px-3">
+            ✓ Emitido en SUNAT
+          </span>
+        )}
         <Button onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          Guardar Comprobante
+          {isEditing ? "Actualizar Comprobante" : "Guardar Comprobante"}
         </Button>
       </div>
     </div>

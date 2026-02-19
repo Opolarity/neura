@@ -1,4 +1,4 @@
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -15,10 +15,10 @@ interface UsersTableProps {
   users: Users[];
   loading: boolean;
   onEdit: (user: Users) => void;
-  onDelete: (id: string) => void;
+  onDeleteClick: (user: Users) => void;
 }
 
-const UsersTable = ({ users, loading, onEdit, onDelete }: UsersTableProps) => {
+const UsersTable = ({ users, loading, onEdit, onDeleteClick }: UsersTableProps) => {
   return (
     <Table>
       <TableHeader>
@@ -34,10 +34,13 @@ const UsersTable = ({ users, loading, onEdit, onDelete }: UsersTableProps) => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {loading ? (
+        {loading && users.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={8} className="text-center">
-              Cargando usuarios...
+            <TableCell colSpan={8} className="text-center py-8">
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Cargando usuarios...
+              </div>
             </TableCell>
           </TableRow>
         ) : users.length === 0 ? (
@@ -58,20 +61,20 @@ const UsersTable = ({ users, loading, onEdit, onDelete }: UsersTableProps) => {
               <TableCell>
                 {u.created_at
                   ? format(
-                      new Date(u.created_at.split("T")[0].replace(/-/g, "/")),
-                      "dd/MM/yyyy",
-                    )
+                    new Date(u.created_at.split("T")[0].replace(/-/g, "/")),
+                    "dd/MM/yyyy",
+                  )
                   : "-"}
               </TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => onEdit(u)}>
+                  <Button variant="outline" size="icon" onClick={() => onEdit(u)}>
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="destructive"
                     size="icon"
-                    onClick={() => onDelete(u.profiles_id)}
+                    onClick={() => onDeleteClick(u)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

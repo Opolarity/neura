@@ -1,78 +1,84 @@
+## Boton "Crear" comprobante en el modal de ventas con asignacion automatica de serie
 
+### Objetivo
 
-## Guardar apellidos correctamente en orders y accounts
-
-### Resumen
-Actualmente `customer_lastname` en la tabla `orders` solo guarda el apellido paterno. Se necesita que guarde ambos apellidos (paterno + materno) juntos separados por un espacio. Al crear el account (cuando el cliente no existe), se debe guardar apellido paterno en `last_name` y apellido materno en `last_name2`.
+Agregar un boton dropdown "Crear" en el modal de comprobantes vinculados (`SalesInvoicesModal`) que permita generar comprobantes desde la orden. El boton solo se habilitara cuando la orden este pagada al 100%, es decir la suma de los order_payment es exactamente igual al total de la orden. Al crear el comprobante, el sistema asignara automaticamente la serie correspondiente usando la tabla `sale_type_invoice_series`.  
+  
+NOTA: Antes de comenzar revisar de nuevo las tablas invoices, invoice_items, `sale_type_invoice_series` , invoice_series e invoice_providers ya que han dufrido cambios.
 
 ### Cambios necesarios
 
-#### 1. Frontend - Servicio `src/modules/sales/services/index.ts`
-- En `createOrder`: enviar un nuevo campo `customer_lastname2` (ya se envia) para que el edge function lo use al crear el account.
-- Cambiar `customer_lastname` para que concatene ambos apellidos: `customerLastname + " " + customerLastname2`.
+#### 1. SalesInvoicesModal - Agregar boton "Crear" con dropdown
 
-#### 2. Frontend - Servicio `src/modules/sales/services/index.ts` (updateOrder)
-- Mismo cambio: `customer_lastname` debe enviar la concatenacion de ambos apellidos.
+**Archivo:** `src/modules/sales/components/SalesInvoicesModal.tsx`
 
-#### 3. Edge Function `create-order/index.ts`
-- Pasar `customer_lastname2` como campo separado dentro de `p_order_data` para que el RPC lo use al crear el account.
-- El campo `customer_lastname` ya llegara concatenado para guardarse en la tabla `orders`.
+- Recibir nuevas props: `orderTotal` (monto total de la orden) y `saleTypeId` (tipo de canal de venta de la orden)
+- Al abrir el modal, consultar `order_payment` para sumar los pagos y determinar si esta 100% cancelada, es decir la suma de sus pagos es exactamente igual al total, no más, ni menos.
+- Cargar los tipos de comprobante (tabla `types` con modulo `INV`)
+- Mostrar un `DropdownMenu` con boton "Crear" alineado a la derecha en el header
+- Si no esta pagada al 100%, el boton aparece deshabilitado
+- Al seleccionar un tipo, ejecutar la logica de creacion del comprobante directamente desde el modal
 
-#### 4. Migracion SQL - Modificar `sp_create_order`
-- En el INSERT a `accounts` (STEP 0), cambiar:
-  - `last_name` = `p_order_data->>'customer_lastname_first'` (apellido paterno solamente)
-  - `last_name2` = `p_order_data->>'customer_lastname2'` (apellido materno)
-- Se enviara un campo adicional `customer_lastname_first` con solo el apellido paterno para uso exclusivo del account.
+#### 2. Logica de creacion con serie automatica
 
-#### 5. Adapter `src/modules/sales/adapters/index.ts` - `adaptSaleById`
-- Al cargar una orden para edicion, `customer_lastname` contiene ambos apellidos juntos. Se debe separar: tomar la primera palabra como `customerLastname` y el resto como `customerLastname2`.
+Cuando el usuario selecciona un tipo de comprobante del dropdown:
 
-### Detalle tecnico
+1. Consultar `sale_type_invoice_series` filtrando por `sale_type_id` de la orden para obtener el `tax_serie_id` (que referencia a `invoice_series`), hay posibilidad de que no lo encuentre.
+2. Con el registro de `invoice_series` obtenido, seleccionar la columna de serie correcta segun las reglas:
+  - **Factura** (code "1"): usar `fac_serie`
+  - **Boleta** (code "2"): usar `bol_serie`
+  - **Nota de credito** (code "3") o **Nota de debito** (code "4"): depende del comprobante vinculado (si esta vinculado a factura usar `fac_serie`, si a boleta usar `bol_serie`) -- para notas creadas desde ventas, esto no aplica directamente, asi que se omitira la serie por ahora para notas
+  - Si no encuentra o no consigue el registro de `invoice_series` dejar el campo tax_serie en NULL
+  - **Tipo comprobante** (code "INV") (columna code de la table types): automaticamente dejar tax_serie en NULL.
+3. Construir el `tax_serie` con el valor de la columna correspondiente
+4. Dejar la columna invoice_number como NULL (esa columna es nueva en invoices)
+5. La columna declared de invoices colocarla como false.
+6. Cargar datos del cliente y productos de la orden
+7. Llamar a la edge function `create-invoice` con toda la informacion
+8. Insertar el registro en `order_invoices` para vincular el comprobante con la orden
+9. Refrescar la lista de comprobantes en el modal
 
-**En `src/modules/sales/services/index.ts` (createOrder y updateOrder):**
-```typescript
-// Concatenar apellidos para orders.customer_lastname
-const fullLastname = [orderData.customerLastname, orderData.customerLastname2]
-  .filter(Boolean)
-  .join(" ");
+#### 3. CreateSale - Pasar props adicionales al modal
 
-// Enviar al edge function
-customer_lastname: fullLastname,
-customer_lastname_first: orderData.customerLastname,  // solo paterno, para accounts
-customer_lastname2: orderData.customerLastname2,       // solo materno, para accounts
+**Archivo:** `src/modules/sales/pages/CreateSale.tsx`
+
+- Pasar `orderTotal` y `saleTypeId` como props al componente `SalesInvoicesModal`
+
+---
+
+### Detalles tecnicos
+
+**Flujo de obtencion de serie:**
+
+```text
+order.sale_type_id
+    |
+    v
+sale_type_invoice_series (sale_type_id -> tax_serie_id)
+    |
+    v
+invoice_series (id = tax_serie_id)
+    |
+    v
+Segun tipo de comprobante:
+  - Factura (code=1) -> fac_serie + "-" + next_number
+  - Boleta (code=2)  -> bol_serie + "-" + next_number
 ```
 
-**En `create-order/index.ts`:**
-```typescript
-// Pasar customer_lastname_first y customer_lastname2 en p_order_data
-// customer_lastname ya viene concatenado para la tabla orders
-```
+**Datos del comprobante a crear:**
 
-**Migracion SQL (sp_create_order):**
-```sql
--- En el INSERT a accounts, usar los campos separados
-INSERT INTO accounts (document_type_id, document_number, name, last_name, last_name2, ...)
-VALUES (
-  ...,
-  p_order_data->>'customer_name',
-  p_order_data->>'customer_lastname_first',  -- solo paterno
-  p_order_data->>'customer_lastname2',       -- solo materno
-  ...
-);
-```
+- `invoice_type_id`: ID del tipo seleccionado
+- `tax_serie`: serie obtenida automaticamente o NULL
+- invoice_number: NULL
+- declared: false
+- `customer_document_type_id` y `customer_document_number`: del `orders` (document_type, document_number)
+- `client_name`: del `orders` (customer_name + customer_lastname)
+- `total_amount`: total del orders
+- total_taxes: calculo del total de orders menos el total de orders entre 1.18.
+- Items: productos de `order_products` convertidos a items de comprobante
 
-**En `adaptSaleById`:**
-```typescript
-// Separar customer_lastname en paterno y materno
-const fullLastname = data.order.customer_lastname || "";
-const lastnameParts = fullLastname.split(" ");
-const customerLastname = lastnameParts[0] || "";
-const customerLastname2 = lastnameParts.slice(1).join(" ") || "";
-```
+**Archivos a modificar:**
 
-### Archivos a modificar
-- `src/modules/sales/services/index.ts` - concatenar apellidos al enviar
-- `supabase/functions/create-order/index.ts` - pasar campos separados al RPC
-- `supabase/functions/update-order/index.ts` - concatenar apellidos en el UPDATE a orders
-- Migracion SQL para actualizar `sp_create_order` - usar campos separados para accounts
-- `src/modules/sales/adapters/index.ts` - separar apellidos al cargar orden
+- `src/modules/sales/components/SalesInvoicesModal.tsx` (logica principal)
+- `src/modules/sales/pages/CreateSale.tsx` (pasar props)
+- `supabase/functions/create-invoice/index.ts` (agregar logica para vincular order_invoices y actualizar next_number)

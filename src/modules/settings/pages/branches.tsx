@@ -62,7 +62,7 @@ const BranchesList = () => {
                     <BranchesTable
                         branches={branches}
                         loading={loading}
-                        handleDeleteBranch={handleDeleteBranch}
+                        onDeleteClick={(branch) => handleDeleteBranch(branch.id)}
                     />
                 </CardContent>
                 <CardFooter>

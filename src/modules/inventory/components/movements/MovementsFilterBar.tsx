@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ListFilter, Search } from "lucide-react";
 
 interface MovementsFilterBarProps {
     search: string;
     onSearchChange: (text: string) => void;
     onOpen: () => void;
+    order: string;
+    onOrderChange: (order: string) => void;
     hasActiveFilters?: boolean;
 }
 
@@ -12,6 +15,8 @@ const MovementsFilterBar = ({
     search,
     onSearchChange,
     onOpen,
+    order,
+    onOrderChange,
     hasActiveFilters
 }: MovementsFilterBarProps) => {
     return (
@@ -31,6 +36,26 @@ const MovementsFilterBar = ({
                 <ListFilter className="w-4 h-4" />
                 Filtrar
             </Button>
+
+            <Select
+                value={order || "none"}
+                onValueChange={(value) =>
+                    onOrderChange(value === "none" ? "none" : value)
+                }
+            >
+                <SelectTrigger className="w-auto">
+                    <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="none">Sin orden</SelectItem>
+                    <SelectItem value="alp-asc">Nombre (A-Z)</SelectItem>
+                    <SelectItem value="alp-dsc">Nombre (Z-A)</SelectItem>
+                    <SelectItem value="cant-dsc">Cantidad más alta</SelectItem>
+                    <SelectItem value="cant-asc">Cantidad más baja</SelectItem>
+                    <SelectItem value="date-dsc">Fecha más reciente</SelectItem>
+                    <SelectItem value="date-asc">Fecha más antigua</SelectItem>
+                </SelectContent>
+            </Select>
         </div>
     )
 }

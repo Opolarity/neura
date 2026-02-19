@@ -74,6 +74,7 @@ import { formatCurrency, calculateLineSubtotal } from "../utils";
 import { useToast } from "@/hooks/use-toast";
 import { VoucherPreviewModal } from "../components/sales/VoucherPreviewModal";
 import { SalesHistoryModal } from "../components/SalesHistoryModal";
+import { SalesInvoicesModal } from "../components/SalesInvoicesModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 
@@ -153,6 +154,8 @@ const CreateSale = () => {
     setHistoryModalOpen,
   } = useCreateSale();
 
+  const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
+
   const [open, setOpen] = useState(false);
   const [tempPriceListId, setTempPriceListId] = useState<string>("");
   const [voucherModalOpen, setVoucherModalOpen] = useState(false);
@@ -162,6 +165,7 @@ const CreateSale = () => {
   const [highlightedRowIndex, setHighlightedRowIndex] = useState<number | null>(null);
   const noteFileInputRef = useRef<HTMLInputElement>(null);
   const voucherFileInputRef = useRef<HTMLInputElement>(null);
+  const isAcceptingRef = useRef(false);
   const { toast } = useToast();
 
   // Total pages for product pagination
@@ -223,12 +227,15 @@ const CreateSale = () => {
   return (
     <div className="space-y-6">
       {/* Sale Settings Modal */}
-      <Dialog open={showPriceListModal} onOpenChange={() => { }}>
-        <DialogContent
-          className="sm:max-w-md"
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-        >
+      <Dialog
+        open={showPriceListModal}
+        onOpenChange={(isOpenValue) => {
+          if (!isOpenValue && !isAcceptingRef.current) {
+            navigate("/sales");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Settings className="w-5 h-5 text-primary" />
@@ -303,7 +310,10 @@ const CreateSale = () => {
               Cancelar
             </Button>
             <Button
-              onClick={() => handleSelectPriceList(tempPriceListId)}
+              onClick={() => {
+                isAcceptingRef.current = true;
+                handleSelectPriceList(tempPriceListId);
+              }}
               disabled={!tempPriceListId || !userWarehouseId}
             >
               Aceptar
@@ -1050,35 +1060,43 @@ const CreateSale = () => {
           style={{ width: "30%" }}
         >
           {/* Order Status */}
-           <Card>
-             <CardHeader className="pb-2">
-               <CardTitle className="text-lg">Estado del Pedido</CardTitle>
-             </CardHeader>
-             <CardContent className="pb-2">
-               <Select value={orderSituation} onValueChange={setOrderSituation}>
-                 <SelectTrigger>
-                   <SelectValue placeholder="Seleccionar estado" />
-                 </SelectTrigger>
-                 <SelectContent>
-                   {filteredSituations.map((s) => (
-                     <SelectItem key={s.id} value={s.id.toString()}>
-                       {s.name}
-                     </SelectItem>
-                   ))}
-                 </SelectContent>
-               </Select>
-             </CardContent>
-             <CardFooter>
-               {createdOrderId && (
-                 <em
-                   className="italic text-sm underline cursor-pointer"
-                   onClick={() => setHistoryModalOpen(true)}
-                 >
-                   ver historial
-                 </em>
-               )}
-             </CardFooter>
-           </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Estado del Pedido</CardTitle>
+            </CardHeader>
+            <CardContent className="pb-2">
+              <Select value={orderSituation} onValueChange={setOrderSituation}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredSituations.map((s) => (
+                    <SelectItem key={s.id} value={s.id.toString()}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+            <CardFooter>
+              {createdOrderId && (
+                <div className="flex gap-3">
+                  <em
+                    className="italic text-sm underline cursor-pointer"
+                    onClick={() => setHistoryModalOpen(true)}
+                  >
+                    ver historial
+                  </em>
+                  <em
+                    className="italic text-sm underline cursor-pointer"
+                    onClick={() => setInvoicesModalOpen(true)}
+                  >
+                    ver comprobantes
+                  </em>
+                </div>
+              )}
+            </CardFooter>
+          </Card>
 
           {/* Summary & Payment */}
           <Card>
@@ -1457,6 +1475,15 @@ const CreateSale = () => {
         open={historyModalOpen}
         onOpenChange={setHistoryModalOpen}
       />
+      {createdOrderId && (
+        <SalesInvoicesModal
+          orderId={createdOrderId}
+          orderTotal={total}
+          saleTypeId={Number(formData.saleType) || 0}
+          open={invoicesModalOpen}
+          onOpenChange={setInvoicesModalOpen}
+        />
+      )}
     </div>
   );
 };

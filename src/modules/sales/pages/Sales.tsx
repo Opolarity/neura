@@ -104,7 +104,7 @@ const Sales = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
+              {loading && sales.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2">
@@ -171,13 +171,13 @@ const Sales = () => {
                         >
                           <SquarePen className="w-4 h-4" />
                         </Button>
-                        <Button
+                        {/*<Button
                           variant="outline"
                           size="sm"
                           onClick={() => navigate(`/sales/${sale.id}`)}
                         >
                           <Eye className="w-4 h-4" />
-                        </Button>
+                        </Button>*/}
                       </div>
                     </TableCell>
                   </TableRow>

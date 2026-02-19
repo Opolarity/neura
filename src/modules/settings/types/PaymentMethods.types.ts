@@ -19,3 +19,10 @@ export interface PaymentMethodsFilters {
     size: number;
     search?: string;
 }
+
+export interface PaymentMethodPayload {
+    id?: number;
+    name: string;
+    business_account_id: number | null;
+    active: boolean;
+}

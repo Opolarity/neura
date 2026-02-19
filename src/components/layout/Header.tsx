@@ -1,9 +1,10 @@
 import React from 'react';
-import { Bell, User, LogOut } from 'lucide-react';
+import { Bell, User, LogOut, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { getHeaderUserData } from '@/shared/services/service';
 import { supabase } from '@/integrations/supabase/client';
+import { useEcommerceSso } from '@/modules/ecommerce/hooks/useEcommerceSso';
 
 interface HeaderProps {
   onSignOut: () => void;
@@ -14,14 +15,13 @@ interface HeaderProps {
 
 const Header = ({ onSignOut }: HeaderProps) => {
   const [userData, setUserData] = useState({ account: 'Cargando...', role: 'Sin Rol' });
+  const { redirectToEcommerce, loading: ssoLoading } = useEcommerceSso();
 
   useEffect(() => {
     const initHeader = async () => {
-      // 1. Obtenemos el ID de la sesión actual de Supabase
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
-        // 2. USAMOS EL SERVICE (Aquí está la clave)
         const profile = await getHeaderUserData(user.id);
 
         if (profile) {
@@ -44,6 +44,21 @@ const Header = ({ onSignOut }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={redirectToEcommerce}
+            disabled={ssoLoading}
+            className="gap-2"
+          >
+            {ssoLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ExternalLink className="w-4 h-4" />
+            )}
+            Editar Ecommerce
+          </Button>
+
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
             <Bell className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
@@ -54,9 +69,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
               <User className="w-5 h-5 text-white" />
             </div>
             <div className="text-sm">
-              {/* Aquí mostramos el nombre de la cuenta (Account Name) */}
               <p className="font-medium">{userData.account || 'Cargando...'}</p>
-              {/* Aquí mostramos el rol o 'Sin Rol' */}
               <p className="text-gray-500 text-xs">
                 {userData.role || 'Sin Rol'}
               </p>

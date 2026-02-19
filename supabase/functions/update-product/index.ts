@@ -185,7 +185,7 @@ serve(async (req) => {
       .eq('is_active', true);
 
     // 4. Update images (delete all and recreate with proper references)
-    
+
     // First, fetch current images BEFORE deleting to identify which files to remove from storage
     console.log('Fetching current images before deletion...');
     const { data: currentImages } = await supabaseAdmin
@@ -211,11 +211,11 @@ serve(async (req) => {
       if (urlParts[1] && !urlParts[1].includes('default/')) {
         const storagePath = urlParts[1];
         console.log(`Deleting image from storage: ${storagePath}`);
-        
+
         const { error: deleteStorageError } = await supabaseAdmin.storage
           .from('products')
           .remove([storagePath]);
-        
+
         if (deleteStorageError) {
           console.error('Error deleting image from storage:', deleteStorageError);
           // Don't throw - continue with the process even if storage deletion fails
@@ -234,12 +234,12 @@ serve(async (req) => {
 
     for (let i = 0; i < productImages.length; i++) {
       const image = productImages[i];
-      
+
       // Get public URL from storage path
       const rawPath = image.path;
       let imageUrl: string;
       let needsRename = false;
-      
+
       if (rawPath && (rawPath.startsWith('http') || image.isExisting)) {
         // If it's already a full URL or marked as existing, use it directly
         imageUrl = rawPath;
@@ -275,20 +275,20 @@ serve(async (req) => {
       if (needsRename && rawPath) {
         // Get file extension from original path
         const originalFileName = rawPath.split('/').pop() || '';
-        const extension = originalFileName.includes('.') 
-          ? originalFileName.substring(originalFileName.lastIndexOf('.')) 
+        const extension = originalFileName.includes('.')
+          ? originalFileName.substring(originalFileName.lastIndexOf('.'))
           : '.jpg';
-        
+
         // New file name format: {product_image_id}-{product_id}.{extension}
         const newFileName = `${insertedImage.id}-${productId}${extension}`;
         const newPath = `products-images/${productId}/${newFileName}`;
-        
+
         console.log(`Moving image from ${rawPath} to ${newPath}`);
-        
+
         const { error: moveError } = await supabaseAdmin.storage
           .from('products')
           .move(rawPath, newPath);
-        
+
         if (moveError) {
           console.error('Error moving image:', moveError);
           // Keep the original URL if move fails
@@ -297,12 +297,12 @@ serve(async (req) => {
           const { data: { publicUrl } } = supabaseAdmin.storage
             .from('products')
             .getPublicUrl(newPath);
-          
+
           const { error: updateError } = await supabaseAdmin
             .from('product_images')
             .update({ image_url: publicUrl })
             .eq('id', insertedImage.id);
-          
+
           if (updateError) {
             console.error('Error updating image URL:', updateError);
           } else {
@@ -320,7 +320,7 @@ serve(async (req) => {
       .select('id')
       .eq('code', 'PRD')
       .single();
-    
+
     const defaultStockTypeId = defaultTypeData?.id;
 
     // Get manual movement type ID by looking up MAN code in STM module
@@ -343,24 +343,24 @@ serve(async (req) => {
     if (resetVariations) {
       // RESET MODE: Deactivate all existing variations and create new ones
       console.log('Reset variations mode - deactivating all existing variations...');
-      
+
       if (existingVariations && existingVariations.length > 0) {
         const existingIds = existingVariations.map((v: ExistingVariation) => v.id);
-        
+
         // Soft delete: set is_active = false
         const { error: deactivateError } = await supabaseAdmin
           .from('variations')
           .update({ is_active: false })
           .in('id', existingIds);
-        
+
         if (deactivateError) {
           console.error('Error deactivating variations:', deactivateError);
           throw new Error(`Error al desactivar variaciones: ${deactivateError.message}`);
         }
-        
+
         console.log(`Deactivated ${existingIds.length} existing variations`);
       }
-      
+
       // Create all new variations
       console.log('Creating all new variations...');
       for (const variation of variations) {
@@ -440,7 +440,7 @@ serve(async (req) => {
 
         if (stockInserts.length > 0) {
           await supabaseAdmin.from('product_stock').insert(stockInserts);
-          
+
           // Create stock movements for initial stock of new variations
           if (manualMovementTypeId) {
             const movementInserts = stockInserts.map(s => ({
@@ -453,11 +453,11 @@ serve(async (req) => {
               stock_type_id: s.stock_type_id,
               is_active: true
             }));
-            
+
             const { error: movementError } = await supabaseAdmin
               .from('stock_movements')
               .insert(movementInserts);
-            
+
             if (movementError) {
               console.error('Error creating stock movements:', movementError);
               // Don't throw - stock movements are secondary
@@ -603,17 +603,17 @@ serve(async (req) => {
         for (const newStock of incoming.stock) {
           const stockTypeId = newStock.stock_type_id || defaultStockTypeId;
           const newQty = newStock.stock || 0;
-          
+
           // Find current stock for this combination
           const oldStockRecord = currentStocks?.find(
-            (s: { warehouse_id: number; stock: number; stock_type_id: number }) => 
-              s.warehouse_id === newStock.warehouse_id && 
+            (s: { warehouse_id: number; stock: number; stock_type_id: number }) =>
+              s.warehouse_id === newStock.warehouse_id &&
               s.stock_type_id === stockTypeId
           );
-          
+
           const oldQty = oldStockRecord?.stock || 0;
           const difference = newQty - oldQty;
-          
+
           // UPSERT: Update if exists, insert if not
           if (oldStockRecord) {
             // Update existing record
@@ -623,7 +623,7 @@ serve(async (req) => {
               .eq('product_variation_id', existing.id)
               .eq('warehouse_id', newStock.warehouse_id)
               .eq('stock_type_id', stockTypeId);
-            
+
             if (updateError) {
               console.error('Error updating stock:', updateError);
               throw updateError;
@@ -638,13 +638,13 @@ serve(async (req) => {
                 stock: newQty,
                 stock_type_id: stockTypeId
               });
-            
+
             if (insertError) {
               console.error('Error inserting stock:', insertError);
               throw insertError;
             }
           }
-          
+
           // Only create movement if there's a real difference
           if (difference !== 0 && manualMovementTypeId) {
             const { error: movementError } = await supabaseAdmin
@@ -659,7 +659,7 @@ serve(async (req) => {
                 stock_type_id: stockTypeId,
                 is_active: true
               });
-            
+
             if (movementError) {
               console.error('Error creating stock movement:', movementError);
               // Don't throw - stock movements are secondary
@@ -768,7 +768,7 @@ serve(async (req) => {
 
           if (stockInserts.length > 0) {
             await supabaseAdmin.from('product_stock').insert(stockInserts);
-            
+
             // Create stock movements for initial stock of new variations
             if (manualMovementTypeId) {
               const movementInserts = stockInserts.map(s => ({
@@ -781,11 +781,11 @@ serve(async (req) => {
                 stock_type_id: s.stock_type_id,
                 is_active: true
               }));
-              
+
               const { error: movementError } = await supabaseAdmin
                 .from('stock_movements')
                 .insert(movementInserts);
-              
+
               if (movementError) {
                 console.error('Error creating stock movements:', movementError);
                 // Don't throw - stock movements are secondary

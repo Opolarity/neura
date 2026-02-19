@@ -47,14 +47,18 @@ const CategoriesFilterModal = ({
         }));
     };
 
+    const parsePositive = (raw: string) => {
+        if (!raw) return null;
+        const clean = raw.replace(/-/g, "");
+        return clean ? Number(clean) : null;
+    };
+
     const handleMinProductsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value ? Number(e.target.value) : null;
-        setInternalFilters((prev) => ({ ...prev, minproducts: value }));
+        setInternalFilters((prev) => ({ ...prev, minproducts: parsePositive(e.target.value) }));
     };
 
     const handleMaxProductsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value ? Number(e.target.value) : null;
-        setInternalFilters((prev) => ({ ...prev, maxproducts: value }));
+        setInternalFilters((prev) => ({ ...prev, maxproducts: parsePositive(e.target.value) }));
     };
 
     const handleParentCategoryChange = (value: string) => {
@@ -121,13 +125,17 @@ const CategoriesFilterModal = ({
                             <Input
                                 type="number"
                                 placeholder="Mínimo"
+                                min={0}
                                 value={internalFilters.minproducts ?? ""}
+                                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                 onChange={handleMinProductsChange}
                             />
                             <Input
                                 type="number"
                                 placeholder="Máximo"
+                                min={0}
                                 value={internalFilters.maxproducts ?? ""}
+                                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                 onChange={handleMaxProductsChange}
                             />
                         </div>

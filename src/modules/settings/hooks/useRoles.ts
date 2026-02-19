@@ -12,7 +12,7 @@ const useRoles = () => {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [isOpenDeleteModal, setIsOpenDeleteModal] = useState(false);
-  const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [filters, setFilters] = useState<RolesFilters>({
     page: 1,
     size: 20,
@@ -81,15 +81,16 @@ const useRoles = () => {
     setIsOpenFilterModal(false);
   };
 
-  const handleDeleteRole = (roleId: number) => {
-    setSelectedRoleId(roleId);
+  const handleDeleteRole = (role: Role) => {
+    setSelectedRole(role);
     setIsOpenDeleteModal(true);
   };
   const handleDeleteConfirm = async () => {
     setDeleting(true);
-    await deleteRoleApi(selectedRoleId);
+    await deleteRoleApi(selectedRole?.id);
     setDeleting(false);
     setIsOpenDeleteModal(false);
+    setSelectedRole(null);
     await loadRoles(filters);
   };
   const handleCloseDeleteModal = () => {
@@ -131,6 +132,7 @@ const useRoles = () => {
     pagination,
     isOpenFilterModal,
     isOpenDeleteModal,
+    selectedRole,
     deleting,
     hasActiveFilters,
     handleEditRole,
