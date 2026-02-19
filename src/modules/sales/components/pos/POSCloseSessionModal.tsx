@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, DollarSign, Calculator, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Loader2, AlertTriangle, Calculator } from "lucide-react";
 import type { POSSession, ClosePOSSessionRequest } from "../../types/POS.types";
 import { formatCurrency } from "@/shared/utils/currency";
 
@@ -77,33 +77,6 @@ export default function POSCloseSessionModal({
     });
   };
 
-  // Determine difference status
-  const getDifferenceStatus = () => {
-    if (difference > 0) {
-      return {
-        icon: TrendingUp,
-        color: "text-green-600",
-        bgColor: "bg-green-50",
-        label: "Sobrante",
-      };
-    } else if (difference < 0) {
-      return {
-        icon: TrendingDown,
-        color: "text-red-600",
-        bgColor: "bg-red-50",
-        label: "Faltante",
-      };
-    }
-    return {
-      icon: Minus,
-      color: "text-muted-foreground",
-      bgColor: "bg-muted",
-      label: "Sin diferencia",
-    };
-  };
-
-  const diffStatus = getDifferenceStatus();
-  const DiffIcon = diffStatus.icon;
 
   if (!session) return null;
 
@@ -146,7 +119,9 @@ export default function POSCloseSessionModal({
           <div className="space-y-2">
             <Label htmlFor="closingAmount">Monto de cierre</Label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+                S/
+              </span>
               <Input
                 id="closingAmount"
                 type="number"
@@ -164,19 +139,27 @@ export default function POSCloseSessionModal({
           </div>
 
           {/* Difference display */}
-          <div className={`rounded-lg p-4 ${diffStatus.bgColor}`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DiffIcon className={`w-5 h-5 ${diffStatus.color}`} />
-                <span className={`font-medium ${diffStatus.color}`}>
-                  {diffStatus.label}
-                </span>
+          {difference !== 0 && (
+            <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+              <div className="text-sm text-destructive">
+                <p className="font-medium">
+                  Diferencia detectada — {difference < 0 ? "Faltante" : "Sobrante"}
+                </p>
+                <p>
+                  Monto esperado: {formatCurrency(expectedAmount)} — Diferencia:{" "}
+                  <span className="font-semibold">
+                    {difference > 0 ? "+" : ""}{formatCurrency(difference)}
+                  </span>
+                </p>
               </div>
-              <span className={`font-bold text-lg ${diffStatus.color}`}>
-                {difference >= 0 ? "+" : ""}{formatCurrency(difference)}
-              </span>
             </div>
-          </div>
+          )}
+          {difference === 0 && closingAmount !== "" && (
+            <p className="text-xs text-muted-foreground">
+              Monto coincide con el esperado ✓
+            </p>
+          )}
 
           {/* Notes */}
           <div className="space-y-2">
