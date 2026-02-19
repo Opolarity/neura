@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
       citiesRes,
       neighborhoodsRes,
       paymentMethodsRes,
+      paymentMethodSaleTypeRes,
       situationsRes,
       stockTypesRes,
       productsRes,
@@ -47,6 +48,7 @@ Deno.serve(async (req) => {
       supabase.from("cities").select("id, name, state_id, country_id").order("name"),
       supabase.from("neighborhoods").select("id, name, city_id, state_id, country_id").order("name"),
       supabase.from("payment_methods").select("id, name").eq("active", true).order("name"),
+      supabase.from("payment_method_sale_type").select("payment_method_id, sale_type_id"),
       supabase.from("situations").select("id, name, code, order").eq("module_id", 1).order("order"), // Module 1 = Sales
       supabase.from("types").select("id, name, code").eq("module_id", stkModuleId).order("name"), // Stock types
       // Fetch only active products with active variations
@@ -90,6 +92,7 @@ Deno.serve(async (req) => {
       citiesRes.error,
       neighborhoodsRes.error,
       paymentMethodsRes.error,
+      paymentMethodSaleTypeRes.error,
       situationsRes.error,
       stockTypesRes.error,
       productsRes.error,
@@ -133,6 +136,7 @@ Deno.serve(async (req) => {
       cities: citiesRes.data || [],
       neighborhoods: neighborhoodsRes.data || [],
       paymentMethods: paymentMethodsRes.data || [],
+      paymentMethodSaleTypes: paymentMethodSaleTypeRes.data || [],
       situations: situationsRes.data || [],
       stockTypes: stockTypesRes.data || [],
       products,

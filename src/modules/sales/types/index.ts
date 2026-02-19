@@ -175,6 +175,7 @@ export interface SalesFormDataResponse {
   neighborhoods: Neighborhood[];
   products: ProductForSearch[];
   paymentMethods: PaymentMethod[];
+  paymentMethodSaleTypes: { paymentMethodId: number; saleTypeId: number }[];
   situations: Situation[];
   stockTypes: StockType[];
 }

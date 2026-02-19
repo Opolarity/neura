@@ -184,6 +184,10 @@ export const adaptSalesFormData = (data: any): SalesFormDataResponse => {
     neighborhoods: adaptNeighborhoods(data.neighborhoods || []),
     products: adaptProducts(data.products || []),
     paymentMethods: adaptPaymentMethods(data.paymentMethods || []),
+    paymentMethodSaleTypes: (data.paymentMethodSaleTypes || []).map((item: any) => ({
+      paymentMethodId: item.payment_method_id,
+      saleTypeId: item.sale_type_id,
+    })),
     situations: adaptSituations(data.situations || []),
     stockTypes: adaptStockTypes(data.stockTypes || []),
   };
