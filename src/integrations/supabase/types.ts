@@ -1418,7 +1418,7 @@ export type Database = {
             foreignKeyName: "orders_sale_type_id_fkey"
             columns: ["sale_type_id"]
             isOneToOne: false
-            referencedRelation: "types"
+            referencedRelation: "sale_types"
             referencedColumns: ["id"]
           },
           {
@@ -2476,59 +2476,53 @@ export type Database = {
         }
         Relationships: []
       }
-      sale_type_invoice_series: {
+      sale_types: {
         Row: {
+          business_acount_id: number | null
+          code: string | null
+          created_at: string
           id: number
-          sale_type_id: number
+          is_active: boolean
+          name: string
+          pos_sale_type: boolean
           tax_serie_id: number
         }
         Insert: {
+          business_acount_id?: number | null
+          code?: string | null
+          created_at?: string
           id?: number
-          sale_type_id: number
+          is_active?: boolean
+          name: string
+          pos_sale_type?: boolean
           tax_serie_id: number
         }
         Update: {
+          business_acount_id?: number | null
+          code?: string | null
+          created_at?: string
           id?: number
-          sale_type_id?: number
+          is_active?: boolean
+          name?: string
+          pos_sale_type?: boolean
           tax_serie_id?: number
         }
         Relationships: [
           {
-            foreignKeyName: "sale_type_invoice_series_sale_type_id_fkey"
-            columns: ["sale_type_id"]
+            foreignKeyName: "sale_types_business_acount_id_fkey"
+            columns: ["business_acount_id"]
             isOneToOne: false
-            referencedRelation: "types"
+            referencedRelation: "business_accounts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "sale_type_invoice_series_tax_serie_id_fkey"
+            foreignKeyName: "sale_types_tax_serie_id_fkey"
             columns: ["tax_serie_id"]
             isOneToOne: false
             referencedRelation: "invoice_series"
             referencedColumns: ["id"]
           },
         ]
-      }
-      sale_types: {
-        Row: {
-          created_at: string
-          id: number
-          is_manual: boolean
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          is_manual?: boolean
-          name: string
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          is_manual?: boolean
-          name?: string
-        }
-        Relationships: []
       }
       shipping_costs: {
         Row: {
@@ -3848,9 +3842,11 @@ export type Database = {
           p_account_id: number
           p_account_number: number
           p_bank: string
+          p_branch_id: number
           p_business_account_type_id: number
           p_name: string
           p_total_amount: number
+          p_user_id: string
         }
         Returns: Json
       }
@@ -4162,6 +4158,16 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_return_order_and_return: {
+        Args: {
+          p_order?: boolean
+          p_page?: number
+          p_return?: boolean
+          p_search?: string
+          p_size?: number
+        }
+        Returns: Json
+      }
       sp_get_returns: {
         Args: {
           p_end_date?: string
@@ -4302,12 +4308,14 @@ export type Database = {
       }
       sp_update_business_account: {
         Args: {
-          p_account_number: number
+          p_account_number: string
           p_bank: string
+          p_branch_id: number
           p_business_account_type_id: number
           p_id: number
           p_name: string
           p_total_amount: number
+          p_user_id: string
         }
         Returns: Json
       }

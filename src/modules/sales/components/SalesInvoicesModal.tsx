@@ -158,14 +158,14 @@ export const SalesInvoicesModal = ({
 
     try {
       // 1. Find invoice_series via sale_type_invoice_series
-      const { data: stis, error: stisError } = await supabase
+      const { data: stis, error: stisError } = await (supabase as any)
         .from("sale_type_invoice_series")
         .select("tax_serie_id")
         .eq("sale_type_id", saleTypeId);
 
       if (stisError || !stis || stis.length === 0) return null;
 
-      const serieId = stis[0].tax_serie_id;
+      const serieId = (stis[0] as any).tax_serie_id;
 
       // 2. Get the invoice_series record
       const { data: serie, error: serieError } = await supabase

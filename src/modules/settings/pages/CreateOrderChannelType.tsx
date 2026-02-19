@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import useCreateOrderChannelType from '../hooks/useCreateOrderChannelType';
 
 const CreateOrderChannelType = () => {
@@ -14,10 +16,12 @@ const CreateOrderChannelType = () => {
         optionsLoading,
         paymentMethods,
         selectedPaymentMethods,
+        invoiceSeries,
         isEdit,
         handleChange,
         togglePaymentMethod,
         handleSubmit,
+        setFormData,
     } = useCreateOrderChannelType();
 
     if (optionsLoading) {
@@ -35,12 +39,12 @@ const CreateOrderChannelType = () => {
                 </Button>
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">
-                        {isEdit ? 'Editar Tipo de Canal de Pedido' : 'Crear Tipo de Canal de Pedido'}
+                        {isEdit ? 'Editar Canal de Venta' : 'Crear Canal de Venta'}
                     </h1>
                     <p className="text-muted-foreground mt-2">
                         {isEdit
-                            ? 'Modifica la información del tipo de canal'
-                            : 'Completa la información para crear un nuevo tipo de canal'}
+                            ? 'Modifica la información del canal de venta'
+                            : 'Completa la información para crear un nuevo canal de venta'}
                     </p>
                 </div>
             </div>
@@ -60,7 +64,7 @@ const CreateOrderChannelType = () => {
                                         id="name"
                                         value={formData.name}
                                         onChange={handleChange}
-                                        placeholder="Ej: Web"
+                                        placeholder="Ej: Tienda Web"
                                         required
                                     />
                                 </div>
@@ -74,6 +78,43 @@ const CreateOrderChannelType = () => {
                                         placeholder="Ej: WEB"
                                         required
                                     />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Serie de Comprobante</Label>
+                                    <Select
+                                        value={formData.tax_serie_id ? String(formData.tax_serie_id) : ''}
+                                        onValueChange={(val) => setFormData(prev => ({ ...prev, tax_serie_id: Number(val) }))}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccionar serie" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {invoiceSeries.map((s) => (
+                                                <SelectItem key={s.id} value={String(s.id)}>
+                                                    {s.fac_serie} / {s.bol_serie} (ID: {s.id})
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <Switch
+                                        id="pos_sale_type"
+                                        checked={formData.pos_sale_type}
+                                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, pos_sale_type: checked }))}
+                                    />
+                                    <Label htmlFor="pos_sale_type">Canal de Punto de Venta (POS)</Label>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <Switch
+                                        id="is_active"
+                                        checked={formData.is_active}
+                                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+                                    />
+                                    <Label htmlFor="is_active">Activo</Label>
                                 </div>
                             </CardContent>
                         </Card>

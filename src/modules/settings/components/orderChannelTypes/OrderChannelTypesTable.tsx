@@ -34,26 +34,25 @@ const OrderChannelTypesTable = ({
           <TableHead>ID</TableHead>
           <TableHead>Nombre</TableHead>
           <TableHead>Código</TableHead>
+          <TableHead>POS</TableHead>
+          <TableHead>Estado</TableHead>
           <TableHead>Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={4} className="text-center py-8">
+            <TableCell colSpan={6} className="text-center py-8">
               <div className="flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Cargando tipos de canales...
+                Cargando canales de venta...
               </div>
             </TableCell>
           </TableRow>
         ) : orderChannelTypes.length === 0 ? (
           <TableRow>
-            <TableCell
-              colSpan={4}
-              className="text-center text-muted-foreground"
-            >
-              No hay tipos de canales de pedido registrados.
+            <TableCell colSpan={6} className="text-center text-muted-foreground">
+              No hay canales de venta registrados.
             </TableCell>
           </TableRow>
         ) : (
@@ -65,8 +64,22 @@ const OrderChannelTypesTable = ({
                 <Badge variant="outline">{type.code}</Badge>
               </TableCell>
               <TableCell>
+                {type.pos_sale_type ? (
+                  <Badge variant="default">Sí</Badge>
+                ) : (
+                  <Badge variant="secondary">No</Badge>
+                )}
+              </TableCell>
+              <TableCell>
+                {type.is_active ? (
+                  <Badge variant="default">Activo</Badge>
+                ) : (
+                  <Badge variant="destructive">Inactivo</Badge>
+                )}
+              </TableCell>
+              <TableCell>
                 <Button variant="outline" size="sm" onClick={() => handleEdit(type.id)}>
-                  <Edit >Editar</Edit>
+                  <Edit className="w-4 h-4 mr-1" /> Editar
                 </Button>
               </TableCell>
             </TableRow>
