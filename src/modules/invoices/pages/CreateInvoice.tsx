@@ -76,7 +76,7 @@ const CreateInvoice = () => {
             <p className="text-sm text-muted-foreground">{isEditing ? "Modificar comprobante existente" : "Crear un nuevo comprobante de pago"}</p>
           </div>
         </div>
-        {isEditing && declared && (pdfUrl || xmlUrl || cdrUrl) && (
+        {isEditing && (pdfUrl || xmlUrl || cdrUrl) && (
           <div className="flex items-center gap-2">
             {pdfUrl && (
               <Button variant="outline" size="sm" asChild>
