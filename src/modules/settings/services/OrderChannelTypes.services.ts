@@ -157,7 +157,7 @@ export const GetBranches = async (): Promise<{ id: number; name: string }[]> => 
     return data ?? [];
 };
 
-export const GetCajas = async (): Promise<{ id: number; name: string }[]> => {
+export const GetCajas = async (currentSaleTypeId?: number): Promise<{ id: number; name: string }[]> => {
     // Business accounts where type code = 'CHR' (cajas)
     const { data, error } = await supabase
         .from("business_accounts")
@@ -167,8 +167,37 @@ export const GetCajas = async (): Promise<{ id: number; name: string }[]> => {
 
     if (error) throw error;
 
-    // Filter by type code CHR
-    return (data ?? [])
+    const allCajas = (data ?? [])
         .filter((ba: any) => ba.types?.code === 'CHR')
         .map((ba: any) => ({ id: ba.id, name: ba.name }));
+
+    // Get cajas already linked to other sale types
+    const { data: linkedData, error: linkedError } = await supabase
+        .from("sale_types")
+        .select("business_acount_id")
+        .not("business_acount_id", "is", null)
+        .eq("is_active", true);
+
+    if (linkedError) throw linkedError;
+
+    const usedIds = new Set(
+        (linkedData ?? [])
+            .filter((st: any) => st.business_acount_id !== currentSaleTypeId ? true : true)
+            .map((st: any) => st.business_acount_id as number)
+    );
+
+    // Exclude cajas used by OTHER sale types (keep the one used by current if editing)
+    if (currentSaleTypeId) {
+        // Find which business_acount_id the current sale type uses
+        const { data: currentSt } = await supabase
+            .from("sale_types")
+            .select("business_acount_id")
+            .eq("id", currentSaleTypeId)
+            .single();
+        if (currentSt?.business_acount_id) {
+            usedIds.delete(currentSt.business_acount_id);
+        }
+    }
+
+    return allCajas.filter(c => !usedIds.has(c.id));
 };
