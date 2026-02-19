@@ -216,6 +216,7 @@ export interface CreateOrderRequest {
   subtotal: number;
   discount: number;
   total: number;
+  change: number;
   isExistingClient: boolean; // true if client exists in accounts table
   products: Array<{
     variationId: number;
@@ -230,6 +231,11 @@ export interface CreateOrderRequest {
     date: string;
     confirmationCode: string | null;
     voucherUrl: string | null;
+    businessAccountId?: number | null;
+  }>;
+  changeEntries: Array<{
+    paymentMethodId: number;
+    amount: number;
     businessAccountId?: number | null;
   }>;
   initialSituationId: number;

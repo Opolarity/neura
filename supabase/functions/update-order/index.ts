@@ -224,6 +224,7 @@ Deno.serve(async (req) => {
         subtotal: input.subtotal,
         discount: input.discount,
         total: input.total,
+        change: input.change || 0,
     };
 
     if (priceListCode !== undefined) {

@@ -115,7 +115,11 @@ const CreateSale = () => {
     filteredPaymentMethods,
     isAnonymousPurchase,
     needsBusinessAccountSelect,
+    needsChangeBusinessAccountSelect,
     businessAccounts,
+    // Change entries
+    changeEntries,
+    currentChangeEntry,
     // Server-side pagination
     productPage,
     productPagination,
@@ -148,6 +152,12 @@ const CreateSale = () => {
     removeNote,
     handleNoteImageSelect,
     removeNoteImage,
+    // Change entry actions
+    handleChangeEntryChange,
+    handleChangeVoucherSelect,
+    removeChangeVoucher,
+    addChangeEntry,
+    removeChangeEntry,
     // Voucher actions
     handleVoucherSelect,
     removeVoucher,
@@ -168,6 +178,7 @@ const CreateSale = () => {
   const [highlightedRowIndex, setHighlightedRowIndex] = useState<number | null>(null);
   const noteFileInputRef = useRef<HTMLInputElement>(null);
   const voucherFileInputRef = useRef<HTMLInputElement>(null);
+  const changeVoucherFileInputRef = useRef<HTMLInputElement>(null);
   const isAcceptingRef = useRef(false);
   const { toast } = useToast();
 
@@ -1321,6 +1332,191 @@ const CreateSale = () => {
                   </Button>
                 </div>
               </div>
+
+              {/* Sección de Vuelto - aparece cuando el pago supera el total */}
+              {changeAmount > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-green-600 dark:text-green-400">
+                      Vuelto — {formatCurrency(changeAmount)}
+                    </Label>
+
+                    {/* Lista de vueltos registrados */}
+                    {changeEntries.filter((e) => e.paymentMethodId).length > 0 && (
+                      <div className="space-y-2">
+                        {changeEntries
+                          .filter((e) => e.paymentMethodId)
+                          .map((e) => {
+                            const method = filteredPaymentMethods.find(
+                              (pm) => pm.id.toString() === e.paymentMethodId,
+                            );
+                            return (
+                              <div
+                                key={e.id}
+                                className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-md"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <CreditCard className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                  <span className="text-sm">{method?.name || "Método"}</span>
+                                  <span className="text-sm font-medium">
+                                    {formatCurrency(parseFloat(e.amount) || 0)}
+                                  </span>
+                                  {e.voucherPreview && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6"
+                                      onClick={() => {
+                                        setSelectedVoucherPreview(e.voucherPreview || null);
+                                        setVoucherModalOpen(true);
+                                      }}
+                                      title="Ver comprobante"
+                                    >
+                                      <Paperclip className="w-3 h-3 text-primary" />
+                                    </Button>
+                                  )}
+                                </div>
+                                {!isComSituation && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => removeChangeEntry(e.id)}
+                                  >
+                                    <Trash2 className="w-3 h-3 text-destructive" />
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
+
+                    {/* Formulario para agregar vuelto */}
+                    {(() => {
+                      const existingChangeTotal = changeEntries.reduce(
+                        (acc, e) => acc + (parseFloat(e.amount) || 0), 0
+                      );
+                      const remainingChange = changeAmount - existingChangeTotal;
+                      if (remainingChange <= 0) return null;
+                      return (
+                        <div className={cn("space-y-3 p-3 border border-green-200 dark:border-green-800 rounded-md bg-green-50/30 dark:bg-green-900/10", isComSituation && "opacity-50 pointer-events-none")}>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label>Método de Pago</Label>
+                              <Select
+                                value={currentChangeEntry.paymentMethodId}
+                                onValueChange={(v) => handleChangeEntryChange("paymentMethodId", v)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Seleccione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {filteredPaymentMethods.map((pm) => (
+                                    <SelectItem key={pm.id} value={pm.id.toString()}>
+                                      {pm.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label>Monto</Label>
+                              <Input
+                                type="number"
+                                value={currentChangeEntry.amount}
+                                onChange={(e) => handleChangeEntryChange("amount", e.target.value)}
+                                placeholder={remainingChange.toFixed(2)}
+                              />
+                            </div>
+                          </div>
+
+                          {needsChangeBusinessAccountSelect && (
+                            <div>
+                              <Label>Cuenta de origen</Label>
+                              <Select
+                                value={currentChangeEntry.businessAccountId || ""}
+                                onValueChange={(v) => handleChangeEntryChange("businessAccountId" as any, v)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Seleccione cuenta" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {businessAccounts?.map((ba) => (
+                                    <SelectItem key={ba.id} value={ba.id.toString()}>
+                                      {ba.name} - {ba.bank}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+
+                          {currentChangeEntry.voucherPreview && (
+                            <div className="relative group">
+                              <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+                                <img
+                                  src={currentChangeEntry.voucherPreview}
+                                  alt="Comprobante"
+                                  className="h-12 w-12 object-cover rounded"
+                                />
+                                <span className="text-xs text-muted-foreground flex-1 truncate">
+                                  {currentChangeEntry.voucherFile?.name}
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={removeChangeVoucher}
+                                >
+                                  <X className="w-3 h-3 text-destructive" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="file"
+                              ref={changeVoucherFileInputRef}
+                              className="hidden"
+                              accept="image/*,.pdf"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleChangeVoucherSelect(file);
+                                e.target.value = "";
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant={currentChangeEntry.voucherPreview ? "default" : "outline"}
+                              size="sm"
+                              className="w-full"
+                              onClick={() => changeVoucherFileInputRef.current?.click()}
+                            >
+                              <Upload className="w-4 h-4 mr-0.5" />
+                              {currentChangeEntry.voucherPreview ? "Cambiar" : "Comprobante"}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="w-full"
+                              onClick={addChangeEntry}
+                            >
+                              <Plus className="w-4 h-4 mr-0.5" />
+                              Agregar Vuelto
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 

@@ -1308,6 +1308,7 @@ export type Database = {
           address: string | null
           address_reference: string | null
           branch_id: number | null
+          change: number
           city_id: number | null
           country_id: number | null
           created_at: string
@@ -1336,6 +1337,7 @@ export type Database = {
           address?: string | null
           address_reference?: string | null
           branch_id?: number | null
+          change?: number
           city_id?: number | null
           country_id?: number | null
           created_at?: string
@@ -1364,6 +1366,7 @@ export type Database = {
           address?: string | null
           address_reference?: string | null
           branch_id?: number | null
+          change?: number
           city_id?: number | null
           country_id?: number | null
           created_at?: string
