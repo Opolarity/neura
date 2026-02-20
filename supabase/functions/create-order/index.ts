@@ -112,13 +112,6 @@ serve(async (req) => {
       business_account_id: p.business_account_id || null,
     }));
 
-    // Build change entries array
-    const changeEntries = (input.change_entries || []).map((e: any) => ({
-      payment_method_id: e.payment_method_id,
-      amount: e.amount,
-      business_account_id: e.business_account_id || null,
-    }));
-
     // Determine if we need to create the client (if not existing)
     const isExistingClient = input.is_existing_client === true;
 
@@ -179,8 +172,7 @@ serve(async (req) => {
       p_products: products,
       p_payments: payments,
       p_initial_situation_id: input.initial_situation_id,
-      p_is_existing_client: isExistingClient,
-      p_change_entries: changeEntries
+      p_is_existing_client: isExistingClient
     });
 
     if (error) {
