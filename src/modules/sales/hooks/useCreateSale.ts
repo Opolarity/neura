@@ -1399,6 +1399,7 @@ export const useCreateSale = () => {
     isComSituation,
     filteredSituations,
     filteredPaymentMethods,
+    allPaymentMethods: salesData?.paymentMethods ?? [],
     isAnonymousPurchase,
     needsBusinessAccountSelect,
     needsChangeBusinessAccountSelect,
