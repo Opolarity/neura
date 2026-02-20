@@ -10,6 +10,7 @@ export interface POSSessionListItem {
   openingAmount: number;
   closingAmount: number | null;
   totalSales: number | null;
+  openingDifference: number;
   difference: number | null;
   openedAt: string;
   closedAt: string | null;
@@ -41,7 +42,7 @@ export const fetchPOSSessions = async (
 
   let dataQuery = supabase
     .from("pos_sessions")
-    .select("id, opening_amount, total_sales, difference, opened_at, closed_at, status_id, user_id, branch_id, warehouse_id")
+    .select("id, opening_amount, total_sales, opening_difference, difference, opened_at, closed_at, status_id, user_id, branch_id, warehouse_id, \"closing_amount number\"")
     .order("id", { ascending: false })
     .range(from, to);
 
@@ -116,8 +117,9 @@ export const fetchPOSSessions = async (
       statusName: status?.name || "—",
       statusCode: status?.code || "",
       openingAmount: s.opening_amount,
-      closingAmount: null,
+      closingAmount: s["closing_amount number"] ?? null,
       totalSales: s.total_sales,
+      openingDifference: s.opening_difference ?? 0,
       difference: s.difference,
       openedAt: s.opened_at,
       closedAt: s.closed_at,
