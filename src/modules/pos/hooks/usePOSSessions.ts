@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -9,28 +9,42 @@ import {
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useNavigate } from "react-router-dom";
 
-// Hook for POS sessions list
+const defaultFilters: POSSessionsFilters = {
+  search: null,
+  statusId: null,
+  page: 1,
+  size: 20,
+  dateFrom: null,
+  dateTo: null,
+  differenceType: null,
+  salesMin: null,
+  salesMax: null,
+  orderBy: "date-desc",
+};
+
 export const usePOSSessions = () => {
   const [sessions, setSessions] = useState<POSSessionListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [order, setOrder] = useState<string | null>(null);
+  const [filters, setFilters] = useState<POSSessionsFilters>(defaultFilters);
   const [pagination, setPagination] = useState<PaginationState>({
     p_page: 1,
     p_size: 20,
     total: 0,
   });
-  const [filters, setFilters] = useState<POSSessionsFilters>({
-    search: null,
-    statusId: null,
-    page: 1,
-    size: 20,
-  });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Filter panel state
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [differenceType, setDifferenceType] = useState<string>("");
+  const [salesMin, setSalesMin] = useState<string>("");
+  const [salesMax, setSalesMax] = useState<string>("");
 
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const loadData = async (currentFilters: POSSessionsFilters) => {
+  const loadData = useCallback(async (currentFilters: POSSessionsFilters) => {
     setLoading(true);
     try {
       const response = await fetchPOSSessions(currentFilters);
@@ -50,16 +64,14 @@ export const usePOSSessions = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
-    if (debouncedSearch !== filters.search) {
-      const newFilters = { ...filters, search: debouncedSearch || null, page: 1 };
-      setFilters(newFilters);
-      loadData(newFilters);
-    }
+    const newFilters = { ...filters, search: debouncedSearch || null, page: 1 };
+    setFilters(newFilters);
+    loadData(newFilters);
   }, [debouncedSearch]);
 
   useEffect(() => {
@@ -69,10 +81,41 @@ export const usePOSSessions = () => {
   const onSearchChange = (value: string) => setSearch(value);
 
   const onOrderChange = (value: string) => {
-    const newOrder = value === "none" ? null : value;
-    setOrder(newOrder);
-    const ascending = newOrder === "date-asc";
-    const newFilters = { ...filters, page: 1 };
+    const orderBy = value === "none" ? "date-desc" : value;
+    const newFilters = { ...filters, orderBy, page: 1 };
+    setFilters(newFilters);
+    loadData(newFilters);
+  };
+
+  const onApplyFilters = () => {
+    const newFilters: POSSessionsFilters = {
+      ...filters,
+      page: 1,
+      dateFrom: dateFrom || null,
+      dateTo: dateTo ? dateTo + "T23:59:59Z" : null,
+      differenceType: differenceType || null,
+      salesMin: salesMin ? parseFloat(salesMin) : null,
+      salesMax: salesMax ? parseFloat(salesMax) : null,
+    };
+    setFilters(newFilters);
+    loadData(newFilters);
+  };
+
+  const onClearFilters = () => {
+    setDateFrom("");
+    setDateTo("");
+    setDifferenceType("");
+    setSalesMin("");
+    setSalesMax("");
+    const newFilters: POSSessionsFilters = {
+      ...filters,
+      page: 1,
+      dateFrom: null,
+      dateTo: null,
+      differenceType: null,
+      salesMin: null,
+      salesMax: null,
+    };
     setFilters(newFilters);
     loadData(newFilters);
   };
@@ -91,14 +134,37 @@ export const usePOSSessions = () => {
 
   const goToOpenPOS = () => navigate("/pos/open");
 
+  const activeFilterCount = [
+    dateFrom,
+    dateTo,
+    differenceType,
+    salesMin,
+    salesMax,
+  ].filter(Boolean).length;
+
   return {
     sessions,
     loading,
     search,
-    order,
+    filters,
     pagination,
+    filtersOpen,
+    setFiltersOpen,
+    dateFrom,
+    setDateFrom,
+    dateTo,
+    setDateTo,
+    differenceType,
+    setDifferenceType,
+    salesMin,
+    setSalesMin,
+    salesMax,
+    setSalesMax,
+    activeFilterCount,
     onSearchChange,
     onOrderChange,
+    onApplyFilters,
+    onClearFilters,
     onPageChange,
     handlePageSizeChange,
     goToOpenPOS,

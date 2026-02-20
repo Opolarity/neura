@@ -38,12 +38,28 @@ Deno.serve(async (req) => {
     const p_status_id = url.searchParams.get("status_id")
       ? parseInt(url.searchParams.get("status_id")!)
       : null;
+    const p_date_from = url.searchParams.get("date_from") || null;
+    const p_date_to = url.searchParams.get("date_to") || null;
+    const p_difference_type = url.searchParams.get("difference_type") || null;
+    const p_sales_min = url.searchParams.get("sales_min")
+      ? parseFloat(url.searchParams.get("sales_min")!)
+      : null;
+    const p_sales_max = url.searchParams.get("sales_max")
+      ? parseFloat(url.searchParams.get("sales_max")!)
+      : null;
+    const p_order_by = url.searchParams.get("order_by") || "date-desc";
 
     const { data, error } = await supabase.rpc("get_pos_sessions_list", {
       p_page,
       p_size,
       p_search,
       p_status_id,
+      p_date_from,
+      p_date_to,
+      p_difference_type,
+      p_sales_min,
+      p_sales_max,
+      p_order_by,
     });
 
     if (error) {
