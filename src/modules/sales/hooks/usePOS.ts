@@ -1098,7 +1098,7 @@ export const usePOS = () => {
     try {
       await POSSessionHook.closeSession(request);
       setShowCloseSessionModal(false);
-      navigate("/sales");
+      navigate("/pos");
     } catch {
       // Error is already handled in hook with toast
     }
