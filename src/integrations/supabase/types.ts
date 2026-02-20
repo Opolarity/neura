@@ -4022,32 +4022,19 @@ export type Database = {
       sp_delete_payment_method: { Args: { p_id: number }; Returns: Json }
       sp_delete_price_list: { Args: { p_id: number }; Returns: Json }
       sp_delete_stock_types: { Args: { p_id: number }; Returns: Json }
-      sp_ec_create_account_profile:
-        | {
-            Args: {
-              p_auth_uid: string
-              p_dni: string
-              p_lastname1: string
-              p_lastname2: string
-              p_nickname: string
-              p_nombre: string
-              p_tipo_documento_id: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_auth_uid: string
-              p_dni: string
-              p_email: string
-              p_lastname1: string
-              p_lastname2: string
-              p_nickname: string
-              p_nombre: string
-              p_tipo_documento_id: number
-            }
-            Returns: Json
-          }
+      sp_ec_create_account_profile: {
+        Args: {
+          p_auth_uid: string
+          p_dni: string
+          p_email: string
+          p_lastname1: string
+          p_lastname2: string
+          p_nickname: string
+          p_nombre: string
+          p_tipo_documento_id: number
+        }
+        Returns: Json
+      }
       sp_ec_get_categories_ids: {
         Args: { p_categories_ids?: number[] }
         Returns: Json

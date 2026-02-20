@@ -2,6 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -27,6 +34,9 @@ interface ProductsStepProps {
   onPageChange: (page: number) => void;
   priceListId: string;
   total: number;
+  stockTypes: Array<{ id: number; name: string }>;
+  selectedStockTypeId: string;
+  onStockTypeChange: (value: string) => void;
 }
 
 export default function ProductsStep({
@@ -41,6 +51,9 @@ export default function ProductsStep({
   pagination,
   priceListId,
   total,
+  stockTypes,
+  selectedStockTypeId,
+  onStockTypeChange,
 }: ProductsStepProps) {
   const getProductPrice = (product: PaginatedProductVariation): number => {
     const priceEntry = product.prices.find(
@@ -61,7 +74,7 @@ export default function ProductsStep({
         <div className="col-span-3 space-y-4">
           <Card>
             <CardContent className="pt-4">
-              {/* Search bar */}
+              {/* Search bar and stock type selector */}
               <div className="flex gap-2 mb-4">
                 <div className="flex-1 relative">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -72,6 +85,18 @@ export default function ProductsStep({
                     className="pl-10"
                   />
                 </div>
+                <Select value={selectedStockTypeId} onValueChange={onStockTypeChange}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Tipo inventario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stockTypes.map((st) => (
+                      <SelectItem key={st.id} value={String(st.id)}>
+                        {st.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Button variant="outline" className="gap-2">
                   <Barcode className="w-4 h-4" />
                   F2 Scanner
@@ -83,7 +108,12 @@ export default function ProductsStep({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Producto</TableHead>
-                    <TableHead className="text-center">Stock</TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex flex-col items-center">
+                        <span>Stock</span>
+                        <span className="text-[10px] font-normal text-muted-foreground">(Virtual)</span>
+                      </div>
+                    </TableHead>
                     <TableHead className="text-right">Precio</TableHead>
                     <TableHead className="w-20"></TableHead>
                   </TableRow>
