@@ -99,19 +99,19 @@ export default function POSCloseSessionModal({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Summary section */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-            <div className="flex items-center justify-between text-sm">
+          <div className="bg-muted/50 rounded-lg p-3 space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Monto de apertura</span>
               <span className="font-medium">{formatCurrency(session.openingAmount)}</span>
             </div>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Total de ventas</span>
               <span className="font-medium text-green-600">+ {formatCurrency(totalSales)}</span>
             </div>
             <Separator />
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Monto esperado</span>
-              <span className="font-bold text-lg">{formatCurrency(expectedAmount)}</span>
+              <span className="font-bold">{formatCurrency(expectedAmount)}</span>
             </div>
           </div>
 
