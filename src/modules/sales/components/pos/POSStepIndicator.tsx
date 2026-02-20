@@ -27,24 +27,23 @@ export default function POSStepIndicator({
 
         return (
           <div key={step} className="flex items-center">
-            {/* Step circle and label */}
             <button
               onClick={() => canClick && onStepClick(step)}
               disabled={!canClick}
               className={cn(
-                "flex flex-col items-center gap-2 px-4",
+                "flex items-center gap-1.5 px-3 py-1",
                 canClick ? "cursor-pointer" : "cursor-not-allowed opacity-50"
               )}
             >
               <div
                 className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                  "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-colors shrink-0",
                   isCompleted && "bg-blue-600 text-white",
-                  isActive && "bg-blue-600 text-white ring-4 ring-blue-100",
+                  isActive && "bg-blue-600 text-white ring-2 ring-blue-100",
                   !isCompleted && !isActive && "bg-gray-100 text-gray-500"
                 )}
               >
-                {isCompleted ? <Check className="w-5 h-5" /> : step}
+                {isCompleted ? <Check className="w-3.5 h-3.5" /> : step}
               </div>
               <span
                 className={cn(
@@ -57,11 +56,10 @@ export default function POSStepIndicator({
               </span>
             </button>
 
-            {/* Connector line */}
             {index < steps.length - 1 && (
               <div
                 className={cn(
-                  "w-20 h-0.5 -mt-6",
+                  "w-10 h-px",
                   currentStep > step ? "bg-blue-600" : "bg-gray-200"
                 )}
               />
