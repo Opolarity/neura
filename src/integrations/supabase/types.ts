@@ -3909,19 +3909,34 @@ export type Database = {
         Args: { p_created_by: string; p_items: Json; p_warehouse_id: number }
         Returns: Json
       }
-      sp_create_order: {
-        Args: {
-          p_branch_id: number
-          p_initial_situation_id: number
-          p_is_existing_client?: boolean
-          p_order_data: Json
-          p_payments: Json
-          p_products: Json
-          p_user_id: string
-          p_warehouse_id: number
-        }
-        Returns: Json
-      }
+      sp_create_order:
+        | {
+            Args: {
+              p_branch_id: number
+              p_initial_situation_id: number
+              p_is_existing_client?: boolean
+              p_order_data: Json
+              p_payments: Json
+              p_products: Json
+              p_user_id: string
+              p_warehouse_id: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_branch_id: number
+              p_change_entries?: Json
+              p_initial_situation_id: number
+              p_is_existing_client?: boolean
+              p_order_data: Json
+              p_payments: Json
+              p_products: Json
+              p_user_id: string
+              p_warehouse_id: number
+            }
+            Returns: Json
+          }
       sp_create_order_chanel_type: {
         Args: {
           p_code: string
@@ -4036,6 +4051,7 @@ export type Database = {
       sp_ec_get_product_list: {
         Args: {
           p_category_id?: number
+          p_order?: string
           p_page?: number
           p_sale_price?: boolean
           p_search?: string
@@ -4341,9 +4357,9 @@ export type Database = {
       sp_open_pos_session: {
         Args: {
           p_branch_id: number
-          p_business_account_id?: number
+          p_business_account_id: number
           p_notes?: string
-          p_opening_amount?: number
+          p_opening_amount: number
           p_user_id: string
           p_warehouse_id: number
         }
