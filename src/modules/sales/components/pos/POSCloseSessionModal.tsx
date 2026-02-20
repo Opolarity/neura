@@ -19,7 +19,8 @@ import { formatCurrency } from "@/shared/utils/currency";
 interface POSCloseSessionModalProps {
   isOpen: boolean;
   session: POSSession | null;
-  totalSales: number;
+  totalCashSales: number;
+  businessAccountTotal: number;
   isClosing: boolean;
   onClose: (request: ClosePOSSessionRequest) => Promise<unknown>;
   onCancel: () => void;
@@ -28,16 +29,23 @@ interface POSCloseSessionModalProps {
 export default function POSCloseSessionModal({
   isOpen,
   session,
-  totalSales,
+  totalCashSales,
+  businessAccountTotal,
   isClosing,
   onClose,
   onCancel
 }: POSCloseSessionModalProps) {
-  // Calculate expected amount (opening + sales)
+  // Calculate expected amount (opening + cash sales)
   const expectedAmount = useMemo(() => {
     if (!session) return 0;
-    return session.openingAmount + totalSales;
-  }, [session, totalSales]);
+    return session.openingAmount + totalCashSales;
+  }, [session, totalCashSales]);
+
+  // Other external movements = business account total - (opening + cash sales)
+  const otherMovements = useMemo(() => {
+    if (!session) return 0;
+    return businessAccountTotal - (session.openingAmount + totalCashSales);
+  }, [session, businessAccountTotal, totalCashSales]);
 
   // Editable closing amount (initialized with expected)
   const [closingAmount, setClosingAmount] = useState<string>("");
@@ -106,7 +114,13 @@ export default function POSCloseSessionModal({
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Total de ventas en efectivo</span>
-              <span className="font-medium text-green-600">+ {formatCurrency(totalSales)}</span>
+              <span className="font-medium text-green-600">+ {formatCurrency(totalCashSales)}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Otros movimientos externos</span>
+              <span className={`font-medium ${otherMovements >= 0 ? "text-blue-600" : "text-destructive"}`}>
+                {otherMovements >= 0 ? "+ " : ""}{formatCurrency(otherMovements)}
+              </span>
             </div>
             <Separator />
             <div className="flex items-center justify-between text-sm">

@@ -1056,40 +1056,53 @@ export const usePOS = () => {
 
   // State for close session modal
   const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
-  const [sessionTotalSales, setSessionTotalSales] = useState(0);
+  const [sessionTotalCashSales, setSessionTotalCashSales] = useState(0);
+  const [sessionBusinessAccountTotal, setSessionBusinessAccountTotal] = useState(0);
 
-  // Calculate session total sales from linked orders
-  const loadSessionTotalSales = useCallback(async () => {
+  // Load session cash sales and business account total
+  const loadSessionCloseData = useCallback(async () => {
     if (!POSSessionHook.session?.id) {
-      setSessionTotalSales(0);
+      setSessionTotalCashSales(0);
+      setSessionBusinessAccountTotal(0);
       return;
     }
 
     try {
-      const { data, error } = await supabase
-        .from("pos_session_orders")
-        .select("order_id, orders(total)")
-        .eq("pos_session_id", POSSessionHook.session.id);
+      // Load total_cash_sales and business_account from pos_sessions
+      const { data: sessionData, error: sessionError } = await supabase
+        .from("pos_sessions")
+        .select("total_cash_sales, business_account")
+        .eq("id", POSSessionHook.session.id)
+        .single();
 
-      if (error) throw error;
+      if (sessionError) throw sessionError;
 
-      const total = data?.reduce((sum, item) => {
-        const order = Array.isArray(item.orders) ? item.orders[0] : item.orders;
-        return sum + ((order as { total?: number })?.total || 0);
-      }, 0) || 0;
+      const cashSales = sessionData?.total_cash_sales ?? 0;
+      setSessionTotalCashSales(cashSales);
 
-      setSessionTotalSales(total);
+      // Load total_amount from business_accounts
+      if (sessionData?.business_account) {
+        const { data: baData, error: baError } = await supabase
+          .from("business_accounts")
+          .select("total_amount")
+          .eq("id", sessionData.business_account)
+          .single();
+
+        if (baError) throw baError;
+        setSessionBusinessAccountTotal(baData?.total_amount ?? 0);
+      }
     } catch (error) {
-      console.error("Error loading session sales:", error);
-      setSessionTotalSales(0);
+      console.error("Error loading session close data:", error);
+      setSessionTotalCashSales(0);
+      setSessionBusinessAccountTotal(0);
     }
   }, [POSSessionHook.session?.id]);
 
   const exitPOS = useCallback(async () => {
-    // Load session total sales and show close modal
-    await loadSessionTotalSales();
+    // Load session data and show close modal
+    await loadSessionCloseData();
     setShowCloseSessionModal(true);
-  }, [loadSessionTotalSales]);
+  }, [loadSessionCloseData]);
 
   const handleCloseSession = useCallback(async (request: { sessionId: number; closingAmount: number; notes?: string }) => {
     try {
@@ -1215,7 +1228,8 @@ export const usePOS = () => {
     
     // Close session modal
     showCloseSessionModal,
-    sessionTotalSales,
+    sessionTotalCashSales,
+    sessionBusinessAccountTotal,
     handleCloseSession,
     cancelCloseSession,
   };
