@@ -4017,6 +4017,29 @@ export type Database = {
         Args: { p_code: string; p_name: string }
         Returns: Json
       }
+      sp_create_user_profile: {
+        Args: {
+          p_address?: string
+          p_address_reference?: string
+          p_branch_id?: number
+          p_city_id?: number
+          p_country_id?: number
+          p_document_number?: string
+          p_document_type_id?: number
+          p_last_name?: string
+          p_last_name2?: string
+          p_middle_name?: string
+          p_name: string
+          p_neighborhood_id?: number
+          p_role_ids?: number[]
+          p_show?: boolean
+          p_state_id?: number
+          p_type_ids?: number[]
+          p_uid: string
+          p_warehouse_id?: number
+        }
+        Returns: Json
+      }
       sp_delete_business_account: { Args: { p_id: number }; Returns: Json }
       sp_delete_payment_method: { Args: { p_id: number }; Returns: Json }
       sp_delete_price_list: { Args: { p_id: number }; Returns: Json }
