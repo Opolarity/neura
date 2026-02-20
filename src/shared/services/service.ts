@@ -122,6 +122,23 @@ export const situationByModuleandStatus = async (moduleCode: string, statusCode:
   return data?.situations ?? [];
 };
 
+//GET ACTIVE PAYMENT METHODS BY SALE TYPE ID//
+
+export const getActivePaymentMethodsBySaleTypeId = async (saleTypeId: number): Promise<PaymentMethod[]> => {
+  const { data, error } = await supabase
+    .from("payment_method_sale_type")
+    .select("payment_method_id, payment_methods!inner(id, name, business_account_id, active, is_active)")
+    .eq("sale_type_id", saleTypeId)
+    .eq("payment_methods.is_active", true)
+    .eq("payment_methods.active", true);
+
+  if (error) {
+    console.error("Error fetching payment methods by sale type:", error.message);
+    return [];
+  }
+
+  return (data || []).map((item: any) => item.payment_methods).filter(Boolean);
+};
 
 
 //GET HEADER USER DATA//

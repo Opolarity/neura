@@ -119,7 +119,7 @@ export default function POS() {
                 cart={pos.cart}
                 payments={pos.payments}
                 currentPayment={pos.currentPayment}
-                paymentMethods={pos.formData.paymentMethods}
+                paymentMethods={pos.filteredPaymentMethods}
                 subtotal={pos.subtotal}
                 discountAmount={pos.discountAmount}
                 shippingCost={pos.customer.requiresShipping ? pos.shipping.shippingCost : 0}
