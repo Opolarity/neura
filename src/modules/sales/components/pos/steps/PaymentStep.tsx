@@ -88,9 +88,6 @@ export default function PaymentStep({
         <CreditCard className="w-5 h-5 text-gray-700" />
         <h2 className="text-lg font-semibold">Resumen y Pago</h2>
       </div>
-      <p className="text-gray-500 text-sm -mt-4">
-        Finaliza el proceso de venta revisando los detalles y seleccionando el metodo de pago.
-      </p>
 
       <div className="grid grid-cols-2 gap-6">
         {/* Left column - Order details */}
