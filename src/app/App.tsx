@@ -99,7 +99,7 @@ const App = () => (
             <Route path="sales/:id" element={<ViewSale />} />
             <Route path="shipping" element={<Shipping />} />
             <Route path="invoices" element={<Invoices />} />
-            <Route path="pos" element={<POS />} />
+            <Route path="pos/open" element={<POS />} />
             <Route path="customers" element={<Customers />}>
               <Route path="list" element={<ClientsList />} />
               <Route path="create" element={<CreateClient />} />

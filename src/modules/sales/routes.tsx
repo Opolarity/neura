@@ -9,7 +9,7 @@ export const salesRoutes: RouteObject[] = [
   { path: 'sales', element: <Sales /> },
   { path: 'sales/create', element: <CreateSale /> },
   { path: 'sales/edit/:id', element: <CreateSale /> },
-  { path: 'pos', element: <POS /> },
+  { path: 'pos/open', element: <POS /> },
   { path: 'shipping', element: <Shipping /> },
   { path: 'shipping/create', element: <CreateShipping /> },
   { path: 'shipping/edit/:id', element: <CreateShipping /> },
