@@ -22,6 +22,7 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { typesByModuleCode } from "@/shared/services/service";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BusinessAccountFormDialogProps {
   open: boolean;
@@ -41,7 +42,9 @@ export const BusinessAccountFormDialog = ({
   const [accountTypes, setAccountTypes] = useState<
     { id: number; name: string }[]
   >([]);
+  const [accounts, setAccounts] = useState<{ id: number; name: string }[]>([]);
   const [typesLoading, setTypesLoading] = useState(false);
+  const [accountsLoading, setAccountsLoading] = useState(false);
 
   const { register, handleSubmit, control, reset } =
     useForm<BusinessAccountPayload>({
@@ -52,6 +55,7 @@ export const BusinessAccountFormDialog = ({
             account_number: item.account_number,
             total_amount: item.total_amount,
             business_account_type_id: item.business_account_type_id,
+            account_id: item.account_id,
           }
         : {
             name: "",
@@ -59,6 +63,7 @@ export const BusinessAccountFormDialog = ({
             account_number: undefined,
             total_amount: undefined,
             business_account_type_id: undefined,
+            account_id: undefined,
           },
     });
 
@@ -69,6 +74,17 @@ export const BusinessAccountFormDialog = ({
       .then(setAccountTypes)
       .catch(console.error)
       .finally(() => setTypesLoading(false));
+
+    setAccountsLoading(true);
+    supabase
+      .from("accounts")
+      .select("id, name")
+      .eq("is_active", true)
+      .order("name")
+      .then(({ data }) => {
+        setAccounts(data ?? []);
+        setAccountsLoading(false);
+      });
   }, [open]);
 
   const onSubmit = async (data: BusinessAccountPayload) => {
@@ -78,6 +94,7 @@ export const BusinessAccountFormDialog = ({
       account_number: data.account_number,
       total_amount: data.total_amount,
       business_account_type_id: data.business_account_type_id,
+      account_id: data.account_id,
     };
     if (item?.id) {
       payload.id = item.id;
@@ -89,6 +106,7 @@ export const BusinessAccountFormDialog = ({
       account_number: undefined,
       total_amount: undefined,
       business_account_type_id: undefined,
+      account_id: undefined,
     });
   };
 
@@ -173,6 +191,37 @@ export const BusinessAccountFormDialog = ({
                     {accountTypes.map((type) => (
                       <SelectItem key={type.id} value={type.id.toString()}>
                         {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Cuenta</Label>
+            <Controller
+              name="account_id"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Select
+                  value={field.value?.toString() ?? ""}
+                  onValueChange={(val) => field.onChange(Number(val))}
+                  disabled={accountsLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        accountsLoading ? "Cargando..." : "Seleccionar cuenta"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id.toString()}>
+                        {account.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

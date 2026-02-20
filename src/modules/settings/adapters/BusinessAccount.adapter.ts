@@ -8,6 +8,7 @@ export function getBusinessAccountsAdapter(response: BusinessAccountApiResponse)
     account_number: item.account_number,
     total_amount: item.total_amount,
     business_account_type_id: item.business_account_type_id,
+    account_id: item.account_id,
     is_active: item.is_active,
   }));
 

@@ -94,7 +94,7 @@ export const useBusinessAccount = () => {
       if (isUpdate) {
         await updateBusinessAccountApi(payload);
       } else {
-        await createBusinessAccountApi({ ...payload, account_id: accountId! });
+        await createBusinessAccountApi(payload);
       }
       if (accountId) await load(accountId);
       toast.success(

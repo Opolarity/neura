@@ -6,6 +6,7 @@ export interface BusinessAccountApiResponse {
     account_number: number;
     total_amount: number;
     business_account_type_id: number;
+    account_id: number;
     is_active: boolean;
   }>;
   page: {
@@ -22,6 +23,7 @@ export interface BusinessAccount {
   account_number: number;
   total_amount: number;
   business_account_type_id: number;
+  account_id: number;
   is_active: boolean;
 }
 
