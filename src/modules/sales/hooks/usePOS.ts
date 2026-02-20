@@ -260,6 +260,7 @@ export const usePOS = () => {
         case 5: // If requires shipping, need shipping data
           if (customer.requiresShipping) {
             return (
+              !!shipping.shippingMethodId &&
               !!shipping.countryId &&
               !!shipping.stateId &&
               !!shipping.cityId &&
