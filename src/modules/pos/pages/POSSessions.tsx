@@ -4,23 +4,23 @@ import {
   Card,
   CardContent,
   CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+  CardHeader } from
+"@/components/ui/card";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  TableRow } from
+"@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from
+"@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Search, Eye, ListFilter } from "lucide-react";
@@ -46,7 +46,7 @@ const POSSessions = () => {
     onApplyFilters,
     onPageChange,
     handlePageSizeChange,
-    goToOpenPOS,
+    goToOpenPOS
   } = usePOSSessions();
 
   return (
@@ -54,7 +54,7 @@ const POSSessions = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold">Sesiones de Caja</h1>
+          <h1 className="text-3xl font-bold">Sesiones de Punto de Venta</h1>
           <p className="text-muted-foreground mt-1">
             Historial de sesiones del punto de venta
           </p>
@@ -67,8 +67,8 @@ const POSSessions = () => {
         filters={filterValues}
         isOpen={filtersOpen}
         onClose={() => setFiltersOpen(false)}
-        onApply={onApplyFilters}
-      />
+        onApply={onApplyFilters} />
+
 
       <Card>
         <CardHeader>
@@ -80,22 +80,22 @@ const POSSessions = () => {
                 onChange={(e) => onSearchChange(e.target.value)}
                 type="text"
                 placeholder="Buscar por usuario, sucursal..."
-                className="pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
-              />
+                className="pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground" />
+
             </div>
 
             <Button
               variant={activeFilterCount > 0 ? "default" : "outline"}
               className="gap-2"
-              onClick={() => setFiltersOpen(true)}
-            >
+              onClick={() => setFiltersOpen(true)}>
+
               <ListFilter className="w-4 h-4" />
               Filtros
-              {activeFilterCount > 0 && (
-                <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-xs">
+              {activeFilterCount > 0 &&
+              <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-xs">
                   {activeFilterCount}
                 </Badge>
-              )}
+              }
             </Button>
 
             <Select value={filters.orderBy} onValueChange={onOrderChange}>
@@ -132,72 +132,72 @@ const POSSessions = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && sessions.length === 0 ? (
-                <TableRow>
+              {loading && sessions.length === 0 ?
+              <TableRow>
                   <TableCell colSpan={9} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Cargando sesiones...
                     </div>
                   </TableCell>
-                </TableRow>
-              ) : sessions.length === 0 ? (
-                <TableRow>
+                </TableRow> :
+              sessions.length === 0 ?
+              <TableRow>
                   <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     {search ? "No se encontraron sesiones" : "No hay sesiones registradas"}
                   </TableCell>
-                </TableRow>
-              ) : (
-                sessions.map((session) => (
-                  <TableRow key={session.id}>
+                </TableRow> :
+
+              sessions.map((session) =>
+              <TableRow key={session.id}>
                     <TableCell>{session.branchName}</TableCell>
                     <TableCell>
                       {format(new Date(session.openedAt), "dd/MM/yyyy HH:mm")}
                     </TableCell>
                     <TableCell>
-                      {session.closedAt
-                        ? format(new Date(session.closedAt), "dd/MM/yyyy HH:mm")
-                        : session.statusCode === "OPE"
-                        ? <Badge variant="default">Abierto</Badge>
-                        : "—"}
+                      {session.closedAt ?
+                  format(new Date(session.closedAt), "dd/MM/yyyy HH:mm") :
+                  session.statusCode === "OPE" ?
+                  <Badge variant="default">Abierto</Badge> :
+                  "—"}
                     </TableCell>
                     <TableCell className="text-right">
                       <span
-                        className={
-                          session.openingDifference < 0
-                            ? "text-destructive"
-                            : session.openingDifference > 0
-                            ? "text-green-600"
-                            : ""
-                        }
-                      >
+                    className={
+                    session.openingDifference < 0 ?
+                    "text-destructive" :
+                    session.openingDifference > 0 ?
+                    "text-green-600" :
+                    ""
+                    }>
+
                         S/ {formatCurrency(session.openingDifference)}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      {session.difference !== null ? (
-                        <span
-                          className={
-                            session.difference < 0
-                              ? "text-destructive"
-                              : session.difference > 0
-                              ? "text-green-600"
-                              : ""
-                          }
-                        >
+                      {session.difference !== null ?
+                  <span
+                    className={
+                    session.difference < 0 ?
+                    "text-destructive" :
+                    session.difference > 0 ?
+                    "text-green-600" :
+                    ""
+                    }>
+
                           S/ {formatCurrency(session.difference)}
-                        </span>
-                      ) : "—"}
+                        </span> :
+                  "—"}
                     </TableCell>
                     <TableCell className="text-right">
-                      {session.totalSales !== null
-                        ? `S/ ${formatCurrency(session.totalSales)}`
-                        : "—"}
+                      {session.totalSales !== null ?
+                  `S/ ${formatCurrency(session.totalSales)}` :
+                  "—"}
                     </TableCell>
                     <TableCell className="text-right">
-                      {session.closingAmount !== null
-                        ? `S/ ${formatCurrency(session.closingAmount)}`
-                        : "—"}
+                      {session.closingAmount !== null ?
+                  `S/ ${formatCurrency(session.closingAmount)}` :
+                  "—"}
                     </TableCell>
                     <TableCell>{session.userName}</TableCell>
                     <TableCell className="text-center">
@@ -206,8 +206,8 @@ const POSSessions = () => {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
+              )
+              }
             </TableBody>
           </Table>
         </CardContent>
@@ -216,12 +216,12 @@ const POSSessions = () => {
           <PaginationBar
             pagination={pagination}
             onPageChange={onPageChange}
-            onPageSizeChange={handlePageSizeChange}
-          />
+            onPageSizeChange={handlePageSizeChange} />
+
         </CardFooter>
       </Card>
-    </div>
-  );
+    </div>);
+
 };
 
 export default POSSessions;
