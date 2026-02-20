@@ -98,8 +98,6 @@ export default function POS() {
                 searchingClient={pos.searchingClient}
                 onUpdateCustomer={pos.updateCustomer}
                 onSearchClient={pos.searchClient}
-                cart={pos.cart}
-                total={pos.total}
               />
             )}
 
