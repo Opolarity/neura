@@ -31,7 +31,7 @@ export default function POSWizardNavigation({
   const isLastStep = currentStep === 5;
 
   return (
-    <footer className="bg-white border-t px-6 py-4">
+    <footer className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t px-6 py-4">
       <div className="flex items-center justify-between">
         {/* Left side - Back button and info */}
         <div className="flex items-center gap-4">
