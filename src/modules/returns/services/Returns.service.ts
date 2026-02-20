@@ -140,15 +140,27 @@ export const returnsService = {
         return data;
     },
 
-    async getReturns() {
-        const { data, error } = await supabase.functions.invoke("get-returns");
+    async getReturns(params?: { page?: number; size?: number; search?: string }) {
+        const urlParams = new URLSearchParams();
+        if (params?.page) urlParams.append("page", params.page.toString());
+        if (params?.size) urlParams.append("size", params.size.toString());
+        if (params?.search) urlParams.append("search", params.search);
+
+        const queryString = urlParams.toString();
+        const endpoint = queryString ? `get-returns?${queryString}` : "get-returns";
+
+        const { data, error } = await supabase.functions.invoke(endpoint, {
+            method: "GET",
+        });
 
         if (error) throw error;
 
-        // Based on the provided sample, the structure is { returnsdata: { data: [...] } }
+        // Based on the provided sample, the structure is { returnsdata: { data: [...], page: {...} } }
         const returnsData = data?.returnsdata?.data || [];
+        const pageData = data?.returnsdata?.page || data?.page || {};
+        const totalRows = pageData.total || data?.returnsdata?.metadata?.total_rows || data?.returnsdata?.total_rows || 0;
 
-        return returnsData.map((item: any) => ({
+        const mappedReturns = returnsData.map((item: any) => ({
             id: item.id,
             order_id: item.id_order,
             customer_document_number: item.customer_document_numer,
@@ -161,6 +173,8 @@ export const returnsService = {
             situations: { name: 'Pendiente' },
             total_exchange_difference: item.otal_exchange_difference ?? item.total_exchange_difference ?? 0
         })) as ReturnItem[];
+
+        return { data: mappedReturns, total: totalRows };
     },
 
     async updateReturnFull(payload: any) {
