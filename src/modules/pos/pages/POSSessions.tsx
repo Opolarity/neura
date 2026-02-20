@@ -13,9 +13,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Search, Eye } from "lucide-react";
+import { Loader2, Search, Eye, ListFilter } from "lucide-react";
 import { format } from "date-fns";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useNavigate } from "react-router-dom";
@@ -40,8 +47,10 @@ const POSSessions = () => {
     sessions,
     loading,
     search,
+    order,
     pagination,
     onSearchChange,
+    onOrderChange,
     onPageChange,
     handlePageSizeChange,
     goToOpenPOS,
@@ -58,8 +67,7 @@ const POSSessions = () => {
           </p>
         </div>
         <Button onClick={goToOpenPOS}>
-          <Plus className="w-4 h-4 mr-2" />
-          Abrir Caja
+          Ir a Punto de Venta
         </Button>
       </div>
 
@@ -76,6 +84,22 @@ const POSSessions = () => {
                 className="pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               />
             </div>
+
+            <Button variant="outline" className="gap-2">
+              <ListFilter className="w-4 h-4" />
+              Filtros
+            </Button>
+
+            <Select value={order || "none"} onValueChange={onOrderChange}>
+              <SelectTrigger className="w-auto min-w-[150px]">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin orden</SelectItem>
+                <SelectItem value="date-dsc">Fecha (más reciente)</SelectItem>
+                <SelectItem value="date-asc">Fecha (más antigua)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
 

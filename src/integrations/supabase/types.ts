@@ -4124,14 +4124,23 @@ export type Database = {
         Args: { p_page?: number; p_size?: number }
         Returns: Json
       }
-      sp_get_cart_details: {
-        Args: { p_cart_id: number; p_user_id?: string }
-        Returns: {
-          cart_items: Json
-          total_amount: number
-          total_count: number
-        }[]
-      }
+      sp_get_cart_details:
+        | {
+            Args: { p_cart_id: number; p_user_id?: string }
+            Returns: {
+              cart_items: Json
+              total_amount: number
+              total_count: number
+            }[]
+          }
+        | {
+            Args: { p_cart_id?: number; p_user_id?: string }
+            Returns: {
+              cart_items: Json
+              total_amount: number
+              total_count: number
+            }[]
+          }
       sp_get_categories_product_count: {
         Args: {
           p_description?: boolean
