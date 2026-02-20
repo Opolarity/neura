@@ -184,7 +184,7 @@ export default function POSCloseSessionModal({
             </Button>
             <Button
               type="submit"
-              variant="destructive"
+              
               disabled={isClosing}
             >
               {isClosing ? (
