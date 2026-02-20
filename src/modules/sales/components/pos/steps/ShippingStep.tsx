@@ -58,9 +58,6 @@ export default function ShippingStep({
         <Truck className="w-5 h-5 text-gray-700" />
         <h2 className="text-lg font-semibold">Detalles de Despacho</h2>
       </div>
-      <p className="text-gray-500 text-sm -mt-4">
-        Seleccione el metodo y la direccion para la entrega del pedido.
-      </p>
 
       <Card>
         <CardHeader>
