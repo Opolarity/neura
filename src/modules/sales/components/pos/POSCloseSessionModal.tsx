@@ -41,11 +41,11 @@ export default function POSCloseSessionModal({
     return session.openingAmount + totalCashSales;
   }, [session, totalCashSales]);
 
-  // Other external movements = business account total - (opening + cash sales)
+  // Other external movements = business account total - opening amount
   const otherMovements = useMemo(() => {
     if (!session) return 0;
-    return businessAccountTotal - (session.openingAmount + totalCashSales);
-  }, [session, businessAccountTotal, totalCashSales]);
+    return businessAccountTotal - session.openingAmount;
+  }, [session, businessAccountTotal]);
 
   // Editable closing amount (initialized with expected)
   const [closingAmount, setClosingAmount] = useState<string>("");
