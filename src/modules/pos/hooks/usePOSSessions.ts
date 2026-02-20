@@ -9,6 +9,7 @@ import {
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useNavigate } from "react-router-dom";
 
+// Hook for POS sessions list
 export const usePOSSessions = () => {
   const [sessions, setSessions] = useState<POSSessionListItem[]>([]);
   const [loading, setLoading] = useState(false);

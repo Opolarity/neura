@@ -3869,16 +3869,6 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_add_to_cart: {
-        Args: {
-          p_cart_id: number
-          p_product_id: number
-          p_quantity: number
-          p_user_id?: string
-          p_variation_id: number
-        }
-        Returns: Json
-      }
       sp_close_pos_session: {
         Args: {
           p_closing_amount: number
@@ -4124,23 +4114,14 @@ export type Database = {
         Args: { p_page?: number; p_size?: number }
         Returns: Json
       }
-      sp_get_cart_details:
-        | {
-            Args: { p_cart_id: number; p_user_id?: string }
-            Returns: {
-              cart_items: Json
-              total_amount: number
-              total_count: number
-            }[]
-          }
-        | {
-            Args: { p_cart_id?: number; p_user_id?: string }
-            Returns: {
-              cart_items: Json
-              total_amount: number
-              total_count: number
-            }[]
-          }
+      sp_get_cart_details: {
+        Args: { p_cart_id?: number; p_user_id?: string }
+        Returns: {
+          cart_items: Json
+          total_amount: number
+          total_count: number
+        }[]
+      }
       sp_get_categories_product_count: {
         Args: {
           p_description?: boolean
