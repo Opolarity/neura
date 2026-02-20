@@ -130,6 +130,15 @@ export const usePOS = () => {
     confirmationCode: "",
   });
 
+  // Change entries (vuelto)
+  const [changeEntries, setChangeEntries] = useState<POSPayment[]>([]);
+  const [currentChangeEntry, setCurrentChangeEntry] = useState<POSPayment>({
+    id: crypto.randomUUID(),
+    paymentMethodId: "",
+    amount: 0,
+    confirmationCode: "",
+  });
+
   // =============================================
   // INITIALIZATION
   // =============================================
@@ -691,7 +700,7 @@ export const usePOS = () => {
   );
 
   // =============================================
-  // COMPUTED VALUES
+  // COMPUTED VALUES (before change entries so changeAmount is available)
   // =============================================
 
   const subtotal = useMemo(() => {
@@ -724,6 +733,87 @@ export const usePOS = () => {
       totalPaid >= total && cart.length > 0 && POSSessionHook.hasActiveSession
     );
   }, [totalPaid, total, cart, POSSessionHook.hasActiveSession]);
+
+  // =============================================
+  // CHANGE ENTRIES (VUELTO)
+  // =============================================
+
+  const addChangeEntry = useCallback(() => {
+    if (!currentChangeEntry.paymentMethodId || currentChangeEntry.amount <= 0) {
+      toast({
+        title: "Error",
+        description: "Seleccione método de pago y monto para el vuelto",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Determine businessAccountId using same 3 rules as payments
+    const selectedMethod = filteredPaymentMethods.find(
+      (pm) => pm.id.toString() === currentChangeEntry.paymentMethodId
+    );
+
+    let finalBusinessAccountId: string | undefined;
+    if (selectedMethod) {
+      const methodBaId = selectedMethod.businessAccountId;
+      if (selectedMethod.code === "CASH") {
+        finalBusinessAccountId = POSSessionHook.session?.businessAccountId?.toString();
+      } else if (methodBaId && methodBaId !== 0) {
+        finalBusinessAccountId = methodBaId.toString();
+      } else {
+        if (!currentChangeEntry.businessAccountId) {
+          toast({
+            title: "Error",
+            description: "Seleccione una cuenta de origen para el vuelto",
+            variant: "destructive",
+          });
+          return;
+        }
+        finalBusinessAccountId = currentChangeEntry.businessAccountId;
+      }
+    }
+
+    // Validate total change entries don't exceed calculated change
+    const existingChangeTotal = changeEntries.reduce(
+      (acc, entry) => acc + entry.amount, 0
+    );
+    if (existingChangeTotal + currentChangeEntry.amount > changeAmount) {
+      toast({
+        title: "Monto excedido",
+        description: "El vuelto total no puede superar el vuelto calculado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setChangeEntries((prev) => [
+      ...prev,
+      {
+        ...currentChangeEntry,
+        id: crypto.randomUUID(),
+        paymentMethodName: selectedMethod?.name,
+        businessAccountId: finalBusinessAccountId,
+      },
+    ]);
+    setCurrentChangeEntry({
+      id: crypto.randomUUID(),
+      paymentMethodId: "",
+      amount: 0,
+      confirmationCode: "",
+    });
+  }, [currentChangeEntry, filteredPaymentMethods, POSSessionHook.session, changeEntries, changeAmount, toast]);
+
+  const removeChangeEntry = useCallback((id: string) => {
+    setChangeEntries((prev) => prev.filter((e) => e.id !== id));
+  }, []);
+
+  const updateCurrentChangeEntry = useCallback(
+    (field: keyof POSPayment, value: string | number) => {
+      setCurrentChangeEntry((prev) => ({ ...prev, [field]: value }));
+    },
+    []
+  );
+
 
   // =============================================
   // SUBMIT ORDER
@@ -803,9 +893,15 @@ export const usePOS = () => {
           confirmationCode: p.confirmationCode || null,
           businessAccountId: p.businessAccountId ? parseInt(p.businessAccountId) : null,
         })),
+        changeEntries: changeEntries.map((e) => ({
+          paymentMethodId: parseInt(e.paymentMethodId),
+          amount: e.amount,
+          businessAccountId: e.businessAccountId ? parseInt(e.businessAccountId) : null,
+        })),
         subtotal,
         discount: discountAmount,
         total,
+        change: changeAmount,
         initialSituationId: situationId,
         saleType: saleTypeId,
       };
@@ -856,6 +952,8 @@ export const usePOS = () => {
     shipping,
     cart,
     payments,
+    changeEntries,
+    changeAmount,
     subtotal,
     discountAmount,
     total,
@@ -869,9 +967,16 @@ export const usePOS = () => {
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
+    setChangeEntries([]);
     setClientFound(null);
     setSearchQuery("");
     setCurrentPayment({
+      id: crypto.randomUUID(),
+      paymentMethodId: "",
+      amount: 0,
+      confirmationCode: "",
+    });
+    setCurrentChangeEntry({
       id: crypto.randomUUID(),
       paymentMethodId: "",
       amount: 0,
@@ -886,9 +991,16 @@ export const usePOS = () => {
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
+    setChangeEntries([]);
     setClientFound(null);
     setSearchQuery("");
     setCurrentPayment({
+      id: crypto.randomUUID(),
+      paymentMethodId: "",
+      amount: 0,
+      confirmationCode: "",
+    });
+    setCurrentChangeEntry({
       id: crypto.randomUUID(),
       paymentMethodId: "",
       amount: 0,
@@ -1029,6 +1141,13 @@ export const usePOS = () => {
     addPayment,
     removePayment,
     updateCurrentPayment,
+
+    // Change entries (vuelto)
+    changeEntries,
+    currentChangeEntry,
+    addChangeEntry,
+    removeChangeEntry,
+    updateCurrentChangeEntry,
 
     // Computed
     subtotal,

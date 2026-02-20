@@ -130,6 +130,11 @@ export default function POS() {
                 onUpdateCurrentPayment={pos.updateCurrentPayment}
                 onAddPayment={pos.addPayment}
                 onRemovePayment={pos.removePayment}
+                changeEntries={pos.changeEntries}
+                currentChangeEntry={pos.currentChangeEntry}
+                onUpdateCurrentChangeEntry={pos.updateCurrentChangeEntry}
+                onAddChangeEntry={pos.addChangeEntry}
+                onRemoveChangeEntry={pos.removeChangeEntry}
               />
             )}
           </div>
