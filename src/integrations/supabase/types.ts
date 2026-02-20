@@ -4373,17 +4373,30 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_open_pos_session: {
-        Args: {
-          p_branch_id: number
-          p_business_account_id: number
-          p_notes?: string
-          p_opening_amount: number
-          p_user_id: string
-          p_warehouse_id: number
-        }
-        Returns: Json
-      }
+      sp_open_pos_session:
+        | {
+            Args: {
+              p_branch_id: number
+              p_business_account_id: number
+              p_notes?: string
+              p_opening_amount: number
+              p_user_id: string
+              p_warehouse_id: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_branch_id: number
+              p_business_account_id: number
+              p_notes: string
+              p_opening_amount: number
+              p_sale_type_id?: number
+              p_user_id: string
+              p_warehouse_id: number
+            }
+            Returns: Json
+          }
       sp_update_business_account: {
         Args: {
           p_account_number: number
