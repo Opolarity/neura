@@ -87,6 +87,7 @@ export interface PaymentMethod {
   id: number;
   name: string;
   businessAccountId: number | null;
+  code?: string | null;
 }
 
 export interface BusinessAccountOption {

@@ -61,6 +61,7 @@ export type PaymentMethod = {
   business_account_id: number;
   active: boolean;
   is_active: boolean;
+  code?: string | null;
 };
 
 export type Class = {

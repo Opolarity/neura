@@ -120,6 +120,7 @@ export default function POS() {
                 payments={pos.payments}
                 currentPayment={pos.currentPayment}
                 paymentMethods={pos.filteredPaymentMethods}
+                businessAccounts={pos.businessAccounts}
                 subtotal={pos.subtotal}
                 discountAmount={pos.discountAmount}
                 shippingCost={pos.customer.requiresShipping ? pos.shipping.shippingCost : 0}

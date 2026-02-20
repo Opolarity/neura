@@ -30,6 +30,7 @@ interface PaymentStepProps {
   payments: POSPayment[];
   currentPayment: POSPayment;
   paymentMethods: PaymentMethod[];
+  businessAccounts: Array<{ id: number; name: string; bank: string }>;
   subtotal: number;
   discountAmount: number;
   shippingCost: number;
@@ -47,6 +48,7 @@ export default function PaymentStep({
   payments,
   currentPayment,
   paymentMethods,
+  businessAccounts,
   subtotal,
   discountAmount,
   shippingCost,
@@ -136,6 +138,37 @@ export default function PaymentStep({
                     ))}
                   </SelectContent>
                 </Select>
+              )}
+
+              {/* Business account selector - shown when method has business_account_id = 0 and is NOT CASH */}
+              {currentPayment.paymentMethodId && (() => {
+                const selectedMethod = paymentMethods.find(
+                  (pm) => pm.id.toString() === currentPayment.paymentMethodId
+                );
+                return selectedMethod && 
+                  (!selectedMethod.businessAccountId || selectedMethod.businessAccountId === 0) && 
+                  selectedMethod.code !== "CASH";
+              })() && (
+                <div className="space-y-2">
+                  <Label>Cuenta de destino</Label>
+                  <Select
+                    value={currentPayment.businessAccountId || ""}
+                    onValueChange={(value) =>
+                      onUpdateCurrentPayment("businessAccountId", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione cuenta..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {businessAccounts.map((account) => (
+                        <SelectItem key={account.id} value={account.id.toString()}>
+                          {account.name} - {account.bank}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
 
               {/* Amount input */}

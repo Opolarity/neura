@@ -183,6 +183,7 @@ export interface POSPayment {
   paymentMethodName?: string;
   amount: number;
   confirmationCode: string;
+  businessAccountId?: string;
 }
 
 // =============================================
@@ -230,6 +231,7 @@ export interface CreatePOSOrderRequest {
     paymentMethodId: number;
     amount: number;
     confirmationCode: string | null;
+    businessAccountId?: number | null;
   }>;
 
   // Totals

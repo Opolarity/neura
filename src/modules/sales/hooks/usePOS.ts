@@ -40,7 +40,7 @@ import {
   fetchSaleProducts,
   getIdInventoryTypeApi,
 } from "../services";
-import { getPriceListIsActiveTrue, getActivePaymentMethodsBySaleTypeId } from "@/shared/services/service";
+import { getPriceListIsActiveTrue, getActivePaymentMethodsBySaleTypeId, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { createPOSOrder } from "../services/POS.service";
 import { filterShippingCostsByLocation } from "../utils";
 
@@ -96,6 +96,8 @@ export const usePOS = () => {
   const [formData, setFormData] = useState<SalesFormDataResponse | null>(null);
   const [allShippingCosts, setAllShippingCosts] = useState<ShippingCost[]>([]);
   const [filteredPaymentMethods, setFilteredPaymentMethods] = useState<import("../types").PaymentMethod[]>([]);
+  const [businessAccounts, setBusinessAccounts] = useState<Array<{ id: number; name: string; bank: string }>>([]);
+  const [sessionSaleTypeId, setSessionSaleTypeId] = useState<number | null>(null);
 
   // Products (Step 2)
   const [cart, setCart] = useState<POSCartItem[]>([]);
@@ -230,13 +232,19 @@ export const usePOS = () => {
         .maybeSingle();
 
       if (saleType?.id) {
+        setSessionSaleTypeId(saleType.id);
         const methods = await getActivePaymentMethodsBySaleTypeId(saleType.id);
         setFilteredPaymentMethods(methods.map(m => ({
           id: m.id,
           name: m.name,
           businessAccountId: m.business_account_id,
+          code: m.code,
         })));
       }
+
+      // Load business accounts for manual selection
+      const accounts = await getBusinessAccountIsActiveTrue();
+      setBusinessAccounts(accounts.map(a => ({ id: a.id, name: a.name, bank: a.bank })));
     };
     
     loadFilteredPaymentMethods();
@@ -624,16 +632,43 @@ export const usePOS = () => {
       return;
     }
 
-    const paymentMethod = formData?.paymentMethods.find(
+    // Find the selected method in filtered payment methods (POS-specific)
+    const selectedMethod = filteredPaymentMethods.find(
       (pm) => pm.id.toString() === currentPayment.paymentMethodId
     );
+
+    // Determine businessAccountId based on 3 rules
+    let finalBusinessAccountId: string | undefined;
+
+    if (selectedMethod) {
+      const methodBaId = selectedMethod.businessAccountId;
+      if (selectedMethod.code === "CASH") {
+        // Rule 3: Cash → use session's business account
+        finalBusinessAccountId = POSSessionHook.session?.businessAccountId?.toString();
+      } else if (methodBaId && methodBaId !== 0) {
+        // Rule 1: Has a linked account → use it
+        finalBusinessAccountId = methodBaId.toString();
+      } else {
+        // Rule 2: No linked account, not cash → user must select manually
+        if (!currentPayment.businessAccountId) {
+          toast({
+            title: "Error",
+            description: "Seleccione una cuenta de destino",
+            variant: "destructive",
+          });
+          return;
+        }
+        finalBusinessAccountId = currentPayment.businessAccountId;
+      }
+    }
 
     setPayments((prev) => [
       ...prev,
       {
         ...currentPayment,
         id: crypto.randomUUID(),
-        paymentMethodName: paymentMethod?.name,
+        paymentMethodName: selectedMethod?.name,
+        businessAccountId: finalBusinessAccountId,
       },
     ]);
     setCurrentPayment({
@@ -642,7 +677,7 @@ export const usePOS = () => {
       amount: 0,
       confirmationCode: "",
     });
-  }, [currentPayment, formData, toast]);
+  }, [currentPayment, filteredPaymentMethods, POSSessionHook.session, toast]);
 
   const removePayment = useCallback((id: string) => {
     setPayments((prev) => prev.filter((p) => p.id !== id));
@@ -766,6 +801,7 @@ export const usePOS = () => {
           paymentMethodId: parseInt(p.paymentMethodId),
           amount: p.amount,
           confirmationCode: p.confirmationCode || null,
+          businessAccountId: p.businessAccountId ? parseInt(p.businessAccountId) : null,
         })),
         subtotal,
         discount: discountAmount,
@@ -989,6 +1025,7 @@ export const usePOS = () => {
     payments,
     currentPayment,
     filteredPaymentMethods,
+    businessAccounts,
     addPayment,
     removePayment,
     updateCurrentPayment,

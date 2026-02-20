@@ -69,6 +69,7 @@ export const createPOSOrder = async (orderData: CreatePOSOrderRequest) => {
         date: new Date().toISOString(),
         confirmation_code: p.confirmationCode,
         voucher_url: null,
+        business_account_id: p.businessAccountId || null,
       })),
       initial_situation_id: orderData.initialSituationId,
     },

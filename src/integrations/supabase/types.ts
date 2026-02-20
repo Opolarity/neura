@@ -1508,6 +1508,7 @@ export type Database = {
         Row: {
           active: boolean
           business_account_id: number | null
+          code: string | null
           id: number
           is_active: boolean
           name: string
@@ -1515,6 +1516,7 @@ export type Database = {
         Insert: {
           active: boolean
           business_account_id?: number | null
+          code?: string | null
           id?: number
           is_active?: boolean
           name: string
@@ -1522,6 +1524,7 @@ export type Database = {
         Update: {
           active?: boolean
           business_account_id?: number | null
+          code?: string | null
           id?: number
           is_active?: boolean
           name?: string
@@ -3783,26 +3786,9 @@ export type Database = {
       }
     }
     Functions: {
-      add_to_cart: {
-        Args: {
-          p_cart_id?: string
-          p_product_id: string
-          p_quantity: number
-          p_variation_id: string
-        }
-        Returns: Json
-      }
       comprueba_variacion: {
         Args: { p_term_ids: number[]; p_variation_id: number }
         Returns: boolean
-      }
-      get_cart_details: {
-        Args: { p_cart_id: string }
-        Returns: {
-          cart_items: Json
-          total_amount: number
-          total_count: number
-        }[]
       }
       get_clients_list: {
         Args: {
@@ -4114,6 +4100,14 @@ export type Database = {
       sp_get_business_accounts: {
         Args: { p_page?: number; p_size?: number }
         Returns: Json
+      }
+      sp_get_cart_details: {
+        Args: { p_cart_id: number }
+        Returns: {
+          cart_items: Json
+          total_amount: number
+          total_count: number
+        }[]
       }
       sp_get_categories_product_count: {
         Args: {
