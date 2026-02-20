@@ -85,8 +85,8 @@ export default function POSCloseSessionModal({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-destructive/10 rounded-full">
-              <Calculator className="w-6 h-6 text-destructive" />
+            <div className="p-3 bg-primary/10 rounded-full">
+              <Calculator className="w-6 h-6 text-primary" />
             </div>
             <div>
               <DialogTitle>Cierre de Caja</DialogTitle>
