@@ -175,7 +175,7 @@ export default function ProductsStep({
         </div>
 
         {/* Cart */}
-        <Card className="self-start">
+        <Card className="self-start min-h-[500px]">
           <CardHeader className="pb-3 space-y-2">
             {cart.length > 0 && (
               <div className="flex justify-between items-center bg-muted/50 rounded-lg px-3 py-2">
