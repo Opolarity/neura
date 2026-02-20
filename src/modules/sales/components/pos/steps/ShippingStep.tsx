@@ -62,7 +62,7 @@ export default function ShippingStep({
             Direccion de Entrega
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           {/* Location selects */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
