@@ -8,6 +8,7 @@ import {
 } from "../services/POSSessions.service";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useNavigate } from "react-router-dom";
+import type { POSSessionsFilterValues } from "../components/POSSessionsFilterModal";
 
 const defaultFilters: POSSessionsFilters = {
   search: null,
@@ -34,12 +35,14 @@ export const usePOSSessions = () => {
   });
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Filter panel state
-  const [dateFrom, setDateFrom] = useState<string>("");
-  const [dateTo, setDateTo] = useState<string>("");
-  const [differenceType, setDifferenceType] = useState<string>("");
-  const [salesMin, setSalesMin] = useState<string>("");
-  const [salesMax, setSalesMax] = useState<string>("");
+  // Track current filter values for the modal
+  const [filterValues, setFilterValues] = useState<POSSessionsFilterValues>({
+    dateFrom: "",
+    dateTo: "",
+    differenceType: "",
+    salesMin: "",
+    salesMax: "",
+  });
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -87,34 +90,17 @@ export const usePOSSessions = () => {
     loadData(newFilters);
   };
 
-  const onApplyFilters = () => {
+  const onApplyFilters = (values: POSSessionsFilterValues) => {
+    setFilterValues(values);
+    setFiltersOpen(false);
     const newFilters: POSSessionsFilters = {
       ...filters,
       page: 1,
-      dateFrom: dateFrom || null,
-      dateTo: dateTo ? dateTo + "T23:59:59Z" : null,
-      differenceType: differenceType || null,
-      salesMin: salesMin ? parseFloat(salesMin) : null,
-      salesMax: salesMax ? parseFloat(salesMax) : null,
-    };
-    setFilters(newFilters);
-    loadData(newFilters);
-  };
-
-  const onClearFilters = () => {
-    setDateFrom("");
-    setDateTo("");
-    setDifferenceType("");
-    setSalesMin("");
-    setSalesMax("");
-    const newFilters: POSSessionsFilters = {
-      ...filters,
-      page: 1,
-      dateFrom: null,
-      dateTo: null,
-      differenceType: null,
-      salesMin: null,
-      salesMax: null,
+      dateFrom: values.dateFrom || null,
+      dateTo: values.dateTo ? values.dateTo + "T23:59:59Z" : null,
+      differenceType: values.differenceType || null,
+      salesMin: values.salesMin ? parseFloat(values.salesMin) : null,
+      salesMax: values.salesMax ? parseFloat(values.salesMax) : null,
     };
     setFilters(newFilters);
     loadData(newFilters);
@@ -135,11 +121,11 @@ export const usePOSSessions = () => {
   const goToOpenPOS = () => navigate("/pos/open");
 
   const activeFilterCount = [
-    dateFrom,
-    dateTo,
-    differenceType,
-    salesMin,
-    salesMax,
+    filterValues.dateFrom,
+    filterValues.dateTo,
+    filterValues.differenceType,
+    filterValues.salesMin,
+    filterValues.salesMax,
   ].filter(Boolean).length;
 
   return {
@@ -150,21 +136,11 @@ export const usePOSSessions = () => {
     pagination,
     filtersOpen,
     setFiltersOpen,
-    dateFrom,
-    setDateFrom,
-    dateTo,
-    setDateTo,
-    differenceType,
-    setDifferenceType,
-    salesMin,
-    setSalesMin,
-    salesMax,
-    setSalesMax,
+    filterValues,
     activeFilterCount,
     onSearchChange,
     onOrderChange,
     onApplyFilters,
-    onClearFilters,
     onPageChange,
     handlePageSizeChange,
     goToOpenPOS,
