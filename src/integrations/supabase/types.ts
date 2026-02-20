@@ -249,9 +249,9 @@ export type Database = {
       }
       cart_products: {
         Row: {
-          bought: boolean
           cart_id: number
           id: number
+          is_active: boolean
           product_discount: number | null
           product_price: number
           product_variation_id: number
@@ -259,9 +259,9 @@ export type Database = {
           warehouse_id: number | null
         }
         Insert: {
-          bought?: boolean
           cart_id: number
           id?: number
+          is_active?: boolean
           product_discount?: number | null
           product_price: number
           product_variation_id: number
@@ -269,9 +269,9 @@ export type Database = {
           warehouse_id?: number | null
         }
         Update: {
-          bought?: boolean
           cart_id?: number
           id?: number
+          is_active?: boolean
           product_discount?: number | null
           product_price?: number
           product_variation_id?: number

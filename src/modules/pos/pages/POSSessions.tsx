@@ -83,22 +83,20 @@ const POSSessions = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Usuario</TableHead>
                 <TableHead>Sucursal</TableHead>
                 <TableHead>Apertura</TableHead>
                 <TableHead>Cierre</TableHead>
-                <TableHead className="text-right">Monto Apertura</TableHead>
-                <TableHead className="text-right">Total Ventas</TableHead>
-                <TableHead className="text-right">Diferencia</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Dif. Apertura</TableHead>
+                <TableHead className="text-right">Dif. Cierre</TableHead>
+                <TableHead className="text-right">Monto Cierre</TableHead>
+                <TableHead>Usuario</TableHead>
                 <TableHead className="text-center">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && sessions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Cargando sesiones...
@@ -108,7 +106,7 @@ const POSSessions = () => {
               ) : sessions.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={10}
+                    colSpan={8}
                     className="text-center py-8 text-muted-foreground"
                   >
                     {search
@@ -119,8 +117,6 @@ const POSSessions = () => {
               ) : (
                 sessions.map((session) => (
                   <TableRow key={session.id}>
-                    <TableCell className="font-medium">#{session.id}</TableCell>
-                    <TableCell>{session.userName}</TableCell>
                     <TableCell>{session.branchName}</TableCell>
                     <TableCell>
                       {format(new Date(session.openedAt), "dd/MM/yyyy HH:mm")}
@@ -128,13 +124,22 @@ const POSSessions = () => {
                     <TableCell>
                       {session.closedAt
                         ? format(new Date(session.closedAt), "dd/MM/yyyy HH:mm")
+                        : session.statusCode === "OPE"
+                        ? <Badge variant="default">Abierto</Badge>
                         : "—"}
                     </TableCell>
                     <TableCell className="text-right">
-                      S/ {formatCurrency(session.openingAmount)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      S/ {formatCurrency(session.totalSales ?? 0)}
+                      <span
+                        className={
+                          session.openingDifference < 0
+                            ? "text-destructive"
+                            : session.openingDifference > 0
+                            ? "text-green-600"
+                            : ""
+                        }
+                      >
+                        S/ {formatCurrency(session.openingDifference)}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right">
                       {session.difference !== null ? (
@@ -153,11 +158,12 @@ const POSSessions = () => {
                         "—"
                       )}
                     </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusVariant(session.statusCode)}>
-                        {session.statusName}
-                      </Badge>
+                    <TableCell className="text-right">
+                      {session.closingAmount !== null
+                        ? `S/ ${formatCurrency(session.closingAmount)}`
+                        : "—"}
                     </TableCell>
+                    <TableCell>{session.userName}</TableCell>
                     <TableCell className="text-center">
                       <Button
                         variant="outline"
