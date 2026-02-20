@@ -35,17 +35,17 @@ export default function POSCloseSessionModal({
   onClose,
   onCancel
 }: POSCloseSessionModalProps) {
-  // Calculate expected amount (opening + cash sales)
-  const expectedAmount = useMemo(() => {
-    if (!session) return 0;
-    return session.openingAmount + totalCashSales;
-  }, [session, totalCashSales]);
-
   // Other external movements = business account total - (opening + cash sales)
   const otherMovements = useMemo(() => {
     if (!session) return 0;
     return businessAccountTotal - (session.openingAmount + totalCashSales);
   }, [session, businessAccountTotal, totalCashSales]);
+
+  // Calculate expected amount (opening + cash sales + other external movements = businessAccountTotal)
+  const expectedAmount = useMemo(() => {
+    if (!session) return 0;
+    return session.openingAmount + totalCashSales + otherMovements;
+  }, [session, totalCashSales, otherMovements]);
 
   // Editable closing amount (initialized with expected)
   const [closingAmount, setClosingAmount] = useState<string>("");
