@@ -10,28 +10,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   CreditCard,
   Banknote,
   Building,
   Plus,
   Trash2,
-  ShoppingCart,
+  ShoppingBag,
+  User,
   CheckCircle,
   RefreshCw,
 } from "lucide-react";
-import type { POSCartItem, POSPayment } from "../../../types/POS.types";
+import type { POSCartItem, POSPayment, POSCustomerData } from "../../../types/POS.types";
 import type { PaymentMethod } from "../../../types";
 import { formatCurrency } from "../../../adapters/POS.adapter";
 
 interface PaymentStepProps {
+  customer: POSCustomerData;
   cart: POSCartItem[];
   payments: POSPayment[];
   currentPayment: POSPayment;
@@ -48,6 +42,7 @@ interface PaymentStepProps {
 }
 
 export default function PaymentStep({
+  customer,
   cart,
   payments,
   currentPayment,
@@ -63,6 +58,7 @@ export default function PaymentStep({
   onRemovePayment,
 }: PaymentStepProps) {
   const pendingAmount = Math.max(0, total - totalPaid);
+  const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   // Quick amount buttons
   const quickAmounts = [
@@ -90,85 +86,7 @@ export default function PaymentStep({
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        {/* Left column - Order details */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4" />
-                Articulos Seleccionados
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Producto</TableHead>
-                    <TableHead className="text-center">Cant.</TableHead>
-                    <TableHead className="text-right">Subtotal</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {cart.map((item) => (
-                    <TableRow key={`${item.variationId}-${item.stockTypeId}`}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {item.imageUrl ? (
-                            <img
-                              src={item.imageUrl}
-                              alt={item.productName}
-                              className="w-8 h-8 rounded object-cover"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 bg-gray-100 rounded" />
-                          )}
-                          <div>
-                            <div className="font-medium text-sm truncate max-w-[150px]">
-                              {item.productName}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {item.variationName}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">{item.quantity}</TableCell>
-                      <TableCell className="text-right">
-                        S/ {formatCurrency(item.quantity * item.price)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              {/* Totals */}
-              <div className="mt-4 pt-4 border-t space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span>S/ {formatCurrency(subtotal)}</span>
-                </div>
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Descuentos</span>
-                    <span>- S/ {formatCurrency(discountAmount)}</span>
-                  </div>
-                )}
-                {shippingCost > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Envio</span>
-                    <span>S/ {formatCurrency(shippingCost)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between pt-2 border-t text-lg font-bold">
-                  <span>TOTAL A PAGAR</span>
-                  <span>S/ {formatCurrency(total)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right column - Payment */}
+        {/* Left column - Payment */}
         <div className="space-y-6">
           <Card>
             <CardHeader className="pb-3">
@@ -224,7 +142,7 @@ export default function PaymentStep({
               <div className="space-y-2">
                 <Label>Monto Recibido</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                     S/
                   </span>
                   <Input
@@ -290,11 +208,11 @@ export default function PaymentStep({
               {/* Payments list */}
               {payments.length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-xs text-gray-500">Pagos registrados:</Label>
+                  <Label className="text-xs text-muted-foreground">Pagos registrados:</Label>
                   {payments.map((payment) => (
                     <div
                       key={payment.id}
-                      className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                      className="flex items-center justify-between p-2 bg-muted rounded"
                     >
                       <div className="text-sm">
                         <span className="font-medium">
@@ -311,7 +229,7 @@ export default function PaymentStep({
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-6 w-6 text-red-500"
+                          className="h-6 w-6 text-destructive"
                           onClick={() => onRemovePayment(payment.id)}
                         >
                           <Trash2 className="w-3 h-3" />
@@ -352,6 +270,91 @@ export default function PaymentStep({
                 <div className="flex items-center gap-2 text-green-600 justify-center p-2">
                   <CheckCircle className="w-5 h-5" />
                   <span className="font-medium">Listo para completar venta</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right column - Sale Summary */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Resumen de Venta</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Totals */}
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})
+                  </span>
+                  <span className="font-medium">S/ {formatCurrency(subtotal)}</span>
+                </div>
+
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Descuentos</span>
+                    <span>- S/ {formatCurrency(discountAmount)}</span>
+                  </div>
+                )}
+
+                {shippingCost > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Costo de Envio</span>
+                    <span className="font-medium">S/ {formatCurrency(shippingCost)}</span>
+                  </div>
+                )}
+
+                <div className="border-t pt-2 flex justify-between">
+                  <span className="text-primary font-medium">TOTAL FINAL</span>
+                  <span className="text-2xl font-bold text-primary">
+                    S/ {formatCurrency(total)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Product list */}
+              {cart.length > 0 && (
+                <div className="space-y-2 border-t pt-4">
+                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1">
+                    <ShoppingBag className="w-3 h-3" />
+                    PRODUCTOS
+                  </div>
+                  {cart.map((item) => (
+                    <div
+                      key={item.variationId}
+                      className="flex justify-between items-start text-sm border-b last:border-b-0 pb-2 last:pb-0"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate text-xs">{item.productName}</p>
+                        <p className="text-xs text-muted-foreground">{item.variationName} × {item.quantity}</p>
+                      </div>
+                      <span className="text-xs font-medium ml-2 whitespace-nowrap">
+                        S/ {formatCurrency(item.price * item.quantity)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Selected customer */}
+              {customer.customerName && (
+                <div className="border-t pt-4">
+                  <div className="bg-muted rounded-lg p-3">
+                    <div className="flex items-center gap-2 text-xs text-primary font-medium mb-1">
+                      <User className="w-3 h-3" />
+                      CLIENTE SELECCIONADO
+                    </div>
+                    <div className="font-medium text-sm">
+                      {customer.customerName} {customer.customerLastname}
+                    </div>
+                    {customer.documentNumber && (
+                      <div className="text-xs text-muted-foreground">
+                        Doc: {customer.documentNumber}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>
