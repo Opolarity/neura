@@ -13,6 +13,7 @@ export const usePOSSessions = () => {
   const [sessions, setSessions] = useState<POSSessionListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [order, setOrder] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationState>({
     p_page: 1,
     p_size: 20,
@@ -66,6 +67,15 @@ export const usePOSSessions = () => {
 
   const onSearchChange = (value: string) => setSearch(value);
 
+  const onOrderChange = (value: string) => {
+    const newOrder = value === "none" ? null : value;
+    setOrder(newOrder);
+    const ascending = newOrder === "date-asc";
+    const newFilters = { ...filters, page: 1 };
+    setFilters(newFilters);
+    loadData(newFilters);
+  };
+
   const onPageChange = (page: number) => {
     const newFilters = { ...filters, page };
     setFilters(newFilters);
@@ -84,8 +94,10 @@ export const usePOSSessions = () => {
     sessions,
     loading,
     search,
+    order,
     pagination,
     onSearchChange,
+    onOrderChange,
     onPageChange,
     handlePageSizeChange,
     goToOpenPOS,
