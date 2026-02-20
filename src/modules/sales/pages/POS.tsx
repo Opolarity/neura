@@ -45,7 +45,7 @@ export default function POS() {
   const canProceedNext = pos.canProceedToStep((pos.currentStep + 1) as POSStep);
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 -m-[15px]">
+    <div className="h-[calc(100vh-73px)] flex flex-col bg-gray-50 -m-[15px]">
       {/* Header */}
       <POSHeader session={pos.session} onExit={pos.exitPOS} />
 
