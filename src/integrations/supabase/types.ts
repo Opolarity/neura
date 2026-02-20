@@ -307,6 +307,7 @@ export type Database = {
           created_at: string
           id: number
           is_active: boolean
+          order_id: number | null
           updated_at: string | null
           user_id: string | null
         }
@@ -314,6 +315,7 @@ export type Database = {
           created_at?: string
           id?: number
           is_active?: boolean
+          order_id?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -321,10 +323,18 @@ export type Database = {
           created_at?: string
           id?: number
           is_active?: boolean
+          order_id?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "carts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "carts_user_id_fkey"
             columns: ["user_id"]
