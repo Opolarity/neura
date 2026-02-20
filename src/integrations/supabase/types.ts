@@ -1260,7 +1260,7 @@ export type Database = {
       order_situations: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           id: number
           last_row: boolean
           order_id: number
@@ -1269,7 +1269,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: number
           last_row: boolean
           order_id: number
@@ -1278,7 +1278,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: number
           last_row?: boolean
           order_id?: number
@@ -1700,7 +1700,7 @@ export type Database = {
           created_at: string | null
           id: number
           is_active: boolean
-          location: number
+          location: string
           name: string
           web: boolean
         }
@@ -1709,7 +1709,7 @@ export type Database = {
           created_at?: string | null
           id?: number
           is_active?: boolean
-          location?: number
+          location: string
           name: string
           web?: boolean
         }
@@ -1718,7 +1718,7 @@ export type Database = {
           created_at?: string | null
           id?: number
           is_active?: boolean
-          location?: number
+          location?: string
           name?: string
           web?: boolean
         }
