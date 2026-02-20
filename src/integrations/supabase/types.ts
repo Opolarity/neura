@@ -1589,6 +1589,7 @@ export type Database = {
           opened_at: string
           opening_amount: number
           opening_difference: number
+          sale_type_id: number
           status_id: number
           total_sales: number | null
           user_id: string
@@ -1607,6 +1608,7 @@ export type Database = {
           opened_at?: string
           opening_amount: number
           opening_difference?: number
+          sale_type_id?: number
           status_id: number
           total_sales?: number | null
           user_id?: string
@@ -1625,6 +1627,7 @@ export type Database = {
           opened_at?: string
           opening_amount?: number
           opening_difference?: number
+          sale_type_id?: number
           status_id?: number
           total_sales?: number | null
           user_id?: string
@@ -1643,6 +1646,13 @@ export type Database = {
             columns: ["business_account"]
             isOneToOne: false
             referencedRelation: "business_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sessions_sale_type_id_fkey"
+            columns: ["sale_type_id"]
+            isOneToOne: false
+            referencedRelation: "sale_types"
             referencedColumns: ["id"]
           },
           {
@@ -3856,6 +3866,16 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_add_to_cart: {
+        Args: {
+          p_cart_id: number
+          p_product_id: number
+          p_quantity: number
+          p_user_id?: string
+          p_variation_id: number
+        }
+        Returns: Json
+      }
       sp_close_pos_session: {
         Args: {
           p_closing_amount: number
@@ -4102,7 +4122,7 @@ export type Database = {
         Returns: Json
       }
       sp_get_cart_details: {
-        Args: { p_cart_id: number }
+        Args: { p_cart_id: number; p_user_id?: string }
         Returns: {
           cart_items: Json
           total_amount: number
