@@ -14,12 +14,12 @@ export default function POSHeader({ session, onExit }: POSHeaderProps) {
     <header className="bg-white border-b px-4 py-1.5 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <Store className="w-4 h-4 text-blue-600" />
-        <span className="font-semibold text-sm">Sistema POS</span>
+        <span className="font-semibold text-sm">Punto de Venta</span>
       </div>
 
       <div className="flex items-center gap-3">
-        {session && (
-          <>
+        {session &&
+        <>
             <span className="flex items-center gap-1.5 text-xs text-gray-500">
               <Clock className="w-3.5 h-3.5" />
               {formatTime(session.openedAt)}
@@ -30,18 +30,18 @@ export default function POSHeader({ session, onExit }: POSHeaderProps) {
               ACTIVA
             </Badge>
           </>
-        )}
+        }
 
         <Button
           variant="ghost"
           size="sm"
           className="gap-1.5 text-red-600 hover:bg-red-50 h-7 text-xs px-2"
-          onClick={onExit}
-        >
+          onClick={onExit}>
+
           <LogOut className="w-3.5 h-3.5" />
           Salir
         </Button>
       </div>
-    </header>
-  );
+    </header>);
+
 }
