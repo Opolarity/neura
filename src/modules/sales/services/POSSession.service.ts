@@ -59,6 +59,7 @@ export const openPOSSession = async (
         action: "open",
         openingAmount: request.openingAmount,
         businessAccountId: request.businessAccountId,
+        saleTypeId: request.saleTypeId,
         notes: request.notes || null,
       },
     }

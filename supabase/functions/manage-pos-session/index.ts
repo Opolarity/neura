@@ -69,7 +69,7 @@ serve(async (req) => {
     // ACTION: OPEN - Open a new cash session
     // =============================================
     if (action === "open") {
-      const { openingAmount, notes, businessAccountId } = input;
+      const { openingAmount, notes, businessAccountId, saleTypeId } = input;
 
       if (!businessAccountId) {
         return new Response(
@@ -88,6 +88,7 @@ serve(async (req) => {
         p_opening_amount: openingAmount || 0,
         p_business_account_id: businessAccountId,
         p_notes: notes || null,
+        p_sale_type_id: saleTypeId || null,
       });
 
       if (error) {
