@@ -182,7 +182,8 @@ export default function POS() {
       <POSCloseSessionModal
         isOpen={pos.showCloseSessionModal}
         session={pos.session}
-        totalSales={pos.sessionTotalSales}
+        totalCashSales={pos.sessionTotalCashSales}
+        businessAccountTotal={pos.sessionBusinessAccountTotal}
         isClosing={pos.closingSession}
         onClose={pos.handleCloseSession}
         onCancel={pos.cancelCloseSession}
