@@ -265,11 +265,11 @@ export default function ProductsStep({
               </div>
             )}
 
-            {/* Total acumulado */}
+            {/* Subtotal acumulado */}
             {cart.length > 0 && (
               <div className="border-t pt-3 mt-3 flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-600">TOTAL</span>
-                <span className="text-lg font-bold text-blue-600">
+                <span className="text-sm font-medium text-muted-foreground">SUBTOTAL</span>
+                <span className="text-lg font-bold text-foreground">
                   S/ {formatCurrency(total)}
                 </span>
               </div>

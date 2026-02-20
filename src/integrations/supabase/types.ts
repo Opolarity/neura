@@ -3819,6 +3819,14 @@ export type Database = {
         }
         Returns: Json
       }
+      get_document_products: {
+        Args: { p_order_id?: number; p_return_id?: number }
+        Returns: Json
+      }
+      get_get_return_order_products: {
+        Args: { p_order_id?: number; p_return_id?: number }
+        Returns: Json
+      }
       get_pos_session_detail: { Args: { p_session_id: number }; Returns: Json }
       get_pos_sessions_list: {
         Args: {
@@ -4217,6 +4225,7 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_return_details: { Args: { p_return_id: number }; Returns: Json }
       sp_get_return_order_and_return: {
         Args: {
           p_order: boolean
@@ -4435,18 +4444,8 @@ export type Database = {
         }
         Returns: Record<string, unknown>
       }
-      sp_update_return_status: {
-        Args: {
-          p_apply_stock?: boolean
-          p_branch_id?: number
-          p_business_account_id?: number
-          p_module_id: number
-          p_payment_methods?: Json
-          p_return_id: number
-          p_situation_id: number
-          p_status_id: number
-          p_user_id: string
-        }
+      sp_update_return: {
+        Args: { p_payload: Json; p_user_id: string }
         Returns: Json
       }
       sp_update_stock_type: {
