@@ -25,9 +25,9 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { cartId, userId } = body;
 
-    if (!cartId) {
+    if (!cartId && !userId) {
       return new Response(
-        JSON.stringify({ error: 'Cart ID is required' }),
+        JSON.stringify({ error: 'cartId or userId is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
