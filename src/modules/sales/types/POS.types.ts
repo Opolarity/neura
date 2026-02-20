@@ -234,10 +234,18 @@ export interface CreatePOSOrderRequest {
     businessAccountId?: number | null;
   }>;
 
+  // Change entries (vuelto)
+  changeEntries: Array<{
+    paymentMethodId: number;
+    amount: number;
+    businessAccountId?: number | null;
+  }>;
+
   // Totals
   subtotal: number;
   discount: number;
   total: number;
+  change: number;
 
   // POS specific
   initialSituationId: number;
