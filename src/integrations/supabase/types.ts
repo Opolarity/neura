@@ -1604,6 +1604,7 @@ export type Database = {
           opening_difference: number
           sale_type_id: number
           status_id: number
+          total_cash_sales: number
           total_sales: number | null
           user_id: string
           warehouse_id: number
@@ -1623,6 +1624,7 @@ export type Database = {
           opening_difference?: number
           sale_type_id?: number
           status_id: number
+          total_cash_sales?: number
           total_sales?: number | null
           user_id?: string
           warehouse_id: number
@@ -1642,6 +1644,7 @@ export type Database = {
           opening_difference?: number
           sale_type_id?: number
           status_id?: number
+          total_cash_sales?: number
           total_sales?: number | null
           user_id?: string
           warehouse_id?: number
