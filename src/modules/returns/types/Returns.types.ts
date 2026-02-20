@@ -16,7 +16,9 @@ export interface OrderProduct {
     product_price: number;
     product_discount: number;
     product_name?: string;
-    variations: {
+    sku?: string;
+    terms?: Array<{ term_id: number; term_name: string; term_group: string; term_group_id: number }>;
+    variations?: {
         sku: string;
         products: {
             title: string;
@@ -29,6 +31,7 @@ export interface ReturnProduct {
     quantity: number;
     product_name: string;
     sku: string;
+    variation_name?: string;
     price: number;
     output: boolean;
     maxQuantity?: number;
@@ -112,4 +115,7 @@ export interface ReturnPayment {
     id: string;
     paymentMethodId: string;
     amount: string;
+    voucherFile?: File;
+    voucherPreview?: string;
+    voucherUrl?: string;
 }

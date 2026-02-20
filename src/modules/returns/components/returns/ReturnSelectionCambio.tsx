@@ -19,9 +19,6 @@ interface ReturnSelectionCambioProps {
     onAddExchangeProduct: (product: any) => void;
     onUpdateProduct: (index: number, field: string, value: any) => void;
     onRemoveProduct: (index: number) => void;
-    calculateReturnTotal: () => number;
-    calculateExchangeTotal: () => number;
-    calculateDifference: () => number;
     formatCurrency: (amount: number) => string;
 }
 
@@ -31,9 +28,6 @@ export const ReturnSelectionCambio = ({
     onAddExchangeProduct,
     onUpdateProduct,
     onRemoveProduct,
-    calculateReturnTotal,
-    calculateExchangeTotal,
-    calculateDifference,
     formatCurrency,
 }: ReturnSelectionCambioProps) => {
     const {
@@ -68,8 +62,6 @@ export const ReturnSelectionCambio = ({
         onAddExchangeProduct(selectedProduct);
         resetSelection();
     };
-
-    const difference = calculateDifference();
 
     return (
         <Card>
@@ -114,16 +106,6 @@ export const ReturnSelectionCambio = ({
                     onRemoveProduct={onRemoveProduct}
                     formatCurrency={formatCurrency}
                 />
-
-                <div className="mt-4 space-y-2 text-right border-t pt-4">
-                    <p>Total Productos Devueltos: {formatCurrency(calculateReturnTotal())}</p>
-                    <p>Total Productos Cambio: {formatCurrency(calculateExchangeTotal())}</p>
-                    <p className="text-lg font-bold">
-                        {difference >= 0
-                            ? `A Reembolsar: ${formatCurrency(difference)}`
-                            : `Diferencia a Pagar: ${formatCurrency(Math.abs(difference))}`}
-                    </p>
-                </div>
             </CardContent>
         </Card>
     );

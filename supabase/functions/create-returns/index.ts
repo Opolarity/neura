@@ -17,6 +17,7 @@ interface ReturnProduct {
 interface PaymentMethod {
   payment_method_id: number;
   amount: number;
+  voucher_url?: string | null;
 }
 
 interface CreateReturnPayload {
@@ -78,9 +79,11 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (err) {
+    // 👇 distinguir entre Error nativo y cualquier otro objeto
+    const message = err instanceof Error ? err.message : JSON.stringify(err);
     return new Response(
-      JSON.stringify({ success: false, error: String(error) }),
+      JSON.stringify({ success: false, error: message }),
       { status: 500, headers: corsHeaders }
     );
   }

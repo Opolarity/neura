@@ -7,8 +7,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
-import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
-import { PaginationState } from "@/shared/components/pagination/Pagination";
+import Pagination, { PaginationState } from "@/shared/components/pagination/Pagination";
 
 interface OrderSelectionTableProps {
     items: any[];
@@ -18,7 +17,6 @@ interface OrderSelectionTableProps {
     sourceType: "orders" | "returns";
     onSelect: (item: any) => void;
     onPageChange: (page: number) => void;
-    onPageSizeChange: (size: number) => void;
     formatCurrency: (amount: number) => string;
 }
 
@@ -30,7 +28,6 @@ export const OrderSelectionTable = ({
     sourceType,
     onSelect,
     onPageChange,
-    onPageSizeChange,
     formatCurrency,
 }: OrderSelectionTableProps) => {
     if (loading) {
@@ -47,7 +44,8 @@ export const OrderSelectionTable = ({
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>N° Documento</TableHead>
+                            {sourceType === "orders" && <TableHead>ID Venta</TableHead>}
+                            <TableHead>{sourceType === "returns" ? "ID Retorno" : "N° Documento"}</TableHead>
                             <TableHead>
                                 {sourceType === "returns" ? "Doc. Cliente" : "Cliente"}
                             </TableHead>
@@ -61,7 +59,7 @@ export const OrderSelectionTable = ({
                         {items.length === 0 ? (
                             <TableRow>
                                 <TableCell
-                                    colSpan={4}
+                                    colSpan={sourceType === "orders" ? 5 : 4}
                                     className="text-center text-muted-foreground py-8"
                                 >
                                     No se encontraron resultados
@@ -69,8 +67,6 @@ export const OrderSelectionTable = ({
                             </TableRow>
                         ) : (
                             items.map((item) => {
-                                // SP orders fields: id, date, customer_name (concat), document_number, total
-                                // SP returns fields: id, customer_document_number, total_refund_amount, total_exchange_difference
                                 const docNumber = item.document_number || `#${item.id}`;
                                 const clientLabel =
                                     item.customer_name ||
@@ -82,13 +78,17 @@ export const OrderSelectionTable = ({
                                 return (
                                     <TableRow
                                         key={item.id}
-                                        className={`cursor-pointer transition-colors ${
-                                            selectedId === item.id
-                                                ? "bg-primary/10 border-l-4 border-l-primary"
-                                                : "hover:bg-accent"
-                                        }`}
+                                        className={`cursor-pointer transition-colors ${selectedId === item.id
+                                            ? "bg-primary/10 border-l-4 border-l-primary"
+                                            : "hover:bg-accent"
+                                            }`}
                                         onClick={() => onSelect(item)}
                                     >
+                                        {sourceType === "orders" && (
+                                            <TableCell className="text-muted-foreground text-sm">
+                                                #{item.id}
+                                            </TableCell>
+                                        )}
                                         <TableCell className="font-medium">
                                             {docNumber}
                                         </TableCell>
@@ -108,11 +108,12 @@ export const OrderSelectionTable = ({
                     </TableBody>
                 </Table>
             </div>
-            <PaginationBar
-                pagination={pagination}
-                onPageChange={onPageChange}
-                onPageSizeChange={onPageSizeChange}
-            />
+            <div className="flex justify-center">
+                <Pagination
+                    pagination={pagination}
+                    onPageChange={onPageChange}
+                />
+            </div>
         </div>
     );
 };

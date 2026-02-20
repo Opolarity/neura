@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error("Missing environment variables");
@@ -49,11 +49,11 @@ Deno.serve(async (req) => {
     }
 
     const { data, error } = await supabase.rpc("sp_get_return_order_and_return", {
-      p_order:   order ?? true,
-      p_return:  returns ?? false,
-      p_size:    size   ?? 20,
-      p_page:    page   ?? 1,
-      p_search:  search ?? null,
+      p_order: order ?? true,
+      p_return: returns ?? false,
+      p_size: size || 5,
+      p_page: page || 1,
+      p_search: search ?? null,
     });
 
     if (error) {

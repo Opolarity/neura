@@ -33,7 +33,7 @@ export const useReturns = () => {
     };
 
     const formatCurrency = (amount: number | null) => {
-        if (!amount) return '-';
+        if (amount === null || amount === undefined) return '-';
         return new Intl.NumberFormat('es-PE', {
             style: 'currency',
             currency: 'PEN',

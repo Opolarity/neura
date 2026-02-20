@@ -59,7 +59,7 @@ export const useReturnSelectionCambio = () => {
         try {
             const response = await getSaleProducts({
                 p_page: page,
-                p_size: size,
+                p_size: size || 5,
                 p_search: searchTerm || null,
                 p_stock_type_id: typeId,
             });

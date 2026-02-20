@@ -24,28 +24,31 @@ Deno.serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) throw new Error("Unauthorized");
 
-    const { return_id, status_id, situation_id, module_id, apply_stock } =
-      await req.json();
+    const { order_id, return_id } = await req.json();
 
-    const { data, error } = await supabase.rpc("sp_update_return_status", {
-      p_return_id: return_id,
-      p_status_id: status_id,
-      p_situation_id: situation_id,
-      p_module_id: module_id,
-      p_user_id: user.id,
-      p_apply_stock: apply_stock ?? false,
+    if (!order_id && !return_id) {
+      return new Response(
+        JSON.stringify({ error: "Debes enviar order_id o return_id." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { data, error } = await supabase.rpc("get_document_products", {
+      p_order_id: order_id ?? null,
+      p_return_id: return_id ?? null,
     });
 
     if (error) throw error;
 
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  } catch (err) {
     return new Response(
-      JSON.stringify(data),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ success: false, error: String(error) }),
-      { status: 500, headers: corsHeaders }
+      JSON.stringify({ error: (err as Error).message ?? "Error interno" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

@@ -122,6 +122,15 @@ export const returnsService = {
         }));
     },
 
+    async getDocumentProducts(params: { order_id?: number; return_id?: number }) {
+        const { data, error } = await supabase.functions.invoke("get-return-order-products", {
+            body: params,
+        });
+
+        if (error) throw error;
+        return data as { header: any; products: any[] };
+    },
+
     async createReturn(payload: any) {
         const { data, error } = await supabase.functions.invoke("create-returns", {
             body: payload,
@@ -150,8 +159,28 @@ export const returnsService = {
             created_at: item.created_at,
             types: { name: 'Devolución' },
             situations: { name: 'Pendiente' },
-            total_exchange_difference: 0
+            total_exchange_difference: item.otal_exchange_difference ?? item.total_exchange_difference ?? 0
         })) as ReturnItem[];
+    },
+
+    async updateReturnFull(payload: any) {
+        const { data, error } = await supabase.functions.invoke('update-return', {
+            body: payload,
+        });
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Error al actualizar la devolución');
+        return data;
+    },
+
+    async getReturnDetails(id: number) {
+        const { data, error } = await supabase.functions.invoke('get-return-details', {
+            body: { return_id: id },
+        });
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Error al obtener los detalles del retorno');
+        return data.data as any;
     },
 
     async getReturnById(id: number) {
@@ -232,5 +261,23 @@ export const returnsService = {
 
         if (error) throw error;
         return data;
-    }
+    },
+
+    async uploadReturnVoucher(file: File): Promise<string> {
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `return-vouchers/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('sales')
+            .upload(filePath, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('sales')
+            .getPublicUrl(filePath);
+
+        return publicUrl;
+    },
 };

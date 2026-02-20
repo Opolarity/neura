@@ -35,7 +35,6 @@ interface OrderSelectionDialogProps {
     selectedEdgeItemId?: number;
     onEdgeItemSelect: (item: any) => void;
     onEdgePageChange: (page: number) => void;
-    onEdgePageSizeChange: (size: number) => void;
     // CAM-only: source selector
     orderSourceType: "orders" | "returns";
     onOrderSourceTypeChange: (source: "orders" | "returns") => void;
@@ -57,7 +56,6 @@ export const OrderSelectionDialog = ({
     selectedEdgeItemId,
     onEdgeItemSelect,
     onEdgePageChange,
-    onEdgePageSizeChange,
     orderSourceType,
     onOrderSourceTypeChange,
     onConfirm,
@@ -145,7 +143,6 @@ export const OrderSelectionDialog = ({
                                         sourceType={isCAM ? orderSourceType : "orders"}
                                         onSelect={onEdgeItemSelect}
                                         onPageChange={onEdgePageChange}
-                                        onPageSizeChange={onEdgePageSizeChange}
                                         formatCurrency={formatCurrency}
                                     />
                                 </div>

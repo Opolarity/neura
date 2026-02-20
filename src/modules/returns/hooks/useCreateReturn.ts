@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ export const useCreateReturn = () => {
     const [orderProducts, setOrderProducts] = useState<OrderProduct[]>([]);
     const [moduleId, setModuleId] = useState<number>(0);
     const [userProfile, setUserProfile] = useState<any>(null);
+    const [orderTotal, setOrderTotal] = useState<number>(0);
 
     // Form fields
     const [reason, setReason] = useState("");
@@ -51,10 +52,15 @@ export const useCreateReturn = () => {
     const [payments, setPayments] = useState<ReturnPayment[]>([]);
     const [currentPayment, setCurrentPayment] = useState<ReturnPayment>(createEmptyPayment());
 
+    // Voucher modal
+    const voucherFileInputRef = useRef<HTMLInputElement>(null);
+    const [voucherModalOpen, setVoucherModalOpen] = useState(false);
+    const [selectedVoucherPreview, setSelectedVoucherPreview] = useState<string | null>(null);
+
     // Edge function state (used for both CAM and non-CAM order selection)
     const [orderSourceType, setOrderSourceType] = useState<"orders" | "returns">("orders");
     const [edgeSearch, setEdgeSearch] = useState("");
-    const [edgePagination, setEdgePagination] = useState<PaginationState>({ p_page: 1, p_size: 20, total: 0 });
+    const [edgePagination, setEdgePagination] = useState<PaginationState>({ p_page: 1, p_size: 5, total: 0 });
     const [edgeItems, setEdgeItems] = useState<any[]>([]);
     const [edgeLoading, setEdgeLoading] = useState(false);
     const [selectedEdgeItem, setSelectedEdgeItem] = useState<any>(null);
@@ -77,8 +83,8 @@ export const useCreateReturn = () => {
         if (!showOrderModal || !selectedReturnType) return;
         const source = selectedReturnTypeCode === "CAM" ? orderSourceType : "orders";
         setEdgeSearch("");
-        setEdgePagination({ p_page: 1, p_size: 20, total: 0 });
-        fetchEdgeData(source, 1, 20, "");
+        setEdgePagination({ p_page: 1, p_size: 5, total: 0 });
+        fetchEdgeData(source, 1, 5, "");
     }, [selectedReturnType, showOrderModal]);
 
     const loadInitialData = async () => {
@@ -191,6 +197,7 @@ export const useCreateReturn = () => {
             document_type: item.document_type || 1,
             shipping_cost: item.shipping_cost || null,
         });
+        setOrderTotal(item.total ?? item.total_refund_amount ?? 0);
     };
 
     const handleOrderSelect = async () => {
@@ -203,22 +210,38 @@ export const useCreateReturn = () => {
         setReturnTypeCode(selectedType?.code || "");
 
         try {
-            // When CAM selects from an existing return, fetch returns_products; otherwise order_products
             const isFromReturn = selectedType?.code === "CAM" && orderSourceType === "returns";
-            const orderProductsData = isFromReturn
-                ? await returnsService.getReturnProductsForDisplay(selectedOrder.id)
-                : await returnsService.getOrderProducts(selectedOrder.id);
-            setOrderProducts(orderProductsData || []);
+            const response = isFromReturn
+                ? await returnsService.getDocumentProducts({ return_id: selectedOrder.id })
+                : await returnsService.getDocumentProducts({ order_id: selectedOrder.id });
+
+            const products = response?.products ?? [];
+            const header = response?.header ?? {};
+
+            const orderProductsData: OrderProduct[] = products.map((p: any) => ({
+                id: p.id,
+                product_variation_id: p.product_variation_id,
+                product_name: p.product_name,
+                sku: p.sku ?? '',
+                quantity: p.quantity,
+                product_price: p.product_price,
+                product_discount: p.product_discount ?? 0,
+                terms: p.terms ?? [],
+            }));
+
+            setOrderProducts(orderProductsData);
             setDocumentType(selectedOrder.document_type.toString());
             setDocumentNumber(selectedOrder.document_number);
-            setShippingCost(selectedOrder.shipping_cost || 0);
+            setShippingCost(header.shipping_cost || 0);
+            setOrderTotal(header.total || orderTotal);
 
             if (selectedType?.code === "DVT") {
-                const allProducts: ReturnProduct[] = (orderProductsData || []).map((p: any) => ({
+                const allProducts: ReturnProduct[] = orderProductsData.map((p) => ({
                     product_variation_id: p.product_variation_id,
                     quantity: p.quantity,
-                    product_name: p.variations.products.title,
-                    sku: p.variations.sku,
+                    product_name: p.product_name ?? '',
+                    sku: p.sku ?? '',
+                    variation_name: p.terms?.map(t => t.term_name).join(' / ') ?? '',
                     price: p.product_price * (1 - p.product_discount / 100),
                     output: false,
                     maxQuantity: p.quantity,
@@ -252,6 +275,26 @@ export const useCreateReturn = () => {
         setPayments((prev) => prev.filter((p) => p.id !== id));
     }, []);
 
+    const handleVoucherSelect = useCallback((file: File) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setCurrentPayment((prev) => ({
+                ...prev,
+                voucherFile: file,
+                voucherPreview: reader.result as string,
+            }));
+        };
+        reader.readAsDataURL(file);
+    }, []);
+
+    const removeVoucher = useCallback(() => {
+        setCurrentPayment((prev) => ({
+            ...prev,
+            voucherFile: undefined,
+            voucherPreview: undefined,
+        }));
+    }, []);
+
     // ── Return products ────────────────────────────────────────────────────────
     const toggleReturnProduct = (product: OrderProduct, quantity: number) => {
         const existing = returnProducts.find(
@@ -266,8 +309,9 @@ export const useCreateReturn = () => {
             const newProduct: ReturnProduct = {
                 product_variation_id: product.product_variation_id,
                 quantity,
-                product_name: product.variations.products.title,
-                sku: product.variations.sku,
+                product_name: product.product_name ?? product.variations?.products?.title ?? '',
+                sku: product.sku ?? product.variations?.sku ?? '',
+                variation_name: product.terms?.map(t => t.term_name).join(' / ') ?? '',
                 price: product.product_price * (1 - product.product_discount / 100),
                 output: false,
                 maxQuantity: product.quantity,
@@ -359,19 +403,11 @@ export const useCreateReturn = () => {
             const selectedSituation = getSelectedSituation();
             const situationCode = selectedSituation?.code || "VIR";
 
-            let totalRefundAmount = 0;
-            let totalExchangeDifference = 0;
-
-            if (returnTypeCode === "DVT" || returnTypeCode === "DVP") {
-                totalRefundAmount = calculateReturnTotal();
-            } else if (returnTypeCode === "CAM") {
-                const difference = calculateDifference();
-                if (difference >= 0) {
-                    totalRefundAmount = difference;
-                } else {
-                    totalExchangeDifference = Math.abs(difference);
-                }
-            }
+            const productsTotal = calculateReturnTotal();
+            const totalRefundAmount = productsTotal; // SP adds shipping_cost automatically
+            const totalExchangeDifference = returnTypeCode === 'CAM'
+                ? calculateExchangeTotal() - (productsTotal + (shippingReturn ? shippingCost : 0))
+                : -(productsTotal + (shippingReturn ? shippingCost : 0));
 
             const returnProductsPayload = returnProducts.map((p) => ({
                 product_variation_id: p.product_variation_id,
@@ -393,7 +429,18 @@ export const useCreateReturn = () => {
             const getBusinessAccountId = (methodId: string) =>
                 paymentMethods.find((pm) => pm.id === parseInt(methodId))?.business_account_id || null;
 
-            const firstPayment = validPayments[0] ?? null;
+            // Upload vouchers before sending
+            const paymentsWithUrls = await Promise.all(
+                validPayments.map(async (p) => {
+                    if (p.voucherFile) {
+                        const url = await returnsService.uploadReturnVoucher(p.voucherFile);
+                        return { ...p, voucherUrl: url };
+                    }
+                    return p;
+                })
+            );
+
+            const firstPayment = paymentsWithUrls[0] ?? null;
 
             const payload = {
                 module_code: "RTU",
@@ -404,7 +451,7 @@ export const useCreateReturn = () => {
                 customer_document_type_id: parseInt(documentType),
                 reason,
                 shipping_return: shippingReturn,
-                shipping_cost: shippingReturn ? shippingCost : 0,
+                shipping_cost: shippingReturn ? shippingCost : null,
                 situation_id: parseInt(situationId),
                 situation_code: situationCode,
                 status_id: selectedSituation?.status_id || 1,
@@ -414,10 +461,11 @@ export const useCreateReturn = () => {
                 return_products: allProducts,
                 payment_method_id: firstPayment ? parseInt(firstPayment.paymentMethodId) : null,
                 business_account_id: firstPayment ? getBusinessAccountId(firstPayment.paymentMethodId) : null,
-                payments: validPayments.map((p) => ({
+                payments: paymentsWithUrls.map((p) => ({
                     payment_method_id: parseInt(p.paymentMethodId),
                     amount: parseFloat(p.amount),
                     business_account_id: getBusinessAccountId(p.paymentMethodId),
+                    voucher_url: p.voucherUrl || null,
                 })),
                 branch_id: userProfile?.branch_id || 1,
                 warehouse_id: userProfile?.warehouse_id || 1,
@@ -470,6 +518,13 @@ export const useCreateReturn = () => {
         setCurrentPayment,
         addPayment,
         removePayment,
+        voucherFileInputRef,
+        handleVoucherSelect,
+        removeVoucher,
+        voucherModalOpen,
+        setVoucherModalOpen,
+        selectedVoucherPreview,
+        setSelectedVoucherPreview,
         returnProducts,
         exchangeProducts,
         orderSourceType,
@@ -488,6 +543,7 @@ export const useCreateReturn = () => {
         addExchangeProduct,
         removeExchangeProduct,
         updateExchangeProduct,
+        orderTotal,
         calculateReturnTotal,
         calculateExchangeTotal,
         calculateDifference,

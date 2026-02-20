@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Plus, Trash2, CreditCard } from "lucide-react";
+import { Loader2, ArrowLeft, Plus, Trash2, CreditCard, Paperclip, Upload, X } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -26,6 +26,7 @@ import { OrderSelectionDialog } from "../components/returns/OrderSelectionDialog
 import { ReturnProductsTable } from "../components/returns/ReturnProductsTable";
 import { ReturnSummary } from "../components/returns/ReturnSummary";
 import { ReturnSelectionCambio } from "../components/returns/ReturnSelectionCambio";
+import { VoucherPreviewModal } from "@/modules/sales/components/sales/VoucherPreviewModal";
 
 const CreateReturn = () => {
   const navigate = useNavigate();
@@ -60,6 +61,13 @@ const CreateReturn = () => {
     setCurrentPayment,
     addPayment,
     removePayment,
+    voucherFileInputRef,
+    handleVoucherSelect,
+    removeVoucher,
+    voucherModalOpen,
+    setVoucherModalOpen,
+    selectedVoucherPreview,
+    setSelectedVoucherPreview,
     returnProducts,
     exchangeProducts,
     orderSourceType,
@@ -71,16 +79,15 @@ const CreateReturn = () => {
     handleEdgeSourceChange,
     handleEdgeSearchChange,
     handleEdgePageChange,
-    handleEdgePageSizeChange,
     handleEdgeItemSelect,
     handleOrderSelect,
     toggleReturnProduct,
     addExchangeProduct,
     removeExchangeProduct,
     updateExchangeProduct,
+    orderTotal,
     calculateReturnTotal,
     calculateExchangeTotal,
-    calculateDifference,
     handleSubmit
   } = useCreateReturn();
 
@@ -113,7 +120,6 @@ const CreateReturn = () => {
         selectedEdgeItemId={selectedEdgeItem?.id}
         onEdgeItemSelect={handleEdgeItemSelect}
         onEdgePageChange={handleEdgePageChange}
-        onEdgePageSizeChange={handleEdgePageSizeChange}
         orderSourceType={orderSourceType}
         onOrderSourceTypeChange={handleEdgeSourceChange}
         onConfirm={handleOrderSelect}
@@ -249,6 +255,18 @@ const CreateReturn = () => {
                             <CreditCard className="w-4 h-4 text-muted-foreground" />
                             <span className="text-sm">{method?.name || "Método"}</span>
                             <span className="text-sm font-medium">{formatCurrency(parseFloat(p.amount) || 0)}</span>
+                            {p.voucherPreview && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => { setSelectedVoucherPreview(p.voucherPreview!); setVoucherModalOpen(true); }}
+                                title="Ver comprobante"
+                              >
+                                <Paperclip className="w-3 h-3 text-primary" />
+                              </Button>
+                            )}
                           </div>
                           <Button
                             type="button"
@@ -291,10 +309,39 @@ const CreateReturn = () => {
                       placeholder="Monto"
                     />
                   </div>
-                  <Button type="button" variant="secondary" size="sm" className="w-full" onClick={addPayment}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    Agregar
-                  </Button>
+                  {/* Voucher preview */}
+                  {currentPayment.voucherPreview && (
+                    <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+                      <img src={currentPayment.voucherPreview} alt="Comprobante" className="h-10 w-10 object-cover rounded" />
+                      <span className="text-xs text-muted-foreground flex-1 truncate">{currentPayment.voucherFile?.name}</span>
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={removeVoucher}>
+                        <X className="w-3 h-3 text-destructive" />
+                      </Button>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    ref={voucherFileInputRef}
+                    className="hidden"
+                    accept="image/*,.pdf"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleVoucherSelect(f); e.target.value = ""; }}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant={currentPayment.voucherPreview ? "default" : "outline"}
+                      size="sm"
+                      className="w-full"
+                      onClick={() => voucherFileInputRef.current?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-1" />
+                      {currentPayment.voucherPreview ? "Cambiar" : "Comprobante"}
+                    </Button>
+                    <Button type="button" variant="secondary" size="sm" className="w-full" onClick={addPayment}>
+                      <Plus className="w-4 h-4 mr-1" />
+                      Agregar
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -330,26 +377,26 @@ const CreateReturn = () => {
               onAddExchangeProduct={addExchangeProduct}
               onUpdateProduct={updateExchangeProduct}
               onRemoveProduct={removeExchangeProduct}
-              calculateReturnTotal={calculateReturnTotal}
-              calculateExchangeTotal={calculateExchangeTotal}
-              calculateDifference={calculateDifference}
               formatCurrency={currencyFormatter}
             />
           )}
 
-          {!isCAM && (
-            <ReturnSummary
-              isCAM={isCAM}
-              calculateReturnTotal={calculateReturnTotal}
-              calculateExchangeTotal={calculateExchangeTotal}
-              calculateDifference={calculateDifference}
-              shippingReturn={shippingReturn}
-              shippingCost={shippingCost}
-              formatCurrency={currencyFormatter}
-            />
-          )}
+          <ReturnSummary
+            isCAM={isCAM}
+            orderTotal={orderTotal}
+            calculateReturnTotal={calculateReturnTotal}
+            calculateExchangeTotal={calculateExchangeTotal}
+            shippingReturn={shippingReturn}
+            shippingCost={shippingCost}
+            formatCurrency={currencyFormatter}
+          />
         </form>
       </div >
+      <VoucherPreviewModal
+        open={voucherModalOpen}
+        onOpenChange={setVoucherModalOpen}
+        voucherSrc={selectedVoucherPreview || ""}
+      />
     </>
   );
 };
