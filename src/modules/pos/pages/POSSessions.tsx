@@ -1,4 +1,5 @@
 import { usePOSSessions } from "../hooks/usePOSSessions";
+import POSSessionsFilterModal from "../components/POSSessionsFilterModal";
 import {
   Card,
   CardContent,
@@ -20,16 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, Search, Eye, ListFilter, X } from "lucide-react";
+import { Loader2, Search, Eye, ListFilter } from "lucide-react";
 import { format } from "date-fns";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useNavigate } from "react-router-dom";
@@ -45,21 +39,11 @@ const POSSessions = () => {
     pagination,
     filtersOpen,
     setFiltersOpen,
-    dateFrom,
-    setDateFrom,
-    dateTo,
-    setDateTo,
-    differenceType,
-    setDifferenceType,
-    salesMin,
-    setSalesMin,
-    salesMax,
-    setSalesMax,
+    filterValues,
     activeFilterCount,
     onSearchChange,
     onOrderChange,
     onApplyFilters,
-    onClearFilters,
     onPageChange,
     handlePageSizeChange,
     goToOpenPOS,
@@ -78,6 +62,14 @@ const POSSessions = () => {
         <Button onClick={goToOpenPOS}>Ir a Punto de Venta</Button>
       </div>
 
+      {/* Filter Modal */}
+      <POSSessionsFilterModal
+        filters={filterValues}
+        isOpen={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        onApply={onApplyFilters}
+      />
+
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2 flex-wrap">
@@ -93,9 +85,9 @@ const POSSessions = () => {
             </div>
 
             <Button
-              variant={filtersOpen ? "default" : "outline"}
+              variant={activeFilterCount > 0 ? "default" : "outline"}
               className="gap-2"
-              onClick={() => setFiltersOpen(!filtersOpen)}
+              onClick={() => setFiltersOpen(true)}
             >
               <ListFilter className="w-4 h-4" />
               Filtros
@@ -106,10 +98,7 @@ const POSSessions = () => {
               )}
             </Button>
 
-            <Select
-              value={filters.orderBy}
-              onValueChange={onOrderChange}
-            >
+            <Select value={filters.orderBy} onValueChange={onOrderChange}>
               <SelectTrigger className="w-auto min-w-[200px]">
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
@@ -125,88 +114,6 @@ const POSSessions = () => {
               </SelectContent>
             </Select>
           </div>
-
-          {/* Filter Panel */}
-          <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
-            <CollapsibleContent>
-              <div className="mt-4 p-4 border border-border rounded-lg bg-muted/30 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Date Range */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Rango de Fecha</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="date"
-                        value={dateFrom}
-                        onChange={(e) => setDateFrom(e.target.value)}
-                        placeholder="Desde"
-                        className="flex-1"
-                      />
-                      <Input
-                        type="date"
-                        value={dateTo}
-                        onChange={(e) => setDateTo(e.target.value)}
-                        placeholder="Hasta"
-                        className="flex-1"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Difference Type */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Diferencia</Label>
-                    <Select
-                      value={differenceType || "all"}
-                      onValueChange={(v) => setDifferenceType(v === "all" ? "" : v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todas" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
-                        <SelectItem value="none">Sin diferencia</SelectItem>
-                        <SelectItem value="opening">Diferencia en apertura</SelectItem>
-                        <SelectItem value="closing">Diferencia en cierre</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Sales Range */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Total de ventas</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        value={salesMin}
-                        onChange={(e) => setSalesMin(e.target.value)}
-                        placeholder="Mín"
-                        min="0"
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        value={salesMax}
-                        onChange={(e) => setSalesMax(e.target.value)}
-                        placeholder="Máx"
-                        min="0"
-                        className="flex-1"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={onClearFilters}>
-                    <X className="w-4 h-4 mr-1" />
-                    Limpiar
-                  </Button>
-                  <Button size="sm" onClick={onApplyFilters}>
-                    Aplicar filtros
-                  </Button>
-                </div>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
         </CardHeader>
 
         <CardContent className="p-0">
@@ -236,13 +143,8 @@ const POSSessions = () => {
                 </TableRow>
               ) : sessions.length === 0 ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={9}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    {search
-                      ? "No se encontraron sesiones"
-                      : "No hay sesiones registradas"}
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    {search ? "No se encontraron sesiones" : "No hay sesiones registradas"}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -254,15 +156,10 @@ const POSSessions = () => {
                     </TableCell>
                     <TableCell>
                       {session.closedAt
-                        ? format(
-                            new Date(session.closedAt),
-                            "dd/MM/yyyy HH:mm"
-                          )
-                        : session.statusCode === "OPE" ? (
-                            <Badge variant="default">Abierto</Badge>
-                          ) : (
-                            "—"
-                          )}
+                        ? format(new Date(session.closedAt), "dd/MM/yyyy HH:mm")
+                        : session.statusCode === "OPE"
+                        ? <Badge variant="default">Abierto</Badge>
+                        : "—"}
                     </TableCell>
                     <TableCell className="text-right">
                       <span
@@ -290,9 +187,7 @@ const POSSessions = () => {
                         >
                           S/ {formatCurrency(session.difference)}
                         </span>
-                      ) : (
-                        "—"
-                      )}
+                      ) : "—"}
                     </TableCell>
                     <TableCell className="text-right">
                       {session.totalSales !== null
@@ -306,13 +201,7 @@ const POSSessions = () => {
                     </TableCell>
                     <TableCell>{session.userName}</TableCell>
                     <TableCell className="text-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          // Future: navigate to session detail
-                        }}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => {}}>
                         <Eye className="w-4 h-4" />
                       </Button>
                     </TableCell>
