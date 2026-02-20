@@ -25,7 +25,7 @@ export default function POSSummary({
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <Card className="w-80 flex-shrink-0">
+    <Card className="w-96 flex-shrink-0">
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Resumen de Venta</CardTitle>
       </CardHeader>
