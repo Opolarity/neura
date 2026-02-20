@@ -50,7 +50,7 @@ export default function POS() {
       <POSHeader session={pos.session} onExit={pos.exitPOS} />
 
       {/* Step indicator */}
-      <div className="bg-white border-b py-6">
+      <div className="bg-white border-b py-2">
         <POSStepIndicator
           currentStep={pos.currentStep}
           requiresShipping={pos.customer.requiresShipping}
