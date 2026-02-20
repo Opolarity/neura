@@ -10,15 +10,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User, Search, Loader2, CheckCircle, XCircle, Truck } from "lucide-react";
-import type { POSCustomerData } from "../../../types/POS.types";
+import { User, Search, Loader2, CheckCircle, XCircle, Truck, ShoppingBag } from "lucide-react";
+import type { POSCustomerData, POSCartItem } from "../../../types/POS.types";
 import type { DocumentType } from "../../../types";
+import { formatCurrency } from "../../../adapters/POS.adapter";
 
 interface CustomerDataStepProps {
   customer: POSCustomerData;
   documentTypes: DocumentType[];
   clientFound: boolean | null;
   searchingClient: boolean;
+  cart: POSCartItem[];
+  subtotal: number;
   onUpdateCustomer: (field: keyof POSCustomerData, value: string | boolean) => void;
   onSearchClient: () => void;
 }
@@ -28,6 +31,8 @@ export default function CustomerDataStep({
   documentTypes,
   clientFound,
   searchingClient,
+  cart,
+  subtotal,
   onUpdateCustomer,
   onSearchClient,
 }: CustomerDataStepProps) {
@@ -203,6 +208,40 @@ export default function CustomerDataStep({
           </div>
         </CardContent>
       </Card>
+
+      {/* Resumen de productos */}
+      {cart.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4" />
+              Resumen de Productos ({cart.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {cart.map((item) => (
+              <div
+                key={item.variationId}
+                className="flex justify-between items-center text-sm border-b last:border-b-0 pb-2 last:pb-0"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{item.productName}</p>
+                  <p className="text-xs text-muted-foreground">{item.variationName} × {item.quantity}</p>
+                </div>
+                <span className="font-medium ml-3 whitespace-nowrap">
+                  S/ {formatCurrency(item.price * item.quantity)}
+                </span>
+              </div>
+            ))}
+            <div className="border-t pt-2 flex justify-between items-center">
+              <span className="text-sm font-medium text-muted-foreground">Subtotal</span>
+              <span className="text-lg font-bold text-foreground">
+                S/ {formatCurrency(subtotal)}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

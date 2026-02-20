@@ -96,6 +96,8 @@ export default function POS() {
                 documentTypes={pos.formData.documentTypes}
                 clientFound={pos.clientFound}
                 searchingClient={pos.searchingClient}
+                cart={pos.cart}
+                subtotal={pos.subtotal}
                 onUpdateCustomer={pos.updateCustomer}
                 onSearchClient={pos.searchClient}
               />
