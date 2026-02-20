@@ -96,6 +96,41 @@ export const returnsService = {
         return data;
     },
 
+    async getReturnProductsForDisplay(returnId: number) {
+        const { data, error } = await supabase
+            .from("returns_products")
+            .select(`
+        *,
+        variations (
+          sku,
+          products (
+            title
+          )
+        )
+      `)
+            .eq("return_id", returnId)
+            .eq("output", false);
+
+        if (error) throw error;
+        return (data || []).map((rp: any) => ({
+            id: rp.id,
+            product_variation_id: rp.product_variation_id,
+            quantity: rp.quantity,
+            product_price: rp.product_amount || 0,
+            product_discount: 0,
+            variations: rp.variations,
+        }));
+    },
+
+    async getDocumentProducts(params: { order_id?: number; return_id?: number }) {
+        const { data, error } = await supabase.functions.invoke("get-return-order-products", {
+            body: params,
+        });
+
+        if (error) throw error;
+        return data as { header: any; products: any[] };
+    },
+
     async createReturn(payload: any) {
         const { data, error } = await supabase.functions.invoke("create-returns", {
             body: payload,
@@ -105,15 +140,27 @@ export const returnsService = {
         return data;
     },
 
-    async getReturns() {
-        const { data, error } = await supabase.functions.invoke("get-returns");
+    async getReturns(params?: { page?: number; size?: number; search?: string }) {
+        const urlParams = new URLSearchParams();
+        if (params?.page) urlParams.append("page", params.page.toString());
+        if (params?.size) urlParams.append("size", params.size.toString());
+        if (params?.search) urlParams.append("search", params.search);
+
+        const queryString = urlParams.toString();
+        const endpoint = queryString ? `get-returns?${queryString}` : "get-returns";
+
+        const { data, error } = await supabase.functions.invoke(endpoint, {
+            method: "GET",
+        });
 
         if (error) throw error;
 
-        // Based on the provided sample, the structure is { returnsdata: { data: [...] } }
+        // Based on the provided sample, the structure is { returnsdata: { data: [...], page: {...} } }
         const returnsData = data?.returnsdata?.data || [];
+        const pageData = data?.returnsdata?.page || data?.page || {};
+        const totalRows = pageData.total || data?.returnsdata?.metadata?.total_rows || data?.returnsdata?.total_rows || 0;
 
-        return returnsData.map((item: any) => ({
+        const mappedReturns = returnsData.map((item: any) => ({
             id: item.id,
             order_id: item.id_order,
             customer_document_number: item.customer_document_numer,
@@ -124,8 +171,30 @@ export const returnsService = {
             created_at: item.created_at,
             types: { name: 'Devolución' },
             situations: { name: 'Pendiente' },
-            total_exchange_difference: 0
+            total_exchange_difference: item.otal_exchange_difference ?? item.total_exchange_difference ?? 0
         })) as ReturnItem[];
+
+        return { data: mappedReturns, total: totalRows };
+    },
+
+    async updateReturnFull(payload: any) {
+        const { data, error } = await supabase.functions.invoke('update-return', {
+            body: payload,
+        });
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Error al actualizar la devolución');
+        return data;
+    },
+
+    async getReturnDetails(id: number) {
+        const { data, error } = await supabase.functions.invoke('get-return-details', {
+            body: { return_id: id },
+        });
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Error al obtener los detalles del retorno');
+        return data.data as any;
     },
 
     async getReturnById(id: number) {
@@ -206,5 +275,23 @@ export const returnsService = {
 
         if (error) throw error;
         return data;
-    }
+    },
+
+    async uploadReturnVoucher(file: File): Promise<string> {
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `return-vouchers/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('sales')
+            .upload(filePath, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('sales')
+            .getPublicUrl(filePath);
+
+        return publicUrl;
+    },
 };

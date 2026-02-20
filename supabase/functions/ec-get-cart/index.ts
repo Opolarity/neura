@@ -10,13 +10,20 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const url = new URL(req.url);
-    const cartId = url.searchParams.get('cartId');
+    const body = await req.json();
+    const { cartId, userId } = body;
 
     if (!cartId) {
       return new Response(
@@ -25,14 +32,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Llamada al Stored Procedure usando .rpc()
-    const { data, error } = await supabase.rpc('get_cart_details', { 
-      p_cart_id: cartId 
+    const { data, error } = await supabase.rpc('sp_get_cart_details', {
+      p_cart_id: cartId || null,
+      p_user_id: userId || null
     });
 
     if (error) throw error;
 
-    // El SP devuelve un array (aunque sea una sola fila), extraemos el primer resultado
     const result = data[0] || { cart_items: [], total_amount: 0, total_count: 0 };
 
     return new Response(

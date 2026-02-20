@@ -5,8 +5,10 @@
 /**
  * Formatea un número como moneda peruana (S/)
  */
-export const formatCurrency = (amount: number): string => {
-  return `S/ ${amount.toFixed(2)}`;
+export const formatCurrency = (amount: number | null | undefined): string => {
+  if (amount == null || isNaN(amount)) return "S/ 0.00";
+  const absAmount = Math.abs(amount).toFixed(2);
+  return amount < 0 ? `-S/ ${absAmount}` : `S/ ${absAmount}`;
 };
 
 /**

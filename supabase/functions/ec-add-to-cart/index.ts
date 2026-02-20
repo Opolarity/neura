@@ -15,21 +15,20 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { productId, quantity, cartId, variationId } = await req.json();
+    const { quantity, cartId, variationId, userId } = await req.json();
 
-    if (!productId || !variationId || !quantity) {
+    if (!variationId || !quantity) {
       return new Response(
         JSON.stringify({ error: 'productId, variationId and quantity are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Ejecutar el RPC
-    const { data, error } = await supabase.rpc('add_to_cart', {
-      p_product_id: productId,
+    const { data, error } = await supabase.rpc('sp_add_to_cart', {
       p_variation_id: variationId,
       p_quantity: quantity,
-      p_cart_id: cartId || null 
+      p_cart_id: cartId || null,
+      p_user_id: userId || null
     });
 
     if (error) throw error;

@@ -28,10 +28,11 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  const url= new URL(req.url);
-  const search = url.searchParams.get('search') || null ;
-  const category_id = Number(url.searchParams.get ('category_id') ) || null;
-  const size = Number(url.searchParams.get ('size') ) || null;
+  const url = new URL(req.url);
+  const search = url.searchParams.get('search') || null;
+  const category_id = Number(url.searchParams.get('category_id')) || null;
+  const size = Number(url.searchParams.get('size')) || 20;
+  const page = Number(url.searchParams.get('page')) || 1;
   const sale_price = url.searchParams.get('sale_price') || false;
 
   try {
@@ -48,11 +49,12 @@ Deno.serve(async (req) => {
 
     // Call the stored procedure
     const { data, error } = await supabaseClient
-      .rpc('sp_ec_get_product_list',{
-         p_search : search,
-         p_category_id: category_id,
-         p_size: size,
-         p_sale_price: sale_price
+      .rpc('sp_ec_get_product_list', {
+        p_search: search,
+        p_category_id: category_id,
+        p_size: size,
+        p_page: page,
+        p_sale_price: sale_price
       })
 
     if (error) {

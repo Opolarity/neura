@@ -30,6 +30,7 @@ export const ReturnProductsTable = ({
             <TableHeader>
                 <TableRow>
                     <TableHead>Producto</TableHead>
+                    <TableHead>Variación</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Precio Unitario</TableHead>
                     <TableHead>Cantidad Máx.</TableHead>
@@ -46,8 +47,9 @@ export const ReturnProductsTable = ({
 
                     return (
                         <TableRow key={product.id}>
-                            <TableCell>{product.variations.products.title}</TableCell>
-                            <TableCell>{product.variations.sku}</TableCell>
+                            <TableCell>{product.product_name ?? product.variations?.products?.title ?? ''}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">{product.terms?.map(t => t.term_name).join(' / ') ?? ''}</TableCell>
+                            <TableCell>{product.sku ?? product.variations?.sku ?? ''}</TableCell>
                             <TableCell>{formatCurrency(unitPrice)}</TableCell>
                             <TableCell>{product.quantity}</TableCell>
                             <TableCell>
