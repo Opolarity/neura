@@ -1,81 +1,82 @@
 
 
-# Plan: Mostrar selector de Business Account cuando el metodo de pago tiene business_account_id = 0
+## Plan: Logica de asignacion de business_account_id en pagos POS
 
-## Resumen
+### Resumen
+Implementar la logica para que cada pago en el POS envie correctamente el `business_account_id` segun tres reglas:
+1. Si el metodo de pago tiene `business_account_id != 0` -> usar ese automaticamente
+2. Si tiene `business_account_id == 0` y su `code != "CASH"` -> mostrar un select de cuentas destino
+3. Si el metodo de pago tiene `code == "CASH"` -> usar el `business_account_id` de la sesion POS (caja vinculada al canal de venta)
 
-Cuando se selecciona un metodo de pago cuyo `business_account_id` es `0` (como "Credito", "Debito", "Efectivo", "Transferencia bancaria"), se mostrara un campo adicional para que el usuario seleccione manualmente a cual cuenta de negocio (business account) asignar el pago. Si el metodo de pago ya tiene un `business_account_id` diferente de `0`, ese valor se usara automaticamente sin mostrar el campo extra.
+---
 
-## Cambios necesarios
+### Cambios por archivo
 
-### 1. Edge Function `get-sales-form-data`
-- Modificar la consulta de `payment_methods` para incluir el campo `business_account_id` en la respuesta (actualmente solo trae `id` y `name`).
-- Agregar una nueva consulta para traer los `business_accounts` activos (id, name, bank) para poblar el dropdown.
+#### 1. `src/shared/services/service.ts`
+- Modificar `getActivePaymentMethodsBySaleTypeId` para incluir la columna `code` en el select de `payment_methods`
+- Cambiar el select de: `id, name, business_account_id, active, is_active` a: `id, name, business_account_id, active, is_active, code`
 
-### 2. Tipos (`src/modules/sales/types/index.ts`)
-- Agregar `businessAccountId` al tipo `PaymentMethod` (actualmente solo tiene `id` y `name`).
-- Agregar `businessAccountId` al tipo `SalePayment` como campo opcional.
-- Agregar tipo `BusinessAccountOption` con `id`, `name`, `bank`.
-- Agregar `businessAccounts` al tipo `SalesFormDataResponse`.
+#### 2. `src/modules/sales/types/index.ts`
+- Agregar `code` al interface `PaymentMethod`:
+  ```
+  code?: string | null;
+  ```
 
-### 3. Adaptador (`src/modules/sales/adapters/index.ts`)
-- Actualizar `adaptPaymentMethods` para incluir `businessAccountId`.
-- Agregar adaptador para `businessAccounts`.
-- Actualizar `adaptSalesFormData` para incluir `businessAccounts`.
+#### 3. `src/modules/sales/types/POS.types.ts`
+- Agregar `businessAccountId` al interface `POSPayment`:
+  ```
+  businessAccountId?: string;
+  ```
 
-### 4. Hook (`src/modules/sales/hooks/useCreateSale.ts`)
-- Agregar campo `businessAccountId` al `createEmptyPayment()`.
-- En `handlePaymentChange`, cuando se cambia `paymentMethodId`, verificar si el metodo seleccionado tiene `businessAccountId === 0`. Si no es 0, auto-asignar ese valor. Si es 0, limpiar para que el usuario seleccione.
-- En `addPayment`, validar que si el metodo tiene `businessAccountId === 0`, el usuario haya seleccionado una cuenta.
-- Al enviar los pagos en `handleSubmit`, incluir `business_account_id` en cada pago.
+#### 4. `src/modules/sales/hooks/usePOS.ts`
+- En `setFilteredPaymentMethods`, mapear tambien `code` desde la respuesta del servicio
+- En la funcion `addPayment`, determinar el `businessAccountId` segun las 3 reglas:
+  - Buscar el metodo seleccionado en `filteredPaymentMethods`
+  - Si `method.businessAccountId != 0` -> asignar ese valor
+  - Si `method.code == "CASH"` -> asignar `POSSessionHook.session.businessAccountId`
+  - Si `method.businessAccountId == 0` y `code != "CASH"` -> tomar del campo `currentPayment.businessAccountId` (seleccionado por el usuario en el UI)
+- Cargar lista de business accounts activas para el select (usar `getBusinessAccountIsActiveTrue` ya existente)
+- En `submitOrder`, pasar `businessAccountId` en cada payment al `CreatePOSOrderRequest`
 
-### 5. Pagina (`src/modules/sales/pages/CreateSale.tsx`)
-- En la seccion de pagos, despues del selector de metodo de pago, agregar condicionalmente un `Select` de "Cuenta de destino" que solo aparece cuando el metodo de pago seleccionado tiene `businessAccountId === 0`.
+#### 5. `src/modules/sales/components/pos/steps/PaymentStep.tsx`
+- Recibir nueva prop `businessAccounts` (lista de cuentas activas)
+- Cuando el usuario selecciona un metodo de pago con `business_account_id == 0` y `code != "CASH"`, mostrar un `Select` adicional de "Cuenta de destino" con las cuentas disponibles
+- Pasar el valor seleccionado via `onUpdateCurrentPayment("businessAccountId", value)`
 
-### 6. Servicio (`src/modules/sales/services/index.ts`)
-- Incluir `business_account_id` en el mapeo de pagos tanto en `createOrder` como en `updateOrder`.
+#### 6. `src/modules/sales/services/POS.service.ts`
+- En `createPOSOrder`, agregar `business_account_id` al mapeo de payments que se envia al edge function:
+  ```
+  business_account_id: p.businessAccountId || null
+  ```
 
-### 7. Edge Function `create-order`
-- Pasar `business_account_id` del pago al stored procedure en el array de pagos.
+#### 7. `src/modules/sales/types/POS.types.ts` (CreatePOSOrderRequest)
+- Agregar `businessAccountId` al tipo de payment en `CreatePOSOrderRequest.payments[]`
 
-### 8. Stored Procedure `sp_create_order`
-- Modificar para usar el `business_account_id` del pago cuando viene en el JSON (override), y solo hacer fallback a `payment_methods.business_account_id` cuando no viene o es null.
-- Agregar `business_acount_id` al INSERT de `order_payment`.
-
-### 9. Edge Function `update-order`
-- Usar el `business_account_id` del pago cuando viene en el input, sino caer al valor del payment_method.
-- Agregar `business_acount_id` al INSERT de `order_payment`.
-
-## Seccion Tecnica
+---
 
 ### Flujo de datos
 
 ```text
-UI (Select Business Account)
-  -> SalePayment.businessAccountId
-    -> createOrder/updateOrder service (business_account_id in payment)
-      -> Edge Function (pass through)
-        -> SP / direct insert
-          -> order_payment.business_acount_id
-          -> movements.business_account_id
+Usuario selecciona metodo de pago
+        |
+        v
+  business_account_id del metodo?
+        |
+   +---------+---------+
+   |         |         |
+  != 0    == 0       == 0
+   |     code=CASH   code!=CASH
+   |         |         |
+  Auto    Session    Mostrar
+  assign  account    Select UI
+   |         |         |
+   v         v         v
+  business_account_id guardado en POSPayment
+        |
+        v
+  Enviado al edge function create-order
+        |
+        v
+  Guardado en order_payment.business_acount_id
 ```
-
-### Logica condicional en UI
-
-```text
-SI payment_method.business_account_id === 0:
-  Mostrar Select "Cuenta de destino" con business_accounts activos
-  Guardar seleccion en currentPayment.businessAccountId
-  Validar antes de agregar pago
-SINO:
-  No mostrar campo extra
-  Usar payment_method.business_account_id automaticamente
-```
-
-### Migracion SQL necesaria
-
-Actualizar `sp_create_order` para:
-1. Leer `business_account_id` del JSON de cada pago
-2. Usarlo como override cuando esta presente y es distinto de null/0
-3. Insertarlo en `order_payment.business_acount_id` (nota: la columna tiene typo "acount")
 
