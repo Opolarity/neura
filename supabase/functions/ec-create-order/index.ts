@@ -5,6 +5,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const PAYMENT_CODE_MERCADOPAGO = 'MCP';
+const PAYMENT_CODE_PWP = 'PWP';
+
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -15,7 +19,8 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { cartId, customerInfo, shippingInfo } = await req.json();
+
+    const { cartId, customerInfo, shippingInfo, paymentInfo } = await req.json();
 
     if (!cartId || !customerInfo || !customerInfo.documentNumber) {
       return new Response(
@@ -24,51 +29,57 @@ Deno.serve(async (req) => {
       );
     }
 
-    const [priceListRes, stockTypeRes, saleTypeRes, initialSituationRes] = await Promise.all([
-      supabase
-        .from('price_list')
-        .select('id')
-        .eq('web', true)
-        .single(),
+    const [priceListRes, stockTypeRes, saleTypeRes, initialSituationRes, paidSituationRes] =
+      await Promise.all([
+        supabase.from('price_list').select('id').eq('web', true).single(),
 
-      supabase
-        .from('types')
-        .select('id')
-        .eq('code', 'PRD')
-        .eq('modules.code', 'STK')
-        .innerJoin('modules', 'module_id', 'id')
-        .single(),
+        supabase
+          .from('types')
+          .select('id')
+          .eq('code', 'PRD')
+          .eq('modules.code', 'STK')
+          .innerJoin('modules', 'module_id', 'id')
+          .single(),
 
-      supabase
-        .from('types')
-        .select('id')
-        .eq('code', 'WRT')
-        .eq('modules.code', 'ORD')
-        .innerJoin('modules', 'module_id', 'id')
-        .single(),
+        supabase
+          .from('types')
+          .select('id')
+          .eq('code', 'WRT')
+          .eq('modules.code', 'ORD')
+          .innerJoin('modules', 'module_id', 'id')
+          .single(),
 
-      // Situación inicial: code = VIR, status.code = PEN, module.code = ORD
-      supabase
-        .from('situations')
-        .select('id, status_id, statuses!inner(code), modules!inner(code)')
-        .eq('code', 'VIR')
-        .eq('statuses.code', 'PEN')
-        .eq('modules.code', 'ORD')
-        .single(),
-    ]);
+        supabase
+          .from('situations')
+          .select('id, status_id, statuses!inner(code), modules!inner(code)')
+          .eq('code', 'VIR')
+          .eq('statuses.code', 'PEN')
+          .eq('modules.code', 'ORD')
+          .single(),
 
-    const webPriceListId     = priceListRes.data?.id;
-    const stockTypeId        = stockTypeRes.data?.id;
-    const saleTypeId         = saleTypeRes.data?.id;
+        supabase
+          .from('situations')
+          .select('id, status_id, statuses!inner(code), modules!inner(code)')
+          .eq('code', 'PAG')
+          .eq('statuses.code', 'PAG')
+          .eq('modules.code', 'ORD')
+          .single(),
+      ]);
+
+    const webPriceListId = priceListRes.data?.id;
+    const stockTypeId = stockTypeRes.data?.id;
+    const saleTypeId = saleTypeRes.data?.id;
     const initialSituationId = initialSituationRes.data?.id;
-    const sellerId           = 0; 
+    const paidSituationId = paidSituationRes.data?.id;
+    const paidStatusId = paidSituationRes.data?.status_id;
+    const sellerId = 0;
 
-    if (!webPriceListId)     throw new Error('Web price list not found');
-    if (!stockTypeId)        throw new Error('Stock type (PRD/STK) not found');
-    if (!saleTypeId)         throw new Error('Sale type (WRT/ORD) not found');
+    if (!webPriceListId) throw new Error('Web price list not found');
+    if (!stockTypeId) throw new Error('Stock type (PRD/STK) not found');
+    if (!saleTypeId) throw new Error('Sale type (WRT/ORD) not found');
     if (!initialSituationId) throw new Error('Initial situation (VIR/PEN/ORD) not found');
 
-    console.log('Using IDs:', { webPriceListId, stockTypeId, saleTypeId, initialSituationId, sellerId });
+    console.log('IDs base:', { webPriceListId, stockTypeId, saleTypeId, initialSituationId, paidSituationId });
 
     const { data: cartProducts, error: cartError } = await supabase
       .from('cart_products')
@@ -83,7 +94,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── 3. Preparar productos con precios actualizados de la lista Web ──
     const products = await Promise.all(
       cartProducts.map(async (item) => {
         const { data: priceData } = await supabase
@@ -105,35 +115,32 @@ Deno.serve(async (req) => {
       })
     );
 
-    const subtotal = products.reduce((sum, p) => sum + (p.price * p.quantity), 0);
-    const total    = subtotal;
+    const subtotal = products.reduce((sum, p) => sum + p.price * p.quantity, 0);
+    const total = subtotal + (shippingInfo?.shippingCost ?? 0);
 
     const orderData = {
-      document_type:    customerInfo.documentTypeId,
+      document_type: customerInfo.documentTypeId,
       document_type_id: customerInfo.documentTypeId,
-      document_number:  customerInfo.documentNumber,
-      customer_name:    customerInfo.firstName,
+      document_number: customerInfo.documentNumber,
+      customer_name: customerInfo.firstName,
       customer_lastname: `${customerInfo.paternalLastName || ''} ${customerInfo.maternalLastName || ''}`.trim(),
-      email:            customerInfo.email || '',
-      phone:            customerInfo.phone || '',
-      sale_type:        saleTypeId,
-      shipping_method:  shippingInfo?.shippingMethodId ?? null,
-      shipping_cost:    shippingInfo?.shippingCost ?? 0,
-      address:          shippingInfo?.address || '',
+      email: customerInfo.email || '',
+      phone: customerInfo.phone || '',
+      sale_type: saleTypeId,
+      shipping_method: shippingInfo?.shippingMethodId ?? null,
+      shipping_cost: shippingInfo?.shippingCost ?? 0,
+      address: shippingInfo?.address || '',
       address_reference: shippingInfo?.instructions || '',
       reception_person: `${customerInfo.firstName} ${customerInfo.paternalLastName || ''}`.trim(),
-      reception_phone:  customerInfo.phone || '',
-      subtotal:         subtotal,
-      discount:         0,
-      total:            total,
-      seller_id:        sellerId,
-      order_status:     'pendiente de pago',
-      situation_id:     initialSituationId,
-      module_id:        1,
-      date:             new Date().toISOString(),
+      reception_phone: customerInfo.phone || '',
+      subtotal,
+      discount: 0,
+      total,
+      date: new Date().toISOString(),
+      change: 0,
+
     };
 
- 
     const { data: cliTypeData } = await supabase
       .from('types')
       .select('id, modules!inner(code)')
@@ -157,26 +164,26 @@ Deno.serve(async (req) => {
           .single();
 
         if (!existingType) {
-          await supabase
-            .from('account_types')
-            .insert({
-              account_id:      existingAccount.id,
-              account_type_id: cliTypeData.id,
-            });
+          await supabase.from('account_types').insert({
+            account_id: existingAccount.id,
+            account_type_id: cliTypeData.id,
+          });
           console.log(`CLI type added to account ${existingAccount.id}`);
         }
       }
     }
 
+    // ── 6. Crear la orden via RPC ──────────────────────────────────────────────
     const { data: orderResponse, error: rpcError } = await supabase.rpc('sp_create_order', {
-      p_user_id:            sellerId,
-      p_branch_id:          1,
-      p_warehouse_id:       1,
-      p_order_data:         orderData,
-      p_products:           products,
-      p_payments:           [], 
+      p_user_id: sellerId,
+      p_branch_id: 1,
+      p_warehouse_id: 1,
+      p_order_data: orderData,
+      p_products: products,
+      p_payments: [],
       p_initial_situation_id: initialSituationId,
       p_is_existing_client: true,
+      p_change_entries: [],
     });
 
     if (rpcError) {
@@ -184,17 +191,154 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to create order: ${rpcError.message}`);
     }
 
+    const orderId = orderResponse?.order_id;
+    console.log('Order created:', orderId);
+
+
+    await supabase
+      .from('carts')
+      .update({
+        is_active: false,
+        order_id: orderId,
+      })
+      .eq('id', cartId);
+
     await supabase
       .from('cart_products')
-      .update({ bought: true })
+      .update({ is_active: true })
       .eq('cart_id', cartId)
-      .eq('bought', false);
+      .eq('is_active', false);
+
+    console.log(`Cart ${cartId} closed and linked to order ${orderId}`);
+
+
+    if (paymentInfo?.paymentMethodCode && orderId) {
+      const { paymentMethodCode, paymentToken, amount: paymentAmount } = paymentInfo;
+
+      const { data: paymentMethod } = await supabase
+        .from('payment_methods')
+        .select('id, business_account_id, code')
+        .eq('code', paymentMethodCode)
+        .eq('is_active', true)
+        .single();
+
+      if (!paymentMethod) {
+        console.warn(`Payment method with code ${paymentMethodCode} not found or inactive`);
+      } else {
+        let gatewayConfirmation: string | null = null;
+        let paymentConfirmed = false;
+
+        if (paymentMethodCode === PAYMENT_CODE_MERCADOPAGO) {
+          try {
+            const mpAccessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')!;
+
+            const mpRes = await fetch(
+              `https://api.mercadopago.com/v1/payments/${paymentToken}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${mpAccessToken}`,
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+
+            if (!mpRes.ok) {
+              throw new Error(`MercadoPago API error: ${mpRes.status}`);
+            }
+
+            const mpData = await mpRes.json();
+            console.log('MercadoPago response:', mpData.status, mpData.id);
+
+            if (
+              mpData.status === 'approved' &&
+              Math.abs(mpData.transaction_amount - (paymentAmount ?? total)) < 0.01
+            ) {
+              gatewayConfirmation = String(mpData.id);
+              paymentConfirmed = true;
+            } else {
+              console.warn(`MercadoPago payment not approved. Status: ${mpData.status}`);
+            }
+          } catch (mpError) {
+            console.error('MercadoPago verification error:', mpError);
+          }
+        }
+
+        if (paymentConfirmed && gatewayConfirmation) {
+
+          const { data: movementData } = await supabase
+            .from('movements')
+            .insert({
+              movement_type_id: 1,
+              movement_class_id: 1,
+              description: `Pago orden #${orderId} vía ${paymentMethodCode}`,
+              amount: paymentAmount ?? total,
+              movement_date: new Date().toISOString().split('T')[0],
+              business_account_id: paymentMethod.business_account_id,
+              branch_id: 1,
+              payment_method_id: paymentMethod.id,
+              created_by: '00000000-0000-0000-0000-000000000000',
+            })
+            .select('id')
+            .single();
+
+          const movementId = movementData?.id;
+
+          if (movementId) {
+            await supabase.from('order_payment').insert({
+              order_id: orderId,
+              payment_method_id: paymentMethod.id,
+              business_acount_id: paymentMethod.business_account_id,
+              amount: paymentAmount ?? total,
+              date: new Date().toISOString(),
+              gateway_confirmation: gatewayConfirmation,
+              movement_id: movementId,
+            });
+
+            console.log(`Payment registered for order ${orderId}, confirmation: ${gatewayConfirmation}`);
+          }
+
+          if (paidSituationId && paidStatusId) {
+            await supabase
+              .from('order_situations')
+              .update({ last_row: false })
+              .eq('order_id', orderId)
+              .eq('last_row', true);
+
+            await supabase.from('order_situations').insert({
+              order_id: orderId,
+              module_id: 1,
+              status_id: paidStatusId,
+              situation_id: paidSituationId,
+              last_row: true,
+              created_at: new Date().toISOString(),
+              created_by: '00000000-0000-0000-0000-000000000000',
+            });
+
+            console.log(`Order ${orderId} situation changed to PAID`);
+          }
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            orderId,
+            paymentConfirmed,
+            gatewayConfirmation,
+            message: paymentConfirmed
+              ? `Order created and payment confirmed via ${paymentMethodCode}`
+              : `Order created but payment via ${paymentMethodCode} could not be confirmed`,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        orderId: orderResponse?.order_id || null,
-        message: 'Order created successfully with System Account (ID 0)',
+        orderId,
+        paymentConfirmed: false,
+        message: 'Order created successfully. No payment info provided.',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

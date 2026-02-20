@@ -19,7 +19,14 @@ Deno.serve(async (req) => {
 
     if (!variationId || !quantity) {
       return new Response(
-        JSON.stringify({ error: 'productId, variationId and quantity are required' }),
+        JSON.stringify({ error: 'variationId and quantity are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!cartId && !userId) {
+      return new Response(
+        JSON.stringify({ error: 'cartId or userId is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
