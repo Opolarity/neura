@@ -115,6 +115,7 @@ export default function POS() {
 
             {pos.currentStep === 5 && pos.formData && (
               <PaymentStep
+                customer={pos.customer}
                 cart={pos.cart}
                 payments={pos.payments}
                 currentPayment={pos.currentPayment}
