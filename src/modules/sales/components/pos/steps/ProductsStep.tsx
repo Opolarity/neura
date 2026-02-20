@@ -127,12 +127,7 @@ export default function ProductsStep({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Producto</TableHead>
-                    <TableHead className="text-center">
-                      <div className="flex flex-col items-center">
-                        <span>Stock</span>
-                        <span className="text-[10px] font-normal text-muted-foreground">(Virtual)</span>
-                      </div>
-                    </TableHead>
+                    <TableHead className="text-center">Stock</TableHead>
                     <TableHead className="text-right">Precio</TableHead>
                     <TableHead className="w-20"></TableHead>
                   </TableRow>
