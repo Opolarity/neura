@@ -56,9 +56,9 @@ export default function ProductsStep({
         <h2 className="text-lg font-semibold">Seleccion de Productos</h2>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-5 gap-6">
         {/* Product search and list */}
-        <div className="col-span-2 space-y-4">
+        <div className="col-span-3 space-y-4">
           <Card>
             <CardContent className="pt-4">
               {/* Search bar */}
@@ -175,7 +175,7 @@ export default function ProductsStep({
         </div>
 
         {/* Cart */}
-        <Card className="self-start">
+        <Card className="self-start col-span-2">
           <CardHeader className="pb-3 space-y-2">
             {cart.length > 0 && (
               <div className="flex justify-between items-center bg-muted/50 rounded-lg px-3 py-2">
