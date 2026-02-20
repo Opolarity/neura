@@ -87,6 +87,9 @@ export default function POS() {
                 onPageChange={pos.handleProductPageChange}
                 priceListId={pos.configuration?.priceListId || ""}
                 total={pos.total}
+                stockTypes={pos.formData?.stockTypes || []}
+                selectedStockTypeId={pos.selectedStockTypeId}
+                onStockTypeChange={pos.setSelectedStockTypeId}
               />
             )}
 
