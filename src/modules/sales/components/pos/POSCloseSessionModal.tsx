@@ -105,7 +105,7 @@ export default function POSCloseSessionModal({
               <span className="font-medium">{formatCurrency(session.openingAmount)}</span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Total de ventas efectivo</span>
+              <span className="text-muted-foreground">Total de ventas en efectivo</span>
               <span className="font-medium text-green-600">+ {formatCurrency(totalSales)}</span>
             </div>
             <Separator />
