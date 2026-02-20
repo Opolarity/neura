@@ -20,26 +20,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, Eye, ListFilter } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, Search, Eye, ListFilter, X } from "lucide-react";
 import { format } from "date-fns";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useNavigate } from "react-router-dom";
 import { formatCurrency } from "@/modules/sales/adapters/POS.adapter";
-
-const getStatusVariant = (
-  statusCode: string
-): "default" | "secondary" | "destructive" | "outline" => {
-  switch (statusCode) {
-    case "OPE":
-      return "default";
-    case "CLO":
-      return "secondary";
-    default:
-      return "outline";
-  }
-};
 
 const POSSessions = () => {
   const navigate = useNavigate();
@@ -47,10 +41,25 @@ const POSSessions = () => {
     sessions,
     loading,
     search,
-    order,
+    filters,
     pagination,
+    filtersOpen,
+    setFiltersOpen,
+    dateFrom,
+    setDateFrom,
+    dateTo,
+    setDateTo,
+    differenceType,
+    setDifferenceType,
+    salesMin,
+    setSalesMin,
+    salesMax,
+    setSalesMax,
+    activeFilterCount,
     onSearchChange,
     onOrderChange,
+    onApplyFilters,
+    onClearFilters,
     onPageChange,
     handlePageSizeChange,
     goToOpenPOS,
@@ -66,41 +75,138 @@ const POSSessions = () => {
             Historial de sesiones del punto de venta
           </p>
         </div>
-        <Button onClick={goToOpenPOS}>
-          Ir a Punto de Venta
-        </Button>
+        <Button onClick={goToOpenPOS}>Ir a Punto de Venta</Button>
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
               <input
                 value={search}
                 onChange={(e) => onSearchChange(e.target.value)}
                 type="text"
-                placeholder="Buscar por usuario, sucursal o ID..."
+                placeholder="Buscar por usuario, sucursal..."
                 className="pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               />
             </div>
 
-            <Button variant="outline" className="gap-2">
+            <Button
+              variant={filtersOpen ? "default" : "outline"}
+              className="gap-2"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+            >
               <ListFilter className="w-4 h-4" />
               Filtros
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-xs">
+                  {activeFilterCount}
+                </Badge>
+              )}
             </Button>
 
-            <Select value={order || "none"} onValueChange={onOrderChange}>
-              <SelectTrigger className="w-auto min-w-[150px]">
+            <Select
+              value={filters.orderBy}
+              onValueChange={onOrderChange}
+            >
+              <SelectTrigger className="w-auto min-w-[200px]">
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Sin orden</SelectItem>
-                <SelectItem value="date-dsc">Fecha (más reciente)</SelectItem>
+                <SelectItem value="date-desc">Fecha (más reciente)</SelectItem>
                 <SelectItem value="date-asc">Fecha (más antigua)</SelectItem>
+                <SelectItem value="sales-desc">Ventas (mayor a menor)</SelectItem>
+                <SelectItem value="sales-asc">Ventas (menor a mayor)</SelectItem>
+                <SelectItem value="opening-diff-desc">Dif. apertura (mayor)</SelectItem>
+                <SelectItem value="opening-diff-asc">Dif. apertura (menor)</SelectItem>
+                <SelectItem value="closing-diff-desc">Dif. cierre (mayor)</SelectItem>
+                <SelectItem value="closing-diff-asc">Dif. cierre (menor)</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {/* Filter Panel */}
+          <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <CollapsibleContent>
+              <div className="mt-4 p-4 border border-border rounded-lg bg-muted/30 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Date Range */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Rango de Fecha</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        placeholder="Desde"
+                        className="flex-1"
+                      />
+                      <Input
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        placeholder="Hasta"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Difference Type */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Diferencia</Label>
+                    <Select
+                      value={differenceType || "all"}
+                      onValueChange={(v) => setDifferenceType(v === "all" ? "" : v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="none">Sin diferencia</SelectItem>
+                        <SelectItem value="opening">Diferencia en apertura</SelectItem>
+                        <SelectItem value="closing">Diferencia en cierre</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Sales Range */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Total de ventas</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        value={salesMin}
+                        onChange={(e) => setSalesMin(e.target.value)}
+                        placeholder="Mín"
+                        min="0"
+                        className="flex-1"
+                      />
+                      <Input
+                        type="number"
+                        value={salesMax}
+                        onChange={(e) => setSalesMax(e.target.value)}
+                        placeholder="Máx"
+                        min="0"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" size="sm" onClick={onClearFilters}>
+                    <X className="w-4 h-4 mr-1" />
+                    Limpiar
+                  </Button>
+                  <Button size="sm" onClick={onApplyFilters}>
+                    Aplicar filtros
+                  </Button>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </CardHeader>
 
         <CardContent className="p-0">
@@ -112,6 +218,7 @@ const POSSessions = () => {
                 <TableHead>Cierre</TableHead>
                 <TableHead className="text-right">Dif. Apertura</TableHead>
                 <TableHead className="text-right">Dif. Cierre</TableHead>
+                <TableHead className="text-right">Total Ventas</TableHead>
                 <TableHead className="text-right">Monto Cierre</TableHead>
                 <TableHead>Usuario</TableHead>
                 <TableHead className="text-center">Acciones</TableHead>
@@ -120,7 +227,7 @@ const POSSessions = () => {
             <TableBody>
               {loading && sessions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Cargando sesiones...
@@ -130,7 +237,7 @@ const POSSessions = () => {
               ) : sessions.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={9}
                     className="text-center py-8 text-muted-foreground"
                   >
                     {search
@@ -147,10 +254,15 @@ const POSSessions = () => {
                     </TableCell>
                     <TableCell>
                       {session.closedAt
-                        ? format(new Date(session.closedAt), "dd/MM/yyyy HH:mm")
-                        : session.statusCode === "OPE"
-                        ? <Badge variant="default">Abierto</Badge>
-                        : "—"}
+                        ? format(
+                            new Date(session.closedAt),
+                            "dd/MM/yyyy HH:mm"
+                          )
+                        : session.statusCode === "OPE" ? (
+                            <Badge variant="default">Abierto</Badge>
+                          ) : (
+                            "—"
+                          )}
                     </TableCell>
                     <TableCell className="text-right">
                       <span
@@ -181,6 +293,11 @@ const POSSessions = () => {
                       ) : (
                         "—"
                       )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {session.totalSales !== null
+                        ? `S/ ${formatCurrency(session.totalSales)}`
+                        : "—"}
                     </TableCell>
                     <TableCell className="text-right">
                       {session.closingAmount !== null
