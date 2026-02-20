@@ -101,6 +101,7 @@ export const usePOS = () => {
 
   // Products (Step 2)
   const [cart, setCart] = useState<POSCartItem[]>([]);
+  const [generalDiscount, setGeneralDiscount] = useState<number>(0);
   const [paginatedProducts, setPaginatedProducts] = useState<
     PaginatedProductVariation[]
   >([]);
@@ -708,11 +709,12 @@ export const usePOS = () => {
   }, [cart]);
 
   const discountAmount = useMemo(() => {
-    return cart.reduce(
+    const itemDiscounts = cart.reduce(
       (sum, item) => sum + item.discountAmount * item.quantity,
       0
     );
-  }, [cart]);
+    return itemDiscounts + generalDiscount;
+  }, [cart, generalDiscount]);
 
   const shippingCostValue = customer.requiresShipping ? shipping.shippingCost : 0;
 
@@ -964,6 +966,7 @@ export const usePOS = () => {
   const resetForNewSale = useCallback(() => {
     setCurrentStep(2); // Go back to products step
     setCart([]);
+    setGeneralDiscount(0);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
@@ -988,6 +991,7 @@ export const usePOS = () => {
     setCurrentStep(1);
     setConfiguration(null);
     setCart([]);
+    setGeneralDiscount(0);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
@@ -1109,6 +1113,8 @@ export const usePOS = () => {
     updateCartItem,
     removeFromCart,
     clearCart,
+    generalDiscount,
+    setGeneralDiscount,
     handleProductPageChange: (page: number) => {
       setProductPage(page);
       if (configuration?.warehouseId) {

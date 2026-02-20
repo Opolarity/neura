@@ -87,9 +87,13 @@ export default function POS() {
                 onPageChange={pos.handleProductPageChange}
                 priceListId={pos.configuration?.priceListId || ""}
                 total={pos.total}
+                subtotal={pos.subtotal}
+                discountAmount={pos.discountAmount}
                 stockTypes={pos.formData?.stockTypes || []}
                 selectedStockTypeId={pos.selectedStockTypeId}
                 onStockTypeChange={pos.setSelectedStockTypeId}
+                generalDiscount={pos.generalDiscount}
+                onGeneralDiscountChange={pos.setGeneralDiscount}
               />
             )}
 
