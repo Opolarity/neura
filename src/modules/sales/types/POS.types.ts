@@ -32,6 +32,7 @@ export interface POSSession {
   userId: string;
   warehouseId: number;
   branchId: number;
+  businessAccountId: number;
   openingAmount: number;
   closingAmount: number | null;
   expectedAmount: number | null;
@@ -49,6 +50,7 @@ export interface POSSessionApiResponse {
   user_id: string;
   warehouse_id: number;
   branch_id: number;
+  business_account: number;
   opening_amount: number;
   closing_amount?: number | null;
   expected_amount?: number | null;

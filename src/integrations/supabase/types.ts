@@ -3819,14 +3819,6 @@ export type Database = {
         }
         Returns: Json
       }
-      get_document_products: {
-        Args: { p_order_id?: number; p_return_id?: number }
-        Returns: Json
-      }
-      get_get_return_order_products: {
-        Args: { p_order_id?: number; p_return_id?: number }
-        Returns: Json
-      }
       get_pos_session_detail: { Args: { p_session_id: number }; Returns: Json }
       get_pos_sessions_list: {
         Args: {
@@ -4135,6 +4127,10 @@ export type Database = {
           p_search?: string
           p_size?: number
         }
+        Returns: Json
+      }
+      sp_get_document_products: {
+        Args: { p_order_id?: number; p_return_id?: number }
         Returns: Json
       }
       sp_get_inventory: {

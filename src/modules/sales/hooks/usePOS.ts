@@ -40,7 +40,7 @@ import {
   fetchSaleProducts,
   getIdInventoryTypeApi,
 } from "../services";
-import { getPriceListIsActiveTrue } from "@/shared/services/service";
+import { getPriceListIsActiveTrue, getActivePaymentMethodsBySaleTypeId } from "@/shared/services/service";
 import { createPOSOrder } from "../services/POS.service";
 import { filterShippingCostsByLocation } from "../utils";
 
@@ -95,6 +95,7 @@ export const usePOS = () => {
   // Form data (dropdown options)
   const [formData, setFormData] = useState<SalesFormDataResponse | null>(null);
   const [allShippingCosts, setAllShippingCosts] = useState<ShippingCost[]>([]);
+  const [filteredPaymentMethods, setFilteredPaymentMethods] = useState<import("../types").PaymentMethod[]>([]);
 
   // Products (Step 2)
   const [cart, setCart] = useState<POSCartItem[]>([]);
@@ -213,6 +214,33 @@ export const usePOS = () => {
       setUserWarehouseName((warehouse as { name?: string })?.name || "");
     }
   };
+
+  // Load filtered payment methods based on session's business account → sale type
+  useEffect(() => {
+    const loadFilteredPaymentMethods = async () => {
+      if (!POSSessionHook.session?.businessAccountId) return;
+      
+      // Find the sale type linked to this business account (POS sale type)
+      const { data: saleType } = await supabase
+        .from("sale_types")
+        .select("id")
+        .eq("business_acount_id", POSSessionHook.session.businessAccountId)
+        .eq("pos_sale_type", true)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (saleType?.id) {
+        const methods = await getActivePaymentMethodsBySaleTypeId(saleType.id);
+        setFilteredPaymentMethods(methods.map(m => ({
+          id: m.id,
+          name: m.name,
+          businessAccountId: m.business_account_id,
+        })));
+      }
+    };
+    
+    loadFilteredPaymentMethods();
+  }, [POSSessionHook.session?.businessAccountId]);
 
   const loadProducts = async (
     page: number,
@@ -960,6 +988,7 @@ export const usePOS = () => {
     // Payments (Step 5)
     payments,
     currentPayment,
+    filteredPaymentMethods,
     addPayment,
     removePayment,
     updateCurrentPayment,
