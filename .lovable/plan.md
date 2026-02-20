@@ -1,82 +1,40 @@
 
+## Plan: Mostrar stock virtual y selector de tipo de inventario en el paso de productos del POS
 
-## Plan: Logica de asignacion de business_account_id en pagos POS
+### Contexto actual
 
-### Resumen
-Implementar la logica para que cada pago en el POS envie correctamente el `business_account_id` segun tres reglas:
-1. Si el metodo de pago tiene `business_account_id != 0` -> usar ese automaticamente
-2. Si tiene `business_account_id == 0` y su `code != "CASH"` -> mostrar un select de cuentas destino
-3. Si el metodo de pago tiene `code == "CASH"` -> usar el `business_account_id` de la sesion POS (caja vinculada al canal de venta)
+- El RPC `sp_get_sale_products` **ya usa** la vista `vw_product_stock_virtual` para mostrar el stock virtual. Esto ya esta funcionando correctamente.
+- El hook `usePOS` ya maneja `selectedStockTypeId` y `setSelectedStockTypeId`, y los tipos de stock estan disponibles en `formData.stockTypes`.
+- Sin embargo, el componente `ProductsStep` **no recibe ni muestra** un selector de tipo de inventario. El tipo se fija automaticamente al inicializar y el usuario no puede cambiarlo en el paso 2.
 
----
+### Cambios a realizar
 
-### Cambios por archivo
+**1. Actualizar `ProductsStep.tsx`** para:
+- Recibir nuevas props: `stockTypes` (lista de tipos disponibles), `selectedStockTypeId` y `onStockTypeChange`.
+- Agregar un selector (`Select`) junto a la barra de busqueda que permita elegir el tipo de inventario (ej: Produccion, Fallado, etc.).
+- Agregar una etiqueta visual que indique que el stock mostrado es "Stock Virtual".
 
-#### 1. `src/shared/services/service.ts`
-- Modificar `getActivePaymentMethodsBySaleTypeId` para incluir la columna `code` en el select de `payment_methods`
-- Cambiar el select de: `id, name, business_account_id, active, is_active` a: `id, name, business_account_id, active, is_active, code`
+**2. Actualizar `POS.tsx`** para:
+- Pasar las nuevas props al componente `ProductsStep`: los tipos de stock desde `pos.formData?.stockTypes`, el tipo seleccionado (`pos.selectedStockTypeId`) y la funcion para cambiarlo (`pos.setSelectedStockTypeId`).
 
-#### 2. `src/modules/sales/types/index.ts`
-- Agregar `code` al interface `PaymentMethod`:
-  ```
-  code?: string | null;
-  ```
+### Detalle tecnico
 
-#### 3. `src/modules/sales/types/POS.types.ts`
-- Agregar `businessAccountId` al interface `POSPayment`:
-  ```
-  businessAccountId?: string;
-  ```
-
-#### 4. `src/modules/sales/hooks/usePOS.ts`
-- En `setFilteredPaymentMethods`, mapear tambien `code` desde la respuesta del servicio
-- En la funcion `addPayment`, determinar el `businessAccountId` segun las 3 reglas:
-  - Buscar el metodo seleccionado en `filteredPaymentMethods`
-  - Si `method.businessAccountId != 0` -> asignar ese valor
-  - Si `method.code == "CASH"` -> asignar `POSSessionHook.session.businessAccountId`
-  - Si `method.businessAccountId == 0` y `code != "CASH"` -> tomar del campo `currentPayment.businessAccountId` (seleccionado por el usuario en el UI)
-- Cargar lista de business accounts activas para el select (usar `getBusinessAccountIsActiveTrue` ya existente)
-- En `submitOrder`, pasar `businessAccountId` en cada payment al `CreatePOSOrderRequest`
-
-#### 5. `src/modules/sales/components/pos/steps/PaymentStep.tsx`
-- Recibir nueva prop `businessAccounts` (lista de cuentas activas)
-- Cuando el usuario selecciona un metodo de pago con `business_account_id == 0` y `code != "CASH"`, mostrar un `Select` adicional de "Cuenta de destino" con las cuentas disponibles
-- Pasar el valor seleccionado via `onUpdateCurrentPayment("businessAccountId", value)`
-
-#### 6. `src/modules/sales/services/POS.service.ts`
-- En `createPOSOrder`, agregar `business_account_id` al mapeo de payments que se envia al edge function:
-  ```
-  business_account_id: p.businessAccountId || null
-  ```
-
-#### 7. `src/modules/sales/types/POS.types.ts` (CreatePOSOrderRequest)
-- Agregar `businessAccountId` al tipo de payment en `CreatePOSOrderRequest.payments[]`
-
----
-
-### Flujo de datos
-
+**`ProductsStep.tsx`** - Nuevas props:
 ```text
-Usuario selecciona metodo de pago
-        |
-        v
-  business_account_id del metodo?
-        |
-   +---------+---------+
-   |         |         |
-  != 0    == 0       == 0
-   |     code=CASH   code!=CASH
-   |         |         |
-  Auto    Session    Mostrar
-  assign  account    Select UI
-   |         |         |
-   v         v         v
-  business_account_id guardado en POSPayment
-        |
-        v
-  Enviado al edge function create-order
-        |
-        v
-  Guardado en order_payment.business_acount_id
+stockTypes: Array<{ id: number; name: string }>
+selectedStockTypeId: string
+onStockTypeChange: (value: string) => void
 ```
 
+Se agregara un componente `Select` de shadcn al lado de la barra de busqueda para elegir el tipo de inventario. Al cambiar el tipo, se recargaran los productos automaticamente (el hook ya escucha cambios en `selectedStockTypeId` via useEffect).
+
+En la columna "Stock" de la tabla de productos, se mostrara la etiqueta "Stock Virtual" en el encabezado para dejar claro que es el stock disponible considerando reservas.
+
+**`POS.tsx`** - Solo agregar 3 props adicionales al componente `ProductsStep`:
+```text
+stockTypes={pos.formData?.stockTypes || []}
+selectedStockTypeId={pos.selectedStockTypeId}
+onStockTypeChange={pos.setSelectedStockTypeId}
+```
+
+No se requieren cambios en el backend, la edge function ni el RPC ya que todo funciona correctamente con `vw_product_stock_virtual`.
