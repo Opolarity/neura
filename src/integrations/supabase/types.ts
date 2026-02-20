@@ -3869,6 +3869,15 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_add_to_cart: {
+        Args: {
+          p_cart_id?: number
+          p_quantity: number
+          p_user_id?: string
+          p_variation_id: number
+        }
+        Returns: Json
+      }
       sp_close_pos_session: {
         Args: {
           p_closing_amount: number
