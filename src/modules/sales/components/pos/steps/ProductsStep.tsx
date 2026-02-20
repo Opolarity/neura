@@ -174,14 +174,6 @@ export default function ProductsStep({
           </Card>
         </div>
 
-        {/* Total */}
-        {cart.length > 0 && (
-          <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
-            <span className="font-semibold text-sm">Total</span>
-            <span className="font-bold text-lg text-primary">{formatCurrency(total)}</span>
-          </div>
-        )}
-
         {/* Cart */}
         <Card>
           <CardHeader className="pb-3">
