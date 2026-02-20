@@ -11,36 +11,35 @@ interface POSHeaderProps {
 
 export default function POSHeader({ session, onExit }: POSHeaderProps) {
   return (
-    <header className="bg-white border-b px-6 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Store className="w-6 h-6 text-blue-600" />
-          <span className="font-semibold text-lg">Sistema POS</span>
-        </div>
+    <header className="bg-white border-b px-4 py-1.5 flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Store className="w-4 h-4 text-blue-600" />
+        <span className="font-semibold text-sm">Sistema POS</span>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {session && (
           <>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Clock className="w-4 h-4" />
-              <span>Sesión iniciada: {formatTime(session.openedAt)}</span>
-            </div>
+            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+              <Clock className="w-3.5 h-3.5" />
+              {formatTime(session.openedAt)}
+            </span>
 
-            <Badge variant="outline" className="text-green-600 border-green-600">
-              <span className="w-2 h-2 bg-green-500 rounded-full mr-2" />
-              SESIÓN ACTIVA
+            <Badge variant="outline" className="text-green-600 border-green-600 text-[10px] px-1.5 py-0">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1" />
+              ACTIVA
             </Badge>
           </>
         )}
 
         <Button
-          variant="outline"
-          className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-red-600 hover:bg-red-50 h-7 text-xs px-2"
           onClick={onExit}
         >
-          <LogOut className="w-4 h-4" />
-          Cerrar Sesión
+          <LogOut className="w-3.5 h-3.5" />
+          Salir
         </Button>
       </div>
     </header>
