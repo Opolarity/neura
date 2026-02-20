@@ -176,7 +176,15 @@ export default function ProductsStep({
 
         {/* Cart */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 space-y-2">
+            {cart.length > 0 && (
+              <div className="flex justify-between items-center bg-muted/50 rounded-lg px-3 py-2">
+                <span className="text-xs font-medium text-muted-foreground">Subtotal</span>
+                <span className="text-lg font-bold text-foreground">
+                  S/ {formatCurrency(total)}
+                </span>
+              </div>
+            )}
             <CardTitle className="text-base flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" />
               Carrito ({cart.length})
@@ -265,15 +273,6 @@ export default function ProductsStep({
               </div>
             )}
 
-            {/* Subtotal acumulado */}
-            {cart.length > 0 && (
-              <div className="border-t pt-3 mt-3 flex justify-between items-center">
-                <span className="text-sm font-medium text-muted-foreground">SUBTOTAL</span>
-                <span className="text-lg font-bold text-foreground">
-                  S/ {formatCurrency(total)}
-                </span>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
