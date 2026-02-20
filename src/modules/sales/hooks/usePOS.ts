@@ -877,11 +877,8 @@ export const usePOS = () => {
     setSaving(true);
     try {
       // Get "Completado" or first available situation
-      const completedSituation = formData?.situations.find((s) =>
-        s.name.toLowerCase().includes("complet")
-      );
-      const situationId =
-        completedSituation?.id || formData?.situations[0]?.id || 1;
+      // POS orders are always created with "Entregado" situation (id: 20)
+      const situationId = 20;
 
       // Get "Tienda Física" sale type or first available
       const tiendaFisicaType = formData?.saleTypes.find(
