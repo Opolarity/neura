@@ -118,6 +118,7 @@ export const usePOS = () => {
   // Customer (Step 3)
   const [customer, setCustomer] = useState<POSCustomerData>(DEFAULT_CUSTOMER);
   const [clientFound, setClientFound] = useState<boolean | null>(null);
+  const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
 
   // Shipping (Step 4)
   const [shipping, setShipping] = useState<POSShippingData>(DEFAULT_SHIPPING);
@@ -297,11 +298,13 @@ export const usePOS = () => {
           return !!configuration?.priceListId && !!configuration?.warehouseId;
         case 3: // Need products in cart
           return cart.length > 0;
-        case 4: // Need customer data
+        case 4: // Need customer data (or anonymous purchase)
           return (
-            !!customer.documentTypeId &&
-            !!customer.documentNumber &&
-            !!customer.customerName
+            isAnonymousPurchase || (
+              !!customer.documentTypeId &&
+              !!customer.documentNumber &&
+              !!customer.customerName
+            )
           );
         case 5: // If requires shipping, need shipping data
           if (customer.requiresShipping) {
@@ -318,7 +321,7 @@ export const usePOS = () => {
           return true;
       }
     },
-    [configuration, cart, customer, shipping]
+    [configuration, cart, customer, shipping, isAnonymousPurchase]
   );
 
   const nextStep = useCallback(() => {
@@ -569,6 +572,46 @@ export const usePOS = () => {
       setSearchingClient(false);
     }
   }, [customer.documentTypeId, customer.documentNumber, formData]);
+
+  // =============================================
+  // ANONYMOUS PURCHASE
+  // =============================================
+
+  const handleAnonymousPurchase = useCallback(async () => {
+    let anonymousName = "No especificado";
+    try {
+      const { data: anonAccount } = await supabase
+        .from("accounts")
+        .select("name, middle_name, last_name, last_name2")
+        .eq("document_type_id", 0)
+        .eq("document_number", " ")
+        .single();
+      if (anonAccount) {
+        anonymousName = [anonAccount.name, anonAccount.middle_name, anonAccount.last_name, anonAccount.last_name2].filter(Boolean).join(" ");
+      }
+    } catch (e) {
+      console.error("Error fetching anonymous account:", e);
+    }
+
+    setCustomer((prev) => ({
+      ...prev,
+      documentTypeId: "",
+      documentNumber: "",
+      customerName: anonymousName,
+      customerLastname: "",
+      customerLastname2: "",
+      isExistingClient: true,
+    }));
+    setIsAnonymousPurchase(true);
+    setClientFound(false);
+
+    // Advance to next step (skip shipping if not required)
+    if (!customer.requiresShipping) {
+      setCurrentStep(5);
+    } else {
+      setCurrentStep(4);
+    }
+  }, [customer.requiresShipping]);
 
   // =============================================
   // SHIPPING (STEP 4)
@@ -853,14 +896,14 @@ export const usePOS = () => {
 
       const orderData: CreatePOSOrderRequest = {
         priceListId: configuration.priceListId,
-        documentType: customer.documentTypeId,
-        documentNumber: customer.documentNumber,
+        documentType: isAnonymousPurchase ? "0" : customer.documentTypeId,
+        documentNumber: isAnonymousPurchase ? " " : customer.documentNumber,
         customerName: customer.customerName,
-        customerLastname: customer.customerLastname,
-        customerLastname2: customer.customerLastname2 || null,
+        customerLastname: isAnonymousPurchase ? null : customer.customerLastname,
+        customerLastname2: isAnonymousPurchase ? null : (customer.customerLastname2 || null),
         email: customer.email || null,
         phone: customer.phone || null,
-        isExistingClient: customer.isExistingClient,
+        isExistingClient: isAnonymousPurchase ? true : customer.isExistingClient,
         withShipping: customer.requiresShipping,
         shippingMethod: customer.requiresShipping
           ? shipping.shippingMethodId
@@ -972,6 +1015,7 @@ export const usePOS = () => {
     setPayments([]);
     setChangeEntries([]);
     setClientFound(null);
+    setIsAnonymousPurchase(false);
     setSearchQuery("");
     setCurrentPayment({
       id: crypto.randomUUID(),
@@ -997,6 +1041,7 @@ export const usePOS = () => {
     setPayments([]);
     setChangeEntries([]);
     setClientFound(null);
+    setIsAnonymousPurchase(false);
     setSearchQuery("");
     setCurrentPayment({
       id: crypto.randomUUID(),
@@ -1132,6 +1177,8 @@ export const usePOS = () => {
     clientFound,
     updateCustomer,
     searchClient,
+    isAnonymousPurchase,
+    handleAnonymousPurchase,
 
     // Shipping (Step 4)
     shipping,

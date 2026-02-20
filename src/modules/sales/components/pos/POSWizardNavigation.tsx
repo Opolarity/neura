@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Pause, XCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Pause, XCircle, RefreshCw, UserX } from "lucide-react";
 import type { POSStep } from "../../types/POS.types";
 
 interface POSWizardNavigationProps {
@@ -13,6 +13,7 @@ interface POSWizardNavigationProps {
   onReset: () => void;
   onPause?: () => void;
   onCancel?: () => void;
+  onAnonymousPurchase?: () => void;
 }
 
 export default function POSWizardNavigation({
@@ -26,6 +27,7 @@ export default function POSWizardNavigation({
   onReset,
   onPause,
   onCancel,
+  onAnonymousPurchase,
 }: POSWizardNavigationProps) {
   const isFirstStep = currentStep === 1;
   const isLastStep = currentStep === 5;
@@ -64,6 +66,18 @@ export default function POSWizardNavigation({
 
         {/* Right side - Action buttons */}
         <div className="flex items-center gap-3">
+          {onAnonymousPurchase && (
+            <Button
+              variant="outline"
+              onClick={onAnonymousPurchase}
+              disabled={saving}
+              className="gap-2"
+            >
+              <UserX className="w-4 h-4" />
+              Venta Anónima
+            </Button>
+          )}
+
           {onPause && (
             <Button
               variant="outline"

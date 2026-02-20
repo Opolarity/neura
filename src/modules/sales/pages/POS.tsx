@@ -174,6 +174,7 @@ export default function POS() {
           onBack={pos.prevStep}
           onFinalize={pos.submitOrder}
           onReset={pos.resetAll}
+          onAnonymousPurchase={pos.currentStep === 3 ? pos.handleAnonymousPurchase : undefined}
         />
       )}
 
