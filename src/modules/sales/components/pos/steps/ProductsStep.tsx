@@ -380,6 +380,7 @@ export default function ProductsStep({
                     <span className="text-sm font-medium">Descuento general</span>
                   </div>
                   <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs text-muted-foreground">S/</span>
                     <Input
                       type="number"
                       min={0}
@@ -389,7 +390,6 @@ export default function ProductsStep({
                       className="h-8 text-sm w-28"
                       placeholder="0.00"
                     />
-                    <span className="text-xs text-muted-foreground">S/</span>
                   </div>
                 </div>
               </div>

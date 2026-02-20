@@ -4126,6 +4126,10 @@ export type Database = {
         Args: { p_page?: number; p_size?: number }
         Returns: Json
       }
+      sp_get_cart: {
+        Args: { p_is_active?: boolean; p_page?: number; p_size?: number }
+        Returns: Json
+      }
       sp_get_cart_details: {
         Args: { p_cart_id?: number; p_user_id?: string }
         Returns: {
