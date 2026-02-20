@@ -26,7 +26,7 @@ const DashboardLayout = () => {
           toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           onSignOut={handleSignOut} />
 
-        <main className="p-6 min-w-0 overflow-hidden px-0 py-0">
+        <main className="p-6 min-w-0 overflow-hidden py-[15px] px-[15px]">
           <Outlet />
         </main>
       </div>
