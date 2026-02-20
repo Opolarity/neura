@@ -5,8 +5,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  DialogFooter } from
+"@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +31,7 @@ export default function POSCloseSessionModal({
   totalSales,
   isClosing,
   onClose,
-  onCancel,
+  onCancel
 }: POSCloseSessionModalProps) {
   // Calculate expected amount (opening + sales)
   const expectedAmount = useMemo(() => {
@@ -73,7 +73,7 @@ export default function POSCloseSessionModal({
     await onClose({
       sessionId: session.id,
       closingAmount: amount,
-      notes: notes || undefined,
+      notes: notes || undefined
     });
   };
 
@@ -105,7 +105,7 @@ export default function POSCloseSessionModal({
               <span className="font-medium">{formatCurrency(session.openingAmount)}</span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Total de ventas</span>
+              <span className="text-muted-foreground">Total de ventas efectivo</span>
               <span className="font-medium text-green-600">+ {formatCurrency(totalSales)}</span>
             </div>
             <Separator />
@@ -130,8 +130,8 @@ export default function POSCloseSessionModal({
                 value={closingAmount}
                 onChange={(e) => setClosingAmount(e.target.value)}
                 className="pl-10 text-lg font-medium"
-                placeholder="0.00"
-              />
+                placeholder="0.00" />
+
             </div>
             <p className="text-xs text-muted-foreground">
               Ingrese el dinero físico contado en la caja
@@ -139,8 +139,8 @@ export default function POSCloseSessionModal({
           </div>
 
           {/* Difference display */}
-          {difference !== 0 && (
-            <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+          {difference !== 0 &&
+          <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
               <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
               <div className="text-sm text-destructive">
                 <p className="font-medium">
@@ -154,12 +154,12 @@ export default function POSCloseSessionModal({
                 </p>
               </div>
             </div>
-          )}
-          {difference === 0 && closingAmount !== "" && (
-            <p className="text-xs text-muted-foreground">
+          }
+          {difference === 0 && closingAmount !== "" &&
+          <p className="text-xs text-muted-foreground">
               Monto coincide con el esperado ✓
             </p>
-          )}
+          }
 
           {/* Notes */}
           <div className="space-y-2">
@@ -169,8 +169,8 @@ export default function POSCloseSessionModal({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Observaciones del cierre de caja..."
-              rows={2}
-            />
+              rows={2} />
+
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
@@ -178,27 +178,27 @@ export default function POSCloseSessionModal({
               type="button"
               variant="outline"
               onClick={onCancel}
-              disabled={isClosing}
-            >
+              disabled={isClosing}>
+
               Cancelar
             </Button>
             <Button
               type="submit"
-              
-              disabled={isClosing}
-            >
-              {isClosing ? (
-                <>
+
+              disabled={isClosing}>
+
+              {isClosing ?
+              <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Cerrando caja...
-                </>
-              ) : (
-                "Confirmar Cierre"
-              )}
+                </> :
+
+              "Confirmar Cierre"
+              }
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>);
+
 }
