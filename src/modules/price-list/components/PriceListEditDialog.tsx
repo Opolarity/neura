@@ -29,7 +29,7 @@ export const PriceListEditDialog = ({
 }: PriceListEditDialogProps) => {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
-  const [location, setLocation] = useState(0);
+  const [location, setLocation] = useState("");
   const [web, setWeb] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -102,9 +102,9 @@ export const PriceListEditDialog = ({
             <Label htmlFor="pl-location">Ubicación</Label>
             <Input
               id="pl-location"
-              type="number"
+              type="text"
               value={location}
-              onChange={(e) => setLocation(Number(e.target.value))}
+              onChange={(e) => setLocation(e.target.value)}
             />
           </div>
 

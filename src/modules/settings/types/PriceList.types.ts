@@ -2,7 +2,7 @@ export interface PriceListItem {
   id: number;
   name: string;
   code: string | null;
-  location: number;
+  location: string;
   web: boolean;
   created_at: string | null;
 }
@@ -14,7 +14,7 @@ export interface PriceListApiResponse {
       web: boolean;
       code: string;
       name: string;
-      location: number;
+      location: string;
     }>;
     page: {
       page: number;
@@ -29,7 +29,7 @@ export interface PriceList {
   isWeb: boolean;
   code: string;
   name: string;
-  location: number;
+  location: string;
 }
 
 export interface PriceListFilters {
