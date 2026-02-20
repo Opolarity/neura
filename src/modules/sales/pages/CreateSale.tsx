@@ -113,6 +113,7 @@ const CreateSale = () => {
     isComSituation,
     filteredSituations,
     filteredPaymentMethods,
+    allPaymentMethods,
     isAnonymousPurchase,
     needsBusinessAccountSelect,
     needsChangeBusinessAccountSelect,
@@ -1161,7 +1162,7 @@ const CreateSale = () => {
                   {payments
                     .filter((p) => p.paymentMethodId)
                     .map((p) => {
-                      const method = filteredPaymentMethods.find(
+                      const method = allPaymentMethods.find(
                         (pm) => pm.id.toString() === p.paymentMethodId,
                       );
                       return (
@@ -1348,7 +1349,7 @@ const CreateSale = () => {
                         {changeEntries
                           .filter((e) => e.paymentMethodId)
                           .map((e) => {
-                            const method = filteredPaymentMethods.find(
+                            const method = allPaymentMethods.find(
                               (pm) => pm.id.toString() === e.paymentMethodId,
                             );
                             return (
