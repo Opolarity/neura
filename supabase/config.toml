@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.emit-invoice]
 verify_jwt = false
+
+[functions.create-users]
+verify_jwt = false
