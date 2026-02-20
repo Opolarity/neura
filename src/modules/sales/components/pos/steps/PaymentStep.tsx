@@ -339,7 +339,7 @@ export default function PaymentStep({
               )}
 
               {/* Selected customer */}
-              {customer.customerName && (
+              {customer?.customerName && (
                 <div className="border-t pt-4">
                   <div className="bg-muted rounded-lg p-3">
                     <div className="flex items-center gap-2 text-xs text-primary font-medium mb-1">
