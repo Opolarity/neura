@@ -61,7 +61,7 @@ export default function POS() {
 
       {/* Main content */}
       <div className="flex-1 overflow-auto">
-        <div className="flex h-full">
+        <div className="flex items-start">
           {/* Step content */}
           <div className="flex-1 p-6 overflow-auto">
             {pos.currentStep === 1 && (
