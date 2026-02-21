@@ -16,7 +16,7 @@ const Invoices = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="p-6">
+    <div>
       <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-2xl font-bold">FACTURACIÓN</h1>
