@@ -42,6 +42,11 @@ export const createUserApi = async (userData: any) => {
     throw error;
   }
 
+  // Handle application-level errors from the edge function
+  if (data?.error) {
+    throw new Error(data.error);
+  }
+
   return data;
 };
 
