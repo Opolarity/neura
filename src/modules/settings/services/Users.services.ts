@@ -39,6 +39,18 @@ export const createUserApi = async (userData: any) => {
 
   if (error) {
     console.error("Invoke error in createUserApi:", error);
+    // Extract the JSON body from FunctionsHttpError to get the custom message
+    try {
+      const errorBody = error.context ? await error.context.json() : null;
+      if (errorBody?.error) {
+        throw new Error(errorBody.error);
+      }
+    } catch (parseErr) {
+      // If parsing fails, check if error itself has a message
+      if (parseErr instanceof Error && parseErr.message && parseErr.message !== error.message) {
+        throw parseErr;
+      }
+    }
     throw error;
   }
 
