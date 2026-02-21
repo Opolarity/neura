@@ -58,6 +58,46 @@ Deno.serve(async (req) => {
 
     console.log('Start create user:', email);
 
+    // 0. Check for duplicates
+
+    // Check if document number already exists linked to a user profile
+    const { data: existingAccount } = await supabase
+      .from('accounts')
+      .select('id, document_number, profiles!profiles_account_id_fkey(UID)')
+      .eq('document_number', document_number)
+      .eq('document_type_id', document_type_id);
+
+    if (existingAccount && existingAccount.length > 0) {
+      const hasProfile = existingAccount.some((a: any) => a.profiles && a.profiles.length > 0);
+      if (hasProfile) {
+        return new Response(
+          JSON.stringify({ error: `Ya existe un usuario con el número de documento ${document_number}` }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+    }
+
+    // Check if email already exists in auth
+    const { data: existingUsers } = await supabase.auth.admin.listUsers();
+    const emailExists = existingUsers?.users?.some((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+    if (emailExists) {
+      return new Response(
+        JSON.stringify({ error: `Ya existe un usuario con el correo ${email}` }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Check if phone already exists (only if provided)
+    if (phone) {
+      const phoneExists = existingUsers?.users?.some((u: any) => u.phone === phone);
+      if (phoneExists) {
+        return new Response(
+          JSON.stringify({ error: `Ya existe un usuario con el número de teléfono ${phone}` }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+    }
+
     // 1. Create Auth User
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
