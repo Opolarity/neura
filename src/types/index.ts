@@ -4,6 +4,7 @@ export * from './term';
 export * from './price';
 export * from './warehouse';
 export * from './product';
+export * from './channel';
 
 
 export type Type = {

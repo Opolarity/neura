@@ -45,7 +45,7 @@ serve(async (req) => {
     if (!product) throw new Error('Product not found');
 
     // Fetch related data in parallel
-    const [categoriesResult, imagesResult, variationsResult] = await Promise.all([
+    const [categoriesResult, imagesResult, variationsResult, channelsResult] = await Promise.all([
       supabase
         .from('product_categories')
         .select('category_id')
@@ -66,12 +66,17 @@ serve(async (req) => {
           product_variation_images(product_image_id)
         `)
         .eq('product_id', productId)
-        .eq('is_active', true)
+        .eq('is_active', true),
+      supabase
+        .from('product_channels')
+        .select('channel_id')
+        .eq('product_id', productId)
     ]);
 
     if (categoriesResult.error) throw categoriesResult.error;
     if (imagesResult.error) throw imagesResult.error;
     if (variationsResult.error) throw variationsResult.error;
+    if (channelsResult.error) throw channelsResult.error;
 
     // Format response
     const response = {
@@ -105,7 +110,8 @@ serve(async (req) => {
           stock_type_id: s.stock_type_id
         })),
         images: (v.product_variation_images || []).map((i: any) => i.product_image_id)
-      }))
+      })),
+      channels: (channelsResult.data || []).map((c: any) => c.channel_id)
     };
 
     console.log('Product details fetched successfully');

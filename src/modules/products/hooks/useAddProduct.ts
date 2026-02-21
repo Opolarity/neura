@@ -8,7 +8,7 @@ import type {
   ProductVariation, 
   AddProductState 
 } from '../types/AddProduct.types';
-import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock, StockType } from '@/types';
+import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock, StockType, Channel } from '@/types';
 
 export const useAddProduct = () => {
   const { toast } = useToast();
@@ -52,6 +52,8 @@ export const useAddProduct = () => {
   const [priceLists, setPriceLists] = useState<PriceList[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [stockTypes, setStockTypes] = useState<StockType[]>([]);
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [selectedChannels, setSelectedChannels] = useState<number[]>([]);
   const [selectedStockType, setSelectedStockType] = useState<number | null>(null);
   
   // Loading state
@@ -111,6 +113,7 @@ export const useAddProduct = () => {
       setPriceLists(adapted.priceLists);
       setWarehouses(adapted.warehouses);
       setStockTypes(adapted.stockTypes);
+      setChannels(adapted.channels as Channel[]);
       
       // Set default stock type to PRD (Production)
       const defaultType = adapted.stockTypes.find(t => t.code === 'PRD');
@@ -146,6 +149,7 @@ export const useAddProduct = () => {
       setIsWeb(adapted.product.isWeb);
       setOriginalIsVariable(adapted.product.isVariable);
       setSelectedCategories(adapted.categories);
+      setSelectedChannels(adapted.channels);
       setProductImages(adapted.images);
       setVariations(adapted.variations);
       setVariationSkus(adapted.variationSkus);
@@ -556,6 +560,7 @@ export const useAddProduct = () => {
           isWeb,
           originalIsVariable,
           selectedCategories,
+          selectedChannels,
           productImages,
           variations,
           attributesHaveChanged
@@ -580,6 +585,7 @@ export const useAddProduct = () => {
           isActive,
           isWeb,
           selectedCategories,
+          selectedChannels,
           productImages,
           variations
         );
@@ -656,6 +662,9 @@ export const useAddProduct = () => {
     priceLists,
     warehouses,
     stockTypes,
+    channels,
+    selectedChannels,
+    setSelectedChannels,
     selectedStockType,
     setSelectedStockType,
     
@@ -665,6 +674,13 @@ export const useAddProduct = () => {
     
     // Handlers
     toggleCategorySelection,
+    toggleChannelSelection: (channelId: number) => {
+      setSelectedChannels(prev => 
+        prev.includes(channelId)
+          ? prev.filter(id => id !== channelId)
+          : [...prev, channelId]
+      );
+    },
     clearTermGroup,
     toggleTermSelection,
     updateVariationPrice,

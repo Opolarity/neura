@@ -19,6 +19,7 @@ export const AddProductAdapter = {
     priceLists: PriceList[];
     warehouses: Warehouse[];
     stockTypes: StockType[];
+    channels: { id: number; name: string; code: string }[];
   } {
     return {
       categories: data.categories || [],
@@ -41,6 +42,11 @@ export const AddProductAdapter = {
         id: st.id,
         code: st.code,
         name: st.name
+      })),
+      channels: (data.channels || []).map((ch: any) => ({
+        id: ch.id,
+        name: ch.name,
+        code: ch.code
       }))
     };
   },
@@ -63,6 +69,7 @@ export const AddProductAdapter = {
       isWeb: boolean;
     };
     categories: number[];
+    channels: number[];
     images: ProductImage[];
     variations: ProductVariation[];
     variationSkus: Record<string, string>;
@@ -147,6 +154,7 @@ export const AddProductAdapter = {
     return {
       product,
       categories,
+      channels: data.channels || [],
       images,
       variations,
       variationSkus,
@@ -165,6 +173,7 @@ export const AddProductAdapter = {
     isActive: boolean,
     isWeb: boolean,
     selectedCategories: number[],
+    selectedChannels: number[],
     productImages: ProductImage[],
     variations: ProductVariation[]
   ): CreateProductRequest {
@@ -186,6 +195,7 @@ export const AddProductAdapter = {
       isActive,
       isWeb,
       selectedCategories,
+      selectedChannels,
       productImages: imageRefs,
       variations: sanitizedVariations
     };
@@ -204,6 +214,7 @@ export const AddProductAdapter = {
     isWeb: boolean,
     originalIsVariable: boolean,
     selectedCategories: number[],
+    selectedChannels: number[],
     productImages: ProductImage[],
     variations: ProductVariation[],
     resetVariations: boolean = false
@@ -226,6 +237,7 @@ export const AddProductAdapter = {
       isWeb,
       originalIsVariable,
       selectedCategories,
+      selectedChannels,
       productImages: imageRefs,
       variations: sanitizedVariations,
       resetVariations

@@ -33,7 +33,8 @@ serve(async (req) => {
       termsResult,
       priceListsResult,
       warehousesResult,
-      stockModuleResult
+      stockModuleResult,
+      channelsResult
     ] = await Promise.all([
       supabase.from('categories').select('id, name, parent_category').order('name'),
       supabase.from('term_groups').select('id, name, is_active').order('name'),
@@ -41,7 +42,8 @@ serve(async (req) => {
       supabase.from('price_list').select('id, name, code').eq('is_active', true).order('id'),
       supabase.from('warehouses').select('id, name').eq('is_active', true).order('id'),
       // Get the inventory module ID by code 'STK'
-      supabase.from('modules').select('id').eq('code', 'STK').single()
+      supabase.from('modules').select('id').eq('code', 'STK').single(),
+      supabase.from('channels').select('id, name, code').order('name')
     ]);
 
     if (categoriesResult.error) throw categoriesResult.error;
@@ -75,7 +77,8 @@ serve(async (req) => {
       terms: termsResult.data || [],
       priceLists: priceListsResult.data || [],
       warehouses: warehousesResult.data || [],
-      stockTypes: stockTypes
+      stockTypes: stockTypes,
+      channels: channelsResult.data || []
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
