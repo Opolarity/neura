@@ -172,6 +172,7 @@ const CreateSale = () => {
 
   const [open, setOpen] = useState(false);
   const [tempPriceListId, setTempPriceListId] = useState<string>("");
+  const [tempSaleTypeId, setTempSaleTypeId] = useState<string>("");
   const [voucherModalOpen, setVoucherModalOpen] = useState(false);
   const [selectedVoucherPreview, setSelectedVoucherPreview] = useState<
     string | null
@@ -316,6 +317,32 @@ const CreateSale = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Sale Channel Select */}
+                <div className="space-y-1">
+                  <Label>Canal de Venta</Label>
+                  {salesData?.saleTypes && salesData.saleTypes.length > 0 ? (
+                    <Select
+                      value={tempSaleTypeId}
+                      onValueChange={setTempSaleTypeId}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione un canal de venta" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {salesData.saleTypes.map((st) => (
+                          <SelectItem key={st.id} value={st.id.toString()}>
+                            {st.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm text-muted-foreground py-2">
+                      No hay canales de venta disponibles
+                    </p>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -327,9 +354,9 @@ const CreateSale = () => {
             <Button
               onClick={() => {
                 isAcceptingRef.current = true;
-                handleSelectPriceList(tempPriceListId);
+                handleSelectPriceList(tempPriceListId, tempSaleTypeId);
               }}
-              disabled={!tempPriceListId || !userWarehouseId}
+              disabled={!tempPriceListId || !userWarehouseId || !tempSaleTypeId}
             >
               Aceptar
             </Button>
@@ -706,8 +733,9 @@ const CreateSale = () => {
                   <Select
                     value={formData.saleType}
                     onValueChange={(v) => handleInputChange("saleType", v)}
+                    disabled={!orderId}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={!orderId ? "bg-muted cursor-not-allowed" : ""}>
                       <SelectValue placeholder="Seleccione" />
                     </SelectTrigger>
                     <SelectContent>
