@@ -522,9 +522,9 @@ export const useCreateSale = () => {
     }
   };
 
-  // Handle price list selection from modal
-  const handleSelectPriceList = useCallback((id: string) => {
-    setFormData((prev) => ({ ...prev, priceListId: id }));
+  // Handle price list and sale type selection from modal
+  const handleSelectPriceList = useCallback((id: string, saleTypeId?: string) => {
+    setFormData((prev) => ({ ...prev, priceListId: id, ...(saleTypeId ? { saleType: saleTypeId } : {}) }));
     setShowPriceListModal(false);
   }, []);
 
