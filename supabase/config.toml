@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.create-users]
 verify_jwt = false
+
+[functions.get-stock-movements]
+verify_jwt = false
