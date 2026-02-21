@@ -376,6 +376,72 @@ export type Database = {
           },
         ]
       }
+      channels: {
+        Row: {
+          branch_id: number
+          code: string
+          id: number
+          price_list_id: number
+          sale_type_id: number
+          stock_type_id: number
+          warehouse_id: number
+        }
+        Insert: {
+          branch_id: number
+          code: string
+          id?: number
+          price_list_id: number
+          sale_type_id: number
+          stock_type_id: number
+          warehouse_id: number
+        }
+        Update: {
+          branch_id?: number
+          code?: string
+          id?: number
+          price_list_id?: number
+          sale_type_id?: number
+          stock_type_id?: number
+          warehouse_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channels_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channels_price_list_id_fkey"
+            columns: ["price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channels_sale_type_id_fkey"
+            columns: ["sale_type_id"]
+            isOneToOne: false
+            referencedRelation: "sale_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channels_stock_type_id_fkey"
+            columns: ["stock_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channels_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           country_id: number
