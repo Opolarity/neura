@@ -21,6 +21,7 @@ Deno.serve(async (req)=>{
     const start_date = url.searchParams.get("start_date") || null;
     const end_date = url.searchParams.get("end_date") || null;
     const branches = url.searchParams.get("branches") || null;
+    const order = url.searchParams.get("order") || null;
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const authHeader = req.headers.get("Authorization");
@@ -62,7 +63,8 @@ Deno.serve(async (req)=>{
       p_start_date: start_date,
       p_end_date: end_date,
       p_payment_method: payment_method,
-      p_branches: branches
+      p_branches: branches,
+      p_order: order,
     });
     if (movementsError) throw movementsError;
     return new Response(JSON.stringify({
