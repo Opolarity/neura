@@ -21,16 +21,28 @@ export const getStockMovementsApi = async (
       .map(([key, value]) => [key, String(value)]),
   );
 
-  const endpoint = queryParams.toString()
-    ? `get-stock-movements?${queryParams.toString()}`
-    : "get-stock-movements";
+  const queryString = queryParams.toString();
+  const url = queryString
+    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-stock-movements?${queryString}`
+    : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-stock-movements`;
 
-  const { data, error } = await supabase.functions.invoke(endpoint);
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
 
-  if (error) {
-    console.error("Invoke error:", error);
-    throw error;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error fetching stock movements: ${response.statusText}`);
   }
+
+  const data = await response.json();
 
   return (
     data ?? {
