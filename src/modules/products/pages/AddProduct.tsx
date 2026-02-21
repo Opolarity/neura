@@ -203,31 +203,16 @@ const AddProduct = () => {
                   onCheckedChange={setIsActive}
                 />
               </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="isWeb" className="cursor-pointer">Web (E-commerce)</Label>
-                <Switch
-                  id="isWeb"
-                  checked={isWeb}
-                  onCheckedChange={setIsWeb}
-                />
-              </div>
-              {channels.length > 0 && (
-                <div className="border-t pt-4 space-y-3">
-                  <Label className="text-sm font-medium">Canales</Label>
-                  {channels.map((channel) => (
-                    <div key={channel.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`channel-${channel.id}`}
-                        checked={selectedChannels.includes(channel.id)}
-                        onCheckedChange={() => toggleChannelSelection(channel.id)}
-                      />
-                      <Label htmlFor={`channel-${channel.id}`} className="cursor-pointer text-sm">
-                        {channel.name}
-                      </Label>
-                    </div>
-                  ))}
+              {channels.map((channel) => (
+                <div key={channel.id} className="flex items-center justify-between">
+                  <Label htmlFor={`channel-${channel.id}`} className="cursor-pointer">{channel.name}</Label>
+                  <Switch
+                    id={`channel-${channel.id}`}
+                    checked={selectedChannels.includes(channel.id)}
+                    onCheckedChange={() => toggleChannelSelection(channel.id)}
+                  />
                 </div>
-              )}
+              ))}
             </CardContent>
           </Card>
 
