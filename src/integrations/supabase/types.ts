@@ -381,6 +381,7 @@ export type Database = {
           branch_id: number
           code: string
           id: number
+          name: string
           price_list_id: number
           sale_type_id: number
           stock_type_id: number
@@ -390,6 +391,7 @@ export type Database = {
           branch_id: number
           code: string
           id?: number
+          name?: string
           price_list_id: number
           sale_type_id: number
           stock_type_id: number
@@ -399,6 +401,7 @@ export type Database = {
           branch_id?: number
           code?: string
           id?: number
+          name?: string
           price_list_id?: number
           sale_type_id?: number
           stock_type_id?: number
@@ -1816,6 +1819,39 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_product_categories_product_id_products_id"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_channels: {
+        Row: {
+          channel_id: number
+          id: number
+          product_id: number
+        }
+        Insert: {
+          channel_id: number
+          id?: number
+          product_id: number
+        }
+        Update: {
+          channel_id?: number
+          id?: number
+          product_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_channels_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_channels_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"

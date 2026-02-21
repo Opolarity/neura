@@ -46,6 +46,8 @@ const AddProduct = () => {
     priceLists,
     warehouses,
     stockTypes,
+    channels,
+    selectedChannels,
     selectedStockType,
     setSelectedStockType,
     loading,
@@ -59,6 +61,7 @@ const AddProduct = () => {
     handleDragOver,
     handleDrop,
     toggleCategorySelection,
+    toggleChannelSelection,
     toggleTermSelection,
     updateVariationPrice,
     updateVariationStock,
@@ -208,6 +211,23 @@ const AddProduct = () => {
                   onCheckedChange={setIsWeb}
                 />
               </div>
+              {channels.length > 0 && (
+                <div className="border-t pt-4 space-y-3">
+                  <Label className="text-sm font-medium">Canales</Label>
+                  {channels.map((channel) => (
+                    <div key={channel.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`channel-${channel.id}`}
+                        checked={selectedChannels.includes(channel.id)}
+                        onCheckedChange={() => toggleChannelSelection(channel.id)}
+                      />
+                      <Label htmlFor={`channel-${channel.id}`} className="cursor-pointer text-sm">
+                        {channel.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 

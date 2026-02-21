@@ -109,6 +109,7 @@ serve(async (req) => {
       isWeb,
       originalIsVariable,
       selectedCategories,
+      selectedChannels,
       productImages,
       variations,
       resetVariations = false
@@ -122,6 +123,7 @@ serve(async (req) => {
       isWeb: boolean;
       originalIsVariable: boolean;
       selectedCategories: number[];
+      selectedChannels: number[];
       productImages: ProductImage[];
       variations: IncomingVariation[];
       resetVariations?: boolean;
@@ -170,6 +172,27 @@ serve(async (req) => {
         throw new Error(`Error al actualizar categorías: ${categoriesError.message}`);
       }
       console.log('Categories updated successfully');
+    }
+
+    // 2.5. Update channels
+    console.log('Updating product channels...');
+    await supabaseAdmin.from('product_channels').delete().eq('product_id', productId);
+
+    if (selectedChannels && selectedChannels.length > 0) {
+      const channelInserts = selectedChannels.map((channelId: number) => ({
+        product_id: productId,
+        channel_id: channelId
+      }));
+
+      const { error: channelsError } = await supabaseAdmin
+        .from('product_channels')
+        .insert(channelInserts);
+
+      if (channelsError) {
+        console.error('Channels update error:', channelsError);
+        throw new Error(`Error al actualizar canales: ${channelsError.message}`);
+      }
+      console.log('Channels updated successfully');
     }
 
     // 3. Fetch existing variations with their terms
