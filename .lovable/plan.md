@@ -1,52 +1,39 @@
 
 
-## Validaciones y mapeo de datos al crear comprobantes (non-INV) desde el modal de ventas
+## Cambios en el Modal de Comprobantes Vinculados
 
 ### Resumen
-Cuando se selecciona un tipo de comprobante cuyo code NO sea "INV", el sistema debe aplicar validaciones de negocio antes de crear el comprobante, y mapear correctamente campos adicionales como `vinculated_invoice_id`, `customer_document_estate_code`, serie e `invoice_number`.
+Se agregaran columnas de "N. Comprobante" y "Acciones" al listado de comprobantes vinculados, con botones de "Emitir" y "Ver" para los comprobantes no-INV que no han sido declarados. Al hacer click en "Emitir", se mostrara un AlertDialog de confirmacion que ejecutara la misma logica existente (`emit-invoice` edge function). Tambien se ampliara el ancho del modal.
 
 ---
 
-### Reglas de validación (solo para code distinto de "INV")
+### Cambios en `SalesInvoicesModal.tsx`
 
-1. **No duplicar tipo**: No puede existir otro comprobante del mismo `invoice_type_id` ya vinculado a la orden.
-2. **Exclusividad entre code 1 y 2**: Si ya existe un comprobante con code "1" o "2", no se puede crear otro de code "1" ni "2".
-3. **Dependencia para code 3 y 4**: Solo se puede crear un comprobante con code "3" o "4" si ya existe uno con code "1" o "2" vinculado a la orden.
-4. **Pago completo (incluyendo negativos)**: La suma de `order_payment.amount` (positivos y negativos) debe ser exactamente igual al total de la orden.
+1. **Ampliar el modal**: Cambiar `sm:max-w-[600px]` a `sm:max-w-[900px]`.
 
----
+2. **Agregar campo `declared` e `invoice_number` a la interfaz `Invoice`**:
+   - `declared: boolean`
+   - `invoice_number: string | null`
 
-### Mapeo de campos adicionales
+3. **Actualizar la query de invoices** para incluir `declared` e `invoice_number` en el `.select()`.
 
-| Campo | Lógica |
-|---|---|
-| `vinculated_invoice_id` | Solo para code "3" o "4": se vincula al `id` del invoice existente con code "1" o "2" |
-| `tax_serie` | Code "1" -> `serie` de `factura_serie_id` del sale_type. Code "2" -> `serie` de `boleta_serie_id`. Code "3"/"4" -> depende del tipo del invoice vinculado: si es tipo "1" usa `factura_serie_id`, si es tipo "2" usa `boleta_serie_id` |
-| `customer_document_estate_code` | Valor de `state_code` de `document_types` donde `id = order.document_type` |
-| `invoice_number` | Siempre `null` |
+4. **Agregar columna "N. Comprobante"** despues de "Tipo" mostrando `inv.invoice_number || "-"`.
 
----
+5. **Agregar columna "Acciones"** al final de la tabla:
+   - Para comprobantes cuyo tipo NO sea "INV" (`code !== "INV"`) y `declared === false`: mostrar dos botones con iconos:
+     - **Emitir** (icono `ArrowUp` de lucide-react): abre un AlertDialog de confirmacion.
+     - **Ver** (icono `Eye` de lucide-react): funcionalidad existente de previsualizar.
+   - Para los demas: mostrar "-".
 
-### Cambios técnicos
+6. **Nuevo estado `emittingInvoiceId`**: para controlar cual comprobante esta siendo emitido y mostrar loading.
 
-**Archivo**: `src/modules/sales/components/SalesInvoicesModal.tsx`
+7. **Nuevo AlertDialog para confirmar emision**:
+   - Estado `pendingEmitInvoice` con el invoice seleccionado.
+   - Mensaje: "Estas seguro de emitir este comprobante a la SUNAT?"
+   - Al confirmar, invoca `supabase.functions.invoke("emit-invoice", { body: { invoice_id } })`.
+   - Maneja la respuesta mostrando toast de exito o error.
+   - Refresca la lista de comprobantes tras emision exitosa.
 
-1. **Refactorizar el flujo de confirmación** para que, al hacer click en un tipo non-INV, antes de mostrar el AlertDialog se ejecuten las validaciones. Si alguna falla, se muestra un toast con el error y no se abre el diálogo.
-
-2. **Nueva función `validateNonInvInvoice`**:
-   - Recibe el `invoiceType` seleccionado y la lista de `invoices` ya cargados (que incluyen `invoice_type_id`).
-   - Consulta los `types` (invoice types) para obtener los codes de los invoices existentes.
-   - Aplica las 4 reglas de validación.
-   - Retorna `{ valid: boolean, error?: string, vinculatedInvoice?: Invoice }`.
-
-3. **Refactorizar `getSerieForType`**:
-   - Para code "3" o "4": recibir el tipo del invoice vinculado (code "1" o "2") y usar `factura_serie_id` o `boleta_serie_id` respectivamente.
-
-4. **Refactorizar `handleCreateInvoice`**:
-   - Obtener `state_code` de `document_types` usando `order.document_type`.
-   - Enviar `customer_document_estate_code` al body del edge function.
-   - Enviar `vinculated_invoice_id` cuando aplique (code "3"/"4").
-   - Enviar `invoice_number: null` siempre.
-
-5. **Actualizar `create-invoice` edge function**: Agregar `customer_document_estate_code` y `vinculated_invoice_id` al INSERT de la tabla `invoices` (verificar que ya los acepta del input, solo falta mapearlos).
+### Sin cambios en Edge Functions
+La edge function `emit-invoice` ya maneja toda la logica de emision (obtiene datos del comprobante, items, proveedor/token via el RPC `sp_get_invoice_for_emit`, construye el payload NubeFact, y actualiza el resultado). Solo se necesita invocarla con el `invoice_id`.
 
