@@ -37,6 +37,7 @@ export interface SaleProduct {
   sku: string;
   quantity: number;
   price: number;
+  originalPrice: number; // precio original antes de reglas
   discountAmount: number; // descuento en monto (S/)
   stockTypeId: number; // tipo de inventario del que se descontará
   stockTypeName: string; // nombre del tipo de inventario
