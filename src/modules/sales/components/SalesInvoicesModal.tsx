@@ -334,7 +334,7 @@ export const SalesInvoicesModal = ({
 
       const { data: orderProducts, error: productsError } = await supabase
         .from("order_products")
-        .select("*")
+        .select("*, variations:product_variation_id(id, sku, product_id, products:product_id(title))")
         .eq("order_id", orderId);
 
       if (productsError || !orderProducts) {
@@ -355,11 +355,12 @@ export const SalesInvoicesModal = ({
       const totalAmount = Number(order.total);
       const totalTaxes = totalAmount - (totalAmount / 1.18);
 
-      const items = orderProducts.map((op) => {
+      const items = orderProducts.map((op: any) => {
         const lineTotal = (Number(op.product_price) * Number(op.quantity)) - Number(op.product_discount || 0);
         const igv = lineTotal - (lineTotal / 1.18);
+        const productTitle = op.variations?.products?.title || op.product_name || `Producto ${op.product_variation_id}`;
         return {
-          description: op.product_name || `Producto ${op.product_variation_id}`,
+          description: productTitle,
           quantity: Number(op.quantity),
           measurement_unit: "NIU",
           unit_price: Number(op.product_price),
