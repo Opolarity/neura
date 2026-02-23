@@ -4023,9 +4023,11 @@ export type Database = {
           p_account_id: number
           p_account_number: number
           p_bank: string
+          p_branch_id: number
           p_business_account_type_id: number
           p_name: string
           p_total_amount: number
+          p_user_id: string
         }
         Returns: Json
       }
@@ -4117,36 +4119,46 @@ export type Database = {
         Args: { p_code: string; p_name: string }
         Returns: Json
       }
+      sp_create_user_profile: {
+        Args: {
+          p_address?: string
+          p_address_reference?: string
+          p_branch_id?: number
+          p_city_id?: number
+          p_country_id?: number
+          p_document_number?: string
+          p_document_type_id?: number
+          p_last_name?: string
+          p_last_name2?: string
+          p_middle_name?: string
+          p_name: string
+          p_neighborhood_id?: number
+          p_role_ids?: number[]
+          p_show?: boolean
+          p_state_id?: number
+          p_type_ids?: number[]
+          p_uid: string
+          p_warehouse_id?: number
+        }
+        Returns: Json
+      }
       sp_delete_business_account: { Args: { p_id: number }; Returns: Json }
       sp_delete_payment_method: { Args: { p_id: number }; Returns: Json }
       sp_delete_price_list: { Args: { p_id: number }; Returns: Json }
       sp_delete_stock_types: { Args: { p_id: number }; Returns: Json }
-      sp_ec_create_account_profile:
-        | {
-            Args: {
-              p_auth_uid: string
-              p_dni: string
-              p_lastname1: string
-              p_lastname2: string
-              p_nickname: string
-              p_nombre: string
-              p_tipo_documento_id: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_auth_uid: string
-              p_dni: string
-              p_email: string
-              p_lastname1: string
-              p_lastname2: string
-              p_nickname: string
-              p_nombre: string
-              p_tipo_documento_id: number
-            }
-            Returns: Json
-          }
+      sp_ec_create_account_profile: {
+        Args: {
+          p_auth_uid: string
+          p_dni: string
+          p_email: string
+          p_lastname1: string
+          p_lastname2: string
+          p_nickname: string
+          p_nombre: string
+          p_tipo_documento_id: number
+        }
+        Returns: Json
+      }
       sp_ec_get_categories_ids: {
         Args: { p_categories_ids?: number[] }
         Returns: Json
@@ -4235,8 +4247,20 @@ export type Database = {
         Returns: Json
       }
       sp_get_business_accounts: {
-        Args: { p_account_id: number }
+        Args: { p_page?: number; p_size?: number }
         Returns: Json
+      }
+      sp_get_cart: {
+        Args: { p_is_active?: boolean; p_page?: number; p_size?: number }
+        Returns: Json
+      }
+      sp_get_cart_details: {
+        Args: { p_cart_id?: number; p_user_id?: string }
+        Returns: {
+          cart_items: Json
+          total_amount: number
+          total_count: number
+        }[]
       }
       sp_get_categories_product_count: {
         Args: {
@@ -4540,17 +4564,6 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_update_business_account: {
-        Args: {
-          p_account_number: number
-          p_bank: string
-          p_business_account_type_id: number
-          p_id: number
-          p_name: string
-          p_total_amount: number
-        }
-        Returns: Json
-      }
       sp_update_payment_method: {
         Args: {
           p_active?: boolean
@@ -4571,23 +4584,6 @@ export type Database = {
         Returns: Json
       }
       sp_update_product: {
-        Args: {
-          p_description: string
-          p_is_active: boolean
-          p_is_variable: boolean
-          p_is_web: boolean
-          p_product_id: number
-          p_product_images: Json
-          p_product_name: string
-          p_reset_variations: boolean
-          p_selected_categories: number[]
-          p_short_description: string
-          p_user_id: string
-          p_variations: Json
-        }
-        Returns: Record<string, unknown>
-      }
-      sp_update_state_returns: {
         Args: {
           p_description: string
           p_is_active: boolean
