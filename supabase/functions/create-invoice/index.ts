@@ -58,6 +58,8 @@ serve(async (req) => {
         total_free: input.total_free || null,
         total_others: input.total_others || null,
         created_by: user.id,
+        customer_document_estate_code: input.customer_document_estate_code || null,
+        vinculated_invoice_id: input.vinculated_invoice_id || null,
       })
       .select("id")
       .single();

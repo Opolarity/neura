@@ -825,6 +825,7 @@ export type Database = {
           client_name: string | null
           created_at: string
           created_by: string
+          customer_document_estate_code: string | null
           customer_document_number: string
           customer_document_type_id: number
           declared: boolean
@@ -847,6 +848,7 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           created_by?: string
+          customer_document_estate_code?: string | null
           customer_document_number?: string
           customer_document_type_id?: number
           declared?: boolean
@@ -869,6 +871,7 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           created_by?: string
+          customer_document_estate_code?: string | null
           customer_document_number?: string
           customer_document_type_id?: number
           declared?: boolean
