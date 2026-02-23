@@ -282,6 +282,30 @@ export const SalesInvoicesModal = ({
       return;
     }
 
+    // Validate order status is "COM" for non-INV types
+    const { data: lastSituation } = await supabase
+      .from("order_situations")
+      .select("status_id")
+      .eq("order_id", orderId)
+      .eq("last_row", true)
+      .single();
+
+    if (lastSituation) {
+      const { data: status } = await supabase
+        .from("statuses")
+        .select("code")
+        .eq("id", lastSituation.status_id)
+        .single();
+
+      if (!status || status.code !== "COM") {
+        toast({ title: "No se puede crear", description: "La orden debe estar en estado Completado para crear este tipo de comprobante.", variant: "destructive" });
+        return;
+      }
+    } else {
+      toast({ title: "No se puede crear", description: "No se pudo verificar el estado de la orden.", variant: "destructive" });
+      return;
+    }
+
     // Run validations for non-INV
     const result = await validateNonInvInvoice(invoiceType);
     if (!result.valid) {

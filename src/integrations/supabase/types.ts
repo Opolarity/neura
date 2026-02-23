@@ -2681,7 +2681,7 @@ export type Database = {
             foreignKeyName: "sale_types_boleta_serie_id_fkey"
             columns: ["boleta_serie_id"]
             isOneToOne: false
-            referencedRelation: "sale_types"
+            referencedRelation: "invoice_series"
             referencedColumns: ["id"]
           },
           {
