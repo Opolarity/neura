@@ -97,11 +97,14 @@ Deno.serve(async (req) => {
       };
     });
 
+    // Pad numero to 8 chars with leading zeros
+    const numeroPadded = String(numero).padStart(8, "0");
+
     const nubefactPayload = {
       operacion: "generar_comprobante",
       tipo_de_comprobante,
       serie,
-      numero,
+      numero: numeroPadded,
       sunat_transaction: 1,
       cliente_tipo_de_documento,
       cliente_numero_de_documento: (invoice.customer_document_number || "").trim()
@@ -174,7 +177,7 @@ Deno.serve(async (req) => {
     }
 
     // 4. Update invoice via RPC - save invoice_number as "SERIE-NUMERO"
-    const invoiceNumber = `${serie}-${numero}`;
+    const invoiceNumber = `${serie}-${numeroPadded}`;
     await supabaseAdmin.rpc("sp_update_invoice_sunat_response", {
       p_invoice_id: invoice_id,
       p_pdf_url: nubefactResult.enlace_del_pdf || null,
