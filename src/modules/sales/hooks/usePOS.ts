@@ -177,9 +177,12 @@ export const usePOS = () => {
   // Apply price rules whenever cart changes
   useEffect(() => {
     if (cart.length === 0) return;
-    const updated = applyPriceRules(cart);
-    const changed = updated.some((u, i) => u.price !== cart[i].price);
-    if (changed) setCart(updated);
+    const run = async () => {
+      const updated = await applyPriceRules(cart);
+      const changed = updated.some((u, i) => u.price !== cart[i].price);
+      if (changed) setCart(updated);
+    };
+    run();
   }, [cart]);
 
   const loadInitialData = async () => {

@@ -236,9 +236,12 @@ export const useCreateSale = () => {
   // Apply price rules whenever products change
   useEffect(() => {
     if (products.length === 0) return;
-    const updated = applyPriceRules(products);
-    const changed = updated.some((u, i) => u.price !== products[i].price);
-    if (changed) setProducts(updated);
+    const run = async () => {
+      const updated = await applyPriceRules(products);
+      const changed = updated.some((u, i) => u.price !== products[i].price);
+      if (changed) setProducts(updated);
+    };
+    run();
   }, [products]);
 
   // Computed: Available shipping costs based on selected location
