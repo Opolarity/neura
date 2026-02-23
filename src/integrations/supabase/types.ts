@@ -4296,19 +4296,7 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_get_invoice_for_emit:
-        | {
-            Args: { p_invoice_id: number }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.sp_get_invoice_for_emit(p_invoice_id => int8), public.sp_get_invoice_for_emit(p_invoice_id => int4). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
-        | {
-            Args: { p_invoice_id: number }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.sp_get_invoice_for_emit(p_invoice_id => int8), public.sp_get_invoice_for_emit(p_invoice_id => int4). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
+      sp_get_invoice_for_emit: { Args: { p_invoice_id: number }; Returns: Json }
       sp_get_invoices: {
         Args: {
           p_declared?: boolean
