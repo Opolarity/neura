@@ -356,7 +356,8 @@ export default function ProductsStep({
                     </div>
                   );
                 })}
-
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

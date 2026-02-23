@@ -24,6 +24,16 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ChevronDown, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 
 interface Invoice {
@@ -63,6 +73,8 @@ export const SalesInvoicesModal = ({
   const [isFullyPaid, setIsFullyPaid] = useState(false);
   const [creating, setCreating] = useState(false);
   const { toast } = useToast();
+
+  const [pendingInvoiceType, setPendingInvoiceType] = useState<InvoiceType | null>(null);
 
   useEffect(() => {
     if (open && orderId) {
@@ -296,7 +308,7 @@ export const SalesInvoicesModal = ({
                 {invoiceTypes.map((type) => (
                   <DropdownMenuItem
                     key={type.id}
-                    onClick={() => handleCreateInvoice(type)}
+                    onClick={() => setPendingInvoiceType(type)}
                   >
                     {type.name}
                   </DropdownMenuItem>
@@ -342,6 +354,31 @@ export const SalesInvoicesModal = ({
           )}
         </div>
       </DialogContent>
+
+      <AlertDialog open={!!pendingInvoiceType} onOpenChange={(open) => { if (!open) setPendingInvoiceType(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar creación de comprobante</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de crear un(a) <strong>{pendingInvoiceType?.name}</strong> con la información actual de esta venta?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={creating}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={creating}
+              onClick={() => {
+                if (pendingInvoiceType) {
+                  handleCreateInvoice(pendingInvoiceType).then(() => setPendingInvoiceType(null));
+                }
+              }}
+            >
+              {creating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
