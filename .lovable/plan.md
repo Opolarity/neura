@@ -1,128 +1,52 @@
 
-# Plan: Crear usuario con Stored Procedure
 
-## Resumen
+## Validaciones y mapeo de datos al crear comprobantes (non-INV) desde el modal de ventas
 
-Mover toda la logica de insercion de datos (accounts, profiles, account_types, user_roles) a un stored procedure `sp_create_user_profile`. Esto garantiza transaccionalidad nativa: si algo falla, PostgreSQL hace rollback automatico sin dejar datos huerfanos.
+### Resumen
+Cuando se selecciona un tipo de comprobante cuyo code NO sea "INV", el sistema debe aplicar validaciones de negocio antes de crear el comprobante, y mapear correctamente campos adicionales como `vinculated_invoice_id`, `customer_document_estate_code`, serie e `invoice_number`.
 
-La edge function solo se encargara de:
-1. Validar campos
-2. Crear el usuario en Auth (esto no puede hacerse en SQL)
-3. Llamar al SP con los datos
-4. Si el SP falla, eliminar el usuario de Auth
+---
 
-## Cambios
+### Reglas de validación (solo para code distinto de "INV")
 
-### 1. Migracion SQL: Crear `sp_create_user_profile`
+1. **No duplicar tipo**: No puede existir otro comprobante del mismo `invoice_type_id` ya vinculado a la orden.
+2. **Exclusividad entre code 1 y 2**: Si ya existe un comprobante con code "1" o "2", no se puede crear otro de code "1" ni "2".
+3. **Dependencia para code 3 y 4**: Solo se puede crear un comprobante con code "3" o "4" si ya existe uno con code "1" o "2" vinculado a la orden.
+4. **Pago completo (incluyendo negativos)**: La suma de `order_payment.amount` (positivos y negativos) debe ser exactamente igual al total de la orden.
 
-Crear un stored procedure que reciba todos los parametros y ejecute las inserciones dentro de una transaccion implicita:
+---
 
-- Verificar que no exista un account con el mismo documento
-- Insertar en `accounts` y obtener el ID generado
-- Insertar en `profiles` vinculando el UID de auth con el account_id
-- Insertar en `account_types` (multiples registros segun type_ids)
-- Insertar en `user_roles` (multiples registros segun role_ids)
-- Retornar el account_id y profile creado
+### Mapeo de campos adicionales
 
-Si cualquier paso falla, PostgreSQL revierte todo automaticamente.
+| Campo | Lógica |
+|---|---|
+| `vinculated_invoice_id` | Solo para code "3" o "4": se vincula al `id` del invoice existente con code "1" o "2" |
+| `tax_serie` | Code "1" -> `serie` de `factura_serie_id` del sale_type. Code "2" -> `serie` de `boleta_serie_id`. Code "3"/"4" -> depende del tipo del invoice vinculado: si es tipo "1" usa `factura_serie_id`, si es tipo "2" usa `boleta_serie_id` |
+| `customer_document_estate_code` | Valor de `state_code` de `document_types` donde `id = order.document_type` |
+| `invoice_number` | Siempre `null` |
 
-### 2. Limpiar datos huerfanos existentes
+---
 
-Ejecutar DELETE de las cuentas huerfanas (IDs 51, 52, 53) que quedaron de pruebas fallidas anteriores, dentro de la misma migracion.
+### Cambios técnicos
 
-### 3. Actualizar edge function `create-users/index.ts`
+**Archivo**: `src/modules/sales/components/SalesInvoicesModal.tsx`
 
-Simplificar la funcion para:
-- Validar campos requeridos
-- Crear usuario en Auth (admin API)
-- Llamar `supabase.rpc('sp_create_user_profile', {...})` con todos los datos
-- Si el RPC falla, eliminar el usuario de Auth como rollback
-- Retornar respuesta exitosa
+1. **Refactorizar el flujo de confirmación** para que, al hacer click en un tipo non-INV, antes de mostrar el AlertDialog se ejecuten las validaciones. Si alguna falla, se muestra un toast con el error y no se abre el diálogo.
 
-### 4. Registrar en `config.toml`
+2. **Nueva función `validateNonInvInvoice`**:
+   - Recibe el `invoiceType` seleccionado y la lista de `invoices` ya cargados (que incluyen `invoice_type_id`).
+   - Consulta los `types` (invoice types) para obtener los codes de los invoices existentes.
+   - Aplica las 4 reglas de validación.
+   - Retorna `{ valid: boolean, error?: string, vinculatedInvoice?: Invoice }`.
 
-Agregar la entrada:
-```
-[functions.create-users]
-verify_jwt = false
-```
+3. **Refactorizar `getSerieForType`**:
+   - Para code "3" o "4": recibir el tipo del invoice vinculado (code "1" o "2") y usar `factura_serie_id` o `boleta_serie_id` respectivamente.
 
-## Detalle tecnico del Stored Procedure
+4. **Refactorizar `handleCreateInvoice`**:
+   - Obtener `state_code` de `document_types` usando `order.document_type`.
+   - Enviar `customer_document_estate_code` al body del edge function.
+   - Enviar `vinculated_invoice_id` cuando aplique (code "3"/"4").
+   - Enviar `invoice_number: null` siempre.
 
-```sql
-CREATE OR REPLACE FUNCTION sp_create_user_profile(
-  p_uid UUID,
-  p_name VARCHAR,
-  p_middle_name VARCHAR DEFAULT NULL,
-  p_last_name VARCHAR DEFAULT NULL,
-  p_last_name2 VARCHAR DEFAULT NULL,
-  p_document_type_id BIGINT,
-  p_document_number VARCHAR,
-  p_show BOOLEAN DEFAULT TRUE,
-  p_country_id BIGINT DEFAULT NULL,
-  p_state_id BIGINT DEFAULT NULL,
-  p_city_id BIGINT DEFAULT NULL,
-  p_neighborhood_id BIGINT DEFAULT NULL,
-  p_address TEXT DEFAULT NULL,
-  p_address_reference TEXT DEFAULT NULL,
-  p_warehouse_id BIGINT,
-  p_branch_id BIGINT,
-  p_type_ids BIGINT[],
-  p_role_ids BIGINT[] DEFAULT '{}'
-)
-RETURNS JSON
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_account_id BIGINT;
-  v_existing RECORD;
-BEGIN
-  -- Check duplicates
-  SELECT id INTO v_existing FROM accounts
-  WHERE document_number = p_document_number
-    AND document_type_id = p_document_type_id;
+5. **Actualizar `create-invoice` edge function**: Agregar `customer_document_estate_code` y `vinculated_invoice_id` al INSERT de la tabla `invoices` (verificar que ya los acepta del input, solo falta mapearlos).
 
-  IF FOUND THEN
-    RAISE EXCEPTION 'User already exists with this document';
-  END IF;
-
-  -- Insert account
-  INSERT INTO accounts (name, middle_name, last_name, last_name2,
-    document_type_id, document_number, is_active, show)
-  VALUES (p_name, p_middle_name, p_last_name, p_last_name2,
-    p_document_type_id, p_document_number, TRUE, p_show)
-  RETURNING id INTO v_account_id;
-
-  -- Insert profile
-  INSERT INTO profiles ("UID", account_id, country_id, state_id,
-    city_id, neighborhood_id, address, address_reference,
-    warehouse_id, branch_id, is_active)
-  VALUES (p_uid, v_account_id, p_country_id, p_state_id,
-    p_city_id, p_neighborhood_id, p_address, p_address_reference,
-    p_warehouse_id, p_branch_id, TRUE);
-
-  -- Insert account types
-  INSERT INTO account_types (account_id, account_type_id)
-  SELECT v_account_id, UNNEST(p_type_ids);
-
-  -- Insert user roles
-  IF array_length(p_role_ids, 1) > 0 THEN
-    INSERT INTO user_roles (user_id, role_id)
-    SELECT p_uid, UNNEST(p_role_ids);
-  END IF;
-
-  RETURN json_build_object(
-    'account_id', v_account_id,
-    'auth_uid', p_uid
-  );
-END;
-$$;
-```
-
-### Ventajas de este enfoque
-
-- **Rollback automatico**: Si falla cualquier INSERT, todo se revierte sin codigo adicional
-- **Consistencia**: Sigue el patron de `sp_close_pos_session` y la directiva del proyecto
-- **Edge function simple**: Solo maneja Auth (que no puede hacerse en SQL) y delega el resto al SP
-- **Sin datos huerfanos**: Imposible que queden registros parciales en la base de datos
