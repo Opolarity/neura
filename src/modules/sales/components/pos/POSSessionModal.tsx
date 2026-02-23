@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -19,8 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Store, AlertTriangle } from "lucide-react";
-import type { OpenPOSSessionRequest, CashRegister } from "../../types/POS.types";
-import { getCashRegisters } from "../../services/POSSession.service";
+import type { OpenPOSSessionRequest, POSSaleType } from "../../types/POS.types";
+import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "../../adapters/POS.adapter";
 
 interface POSSessionModalProps {
@@ -51,12 +51,25 @@ export default function POSSessionModal({
 
   const loadSaleTypes = async () => {
     try {
-      setLoadingCashRegisters(true);
-      const data = await getCashRegisters();
-      setCashRegisters(data);
-      if (data.length === 1) {
-        setSelectedSaleTypeId(String(data[0].id));
-        loadCashRegisterData(data[0].businessAccountId);
+      setLoadingSaleTypes(true);
+      const { data, error } = await supabase
+        .from("sale_types")
+        .select("id, name, business_acount_id, pos_sale_type")
+        .eq("pos_sale_type", true)
+        .eq("is_active", true);
+
+      if (error) throw error;
+
+      const mapped: POSSaleType[] = (data || []).map((st) => ({
+        id: st.id,
+        name: st.name,
+        businessAccountId: st.business_acount_id,
+      }));
+      setSaleTypes(mapped);
+
+      if (mapped.length === 1) {
+        setSelectedSaleTypeId(String(mapped[0].id));
+        loadCashRegisterData(mapped[0].businessAccountId);
       }
     } catch (error) {
       console.error("Error loading POS sale types:", error);
@@ -92,16 +105,13 @@ export default function POSSessionModal({
     }
   };
 
-  const selectedRegister = useMemo(() => {
-    if (!selectedCashRegisterId) return null;
-    return cashRegisters.find(r => String(r.id) === selectedCashRegisterId) || null;
-  }, [selectedCashRegisterId, cashRegisters]);
-
-  const expectedAmount = selectedRegister?.totalAmount ?? 0;
+  const selectedSaleType = saleTypes.find((st) => String(st.id) === selectedSaleTypeId) || null;
 
   const parsedAmount = openingAmount !== "" ? parseFloat(openingAmount) : null;
-  const difference = parsedAmount !== null && !isNaN(parsedAmount) ? parsedAmount - expectedAmount : null;
-  const hasNegativeDifference = difference !== null && difference < 0;
+  const difference = parsedAmount !== null && !isNaN(parsedAmount) && expectedAmount !== null
+    ? parsedAmount - expectedAmount
+    : null;
+  const hasDifference = difference !== null && difference !== 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,12 +124,12 @@ export default function POSSessionModal({
     if (isNaN(amount) || amount < 0) {
       return;
     }
-    
-    await onOpen({ 
-      openingAmount: amount, 
-      businessAccountId: parseInt(selectedCashRegisterId),
+
+    await onOpen({
+      openingAmount: amount,
+      businessAccountId: selectedSaleType.businessAccountId,
       openingDifference: difference ?? 0,
-      notes: notes || undefined 
+      notes: notes || undefined,
     });
   };
 
@@ -129,8 +139,6 @@ export default function POSSessionModal({
 
   const isAmountValid = openingAmount !== "" && !isNaN(parseFloat(openingAmount)) && parseFloat(openingAmount) >= 0;
   const isFormValid = selectedSaleTypeId && selectedSaleType?.businessAccountId && isAmountValid && !loadingSaleTypes;
-
-  const formatCurrency = (value: number) => `S/ ${value.toFixed(2)}`;
 
   return (
     <Dialog open={isOpen}>
@@ -154,7 +162,6 @@ export default function POSSessionModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Canal de venta y Caja en dos columnas */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="saleType">Canal de venta *</Label>
@@ -200,7 +207,7 @@ export default function POSSessionModal({
               />
               {expectedAmount !== null && (
                 <p className="text-xs text-muted-foreground">
-                  Saldo: {formatCurrency(expectedAmount)}
+                  Saldo: S/ {formatCurrency(expectedAmount)}
                 </p>
               )}
             </div>
@@ -209,7 +216,7 @@ export default function POSSessionModal({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="openingAmount">Monto Inicial *</Label>
-              {selectedRegister && (
+              {expectedAmount !== null && (
                 <span className="text-sm text-muted-foreground">
                   Saldo en sistema: <span className="font-semibold text-foreground">S/ {formatCurrency(expectedAmount)}</span>
                 </span>
@@ -232,17 +239,16 @@ export default function POSSessionModal({
               />
             </div>
 
-            {/* Difference warning */}
             {hasDifference && (
               <div className="flex items-start gap-2 p-2 rounded-md bg-destructive/10 border border-destructive/20">
                 <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
                 <div className="text-xs text-destructive">
                   <p className="font-medium">Diferencia detectada</p>
                   <p>
-                    Monto esperado: {formatCurrency(expectedAmount!)} — Diferencia:{" "}
+                    Monto esperado: S/ {formatCurrency(expectedAmount!)} — Diferencia:{" "}
                     <span className="font-semibold">
-                      {openingDifference! > 0 ? "+" : ""}
-                      {formatCurrency(openingDifference!)}
+                      {difference! > 0 ? "+" : ""}
+                      S/ {formatCurrency(difference!)}
                     </span>
                   </p>
                 </div>
@@ -255,22 +261,6 @@ export default function POSSessionModal({
               </p>
             )}
           </div>
-
-          {/* Difference display */}
-          {difference !== null && difference !== 0 && selectedRegister && (
-            <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-3 space-y-1">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Diferencia</span>
-                <span className="font-semibold text-destructive">
-                  {difference > 0 ? '+' : ''} S/ {formatCurrency(difference)}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-destructive">
-                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>El monto inicial no coincide con el saldo registrado en el sistema. Esta diferencia se guardará.</span>
-              </div>
-            </div>
-          )}
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notas (opcional)</Label>
