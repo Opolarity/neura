@@ -4,6 +4,7 @@
 // =============================================
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { applyPriceRules } from "../rules/applyPriceRules";
 import { getPriceListIsActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -231,6 +232,14 @@ export const useCreateSale = () => {
     };
     load();
   }, [createdOrderId]);
+
+  // Apply price rules whenever products change
+  useEffect(() => {
+    if (products.length === 0) return;
+    const updated = applyPriceRules(products);
+    const changed = updated.some((u, i) => u.price !== products[i].price);
+    if (changed) setProducts(updated);
+  }, [products]);
 
   // Computed: Available shipping costs based on selected location
   const availableShippingCosts = useMemo(() => {
@@ -1077,6 +1086,7 @@ export const useCreateSale = () => {
         sku: selectedVariation.sku,
         quantity: 1,
         price,
+        originalPrice: price,
         discountAmount: 0,
         stockTypeId: parseInt(selectedStockTypeId),
         stockTypeName,

@@ -275,6 +275,7 @@ export const adaptSaleById = (data: any) => ({
     sku: p.sku,
     quantity: p.quantity,
     price: p.price,
+    originalPrice: p.price,
     discountAmount: p.discount_amount,
     stockTypeId: p.stock_type_id,
     stockTypeName: p.stock_type_name,
