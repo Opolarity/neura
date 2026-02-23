@@ -71,12 +71,13 @@ Deno.serve(async (req) => {
       return sum + base;
     }, 0);
 
-    const totalIgv = items.reduce((sum: number, item: any) => sum + item.igv, 0);
+    const totalIgv = +(totalGravada * 0.18).toFixed(2);
+    const totalConIgv = +(totalGravada + totalIgv).toFixed(2);
 
     const nubefactItems = items.map((item: any) => {
       const base = item.quantity * item.unit_price - (item.discount || 0);
       const valorUnitario = +(base / item.quantity).toFixed(10);
-      const precioUnitario = +(item.total / item.quantity).toFixed(10);
+      const precioUnitario = +(valorUnitario * 1.18).toFixed(10);
 
       return {
         unidad_de_medida: item.measurement_unit || "NIU",
@@ -88,8 +89,8 @@ Deno.serve(async (req) => {
         descuento: item.discount ? +item.discount.toFixed(2) : "",
         subtotal: +base.toFixed(2),
         tipo_de_igv: 1,
-        igv: +item.igv.toFixed(2),
-        total: +item.total.toFixed(2),
+        igv: +(base * 0.18).toFixed(2),
+        total: +(base * 1.18).toFixed(2),
         anticipo_regularizacion: false,
         anticipo_documento_serie: "",
         anticipo_documento_numero: "",
@@ -122,10 +123,10 @@ Deno.serve(async (req) => {
       total_gravada: +totalGravada.toFixed(2),
       total_inafecta: "",
       total_exonerada: "",
-      total_igv: +totalIgv.toFixed(2),
+      total_igv: totalIgv,
       total_gratuita: "",
       total_otros_cargos: "",
-      total: +invoice.total_amount.toFixed(2),
+      total: totalConIgv,
       percepcion_tipo: "",
       percepcion_base_imponible: "",
       total_percepcion: "",
