@@ -458,6 +458,7 @@ export const SalesInvoicesModal = ({
               <TableHeader>
                 <TableRow>
                   <TableHead>#</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Serie</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Total</TableHead>
@@ -468,6 +469,7 @@ export const SalesInvoicesModal = ({
                 {invoices.map((inv, index) => (
                   <TableRow key={inv.id}>
                     <TableCell>{index + 1}</TableCell>
+                    <TableCell>{invoiceTypes.find(t => t.id === inv.invoice_type_id)?.name || "-"}</TableCell>
                     <TableCell>{inv.tax_serie || "-"}</TableCell>
                     <TableCell>{inv.client_name || "-"}</TableCell>
                     <TableCell>S/ {inv.total_amount.toFixed(2)}</TableCell>
