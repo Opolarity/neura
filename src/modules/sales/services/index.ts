@@ -71,6 +71,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
       subtotal: orderData.subtotal,
       discount: orderData.discount,
       total: orderData.total,
+      change: orderData.change,
       is_existing_client: orderData.isExistingClient,
       products: orderData.products.map((p) => ({
         variation_id: p.variationId,
@@ -85,6 +86,12 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
         date: p.date,
         confirmation_code: p.confirmationCode,
         voucher_url: p.voucherUrl,
+        business_account_id: p.businessAccountId || null,
+      })),
+      change_entries: orderData.changeEntries.map((e) => ({
+        payment_method_id: e.paymentMethodId,
+        amount: e.amount,
+        business_account_id: e.businessAccountId || null,
       })),
       initial_situation_id: orderData.initialSituationId,
     },
@@ -130,6 +137,7 @@ export const updateOrder = async (
       subtotal: orderData.subtotal,
       discount: orderData.discount,
       total: orderData.total,
+      change: orderData.change,
       products: orderData.products.map((p) => ({
         variation_id: p.variationId,
         quantity: p.quantity,
@@ -143,6 +151,12 @@ export const updateOrder = async (
         date: p.date,
         confirmation_code: p.confirmationCode,
         voucher_url: p.voucherUrl,
+        business_account_id: p.businessAccountId || null,
+      })),
+      change_entries: orderData.changeEntries.map((e) => ({
+        payment_method_id: e.paymentMethodId,
+        amount: e.amount,
+        business_account_id: e.businessAccountId || null,
       })),
     },
   });

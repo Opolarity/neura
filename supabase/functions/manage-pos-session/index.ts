@@ -88,6 +88,7 @@ serve(async (req) => {
         p_opening_amount: openingAmount || 0,
         p_business_account_id: businessAccountId,
         p_notes: notes || null,
+        p_sale_type_id: saleTypeId || null,
       });
 
       if (error) {

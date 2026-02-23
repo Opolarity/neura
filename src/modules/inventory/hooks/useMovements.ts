@@ -152,7 +152,8 @@ export const useMovements = () => {
     };
 
     const onOrderChange = (order: string) => {
-        const newFilters = { ...filters, order };
+        const orderValue = order === "none" ? null : order;
+        const newFilters = { ...filters, order: orderValue };
         setFilters(newFilters);
         loadMovements(newFilters);
     };

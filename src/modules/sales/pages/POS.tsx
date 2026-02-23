@@ -45,12 +45,12 @@ export default function POS() {
   const canProceedNext = pos.canProceedToStep((pos.currentStep + 1) as POSStep);
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-[calc(100vh-73px)] flex flex-col bg-gray-50 -m-[15px]">
       {/* Header */}
       <POSHeader session={pos.session} onExit={pos.exitPOS} />
 
       {/* Step indicator */}
-      <div className="bg-white border-b py-6">
+      <div className="bg-white border-b py-2">
         <POSStepIndicator
           currentStep={pos.currentStep}
           requiresShipping={pos.customer.requiresShipping}
@@ -61,7 +61,7 @@ export default function POS() {
 
       {/* Main content */}
       <div className="flex-1 overflow-auto">
-        <div className="flex h-full">
+        <div className="flex items-start">
           {/* Step content */}
           <div className="flex-1 p-6 overflow-auto">
             {pos.currentStep === 1 && (
@@ -87,6 +87,13 @@ export default function POS() {
                 onPageChange={pos.handleProductPageChange}
                 priceListId={pos.configuration?.priceListId || ""}
                 total={pos.total}
+                subtotal={pos.subtotal}
+                discountAmount={pos.discountAmount}
+                stockTypes={pos.formData?.stockTypes || []}
+                selectedStockTypeId={pos.selectedStockTypeId}
+                onStockTypeChange={pos.setSelectedStockTypeId}
+                generalDiscount={pos.generalDiscount}
+                onGeneralDiscountChange={pos.setGeneralDiscount}
               />
             )}
 
@@ -115,10 +122,12 @@ export default function POS() {
 
             {pos.currentStep === 5 && pos.formData && (
               <PaymentStep
+                customer={pos.customer}
                 cart={pos.cart}
                 payments={pos.payments}
                 currentPayment={pos.currentPayment}
-                paymentMethods={pos.formData.paymentMethods}
+                paymentMethods={pos.filteredPaymentMethods}
+                businessAccounts={pos.businessAccounts}
                 subtotal={pos.subtotal}
                 discountAmount={pos.discountAmount}
                 shippingCost={pos.customer.requiresShipping ? pos.shipping.shippingCost : 0}
@@ -128,6 +137,11 @@ export default function POS() {
                 onUpdateCurrentPayment={pos.updateCurrentPayment}
                 onAddPayment={pos.addPayment}
                 onRemovePayment={pos.removePayment}
+                changeEntries={pos.changeEntries}
+                currentChangeEntry={pos.currentChangeEntry}
+                onUpdateCurrentChangeEntry={pos.updateCurrentChangeEntry}
+                onAddChangeEntry={pos.addChangeEntry}
+                onRemoveChangeEntry={pos.removeChangeEntry}
               />
             )}
           </div>
@@ -142,6 +156,7 @@ export default function POS() {
                 discountAmount={pos.discountAmount}
                 shippingCost={pos.customer.requiresShipping ? pos.shipping.shippingCost : 0}
                 total={pos.total}
+                showProducts={pos.currentStep >= 3}
               />
             </div>
           )}
@@ -159,6 +174,7 @@ export default function POS() {
           onBack={pos.prevStep}
           onFinalize={pos.submitOrder}
           onReset={pos.resetAll}
+          onAnonymousPurchase={pos.currentStep === 3 ? pos.handleAnonymousPurchase : undefined}
         />
       )}
 
@@ -166,7 +182,8 @@ export default function POS() {
       <POSCloseSessionModal
         isOpen={pos.showCloseSessionModal}
         session={pos.session}
-        totalSales={pos.sessionTotalSales}
+        totalCashSales={pos.sessionTotalCashSales}
+        businessAccountTotal={pos.sessionBusinessAccountTotal}
         isClosing={pos.closingSession}
         onClose={pos.handleCloseSession}
         onCancel={pos.cancelCloseSession}

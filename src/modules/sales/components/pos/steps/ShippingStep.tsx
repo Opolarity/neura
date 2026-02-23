@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Truck, MapPin, User, Phone, FileText } from "lucide-react";
 import type { POSShippingData } from "../../../types/POS.types";
 import type { Country, State, City, Neighborhood, ShippingCost } from "../../../types";
@@ -45,15 +44,20 @@ export default function ShippingStep({
     (n) => n.cityId === parseInt(shipping.cityId)
   );
 
+  // Get unique shipping methods from costs
+  const uniqueMethods = shippingCosts.reduce((acc, cost) => {
+    if (!acc.find((m) => m.shippingMethodId === cost.shippingMethodId)) {
+      acc.push(cost);
+    }
+    return acc;
+  }, [] as ShippingCost[]);
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-2">
         <Truck className="w-5 h-5 text-gray-700" />
         <h2 className="text-lg font-semibold">Detalles de Despacho</h2>
       </div>
-      <p className="text-gray-500 text-sm -mt-4">
-        Seleccione el metodo y la direccion para la entrega del pedido.
-      </p>
 
       <Card>
         <CardHeader>
@@ -62,7 +66,59 @@ export default function ShippingStep({
             Direccion de Entrega
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
+          {/* Shipping method + price */}
+          {shippingCosts.length > 0 && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Truck className="w-4 h-4" />
+                  Método de Envío
+                </Label>
+                <Select
+                  value={shipping.shippingMethodId}
+                  onValueChange={(value) => {
+                    onUpdateShipping("shippingMethodId", value);
+                    const matched = shippingCosts.find(
+                      (c) => c.shippingMethodId.toString() === value
+                    );
+                    if (matched) {
+                      onUpdateShipping("shippingCost", matched.cost);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione método..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {uniqueMethods.map((cost) => (
+                      <SelectItem
+                        key={cost.shippingMethodId}
+                        value={cost.shippingMethodId.toString()}
+                      >
+                        {cost.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Costo de Envío (S/)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={shipping.shippingCost}
+                  onChange={(e) =>
+                    onUpdateShipping("shippingCost", parseFloat(e.target.value) || 0)
+                  }
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Location selects */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -205,43 +261,6 @@ export default function ShippingStep({
           </div>
         </CardContent>
       </Card>
-
-      {/* Shipping method selection */}
-      {shippingCosts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Metodo de Envio</CardTitle>
-            <CardDescription>Seleccione el metodo de envio disponible para esta ubicacion</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {shippingCosts.map((cost) => (
-                <div
-                  key={cost.id}
-                  onClick={() => {
-                    onUpdateShipping("shippingMethodId", cost.shippingMethodId.toString());
-                    onUpdateShipping("shippingCost", cost.cost);
-                  }}
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    shipping.shippingMethodId === cost.shippingMethodId.toString()
-                      ? "border-blue-500 bg-blue-50"
-                      : "hover:border-gray-300"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{cost.name}</div>
-                    </div>
-                    <Badge variant="secondary">
-                      S/ {formatCurrency(cost.cost)}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

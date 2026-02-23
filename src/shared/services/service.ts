@@ -122,6 +122,23 @@ export const situationByModuleandStatus = async (moduleCode: string, statusCode:
   return data?.situations ?? [];
 };
 
+//GET ACTIVE PAYMENT METHODS BY SALE TYPE ID//
+
+export const getActivePaymentMethodsBySaleTypeId = async (saleTypeId: number): Promise<PaymentMethod[]> => {
+  const { data, error } = await supabase
+    .from("payment_method_sale_type")
+    .select("payment_method_id, payment_methods!inner(id, name, business_account_id, active, is_active, code)")
+    .eq("sale_type_id", saleTypeId)
+    .eq("payment_methods.is_active", true)
+    .eq("payment_methods.active", true);
+
+  if (error) {
+    console.error("Error fetching payment methods by sale type:", error.message);
+    return [];
+  }
+
+  return (data || []).map((item: any) => item.payment_methods).filter(Boolean);
+};
 
 
 //GET HEADER USER DATA//
@@ -316,4 +333,32 @@ export const getAccountsByModuleCodeAndTypeUser = async () => {
 
   if (error) throw error;
   return data ?? [];
+};
+
+//GET POS SALE TYPES BY BRANCH//
+export const getPosSaleTypesByBranch = async (branchId: number) => {
+  const { data, error } = await supabase
+    .from("sale_type_branches")
+    .select(`
+      sale_type_id,
+      sale_types!inner (
+        id,
+        name,
+        business_acount_id
+      )
+    `)
+    .eq("branch_id", branchId)
+    .eq("sale_types.pos_sale_type", true)
+    .eq("sale_types.is_active", true);
+
+  if (error) {
+    console.error("Error fetching POS sale types:", error.message);
+    return [];
+  }
+
+  return (data || []).map((item: any) => ({
+    id: item.sale_types.id,
+    name: item.sale_types.name,
+    businessAccountId: item.sale_types.business_acount_id,
+  }));
 };

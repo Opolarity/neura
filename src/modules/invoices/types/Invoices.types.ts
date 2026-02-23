@@ -37,12 +37,27 @@ export interface CreateInvoicePayload {
 
 export interface InvoiceFormData {
   invoiceTypeId: string;
+  invoiceProviderId: string;
+  invoiceSerieId: string;
   taxSerie: string;
   documentTypeId: string;
   clientDocument: string;
   clientName: string;
   clientEmail: string;
   clientAddress: string;
+}
+
+export interface InvoiceProvider {
+  id: number;
+  description: string | null;
+}
+
+export interface InvoiceSerie {
+  id: number;
+  invoice_type_id: number;
+  serie: string | null;
+  next_number: number;
+  invoice_provider_id: number;
 }
 
 export interface DocumentType {

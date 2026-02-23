@@ -1,8 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// ============= Types =============
+// ============= Type Definitions =============
 
 interface ProductImage {
   id: string;
@@ -36,61 +36,69 @@ interface IncomingVariation {
   selectedImages: string[];
 }
 
-interface RequestBody {
-  productId: number;
-  productName: string;
-  shortDescription: string;
-  description: string;
-  isVariable: boolean;
-  isActive: boolean;
-  isWeb: boolean;
-  originalIsVariable: boolean;
-  selectedCategories: number[];
-  productImages: ProductImage[];
-  variations: IncomingVariation[];
-  resetVariations?: boolean;
+interface ExistingVariation {
+  id: number;
+  sku: string;
+  variation_terms: { term_id: number }[];
 }
 
-// ============= CORS =============
+interface CategoryInsert {
+  product_id: number;
+  category_id: number;
+}
+
+interface UpdatePair {
+  existing: ExistingVariation;
+  incoming: IncomingVariation;
+}
+
+// ============= CORS Headers =============
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-// ============= Handler =============
-
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
 
+    // Auth client to validate user
     const supabaseAuth = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader }
+        }
+      }
     );
 
+    // Validate user authentication
     const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
     if (authError || !user) {
+      console.error('Authentication error:', authError);
       return new Response(
-        JSON.stringify({ success: false, error: "No autorizado" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: false, error: 'No autorizado' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log("User authenticated:", user.id);
+    console.log('User authenticated:', user.id);
 
+    // Admin client for database operations (bypasses RLS)
     const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const body = await req.json() as RequestBody;
     const {
       productId,
       productName,
@@ -99,7 +107,9 @@ serve(async (req) => {
       isVariable,
       isActive,
       isWeb,
+      originalIsVariable,
       selectedCategories,
+      selectedChannels,
       productImages,
       variations,
       resetVariations = false,
@@ -128,81 +138,700 @@ serve(async (req) => {
       throw new Error(spError.message);
     }
 
-    console.log("SP executed successfully");
+    // 2.5. Update channels
+    console.log('Updating product channels...');
+    await supabaseAdmin.from('product_channels').delete().eq('product_id', productId);
 
+    if (selectedChannels && selectedChannels.length > 0) {
+      const channelInserts = selectedChannels.map((channelId: number) => ({
+        product_id: productId,
+        channel_id: channelId
+      }));
 
-    const imageIdMap: Record<string, number> = spResult?.o_image_id_map ?? {};
-    const imagesToDelete: string[] = spResult?.o_images_to_delete ?? [];
+      const { error: channelsError } = await supabaseAdmin
+        .from('product_channels')
+        .insert(channelInserts);
 
-    for (const imageUrl of imagesToDelete) {
-      const urlParts = imageUrl.split("/products/");
-      if (urlParts[1] && !urlParts[1].includes("default/")) {
+      if (channelsError) {
+        console.error('Channels update error:', channelsError);
+        throw new Error(`Error al actualizar canales: ${channelsError.message}`);
+      }
+      console.log('Channels updated successfully');
+    }
+
+    // 3. Fetch existing variations with their terms
+    console.log('Fetching existing variations with terms...');
+    const { data: existingVariations } = await supabaseAdmin
+      .from('variations')
+      .select(`
+        id,
+        sku,
+        variation_terms(term_id)
+      `)
+      .eq('product_id', productId)
+      .eq('is_active', true);
+
+    // 4. Update images (delete all and recreate with proper references)
+
+    // First, fetch current images BEFORE deleting to identify which files to remove from storage
+    console.log('Fetching current images before deletion...');
+    const { data: currentImages } = await supabaseAdmin
+      .from('product_images')
+      .select('id, image_url')
+      .eq('product_id', productId);
+
+    // Identify existing images that should be kept (they have 'existing-' prefix in ID)
+    const existingImageIds = productImages
+      .filter((img: ProductImage) => img.id.startsWith('existing-'))
+      .map((img: ProductImage) => parseInt(img.id.replace('existing-', '')));
+
+    // Identify images to delete from storage (in DB but not in the request as existing)
+    const imagesToDeleteFromStorage = (currentImages || []).filter(
+      (img: { id: number; image_url: string }) => !existingImageIds.includes(img.id)
+    );
+
+    // Delete files from storage (except placeholder/default images)
+    for (const img of imagesToDeleteFromStorage) {
+      // Extract the relative path from the full URL
+      // URL example: https://xxx.supabase.co/storage/v1/object/public/products/products-images/123/file.jpg
+      const urlParts = img.image_url.split('/products/');
+      if (urlParts[1] && !urlParts[1].includes('default/')) {
         const storagePath = urlParts[1];
-        console.log("Deleting from storage:", storagePath);
-        const { error: delErr } = await supabaseAdmin.storage
-          .from("products")
+        console.log(`Deleting image from storage: ${storagePath}`);
+
+        const { error: deleteStorageError } = await supabaseAdmin.storage
+          .from('products')
           .remove([storagePath]);
-        if (delErr) console.error("Storage delete error:", delErr);
+
+        if (deleteStorageError) {
+          console.error('Error deleting image from storage:', deleteStorageError);
+          // Don't throw - continue with the process even if storage deletion fails
+        } else {
+          console.log(`Image deleted successfully from storage: ${storagePath}`);
+        }
       }
     }
 
+    // Now delete all image records from DB
+    console.log('Deleting old product images from database...');
+    await supabaseAdmin.from('product_images').delete().eq('product_id', productId);
 
-    for (const image of productImages) {
+    // Map to track old image IDs to new DB IDs
+    const imageIdMap: Record<string, number> = {};
+
+    for (let i = 0; i < productImages.length; i++) {
+      const image = productImages[i];
+
+      // Get public URL from storage path
       const rawPath = image.path;
-      const isTmp = rawPath && rawPath.includes("products-images/tmp/");
-      if (!isTmp) continue;
+      let imageUrl: string;
+      let needsRename = false;
 
-      const dbImageId = imageIdMap[image.id];
-      if (!dbImageId) continue;
-
-      const originalFileName = rawPath.split("/").pop() ?? "";
-      const extension = originalFileName.includes(".")
-        ? originalFileName.substring(originalFileName.lastIndexOf("."))
-        : ".jpg";
-
-      const newFileName = `${dbImageId}-${productId}${extension}`;
-      const newPath = `products-images/${productId}/${newFileName}`;
-
-      console.log(`Moving image ${rawPath} → ${newPath}`);
-
-      const { error: moveError } = await supabaseAdmin.storage
-        .from("products")
-        .move(rawPath, newPath);
-
-      if (moveError) {
-        console.error("Error moving image:", moveError);
-        continue; // Mantener URL original si falla el movimiento
+      if (rawPath && (rawPath.startsWith('http') || image.isExisting)) {
+        // If it's already a full URL or marked as existing, use it directly
+        imageUrl = rawPath;
+      } else {
+        // For new images, use a temporary URL first (will be updated after insert)
+        const { data: { publicUrl } } = supabaseAdmin.storage
+          .from('products')
+          .getPublicUrl(rawPath);
+        imageUrl = publicUrl;
+        needsRename = Boolean(rawPath && rawPath.includes('products-images/tmp/'));
       }
 
-      const { data: { publicUrl } } = supabaseAdmin.storage
-        .from("products")
-        .getPublicUrl(newPath);
+      // Insert the image record first to get the DB ID
+      const { data: insertedImage, error: imageError } = await supabaseAdmin
+        .from('product_images')
+        .insert({
+          product_id: productId,
+          image_url: imageUrl,
+          image_order: image.order
+        })
+        .select('id')
+        .single();
 
-      const { error: updateErr } = await supabaseAdmin
-        .from("product_images")
-        .update({ image_url: publicUrl })
-        .eq("id", dbImageId);
+      if (imageError) {
+        console.error('Image record creation error:', imageError);
+        throw imageError;
+      }
 
-      if (updateErr) {
-        console.error("Error updating image URL:", updateErr);
-      } else {
-        console.log(`Image ${dbImageId} URL updated: ${publicUrl}`);
+      // Map the temp ID to the new DB ID
+      imageIdMap[image.id] = insertedImage.id;
+
+      // Now move the file with proper naming if it's a new image from tmp/
+      if (needsRename && rawPath) {
+        // Get file extension from original path
+        const originalFileName = rawPath.split('/').pop() || '';
+        const extension = originalFileName.includes('.')
+          ? originalFileName.substring(originalFileName.lastIndexOf('.'))
+          : '.jpg';
+
+        // New file name format: {product_image_id}-{product_id}.{extension}
+        const newFileName = `${insertedImage.id}-${productId}${extension}`;
+        const newPath = `products-images/${productId}/${newFileName}`;
+
+        console.log(`Moving image from ${rawPath} to ${newPath}`);
+
+        const { error: moveError } = await supabaseAdmin.storage
+          .from('products')
+          .move(rawPath, newPath);
+
+        if (moveError) {
+          console.error('Error moving image:', moveError);
+          // Keep the original URL if move fails
+        } else {
+          // Get public URL from the new location and update the DB record
+          const { data: { publicUrl } } = supabaseAdmin.storage
+            .from('products')
+            .getPublicUrl(newPath);
+
+          const { error: updateError } = await supabaseAdmin
+            .from('product_images')
+            .update({ image_url: publicUrl })
+            .eq('id', insertedImage.id);
+
+          if (updateError) {
+            console.error('Error updating image URL:', updateError);
+          } else {
+            console.log(`Image ${insertedImage.id} moved successfully. New URL: ${publicUrl}`);
+          }
+        }
       }
     }
 
+    console.log('Images updated:', productImages.length);
+
+    // Get default stock type ID by looking up PRD code
+    const { data: defaultTypeData } = await supabaseAdmin
+      .from('types')
+      .select('id')
+      .eq('code', 'PRD')
+      .single();
+
+    const defaultStockTypeId = defaultTypeData?.id;
+
+    // Get manual movement type ID by looking up MAN code in STM module
+    const { data: manualTypeData } = await supabaseAdmin
+      .from('types')
+      .select(`
+        id,
+        modules!inner (
+          code
+        )
+      `)
+      .eq('code', 'MAN')
+      .eq('modules.code', 'STM')
+      .single();
+
+    const manualMovementTypeId = manualTypeData?.id;
+    console.log('Manual movement type ID:', manualMovementTypeId);
+
+    // 5. Handle variations based on resetVariations flag
+    if (resetVariations) {
+      // RESET MODE: Deactivate all existing variations and create new ones
+      console.log('Reset variations mode - deactivating all existing variations...');
+
+      if (existingVariations && existingVariations.length > 0) {
+        const existingIds = existingVariations.map((v: ExistingVariation) => v.id);
+
+        // Soft delete: set is_active = false
+        const { error: deactivateError } = await supabaseAdmin
+          .from('variations')
+          .update({ is_active: false })
+          .in('id', existingIds);
+
+        if (deactivateError) {
+          console.error('Error deactivating variations:', deactivateError);
+          throw new Error(`Error al desactivar variaciones: ${deactivateError.message}`);
+        }
+
+        console.log(`Deactivated ${existingIds.length} existing variations`);
+      }
+
+      // Create all new variations
+      console.log('Creating all new variations...');
+      for (const variation of variations) {
+        const { data: newVariation, error: variationError } = await supabaseAdmin
+          .from('variations')
+          .insert({
+            product_id: productId,
+            sku: null,
+            is_active: true
+          })
+          .select()
+          .single();
+
+        if (variationError) {
+          console.error('Variation creation error:', variationError);
+          throw variationError;
+        }
+
+        console.log('New variation created with ID:', newVariation.id);
+
+        // Generate and update SKU
+        const brandCode = '100';
+        const productCode = String(productId).padStart(5, '0');
+        const variationCode = String(newVariation.id).padStart(4, '0');
+        const sku = `${brandCode}${productCode}${variationCode}`;
+
+        await supabaseAdmin
+          .from('variations')
+          .update({ sku })
+          .eq('id', newVariation.id);
+
+        console.log('SKU generated:', sku);
+
+        // Insert variation terms
+        if (variation.attributes.length > 0) {
+          const termsInsert = variation.attributes.map((attr: VariationAttribute) => ({
+            product_variation_id: newVariation.id,
+            term_id: attr.term_id
+          }));
+
+          const { error: termsError } = await supabaseAdmin
+            .from('variation_terms')
+            .insert(termsInsert);
+
+          if (termsError) {
+            console.error('Terms creation error:', termsError);
+            throw termsError;
+          }
+        }
+
+        // Insert prices
+        const priceInserts = variation.prices
+          .filter((p: VariationPrice) =>
+            (p.price !== undefined && p.price > 0) ||
+            (p.sale_price !== undefined && p.sale_price !== null && p.sale_price > 0)
+          )
+          .map((price: VariationPrice) => ({
+            product_variation_id: newVariation.id,
+            price_list_id: price.price_list_id,
+            price: price.price !== undefined ? price.price : 0,
+            sale_price: price.sale_price !== undefined && price.sale_price !== null ? price.sale_price : null
+          }));
+
+        if (priceInserts.length > 0) {
+          await supabaseAdmin.from('product_price').insert(priceInserts);
+        }
+
+        // Insert stock and create stock movements for new variations
+        const stockInserts = variation.stock
+          .filter((s: VariationStock) => s.stock > 0)
+          .map((stock: VariationStock) => ({
+            product_variation_id: newVariation.id,
+            warehouse_id: stock.warehouse_id,
+            stock: stock.stock,
+            stock_type_id: stock.stock_type_id || defaultStockTypeId
+          }));
+
+        if (stockInserts.length > 0) {
+          await supabaseAdmin.from('product_stock').insert(stockInserts);
+
+          // Create stock movements for initial stock of new variations
+          if (manualMovementTypeId) {
+            const movementInserts = stockInserts.map(s => ({
+              product_variation_id: newVariation.id,
+              quantity: s.stock,
+              created_by: user.id,
+              movement_type: manualMovementTypeId,
+              warehouse_id: s.warehouse_id,
+              completed: true,
+              stock_type_id: s.stock_type_id,
+              is_active: true
+            }));
+
+            const { error: movementError } = await supabaseAdmin
+              .from('stock_movements')
+              .insert(movementInserts);
+
+            if (movementError) {
+              console.error('Error creating stock movements:', movementError);
+              // Don't throw - stock movements are secondary
+            } else {
+              console.log(`Created ${movementInserts.length} stock movements for new variation ${newVariation.id}`);
+            }
+          }
+        }
+
+        // Insert variation images
+        if (variation.selectedImages.length > 0) {
+          for (const selectedImageId of variation.selectedImages) {
+            const dbImageId = imageIdMap[selectedImageId];
+            if (dbImageId) {
+              await supabaseAdmin.from('product_variation_images').insert({
+                product_variation_id: newVariation.id,
+                product_image_id: dbImageId
+              });
+            }
+          }
+        }
+
+        console.log(`New variation ${newVariation.id} created successfully`);
+      }
+    } else {
+      // NORMAL MODE: Update/create/delete variations as before
+      console.log('Normal mode - analyzing variation changes...');
+
+      // Helper function to create a key from term IDs
+      const createTermKey = (termIds: number[]): string => {
+        return termIds.sort((a: number, b: number) => a - b).join(',');
+      };
+
+      // Map existing variations by their term combination
+      const existingMap = new Map<string, ExistingVariation>();
+      if (existingVariations && existingVariations.length > 0) {
+        existingVariations.forEach((v: ExistingVariation) => {
+          const termIds = v.variation_terms?.map((t: { term_id: number }) => t.term_id) || [];
+          const key = createTermKey(termIds);
+          existingMap.set(key, v);
+        });
+      }
+
+      // Map incoming variations by their term combination
+      const incomingMap = new Map<string, IncomingVariation>();
+      variations.forEach((v: IncomingVariation) => {
+        const termIds = v.attributes.map((a: VariationAttribute) => a.term_id);
+        const key = createTermKey(termIds);
+        incomingMap.set(key, v);
+      });
+
+      // Categorize operations
+      const toUpdate: UpdatePair[] = [];
+      const toDelete: ExistingVariation[] = [];
+      const toCreate: IncomingVariation[] = [];
+
+      // Check existing variations
+      existingMap.forEach((existingVar: ExistingVariation, key: string) => {
+        if (incomingMap.has(key)) {
+          toUpdate.push({
+            existing: existingVar,
+            incoming: incomingMap.get(key)!
+          });
+        } else {
+          toDelete.push(existingVar);
+        }
+      });
+
+      // Check for new variations
+      incomingMap.forEach((incomingVar: IncomingVariation, key: string) => {
+        if (!existingMap.has(key)) {
+          toCreate.push(incomingVar);
+        }
+      });
+
+      console.log(`Variations to update: ${toUpdate.length}`);
+      console.log(`Variations to create: ${toCreate.length}`);
+      console.log(`Variations to delete: ${toDelete.length}`);
+
+      // 6. Validate deletions - check if any are linked to orders
+      if (toDelete.length > 0) {
+        const idsToDelete = toDelete.map((v: ExistingVariation) => v.id);
+
+        console.log('Checking if variations to delete are linked to orders...');
+        const { data: linkedOrders, error: orderCheckError } = await supabaseAdmin
+          .from('order_products')
+          .select('product_variation_id')
+          .in('product_variation_id', idsToDelete)
+          .limit(1);
+
+        if (orderCheckError) {
+          console.error('Error checking order links:', orderCheckError);
+          throw new Error('Error al verificar vínculos con pedidos');
+        }
+
+        if (linkedOrders && linkedOrders.length > 0) {
+          throw new Error(
+            'No se pueden eliminar variaciones vinculadas a pedidos existentes. ' +
+            'Las variaciones que está intentando eliminar están asociadas a uno o más pedidos. ' +
+            'Por favor, conserve los términos actuales o agregue nuevos sin eliminar los existentes.'
+          );
+        }
+        console.log('Safe to delete - no order links found');
+      }
+
+      // 7. Update existing variations (only prices, stock, and images)
+      console.log('Updating existing variations...');
+      for (const { existing, incoming } of toUpdate) {
+        console.log(`Updating variation ID: ${existing.id}`);
+
+        // Update prices: delete old, insert new
+        await supabaseAdmin.from('product_price').delete().eq('product_variation_id', existing.id);
+
+        const priceInserts = incoming.prices
+          .filter((p: VariationPrice) =>
+            p.price !== undefined ||
+            (p.sale_price !== undefined && p.sale_price !== null)
+          )
+          .map((price: VariationPrice) => ({
+            product_variation_id: existing.id,
+            price_list_id: price.price_list_id,
+            price: price.price !== undefined ? price.price : 0,
+            sale_price: price.sale_price !== undefined && price.sale_price !== null ? price.sale_price : null
+          }));
+
+        if (priceInserts.length > 0) {
+          const { error: pricesError } = await supabaseAdmin
+            .from('product_price')
+            .insert(priceInserts);
+          if (pricesError) {
+            console.error('Error updating prices:', pricesError);
+            throw pricesError;
+          }
+        }
+
+        // Get current stock BEFORE updating to calculate differences
+        const { data: currentStocks } = await supabaseAdmin
+          .from('product_stock')
+          .select('warehouse_id, stock, stock_type_id')
+          .eq('product_variation_id', existing.id);
+
+        // Process each stock entry with UPSERT logic
+        for (const newStock of incoming.stock) {
+          const stockTypeId = newStock.stock_type_id || defaultStockTypeId;
+          const newQty = newStock.stock || 0;
+
+          // Find current stock for this combination
+          const oldStockRecord = currentStocks?.find(
+            (s: { warehouse_id: number; stock: number; stock_type_id: number }) =>
+              s.warehouse_id === newStock.warehouse_id &&
+              s.stock_type_id === stockTypeId
+          );
+
+          const oldQty = oldStockRecord?.stock || 0;
+          const difference = newQty - oldQty;
+
+          // UPSERT: Update if exists, insert if not
+          if (oldStockRecord) {
+            // Update existing record
+            const { error: updateError } = await supabaseAdmin
+              .from('product_stock')
+              .update({ stock: newQty })
+              .eq('product_variation_id', existing.id)
+              .eq('warehouse_id', newStock.warehouse_id)
+              .eq('stock_type_id', stockTypeId);
+
+            if (updateError) {
+              console.error('Error updating stock:', updateError);
+              throw updateError;
+            }
+          } else if (newQty > 0) {
+            // Insert new record only if stock > 0
+            const { error: insertError } = await supabaseAdmin
+              .from('product_stock')
+              .insert({
+                product_variation_id: existing.id,
+                warehouse_id: newStock.warehouse_id,
+                stock: newQty,
+                stock_type_id: stockTypeId
+              });
+
+            if (insertError) {
+              console.error('Error inserting stock:', insertError);
+              throw insertError;
+            }
+          }
+
+          // Only create movement if there's a real difference
+          if (difference !== 0 && manualMovementTypeId) {
+            const { error: movementError } = await supabaseAdmin
+              .from('stock_movements')
+              .insert({
+                product_variation_id: existing.id,
+                quantity: difference,
+                created_by: user.id,
+                movement_type: manualMovementTypeId,
+                warehouse_id: newStock.warehouse_id,
+                completed: true,
+                stock_type_id: stockTypeId,
+                is_active: true
+              });
+
+            if (movementError) {
+              console.error('Error creating stock movement:', movementError);
+              // Don't throw - stock movements are secondary
+            } else {
+              console.log(`Stock movement created for variation ${existing.id}: ${difference} units (warehouse ${newStock.warehouse_id}, type ${stockTypeId})`);
+            }
+          }
+        }
+
+        // Update variation images: delete old, insert new
+        await supabaseAdmin.from('product_variation_images').delete().eq('product_variation_id', existing.id);
+
+        if (incoming.selectedImages.length > 0) {
+          for (const selectedImageId of incoming.selectedImages) {
+            const dbImageId = imageIdMap[selectedImageId];
+            if (dbImageId) {
+              await supabaseAdmin.from('product_variation_images').insert({
+                product_variation_id: existing.id,
+                product_image_id: dbImageId
+              });
+            }
+          }
+        }
+
+        console.log(`Variation ${existing.id} updated successfully`);
+      }
+
+      // 8. Create new variations
+      if (toCreate.length > 0) {
+        console.log('Creating new variations...');
+
+        for (const variation of toCreate) {
+          const { data: newVariation, error: variationError } = await supabaseAdmin
+            .from('variations')
+            .insert({
+              product_id: productId,
+              sku: null,
+              is_active: true
+            })
+            .select()
+            .single();
+
+          if (variationError) {
+            console.error('Variation creation error:', variationError);
+            throw variationError;
+          }
+
+          console.log('Variation created with ID:', newVariation.id);
+
+          // Generate and update SKU
+          const brandCode = '100';
+          const productCode = String(productId).padStart(5, '0');
+          const variationCode = String(newVariation.id).padStart(4, '0');
+          const sku = `${brandCode}${productCode}${variationCode}`;
+
+          await supabaseAdmin
+            .from('variations')
+            .update({ sku })
+            .eq('id', newVariation.id);
+
+          console.log('SKU generated:', sku);
+
+          // Insert variation terms
+          if (variation.attributes.length > 0) {
+            const termsInsert = variation.attributes.map((attr: VariationAttribute) => ({
+              product_variation_id: newVariation.id,
+              term_id: attr.term_id
+            }));
+
+            const { error: termsError } = await supabaseAdmin
+              .from('variation_terms')
+              .insert(termsInsert);
+
+            if (termsError) {
+              console.error('Terms creation error:', termsError);
+              throw termsError;
+            }
+          }
+
+          // Insert prices
+          const priceInserts = variation.prices
+            .filter((p: VariationPrice) =>
+              (p.price !== undefined && p.price > 0) ||
+              (p.sale_price !== undefined && p.sale_price !== null && p.sale_price > 0)
+            )
+            .map((price: VariationPrice) => ({
+              product_variation_id: newVariation.id,
+              price_list_id: price.price_list_id,
+              price: price.price !== undefined ? price.price : 0,
+              sale_price: price.sale_price !== undefined && price.sale_price !== null ? price.sale_price : null
+            }));
+
+          if (priceInserts.length > 0) {
+            await supabaseAdmin.from('product_price').insert(priceInserts);
+          }
+
+          // Insert stock and create stock movements for new variations
+          const stockInserts = variation.stock
+            .filter((s: VariationStock) => s.stock > 0)
+            .map((stock: VariationStock) => ({
+              product_variation_id: newVariation.id,
+              warehouse_id: stock.warehouse_id,
+              stock: stock.stock,
+              stock_type_id: stock.stock_type_id || defaultStockTypeId
+            }));
+
+          if (stockInserts.length > 0) {
+            await supabaseAdmin.from('product_stock').insert(stockInserts);
+
+            // Create stock movements for initial stock of new variations
+            if (manualMovementTypeId) {
+              const movementInserts = stockInserts.map(s => ({
+                product_variation_id: newVariation.id,
+                quantity: s.stock,
+                created_by: user.id,
+                movement_type: manualMovementTypeId,
+                warehouse_id: s.warehouse_id,
+                completed: true,
+                stock_type_id: s.stock_type_id,
+                is_active: true
+              }));
+
+              const { error: movementError } = await supabaseAdmin
+                .from('stock_movements')
+                .insert(movementInserts);
+
+              if (movementError) {
+                console.error('Error creating stock movements:', movementError);
+                // Don't throw - stock movements are secondary
+              } else {
+                console.log(`Created ${movementInserts.length} stock movements for new variation ${newVariation.id}`);
+              }
+            }
+          }
+
+          // Insert variation images
+          if (variation.selectedImages.length > 0) {
+            for (const selectedImageId of variation.selectedImages) {
+              const dbImageId = imageIdMap[selectedImageId];
+              if (dbImageId) {
+                await supabaseAdmin.from('product_variation_images').insert({
+                  product_variation_id: newVariation.id,
+                  product_image_id: dbImageId
+                });
+              }
+            }
+          }
+
+          console.log(`New variation ${newVariation.id} created successfully`);
+        }
+      }
+
+      // 9. Delete safe variations (not linked to orders)
+      if (toDelete.length > 0) {
+        console.log('Deleting safe variations...');
+
+        for (const variation of toDelete) {
+          console.log(`Deleting variation ID: ${variation.id}`);
+
+          // Delete in proper order to avoid FK constraints
+          await supabaseAdmin.from('product_variation_images').delete().eq('product_variation_id', variation.id);
+          await supabaseAdmin.from('product_price').delete().eq('product_variation_id', variation.id);
+          await supabaseAdmin.from('product_stock').delete().eq('product_variation_id', variation.id);
+          await supabaseAdmin.from('variation_terms').delete().eq('product_variation_id', variation.id);
+          await supabaseAdmin.from('variations').delete().eq('id', variation.id);
+
+          console.log(`Variation ${variation.id} deleted successfully`);
+        }
+      }
+    }
+
+    console.log('Product update completed successfully');
 
     return new Response(
-      JSON.stringify({ success: true, message: "Producto actualizado correctamente" }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ success: true, message: 'Producto actualizado correctamente' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error("Error in update-product function:", error);
-    const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+    console.error('Error in update-product function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
 
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

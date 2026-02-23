@@ -1,38 +1,113 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { CreateOrderChannelType, GetModules } from '../services/OrderChannelTypes.services';
+import { CreateSaleType, GetOrderChannelTypeDetails, UpdateSaleType, GetInvoiceSeries, GetBranches, GetCajas } from '../services/OrderChannelTypes.services';
+import { getPaymentMethodsIsActiveTrueAndActiveTrue } from '@/shared/services/service';
 
 interface FormData {
     name: string;
     code: string;
-    moduleId: string; // Storing as string for Select value
+    factura_serie_id: number | '';
+    boleta_serie_id: number | '';
+    business_acount_id: number | '' | null;
+    pos_sale_type: boolean;
+    is_active: boolean;
+}
+
+interface PaymentMethodOption {
+    id: number;
+    name: string;
+    business_accounts?: { name: string };
+}
+
+interface InvoiceSerieOption {
+    id: number;
+    serie: string | null;
+    invoice_type_id: number;
+    invoice_provider_id: number;
+    type_code: string | null;
+    provider_description: string | null;
+}
+
+export interface BranchOption {
+    id: number;
+    name: string;
+}
+
+export interface CajaOption {
+    id: number;
+    name: string;
 }
 
 const useCreateOrderChannelType = () => {
     const navigate = useNavigate();
+    const { id: channelTypeId } = useParams();
+    const isEdit = Boolean(channelTypeId);
     const { toast } = useToast();
 
     const [loading, setLoading] = useState(false);
     const [optionsLoading, setOptionsLoading] = useState(true);
-    const [modules, setModules] = useState<{ id: number; name: string; code: string }[]>([]);
+    const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOption[]>([]);
+    const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<Set<number>>(new Set());
+    const [invoiceSeries, setInvoiceSeries] = useState<InvoiceSerieOption[]>([]);
+    const [branches, setBranches] = useState<BranchOption[]>([]);
+    const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
+    const [cajas, setCajas] = useState<CajaOption[]>([]);
 
     const [formData, setFormData] = useState<FormData>({
         name: '',
         code: '',
-        moduleId: '',
+        factura_serie_id: '',
+        boleta_serie_id: '',
+        business_acount_id: null,
+        pos_sale_type: false,
+        is_active: true,
     });
 
     useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const modulesData = await GetModules();
-                setModules(modulesData);
+                const promises: Promise<any>[] = [
+                    getPaymentMethodsIsActiveTrueAndActiveTrue(),
+                    GetInvoiceSeries(),
+                    GetBranches(),
+                    GetCajas(isEdit && channelTypeId ? parseInt(channelTypeId) : undefined),
+                ];
+
+                if (isEdit && channelTypeId) {
+                    promises.push(GetOrderChannelTypeDetails(parseInt(channelTypeId)));
+                }
+
+                const results = await Promise.all(promises);
+                const paymentMethodsData = results[0];
+                const invoiceSeriesData = results[1];
+                const branchesData = results[2];
+                const cajasData = results[3];
+
+                setPaymentMethods(paymentMethodsData);
+                setInvoiceSeries(invoiceSeriesData);
+                setBranches(branchesData);
+                setCajas(cajasData);
+
+                if (isEdit && results[4]) {
+                    const { saleType, paymentMethodIds, branchIds } = results[4];
+                    setFormData({
+                        name: saleType.name,
+                        code: saleType.code ?? '',
+                        factura_serie_id: saleType.factura_serie_id,
+                        boleta_serie_id: saleType.boleta_serie_id,
+                        business_acount_id: saleType.business_acount_id ?? null,
+                        pos_sale_type: saleType.pos_sale_type,
+                        is_active: saleType.is_active,
+                    });
+                    setSelectedPaymentMethods(new Set(paymentMethodIds));
+                    setSelectedBranches(branchIds);
+                }
             } catch (error) {
-                console.error("Error loading modules:", error);
+                console.error("Error loading options:", error);
                 toast({
                     title: "Error",
-                    description: "No se pudieron cargar los módulos",
+                    description: "No se pudieron cargar las opciones",
                     variant: "destructive"
                 });
             } finally {
@@ -40,36 +115,58 @@ const useCreateOrderChannelType = () => {
             }
         };
         fetchOptions();
-    }, [toast]);
+    }, [toast, isEdit, channelTypeId]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { id, value } = e.target;
-        setFormData(prev => ({ ...prev, [id]: value }));
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { id, value, type } = e.target;
+        if (type === 'checkbox') {
+            const checked = (e.target as HTMLInputElement).checked;
+            setFormData(prev => ({ ...prev, [id]: checked }));
+        } else {
+            setFormData(prev => ({ ...prev, [id]: value }));
+        }
     };
 
-    const handleSelectChange = (value: string) => {
-        setFormData(prev => ({ ...prev, moduleId: value }));
+    const togglePaymentMethod = (id: number) => {
+        setSelectedPaymentMethods(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const toggleBranch = (id: number) => {
+        setSelectedBranches(prev => {
+            if (prev.includes(id)) {
+                return prev.filter(b => b !== id);
+            }
+            return [...prev, id];
+        });
+    };
+
+    const setSelectedBranchSingle = (id: number) => {
+        setSelectedBranches([id]);
+    };
+
+    const handlePosToggle = (checked: boolean) => {
+        setFormData(prev => ({ ...prev, pos_sale_type: checked }));
+        if (checked && selectedBranches.length > 1) {
+            setSelectedBranches(prev => prev.length > 0 ? [prev[0]] : []);
+        }
+        if (!checked) {
+            setFormData(prev => ({ ...prev, business_acount_id: null }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        if (!formData.name || !formData.code || !formData.moduleId) {
+        if (!formData.name || !formData.code || !formData.factura_serie_id || !formData.boleta_serie_id) {
             toast({
                 title: "Error",
-                description: "Por favor complete todos los campos requeridos",
-                variant: "destructive"
-            });
-            setLoading(false);
-            return;
-        }
-
-        const selectedModule = modules.find(m => m.id.toString() === formData.moduleId);
-        if (!selectedModule) {
-            toast({
-                title: "Error",
-                description: "Módulo seleccionado inválido",
+                description: "Por favor complete todos los campos requeridos (nombre, código y series)",
                 variant: "destructive"
             });
             setLoading(false);
@@ -77,19 +174,31 @@ const useCreateOrderChannelType = () => {
         }
 
         try {
-            await CreateOrderChannelType({
+            const payload = {
                 name: formData.name,
                 code: formData.code,
-                moduleID: selectedModule.id,
-                moduleCode: selectedModule.code,
-            });
-            toast({ title: "Éxito", description: "Tipo de canal creado correctamente" });
+                factura_serie_id: Number(formData.factura_serie_id),
+                boleta_serie_id: Number(formData.boleta_serie_id),
+                business_acount_id: formData.business_acount_id ? Number(formData.business_acount_id) : null,
+                pos_sale_type: formData.pos_sale_type,
+                is_active: formData.is_active,
+                paymentMethods: Array.from(selectedPaymentMethods),
+                branches: selectedBranches,
+            };
+
+            if (isEdit && channelTypeId) {
+                await UpdateSaleType({ ...payload, id: parseInt(channelTypeId) });
+                toast({ title: "Éxito", description: "Canal de venta actualizado correctamente" });
+            } else {
+                await CreateSaleType(payload);
+                toast({ title: "Éxito", description: "Canal de venta creado correctamente" });
+            }
             navigate('/settings/order-channel-types');
         } catch (error: any) {
-            console.error("Error creating order channel type:", error);
+            console.error("Error saving sale type:", error);
             toast({
                 title: "Error",
-                description: error.message || "Error al crear",
+                description: error.message || (isEdit ? "Error al actualizar" : "Error al crear"),
                 variant: "destructive"
             });
         } finally {
@@ -101,10 +210,20 @@ const useCreateOrderChannelType = () => {
         formData,
         loading,
         optionsLoading,
-        modules,
+        paymentMethods,
+        selectedPaymentMethods,
+        invoiceSeries,
+        branches,
+        selectedBranches,
+        cajas,
+        isEdit,
         handleChange,
-        handleSelectChange,
-        handleSubmit
+        togglePaymentMethod,
+        toggleBranch,
+        setSelectedBranchSingle,
+        handlePosToggle,
+        handleSubmit,
+        setFormData,
     };
 };
 

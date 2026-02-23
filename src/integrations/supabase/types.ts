@@ -249,9 +249,9 @@ export type Database = {
       }
       cart_products: {
         Row: {
-          bought: boolean
           cart_id: number
           id: number
+          is_active: boolean
           product_discount: number | null
           product_price: number
           product_variation_id: number
@@ -259,9 +259,9 @@ export type Database = {
           warehouse_id: number | null
         }
         Insert: {
-          bought?: boolean
           cart_id: number
           id?: number
+          is_active?: boolean
           product_discount?: number | null
           product_price: number
           product_variation_id: number
@@ -269,9 +269,9 @@ export type Database = {
           warehouse_id?: number | null
         }
         Update: {
-          bought?: boolean
           cart_id?: number
           id?: number
+          is_active?: boolean
           product_discount?: number | null
           product_price?: number
           product_variation_id?: number
@@ -306,22 +306,35 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          is_active: boolean
+          order_id: number | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: number
+          is_active?: boolean
+          order_id?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: number
+          is_active?: boolean
+          order_id?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "carts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "carts_user_id_fkey"
             columns: ["user_id"]
@@ -359,6 +372,75 @@ export type Database = {
             columns: ["parent_category"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channels: {
+        Row: {
+          branch_id: number
+          code: string
+          id: number
+          name: string
+          price_list_id: number
+          sale_type_id: number
+          stock_type_id: number
+          warehouse_id: number
+        }
+        Insert: {
+          branch_id: number
+          code: string
+          id?: number
+          name?: string
+          price_list_id: number
+          sale_type_id: number
+          stock_type_id: number
+          warehouse_id: number
+        }
+        Update: {
+          branch_id?: number
+          code?: string
+          id?: number
+          name?: string
+          price_list_id?: number
+          sale_type_id?: number
+          stock_type_id?: number
+          warehouse_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channels_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channels_price_list_id_fkey"
+            columns: ["price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channels_sale_type_id_fkey"
+            columns: ["sale_type_id"]
+            isOneToOne: false
+            referencedRelation: "sale_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channels_stock_type_id_fkey"
+            columns: ["stock_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channels_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
             referencedColumns: ["id"]
           },
         ]
@@ -647,6 +729,7 @@ export type Database = {
           branch_id: number
           created_at: string
           default: boolean
+          description: string | null
           id: number
           token: string
           url: string
@@ -655,6 +738,7 @@ export type Database = {
           branch_id: number
           created_at?: string
           default?: boolean
+          description?: string | null
           id?: number
           token: string
           url: string
@@ -663,6 +747,7 @@ export type Database = {
           branch_id?: number
           created_at?: string
           default?: boolean
+          description?: string | null
           id?: number
           token?: string
           url?: string
@@ -680,54 +765,33 @@ export type Database = {
       invoice_series: {
         Row: {
           account_id: number
-          bol_serie: string
           created_at: string
-          default: boolean
-          fac_serie: string
-          grr_serie: string
-          grt_serie: string
           id: number
           invoice_provider_id: number
+          invoice_type_id: number
           is_active: boolean
-          ncb_serie: string
-          ncf_serie: string
-          ndb_serie: string
-          ndf_serie: string
           next_number: number
+          serie: string | null
         }
         Insert: {
           account_id: number
-          bol_serie: string
           created_at?: string
-          default?: boolean
-          fac_serie: string
-          grr_serie: string
-          grt_serie: string
           id?: number
           invoice_provider_id: number
+          invoice_type_id: number
           is_active?: boolean
-          ncb_serie: string
-          ncf_serie: string
-          ndb_serie: string
-          ndf_serie: string
           next_number: number
+          serie?: string | null
         }
         Update: {
           account_id?: number
-          bol_serie?: string
           created_at?: string
-          default?: boolean
-          fac_serie?: string
-          grr_serie?: string
-          grt_serie?: string
           id?: number
           invoice_provider_id?: number
+          invoice_type_id?: number
           is_active?: boolean
-          ncb_serie?: string
-          ncf_serie?: string
-          ndb_serie?: string
-          ndf_serie?: string
           next_number?: number
+          serie?: string | null
         }
         Relationships: [
           {
@@ -744,6 +808,13 @@ export type Database = {
             referencedRelation: "invoice_providers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "invoice_series_invoice_type_id_fkey"
+            columns: ["invoice_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
         ]
       }
       invoices: {
@@ -758,6 +829,7 @@ export type Database = {
           customer_document_type_id: number
           declared: boolean
           id: number
+          invoice_number: string | null
           invoice_type_id: number
           pdf_url: string | null
           tax_serie: string | null
@@ -765,6 +837,7 @@ export type Database = {
           total_free: number | null
           total_others: number | null
           total_taxes: number | null
+          vinculated_invoice_id: number | null
           xml_url: string | null
         }
         Insert: {
@@ -778,6 +851,7 @@ export type Database = {
           customer_document_type_id?: number
           declared?: boolean
           id?: number
+          invoice_number?: string | null
           invoice_type_id: number
           pdf_url?: string | null
           tax_serie?: string | null
@@ -785,6 +859,7 @@ export type Database = {
           total_free?: number | null
           total_others?: number | null
           total_taxes?: number | null
+          vinculated_invoice_id?: number | null
           xml_url?: string | null
         }
         Update: {
@@ -798,6 +873,7 @@ export type Database = {
           customer_document_type_id?: number
           declared?: boolean
           id?: number
+          invoice_number?: string | null
           invoice_type_id?: number
           pdf_url?: string | null
           tax_serie?: string | null
@@ -805,6 +881,7 @@ export type Database = {
           total_free?: number | null
           total_others?: number | null
           total_taxes?: number | null
+          vinculated_invoice_id?: number | null
           xml_url?: string | null
         }
         Relationships: [
@@ -827,6 +904,13 @@ export type Database = {
             columns: ["invoice_type_id"]
             isOneToOne: false
             referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_vinculated_invoice_id_fkey"
+            columns: ["vinculated_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -1115,6 +1199,7 @@ export type Database = {
       order_payment: {
         Row: {
           amount: number
+          business_acount_id: number
           date: string
           gateway_confirmation_code: string | null
           id: number
@@ -1125,6 +1210,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          business_acount_id: number
           date: string
           gateway_confirmation_code?: string | null
           id?: number
@@ -1135,6 +1221,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          business_acount_id?: number
           date?: string
           gateway_confirmation_code?: string | null
           id?: number
@@ -1156,6 +1243,13 @@ export type Database = {
             columns: ["payment_method_id"]
             isOneToOne: false
             referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_payment_business_acount_id_fkey"
+            columns: ["business_acount_id"]
+            isOneToOne: false
+            referencedRelation: "business_accounts"
             referencedColumns: ["id"]
           },
           {
@@ -1235,7 +1329,7 @@ export type Database = {
       order_situations: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           id: number
           last_row: boolean
           order_id: number
@@ -1244,7 +1338,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: number
           last_row: boolean
           order_id: number
@@ -1253,7 +1347,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: number
           last_row?: boolean
           order_id?: number
@@ -1296,6 +1390,7 @@ export type Database = {
           address: string | null
           address_reference: string | null
           branch_id: number | null
+          change: number
           city_id: number | null
           country_id: number | null
           created_at: string
@@ -1324,6 +1419,7 @@ export type Database = {
           address?: string | null
           address_reference?: string | null
           branch_id?: number | null
+          change?: number
           city_id?: number | null
           country_id?: number | null
           created_at?: string
@@ -1352,6 +1448,7 @@ export type Database = {
           address?: string | null
           address_reference?: string | null
           branch_id?: number | null
+          change?: number
           city_id?: number | null
           country_id?: number | null
           created_at?: string
@@ -1402,7 +1499,7 @@ export type Database = {
             foreignKeyName: "orders_sale_type_id_fkey"
             columns: ["sale_type_id"]
             isOneToOne: false
-            referencedRelation: "types"
+            referencedRelation: "sale_types"
             referencedColumns: ["id"]
           },
           {
@@ -1461,19 +1558,16 @@ export type Database = {
           id: number
           payment_method_id: number
           sale_type_id: number
-          tax_serie_id: number | null
         }
         Insert: {
           id?: number
           payment_method_id: number
           sale_type_id: number
-          tax_serie_id?: number | null
         }
         Update: {
           id?: number
           payment_method_id?: number
           sale_type_id?: number
-          tax_serie_id?: number | null
         }
         Relationships: [
           {
@@ -1487,14 +1581,7 @@ export type Database = {
             foreignKeyName: "payment_method_sale_type_sale_type_id_fkey"
             columns: ["sale_type_id"]
             isOneToOne: false
-            referencedRelation: "types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_method_sale_type_tax_serie_id_fkey"
-            columns: ["tax_serie_id"]
-            isOneToOne: false
-            referencedRelation: "invoice_series"
+            referencedRelation: "sale_types"
             referencedColumns: ["id"]
           },
         ]
@@ -1503,6 +1590,7 @@ export type Database = {
         Row: {
           active: boolean
           business_account_id: number | null
+          code: string | null
           id: number
           is_active: boolean
           name: string
@@ -1510,6 +1598,7 @@ export type Database = {
         Insert: {
           active: boolean
           business_account_id?: number | null
+          code?: string | null
           id?: number
           is_active?: boolean
           name: string
@@ -1517,6 +1606,7 @@ export type Database = {
         Update: {
           active?: boolean
           business_account_id?: number | null
+          code?: string | null
           id?: number
           is_active?: boolean
           name?: string
@@ -1581,7 +1671,9 @@ export type Database = {
           opened_at: string
           opening_amount: number
           opening_difference: number
+          sale_type_id: number
           status_id: number
+          total_cash_sales: number
           total_sales: number | null
           user_id: string
           warehouse_id: number
@@ -1599,7 +1691,9 @@ export type Database = {
           opened_at?: string
           opening_amount: number
           opening_difference?: number
+          sale_type_id?: number
           status_id: number
+          total_cash_sales?: number
           total_sales?: number | null
           user_id?: string
           warehouse_id: number
@@ -1617,7 +1711,9 @@ export type Database = {
           opened_at?: string
           opening_amount?: number
           opening_difference?: number
+          sale_type_id?: number
           status_id?: number
+          total_cash_sales?: number
           total_sales?: number | null
           user_id?: string
           warehouse_id?: number
@@ -1635,6 +1731,13 @@ export type Database = {
             columns: ["business_account"]
             isOneToOne: false
             referencedRelation: "business_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sessions_sale_type_id_fkey"
+            columns: ["sale_type_id"]
+            isOneToOne: false
+            referencedRelation: "sale_types"
             referencedColumns: ["id"]
           },
           {
@@ -1666,7 +1769,7 @@ export type Database = {
           created_at: string | null
           id: number
           is_active: boolean
-          location: number
+          location: string
           name: string
           web: boolean
         }
@@ -1675,7 +1778,7 @@ export type Database = {
           created_at?: string | null
           id?: number
           is_active?: boolean
-          location?: number
+          location: string
           name: string
           web?: boolean
         }
@@ -1684,7 +1787,7 @@ export type Database = {
           created_at?: string | null
           id?: number
           is_active?: boolean
-          location?: number
+          location?: string
           name?: string
           web?: boolean
         }
@@ -1716,6 +1819,39 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_product_categories_product_id_products_id"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_channels: {
+        Row: {
+          channel_id: number
+          id: number
+          product_id: number
+        }
+        Insert: {
+          channel_id: number
+          id?: number
+          product_id: number
+        }
+        Update: {
+          channel_id?: number
+          id?: number
+          product_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_channels_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_channels_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -2470,26 +2606,96 @@ export type Database = {
         }
         Relationships: []
       }
-      sale_types: {
+      sale_type_branches: {
         Row: {
-          created_at: string
+          branch_id: number
           id: number
-          is_manual: boolean
-          name: string
+          sale_type_id: number
         }
         Insert: {
-          created_at?: string
+          branch_id: number
           id?: number
-          is_manual?: boolean
-          name: string
+          sale_type_id: number
         }
         Update: {
-          created_at?: string
+          branch_id?: number
           id?: number
-          is_manual?: boolean
-          name?: string
+          sale_type_id?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sale_type_branches_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_type_warehouses_sale_type_id_fkey"
+            columns: ["sale_type_id"]
+            isOneToOne: false
+            referencedRelation: "sale_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_types: {
+        Row: {
+          boleta_serie_id: number
+          business_acount_id: number | null
+          code: string | null
+          created_at: string
+          factura_serie_id: number
+          id: number
+          is_active: boolean
+          name: string
+          pos_sale_type: boolean
+        }
+        Insert: {
+          boleta_serie_id: number
+          business_acount_id?: number | null
+          code?: string | null
+          created_at?: string
+          factura_serie_id: number
+          id?: number
+          is_active?: boolean
+          name: string
+          pos_sale_type?: boolean
+        }
+        Update: {
+          boleta_serie_id?: number
+          business_acount_id?: number | null
+          code?: string | null
+          created_at?: string
+          factura_serie_id?: number
+          id?: number
+          is_active?: boolean
+          name?: string
+          pos_sale_type?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_types_boleta_serie_id_fkey"
+            columns: ["boleta_serie_id"]
+            isOneToOne: false
+            referencedRelation: "sale_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_types_business_acount_id_fkey"
+            columns: ["business_acount_id"]
+            isOneToOne: false
+            referencedRelation: "business_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_types_factura_serie_id_fkey"
+            columns: ["factura_serie_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_series"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shipping_costs: {
         Row: {
@@ -3708,26 +3914,9 @@ export type Database = {
       }
     }
     Functions: {
-      add_to_cart: {
-        Args: {
-          p_cart_id?: string
-          p_product_id: string
-          p_quantity: number
-          p_variation_id: string
-        }
-        Returns: Json
-      }
       comprueba_variacion: {
         Args: { p_term_ids: number[]; p_variation_id: number }
         Returns: boolean
-      }
-      get_cart_details: {
-        Args: { p_cart_id: string }
-        Returns: {
-          cart_items: Json
-          total_amount: number
-          total_count: number
-        }[]
       }
       get_clients_list: {
         Args: {
@@ -3745,15 +3934,31 @@ export type Database = {
         Returns: Json
       }
       get_pos_session_detail: { Args: { p_session_id: number }; Returns: Json }
-      get_pos_sessions_list: {
-        Args: {
-          p_page?: number
-          p_search?: string
-          p_size?: number
-          p_status_id?: number
-        }
-        Returns: Json
-      }
+      get_pos_sessions_list:
+        | {
+            Args: {
+              p_page?: number
+              p_search?: string
+              p_size?: number
+              p_status_id?: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_date_from?: string
+              p_date_to?: string
+              p_difference_type?: string
+              p_order_by?: string
+              p_page?: number
+              p_sales_max?: number
+              p_sales_min?: number
+              p_search?: string
+              p_size?: number
+              p_status_id?: number
+            }
+            Returns: Json
+          }
       get_product_attribute_groups: {
         Args: { p_product_id: number }
         Returns: Json
@@ -3792,6 +3997,15 @@ export type Database = {
           p_size?: number
           p_status?: boolean
           p_web?: boolean
+        }
+        Returns: Json
+      }
+      sp_add_to_cart: {
+        Args: {
+          p_cart_id?: number
+          p_quantity: number
+          p_user_id?: string
+          p_variation_id: number
         }
         Returns: Json
       }
@@ -3835,6 +4049,7 @@ export type Database = {
       sp_create_order: {
         Args: {
           p_branch_id: number
+          p_change_entries?: Json
           p_initial_situation_id: number
           p_is_existing_client?: boolean
           p_order_data: Json
@@ -3959,6 +4174,8 @@ export type Database = {
       sp_ec_get_product_list: {
         Args: {
           p_category_id?: number
+          p_order?: string
+          p_page?: number
           p_sale_price?: boolean
           p_search?: string
           p_size?: number
@@ -4035,6 +4252,10 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_document_products: {
+        Args: { p_order_id?: number; p_return_id?: number }
+        Returns: Json
+      }
       sp_get_inventory: {
         Args: {
           p_max_stock?: number
@@ -4048,6 +4269,7 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_invoice_for_emit: { Args: { p_invoice_id: number }; Returns: Json }
       sp_get_invoices: {
         Args: {
           p_declared?: boolean
@@ -4119,6 +4341,17 @@ export type Database = {
           p_search?: string
           p_size?: number
           p_variation?: number
+        }
+        Returns: Json
+      }
+      sp_get_return_details: { Args: { p_return_id: number }; Returns: Json }
+      sp_get_return_order_and_return: {
+        Args: {
+          p_order: boolean
+          p_page?: number
+          p_return: boolean
+          p_search?: string
+          p_size?: number
         }
         Returns: Json
       }
@@ -4249,14 +4482,61 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_open_pos_session: {
+      sp_open_pos_session:
+        | {
+            Args: {
+              p_branch_id: number
+              p_business_account_id: number
+              p_notes?: string
+              p_opening_amount: number
+              p_user_id: string
+              p_warehouse_id: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_branch_id: number
+              p_business_account_id: number
+              p_notes: string
+              p_opening_amount: number
+              p_sale_type_id?: number
+              p_user_id: string
+              p_warehouse_id: number
+            }
+            Returns: Json
+          }
+      sp_update_business_account: {
         Args: {
+          p_account_number: number
+          p_bank: string
           p_branch_id: number
-          p_business_account_id?: number
-          p_notes?: string
-          p_opening_amount?: number
+          p_business_account_type_id: number
+          p_id: number
+          p_name: string
+          p_total_amount: number
           p_user_id: string
-          p_warehouse_id: number
+        }
+        Returns: Json
+      }
+      sp_update_invoice_sunat_response: {
+        Args: {
+          p_cdr_url?: string
+          p_declared?: boolean
+          p_invoice_id: number
+          p_pdf_url?: string
+          p_xml_url?: string
+        }
+        Returns: undefined
+      }
+      sp_update_order_chanel_type: {
+        Args: {
+          p_code: string
+          p_id: number
+          p_module_code?: string
+          p_module_id?: number
+          p_name: string
+          p_payment_methods?: number[]
         }
         Returns: Json
       }
@@ -4309,13 +4589,23 @@ export type Database = {
       }
       sp_update_state_returns: {
         Args: {
-          p_apply_stock: boolean
-          p_module_id: number
-          p_return_id: number
-          p_situation_id: number
-          p_status_id: number
+          p_description: string
+          p_is_active: boolean
+          p_is_variable: boolean
+          p_is_web: boolean
+          p_product_id: number
+          p_product_images: Json
+          p_product_name: string
+          p_reset_variations: boolean
+          p_selected_categories: number[]
+          p_short_description: string
           p_user_id: string
+          p_variations: Json
         }
+        Returns: Record<string, unknown>
+      }
+      sp_update_return: {
+        Args: { p_payload: Json; p_user_id: string }
         Returns: Json
       }
       sp_update_stock_type: {

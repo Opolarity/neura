@@ -5,16 +5,33 @@ import { Plus } from 'lucide-react';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import OrderChannelTypesTable from '../components/orderChannelTypes/OrderChannelTypesTable';
 import useOrderChannelTypes from '../hooks/useOrderChannelTypes';
-import { TableCell, TableHead } from '@/components/ui/table';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const OrderChannelTypesList = () => {
+    const { toast } = useToast();
     const {
         orderChannelTypes,
         loading,
         pagination,
         handlePageChange,
         handleSizeChange,
+        refresh,
     } = useOrderChannelTypes();
+
+    const handleDelete = async (id: number) => {
+        try {
+            const { error } = await supabase
+                .from('sale_types')
+                .update({ is_active: false })
+                .eq('id', id);
+            if (error) throw error;
+            toast({ title: "Canal de venta eliminado correctamente" });
+            refresh();
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -40,6 +57,7 @@ const OrderChannelTypesList = () => {
                     <OrderChannelTypesTable
                         orderChannelTypes={orderChannelTypes}
                         loading={loading}
+                        onDelete={handleDelete}
                     />
                 </CardContent>
                 <CardFooter>

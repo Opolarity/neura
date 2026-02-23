@@ -1,30 +1,14 @@
-export interface OrderChannelTypesApiResponse {
-  productsdata: {
-    data: Array<{
-      id: number;
-      name: string;
-      code: string;
-      module_id?: number;
-      module_code?: string;
-      created_at?: string;
-    }>;
-    page: {
-      page: number;
-      size: number;
-      total: number;
-    };
-  };
-}
-
 export interface OrderChannelType {
   id: number;
   name: string;
-  code: string;
-  module_id?: number;
-  module_code?: string;
+  code: string | null;
+  factura_serie_id: number;
+  boleta_serie_id: number;
+  business_acount_id: number | null;
+  pos_sale_type: boolean;
+  is_active: boolean;
   created_at?: string;
 }
-
 
 export interface OrderChannelTypesFilters {
   page: number;
@@ -35,6 +19,15 @@ export interface OrderChannelTypesFilters {
 export interface CreateOrderChannelPayload {
   name: string;
   code: string;
-  moduleID: number;
-  moduleCode: string;
+  factura_serie_id: number;
+  boleta_serie_id: number;
+  business_acount_id?: number | null;
+  pos_sale_type: boolean;
+  is_active: boolean;
+  paymentMethods?: number[];
+  branches?: number[];
+}
+
+export interface UpdateOrderChannelPayload extends CreateOrderChannelPayload {
+  id: number;
 }

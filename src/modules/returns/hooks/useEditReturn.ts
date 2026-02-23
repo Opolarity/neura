@@ -1,16 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useDebounce } from '@/shared/hooks/useDebounce';
 import { returnsService } from '../services/Returns.service';
 import {
     OrderProduct,
     ReturnProduct,
-    ExchangeProduct as NewProduct,
-    SearchProduct,
-    ProductSearchPagination
+    ExchangeProduct,
+    ReturnPayment,
 } from '../types/Returns.types';
+
+const createEmptyPayment = (): ReturnPayment => ({
+    id: crypto.randomUUID(),
+    paymentMethodId: '',
+    amount: '',
+});
 
 export const useEditReturn = () => {
     const navigate = useNavigate();
@@ -19,12 +23,25 @@ export const useEditReturn = () => {
     const [saving, setSaving] = useState(false);
     const [situations, setSituations] = useState<any[]>([]);
     const [documentTypes, setDocumentTypes] = useState<any[]>([]);
+    const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
     const [returnTypes, setReturnTypes] = useState<any[]>([]);
     const [selectedReturnType, setSelectedReturnType] = useState<string>('');
     const [returnTypeCode, setReturnTypeCode] = useState<string>('');
     const [orderProducts, setOrderProducts] = useState<OrderProduct[]>([]);
-    const [products, setProducts] = useState<any[]>([]);
-    const [orderId, setOrderId] = useState<number>(0);
+    const [displayOrderId, setDisplayOrderId] = useState<number>(0);
+    const [moduleId, setModuleId] = useState<number>(0);
+    const [userProfile, setUserProfile] = useState<any>(null);
+    const [orderTotal, setOrderTotal] = useState<number>(0);
+    const [shippingCost, setShippingCost] = useState<number>(0);
+
+    // Multiple payments (same pattern as CreateReturn)
+    const [payments, setPayments] = useState<ReturnPayment[]>([]);
+    const [currentPayment, setCurrentPayment] = useState<ReturnPayment>(createEmptyPayment());
+
+    // Voucher modal
+    const voucherFileInputRef = useRef<HTMLInputElement>(null);
+    const [voucherModalOpen, setVoucherModalOpen] = useState(false);
+    const [selectedVoucherPreview, setSelectedVoucherPreview] = useState<string | null>(null);
 
     // Form fields
     const [reason, setReason] = useState('');
@@ -33,14 +50,7 @@ export const useEditReturn = () => {
     const [shippingReturn, setShippingReturn] = useState(false);
     const [situationId, setSituationId] = useState('');
     const [returnProducts, setReturnProducts] = useState<ReturnProduct[]>([]);
-    const [newProducts, setNewProducts] = useState<NewProduct[]>([]);
-
-    // Product search with pagination
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
-    const [searchLoading, setSearchLoading] = useState(false);
-    const [searchPagination, setSearchPagination] = useState<ProductSearchPagination>({ page: 1, size: 10, total: 0 });
-    const debouncedSearch = useDebounce(searchQuery, 300);
+    const [exchangeProducts, setExchangeProducts] = useState<ExchangeProduct[]>([]);
 
     useEffect(() => {
         if (id) loadReturnData();
@@ -49,82 +59,112 @@ export const useEditReturn = () => {
     const loadReturnData = async () => {
         setLoading(true);
         try {
-            const returnData = await returnsService.getReturnById(Number(id));
-            const returnProductsData = await returnsService.getReturnProducts(Number(id));
-            const orderProductsData = await returnsService.getOrderProducts(returnData.order_id);
+            const details = await returnsService.getReturnDetails(Number(id));
+
+            const response = await returnsService.getDocumentProducts({ order_id: details.order_id });
+            const rawOrderProducts = response?.products ?? [];
+            const header = response?.header ?? {};
+
+            const orderProductsData: OrderProduct[] = rawOrderProducts.map((p: any) => ({
+                id: p.id,
+                product_variation_id: p.product_variation_id,
+                product_name: p.product_name,
+                sku: p.sku ?? '',
+                quantity: p.quantity,
+                product_price: p.product_price,
+                product_discount: p.product_discount ?? 0,
+                terms: p.terms ?? [],
+            }));
+            setDisplayOrderId(details.order_id);
+            setShippingCost(header.shipping_cost || 0);
+            setOrderTotal(header.total || 0);
             const docTypesData = await returnsService.getDocumentTypes();
 
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Usuario no autenticado');
+            const { data: profileData } = await supabase
+                .from('profiles')
+                .select('*, branches(*)')
+                .eq('UID', user.id)
+                .single();
+            setUserProfile(profileData);
+
             const moduleData = await returnsService.getModuleInfo('RTU');
-            const situationsData = await returnsService.getSituations(moduleData.id);
-            const typesData = await returnsService.getTypes(moduleData.id);
+            setModuleId(moduleData.id);
+            const [situationsData, typesData, paymentMethodsData] = await Promise.all([
+                returnsService.getSituations(moduleData.id),
+                returnsService.getTypes(moduleData.id),
+                returnsService.getPaymentMethods(),
+            ]);
 
-            // Load all products for exchange info (simplified for now as in original)
-            const { data: productsData } = await supabase
-                .from('variations')
-                .select(`
-          id,
-          sku,
-          products (
-            id,
-            title
-          ),
-          product_price (
-            price,
-            sale_price
-          )
-        `);
-
-            setOrderId(returnData.order_id);
-            setReason(returnData.reason || '');
-            setDocumentType(returnData.customer_document_type_id?.toString() || '');
-            setDocumentNumber(returnData.customer_document_number);
-            setShippingReturn(returnData.shipping_return);
-            setSituationId(returnData.situation_id.toString());
-            setSelectedReturnType(returnData.return_type_id.toString());
-            setReturnTypeCode(returnData.types?.code || '');
+            setReason(details.reason || '');
+            setDocumentType(details.customer_document_type_id?.toString() || '');
+            setDocumentNumber(details.customer_document_number);
+            setShippingReturn(details.shipping_return);
+            setSituationId(details.situation_id.toString());
+            setSelectedReturnType(details.return_type_id.toString());
+            setReturnTypeCode(details.return_type_code || '');
             setOrderProducts(orderProductsData || []);
-            setProducts(productsData || []);
             setDocumentTypes(docTypesData || []);
             setSituations(situationsData || []);
             setReturnTypes(typesData || []);
+            setPaymentMethods(paymentMethodsData || []);
 
-            if (returnData.types?.code === 'DVT') {
-                const allOrderProducts = orderProductsData?.map((op: any) => ({
+            // output=false → prenda que ENTRA (devuelta a tienda)
+            // output=true  → prenda que SALE (cambio al cliente)
+            if (details.return_type_code === 'DVT') {
+                const allOrderProducts = orderProductsData?.map((op) => ({
                     product_variation_id: op.product_variation_id,
                     quantity: op.quantity,
-                    product_name: op.variations.products.title,
-                    sku: op.variations.sku,
+                    product_name: op.product_name ?? op.variations?.products?.title ?? '',
+                    sku: op.sku ?? op.variations?.sku ?? '',
+                    variation_name: op.terms?.map(t => t.term_name).join(' / ') ?? '',
                     price: op.product_price,
-                    output: true
+                    output: false,
                 })) || [];
                 setReturnProducts(allOrderProducts);
             } else {
-                const formattedReturnProducts = returnProductsData?.filter((rp: any) => rp.output).map((rp: any) => ({
-                    product_variation_id: rp.product_variation_id,
-                    quantity: rp.quantity,
-                    product_name: rp.variations.products.title,
-                    sku: rp.variations.sku,
-                    price: rp.product_amount || 0,
-                    output: rp.output
-                })) || [];
+                const formattedReturnProducts = (details.return_products || [])
+                    .filter((rp: any) => !rp.output)
+                    .map((rp: any) => {
+                        const orderProd = orderProductsData.find(op => op.product_variation_id === rp.product_variation_id);
+                        return {
+                            product_variation_id: rp.product_variation_id,
+                            quantity: rp.quantity,
+                            product_name: rp.product_name || '',
+                            sku: orderProd?.sku ?? '',
+                            variation_name: orderProd?.terms?.map(t => t.term_name).join(' / ') ?? '',
+                            price: rp.product_amount || 0,
+                            output: false,
+                        };
+                    });
                 setReturnProducts(formattedReturnProducts);
             }
 
-            if (returnData.types?.code === 'CAM') {
-                const newProds = returnProductsData?.filter((rp: any) => !rp.output).map((rp: any) => {
-                    const variation = productsData?.find((p: any) => p.id === rp.product_variation_id);
-                    return {
+            if (details.return_type_code === 'CAM') {
+                const loadedExchangeProducts = (details.return_products || [])
+                    .filter((rp: any) => rp.output)
+                    .map((rp: any) => ({
                         variation_id: rp.product_variation_id,
-                        product_name: variation?.products?.title || '',
-                        variation_name: variation?.sku || '',
-                        sku: variation?.sku || '',
+                        product_name: rp.product_name || '',
+                        variation_name: '',
+                        sku: '',
                         quantity: rp.quantity,
                         price: rp.product_amount || 0,
                         discount: 0,
-                        linked_return_index: null
-                    };
-                }) || [];
-                setNewProducts(newProds);
+                        linked_return_index: null,
+                    }));
+                setExchangeProducts(loadedExchangeProducts);
+            }
+
+            // Load existing payments from details
+            if (details.payment_methods && details.payment_methods.length > 0) {
+                const loadedPayments: ReturnPayment[] = details.payment_methods.map((pm: any) => ({
+                    id: crypto.randomUUID(),
+                    paymentMethodId: pm.payment_method_id.toString(),
+                    amount: pm.amount.toString(),
+                }));
+                setPayments(loadedPayments);
             }
 
         } catch (error: any) {
@@ -136,49 +176,43 @@ export const useEditReturn = () => {
         }
     };
 
-    const fetchSearchProducts = useCallback(async (page: number = 1, search: string = '') => {
-        setSearchLoading(true);
-        try {
-            const params = new URLSearchParams({
-                p_page: page.toString(),
-                p_size: '10',
-            });
-            if (search) params.append('p_search', search);
-
-            const response = await fetch(
-                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-sale-products?${params.toString()}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
-
-            if (!response.ok) throw new Error('Error fetching products');
-
-            const result = await response.json();
-            setSearchProducts(result.data || []);
-            setSearchPagination(result.page || { page: 1, size: 10, total: 0 });
-        } catch (error) {
-            console.error('Error fetching search products:', error);
-            setSearchProducts([]);
-        } finally {
-            setSearchLoading(false);
+    const addPayment = useCallback(() => {
+        if (!currentPayment.paymentMethodId || !currentPayment.amount) {
+            toast.error('Seleccione un método de pago y monto');
+            return;
         }
+        const amount = parseFloat(currentPayment.amount);
+        if (isNaN(amount) || amount <= 0) {
+            toast.error('El monto debe ser mayor a cero');
+            return;
+        }
+        setPayments((prev) => [...prev, { ...currentPayment, id: crypto.randomUUID() }]);
+        setCurrentPayment(createEmptyPayment());
+    }, [currentPayment]);
+
+    const removePayment = useCallback((id: string) => {
+        setPayments((prev) => prev.filter((p) => p.id !== id));
     }, []);
 
-    useEffect(() => {
-        if (returnTypeCode === 'CAM' && debouncedSearch) {
-            fetchSearchProducts(1, debouncedSearch);
-        }
-    }, [debouncedSearch, returnTypeCode, fetchSearchProducts]);
+    const handleVoucherSelect = useCallback((file: File) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setCurrentPayment((prev) => ({
+                ...prev,
+                voucherFile: file,
+                voucherPreview: reader.result as string,
+            }));
+        };
+        reader.readAsDataURL(file);
+    }, []);
 
-    const handleSearchPageChange = (newPage: number) => {
-        if (newPage >= 1 && newPage <= Math.ceil(searchPagination.total / searchPagination.size)) {
-            fetchSearchProducts(newPage, debouncedSearch);
-        }
-    };
+    const removeVoucher = useCallback(() => {
+        setCurrentPayment((prev) => ({
+            ...prev,
+            voucherFile: undefined,
+            voucherPreview: undefined,
+        }));
+    }, []);
 
     const addReturnProduct = (orderProduct: OrderProduct) => {
         const existingProduct = returnProducts.find(
@@ -193,10 +227,11 @@ export const useEditReturn = () => {
         const newReturnProduct: ReturnProduct = {
             product_variation_id: orderProduct.product_variation_id,
             quantity: 1,
-            product_name: orderProduct.variations.products.title,
-            sku: orderProduct.variations.sku,
+            product_name: orderProduct.product_name ?? orderProduct.variations?.products?.title ?? '',
+            sku: orderProduct.sku ?? orderProduct.variations?.sku ?? '',
+            variation_name: orderProduct.terms?.map(t => t.term_name).join(' / ') ?? '',
             price: orderProduct.product_price,
-            output: true
+            output: false,
         };
 
         setReturnProducts([...returnProducts, newReturnProduct]);
@@ -221,9 +256,10 @@ export const useEditReturn = () => {
         setReturnProducts(updated);
     };
 
-    const addProductFromSearch = (product: SearchProduct) => {
-        const existingProduct = newProducts.find(
-            np => np.variation_id === product.variationId
+    // ── Exchange products (same interface as CreateReturn's ReturnSelectionCambio) ──
+    const addExchangeProduct = (product: any) => {
+        const existingProduct = exchangeProducts.find(
+            ep => ep.variation_id === product.variationId
         );
 
         if (existingProduct) {
@@ -231,61 +267,58 @@ export const useEditReturn = () => {
             return;
         }
 
-        const price = product.prices?.[0]?.sale_price || product.prices?.[0]?.price || 0;
-        const newProduct: any = {
+        const termsNames = product.terms?.map((t: any) => t.name).join(' - ') || '';
+        const newProduct: ExchangeProduct = {
             variation_id: product.variationId,
             product_name: product.productTitle,
-            variation_name: product.terms.map(t => t.name).join(' / ') || product.sku,
-            sku: product.sku,
+            variation_name: termsNames,
+            sku: product.sku || '',
             quantity: 1,
-            price: price,
+            price: product.prices?.[0]?.price || 0,
             discount: 0,
+            linked_return_index: null,
             imageUrl: product.imageUrl,
             stock: product.stock,
-            linked_return_index: null
         };
 
-        setNewProducts([...newProducts, newProduct]);
-        toast.success('Producto agregado');
+        setExchangeProducts([...exchangeProducts, newProduct]);
     };
 
-    const removeNewProduct = (index: number) => {
-        setNewProducts(newProducts.filter((_, i) => i !== index));
+    const removeExchangeProduct = (index: number) => {
+        setExchangeProducts(exchangeProducts.filter((_, i) => i !== index));
     };
 
-    const updateNewProductQuantity = (index: number, quantity: number) => {
-        const updated = [...newProducts];
-        updated[index].quantity = quantity;
-        setNewProducts(updated);
+    const updateExchangeProduct = (index: number, field: string, value: any) => {
+        setExchangeProducts(
+            exchangeProducts.map((p, i) => (i === index ? { ...p, [field]: value } : p))
+        );
     };
 
-    const updateNewProductDiscount = (index: number, discount: number) => {
-        const updated = [...newProducts];
-        updated[index].discount = discount;
-        setNewProducts(updated);
+    // ── Totals ────────────────────────────────────────────────────────────────────
+    const calculateReturnTotal = () => {
+        if (returnTypeCode === 'DVT') {
+            return orderProducts.reduce((sum, p) => sum + p.product_price * p.quantity, 0);
+        }
+        return returnProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
+    };
+
+    const calculateExchangeTotal = () => {
+        return exchangeProducts.reduce((sum, p) => {
+            return sum + p.price * (1 - p.discount / 100) * p.quantity;
+        }, 0);
+    };
+
+    const calculateDifference = () => {
+        return calculateReturnTotal() - calculateExchangeTotal();
     };
 
     const calculateTotals = () => {
-        let returnTotal = 0;
-
-        if (returnTypeCode === 'DVT') {
-            returnTotal = orderProducts.reduce((sum, product) => {
-                return sum + (product.product_price * product.quantity);
-            }, 0);
-        } else {
-            returnTotal = returnProducts.reduce((sum, product) => {
-                return sum + (product.price * product.quantity);
-            }, 0);
-        }
-
-        const newTotal = newProducts.reduce((sum, product) => {
-            return sum + ((product.price - product.discount) * product.quantity);
-        }, 0);
-
+        const returnTotal = calculateReturnTotal();
+        const newTotal = calculateExchangeTotal();
         return {
             returnTotal,
             newTotal,
-            difference: newTotal - returnTotal
+            difference: newTotal - returnTotal,
         };
     };
 
@@ -305,7 +338,7 @@ export const useEditReturn = () => {
                 toast.error('Debe seleccionar productos a devolver');
                 return;
             }
-            if (newProducts.length === 0) {
+            if (exchangeProducts.length === 0) {
                 toast.error('Debe agregar productos de cambio');
                 return;
             }
@@ -313,123 +346,81 @@ export const useEditReturn = () => {
 
         setSaving(true);
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('Usuario no autenticado');
+            const productsTotal = calculateReturnTotal();
+            const totalRefundAmount = productsTotal; // SP adds shipping_cost automatically
+            const totalExchangeDifference = returnTypeCode === 'CAM'
+                ? calculateExchangeTotal() - (productsTotal + (shippingReturn ? shippingCost : 0))
+                : -(productsTotal + (shippingReturn ? shippingCost : 0));
 
-            const totals = calculateTotals();
-
-            const payload = {
-                order_id: orderId,
-                return_type_id: Number(selectedReturnType),
-                customer_document_type_id: documentType ? Number(documentType) : null,
-                customer_document_number: documentNumber,
-                reason: reason || null,
-                shipping_return: shippingReturn,
-                situation_id: Number(situationId),
-                status_id: situations.find(s => s.id === Number(situationId))?.status_id,
-                total_refund_amount: (returnTypeCode === 'DVT' || returnTypeCode === 'DVP') ? totals.returnTotal : null,
-                total_exchange_difference: returnTypeCode === 'CAM' ? totals.difference : null,
-            };
-
-            await returnsService.updateReturn(Number(id), payload);
-            await returnsService.deleteReturnProducts(Number(id));
-
-            let returnProductsToInsert = [];
+            let allReturnProducts: any[] = [];
             if (returnTypeCode === 'DVT') {
-                returnProductsToInsert = orderProducts.map(p => ({
-                    return_id: Number(id),
+                allReturnProducts = orderProducts.map(p => ({
                     product_variation_id: p.product_variation_id,
                     quantity: p.quantity,
                     product_amount: p.product_price,
-                    output: true
+                    output: false,
                 }));
             } else {
-                returnProductsToInsert = returnProducts.map(product => ({
-                    return_id: Number(id),
-                    product_variation_id: product.product_variation_id,
-                    quantity: product.quantity,
-                    product_amount: product.price,
-                    output: true
+                allReturnProducts = returnProducts.map(p => ({
+                    product_variation_id: p.product_variation_id,
+                    quantity: p.quantity,
+                    product_amount: p.price,
+                    output: false,
                 }));
             }
 
-            await returnsService.insertReturnProducts(returnProductsToInsert);
-
-            if (returnTypeCode === 'CAM' && newProducts.length > 0) {
-                const newProductsToInsert = newProducts.map(product => ({
-                    return_id: Number(id),
-                    product_variation_id: product.variation_id,
-                    quantity: product.quantity,
-                    product_amount: product.price - product.discount,
-                    output: false
-                }));
-                await returnsService.insertReturnProducts(newProductsToInsert);
+            if (returnTypeCode === 'CAM' && exchangeProducts.length > 0) {
+                allReturnProducts = [
+                    ...allReturnProducts,
+                    ...exchangeProducts.map(p => ({
+                        product_variation_id: p.variation_id,
+                        quantity: p.quantity,
+                        product_amount: p.price * (1 - p.discount / 100),
+                        output: true,
+                    })),
+                ];
             }
 
             const selectedSituation = situations.find(s => s.id === Number(situationId));
-            if (selectedSituation) {
-                const statusData = await returnsService.getStatusById(selectedSituation.status_id);
-                if (statusData?.code === 'CFM') {
-                    // Logic for stock movements (as in original)
-                    // Simplified for brevity in hook, should ideally be in service or backend
-                    // Keeping it here for now to match original logic
-                    let allReturnProducts = [];
-                    if (returnTypeCode === 'DVT') {
-                        allReturnProducts = orderProducts.map(p => ({
-                            product_variation_id: p.product_variation_id,
-                            quantity: p.quantity,
-                            output: false
-                        }));
-                    } else {
-                        allReturnProducts = returnProducts.map(p => ({
-                            product_variation_id: p.product_variation_id,
-                            quantity: p.quantity,
-                            output: false
-                        }));
+
+            // Upload vouchers before sending
+            const paymentsWithUrls = await Promise.all(
+                payments.map(async (p) => {
+                    if (p.voucherFile) {
+                        const url = await returnsService.uploadReturnVoucher(p.voucherFile);
+                        return { ...p, voucherUrl: url };
                     }
+                    return p;
+                })
+            );
 
-                    if (returnTypeCode === 'CAM' && newProducts.length > 0) {
-                        allReturnProducts = [
-                            ...allReturnProducts,
-                            ...newProducts.map(p => ({
-                                product_variation_id: p.variation_id,
-                                quantity: p.quantity,
-                                output: true
-                            }))
-                        ];
-                    }
+            const payload = {
+                return_id: Number(id),
+                return_type_id: Number(selectedReturnType),
+                return_type_code: returnTypeCode,
+                customer_document_type_id: documentType ? Number(documentType) : 0,
+                customer_document_number: documentNumber,
+                reason: reason || '',
+                shipping_return: shippingReturn,
+                shipping_cost: shippingReturn ? shippingCost : null,
+                situation_id: Number(situationId),
+                status_id: selectedSituation?.status_id || 0,
+                module_id: moduleId,
+                module_code: 'RTU',
+                total_refund_amount: totalRefundAmount,
+                total_exchange_difference: totalExchangeDifference,
+                return_products: allReturnProducts,
+                payment_methods: paymentsWithUrls.map(p => ({
+                    payment_method_id: Number(p.paymentMethodId),
+                    amount: parseFloat(p.amount),
+                    voucher_url: p.voucherUrl || null,
+                })),
+                business_account_id: userProfile?.business_account_id || 0,
+                branch_id: userProfile?.branch_id || 1,
+                warehouse_id: userProfile?.branches?.warehouse_id || 1,
+            };
 
-                    for (const product of allReturnProducts) {
-                        const returnMovementType: any = await returnsService.getStatusByCode('ENT'); // Assuming ENT exists for entries
-                        // This part is very specific to stock logic, better kept in a more central place or service
-                        // For now, I'll keep it as is but using service for the fetch
-                        await (supabase as any).from('stock_movements').insert({
-                            product_variation_id: product.product_variation_id,
-                            quantity: product.output ? -product.quantity : product.quantity,
-                            created_by: user.id,
-                            movement_type: 1, // Defaulting to 1 as in original if not found
-                            warehouse_id: 1,
-                            completed: true,
-                        });
-
-                        const { data: currentStock }: any = await supabase
-                            .from('product_stock')
-                            .select('stock')
-                            .eq('product_variation_id', product.product_variation_id)
-                            .eq('warehouse_id', 1)
-                            .single();
-
-                        if (currentStock) {
-                            const newStock = currentStock.stock + (product.output ? -product.quantity : product.quantity);
-                            await supabase
-                                .from('product_stock')
-                                .update({ stock: newStock })
-                                .eq('product_variation_id', product.product_variation_id)
-                                .eq('warehouse_id', 1);
-                        }
-                    }
-                }
-            }
+            await returnsService.updateReturnFull(payload);
 
             toast.success('Devolución actualizada exitosamente');
             navigate('/returns');
@@ -444,6 +435,7 @@ export const useEditReturn = () => {
     return {
         loading,
         saving,
+        displayOrderId,
         situations,
         documentTypes,
         returnTypes,
@@ -458,24 +450,36 @@ export const useEditReturn = () => {
         setDocumentNumber,
         shippingReturn,
         setShippingReturn,
+        shippingCost,
+        setShippingCost,
         situationId,
         setSituationId,
         returnProducts,
-        newProducts,
-        searchQuery,
-        setSearchQuery,
-        searchProducts,
-        searchLoading,
-        searchPagination,
-        handleSearchPageChange,
+        exchangeProducts,
+        paymentMethods,
+        payments,
+        currentPayment,
+        setCurrentPayment,
+        addPayment,
+        removePayment,
+        voucherFileInputRef,
+        handleVoucherSelect,
+        removeVoucher,
+        voucherModalOpen,
+        setVoucherModalOpen,
+        selectedVoucherPreview,
+        setSelectedVoucherPreview,
         addReturnProduct,
         removeReturnProduct,
         updateReturnProductQuantity,
-        addProductFromSearch,
-        removeNewProduct,
-        updateNewProductQuantity,
-        updateNewProductDiscount,
+        addExchangeProduct,
+        removeExchangeProduct,
+        updateExchangeProduct,
+        orderTotal,
+        calculateReturnTotal,
+        calculateExchangeTotal,
+        calculateDifference,
         calculateTotals,
-        handleSave
+        handleSave,
     };
 };

@@ -6,7 +6,7 @@ import { ReturnsTable } from '../components/returns/ReturnsTable';
 
 const Returns = () => {
   const navigate = useNavigate();
-  const { returns, loading, formatDate, formatCurrency } = useReturns();
+  const { returns, loading, formatDate, formatCurrency, search, handleSearchChange, pagination, handlePageChange, handlePageSizeChange } = useReturns();
 
   return (
     <div className="p-6">
@@ -28,6 +28,11 @@ const Returns = () => {
         loading={loading}
         formatDate={formatDate}
         formatCurrency={formatCurrency}
+        search={search}
+        onSearchChange={handleSearchChange}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
       />
     </div>
   );

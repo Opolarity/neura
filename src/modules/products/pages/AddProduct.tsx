@@ -46,6 +46,8 @@ const AddProduct = () => {
     priceLists,
     warehouses,
     stockTypes,
+    channels,
+    selectedChannels,
     selectedStockType,
     setSelectedStockType,
     loading,
@@ -59,6 +61,7 @@ const AddProduct = () => {
     handleDragOver,
     handleDrop,
     toggleCategorySelection,
+    toggleChannelSelection,
     toggleTermSelection,
     updateVariationPrice,
     updateVariationStock,
@@ -158,7 +161,7 @@ const AddProduct = () => {
                 value={shortDescription}
                 onChange={setShortDescription}
                 placeholder="Descripción breve del producto"
-                height="120px"
+                height="200px"
                 toolbar="basic"
               />
 
@@ -200,14 +203,16 @@ const AddProduct = () => {
                   onCheckedChange={setIsActive}
                 />
               </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="isWeb" className="cursor-pointer">Web (E-commerce)</Label>
-                <Switch
-                  id="isWeb"
-                  checked={isWeb}
-                  onCheckedChange={setIsWeb}
-                />
-              </div>
+              {channels.map((channel) => (
+                <div key={channel.id} className="flex items-center justify-between">
+                  <Label htmlFor={`channel-${channel.id}`} className="cursor-pointer">{channel.name}</Label>
+                  <Switch
+                    id={`channel-${channel.id}`}
+                    checked={selectedChannels.includes(channel.id)}
+                    onCheckedChange={() => toggleChannelSelection(channel.id)}
+                  />
+                </div>
+              ))}
             </CardContent>
           </Card>
 

@@ -37,28 +37,58 @@ export default function POSSessionModal({
   const navigate = useNavigate();
   const [openingAmount, setOpeningAmount] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
-  const [selectedCashRegisterId, setSelectedCashRegisterId] = useState<string>("");
-  const [cashRegisters, setCashRegisters] = useState<CashRegister[]>([]);
-  const [loadingCashRegisters, setLoadingCashRegisters] = useState(true);
+  const [selectedSaleTypeId, setSelectedSaleTypeId] = useState<string>("");
+  const [saleTypes, setSaleTypes] = useState<POSSaleType[]>([]);
+  const [loadingSaleTypes, setLoadingSaleTypes] = useState(true);
+  const [linkedCashRegisterName, setLinkedCashRegisterName] = useState<string>("");
+  const [expectedAmount, setExpectedAmount] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      loadCashRegisters();
+      loadSaleTypes();
     }
   }, [isOpen]);
 
-  const loadCashRegisters = async () => {
+  const loadSaleTypes = async () => {
     try {
       setLoadingCashRegisters(true);
       const data = await getCashRegisters();
       setCashRegisters(data);
       if (data.length === 1) {
-        setSelectedCashRegisterId(String(data[0].id));
+        setSelectedSaleTypeId(String(data[0].id));
+        loadCashRegisterData(data[0].businessAccountId);
       }
     } catch (error) {
-      console.error("Error loading cash registers:", error);
+      console.error("Error loading POS sale types:", error);
     } finally {
-      setLoadingCashRegisters(false);
+      setLoadingSaleTypes(false);
+    }
+  };
+
+  const loadCashRegisterData = async (businessAccountId: number | null) => {
+    if (!businessAccountId) {
+      setLinkedCashRegisterName("");
+      setExpectedAmount(null);
+      return;
+    }
+    const { data } = await supabase
+      .from("business_accounts")
+      .select("name, total_amount")
+      .eq("id", businessAccountId)
+      .single();
+    setLinkedCashRegisterName(data?.name || "");
+    setExpectedAmount(data?.total_amount ?? 0);
+  };
+
+  const handleSaleTypeChange = (value: string) => {
+    setSelectedSaleTypeId(value);
+    setOpeningAmount("");
+    const selected = saleTypes.find((st) => String(st.id) === value);
+    if (selected) {
+      loadCashRegisterData(selected.businessAccountId);
+    } else {
+      setLinkedCashRegisterName("");
+      setExpectedAmount(null);
     }
   };
 
@@ -75,11 +105,11 @@ export default function POSSessionModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!selectedCashRegisterId || openingAmount === "" || openingAmount === null) {
+
+    if (!selectedSaleTypeId || !selectedSaleType?.businessAccountId || openingAmount === "" || openingAmount === null) {
       return;
     }
-    
+
     const amount = parseFloat(openingAmount);
     if (isNaN(amount) || amount < 0) {
       return;
@@ -94,19 +124,21 @@ export default function POSSessionModal({
   };
 
   const handleCancel = () => {
-    navigate("/sales");
+    navigate("/pos");
   };
 
   const isAmountValid = openingAmount !== "" && !isNaN(parseFloat(openingAmount)) && parseFloat(openingAmount) >= 0;
-  const isFormValid = selectedCashRegisterId && isAmountValid && !loadingCashRegisters;
+  const isFormValid = selectedSaleTypeId && selectedSaleType?.businessAccountId && isAmountValid && !loadingSaleTypes;
+
+  const formatCurrency = (value: number) => `S/ ${value.toFixed(2)}`;
 
   return (
     <Dialog open={isOpen}>
-      <DialogContent 
-        className="sm:max-w-md [&>button]:hidden" 
+      <DialogContent
+        className="sm:max-w-md [&>button]:hidden"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
-      >        
+      >
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-3 bg-primary/10 rounded-full">
@@ -115,43 +147,63 @@ export default function POSSessionModal({
             <div>
               <DialogTitle>Apertura de Caja</DialogTitle>
               <DialogDescription>
-                Seleccione la caja e ingrese el monto inicial
+                Seleccione el canal de venta e ingrese el monto inicial
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="cashRegister">Caja *</Label>
-            {loadingCashRegisters ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Cargando cajas...
-              </div>
-            ) : (
-              <Select
-                value={selectedCashRegisterId}
-                onValueChange={setSelectedCashRegisterId}
-                required
-              >
-                <SelectTrigger id="cashRegister">
-                  <SelectValue placeholder="Seleccione una caja" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cashRegisters.map((register) => (
-                    <SelectItem key={register.id} value={String(register.id)}>
-                      {register.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {cashRegisters.length === 0 && !loadingCashRegisters && (
-              <p className="text-xs text-destructive">
-                No hay cajas disponibles
-              </p>
-            )}
+          {/* Canal de venta y Caja en dos columnas */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="saleType">Canal de venta *</Label>
+              {loadingSaleTypes ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Cargando...
+                </div>
+              ) : (
+                <Select
+                  value={selectedSaleTypeId}
+                  onValueChange={handleSaleTypeChange}
+                  required
+                >
+                  <SelectTrigger id="saleType">
+                    <SelectValue placeholder="Seleccione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {saleTypes.map((st) => (
+                      <SelectItem key={st.id} value={String(st.id)}>
+                        {st.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {saleTypes.length === 0 && !loadingSaleTypes && (
+                <p className="text-xs text-destructive">
+                  No hay canales POS disponibles
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cashRegister">Caja *</Label>
+              <Input
+                id="cashRegister"
+                value={linkedCashRegisterName}
+                readOnly
+                disabled
+                placeholder={selectedSaleTypeId ? "" : "Seleccione canal"}
+                className="bg-muted"
+              />
+              {expectedAmount !== null && (
+                <p className="text-xs text-muted-foreground">
+                  Saldo: {formatCurrency(expectedAmount)}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -179,9 +231,29 @@ export default function POSSessionModal({
                 required
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Ingrese el dinero en efectivo con el que inicia la caja
-            </p>
+
+            {/* Difference warning */}
+            {hasDifference && (
+              <div className="flex items-start gap-2 p-2 rounded-md bg-destructive/10 border border-destructive/20">
+                <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+                <div className="text-xs text-destructive">
+                  <p className="font-medium">Diferencia detectada</p>
+                  <p>
+                    Monto esperado: {formatCurrency(expectedAmount!)} — Diferencia:{" "}
+                    <span className="font-semibold">
+                      {openingDifference! > 0 ? "+" : ""}
+                      {formatCurrency(openingDifference!)}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {!hasDifference && openingAmount !== "" && expectedAmount !== null && (
+              <p className="text-xs text-muted-foreground">
+                Monto coincide con el saldo registrado ✓
+              </p>
+            )}
           </div>
 
           {/* Difference display */}

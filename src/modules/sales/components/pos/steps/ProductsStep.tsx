@@ -2,6 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -9,10 +16,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, Barcode } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, Barcode, Percent, ChevronDown, ChevronUp } from "lucide-react";
 import type { POSCartItem } from "../../../types/POS.types";
 import type { PaginatedProductVariation, PaginationMeta } from "../../../types";
 import { formatCurrency } from "../../../adapters/POS.adapter";
+import { useState } from "react";
 
 interface ProductsStepProps {
   searchQuery: string;
@@ -21,12 +29,19 @@ interface ProductsStepProps {
   productsLoading: boolean;
   cart: POSCartItem[];
   onAddToCart: (product: PaginatedProductVariation) => boolean;
-  onUpdateQuantity: (index: number, field: "quantity", value: number) => void;
+  onUpdateQuantity: (index: number, field: "quantity" | "discountAmount", value: number) => void;
   onRemoveFromCart: (index: number) => void;
   pagination: PaginationMeta;
   onPageChange: (page: number) => void;
   priceListId: string;
   total: number;
+  subtotal: number;
+  discountAmount: number;
+  stockTypes: Array<{ id: number; name: string }>;
+  selectedStockTypeId: string;
+  onStockTypeChange: (value: string) => void;
+  generalDiscount: number;
+  onGeneralDiscountChange: (value: number) => void;
 }
 
 export default function ProductsStep({
@@ -41,7 +56,24 @@ export default function ProductsStep({
   pagination,
   priceListId,
   total,
+  subtotal,
+  discountAmount,
+  stockTypes,
+  selectedStockTypeId,
+  onStockTypeChange,
+  generalDiscount,
+  onGeneralDiscountChange,
 }: ProductsStepProps) {
+  const [expandedDiscounts, setExpandedDiscounts] = useState<Set<number>>(new Set());
+
+  const toggleDiscount = (index: number) => {
+    setExpandedDiscounts(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
   const getProductPrice = (product: PaginatedProductVariation): number => {
     const priceEntry = product.prices.find(
       (p) => p.price_list_id === parseInt(priceListId)
@@ -56,12 +88,12 @@ export default function ProductsStep({
         <h2 className="text-lg font-semibold">Seleccion de Productos</h2>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-5 gap-6">
         {/* Product search and list */}
-        <div className="col-span-2 space-y-4">
+        <div className="col-span-3 space-y-4">
           <Card>
             <CardContent className="pt-4">
-              {/* Search bar */}
+              {/* Search bar and stock type selector */}
               <div className="flex gap-2 mb-4">
                 <div className="flex-1 relative">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -72,6 +104,18 @@ export default function ProductsStep({
                     className="pl-10"
                   />
                 </div>
+                <Select value={selectedStockTypeId} onValueChange={onStockTypeChange}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Tipo inventario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stockTypes.map((st) => (
+                      <SelectItem key={st.id} value={String(st.id)}>
+                        {st.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Button variant="outline" className="gap-2">
                   <Barcode className="w-4 h-4" />
                   F2 Scanner
@@ -191,86 +235,127 @@ export default function ProductsStep({
           </CardHeader>
           <CardContent>
             {cart.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 text-sm">
+              <div className="text-center py-8 text-muted-foreground text-sm">
                 Agregue productos al carrito
               </div>
             ) : (
               <div className="space-y-3">
-                {cart.map((item, index) => (
-                  <div
-                    key={`${item.variationId}-${item.stockTypeId}`}
-                    className="border rounded-lg p-3"
-                  >
-                    <div className="flex items-start gap-3">
-                      {item.imageUrl ? (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.productName}
-                          className="w-12 h-12 rounded object-cover"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                          <ShoppingCart className="w-4 h-4 text-gray-400" />
+                {cart.map((item, index) => {
+                  const itemTotal = item.quantity * item.price;
+                  const itemDiscount = item.discountAmount * item.quantity;
+                  const itemFinal = itemTotal - itemDiscount;
+
+                  return (
+                    <div
+                      key={`${item.variationId}-${item.stockTypeId}`}
+                      className="border rounded-lg p-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        {item.imageUrl ? (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.productName}
+                            className="w-12 h-12 rounded object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                            <ShoppingCart className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">
+                            {item.productName}
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {item.variationName}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            S/ {formatCurrency(item.price)} c/u
+                          </div>
+                        </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 text-destructive hover:text-destructive/80"
+                          onClick={() => onRemoveFromCart(index)}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+
+                      {/* Quantity controls */}
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-7 w-7"
+                            onClick={() =>
+                              onUpdateQuantity(index, "quantity", item.quantity - 1)
+                            }
+                            disabled={item.quantity <= 1}
+                          >
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className="w-8 text-center text-sm font-medium">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-7 w-7"
+                            onClick={() =>
+                              onUpdateQuantity(index, "quantity", item.quantity + 1)
+                            }
+                            disabled={item.quantity >= item.maxStock}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <div className="text-right">
+                          {itemDiscount > 0 && (
+                            <div className="text-xs text-muted-foreground line-through">
+                              S/ {formatCurrency(itemTotal)}
+                            </div>
+                          )}
+                          <div className="font-semibold text-sm">
+                            S/ {formatCurrency(itemFinal)}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Per-item discount toggle */}
+                      <button
+                        type="button"
+                        className="flex items-center gap-1 text-xs text-primary hover:underline mt-2"
+                        onClick={() => toggleDiscount(index)}
+                      >
+                        <Percent className="w-3 h-3" />
+                        {expandedDiscounts.has(index) ? "Ocultar descuento" : "Añadir descuento"}
+                        {expandedDiscounts.has(index) ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      </button>
+
+                      {expandedDiscounts.has(index) && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">Dcto. x und:</span>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={item.price}
+                            step={0.01}
+                            value={item.discountAmount || ""}
+                            onChange={(e) =>
+                              onUpdateQuantity(index, "discountAmount", Math.min(parseFloat(e.target.value) || 0, item.price))
+                            }
+                            className="h-7 text-xs w-24"
+                            placeholder="0.00"
+                          />
+                          <span className="text-xs text-muted-foreground">S/</span>
                         </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm truncate">
-                          {item.productName}
-                        </div>
-                        <div className="text-xs text-gray-500 truncate">
-                          {item.variationName}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          S/ {formatCurrency(item.price)} c/u
-                        </div>
-                      </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6 text-red-500 hover:text-red-600"
-                        onClick={() => onRemoveFromCart(index)}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
                     </div>
-
-                    {/* Quantity controls */}
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="h-7 w-7"
-                          onClick={() =>
-                            onUpdateQuantity(index, "quantity", item.quantity - 1)
-                          }
-                          disabled={item.quantity <= 1}
-                        >
-                          <Minus className="w-3 h-3" />
-                        </Button>
-                        <span className="w-8 text-center text-sm font-medium">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="h-7 w-7"
-                          onClick={() =>
-                            onUpdateQuantity(index, "quantity", item.quantity + 1)
-                          }
-                          disabled={item.quantity >= item.maxStock}
-                        >
-                          <Plus className="w-3 h-3" />
-                        </Button>
-                      </div>
-                      <div className="font-semibold text-sm">
-                        S/ {formatCurrency(item.quantity * item.price)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  );
+                })}
 
           </CardContent>
         </Card>

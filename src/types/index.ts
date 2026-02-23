@@ -4,6 +4,7 @@ export * from './term';
 export * from './price';
 export * from './warehouse';
 export * from './product';
+export * from './channel';
 
 
 export type Type = {
@@ -61,6 +62,7 @@ export type PaymentMethod = {
   business_account_id: number;
   active: boolean;
   is_active: boolean;
+  code?: string | null;
 };
 
 export type Class = {

@@ -9,6 +9,7 @@ import type {
   SaleType,
   PriceList,
   PaymentMethod,
+  BusinessAccountOption,
   Situation,
   StockType,
   Country,
@@ -57,6 +58,7 @@ export const adaptPaymentMethods = (data: any[]): PaymentMethod[] => {
   return data.map((item) => ({
     id: item.id,
     name: item.name,
+    businessAccountId: item.business_account_id ?? null,
   }));
 };
 
@@ -184,6 +186,10 @@ export const adaptSalesFormData = (data: any): SalesFormDataResponse => {
     neighborhoods: adaptNeighborhoods(data.neighborhoods || []),
     products: adaptProducts(data.products || []),
     paymentMethods: adaptPaymentMethods(data.paymentMethods || []),
+    paymentMethodSaleTypes: (data.paymentMethodSaleTypes || []).map((item: any) => ({
+      paymentMethodId: item.payment_method_id,
+      saleTypeId: item.sale_type_id,
+    })),
     situations: adaptSituations(data.situations || []),
     stockTypes: adaptStockTypes(data.stockTypes || []),
   };
@@ -281,6 +287,7 @@ export const adaptSaleById = (data: any) => ({
     confirmationCode: p.confirmation_code || "",
     voucherUrl: p.voucher_url || "",
     voucherPreview: p.voucher_url || undefined,
+    businessAccountId: p.business_account_id?.toString() || "",
   })),
   currentSituation: data.current_situation?.situation_id?.toString() || "",
   currentStatusCode: data.current_situation?.statuses?.code || "",

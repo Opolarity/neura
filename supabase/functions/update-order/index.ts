@@ -224,6 +224,7 @@ Deno.serve(async (req) => {
         subtotal: input.subtotal,
         discount: input.discount,
         total: input.total,
+        change: input.change || 0,
     };
 
     if (priceListCode !== undefined) {
@@ -313,26 +314,58 @@ Deno.serve(async (req) => {
         .single();
       const saleMovementTypeId = saleMovementType?.id || 1;
 
+      // Get movement class for orders (ORD)
+      const { data: ordMovementClass } = await supabase
+        .from("classes")
+        .select("id, module_id, modules!inner(code)")
+        .eq("code", "ORD")
+        .eq("modules.code", "MOV")
+        .single();
+      const ordMovementClassId = ordMovementClass?.id || 1;
+
+      // Get egress movement type (OUT)
+      const { data: egressType } = await supabase
+        .from("types")
+        .select("id, module_id, modules!inner(code)")
+        .eq("code", "OUT")
+        .eq("modules.code", "MOV")
+        .single();
+      const egressTypeId = egressType?.id || 28;
+
+      // Get ingress movement type (INC)
+      const { data: ingressType } = await supabase
+        .from("types")
+        .select("id, module_id, modules!inner(code)")
+        .eq("code", "INC")
+        .eq("modules.code", "MOV")
+        .single();
+      const ingressTypeId = ingressType?.id || 27;
+
       await supabase.from("order_payment").delete().eq("order_id", orderId);
 
       const createdPayments = [];
       for (let i = 0; i < input.payments.length; i++) {
         const payment = input.payments[i];
 
-        const { data: paymentMethod } = await supabase
-          .from("payment_methods")
-          .select("business_account_id")
-          .eq("id", payment.payment_method_id)
-          .single();
+        // Determine business_account_id: use override from payment if provided, else fallback to payment_method's
+        let resolvedBusinessAccountId = payment.business_account_id;
+        if (!resolvedBusinessAccountId || resolvedBusinessAccountId === 0) {
+          const { data: paymentMethod } = await supabase
+            .from("payment_methods")
+            .select("business_account_id")
+            .eq("id", payment.payment_method_id)
+            .single();
+          resolvedBusinessAccountId = paymentMethod?.business_account_id || 1;
+        }
 
         const { data: movement, error: movError } = await supabase
           .from("movements")
           .insert({
             amount: payment.amount,
             branch_id: profile.branch_id,
-            business_account_id: paymentMethod?.business_account_id || 1,
-            movement_class_id: movementClassId,
-            movement_type_id: saleMovementTypeId,
+            business_account_id: resolvedBusinessAccountId,
+            movement_class_id: ordMovementClassId,
+            movement_type_id: ingressTypeId,
             payment_method_id: payment.payment_method_id,
             movement_date: payment.date,
             user_id: user.id,
@@ -356,6 +389,7 @@ Deno.serve(async (req) => {
             gateway_confirmation_code: payment.confirmation_code,
             voucher_url: payment.voucher_url,
             movement_id: movement?.id || 0,
+            business_acount_id: resolvedBusinessAccountId,
           })
           .select("id")
           .single();
@@ -366,6 +400,52 @@ Deno.serve(async (req) => {
             localIndex: i,
           });
         }
+      }
+
+      // Step 6.5: Handle change entries (vueltos) as negative order_payments
+      const changeEntries = input.change_entries || [];
+      for (const changeEntry of changeEntries) {
+        let changeBusinessAccountId = changeEntry.business_account_id;
+        if (!changeBusinessAccountId || changeBusinessAccountId === 0) {
+          const { data: pm } = await supabase
+            .from("payment_methods")
+            .select("business_account_id")
+            .eq("id", changeEntry.payment_method_id)
+            .single();
+          changeBusinessAccountId = pm?.business_account_id || 1;
+        }
+
+        const { data: changeMov, error: changeMovError } = await supabase
+          .from("movements")
+          .insert({
+            amount: changeEntry.amount,
+            branch_id: profile.branch_id,
+            business_account_id: changeBusinessAccountId,
+            movement_class_id: ordMovementClassId,
+            movement_type_id: egressTypeId,
+            payment_method_id: changeEntry.payment_method_id,
+            movement_date: new Date().toISOString(),
+            user_id: user.id,
+            description: `Vuelto de orden #${orderId}`,
+          })
+          .select("id")
+          .single();
+
+        if (changeMovError) {
+          console.error("Error creating change movement:", changeMovError);
+          continue;
+        }
+
+        await supabase
+          .from("order_payment")
+          .insert({
+            order_id: orderId,
+            payment_method_id: changeEntry.payment_method_id,
+            amount: -changeEntry.amount,
+            date: new Date().toISOString(),
+            movement_id: changeMov?.id || 0,
+            business_acount_id: changeBusinessAccountId,
+          });
       }
     }
 

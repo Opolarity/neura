@@ -4,6 +4,7 @@
 // =============================================
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { getPriceListIsActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +20,7 @@ import type {
   PaginatedProductVariation,
   PaginationMeta,
   OrdersSituationsById,
+  BusinessAccountOption,
 } from "../types";
 import {
   adaptSalesFormData,
@@ -37,7 +39,6 @@ import {
   createOrder,
   updateOrder,
   updateOrderSituation,
-  fetchPriceLists,
   fetchSaleProducts,
   uploadPaymentVoucher,
   updatePaymentVoucherUrl,
@@ -88,6 +89,7 @@ const createEmptyPayment = (): SalePayment => ({
   voucherUrl: "",
   voucherFile: undefined,
   voucherPreview: undefined,
+  businessAccountId: "",
 });
 
 export const useCreateSale = () => {
@@ -118,6 +120,10 @@ export const useCreateSale = () => {
   ]);
   const [currentPayment, setCurrentPayment] =
     useState<SalePayment>(createEmptyPayment());
+  // Change entries state (for returning change to customer)
+  const [changeEntries, setChangeEntries] = useState<SalePayment[]>([]);
+  const [currentChangeEntry, setCurrentChangeEntry] =
+    useState<SalePayment>(createEmptyPayment());
   const [orderSituation, setOrderSituation] = useState<string>("");
   const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
 
@@ -126,6 +132,7 @@ export const useCreateSale = () => {
     null,
   );
   const [allShippingCosts, setAllShippingCosts] = useState<ShippingCost[]>([]);
+  const [businessAccounts, setBusinessAccounts] = useState<BusinessAccountOption[]>([]);
 
   // UI state
   const [clientFound, setClientFound] = useState<boolean | null>(null);
@@ -162,10 +169,11 @@ export const useCreateSale = () => {
     OrdersSituationsById[]
   >([]);
 
-  // Load initial form data and user warehouse
+  // Load initial form data, user warehouse, and business accounts
   useEffect(() => {
     loadFormData();
     loadUserWarehouse();
+    loadBusinessAccounts();
   }, []);
 
   // Load price lists on mount
@@ -343,6 +351,20 @@ export const useCreateSale = () => {
     );
   }, [orderSituation, salesData?.situations]);
 
+  // Computed: Filter payment methods based on selected sale type
+  const filteredPaymentMethods = useMemo(() => {
+    if (!salesData?.paymentMethods) return [];
+    if (!formData.saleType) return salesData.paymentMethods;
+
+    const linkedPmIds = salesData.paymentMethodSaleTypes
+      .filter((pmst) => pmst.saleTypeId.toString() === formData.saleType)
+      .map((pmst) => pmst.paymentMethodId);
+
+    if (linkedPmIds.length === 0) return [];
+
+    return salesData.paymentMethods.filter((pm) => linkedPmIds.includes(pm.id));
+  }, [formData.saleType, salesData?.paymentMethods, salesData?.paymentMethodSaleTypes]);
+
   // Load form data from API
   const loadFormData = async () => {
     try {
@@ -432,7 +454,7 @@ export const useCreateSale = () => {
   const loadPriceLists = async () => {
     try {
       setPriceListsLoading(true);
-      const data = await fetchPriceLists();
+      const data = await getPriceListIsActiveTrue();
       setPriceLists(adaptPriceLists(data || []));
     } catch (error) {
       console.error("Error loading price lists:", error);
@@ -443,6 +465,22 @@ export const useCreateSale = () => {
       });
     } finally {
       setPriceListsLoading(false);
+    }
+  };
+
+  // Load business accounts from shared service
+  const loadBusinessAccounts = async () => {
+    try {
+      const data = await getBusinessAccountIsActiveTrue();
+      setBusinessAccounts(
+        (data || []).map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          bank: item.bank,
+        }))
+      );
+    } catch (error) {
+      console.error("Error loading business accounts:", error);
     }
   };
 
@@ -484,9 +522,9 @@ export const useCreateSale = () => {
     }
   };
 
-  // Handle price list selection from modal
-  const handleSelectPriceList = useCallback((id: string) => {
-    setFormData((prev) => ({ ...prev, priceListId: id }));
+  // Handle price list and sale type selection from modal
+  const handleSelectPriceList = useCallback((id: string, saleTypeId?: string) => {
+    setFormData((prev) => ({ ...prev, priceListId: id, ...(saleTypeId ? { saleType: saleTypeId } : {}) }));
     setShowPriceListModal(false);
   }, []);
 
@@ -532,9 +570,9 @@ export const useCreateSale = () => {
   // Handle form input changes
   const handleInputChange = useCallback(
     (field: keyof SaleFormData, value: string | boolean) => {
-      // Debug: Log when saleType changes
+      // When saleType changes, reset current payment method selection
       if (field === "saleType") {
-        console.log("[CreateSale] handleInputChange saleType:", value);
+        setCurrentPayment(createEmptyPayment());
       }
       
       // When document type changes to persona jurídica, clear lastname fields
@@ -628,9 +666,18 @@ export const useCreateSale = () => {
   // Handle current payment changes
   const handlePaymentChange = useCallback(
     (field: keyof SalePayment, value: string) => {
-      setCurrentPayment((prev) => ({ ...prev, [field]: value }));
+      if (field === "paymentMethodId") {
+        // When payment method changes, auto-assign businessAccountId if non-zero
+        const method = filteredPaymentMethods.find((pm) => pm.id.toString() === value);
+        const autoAccountId = method?.businessAccountId && method.businessAccountId !== 0
+          ? method.businessAccountId.toString()
+          : "";
+        setCurrentPayment((prev) => ({ ...prev, paymentMethodId: value, businessAccountId: autoAccountId }));
+      } else {
+        setCurrentPayment((prev) => ({ ...prev, [field]: value }));
+      }
     },
-    [],
+    [filteredPaymentMethods],
   );
 
   // Handle voucher file selection
@@ -655,12 +702,40 @@ export const useCreateSale = () => {
     }));
   }, []);
 
+  // Check if selected payment method needs manual business account selection (for payments)
+  const needsBusinessAccountSelect = useMemo(() => {
+    if (!currentPayment.paymentMethodId) return false;
+    const method = filteredPaymentMethods.find(
+      (pm) => pm.id.toString() === currentPayment.paymentMethodId
+    );
+    return method?.businessAccountId === 0 || method?.businessAccountId === null;
+  }, [currentPayment.paymentMethodId, filteredPaymentMethods]);
+
+  // Check if selected payment method needs manual business account selection (for change entries)
+  const needsChangeBusinessAccountSelect = useMemo(() => {
+    if (!currentChangeEntry.paymentMethodId) return false;
+    const method = filteredPaymentMethods.find(
+      (pm) => pm.id.toString() === currentChangeEntry.paymentMethodId
+    );
+    return method?.businessAccountId === 0 || method?.businessAccountId === null;
+  }, [currentChangeEntry.paymentMethodId, filteredPaymentMethods]);
+
   // Add payment to list
   const addPayment = useCallback(() => {
     if (!currentPayment.paymentMethodId || !currentPayment.amount) {
       toast({
         title: "Error",
         description: "Seleccione método de pago y monto",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate business account selection when needed
+    if (needsBusinessAccountSelect && !currentPayment.businessAccountId) {
+      toast({
+        title: "Error",
+        description: "Seleccione una cuenta de destino para este método de pago",
         variant: "destructive",
       });
       return;
@@ -681,7 +756,7 @@ export const useCreateSale = () => {
       { ...currentPayment, id: crypto.randomUUID() },
     ]);
     setCurrentPayment(createEmptyPayment());
-  }, [currentPayment, toast]);
+  }, [currentPayment, toast, needsBusinessAccountSelect]);
 
   // Remove payment from list
   const removePayment = useCallback((paymentId: string) => {
@@ -697,6 +772,104 @@ export const useCreateSale = () => {
     },
     [],
   );
+
+  // Handle change entry field changes
+  const handleChangeEntryChange = useCallback(
+    (field: keyof SalePayment, value: string) => {
+      if (field === "paymentMethodId") {
+        const method = filteredPaymentMethods.find((pm) => pm.id.toString() === value);
+        const autoAccountId = method?.businessAccountId && method.businessAccountId !== 0
+          ? method.businessAccountId.toString()
+          : "";
+        setCurrentChangeEntry((prev) => ({ ...prev, paymentMethodId: value, businessAccountId: autoAccountId }));
+      } else {
+        setCurrentChangeEntry((prev) => ({ ...prev, [field]: value }));
+      }
+    },
+    [filteredPaymentMethods],
+  );
+
+  // Handle change entry voucher
+  const handleChangeVoucherSelect = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCurrentChangeEntry((prev) => ({
+        ...prev,
+        voucherFile: file,
+        voucherPreview: reader.result as string,
+      }));
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const removeChangeVoucher = useCallback(() => {
+    setCurrentChangeEntry((prev) => ({
+      ...prev,
+      voucherFile: undefined,
+      voucherPreview: undefined,
+    }));
+  }, []);
+
+  // Add change entry to list
+  const addChangeEntry = useCallback(() => {
+    if (!currentChangeEntry.paymentMethodId || !currentChangeEntry.amount) {
+      toast({
+        title: "Error",
+        description: "Seleccione método de pago y monto para el vuelto",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (needsChangeBusinessAccountSelect && !currentChangeEntry.businessAccountId) {
+      toast({
+        title: "Error",
+        description: "Seleccione una cuenta de origen para el vuelto",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const amount = parseFloat(currentChangeEntry.amount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: "Monto inválido",
+        description: "El monto del vuelto debe ser mayor a cero",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate total change entries don't exceed calculated change
+    const existingChangeTotal = changeEntries.reduce(
+      (acc, entry) => acc + (parseFloat(entry.amount) || 0), 0
+    );
+    // We need to compute changeAmount here (totalPaid - total)
+    const totalPaid = payments
+      .filter((p) => p.paymentMethodId && p.amount)
+      .reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+    const calculatedChange = totalPaid - total;
+
+    if (existingChangeTotal + amount > calculatedChange) {
+      toast({
+        title: "Monto excedido",
+        description: "El vuelto total no puede superar el vuelto calculado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setChangeEntries((prev) => [
+      ...prev,
+      { ...currentChangeEntry, id: crypto.randomUUID() },
+    ]);
+    setCurrentChangeEntry(createEmptyPayment());
+  }, [currentChangeEntry, toast, needsChangeBusinessAccountSelect, changeEntries, payments, total]);
+
+  // Remove change entry
+  const removeChangeEntry = useCallback((entryId: string) => {
+    setChangeEntries((prev) => prev.filter((e) => e.id !== entryId));
+  }, []);
 
   // Search client by document
   const handleSearchClient = useCallback(
@@ -1007,6 +1180,15 @@ export const useCreateSale = () => {
         return;
       }
 
+      if (!formData.saleType) {
+        toast({
+          title: "Error",
+          description: "Seleccione un canal de venta",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setSaving(true);
 
       // Debug: Log saleType value being sent
@@ -1016,7 +1198,7 @@ export const useCreateSale = () => {
         const orderData = {
           documentType: isAnonymousPurchase ? "0" : formData.documentType,
           documentNumber: isAnonymousPurchase ? " " : formData.documentNumber,
-          customerName: isAnonymousPurchase ? null : formData.customerName,
+          customerName: formData.customerName || null,
           customerLastname: isAnonymousPurchase ? null : formData.customerLastname,
           customerLastname2: isAnonymousPurchase ? null : (formData.customerLastname2 || null),
           email: formData.email || null,
@@ -1041,7 +1223,10 @@ export const useCreateSale = () => {
           subtotal,
           discount: discountAmount,
           total,
-          isExistingClient, // true if client was found in accounts table
+          change: Math.max(0, payments
+            .filter((p) => p.paymentMethodId && p.amount)
+            .reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0) - total),
+          isExistingClient: isAnonymousPurchase ? true : isExistingClient, // anonymous purchase always uses existing account
           products: products.map((p) => ({
             variationId: p.variationId,
             quantity: p.quantity,
@@ -1057,6 +1242,14 @@ export const useCreateSale = () => {
               date: new Date().toISOString(),
               confirmationCode: p.confirmationCode || null,
               voucherUrl: p.voucherUrl || null,
+              businessAccountId: p.businessAccountId ? parseInt(p.businessAccountId) : null,
+            })),
+          changeEntries: changeEntries
+            .filter((e) => e.paymentMethodId && e.amount)
+            .map((e) => ({
+              paymentMethodId: parseInt(e.paymentMethodId),
+              amount: parseFloat(e.amount) || 0,
+              businessAccountId: e.businessAccountId ? parseInt(e.businessAccountId) : null,
             })),
           initialSituationId: parseInt(orderSituation),
         };
@@ -1142,6 +1335,7 @@ export const useCreateSale = () => {
       formData,
       products,
       payments,
+      changeEntries,
       orderSituation,
       orderId,
       subtotal,
@@ -1204,7 +1398,16 @@ export const useCreateSale = () => {
     isPhySituation,
     isComSituation,
     filteredSituations,
+    filteredPaymentMethods,
+    allPaymentMethods: salesData?.paymentMethods ?? [],
     isAnonymousPurchase,
+    needsBusinessAccountSelect,
+    needsChangeBusinessAccountSelect,
+    businessAccounts,
+
+    // Change entries
+    changeEntries,
+    currentChangeEntry,
 
     // Actions
     setOrderSituation,
@@ -1225,6 +1428,13 @@ export const useCreateSale = () => {
     updateProduct,
     handleSubmit,
     navigate,
+
+    // Change entry actions
+    handleChangeEntryChange,
+    handleChangeVoucherSelect,
+    removeChangeVoucher,
+    addChangeEntry,
+    removeChangeEntry,
 
     // Notes actions
     setNewNoteText,

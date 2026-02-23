@@ -32,6 +32,7 @@ export interface POSSession {
   userId: string;
   warehouseId: number;
   branchId: number;
+  businessAccountId: number;
   openingAmount: number;
   closingAmount: number | null;
   expectedAmount: number | null;
@@ -49,6 +50,7 @@ export interface POSSessionApiResponse {
   user_id: string;
   warehouse_id: number;
   branch_id: number;
+  business_account: number;
   opening_amount: number;
   closing_amount?: number | null;
   expected_amount?: number | null;
@@ -66,6 +68,12 @@ export interface OpenPOSSessionRequest {
   businessAccountId: number;
   openingDifference: number;
   notes?: string;
+}
+
+export interface POSSaleType {
+  id: number;
+  name: string;
+  businessAccountId: number | null;
 }
 
 export interface CashRegister {
@@ -176,6 +184,7 @@ export interface POSPayment {
   paymentMethodName?: string;
   amount: number;
   confirmationCode: string;
+  businessAccountId?: string;
 }
 
 // =============================================
@@ -223,12 +232,21 @@ export interface CreatePOSOrderRequest {
     paymentMethodId: number;
     amount: number;
     confirmationCode: string | null;
+    businessAccountId?: number | null;
+  }>;
+
+  // Change entries (vuelto)
+  changeEntries: Array<{
+    paymentMethodId: number;
+    amount: number;
+    businessAccountId?: number | null;
   }>;
 
   // Totals
   subtotal: number;
   discount: number;
   total: number;
+  change: number;
 
   // POS specific
   initialSituationId: number;

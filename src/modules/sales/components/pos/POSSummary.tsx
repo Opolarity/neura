@@ -10,6 +10,7 @@ interface POSSummaryProps {
   discountAmount: number;
   shippingCost: number;
   total: number;
+  showProducts?: boolean;
 }
 
 export default function POSSummary({
@@ -19,11 +20,12 @@ export default function POSSummary({
   discountAmount,
   shippingCost,
   total,
+  showProducts = false,
 }: POSSummaryProps) {
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <Card className="w-80 flex-shrink-0">
+    <Card className="w-96 flex-shrink-0">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
@@ -66,6 +68,30 @@ export default function POSSummary({
             </span>
           </div>
         </div>
+
+        {/* Product list */}
+        {showProducts && cart.length > 0 && (
+          <div className="space-y-2 border-t pt-4">
+            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1">
+              <ShoppingBag className="w-3 h-3" />
+              PRODUCTOS
+            </div>
+            {cart.map((item) => (
+              <div
+                key={item.variationId}
+                className="flex justify-between items-start text-sm border-b last:border-b-0 pb-2 last:pb-0"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate text-xs">{item.productName}</p>
+                  <p className="text-xs text-muted-foreground">{item.variationName} × {item.quantity}</p>
+                </div>
+                <span className="text-xs font-medium ml-2 whitespace-nowrap">
+                  S/ {formatCurrency(item.price * item.quantity)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Selected customer */}
         {customer.customerName && (

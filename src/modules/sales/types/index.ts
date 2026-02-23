@@ -51,6 +51,7 @@ export interface SalePayment {
   voucherUrl?: string;
   voucherFile?: File;
   voucherPreview?: string;
+  businessAccountId?: string; // manual selection when payment method has business_account_id = 0
 }
 
 // API Response Types
@@ -85,6 +86,14 @@ export interface PriceList {
 export interface PaymentMethod {
   id: number;
   name: string;
+  businessAccountId: number | null;
+  code?: string | null;
+}
+
+export interface BusinessAccountOption {
+  id: number;
+  name: string;
+  bank: string;
 }
 
 export interface Situation {
@@ -175,8 +184,10 @@ export interface SalesFormDataResponse {
   neighborhoods: Neighborhood[];
   products: ProductForSearch[];
   paymentMethods: PaymentMethod[];
+  paymentMethodSaleTypes: { paymentMethodId: number; saleTypeId: number }[];
   situations: Situation[];
   stockTypes: StockType[];
+  
 }
 
 // Create Order Request
@@ -206,6 +217,7 @@ export interface CreateOrderRequest {
   subtotal: number;
   discount: number;
   total: number;
+  change: number;
   isExistingClient: boolean; // true if client exists in accounts table
   products: Array<{
     variationId: number;
@@ -220,6 +232,12 @@ export interface CreateOrderRequest {
     date: string;
     confirmationCode: string | null;
     voucherUrl: string | null;
+    businessAccountId?: number | null;
+  }>;
+  changeEntries: Array<{
+    paymentMethodId: number;
+    amount: number;
+    businessAccountId?: number | null;
   }>;
   initialSituationId: number;
 }

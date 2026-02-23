@@ -56,6 +56,7 @@ const CreateUser = () => {
     isRUC,
     isSearchingDocument,
     isDocumentFound,
+    handleDocumentLookup,
   } = useCreateUser(id, isEdit);
 
   if (fetchingUser) {
@@ -72,7 +73,7 @@ const CreateUser = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="mx-auto max-w-7xl">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Link to="/settings/users">
@@ -99,9 +100,10 @@ const CreateUser = () => {
                     <Label>Tipo de Documento</Label>
                     <Select
                       value={formData.document_type_id}
-                      onValueChange={(val) =>
-                        handleSelectChange("document_type_id", val)
-                      }
+                      onValueChange={(val) => {
+                        handleSelectChange("document_type_id", val);
+                        if (formData.document_number) handleDocumentLookup(val);
+                      }}
                       disabled={isEdit}
                     >
                       <SelectTrigger>
@@ -124,6 +126,7 @@ const CreateUser = () => {
                         placeholder="Ingrese el número"
                         value={formData.document_number}
                         onChange={handleChange}
+                        onBlur={() => handleDocumentLookup()}
                         disabled={isEdit || !formData.document_type_id}
                         className={isSearchingDocument ? "pr-10" : ""}
                       />

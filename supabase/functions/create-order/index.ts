@@ -89,7 +89,8 @@ serve(async (req) => {
       reception_phone: input.reception_phone,
       subtotal: input.subtotal,
       discount: input.discount,
-      total: input.total
+      total: input.total,
+      change: input.change || 0
     };
 
     // Build products array
@@ -107,7 +108,15 @@ serve(async (req) => {
       amount: p.amount,
       date: p.date,
       confirmation_code: p.confirmation_code,
-      voucher_url: p.voucher_url
+      voucher_url: p.voucher_url,
+      business_account_id: p.business_account_id || null,
+    }));
+
+    // Build change entries array
+    const changeEntries = (input.change_entries || []).map((e: any) => ({
+      payment_method_id: e.payment_method_id,
+      amount: e.amount,
+      business_account_id: e.business_account_id || null,
     }));
 
     // Determine if we need to create the client (if not existing)
@@ -170,7 +179,8 @@ serve(async (req) => {
       p_products: products,
       p_payments: payments,
       p_initial_situation_id: input.initial_situation_id,
-      p_is_existing_client: isExistingClient
+      p_is_existing_client: isExistingClient,
+      p_change_entries: changeEntries
     });
 
     if (error) {

@@ -30,7 +30,6 @@ import {
   adaptSalesFormData,
   adaptShippingCosts,
   adaptClientSearchResult,
-  adaptPriceLists,
   getIdInventoryTypeAdapter,
 } from "../adapters";
 import {
@@ -38,10 +37,10 @@ import {
   fetchShippingCosts,
   searchClientByDocument,
   lookupDocument,
-  fetchPriceLists,
   fetchSaleProducts,
   getIdInventoryTypeApi,
 } from "../services";
+import { getPriceListIsActiveTrue, getActivePaymentMethodsBySaleTypeId, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { createPOSOrder } from "../services/POS.service";
 import { filterShippingCostsByLocation } from "../utils";
 
@@ -96,9 +95,13 @@ export const usePOS = () => {
   // Form data (dropdown options)
   const [formData, setFormData] = useState<SalesFormDataResponse | null>(null);
   const [allShippingCosts, setAllShippingCosts] = useState<ShippingCost[]>([]);
+  const [filteredPaymentMethods, setFilteredPaymentMethods] = useState<import("../types").PaymentMethod[]>([]);
+  const [businessAccounts, setBusinessAccounts] = useState<Array<{ id: number; name: string; bank: string }>>([]);
+  const [sessionSaleTypeId, setSessionSaleTypeId] = useState<number | null>(null);
 
   // Products (Step 2)
   const [cart, setCart] = useState<POSCartItem[]>([]);
+  const [generalDiscount, setGeneralDiscount] = useState<number>(0);
   const [paginatedProducts, setPaginatedProducts] = useState<
     PaginatedProductVariation[]
   >([]);
@@ -115,6 +118,7 @@ export const usePOS = () => {
   // Customer (Step 3)
   const [customer, setCustomer] = useState<POSCustomerData>(DEFAULT_CUSTOMER);
   const [clientFound, setClientFound] = useState<boolean | null>(null);
+  const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
 
   // Shipping (Step 4)
   const [shipping, setShipping] = useState<POSShippingData>(DEFAULT_SHIPPING);
@@ -122,6 +126,15 @@ export const usePOS = () => {
   // Payments (Step 5)
   const [payments, setPayments] = useState<POSPayment[]>([]);
   const [currentPayment, setCurrentPayment] = useState<POSPayment>({
+    id: crypto.randomUUID(),
+    paymentMethodId: "",
+    amount: 0,
+    confirmationCode: "",
+  });
+
+  // Change entries (vuelto)
+  const [changeEntries, setChangeEntries] = useState<POSPayment[]>([]);
+  const [currentChangeEntry, setCurrentChangeEntry] = useState<POSPayment>({
     id: crypto.randomUUID(),
     paymentMethodId: "",
     amount: 0,
@@ -168,13 +181,13 @@ export const usePOS = () => {
       const [salesFormData, priceListsData, shippingCostsData, stockTypeData] =
         await Promise.all([
           fetchSalesFormData(),
-          fetchPriceLists(),
+          getPriceListIsActiveTrue(),
           fetchShippingCosts(),
           getIdInventoryTypeApi(),
         ]);
 
       setFormData(adaptSalesFormData(salesFormData));
-      setPriceLists(adaptPriceLists(priceListsData || []));
+      setPriceLists(priceListsData);
       setAllShippingCosts(adaptShippingCosts(shippingCostsData || []));
       setSelectedStockTypeId(
         getIdInventoryTypeAdapter(stockTypeData).toString()
@@ -215,6 +228,39 @@ export const usePOS = () => {
     }
   };
 
+  // Load filtered payment methods based on session's business account → sale type
+  useEffect(() => {
+    const loadFilteredPaymentMethods = async () => {
+      if (!POSSessionHook.session?.businessAccountId) return;
+      
+      // Find the sale type linked to this business account (POS sale type)
+      const { data: saleType } = await supabase
+        .from("sale_types")
+        .select("id")
+        .eq("business_acount_id", POSSessionHook.session.businessAccountId)
+        .eq("pos_sale_type", true)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (saleType?.id) {
+        setSessionSaleTypeId(saleType.id);
+        const methods = await getActivePaymentMethodsBySaleTypeId(saleType.id);
+        setFilteredPaymentMethods(methods.map(m => ({
+          id: m.id,
+          name: m.name,
+          businessAccountId: m.business_account_id,
+          code: m.code,
+        })));
+      }
+
+      // Load business accounts for manual selection
+      const accounts = await getBusinessAccountIsActiveTrue();
+      setBusinessAccounts(accounts.map(a => ({ id: a.id, name: a.name, bank: a.bank })));
+    };
+    
+    loadFilteredPaymentMethods();
+  }, [POSSessionHook.session?.businessAccountId]);
+
   const loadProducts = async (
     page: number,
     search: string,
@@ -252,15 +298,18 @@ export const usePOS = () => {
           return !!configuration?.priceListId && !!configuration?.warehouseId;
         case 3: // Need products in cart
           return cart.length > 0;
-        case 4: // Need customer data
+        case 4: // Need customer data (or anonymous purchase)
           return (
-            !!customer.documentTypeId &&
-            !!customer.documentNumber &&
-            !!customer.customerName
+            isAnonymousPurchase || (
+              !!customer.documentTypeId &&
+              !!customer.documentNumber &&
+              !!customer.customerName
+            )
           );
         case 5: // If requires shipping, need shipping data
           if (customer.requiresShipping) {
             return (
+              !!shipping.shippingMethodId &&
               !!shipping.countryId &&
               !!shipping.stateId &&
               !!shipping.cityId &&
@@ -272,7 +321,7 @@ export const usePOS = () => {
           return true;
       }
     },
-    [configuration, cart, customer, shipping]
+    [configuration, cart, customer, shipping, isAnonymousPurchase]
   );
 
   const nextStep = useCallback(() => {
@@ -525,6 +574,46 @@ export const usePOS = () => {
   }, [customer.documentTypeId, customer.documentNumber, formData]);
 
   // =============================================
+  // ANONYMOUS PURCHASE
+  // =============================================
+
+  const handleAnonymousPurchase = useCallback(async () => {
+    let anonymousName = "No especificado";
+    try {
+      const { data: anonAccount } = await supabase
+        .from("accounts")
+        .select("name, middle_name, last_name, last_name2")
+        .eq("document_type_id", 0)
+        .eq("document_number", " ")
+        .single();
+      if (anonAccount) {
+        anonymousName = [anonAccount.name, anonAccount.middle_name, anonAccount.last_name, anonAccount.last_name2].filter(Boolean).join(" ");
+      }
+    } catch (e) {
+      console.error("Error fetching anonymous account:", e);
+    }
+
+    setCustomer((prev) => ({
+      ...prev,
+      documentTypeId: "",
+      documentNumber: "",
+      customerName: anonymousName,
+      customerLastname: "",
+      customerLastname2: "",
+      isExistingClient: true,
+    }));
+    setIsAnonymousPurchase(true);
+    setClientFound(false);
+
+    // Advance to next step (skip shipping if not required)
+    if (!customer.requiresShipping) {
+      setCurrentStep(5);
+    } else {
+      setCurrentStep(4);
+    }
+  }, [customer.requiresShipping]);
+
+  // =============================================
   // SHIPPING (STEP 4)
   // =============================================
 
@@ -596,16 +685,43 @@ export const usePOS = () => {
       return;
     }
 
-    const paymentMethod = formData?.paymentMethods.find(
+    // Find the selected method in filtered payment methods (POS-specific)
+    const selectedMethod = filteredPaymentMethods.find(
       (pm) => pm.id.toString() === currentPayment.paymentMethodId
     );
+
+    // Determine businessAccountId based on 3 rules
+    let finalBusinessAccountId: string | undefined;
+
+    if (selectedMethod) {
+      const methodBaId = selectedMethod.businessAccountId;
+      if (selectedMethod.code === "CASH") {
+        // Rule 3: Cash → use session's business account
+        finalBusinessAccountId = POSSessionHook.session?.businessAccountId?.toString();
+      } else if (methodBaId && methodBaId !== 0) {
+        // Rule 1: Has a linked account → use it
+        finalBusinessAccountId = methodBaId.toString();
+      } else {
+        // Rule 2: No linked account, not cash → user must select manually
+        if (!currentPayment.businessAccountId) {
+          toast({
+            title: "Error",
+            description: "Seleccione una cuenta de destino",
+            variant: "destructive",
+          });
+          return;
+        }
+        finalBusinessAccountId = currentPayment.businessAccountId;
+      }
+    }
 
     setPayments((prev) => [
       ...prev,
       {
         ...currentPayment,
         id: crypto.randomUUID(),
-        paymentMethodName: paymentMethod?.name,
+        paymentMethodName: selectedMethod?.name,
+        businessAccountId: finalBusinessAccountId,
       },
     ]);
     setCurrentPayment({
@@ -614,7 +730,7 @@ export const usePOS = () => {
       amount: 0,
       confirmationCode: "",
     });
-  }, [currentPayment, formData, toast]);
+  }, [currentPayment, filteredPaymentMethods, POSSessionHook.session, toast]);
 
   const removePayment = useCallback((id: string) => {
     setPayments((prev) => prev.filter((p) => p.id !== id));
@@ -628,7 +744,7 @@ export const usePOS = () => {
   );
 
   // =============================================
-  // COMPUTED VALUES
+  // COMPUTED VALUES (before change entries so changeAmount is available)
   // =============================================
 
   const subtotal = useMemo(() => {
@@ -636,11 +752,12 @@ export const usePOS = () => {
   }, [cart]);
 
   const discountAmount = useMemo(() => {
-    return cart.reduce(
+    const itemDiscounts = cart.reduce(
       (sum, item) => sum + item.discountAmount * item.quantity,
       0
     );
-  }, [cart]);
+    return itemDiscounts + generalDiscount;
+  }, [cart, generalDiscount]);
 
   const shippingCostValue = customer.requiresShipping ? shipping.shippingCost : 0;
 
@@ -663,6 +780,87 @@ export const usePOS = () => {
   }, [totalPaid, total, cart, POSSessionHook.hasActiveSession]);
 
   // =============================================
+  // CHANGE ENTRIES (VUELTO)
+  // =============================================
+
+  const addChangeEntry = useCallback(() => {
+    if (!currentChangeEntry.paymentMethodId || currentChangeEntry.amount <= 0) {
+      toast({
+        title: "Error",
+        description: "Seleccione método de pago y monto para el vuelto",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Determine businessAccountId using same 3 rules as payments
+    const selectedMethod = filteredPaymentMethods.find(
+      (pm) => pm.id.toString() === currentChangeEntry.paymentMethodId
+    );
+
+    let finalBusinessAccountId: string | undefined;
+    if (selectedMethod) {
+      const methodBaId = selectedMethod.businessAccountId;
+      if (selectedMethod.code === "CASH") {
+        finalBusinessAccountId = POSSessionHook.session?.businessAccountId?.toString();
+      } else if (methodBaId && methodBaId !== 0) {
+        finalBusinessAccountId = methodBaId.toString();
+      } else {
+        if (!currentChangeEntry.businessAccountId) {
+          toast({
+            title: "Error",
+            description: "Seleccione una cuenta de origen para el vuelto",
+            variant: "destructive",
+          });
+          return;
+        }
+        finalBusinessAccountId = currentChangeEntry.businessAccountId;
+      }
+    }
+
+    // Validate total change entries don't exceed calculated change
+    const existingChangeTotal = changeEntries.reduce(
+      (acc, entry) => acc + entry.amount, 0
+    );
+    if (existingChangeTotal + currentChangeEntry.amount > changeAmount) {
+      toast({
+        title: "Monto excedido",
+        description: "El vuelto total no puede superar el vuelto calculado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setChangeEntries((prev) => [
+      ...prev,
+      {
+        ...currentChangeEntry,
+        id: crypto.randomUUID(),
+        paymentMethodName: selectedMethod?.name,
+        businessAccountId: finalBusinessAccountId,
+      },
+    ]);
+    setCurrentChangeEntry({
+      id: crypto.randomUUID(),
+      paymentMethodId: "",
+      amount: 0,
+      confirmationCode: "",
+    });
+  }, [currentChangeEntry, filteredPaymentMethods, POSSessionHook.session, changeEntries, changeAmount, toast]);
+
+  const removeChangeEntry = useCallback((id: string) => {
+    setChangeEntries((prev) => prev.filter((e) => e.id !== id));
+  }, []);
+
+  const updateCurrentChangeEntry = useCallback(
+    (field: keyof POSPayment, value: string | number) => {
+      setCurrentChangeEntry((prev) => ({ ...prev, [field]: value }));
+    },
+    []
+  );
+
+
+  // =============================================
   // SUBMIT ORDER
   // =============================================
 
@@ -679,11 +877,8 @@ export const usePOS = () => {
     setSaving(true);
     try {
       // Get "Completado" or first available situation
-      const completedSituation = formData?.situations.find((s) =>
-        s.name.toLowerCase().includes("complet")
-      );
-      const situationId =
-        completedSituation?.id || formData?.situations[0]?.id || 1;
+      // POS orders are always created with "Entregado" situation (id: 20)
+      const situationId = 20;
 
       // Get "Tienda Física" sale type or first available
       const tiendaFisicaType = formData?.saleTypes.find(
@@ -698,14 +893,14 @@ export const usePOS = () => {
 
       const orderData: CreatePOSOrderRequest = {
         priceListId: configuration.priceListId,
-        documentType: customer.documentTypeId,
-        documentNumber: customer.documentNumber,
+        documentType: isAnonymousPurchase ? "0" : customer.documentTypeId,
+        documentNumber: isAnonymousPurchase ? " " : customer.documentNumber,
         customerName: customer.customerName,
-        customerLastname: customer.customerLastname,
-        customerLastname2: customer.customerLastname2 || null,
+        customerLastname: isAnonymousPurchase ? null : customer.customerLastname,
+        customerLastname2: isAnonymousPurchase ? null : (customer.customerLastname2 || null),
         email: customer.email || null,
         phone: customer.phone || null,
-        isExistingClient: customer.isExistingClient,
+        isExistingClient: isAnonymousPurchase ? true : customer.isExistingClient,
         withShipping: customer.requiresShipping,
         shippingMethod: customer.requiresShipping
           ? shipping.shippingMethodId
@@ -738,10 +933,17 @@ export const usePOS = () => {
           paymentMethodId: parseInt(p.paymentMethodId),
           amount: p.amount,
           confirmationCode: p.confirmationCode || null,
+          businessAccountId: p.businessAccountId ? parseInt(p.businessAccountId) : null,
+        })),
+        changeEntries: changeEntries.map((e) => ({
+          paymentMethodId: parseInt(e.paymentMethodId),
+          amount: e.amount,
+          businessAccountId: e.businessAccountId ? parseInt(e.businessAccountId) : null,
         })),
         subtotal,
         discount: discountAmount,
         total,
+        change: changeAmount,
         initialSituationId: situationId,
         saleType: saleTypeId,
       };
@@ -792,6 +994,8 @@ export const usePOS = () => {
     shipping,
     cart,
     payments,
+    changeEntries,
+    changeAmount,
     subtotal,
     discountAmount,
     total,
@@ -802,12 +1006,21 @@ export const usePOS = () => {
   const resetForNewSale = useCallback(() => {
     setCurrentStep(2); // Go back to products step
     setCart([]);
+    setGeneralDiscount(0);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
+    setChangeEntries([]);
     setClientFound(null);
+    setIsAnonymousPurchase(false);
     setSearchQuery("");
     setCurrentPayment({
+      id: crypto.randomUUID(),
+      paymentMethodId: "",
+      amount: 0,
+      confirmationCode: "",
+    });
+    setCurrentChangeEntry({
       id: crypto.randomUUID(),
       paymentMethodId: "",
       amount: 0,
@@ -819,12 +1032,21 @@ export const usePOS = () => {
     setCurrentStep(1);
     setConfiguration(null);
     setCart([]);
+    setGeneralDiscount(0);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
+    setChangeEntries([]);
     setClientFound(null);
+    setIsAnonymousPurchase(false);
     setSearchQuery("");
     setCurrentPayment({
+      id: crypto.randomUUID(),
+      paymentMethodId: "",
+      amount: 0,
+      confirmationCode: "",
+    });
+    setCurrentChangeEntry({
       id: crypto.randomUUID(),
       paymentMethodId: "",
       amount: 0,
@@ -834,46 +1056,59 @@ export const usePOS = () => {
 
   // State for close session modal
   const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
-  const [sessionTotalSales, setSessionTotalSales] = useState(0);
+  const [sessionTotalCashSales, setSessionTotalCashSales] = useState(0);
+  const [sessionBusinessAccountTotal, setSessionBusinessAccountTotal] = useState(0);
 
-  // Calculate session total sales from linked orders
-  const loadSessionTotalSales = useCallback(async () => {
+  // Load session cash sales and business account total
+  const loadSessionCloseData = useCallback(async () => {
     if (!POSSessionHook.session?.id) {
-      setSessionTotalSales(0);
+      setSessionTotalCashSales(0);
+      setSessionBusinessAccountTotal(0);
       return;
     }
 
     try {
-      const { data, error } = await supabase
-        .from("pos_session_orders")
-        .select("order_id, orders(total)")
-        .eq("pos_session_id", POSSessionHook.session.id);
+      // Load total_cash_sales and business_account from pos_sessions
+      const { data: sessionData, error: sessionError } = await supabase
+        .from("pos_sessions")
+        .select("total_cash_sales, business_account")
+        .eq("id", POSSessionHook.session.id)
+        .single();
 
-      if (error) throw error;
+      if (sessionError) throw sessionError;
 
-      const total = data?.reduce((sum, item) => {
-        const order = Array.isArray(item.orders) ? item.orders[0] : item.orders;
-        return sum + ((order as { total?: number })?.total || 0);
-      }, 0) || 0;
+      const cashSales = sessionData?.total_cash_sales ?? 0;
+      setSessionTotalCashSales(cashSales);
 
-      setSessionTotalSales(total);
+      // Load total_amount from business_accounts
+      if (sessionData?.business_account) {
+        const { data: baData, error: baError } = await supabase
+          .from("business_accounts")
+          .select("total_amount")
+          .eq("id", sessionData.business_account)
+          .single();
+
+        if (baError) throw baError;
+        setSessionBusinessAccountTotal(baData?.total_amount ?? 0);
+      }
     } catch (error) {
-      console.error("Error loading session sales:", error);
-      setSessionTotalSales(0);
+      console.error("Error loading session close data:", error);
+      setSessionTotalCashSales(0);
+      setSessionBusinessAccountTotal(0);
     }
   }, [POSSessionHook.session?.id]);
 
   const exitPOS = useCallback(async () => {
-    // Load session total sales and show close modal
-    await loadSessionTotalSales();
+    // Load session data and show close modal
+    await loadSessionCloseData();
     setShowCloseSessionModal(true);
-  }, [loadSessionTotalSales]);
+  }, [loadSessionCloseData]);
 
   const handleCloseSession = useCallback(async (request: { sessionId: number; closingAmount: number; notes?: string }) => {
     try {
       await POSSessionHook.closeSession(request);
       setShowCloseSessionModal(false);
-      navigate("/sales");
+      navigate("/pos");
     } catch {
       // Error is already handled in hook with toast
     }
@@ -933,6 +1168,8 @@ export const usePOS = () => {
     updateCartItem,
     removeFromCart,
     clearCart,
+    generalDiscount,
+    setGeneralDiscount,
     handleProductPageChange: (page: number) => {
       setProductPage(page);
       if (configuration?.warehouseId) {
@@ -950,6 +1187,8 @@ export const usePOS = () => {
     clientFound,
     updateCustomer,
     searchClient,
+    isAnonymousPurchase,
+    handleAnonymousPurchase,
 
     // Shipping (Step 4)
     shipping,
@@ -960,9 +1199,18 @@ export const usePOS = () => {
     // Payments (Step 5)
     payments,
     currentPayment,
+    filteredPaymentMethods,
+    businessAccounts,
     addPayment,
     removePayment,
     updateCurrentPayment,
+
+    // Change entries (vuelto)
+    changeEntries,
+    currentChangeEntry,
+    addChangeEntry,
+    removeChangeEntry,
+    updateCurrentChangeEntry,
 
     // Computed
     subtotal,
@@ -980,7 +1228,8 @@ export const usePOS = () => {
     
     // Close session modal
     showCloseSessionModal,
-    sessionTotalSales,
+    sessionTotalCashSales,
+    sessionBusinessAccountTotal,
     handleCloseSession,
     cancelCloseSession,
   };
