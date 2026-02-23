@@ -50,6 +50,7 @@ Deno.serve(async (req) => {
     const {
       invoice,
       items,
+      shipping_cost,
       tipo_de_comprobante,
       cliente_tipo_de_documento,
       serie,
@@ -59,25 +60,29 @@ Deno.serve(async (req) => {
     } = rpcResult;
 
     // 2. Build NubeFact JSON - NubeFact requires today's date in Peru timezone
-    // Get current time in Peru (UTC-5)
     const now = new Date();
     const peruTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Lima" }));
     const fechaFormatted = `${String(peruTime.getDate()).padStart(2, "0")}-${String(
       peruTime.getMonth() + 1
     ).padStart(2, "0")}-${peruTime.getFullYear()}`;
 
-    const totalGravada = items.reduce((sum: number, item: any) => {
-      const base = item.quantity * item.unit_price - (item.discount || 0);
-      return sum + base;
-    }, 0);
-
-    const totalIgv = +(totalGravada * 0.18).toFixed(2);
-    const totalConIgv = +(totalGravada + totalIgv).toFixed(2);
+    // Items from invoice_items have:
+    // - unit_price: precio del producto (con IGV incluido)
+    // - discount: descuento por producto (con IGV incluido)
+    // - total: lineTotal = (unit_price * quantity) - discount (con IGV incluido)
+    // For NubeFact:
+    // - precio_unitario = unit_price (precio con IGV)
+    // - valor_unitario = (unit_price - discount/quantity) / 1.18 (precio sin IGV, ya descontado)
+    // - igv = total - total / 1.18
+    // - subtotal (base gravada) = total / 1.18
 
     const nubefactItems = items.map((item: any) => {
-      const base = item.quantity * item.unit_price - (item.discount || 0);
-      const valorUnitario = +(base / item.quantity).toFixed(10);
-      const precioUnitario = +(valorUnitario * 1.18).toFixed(10);
+      const discount = item.discount || 0;
+      const lineTotal = item.total; // total con IGV incluido
+      const baseGravada = +(lineTotal / 1.18).toFixed(2);
+      const igv = +(lineTotal - baseGravada).toFixed(2);
+      const precioUnitario = +((item.unit_price * item.quantity - discount) / item.quantity).toFixed(10);
+      const valorUnitario = +(precioUnitario / 1.18).toFixed(10);
 
       return {
         unidad_de_medida: item.measurement_unit || "NIU",
@@ -86,16 +91,44 @@ Deno.serve(async (req) => {
         cantidad: item.quantity,
         valor_unitario: valorUnitario,
         precio_unitario: precioUnitario,
-        descuento: item.discount ? +item.discount.toFixed(2) : "",
-        subtotal: +base.toFixed(2),
+        descuento: "",
+        subtotal: baseGravada,
         tipo_de_igv: 1,
-        igv: +(base * 0.18).toFixed(2),
-        total: +(base * 1.18).toFixed(2),
+        igv: igv,
+        total: +lineTotal.toFixed(2),
         anticipo_regularizacion: false,
         anticipo_documento_serie: "",
         anticipo_documento_numero: "",
       };
     });
+
+    // Add shipping cost as an additional item if > 0
+    const shippingCost = Number(shipping_cost) || 0;
+    if (shippingCost > 0) {
+      const shippingBase = +(shippingCost / 1.18).toFixed(2);
+      const shippingIgv = +(shippingCost - shippingBase).toFixed(2);
+      nubefactItems.push({
+        unidad_de_medida: "ZZ",
+        codigo: "",
+        descripcion: "Costo de envío",
+        cantidad: 1,
+        valor_unitario: +shippingBase.toFixed(10),
+        precio_unitario: +shippingCost.toFixed(10),
+        descuento: "",
+        subtotal: shippingBase,
+        tipo_de_igv: 1,
+        igv: shippingIgv,
+        total: +shippingCost.toFixed(2),
+        anticipo_regularizacion: false,
+        anticipo_documento_serie: "",
+        anticipo_documento_numero: "",
+      });
+    }
+
+    // Calculate totals from all nubefact items
+    const totalGravada = +nubefactItems.reduce((sum: number, i: any) => sum + i.subtotal, 0).toFixed(2);
+    const totalIgv = +nubefactItems.reduce((sum: number, i: any) => sum + i.igv, 0).toFixed(2);
+    const totalConIgv = +nubefactItems.reduce((sum: number, i: any) => sum + i.total, 0).toFixed(2);
 
     // Pad numero to 8 chars with leading zeros
     const numeroPadded = String(numero).padStart(8, "0");
@@ -123,7 +156,7 @@ Deno.serve(async (req) => {
       descuento_global: "",
       total_descuento: "",
       total_anticipo: "",
-      total_gravada: +totalGravada.toFixed(2),
+      total_gravada: totalGravada,
       total_inafecta: "",
       total_exonerada: "",
       total_igv: totalIgv,
