@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ArrowUp, ChevronDown, Eye, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -44,6 +44,8 @@ interface Invoice {
   customer_document_number: string;
   created_at: string;
   invoice_type_id?: number;
+  declared: boolean;
+  invoice_number: string | null;
 }
 
 interface InvoiceType {
@@ -75,6 +77,13 @@ export const SalesInvoicesModal = ({
   const { toast } = useToast();
 
   const [pendingInvoiceType, setPendingInvoiceType] = useState<InvoiceType | null>(null);
+  const [pendingEmitInvoice, setPendingEmitInvoice] = useState<Invoice | null>(null);
+  const [emitting, setEmitting] = useState(false);
+
+  const [pendingValidation, setPendingValidation] = useState<{
+    vinculatedInvoiceId?: number;
+    vinculatedTypeCode?: string;
+  } | null>(null);
 
   useEffect(() => {
     if (open && orderId) {
@@ -102,7 +111,7 @@ export const SalesInvoicesModal = ({
 
       const { data: invoicesData, error: invoicesError } = await supabase
         .from("invoices")
-        .select("id, tax_serie, total_amount, client_name, customer_document_number, created_at, invoice_type_id")
+        .select("id, tax_serie, total_amount, client_name, customer_document_number, created_at, invoice_type_id, declared, invoice_number")
         .in("id", invoiceIds);
 
       if (invoicesError || !invoicesData) {
@@ -160,17 +169,11 @@ export const SalesInvoicesModal = ({
     }
   };
 
-  /**
-   * Validates business rules for non-INV invoice types.
-   * Returns { valid, error?, vinculatedInvoice? }
-   */
   const validateNonInvInvoice = async (
     selectedType: InvoiceType
   ): Promise<{ valid: boolean; error?: string; vinculatedInvoiceId?: number; vinculatedTypeCode?: string }> => {
-    // Get codes of existing invoices linked to this order
     const existingTypeIds = invoices.map((i) => i.invoice_type_id).filter(Boolean);
 
-    // Fetch codes for existing invoice types
     let existingCodes: { id: number; code: string }[] = [];
     if (existingTypeIds.length > 0) {
       const { data } = await supabase
@@ -182,12 +185,10 @@ export const SalesInvoicesModal = ({
 
     const existingCodeValues = existingCodes.map((t) => t.code);
 
-    // Rule 1: No duplicate type
     if (existingTypeIds.includes(selectedType.id)) {
       return { valid: false, error: "Ya existe un comprobante de este tipo vinculado a la orden." };
     }
 
-    // Rule 2: Exclusivity between code 1 and 2
     if (
       (selectedType.code === "1" || selectedType.code === "2") &&
       existingCodeValues.some((c) => c === "1" || c === "2")
@@ -195,7 +196,6 @@ export const SalesInvoicesModal = ({
       return { valid: false, error: "Ya existe una Factura o Boleta vinculada a esta orden. No se puede crear otra." };
     }
 
-    // Rule 3: Dependency for code 3 and 4
     if (
       (selectedType.code === "3" || selectedType.code === "4") &&
       !existingCodeValues.some((c) => c === "1" || c === "2")
@@ -203,7 +203,6 @@ export const SalesInvoicesModal = ({
       return { valid: false, error: "Debe existir una Factura o Boleta antes de crear este tipo de comprobante." };
     }
 
-    // Rule 4: Payment sum must equal order total
     const { data: payments } = await supabase
       .from("order_payment")
       .select("amount")
@@ -214,7 +213,6 @@ export const SalesInvoicesModal = ({
       return { valid: false, error: "La suma de pagos no coincide con el total de la orden." };
     }
 
-    // Find vinculated invoice for codes 3/4
     let vinculatedInvoiceId: number | undefined;
     let vinculatedTypeCode: string | undefined;
     if (selectedType.code === "3" || selectedType.code === "4") {
@@ -251,7 +249,6 @@ export const SalesInvoicesModal = ({
       } else if (typeCode === "2") {
         serieId = saleType.boleta_serie_id;
       } else if (typeCode === "3" || typeCode === "4") {
-        // Use the serie based on the vinculated invoice type
         if (vinculatedTypeCode === "1") {
           serieId = saleType.factura_serie_id;
         } else if (vinculatedTypeCode === "2") {
@@ -276,13 +273,11 @@ export const SalesInvoicesModal = ({
   };
 
   const handleSelectInvoiceType = async (invoiceType: InvoiceType) => {
-    // For INV type, skip validations — just confirm
     if (invoiceType.code === "INV") {
       setPendingInvoiceType(invoiceType);
       return;
     }
 
-    // Validate order status is "COM" for non-INV types
     const { data: lastSituation } = await supabase
       .from("order_situations")
       .select("status_id")
@@ -306,35 +301,26 @@ export const SalesInvoicesModal = ({
       return;
     }
 
-    // Run validations for non-INV
     const result = await validateNonInvInvoice(invoiceType);
     if (!result.valid) {
       toast({ title: "No se puede crear", description: result.error, variant: "destructive" });
       return;
     }
 
-    // Store validation result for use in handleCreateInvoice
     setPendingInvoiceType(invoiceType);
     setPendingValidation(result);
   };
-
-  const [pendingValidation, setPendingValidation] = useState<{
-    vinculatedInvoiceId?: number;
-    vinculatedTypeCode?: string;
-  } | null>(null);
 
   const handleCreateInvoice = async (invoiceType: InvoiceType) => {
     setCreating(true);
     try {
       const isNonInv = invoiceType.code !== "INV";
 
-      // 1. Get tax_serie
       const taxSerie = await getSerieForType(
         invoiceType.code,
         isNonInv ? pendingValidation?.vinculatedTypeCode : undefined
       );
 
-      // 2. Fetch order data
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .select("*")
@@ -346,7 +332,6 @@ export const SalesInvoicesModal = ({
         return;
       }
 
-      // 3. Fetch order products
       const { data: orderProducts, error: productsError } = await supabase
         .from("order_products")
         .select("*")
@@ -357,7 +342,6 @@ export const SalesInvoicesModal = ({
         return;
       }
 
-      // 4. Get customer_document_estate_code for non-INV
       let customerDocumentEstateCode: string | null = null;
       if (isNonInv) {
         const { data: docType } = await supabase
@@ -368,11 +352,9 @@ export const SalesInvoicesModal = ({
         customerDocumentEstateCode = docType?.state_code || null;
       }
 
-      // 5. Calculate totals
       const totalAmount = Number(order.total);
       const totalTaxes = totalAmount - (totalAmount / 1.18);
 
-      // 6. Build items from order products
       const items = orderProducts.map((op) => {
         const lineTotal = (Number(op.product_price) * Number(op.quantity)) - Number(op.product_discount || 0);
         const igv = lineTotal - (lineTotal / 1.18);
@@ -387,10 +369,8 @@ export const SalesInvoicesModal = ({
         };
       });
 
-      // 7. Build client name
       const clientName = [order.customer_name, order.customer_lastname].filter(Boolean).join(" ") || null;
 
-      // 8. Build body
       const body: Record<string, any> = {
         invoice_type_id: invoiceType.id,
         tax_serie: taxSerie,
@@ -405,7 +385,6 @@ export const SalesInvoicesModal = ({
         order_id: orderId,
       };
 
-      // Non-INV specific fields
       if (isNonInv) {
         body.customer_document_estate_code = customerDocumentEstateCode;
         if (pendingValidation?.vinculatedInvoiceId) {
@@ -413,7 +392,6 @@ export const SalesInvoicesModal = ({
         }
       }
 
-      // 9. Call edge function
       const { error: fnError } = await supabase.functions.invoke("create-invoice", { body });
 
       if (fnError) {
@@ -430,9 +408,41 @@ export const SalesInvoicesModal = ({
     }
   };
 
+  const handleEmitInvoice = async (invoice: Invoice) => {
+    setEmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("emit-invoice", {
+        body: { invoice_id: invoice.id },
+      });
+
+      if (error) {
+        toast({ title: "Error", description: "Error al emitir el comprobante", variant: "destructive" });
+        return;
+      }
+
+      if (data?.error) {
+        toast({ title: "Error de emisión", description: data.error, variant: "destructive" });
+        return;
+      }
+
+      toast({ title: "Éxito", description: "Comprobante emitido correctamente a SUNAT" });
+      fetchInvoices();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
+    } finally {
+      setEmitting(false);
+      setPendingEmitInvoice(null);
+    }
+  };
+
+  const getInvoiceTypeCode = (inv: Invoice): string | null => {
+    const type = invoiceTypes.find((t) => t.id === inv.invoice_type_id);
+    return type?.code || null;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[900px]">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -483,31 +493,67 @@ export const SalesInvoicesModal = ({
                 <TableRow>
                   <TableHead>#</TableHead>
                   <TableHead>Tipo</TableHead>
+                  <TableHead>N. Comprobante</TableHead>
                   <TableHead>Serie</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Fecha</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoices.map((inv, index) => (
-                  <TableRow key={inv.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{invoiceTypes.find(t => t.id === inv.invoice_type_id)?.name || "-"}</TableCell>
-                    <TableCell>{inv.tax_serie || "-"}</TableCell>
-                    <TableCell>{inv.client_name || "-"}</TableCell>
-                    <TableCell>S/ {inv.total_amount.toFixed(2)}</TableCell>
-                    <TableCell>
-                      {format(new Date(inv.created_at), "dd/MM/yyyy")}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {invoices.map((inv, index) => {
+                  const typeCode = getInvoiceTypeCode(inv);
+                  const showActions = typeCode !== "INV" && typeCode !== null && !inv.declared;
+                  return (
+                    <TableRow key={inv.id}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{invoiceTypes.find(t => t.id === inv.invoice_type_id)?.name || "-"}</TableCell>
+                      <TableCell>{inv.invoice_number || "-"}</TableCell>
+                      <TableCell>{inv.tax_serie || "-"}</TableCell>
+                      <TableCell>{inv.client_name || "-"}</TableCell>
+                      <TableCell>S/ {inv.total_amount.toFixed(2)}</TableCell>
+                      <TableCell>
+                        {format(new Date(inv.created_at), "dd/MM/yyyy")}
+                      </TableCell>
+                      <TableCell>
+                        {showActions ? (
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Emitir a SUNAT"
+                              onClick={() => setPendingEmitInvoice(inv)}
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Ver comprobante"
+                              onClick={() => {
+                                window.open(`/invoices/edit/${inv.id}`, "_blank");
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
         </div>
       </DialogContent>
 
+      {/* Confirm create invoice */}
       <AlertDialog open={!!pendingInvoiceType} onOpenChange={(alertOpen) => {
         if (!alertOpen) {
           setPendingInvoiceType(null);
@@ -536,6 +582,36 @@ export const SalesInvoicesModal = ({
             >
               {creating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
               Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm emit invoice to SUNAT */}
+      <AlertDialog open={!!pendingEmitInvoice} onOpenChange={(alertOpen) => {
+        if (!alertOpen) {
+          setPendingEmitInvoice(null);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar emisión a SUNAT</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de emitir este comprobante a la SUNAT? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={emitting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={emitting}
+              onClick={() => {
+                if (pendingEmitInvoice) {
+                  handleEmitInvoice(pendingEmitInvoice);
+                }
+              }}
+            >
+              {emitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Emitir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
