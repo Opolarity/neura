@@ -103,7 +103,9 @@ Deno.serve(async (req) => {
       numero,
       sunat_transaction: 1,
       cliente_tipo_de_documento,
-      cliente_numero_de_documento: invoice.customer_document_number || "",
+      cliente_numero_de_documento: (invoice.customer_document_number || "").trim()
+        ? invoice.customer_document_number.trim().padStart(8, "0")
+        : "00000000",
       cliente_denominacion: invoice.client_name || "",
       cliente_direccion: invoice.client_address || "",
       cliente_email: invoice.client_email || "",
