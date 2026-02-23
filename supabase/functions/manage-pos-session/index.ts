@@ -69,7 +69,7 @@ serve(async (req) => {
     // ACTION: OPEN - Open a new cash session
     // =============================================
     if (action === "open") {
-      const { openingAmount, notes, businessAccountId, saleTypeId } = input;
+      const { openingAmount, notes, businessAccountId, openingDifference } = input;
 
       if (!businessAccountId) {
         return new Response(
@@ -103,6 +103,19 @@ serve(async (req) => {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
+      }
+
+      // Update opening_difference if provided
+      const sessionId = data?.session_id || data?.id;
+      if (sessionId && openingDifference !== undefined && openingDifference !== null) {
+        const { error: updateError } = await supabase
+          .from("pos_sessions")
+          .update({ opening_difference: openingDifference })
+          .eq("id", sessionId);
+
+        if (updateError) {
+          console.error("Error updating opening_difference:", updateError);
+        }
       }
 
       return new Response(JSON.stringify({ success: true, session: data }), {

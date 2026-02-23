@@ -219,36 +219,19 @@ export default function ProductsStep({
         </div>
 
         {/* Cart */}
-        <Card className="self-start col-span-2">
-          <CardHeader className="pb-3 space-y-2">
-            {cart.length > 0 && (
-              <div className="space-y-1.5 bg-muted/50 rounded-lg px-3 py-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-medium text-muted-foreground">Subtotal</span>
-                  <span className="text-sm font-medium text-foreground">
-                    S/ {formatCurrency(subtotal)}
-                  </span>
-                </div>
-                {discountAmount > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-medium text-red-600">Descuento</span>
-                    <span className="text-sm font-medium text-red-600">
-                      -S/ {formatCurrency(discountAmount)}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center border-t pt-1.5">
-                  <span className="text-xs font-bold text-foreground">Total</span>
-                  <span className="text-lg font-bold text-foreground">
-                    S/ {formatCurrency(total)}
-                  </span>
-                </div>
-              </div>
-            )}
-            <CardTitle className="text-base flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4" />
-              Carrito ({cart.length})
-            </CardTitle>
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4" />
+                Carrito ({cart.length})
+              </CardTitle>
+              {cart.length > 0 && (
+                <span className="text-lg font-bold text-primary">
+                  S/ {formatCurrency(total)}
+                </span>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {cart.length === 0 ? (
@@ -374,26 +357,6 @@ export default function ProductsStep({
                   );
                 })}
 
-                {/* General discount */}
-                <div className="border-t pt-3 mt-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Descuento general</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs text-muted-foreground">S/</span>
-                    <Input
-                      type="number"
-                      min={0}
-                      step={0.01}
-                      value={generalDiscount || ""}
-                      onChange={(e) => onGeneralDiscountChange(parseFloat(e.target.value) || 0)}
-                      className="h-8 text-sm w-28"
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>

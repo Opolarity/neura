@@ -72,11 +72,8 @@ verify_jwt = false
 [functions.generate-sso-token]
 verify_jwt = false
 
-[functions.emit-invoice]
+[functions.get-pos-sessions-list]
 verify_jwt = false
 
-[functions.create-users]
-verify_jwt = false
-
-[functions.get-stock-movements]
+[functions.get-pos-session-detail]
 verify_jwt = false

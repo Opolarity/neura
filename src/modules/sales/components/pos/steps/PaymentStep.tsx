@@ -98,9 +98,7 @@ export default function PaymentStep({
         <h2 className="text-lg font-semibold">Resumen y Pago</h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        {/* Left column - Payment */}
-        <div className="space-y-6">
+      <div className="max-w-xl mx-auto space-y-6">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -442,92 +440,6 @@ export default function PaymentStep({
               )}
             </CardContent>
           </Card>
-        </div>
-
-        {/* Right column - Sale Summary */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Resumen de Venta</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Totals */}
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})
-                  </span>
-                  <span className="font-medium">S/ {formatCurrency(subtotal)}</span>
-                </div>
-
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Descuentos</span>
-                    <span>- S/ {formatCurrency(discountAmount)}</span>
-                  </div>
-                )}
-
-                {shippingCost > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Costo de Envio</span>
-                    <span className="font-medium">S/ {formatCurrency(shippingCost)}</span>
-                  </div>
-                )}
-
-                <div className="border-t pt-2 flex justify-between">
-                  <span className="text-primary font-medium">TOTAL FINAL</span>
-                  <span className="text-2xl font-bold text-primary">
-                    S/ {formatCurrency(total)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Product list */}
-              {cart.length > 0 && (
-                <div className="space-y-2 border-t pt-4">
-                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1">
-                    <ShoppingBag className="w-3 h-3" />
-                    PRODUCTOS
-                  </div>
-                  {cart.map((item) => (
-                    <div
-                      key={item.variationId}
-                      className="flex justify-between items-start text-sm border-b last:border-b-0 pb-2 last:pb-0"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate text-xs">{item.productName}</p>
-                        <p className="text-xs text-muted-foreground">{item.variationName} × {item.quantity}</p>
-                      </div>
-                      <span className="text-xs font-medium ml-2 whitespace-nowrap">
-                        S/ {formatCurrency(item.price * item.quantity)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Selected customer */}
-              {customer?.customerName && (
-                <div className="border-t pt-4">
-                  <div className="bg-muted rounded-lg p-3">
-                    <div className="flex items-center gap-2 text-xs text-primary font-medium mb-1">
-                      <User className="w-3 h-3" />
-                      CLIENTE SELECCIONADO
-                    </div>
-                    <div className="font-medium text-sm">
-                      {customer.customerName} {customer.customerLastname}
-                    </div>
-                    {customer.documentNumber && (
-                      <div className="text-xs text-muted-foreground">
-                        Doc: {customer.documentNumber}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );

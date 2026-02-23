@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, ShoppingBag } from "lucide-react";
+import { ShoppingCart, User } from "lucide-react";
 import type { POSCartItem, POSCustomerData } from "../../types/POS.types";
 import { formatCurrency } from "../../adapters/POS.adapter";
 
@@ -27,15 +27,23 @@ export default function POSSummary({
   return (
     <Card className="w-96 flex-shrink-0">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Resumen de Venta</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <ShoppingCart className="w-4 h-4" />
+            Resumen ({itemCount} {itemCount === 1 ? "item" : "items"})
+          </CardTitle>
+          {cart.length > 0 && (
+            <span className="text-lg font-bold text-primary">
+              S/ {formatCurrency(total)}
+            </span>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Totals */}
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">
-              Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})
-            </span>
+            <span className="text-muted-foreground">Subtotal</span>
             <span className="font-medium">S/ {formatCurrency(subtotal)}</span>
           </div>
 
@@ -101,6 +109,31 @@ export default function POSSummary({
                   Doc: {customer.documentNumber}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Cart items */}
+        {cart.length > 0 && (
+          <div className="border-t pt-4">
+            <div className="text-xs text-muted-foreground font-medium mb-2">PRODUCTOS</div>
+            <div className="space-y-2 max-h-60 overflow-auto">
+              {cart.map((item) => (
+                <div
+                  key={`${item.variationId}-${item.stockTypeId}`}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="truncate font-medium text-xs">{item.productName}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {item.quantity} x S/ {formatCurrency(item.price)}
+                    </div>
+                  </div>
+                  <span className="font-medium text-xs ml-2">
+                    S/ {formatCurrency(item.quantity * item.price)}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}

@@ -112,66 +112,30 @@ serve(async (req) => {
       selectedChannels,
       productImages,
       variations,
-      resetVariations = false
-    } = await req.json() as {
-      productId: number;
-      productName: string;
-      shortDescription: string;
-      description: string;
-      isVariable: boolean;
-      isActive: boolean;
-      isWeb: boolean;
-      originalIsVariable: boolean;
-      selectedCategories: number[];
-      selectedChannels: number[];
-      productImages: ProductImage[];
-      variations: IncomingVariation[];
-      resetVariations?: boolean;
-    };
+      resetVariations = false,
+    } = body;
 
-    console.log('Updating product:', productId, productName);
-    console.log('Reset variations mode:', resetVariations);
+    console.log("Calling SP sp_update_product for product:", productId);
 
-    // 1. Update basic product data
-    console.log('Updating product basic data...');
-    const { error: productError } = await supabaseAdmin
-      .from('products')
-      .update({
-        title: productName,
-        short_description: shortDescription,
-        description: description,
-        is_variable: isVariable,
-        active: isActive,
-        web: isWeb
-      })
-      .eq('id', productId);
+    // ── Llamar al Stored Procedure ────────────────────────────
+    const { data: spResult, error: spError } = await supabaseAdmin.rpc("sp_update_product", {
+      p_product_id: productId,
+      p_product_name: productName,
+      p_short_description: shortDescription,
+      p_description: description,
+      p_is_variable: isVariable,
+      p_is_active: isActive,
+      p_is_web: isWeb,
+      p_selected_categories: selectedCategories,
+      p_product_images: productImages,
+      p_variations: variations,
+      p_reset_variations: resetVariations,
+      p_user_id: user.id,
+    });
 
-    if (productError) {
-      console.error('Product update error:', productError);
-      throw new Error(`Error al actualizar producto: ${productError.message}`);
-    }
-    console.log('Product updated successfully');
-
-    // 2. Update categories
-    console.log('Deleting old categories...');
-    await supabaseAdmin.from('product_categories').delete().eq('product_id', productId);
-
-    if (selectedCategories.length > 0) {
-      console.log('Inserting new categories...');
-      const categoryInserts: CategoryInsert[] = selectedCategories.map((categoryId: number) => ({
-        product_id: productId,
-        category_id: categoryId
-      }));
-
-      const { error: categoriesError } = await supabaseAdmin
-        .from('product_categories')
-        .insert(categoryInserts);
-
-      if (categoriesError) {
-        console.error('Categories update error:', categoriesError);
-        throw new Error(`Error al actualizar categorías: ${categoriesError.message}`);
-      }
-      console.log('Categories updated successfully');
+    if (spError) {
+      console.error("SP error:", spError);
+      throw new Error(spError.message);
     }
 
     // 2.5. Update channels
