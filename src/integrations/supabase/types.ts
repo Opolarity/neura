@@ -4352,15 +4352,10 @@ export type Database = {
         Returns: Json
       }
       sp_get_payment_method_details: { Args: { p_id: number }; Returns: Json }
-      sp_get_payments_methods:
-        | {
-            Args: { p_page?: number; p_search?: string; p_size?: number }
-            Returns: Json
-          }
-        | {
-            Args: { p_page?: number; p_search?: string; p_size?: number }
-            Returns: Json
-          }
+      sp_get_payments_methods: {
+        Args: { p_page?: number; p_search?: string; p_size?: number }
+        Returns: Json
+      }
       sp_get_price_list: {
         Args: { p_page?: number; p_size?: number }
         Returns: Json
