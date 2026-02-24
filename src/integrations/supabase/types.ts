@@ -2122,6 +2122,7 @@ export type Database = {
           account_id: number
           address: string | null
           address_reference: string | null
+          birthday_day: string | null
           branch_id: number
           city_id: number | null
           country_id: number | null
@@ -2136,6 +2137,7 @@ export type Database = {
           account_id: number
           address?: string | null
           address_reference?: string | null
+          birthday_day?: string | null
           branch_id: number
           city_id?: number | null
           country_id?: number | null
@@ -2150,6 +2152,7 @@ export type Database = {
           account_id?: number
           address?: string | null
           address_reference?: string | null
+          birthday_day?: string | null
           branch_id?: number
           city_id?: number | null
           country_id?: number | null
