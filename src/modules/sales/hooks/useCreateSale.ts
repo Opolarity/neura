@@ -557,6 +557,7 @@ export const useCreateSale = () => {
           ? adapted.payments
           : [createEmptyPayment()]
       );
+      setChangeEntries(adapted.changeEntries || []);
       setOrderSituation(adapted.currentSituation);
       setCurrentStatusCode(adapted.currentStatusCode || "");
       setClientFound(true);
