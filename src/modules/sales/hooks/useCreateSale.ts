@@ -562,6 +562,11 @@ export const useCreateSale = () => {
       setClientFound(true);
       setCreatedOrderId(id);
 
+      // Override warehouse with order's warehouse when editing
+      if (adapted.orderWarehouseId) {
+        setUserWarehouseId(adapted.orderWarehouseId);
+      }
+
       // Detect anonymous purchase: document_type = "0" and document_number = " "
       if (adapted.formData.documentType === "0" && adapted.formData.documentNumber === " ") {
         setIsAnonymousPurchase(true);

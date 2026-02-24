@@ -253,6 +253,7 @@ Deno.serve(async (req) => {
         subtotal: order.subtotal,
         discount: order.discount,
         total: order.total,
+        warehouse_id: warehouseId || null,
       },
       products: enrichedProducts,
       payments: (payments || []).map((p: any) => ({
