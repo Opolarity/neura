@@ -47,6 +47,7 @@ const ProductsTable = ({
               onCheckedChange={() => onToggleAllProductsSelection()}
             />
           </TableHead>
+          <TableHead className="w-16">ID</TableHead>
           <TableHead className="w-20">Imagen</TableHead>
           <TableHead>Producto</TableHead>
           <TableHead>Categoría</TableHead>
@@ -83,6 +84,7 @@ const ProductsTable = ({
                   onCheckedChange={() => onToggleProductSelection(product.id)}
                 />
               </TableCell>
+              <TableCell className="font-mono text-muted-foreground">{product.id}</TableCell>
               <TableCell>
                 <img
                   src={product.image || placeholderImage}
