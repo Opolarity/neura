@@ -1,0 +1,1 @@
+UPDATE functions SET location = '/products/categories' WHERE id = 25;
