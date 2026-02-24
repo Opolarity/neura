@@ -196,11 +196,19 @@ export const SalesInvoicesModal = ({
       return { valid: false, error: "Ya existe una Factura o Boleta vinculada a esta orden. No se puede crear otra." };
     }
 
-    if (
-      (selectedType.code === "3" || selectedType.code === "4") &&
-      !existingCodeValues.some((c) => c === "1" || c === "2")
-    ) {
-      return { valid: false, error: "Debe existir una Factura o Boleta antes de crear este tipo de comprobante." };
+    if (selectedType.code === "3" || selectedType.code === "4") {
+      if (!existingCodeValues.some((c) => c === "1" || c === "2")) {
+        return { valid: false, error: "Debe existir una Factura o Boleta antes de crear este tipo de comprobante." };
+      }
+
+      // Check that the parent invoice (Factura/Boleta) has been declared (declared = true)
+      const parentTypeId = existingCodes.find((t) => t.code === "1" || t.code === "2");
+      if (parentTypeId) {
+        const parentInvoice = invoices.find((i) => i.invoice_type_id === parentTypeId.id);
+        if (parentInvoice && !parentInvoice.declared) {
+          return { valid: false, error: "La Factura o Boleta vinculada debe estar emitida (declarada) antes de crear una Nota de Crédito o Débito." };
+        }
+      }
     }
 
     const { data: payments } = await supabase
