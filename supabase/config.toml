@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.get-pos-session-detail]
 verify_jwt = false
+
+[functions.apply-price-rules]
+verify_jwt = false

@@ -109,6 +109,7 @@ export interface POSCartItem {
   sku: string;
   quantity: number;
   price: number;
+  originalPrice: number; // precio original antes de reglas
   discountAmount: number;
   stockTypeId: number;
   stockTypeName: string;

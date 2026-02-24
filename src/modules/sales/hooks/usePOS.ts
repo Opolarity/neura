@@ -4,6 +4,7 @@
 // =============================================
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { applyPriceRules } from "../rules/applyPriceRules";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -172,6 +173,17 @@ export const usePOS = () => {
       }
     };
   }, [searchQuery, selectedStockTypeId, configuration?.warehouseId]);
+
+  // Apply price rules whenever cart changes
+  useEffect(() => {
+    if (cart.length === 0) return;
+    const run = async () => {
+      const updated = await applyPriceRules(cart);
+      const changed = updated.some((u, i) => u.price !== cart[i].price);
+      if (changed) setCart(updated);
+    };
+    run();
+  }, [cart]);
 
   const loadInitialData = async () => {
     try {
@@ -447,6 +459,7 @@ export const usePOS = () => {
         sku: product.sku,
         quantity: 1,
         price,
+        originalPrice: price,
         discountAmount: 0,
         stockTypeId: parseInt(selectedStockTypeId),
         stockTypeName:
