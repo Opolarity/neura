@@ -4418,19 +4418,35 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_get_sales_list: {
-        Args: {
-          p_end_date?: string
-          p_order?: string
-          p_page?: number
-          p_sale_type?: number
-          p_search?: string
-          p_size?: number
-          p_start_date?: string
-          p_status?: string
-        }
-        Returns: Json
-      }
+      sp_get_sales_list:
+        | {
+            Args: {
+              p_end_date?: string
+              p_order?: string
+              p_page?: number
+              p_sale_type?: number
+              p_search?: string
+              p_size?: number
+              p_start_date?: string
+              p_status?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_branch_id?: number
+              p_end_date?: string
+              p_order?: string
+              p_page?: number
+              p_sale_type?: number
+              p_search?: string
+              p_size?: number
+              p_start_date?: string
+              p_status?: string
+              p_warehouse_id?: number
+            }
+            Returns: Json
+          }
       sp_get_shipping_methods: {
         Args: {
           p_cities?: number
