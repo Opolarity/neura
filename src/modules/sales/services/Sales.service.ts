@@ -33,9 +33,9 @@ export const fetchSalesList = async (
 
 export const fetchSaleTypes = async (): Promise<{ id: number; name: string }[]> => {
   const { data, error } = await supabase
-    .from("types")
+    .from("sale_types")
     .select("id, name")
-    .eq("module_id", 2); // Assuming module_id 2 is for sale types
+    .eq("is_active", true);
 
   if (error) throw error;
   return data || [];
