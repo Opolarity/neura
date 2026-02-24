@@ -70,7 +70,7 @@ const InventoryTable = ({
               (s) => s.id === warehouse.id
             );
 
-            const baseValue = stock?.stock ?? 0;
+            const baseValue = stock?.stock ?? null;
             const value = getStockValue(item, warehouse.id, baseValue);
 
             const numericValue =
@@ -89,7 +89,7 @@ const InventoryTable = ({
               {warehouses.map((warehouse) => {
                 // Buscamos si el producto ya tiene stock en este almacén
                 const stockRecord = item.stock_by_warehouse.find(s => s.id === warehouse.id);
-                const baseValue = stockRecord?.stock ?? 0; // Si no existe, el valor base es 0
+                const baseValue = stockRecord?.stock ?? null; // Si no existe registro, el valor es null (vacío)
 
                 return (
                   <TableCell key={warehouse.id}>
