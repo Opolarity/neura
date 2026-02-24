@@ -1267,10 +1267,15 @@ const CreateSale = () => {
                     <Label>Monto</Label>
                     <Input
                       type="number"
+                      min="0"
+                      step="0.01"
                       value={currentPayment.amount}
-                      onChange={(e) =>
-                        handlePaymentChange("amount", e.target.value)
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || parseFloat(val) >= 0) {
+                          handlePaymentChange("amount", val);
+                        }
+                      }}
                       placeholder={Math.max(0, total - totalPaid).toFixed(2)}
                     />
                   </div>
@@ -1455,8 +1460,15 @@ const CreateSale = () => {
                               <Label>Monto</Label>
                               <Input
                                 type="number"
+                                min="0"
+                                step="0.01"
                                 value={currentChangeEntry.amount}
-                                onChange={(e) => handleChangeEntryChange("amount", e.target.value)}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === '' || parseFloat(val) >= 0) {
+                                    handleChangeEntryChange("amount", val);
+                                  }
+                                }}
                                 placeholder={remainingChange.toFixed(2)}
                               />
                             </div>
