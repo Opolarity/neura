@@ -32,6 +32,8 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    console.log("get-sale-products params:", { p_page, p_size, p_search, p_stock_type_id, p_warehouse_id });
+
     const { data, error } = await supabase.rpc("sp_get_sale_products", {
       p_page,
       p_size,
