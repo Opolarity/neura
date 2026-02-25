@@ -618,6 +618,7 @@ export const useAddProduct = () => {
   return {
     // Mode
     isEditMode,
+    productId,
     
     // Form state
     productName,
