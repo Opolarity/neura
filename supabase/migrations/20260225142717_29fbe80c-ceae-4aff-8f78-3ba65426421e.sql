@@ -1,1 +1,0 @@
-DROP FUNCTION IF EXISTS public.sp_get_shipping_methods(integer, integer, integer, integer, integer, integer, text, integer, integer, text);
