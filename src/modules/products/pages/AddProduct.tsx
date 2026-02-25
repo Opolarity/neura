@@ -53,6 +53,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     setSelectedStockType,
     loading,
     isLoadingProduct,
+    initialDataLoaded,
     showResetVariationsDialog,
     confirmResetVariations,
     cancelResetVariations,
@@ -79,9 +80,16 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     return flattenCategoryTree(tree);
   }, [categories]);
 
+  if (isEditMode && (isLoadingProduct || !initialDataLoaded)) {
+    return (
+      <div className="relative w-full h-[80vh]">
+        <PageLoader message="Cargando datos del producto..." />
+      </div>
+    );
+  }
+
   return (
     <div className="relative space-y-6 min-w-0 overflow-hidden">
-      {isLoadingProduct && <PageLoader message="Cargando datos del producto..." />}
       {/* Reset Variations Confirmation Dialog */}
       <AlertDialog open={showResetVariationsDialog} onOpenChange={(open) => !open && cancelResetVariations()}>
         <AlertDialogContent>
