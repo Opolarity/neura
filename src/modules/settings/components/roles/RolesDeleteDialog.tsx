@@ -29,7 +29,7 @@ export const RolesDeleteDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" hideClose>
         <DialogHeader>
           <DialogTitle>¿Eliminar rol?</DialogTitle>
           <DialogDescription className="pt-4">
