@@ -2,7 +2,8 @@ interface ShippingData {
   data: Array<{
     id: number;
     name_shipping: string;
-    cost: number | null;
+    min_cost: number | null;
+    max_cost: number | null;
     zones: string | null;
   }>;
   page: {
@@ -32,7 +33,8 @@ export interface ShippingFilters {
 export interface Shipping {
   id: number;
   name: string;
-  cost: number;
+  minCost: number;
+  maxCost: number;
   zones: string;
 }
 
