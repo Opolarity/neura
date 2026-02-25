@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Edit, Trash, Loader2 } from "lucide-react";
+import { Eye, Edit, Trash, Loader2 } from "lucide-react";
 import placeholderImage from "@/assets/product-placeholder.png";
 import { Product } from "../../types/Products.types";
 
@@ -21,6 +21,7 @@ interface ProductsTableProps {
   onToggleProductSelection: (productId: number) => void;
   onToggleAllProductsSelection: () => void;
   onGoToProductDetail: (id: number) => void;
+  onViewProduct: (id: number) => void;
   onDeleteClick: (product: Product) => void;
 }
 
@@ -32,6 +33,7 @@ const ProductsTable = ({
   onToggleAllProductsSelection,
   onToggleProductSelection,
   onGoToProductDetail,
+  onViewProduct,
   onDeleteClick,
 }: ProductsTableProps) => {
   return (
@@ -120,7 +122,16 @@ const ProductsTable = ({
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => onViewProduct(product.id)}
+                    title="Ver producto"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => onGoToProductDetail(product.id)}
+                    title="Editar producto"
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
@@ -128,6 +139,7 @@ const ProductsTable = ({
                     variant="destructive"
                     size="sm"
                     onClick={() => onDeleteClick(product)}
+                    title="Eliminar producto"
                   >
                     <Trash className="w-4 h-4" />
                   </Button>

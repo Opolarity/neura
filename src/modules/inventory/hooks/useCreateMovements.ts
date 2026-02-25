@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from '@/hooks/use-toast'
 import { createMovementsTypeStockApi, createStockMovementsEntranceApi, getSaleProducts, getStockByVariationAndTypeApi, getUserWarehouse } from '../services/Movements.service';
-import { getTypes } from '@/shared/services/service';
+import { typesByModuleCode } from '@/shared/services/service';
 import { getProductSalesAdapter, getUserWarehouseAdapter } from '../adapters/Movements.adapter';
-import { getTypesAdapter } from '@/shared/adapters/adapter';
+
 import { ProductSales, UserSummary, ProductSalesFilter, SelectedProduct } from "../types/Movements.types"
 import { Types } from '@/shared/types/type';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
 import { useDebounce } from '@/shared/hooks';
 
 export const useCreateMovements = () => {
+    const navigate = useNavigate();
     const [loadingInitial, setLoadingInitial] = useState(true);
     const [loadingProducts, setLoadingProducts] = useState(true);
     //USER SUMMARY
@@ -214,30 +217,43 @@ export const useCreateMovements = () => {
     };
 
     const sendMovement = async () => {
-        if (movementType.code === "MER") {
-            const transformed = selectedProducts.map(item => ({
-                product_variation_id: item.variationId,
-                quantity: item.quantity,
-                stock_type_id: item.originType.id,
-                movements_type_id: movementType?.id,
-                warehouse_id: userSummary?.warehouse_id
-            }));
-
-            const res = await createStockMovementsEntranceApi(transformed);
-            console.log(res);
-        } else if (movementType.code === "TRS") {
-            const payload = {
-                warehouse_id: userSummary?.warehouse_id,
-                products: selectedProducts.map(item => ({
+        try {
+            if (movementType.code === "MER") {
+                const transformed = selectedProducts.map(item => ({
                     product_variation_id: item.variationId,
                     quantity: item.quantity,
-                    origin_stock_type_code: item.originType.code,
-                    destination_stock_type_code: item.destinationType.code
-                }))
-            };
+                    stock_type_id: item.originType.id,
+                    movements_type_id: movementType?.id,
+                    warehouse_id: userSummary?.warehouse_id
+                }));
 
-            const res = await createMovementsTypeStockApi(payload);
-            console.log(res);
+                await createStockMovementsEntranceApi(transformed);
+            } else if (movementType.code === "TRS") {
+                const payload = {
+                    warehouse_id: userSummary?.warehouse_id,
+                    products: selectedProducts.map(item => ({
+                        product_variation_id: item.variationId,
+                        quantity: item.quantity,
+                        origin_stock_type_code: item.originType.code,
+                        destination_stock_type_code: item.destinationType.code
+                    }))
+                };
+
+                await createMovementsTypeStockApi(payload);
+            }
+
+            toast({
+                title: "Movimiento creado",
+                description: "El movimiento de inventario se creó exitosamente.",
+            });
+            navigate("/inventory/movements");
+        } catch (error) {
+            console.error("Error al crear movimiento:", error);
+            toast({
+                title: "Error",
+                description: "No se pudo crear el movimiento de inventario.",
+                variant: "destructive",
+            });
         }
     }
 
@@ -265,12 +281,12 @@ export const useCreateMovements = () => {
 
             // 2. Tipos necesarios
             const [typesSTMRes, typesSTKRes] = await Promise.all([
-                getTypes("STM"),
-                getTypes("STK")
+                typesByModuleCode("STM"),
+                typesByModuleCode("STK")
             ]);
 
-            const typesSTMAdp = getTypesAdapter(typesSTMRes);
-            const typesSTKAdp = getTypesAdapter(typesSTKRes);
+            const typesSTMAdp = typesSTMRes.map(t => ({ id: t.id, name: t.name, code: t.code }));
+            const typesSTKAdp = typesSTKRes.map(t => ({ id: t.id, name: t.name, code: t.code }));
 
             setMovementTypes(typesSTMAdp);
             setProductStatusTypes(typesSTKAdp);

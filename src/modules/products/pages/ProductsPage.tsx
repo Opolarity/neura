@@ -38,6 +38,7 @@ const Products = () => {
     onApplyFilter,
     goToNewProduct,
     goToProductDetail,
+    goToViewProduct,
     onPageChange,
     onSearchChange,
     onOrderChange,
@@ -82,6 +83,7 @@ const Products = () => {
             selectedProducts={selectedProducts}
             onDeleteClick={handleDeleteClick}
             onGoToProductDetail={goToProductDetail}
+            onViewProduct={goToViewProduct}
             onToggleAllProductsSelection={toggleSelectAll}
             onToggleProductSelection={toggleProductSelection}
           />

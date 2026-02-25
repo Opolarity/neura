@@ -85,7 +85,9 @@ const App = () => (
             <Route index element={<Dashboard />} />
             <Route path="products" element={<Products />}></Route>
             <Route path="categories" element={<Categories />} />
-            <Route path="products/add" element={<AddProduct />} />
+            <Route path="products/add" element={<AddProduct key="add" />} />
+            <Route path="products/edit/:id" element={<AddProduct key="edit" />} />
+            <Route path="products/view/:id" element={<AddProduct key="view" viewOnly />} />
             <Route path="products/costs" element={<ProductCosts />} />
             <Route path="inventory" element={<Inventory />} />
             <Route

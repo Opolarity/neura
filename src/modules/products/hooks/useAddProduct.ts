@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { AddProductService } from '../services/AddProduct.service';
 import { AddProductAdapter } from '../adapters/AddProduct.adapter';
@@ -13,8 +13,7 @@ import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, V
 export const useAddProduct = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const productId = searchParams.get('id');
+  const { id: productId } = useParams<{ id: string }>();
   const isEditMode = !!productId;
   
   // Form state
@@ -619,6 +618,7 @@ export const useAddProduct = () => {
   return {
     // Mode
     isEditMode,
+    productId,
     
     // Form state
     productName,
@@ -671,6 +671,7 @@ export const useAddProduct = () => {
     // Loading
     loading,
     isLoadingProduct,
+    initialDataLoaded,
     
     // Handlers
     toggleCategorySelection,

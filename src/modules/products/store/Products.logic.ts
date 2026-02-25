@@ -163,7 +163,7 @@ export const useProductsLogic = () => {
   };
 
   const handleEditProduct = (productId: number) => {
-    navigate(`/products/add?id=${productId}`);
+    navigate(`/products/edit/${productId}`);
   };
 
   const handleDeleteConfirm = async () => {

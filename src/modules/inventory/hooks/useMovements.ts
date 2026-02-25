@@ -152,8 +152,7 @@ export const useMovements = () => {
     };
 
     const onOrderChange = (order: string) => {
-        const orderValue = order === "none" ? null : order;
-        const newFilters = { ...filters, order: orderValue };
+        const newFilters = { ...filters, order };
         setFilters(newFilters);
         loadMovements(newFilters);
     };
@@ -179,7 +178,7 @@ export const useMovements = () => {
             search: null,
             start_date: null,
             end_date: null,
-            order: null,
+            order: "desc",
         };
         setFilters(resetFilters);
         loadMovements(resetFilters);
