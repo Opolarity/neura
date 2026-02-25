@@ -56,6 +56,7 @@ export const typesByModuleCode = async (moduleCode: string): Promise<Type[]> => 
     .from("modules")
     .select("types(*)")
     .eq("code", moduleCode)
+    .eq("types.is_active", true)
     .order("name")
     .single();
 
