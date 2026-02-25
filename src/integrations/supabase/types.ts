@@ -4239,17 +4239,18 @@ export type Database = {
       }
       sp_ec_get_product_ids: {
         Args: {
-          p_branch_id?: number
-          p_category_id?: number
-          p_order?: string
-          p_price_list_id?: number
-          p_product_ids?: number[]
-          p_sale_price?: boolean
-          p_sale_type_id?: number
-          p_search?: string
-          p_size?: number
-          p_stock_type_id?: number
-          p_warehouse_id?: number
+          p_branch_id: number
+          p_category_id: number
+          p_channel_id: number
+          p_order: string
+          p_price_list_id: number
+          p_product_ids: number[]
+          p_sale_price: boolean
+          p_sale_type_id: number
+          p_search: string
+          p_size: number
+          p_stock_type_id: number
+          p_warehouse_id: number
         }
         Returns: Json
       }
