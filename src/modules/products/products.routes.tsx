@@ -11,6 +11,7 @@ export const productsRoutes: RouteObject[] = [
     children: [
       { index: true, element: <Products /> },
       { path: "add", element: <AddProduct /> },
+      { path: "edit", element: <AddProduct /> },
       { path: "costs", element: <ProductCosts /> },
       { path: "categories", element: <Categories /> }, //BACKEND TIENE QUE ACTUALIZAR ESTA RUTA
       { path: "attributes", element: <Attributes /> },
