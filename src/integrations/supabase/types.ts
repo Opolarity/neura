@@ -3581,6 +3581,7 @@ export type Database = {
           code: string | null
           created_at: string
           id: number
+          is_active: boolean
           module_id: number
           name: string
         }
@@ -3588,6 +3589,7 @@ export type Database = {
           code?: string | null
           created_at?: string
           id?: number
+          is_active?: boolean
           module_id: number
           name: string
         }
@@ -3595,6 +3597,7 @@ export type Database = {
           code?: string | null
           created_at?: string
           id?: number
+          is_active?: boolean
           module_id?: number
           name?: string
         }
