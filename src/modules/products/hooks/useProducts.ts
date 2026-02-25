@@ -109,6 +109,10 @@ export const useProducts = () => {
     navigate(`/products/edit/${id}`);
   };
 
+  const goToViewProduct = (id: number) => {
+    navigate(`/products/view/${id}`);
+  };
+
   const goToNewProduct = () => {
     navigate("/products/add");
   };
@@ -201,6 +205,7 @@ export const useProducts = () => {
     onPageChange,
     handlePageSizeChange,
     goToProductDetail,
+    goToViewProduct,
     goToNewProduct,
     onSearchChange,
     onOpenFilterModal,

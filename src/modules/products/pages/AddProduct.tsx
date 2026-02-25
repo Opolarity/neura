@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { X, Upload, Save, ArrowLeft, ChevronDown } from 'lucide-react';
+import { X, Upload, Save, ArrowLeft, ChevronDown, Edit } from 'lucide-react';
 import WysiwygEditor from '@/components/ui/wysiwyg-editor';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
@@ -18,9 +18,10 @@ import { useAddProduct } from '../hooks/useAddProduct';
 import { PageLoader } from '@/shared/components/page-loader';
 import { buildCategoryTree, flattenCategoryTree } from '../utils/categoryTree';
 
-const AddProduct = () => {
+const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
   const {
     isEditMode,
+    productId,
     productName,
     setProductName,
     shortDescription,
@@ -116,21 +117,29 @@ const AddProduct = () => {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              {isEditMode ? 'Editar Producto' : 'Añadir Producto'}
+              {viewOnly ? 'Ver Producto' : (isEditMode ? 'Editar Producto' : 'Añadir Producto')}
             </h1>
             <p className="text-muted-foreground">
-              {isEditMode ? 'Actualizar la información del producto' : 'Crear un nuevo producto en el catálogo'}
+              {viewOnly ? 'Información del producto (solo lectura)' : (isEditMode ? 'Actualizar la información del producto' : 'Crear un nuevo producto en el catálogo')}
             </p>
           </div>
         </div>
         <div className="flex gap-3">
+          {viewOnly && productId && (
+            <Button variant="outline" onClick={() => navigate(`/products/edit/${productId}`)}>
+              <Edit className="w-4 h-4 mr-2" />
+              Editar
+            </Button>
+          )}
           <Button variant="outline" onClick={() => navigate('/products')}>
-            Cancelar
+            {viewOnly ? 'Volver' : 'Cancelar'}
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            <Save className="w-4 h-4 mr-2" />
-            {loading ? 'Guardando...' : (isEditMode ? 'Actualizar Producto' : 'Guardar Producto')}
-          </Button>
+          {!viewOnly && (
+            <Button onClick={handleSubmit} disabled={loading}>
+              <Save className="w-4 h-4 mr-2" />
+              {loading ? 'Guardando...' : (isEditMode ? 'Actualizar Producto' : 'Guardar Producto')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -153,6 +162,7 @@ const AddProduct = () => {
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
                   placeholder="Ingrese el nombre del producto"
+                  disabled={viewOnly}
                 />
               </div>
 
@@ -163,6 +173,7 @@ const AddProduct = () => {
                 placeholder="Descripción breve del producto"
                 height="200px"
                 toolbar="basic"
+                disabled={viewOnly}
               />
 
               <WysiwygEditor
@@ -172,6 +183,7 @@ const AddProduct = () => {
                 placeholder="Descripción detallada del producto"
                 height="200px"
                 toolbar="full"
+                disabled={viewOnly}
               />
 
               <div className="flex items-center space-x-2">
@@ -179,6 +191,7 @@ const AddProduct = () => {
                   id="isVariable"
                   checked={isVariable}
                   onCheckedChange={setIsVariable}
+                  disabled={viewOnly}
                 />
                 <Label htmlFor="isVariable">¿Es un producto variable?</Label>
               </div>
@@ -201,6 +214,7 @@ const AddProduct = () => {
                   id="isActive"
                   checked={isActive}
                   onCheckedChange={setIsActive}
+                  disabled={viewOnly}
                 />
               </div>
               {channels.map((channel) => (
@@ -210,6 +224,7 @@ const AddProduct = () => {
                     id={`channel-${channel.id}`}
                     checked={selectedChannels.includes(channel.id)}
                     onCheckedChange={() => toggleChannelSelection(channel.id)}
+                    disabled={viewOnly}
                   />
                 </div>
               ))}
@@ -236,7 +251,7 @@ const AddProduct = () => {
                   variant="outline"
                   onClick={() => document.getElementById('images')?.click()}
                   className="w-full"
-                  disabled={loading}
+                  disabled={loading || viewOnly}
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   {loading ? 'Subiendo...' : 'Seleccionar imágenes'}
@@ -251,10 +266,10 @@ const AddProduct = () => {
                       <div
                         key={image.id}
                         className="relative aspect-square group cursor-move select-none"
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, image.id)}
-                        onDragOver={(e) => handleDragOver(e, image.id)}
-                        onDragEnd={handleDrop}
+                        draggable={!viewOnly}
+                        onDragStart={viewOnly ? undefined : (e) => handleDragStart(e, image.id)}
+                        onDragOver={viewOnly ? undefined : (e) => handleDragOver(e, image.id)}
+                        onDragEnd={viewOnly ? undefined : handleDrop}
                       >
                         <img
                           src={image.preview}
@@ -262,17 +277,19 @@ const AddProduct = () => {
                           className="w-full h-full object-cover rounded-lg border pointer-events-none"
                           draggable={false}
                         />
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="absolute top-1 right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeImage(image.id);
-                          }}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
+                        {!viewOnly && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="absolute top-1 right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeImage(image.id);
+                            }}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        )}
                         <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded pointer-events-none">
                           {image.order + 1}
                         </div>
@@ -306,6 +323,7 @@ const AddProduct = () => {
                       id={`category-${category.id}`}
                       checked={selectedCategories.includes(category.id)}
                       onCheckedChange={() => toggleCategorySelection(category.id)}
+                      disabled={viewOnly}
                     />
                     <Label
                       htmlFor={`category-${category.id}`}
@@ -349,6 +367,7 @@ const AddProduct = () => {
                             variant="outline"
                             role="combobox"
                             className="w-full justify-between"
+                            disabled={viewOnly}
                           >
                             {selectedGroupTerms.length > 0
                               ? `${selectedGroupTerms.length} seleccionado${selectedGroupTerms.length > 1 ? 's' : ''}`
@@ -443,6 +462,7 @@ const AddProduct = () => {
                                     onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                     onChange={(e) => updateVariationPrice(variation.id, pl.id, 'price', e.target.value)}
                                     className="h-8 text-sm"
+                                    disabled={viewOnly}
                                   />
                                 </TableCell>
                                 <TableCell className="p-2">
@@ -453,6 +473,7 @@ const AddProduct = () => {
                                     onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                     onChange={(e) => updateVariationPrice(variation.id, pl.id, 'sale_price', e.target.value)}
                                     className="h-8 text-sm"
+                                    disabled={viewOnly}
                                   />
                                 </TableCell>
                               </React.Fragment>
@@ -524,6 +545,7 @@ const AddProduct = () => {
                                   onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                   onChange={(e) => updateVariationStock(variation.id, wh.id, e.target.value, selectedStockType || undefined)}
                                   className="h-8 text-sm"
+                                  disabled={viewOnly}
                                 />
                               </TableCell>
                             );
