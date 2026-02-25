@@ -38,16 +38,16 @@ const MovementsFilterBar = ({
             </Button>
 
             <Select
-                value={order || "none"}
+                value={order || "desc"}
                 onValueChange={(value) =>
-                    onOrderChange(value === "none" ? "none" : value)
+                    onOrderChange(value)
                 }
             >
                 <SelectTrigger className="w-auto">
                     <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="none">Sin orden</SelectItem>
+                    <SelectItem value="desc">Más reciente</SelectItem>
                     <SelectItem value="alp-asc">Nombre (A-Z)</SelectItem>
                     <SelectItem value="alp-dsc">Nombre (Z-A)</SelectItem>
                     <SelectItem value="cant-dsc">Cantidad más alta</SelectItem>
