@@ -16,6 +16,7 @@ const CategoriesTable = ({ categories, loading, onEdit, onDelete }: CategoriesTa
         <Table>
             <TableHeader>
                 <TableRow>
+                    <TableHead className="w-16">ID</TableHead>
                     <TableHead>Imagen</TableHead>
                     <TableHead>Nombre</TableHead>
                     <TableHead>Descripción</TableHead>
@@ -27,7 +28,7 @@ const CategoriesTable = ({ categories, loading, onEdit, onDelete }: CategoriesTa
             <TableBody>
                 {loading && categories.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
+                        <TableCell colSpan={7} className="text-center py-8">
                             <div className="flex justify-center items-center gap-2">
                                 <Loader2 className="w-4 h-4 animate-spin" />
                                 Cargando categorias...
@@ -36,12 +37,13 @@ const CategoriesTable = ({ categories, loading, onEdit, onDelete }: CategoriesTa
                     </TableRow>
                 ) : categories.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                             No hay categorias registradas.
                         </TableCell>
                     </TableRow>
                 ) : categories.map((category) => (
                     <TableRow key={category.id}>
+                        <TableCell className="font-mono text-muted-foreground">{category.id}</TableCell>
                         <TableCell>
                             <img
                                 src={category.image || productPlaceholder}
