@@ -4192,13 +4192,38 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_ec_create_order: {
+        Args: {
+          p_branch_id?: number
+          p_change_entries?: Json
+          p_initial_situation_id?: number
+          p_is_existing_client?: boolean
+          p_order_data?: Json
+          p_payments?: Json
+          p_price_list_id?: number
+          p_products?: Json
+          p_sale_type_id?: number
+          p_stock_type_id?: number
+          p_user_id?: number
+          p_warehouse_id?: number
+        }
+        Returns: Json
+      }
       sp_ec_get_categories_ids: {
         Args: { p_categories_ids?: number[] }
         Returns: Json
       }
       sp_ec_get_customer_orders: { Args: { p_user_id: string }; Returns: Json }
       sp_ec_get_order_details: {
-        Args: { p_order_id: number; p_user_id: string }
+        Args: {
+          p_branch_id?: number
+          p_order_id?: number
+          p_price_list_id?: number
+          p_sale_type_id?: number
+          p_stock_type_id?: number
+          p_user_id?: string
+          p_warehouse_id?: number
+        }
         Returns: Json
       }
       sp_ec_get_product_detail: {

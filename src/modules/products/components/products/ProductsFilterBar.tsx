@@ -50,8 +50,6 @@ export default function ProductsFilterBar({
           <SelectItem value="none">Sin orden</SelectItem>
           <SelectItem value="alp-asc">Nombre (A-Z)</SelectItem>
           <SelectItem value="alp-dsc">Nombre (Z-A)</SelectItem>
-          <SelectItem value="pri-asc">Precio más bajo</SelectItem>
-          <SelectItem value="pri-dec">Precio más alto</SelectItem>
           <SelectItem value="sto-asc">Stock más bajo</SelectItem>
           <SelectItem value="sto-dsc">Stock más alto</SelectItem>
         </SelectContent>
