@@ -4450,37 +4450,21 @@ export type Database = {
             }
             Returns: Json
           }
-      sp_get_shipping_methods:
-        | {
-            Args: {
-              p_cities?: number
-              p_countries?: number
-              p_max_cost?: number
-              p_min_cost?: number
-              p_neighborhoods?: number
-              p_order?: string
-              p_page?: number
-              p_search?: string
-              p_size?: number
-              p_states?: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_cities?: number
-              p_countries?: number
-              p_max_cost?: number
-              p_min_cost?: number
-              p_neighborhoods?: number
-              p_order?: string
-              p_page?: number
-              p_search?: string
-              p_size?: number
-              p_states?: number
-            }
-            Returns: Json
-          }
+      sp_get_shipping_methods: {
+        Args: {
+          p_cities?: number
+          p_countries?: number
+          p_max_cost?: number
+          p_min_cost?: number
+          p_neighborhoods?: number
+          p_order?: string
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_states?: number
+        }
+        Returns: Json
+      }
       sp_get_stock_byvariation_and_type: {
         Args: {
           p_product_variation_id?: number
