@@ -15,6 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Types as TypesStock } from "@/shared/types/type";
 
@@ -24,6 +25,7 @@ interface CMovementTypeModalProps {
 }
 
 const CMovementTypeModal = ({ types, onTypeStock }: CMovementTypeModalProps) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
   const [isConfirm, setIsConfirm] = useState(false);
   const [typeMovementId, setTypeMovementId] = useState<string>("");
@@ -53,7 +55,7 @@ const CMovementTypeModal = ({ types, onTypeStock }: CMovementTypeModalProps) => 
 
   return (
     <Dialog open={isOpen} onOpenChange={closeModal}>
-      <DialogContent>
+      <DialogContent hideClose>
         <DialogHeader>
           <DialogTitle>Crear Movimiento</DialogTitle>
           <DialogDescription>
@@ -88,6 +90,9 @@ const CMovementTypeModal = ({ types, onTypeStock }: CMovementTypeModalProps) => 
         </div>
 
         <DialogFooter>
+          <Button variant="outline" onClick={() => navigate("/inventory/movements")}>
+            Cancelar
+          </Button>
           <Button onClick={nextStep} disabled={typeMovementId === ""}>
             Continuar
           </Button>
