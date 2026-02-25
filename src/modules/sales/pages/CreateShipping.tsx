@@ -368,7 +368,35 @@ const CreateShipping = () => {
       setShippingId(dataAdapter.id);
       setShippingName(dataAdapter.name);
       setShippingCode(dataAdapter.code);
-      setShippingCosts(dataAdapter.costs);
+
+      // Load location dropdowns for each cost
+      const costsWithLocations = await Promise.all(
+        dataAdapter.costs.map(async (cost) => {
+          let states: State[] = [];
+          let cities: { id: number; name: string }[] = [];
+          let neighborhoods: { id: number; name: string }[] = [];
+
+          if (cost.country_id) {
+            try {
+              states = await getStatesByCountryIdApi(cost.country_id);
+            } catch (e) { console.error(e); }
+          }
+          if (cost.country_id && cost.state_id) {
+            try {
+              cities = await getCitiesByStateIdApi(cost.country_id, cost.state_id);
+            } catch (e) { console.error(e); }
+          }
+          if (cost.country_id && cost.state_id && cost.city_id) {
+            try {
+              neighborhoods = await getDistrictsByCityIdApi(cost.country_id, cost.state_id, cost.city_id);
+            } catch (e) { console.error(e); }
+          }
+
+          return { ...cost, states, cities, neighborhoods };
+        })
+      );
+
+      setShippingCosts(costsWithLocations);
     } catch (error) {
       console.log(error);
     }

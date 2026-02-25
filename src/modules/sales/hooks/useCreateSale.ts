@@ -42,6 +42,7 @@ import {
   updateOrderSituation,
   fetchSaleProducts,
   uploadPaymentVoucher,
+  uploadNoteImage,
   updatePaymentVoucherUrl,
   getIdInventoryTypeApi,
   getOrdersSituationsById,
@@ -557,10 +558,18 @@ export const useCreateSale = () => {
           ? adapted.payments
           : [createEmptyPayment()]
       );
+      setChangeEntries(adapted.changeEntries || []);
       setOrderSituation(adapted.currentSituation);
       setCurrentStatusCode(adapted.currentStatusCode || "");
       setClientFound(true);
       setCreatedOrderId(id);
+
+      // Load notes from DB
+      await loadNotesFromDB(id);
+      // Override warehouse with order's warehouse when editing
+      if (adapted.orderWarehouseId) {
+        setUserWarehouseId(adapted.orderWarehouseId);
+      }
 
       // Detect anonymous purchase: document_type = "0" and document_number = " "
       if (adapted.formData.documentType === "0" && adapted.formData.documentNumber === " ") {
@@ -1128,26 +1137,127 @@ export const useCreateSale = () => {
     [],
   );
 
+  // Load notes from DB for an existing order
+  const loadNotesFromDB = async (orderIdNum: number) => {
+    try {
+      const { data: orderNotes, error } = await (supabase as any)
+        .from("order_notes")
+        .select("note_id")
+        .eq("order_id", orderIdNum);
+
+      if (error) throw error;
+
+      if (orderNotes && orderNotes.length > 0) {
+        const noteIds = orderNotes.map((on: any) => on.note_id);
+        const { data: notesData, error: notesError } = await (supabase as any)
+          .from("notes")
+          .select(`
+            *,
+            profiles:user_id (
+              account_id,
+              accounts:account_id (
+                name,
+                last_name
+              )
+            )
+          `)
+          .in("id", noteIds)
+          .order("created_at", { ascending: true });
+
+        if (notesError) throw notesError;
+
+        const loadedNotes: LocalNote[] = (notesData || []).map((note: any) => ({
+          id: note.id.toString(),
+          message: note.message || "",
+          imagePreview: note.image_url || undefined,
+          createdAt: new Date(note.created_at),
+          userName: note.profiles?.accounts
+            ? `${note.profiles.accounts.name || ""} ${note.profiles.accounts.last_name || ""}`.trim()
+            : "Usuario",
+        }));
+
+        setNotes(loadedNotes);
+      } else {
+        setNotes([]);
+      }
+    } catch (error) {
+      console.error("Error loading notes:", error);
+    }
+  };
+
   // Add a note to the list (chat-style)
-  const addNote = useCallback(() => {
+  const addNote = useCallback(async () => {
     if (!newNoteText.trim() && !noteImageFile) {
       return;
     }
 
+    // If editing (orderId exists), save directly to DB
+    if (orderId) {
+      try {
+        const orderIdNum = parseInt(orderId);
+
+        // 1. Insert note
+        const { data: noteData, error: noteError } = await supabase
+          .from("notes")
+          .insert({ message: newNoteText.trim() || "Archivo adjunto" })
+          .select()
+          .single();
+
+        if (noteError) throw noteError;
+
+        // 2. Upload image if exists
+        if (noteImageFile && noteData) {
+          const imageUrl = await uploadNoteImage(orderIdNum, noteData.id, noteImageFile);
+          await supabase
+            .from("notes")
+            .update({ image_url: imageUrl })
+            .eq("id", noteData.id);
+        }
+
+        // 3. Link note to order
+        const { error: linkError } = await (supabase as any)
+          .from("order_notes")
+          .insert({ order_id: orderIdNum, note_id: noteData.id });
+
+        if (linkError) throw linkError;
+
+        // 4. Reload notes from DB
+        await loadNotesFromDB(orderIdNum);
+
+        setNewNoteText("");
+        setNoteImageFile(null);
+        setNoteImagePreview(null);
+
+        toast({
+          title: "Nota guardada",
+          description: "La nota se ha guardado correctamente",
+        });
+      } catch (error) {
+        console.error("Error saving note:", error);
+        toast({
+          title: "Error",
+          description: "No se pudo guardar la nota",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    // If creating (no orderId), store locally
     const newNote: LocalNote = {
       id: crypto.randomUUID(),
       message: newNoteText.trim(),
       imageFile: noteImageFile || undefined,
       imagePreview: noteImagePreview || undefined,
       createdAt: new Date(),
-      userName: "Usuario", // TODO: Get from auth context
+      userName: "Usuario",
     };
 
     setNotes((prev) => [...prev, newNote]);
     setNewNoteText("");
     setNoteImageFile(null);
     setNoteImagePreview(null);
-  }, [newNoteText, noteImageFile, noteImagePreview]);
+  }, [newNoteText, noteImageFile, noteImagePreview, orderId, toast]);
 
   // Remove a note from the list
   const removeNote = useCallback((noteId: string) => {

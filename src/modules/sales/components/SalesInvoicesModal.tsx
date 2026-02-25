@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { ArrowUp, ChevronDown, Eye, Loader2 } from "lucide-react";
+import { ArrowUp, ChevronDown, Code, Eye, FileText, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -46,6 +46,8 @@ interface Invoice {
   invoice_type_id?: number;
   declared: boolean;
   invoice_number: string | null;
+  pdf_url: string | null;
+  xml_url: string | null;
 }
 
 interface InvoiceType {
@@ -111,7 +113,7 @@ export const SalesInvoicesModal = ({
 
       const { data: invoicesData, error: invoicesError } = await supabase
         .from("invoices")
-        .select("id, tax_serie, total_amount, client_name, customer_document_number, created_at, invoice_type_id, declared, invoice_number")
+        .select("id, tax_serie, total_amount, client_name, customer_document_number, created_at, invoice_type_id, declared, invoice_number, pdf_url, xml_url")
         .in("id", invoiceIds);
 
       if (invoicesError || !invoicesData) {
@@ -196,11 +198,19 @@ export const SalesInvoicesModal = ({
       return { valid: false, error: "Ya existe una Factura o Boleta vinculada a esta orden. No se puede crear otra." };
     }
 
-    if (
-      (selectedType.code === "3" || selectedType.code === "4") &&
-      !existingCodeValues.some((c) => c === "1" || c === "2")
-    ) {
-      return { valid: false, error: "Debe existir una Factura o Boleta antes de crear este tipo de comprobante." };
+    if (selectedType.code === "3" || selectedType.code === "4") {
+      if (!existingCodeValues.some((c) => c === "1" || c === "2")) {
+        return { valid: false, error: "Debe existir una Factura o Boleta antes de crear este tipo de comprobante." };
+      }
+
+      // Check that the parent invoice (Factura/Boleta) has been declared (declared = true)
+      const parentTypeId = existingCodes.find((t) => t.code === "1" || t.code === "2");
+      if (parentTypeId) {
+        const parentInvoice = invoices.find((i) => i.invoice_type_id === parentTypeId.id);
+        if (parentInvoice && !parentInvoice.declared) {
+          return { valid: false, error: "La Factura o Boleta vinculada debe estar emitida (declarada) antes de crear una Nota de Crédito o Débito." };
+        }
+      }
     }
 
     const { data: payments } = await supabase
@@ -505,7 +515,7 @@ export const SalesInvoicesModal = ({
               <TableBody>
                 {invoices.map((inv, index) => {
                   const typeCode = getInvoiceTypeCode(inv);
-                  const showActions = typeCode !== "INV" && typeCode !== null && !inv.declared;
+                  const showEmitAction = typeCode !== "INV" && typeCode !== null && !inv.declared;
                   return (
                     <TableRow key={inv.id}>
                       <TableCell>{index + 1}</TableCell>
@@ -518,32 +528,75 @@ export const SalesInvoicesModal = ({
                         {format(new Date(inv.created_at), "dd/MM/yyyy")}
                       </TableCell>
                       <TableCell>
-                        {showActions ? (
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              title="Emitir a SUNAT"
-                              onClick={() => setPendingEmitInvoice(inv)}
-                            >
-                              <ArrowUp className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              title="Ver comprobante"
-                              onClick={() => {
-                                window.open(`/invoices/edit/${inv.id}`, "_blank");
-                              }}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          "-"
-                        )}
+                        <div className="flex gap-1">
+                          {inv.declared ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="Ver comprobante"
+                                onClick={() => {
+                                  window.open(`/invoices/edit/${inv.id}`, "_blank");
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              {inv.pdf_url && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  title="Ver PDF"
+                                  onClick={() => window.open(inv.pdf_url!, "_blank")}
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {inv.xml_url && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  title="Descargar XML"
+                                  onClick={() => {
+                                    const link = document.createElement("a");
+                                    link.href = inv.xml_url!;
+                                    link.download = `comprobante-${inv.invoice_number || inv.id}.xml`;
+                                    link.click();
+                                  }}
+                                >
+                                  <Code className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </>
+                          ) : showEmitAction ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="Emitir a SUNAT"
+                                onClick={() => setPendingEmitInvoice(inv)}
+                              >
+                                <ArrowUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="Ver comprobante"
+                                onClick={() => {
+                                  window.open(`/invoices/edit/${inv.id}`, "_blank");
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            "-"
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

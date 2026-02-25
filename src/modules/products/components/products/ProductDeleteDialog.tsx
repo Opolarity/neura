@@ -29,7 +29,7 @@ export const ProductDeleteDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" hideClose>
         <DialogHeader>
           <DialogTitle>¿Eliminar producto?</DialogTitle>
           <DialogDescription className="pt-4">

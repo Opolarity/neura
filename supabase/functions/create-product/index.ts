@@ -122,7 +122,8 @@ serve(async (req) => {
         url: img.url,
         order: img.order
       })),
-      p_variations: preparedVariations
+      p_variations: preparedVariations,
+      p_user_id: user.id
     });
 
     if (error) {

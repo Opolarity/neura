@@ -3581,6 +3581,7 @@ export type Database = {
           code: string | null
           created_at: string
           id: number
+          is_active: boolean
           module_id: number
           name: string
         }
@@ -3588,6 +3589,7 @@ export type Database = {
           code?: string | null
           created_at?: string
           id?: number
+          is_active?: boolean
           module_id: number
           name: string
         }
@@ -3595,6 +3597,7 @@ export type Database = {
           code?: string | null
           created_at?: string
           id?: number
+          is_active?: boolean
           module_id?: number
           name?: string
         }
@@ -4095,20 +4098,36 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_create_product: {
-        Args: {
-          p_active: boolean
-          p_categories: number[]
-          p_description: string
-          p_images: Json
-          p_is_variable: boolean
-          p_short_description: string
-          p_title: string
-          p_variations: Json
-          p_web: boolean
-        }
-        Returns: Json
-      }
+      sp_create_product:
+        | {
+            Args: {
+              p_active: boolean
+              p_categories: number[]
+              p_description: string
+              p_images: Json
+              p_is_variable: boolean
+              p_short_description: string
+              p_title: string
+              p_variations: Json
+              p_web: boolean
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_active: boolean
+              p_categories: number[]
+              p_description: string
+              p_images: Json
+              p_is_variable: boolean
+              p_short_description: string
+              p_title: string
+              p_user_id?: string
+              p_variations: Json
+              p_web: boolean
+            }
+            Returns: Json
+          }
       sp_create_return: {
         Args: { p_payload: Json; p_user_id: string }
         Returns: Json
@@ -4418,19 +4437,35 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_get_sales_list: {
-        Args: {
-          p_end_date?: string
-          p_order?: string
-          p_page?: number
-          p_sale_type?: number
-          p_search?: string
-          p_size?: number
-          p_start_date?: string
-          p_status?: string
-        }
-        Returns: Json
-      }
+      sp_get_sales_list:
+        | {
+            Args: {
+              p_end_date?: string
+              p_order?: string
+              p_page?: number
+              p_sale_type?: number
+              p_search?: string
+              p_size?: number
+              p_start_date?: string
+              p_status?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_branch_id?: number
+              p_end_date?: string
+              p_order?: string
+              p_page?: number
+              p_sale_type?: number
+              p_search?: string
+              p_size?: number
+              p_start_date?: string
+              p_status?: string
+              p_warehouse_id?: number
+            }
+            Returns: Json
+          }
       sp_get_shipping_methods: {
         Args: {
           p_cities?: number

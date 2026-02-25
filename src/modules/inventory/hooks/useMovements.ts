@@ -35,7 +35,7 @@ export const useMovements = () => {
         search: null,
         start_date: null,
         end_date: null,
-        order: null,
+        order: "desc",
     });
 
     const loadInitial = async () => {

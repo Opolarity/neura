@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -22,8 +21,32 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
+    // Get user from auth header to extract branch_id and warehouse_id
+    const authHeader = req.headers.get("authorization") || "";
+    let userBranchId: number | null = null;
+    let userWarehouseId: number | null = null;
+
+    if (authHeader.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || supabaseServiceRoleKey);
+      const { data: { user } } = await supabaseAuth.auth.getUser(token);
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("branch_id, warehouse_id")
+          .eq("UID", user.id)
+          .single();
+
+        if (profile) {
+          userBranchId = profile.branch_id || null;
+          userWarehouseId = profile.warehouse_id || null;
+        }
+      }
+    }
+
     const url = new URL(req.url);
-    
+
     const params = {
       p_page: parseInt(url.searchParams.get("page") || "1"),
       p_size: parseInt(url.searchParams.get("size") || "20"),
@@ -35,6 +58,8 @@ Deno.serve(async (req) => {
       p_start_date: url.searchParams.get("start_date") || null,
       p_end_date: url.searchParams.get("end_date") || null,
       p_order: url.searchParams.get("order") || "date_desc",
+      p_branch_id: userBranchId,
+      p_warehouse_id: userWarehouseId,
     };
 
     console.log("Calling sp_get_sales_list with params:", params);

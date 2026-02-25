@@ -138,8 +138,17 @@ export const useInventory = () => {
     value: string,
   ) => {
     const key = getStockKey(item.variation_id, warehouseId);
-    const newValue = value === "" ? null : parseInt(value, 10);
     const originalValue = getOriginalStock(item, warehouseId);
+
+    // Si el campo se vacía:
+    // - Si el stock original es null (no existe registro) → permitir null
+    // - Si el stock original es un número (registro existe) → no permitir vaciar, mínimo 0
+    let newValue: number | null;
+    if (value === "") {
+      newValue = originalValue === null ? null : 0;
+    } else {
+      newValue = parseInt(value, 10);
+    }
 
     setStockChanges((prev) => {
       const newMap = new Map(prev);

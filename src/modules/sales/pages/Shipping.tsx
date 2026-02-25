@@ -127,7 +127,11 @@ const Shipping = () => {
                     
                   </TableCell>*/}
                   <TableCell className="font-medium">{shipping.name}</TableCell>
-                  <TableCell>S/ {shipping.cost}</TableCell>
+                  <TableCell>
+                    {shipping.minCost === shipping.maxCost
+                      ? `S/ ${shipping.minCost.toFixed(2)}`
+                      : `S/ ${shipping.minCost.toFixed(2)} - S/ ${shipping.maxCost.toFixed(2)}`}
+                  </TableCell>
                   <TableCell>{shipping.zones}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
