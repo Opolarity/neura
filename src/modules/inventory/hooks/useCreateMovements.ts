@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from '@/hooks/use-toast'
 import { createMovementsTypeStockApi, createStockMovementsEntranceApi, getSaleProducts, getStockByVariationAndTypeApi, getUserWarehouse } from '../services/Movements.service';
-import { getTypes } from '@/shared/services/service';
+import { typesByModuleCode } from '@/shared/services/service';
 import { getProductSalesAdapter, getUserWarehouseAdapter } from '../adapters/Movements.adapter';
-import { getTypesAdapter } from '@/shared/adapters/adapter';
+
 import { ProductSales, UserSummary, ProductSalesFilter, SelectedProduct } from "../types/Movements.types"
 import { Types } from '@/shared/types/type';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
@@ -281,12 +281,12 @@ export const useCreateMovements = () => {
 
             // 2. Tipos necesarios
             const [typesSTMRes, typesSTKRes] = await Promise.all([
-                getTypes("STM"),
-                getTypes("STK")
+                typesByModuleCode("STM"),
+                typesByModuleCode("STK")
             ]);
 
-            const typesSTMAdp = getTypesAdapter(typesSTMRes);
-            const typesSTKAdp = getTypesAdapter(typesSTKRes);
+            const typesSTMAdp = typesSTMRes.map(t => ({ id: t.id, name: t.name, code: t.code }));
+            const typesSTKAdp = typesSTKRes.map(t => ({ id: t.id, name: t.name, code: t.code }));
 
             setMovementTypes(typesSTMAdp);
             setProductStatusTypes(typesSTKAdp);
