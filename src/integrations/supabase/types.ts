@@ -2129,6 +2129,7 @@ export type Database = {
           created_at: string | null
           is_active: boolean
           neighborhood_id: number | null
+          phone: number | null
           state_id: number | null
           UID: string
           warehouse_id: number
@@ -2144,6 +2145,7 @@ export type Database = {
           created_at?: string | null
           is_active: boolean
           neighborhood_id?: number | null
+          phone?: number | null
           state_id?: number | null
           UID: string
           warehouse_id?: number
@@ -2159,6 +2161,7 @@ export type Database = {
           created_at?: string | null
           is_active?: boolean
           neighborhood_id?: number | null
+          phone?: number | null
           state_id?: number | null
           UID?: string
           warehouse_id?: number
@@ -4011,10 +4014,15 @@ export type Database = {
       }
       sp_add_to_cart: {
         Args: {
+          p_branch_id?: number
           p_cart_id?: number
-          p_quantity: number
+          p_price_list_id?: number
+          p_quantity?: number
+          p_sale_type_id?: number
+          p_stock_type_id?: number
           p_user_id?: string
-          p_variation_id: number
+          p_variation_id?: number
+          p_warehouse_id?: number
         }
         Returns: Json
       }
@@ -4194,28 +4202,45 @@ export type Database = {
         Returns: Json
       }
       sp_ec_get_product_detail: {
-        Args: { p_product_id: number }
+        Args: {
+          p_branch_id?: number
+          p_price_list_id?: number
+          p_product_id?: number
+          p_sale_type_id?: number
+          p_stock_type_id?: number
+          p_warehouse_id?: number
+        }
         Returns: Json
       }
       sp_ec_get_product_ids: {
         Args: {
+          p_branch_id?: number
           p_category_id?: number
           p_order?: string
+          p_price_list_id?: number
           p_product_ids?: number[]
           p_sale_price?: boolean
+          p_sale_type_id?: number
           p_search?: string
           p_size?: number
+          p_stock_type_id?: number
+          p_warehouse_id?: number
         }
         Returns: Json
       }
       sp_ec_get_product_list: {
         Args: {
+          p_branch_id?: number
           p_category_id?: number
           p_order?: string
           p_page?: number
+          p_price_list_id?: number
           p_sale_price?: boolean
+          p_sale_type_id?: number
           p_search?: string
           p_size?: number
+          p_stock_type_id?: number
+          p_warehouse_id?: number
         }
         Returns: Json
       }
@@ -4280,7 +4305,15 @@ export type Database = {
         Returns: Json
       }
       sp_get_cart_details: {
-        Args: { p_cart_id?: number; p_user_id?: string }
+        Args: {
+          p_branch_id?: number
+          p_cart_id?: number
+          p_price_list_id?: number
+          p_sale_type_id?: number
+          p_stock_type_id?: number
+          p_user_id?: string
+          p_warehouse_id?: number
+        }
         Returns: {
           cart_items: Json
           total_amount: number
