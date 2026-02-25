@@ -106,7 +106,7 @@ export const useProducts = () => {
   };
 
   const goToProductDetail = (id: number) => {
-    navigate(`/products/add?id=${id}`);
+    navigate(`/products/edit?id=${id}`);
   };
 
   const goToNewProduct = () => {
