@@ -13,7 +13,8 @@ export const shippingAdapter = (response?: ShippingApiResponse) => {
     (item) => ({
       id: item.id,
       name: item.name_shipping,
-      cost: item.cost ?? 0,
+      minCost: item.min_cost ?? 0,
+      maxCost: item.max_cost ?? 0,
       zones: item.zones ?? "",
     }),
   );
