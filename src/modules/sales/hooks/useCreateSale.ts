@@ -234,17 +234,7 @@ export const useCreateSale = () => {
     load();
   }, [createdOrderId]);
 
-  // Apply price rules whenever products change (only for new sales, not editing)
-  useEffect(() => {
-    if (orderId) return; // Skip price rules in edit mode — use order_products prices as-is
-    if (products.length === 0) return;
-    const run = async () => {
-      const updated = await applyPriceRules(products);
-      const changed = updated.some((u, i) => u.price !== products[i].price);
-      if (changed) setProducts(updated);
-    };
-    run();
-  }, [products, orderId]);
+
 
   // Computed: Available shipping costs based on selected location
   const availableShippingCosts = useMemo(() => {
@@ -344,6 +334,18 @@ export const useCreateSale = () => {
     );
     return currentSituation?.code === "PHY";
   }, [orderSituation, salesData?.situations]);
+
+  // Apply price rules whenever products change (skip when product editing is disabled — PHY situation)
+  useEffect(() => {
+    if (isPhySituation) return;
+    if (products.length === 0) return;
+    const run = async () => {
+      const updated = await applyPriceRules(products);
+      const changed = updated.some((u, i) => u.price !== products[i].price);
+      if (changed) setProducts(updated);
+    };
+    run();
+  }, [products, isPhySituation]);
 
   // Computed: Check if current status has COM code (completed - no payment edits allowed)
   const isComSituation = useMemo(() => {
