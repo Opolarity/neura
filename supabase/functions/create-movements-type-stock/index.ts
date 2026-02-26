@@ -11,12 +11,18 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const authHeader = req.headers.get("Authorization");
 
-    const authHeader = req.headers.get('Authorization')
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error("Missing environment variables");
+    }
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: authHeader },
+      },
+    });
     if (!authHeader) throw new Error('Missing Authorization')
 
     const token = authHeader.replace('Bearer ', '')

@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-channel-code",
 };
 
 Deno.serve(async (req) => {
@@ -10,14 +10,33 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const authHeader = req.headers.get("Authorization");
+  const channel = req.headers.get('x-channel-code');
 
-    if (!supabaseUrl || !anonKey || !authHeader) {
-      throw new Error("Configuración del servidor faltante");
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
+    );
+
+    // Validate channel code
+    const channelInfo = await supabaseClient.from('channels').select('*').eq('code', channel).single();
+    if (channelInfo.error || !channelInfo.data) {
+      console.error('Channel validation error:', channelInfo.error);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Código de canal inválido',
+        details: channelInfo.error ? channelInfo.error.message : 'No channel found'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
+
 
     if (req.method !== "POST") {
       return new Response(
@@ -45,12 +64,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabase = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: "No autorizado. Token inválido." }),
@@ -58,9 +73,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { data, error } = await supabase.rpc("sp_ec_get_order_details", {
+    const { data, error } = await supabaseClient.rpc("sp_ec_get_order_details", {
       p_user_id: user.id,
-      p_order_id: parseInt(order_id)
+      p_order_id: parseInt(order_id),
+      p_price_list_id: channelInfo.data?.price_list_id,
+      p_branch_id: channelInfo.data?.branch_id,
+      p_warehouse_id: channelInfo.data?.warehouse_id,
+      p_stock_type_id: channelInfo.data?.stock_type_id,
+      p_sale_type_id: channelInfo.data?.sale_type_id,
     });
 
     if (error) {

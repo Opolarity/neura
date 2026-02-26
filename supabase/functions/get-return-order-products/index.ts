@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { data, error } = await supabase.rpc("get_document_products", {
+    const { data, error } = await supabase.rpc("sp_get_document_products", {
       p_order_id: order_id ?? null,
       p_return_id: return_id ?? null,
     });

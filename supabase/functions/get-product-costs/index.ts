@@ -11,6 +11,16 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    
+    const authHeader = req.headers.get('Authorization');
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: authHeader ? { Authorization: authHeader } : {},
+      },
+    });
+
     const url = new URL(req.url);
     const page = Number(url.searchParams.get('page') || 1);
     const size = Number(url.searchParams.get('size') || 20);
@@ -21,15 +31,8 @@ Deno.serve(async (req) => {
     const order = url.searchParams.get('order') || null;
     const variation = Number(url.searchParams.get('variation')) || null;
 
+    console.log(`Fetching costs... Mode: ${authHeader ? 'Authenticated' : 'Anonymous'}`);
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    console.log('Fetching product costs data...');
-
-    //Mandamos los parametros a la funcion
     const { data: productsdata, error: productserror } = await supabase.rpc('sp_get_products_costs', {
       p_search: search,
       p_min_cost: mincost,
@@ -39,19 +42,18 @@ Deno.serve(async (req) => {
       p_variation: variation,
       p_page: page,
       p_size: size,
-    })
+    });
 
-    //Validamos si hubo error
     if (productserror) throw productserror;
 
-    //Retornamos la respuesta
     return new Response(JSON.stringify({ products: productsdata }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+
   } catch (error) {
     console.error('Error fetching product costs:', error);
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 400,
+      status: 400, // O 500 según prefieras
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

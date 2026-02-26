@@ -12,17 +12,22 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!supabaseUrl || !supabaseKey) {
+    
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const authHeader = req.headers.get("Authorization");
+
+    if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error("Missing environment variables");
     }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: authHeader },
+      },
+    });
     // Validate auth
-    const authHeader = req.headers.get("authorization")?.split(" ")[1];
+    
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "No authorization header" }), {
         status: 401,
@@ -58,6 +63,8 @@ serve(async (req) => {
         total_free: input.total_free || null,
         total_others: input.total_others || null,
         created_by: user.id,
+        customer_document_estate_code: input.customer_document_estate_code || null,
+        vinculated_invoice_id: input.vinculated_invoice_id || null,
       })
       .select("id")
       .single();

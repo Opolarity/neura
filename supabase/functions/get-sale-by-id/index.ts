@@ -253,14 +253,22 @@ Deno.serve(async (req) => {
         subtotal: order.subtotal,
         discount: order.discount,
         total: order.total,
+        warehouse_id: warehouseId || null,
       },
       products: enrichedProducts,
-      payments: (payments || []).map((p: any) => ({
+      payments: (payments || []).filter((p: any) => p.amount >= 0).map((p: any) => ({
         id: p.id,
         payment_method_id: p.payment_method_id,
         amount: p.amount,
         confirmation_code: p.gateway_confirmation_code,
         voucher_url: p.voucher_url,
+        business_account_id: p.business_acount_id,
+      })),
+      change_entries: (payments || []).filter((p: any) => p.amount < 0).map((p: any) => ({
+        id: p.id,
+        payment_method_id: p.payment_method_id,
+        amount: Math.abs(p.amount),
+        business_account_id: p.business_acount_id,
       })),
       current_situation: situation,
     };

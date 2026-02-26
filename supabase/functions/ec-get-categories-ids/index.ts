@@ -12,10 +12,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    
+
 
     let categories_ids: number[] | null = null;
-    
+
     if (req.method === 'POST') {
       try {
         const body = await req.json();
@@ -28,9 +28,9 @@ Deno.serve(async (req) => {
     if (!categories_ids || (Array.isArray(categories_ids) && categories_ids.length === 0)) {
       return new Response(
         JSON.stringify({ success: true, data: [] }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     // Llamada al Stored Procedure
     const { data, error } = await supabaseClient
       .rpc('sp_ec_get_categories_ids', {
-         p_categories_ids: categories_ids
+        p_categories_ids: categories_ids
       })
 
     if (error) throw error;
@@ -63,14 +63,14 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'Error procesando solicitud', 
-        details: error.message 
+      JSON.stringify({
+        success: false,
+        error: 'Error procesando solicitud',
+        details: error.message
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
   }

@@ -55,6 +55,7 @@ serve(async (req) => {
       isActive, 
       isWeb, 
       selectedCategories, 
+      selectedChannels,
       productImages, 
       variations 
     } = await req.json();
@@ -121,7 +122,8 @@ serve(async (req) => {
         url: img.url,
         order: img.order
       })),
-      p_variations: preparedVariations
+      p_variations: preparedVariations,
+      p_user_id: user.id
     });
 
     if (error) {
@@ -194,6 +196,25 @@ serve(async (req) => {
             }
           }
         }
+      }
+    }
+
+    // Save product channels
+    if (selectedChannels && selectedChannels.length > 0) {
+      const channelInserts = selectedChannels.map((channelId: number) => ({
+        product_id: productId,
+        channel_id: channelId
+      }));
+
+      const { error: channelsError } = await supabaseAdmin
+        .from('product_channels')
+        .insert(channelInserts);
+
+      if (channelsError) {
+        console.error('Error inserting product channels:', channelsError);
+        // Don't throw - channels are secondary
+      } else {
+        console.log(`Inserted ${channelInserts.length} product channels`);
       }
     }
 

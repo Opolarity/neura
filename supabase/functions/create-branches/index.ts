@@ -28,9 +28,16 @@ Deno.serve(async (req) => {
 
     console.log('Create branches:', name);
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const authHeader = req.headers.get("Authorization")!; // El JWT del usuario
+
+    // 2. Creas el cliente usando la Anon Key y pasando la identidad del usuario
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: authHeader },
+      },
+    });
 
     const { error: createbranchesError } = await supabase
       .from('branches')

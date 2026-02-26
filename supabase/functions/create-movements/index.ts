@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -6,84 +5,58 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error("Missing environment variables");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const authHeader = req.headers.get("Authorization");
 
-    const authHeader = req.headers.get("authorization")?.split(" ")[1];
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "No authorization header" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: authHeader ? { Authorization: authHeader } : {},
+      },
+    });
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader);
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
+    let userId = null;
+    let branchId = null;
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("branch_id")
-      .eq("UID", user.id)
-      .single();
-
-    if (profileError || !profile) {
-      return new Response(JSON.stringify({ error: "User profile not found" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      
+      if (!authError && user) {
+        userId = user.id;
+        
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("branch_id")
+          .eq("UID", userId)
+          .single();
+        
+        branchId = profile?.branch_id;
+      }
     }
 
     const input = await req.json();
 
-    if (!input.amount || input.amount <= 0) {
-      return new Response(JSON.stringify({ error: "El monto debe ser mayor a 0" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
+    if (!input.amount || input.amount <= 0) throw new Error("El monto debe ser mayor a 0");
+    if (!input.payment_method_id) throw new Error("Se requiere payment_method_id");
 
-    if (!input.payment_method_id) {
-      return new Response(JSON.stringify({ error: "Se requiere payment_method_id" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-
-    if (!input.movement_type_id) {
-      return new Response(JSON.stringify({ error: "Se requiere movement_type_id (INC o GAS)" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-
-    if (!input.movement_class_id) {
-      return new Response(JSON.stringify({ error: "Se requiere movement_class_id" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
+    console.log(`Creating movement... Mode: ${authHeader ? 'Authenticated' : 'Anonymous'}`);
 
     const { data, error } = await supabase.rpc("sp_create_movement", {
-      p_user_id: user.id,                          
-      p_branch_id: profile.branch_id,              
-      p_amount: input.amount,                      
+      p_user_id: userId,                                  
+      p_branch_id: branchId,              
+      p_amount: input.amount,                       
       p_movement_date: input.movement_date,        
       p_description: input.description || null,    
       p_payment_method_id: input.payment_method_id,
@@ -91,26 +64,16 @@ serve(async (req) => {
       p_movement_class_id: input.movement_class_id 
     });
 
-    if (error) {
-      console.error("Error calling sp_create_movement:", error);
-      return new Response(JSON.stringify({ error: "Failed to create movement", details: error.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
+    if (error) throw error;
 
-    return new Response(JSON.stringify({
-      success: true,
-      movement: data
-    }), {
+    return new Response(JSON.stringify({ success: true, movement: data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
 
   } catch (error) {
-    console.error("Error in create-movement:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: "Internal server error", details: errorMessage }), {
-      status: 500,
+    console.error("Error in create-movement:", error.message);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   }
