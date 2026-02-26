@@ -104,6 +104,7 @@ export interface POSConfiguration {
 
 export interface POSCartItem {
   variationId: number;
+  productId?: number;
   productName: string;
   variationName: string;
   sku: string;

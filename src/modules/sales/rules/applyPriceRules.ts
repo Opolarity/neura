@@ -18,16 +18,48 @@ export async function applyPriceRules<T extends CartItemForRules>(items: T[]): P
   try {
     if (items.length === 0) return items;
 
-    // Debug: log items to detect undefined variationIds
-    const invalidItems = items.filter(
-      (item) => item.variationId == null || isNaN(item.variationId)
+    const missingProductIdItems = items.filter(
+      (item) => Number.isFinite(item.variationId) && !Number.isFinite(item.productId)
     );
-    if (invalidItems.length > 0) {
-      console.error("applyPriceRules: items with invalid variationId detected:", invalidItems);
+
+    const missingVariationIds = [
+      ...new Set(missingProductIdItems.map((item) => item.variationId)),
+    ];
+
+    const productIdByVariation = new Map<number, number>();
+    if (missingVariationIds.length > 0) {
+      const { data: variationRows, error: variationError } = await supabase
+        .from("variations")
+        .select("id, product_id")
+        .in("id", missingVariationIds);
+
+      if (variationError) {
+        console.error("applyPriceRules: error resolving productId by variationId", variationError);
+      } else {
+        (variationRows || []).forEach((row) => {
+          if (Number.isFinite(row.id) && Number.isFinite(row.product_id)) {
+            productIdByVariation.set(row.id, row.product_id);
+          }
+        });
+      }
     }
 
+    const payloadItems = items.map((item) => {
+      const resolvedProductId = Number.isFinite(item.productId)
+        ? item.productId
+        : productIdByVariation.get(item.variationId);
+
+      return {
+        ...item,
+        productId: resolvedProductId,
+        product_id: resolvedProductId,
+        variation_id: item.variationId,
+        product_variation_id: item.variationId,
+      };
+    });
+
     const { data, error } = await supabase.functions.invoke("apply-price-rules", {
-      body: { items },
+      body: { items: payloadItems },
     });
 
     if (error) {
@@ -35,10 +67,19 @@ export async function applyPriceRules<T extends CartItemForRules>(items: T[]): P
       return items;
     }
 
-    const returnedItems = data.items as CartItemForRules[];
-    return items.map((item, i) => ({
+    const returnedItems = (data?.items || []) as CartItemForRules[];
+    const returnedPriceByVariation = new Map<number, number>();
+
+    returnedItems.forEach((item) => {
+      const variationId = item.variationId ?? item.variation_id ?? item.product_variation_id;
+      if (Number.isFinite(variationId) && Number.isFinite(item.price)) {
+        returnedPriceByVariation.set(variationId, item.price);
+      }
+    });
+
+    return items.map((item, index) => ({
       ...item,
-      price: returnedItems[i]?.price ?? item.price,
+      price: returnedPriceByVariation.get(item.variationId) ?? returnedItems[index]?.price ?? item.price,
     }));
   } catch (err) {
     console.error("Error in applyPriceRules:", err);

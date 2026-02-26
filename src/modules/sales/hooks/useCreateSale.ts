@@ -1093,6 +1093,7 @@ export const useCreateSale = () => {
       ...prev,
       {
         variationId: selectedVariation.id,
+        productId: selectedVariation.productId,
         productName: selectedVariation.productTitle,
         variationName: termsNames || selectedVariation.sku,
         sku: selectedVariation.sku,
