@@ -234,8 +234,9 @@ export const useCreateSale = () => {
     load();
   }, [createdOrderId]);
 
-  // Apply price rules whenever products change
+  // Apply price rules whenever products change (only for new sales, not editing)
   useEffect(() => {
+    if (orderId) return; // Skip price rules in edit mode — use order_products prices as-is
     if (products.length === 0) return;
     const run = async () => {
       const updated = await applyPriceRules(products);
@@ -243,7 +244,7 @@ export const useCreateSale = () => {
       if (changed) setProducts(updated);
     };
     run();
-  }, [products]);
+  }, [products, orderId]);
 
   // Computed: Available shipping costs based on selected location
   const availableShippingCosts = useMemo(() => {
