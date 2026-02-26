@@ -60,7 +60,6 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
             <TableHead>Ventas</TableHead>
             <TableHead>Monto Cierre</TableHead>
             <TableHead>Diferencia</TableHead>
-            <TableHead>Estado</TableHead>
             <TableHead>Apertura</TableHead>
             <TableHead>Cierre</TableHead>
             <TableHead>Acciones</TableHead>
@@ -69,7 +68,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={11} className="text-center py-8">
+              <TableCell colSpan={10} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Cargando sesiones...
@@ -78,7 +77,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
             </TableRow>
           ) : sessions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                 {search
                   ? "No se encontraron sesiones"
                   : "No hay sesiones registradas"}
@@ -119,9 +118,6 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                   )}
                 </TableCell>
                 <TableCell>
-                  {getStatusBadge(session.statusCode, session.statusName)}
-                </TableCell>
-                <TableCell>
                   <div className="text-sm">
                     <div>{formatDate(session.openedAt)}</div>
                     <div className="text-muted-foreground">
@@ -138,7 +134,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                       </div>
                     </div>
                   ) : (
-                    "-"
+                    <Badge className="bg-green-500 hover:bg-green-500">Abierto</Badge>
                   )}
                 </TableCell>
                 <TableCell>
