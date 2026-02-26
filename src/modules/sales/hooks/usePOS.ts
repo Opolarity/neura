@@ -453,6 +453,7 @@ export const usePOS = () => {
 
       const newItem: POSCartItem = {
         variationId: product.variationId,
+        productId: product.productId,
         productName: product.productTitle,
         variationName:
           product.terms.map((t) => t.name).join(" / ") || product.sku,

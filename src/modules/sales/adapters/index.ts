@@ -270,6 +270,7 @@ export const adaptSaleById = (data: any) => ({
   },
   products: (data.products || []).map((p: any) => ({
     variationId: p.variation_id,
+    productId: p.product_id,
     productName: p.product_name,
     variationName: p.variation_name,
     sku: p.sku,
