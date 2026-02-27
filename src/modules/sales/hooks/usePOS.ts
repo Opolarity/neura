@@ -308,9 +308,7 @@ export const usePOS = () => {
       switch (step) {
         case 2: // Need configuration
           return !!configuration?.priceListId && !!configuration?.warehouseId;
-        case 3: // Need products in cart
-          return cart.length > 0;
-        case 4: // Need customer data (or anonymous purchase)
+        case 3: // Need customer data (or anonymous purchase)
           return (
             isAnonymousPurchase || (
               !!customer.documentTypeId &&
@@ -318,6 +316,8 @@ export const usePOS = () => {
               !!customer.customerName
             )
           );
+        case 4: // Need products in cart
+          return cart.length > 0;
         case 5: // If requires shipping, need shipping data
           if (customer.requiresShipping) {
             return (
@@ -328,7 +328,7 @@ export const usePOS = () => {
               !!shipping.address
             );
           }
-          return true;
+          return cart.length > 0;
         default:
           return true;
       }
@@ -619,13 +619,9 @@ export const usePOS = () => {
     setIsAnonymousPurchase(true);
     setClientFound(false);
 
-    // Advance to next step (skip shipping if not required)
-    if (!customer.requiresShipping) {
-      setCurrentStep(5);
-    } else {
-      setCurrentStep(4);
-    }
-  }, [customer.requiresShipping]);
+    // Advance to products step
+    setCurrentStep(3);
+  }, []);
 
   // =============================================
   // SHIPPING (STEP 4)
