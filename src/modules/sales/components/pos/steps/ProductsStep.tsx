@@ -219,7 +219,7 @@ export default function ProductsStep({
         </div>
 
         {/* Cart */}
-        <Card className="h-full flex flex-col">
+        <Card className="col-span-2 h-full flex flex-col">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
