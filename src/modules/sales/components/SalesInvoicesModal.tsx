@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { ArrowUp, ChevronDown, Code, Eye, FileText, Loader2, Printer } from "lucide-react";
+import { ArrowUp, ChevronDown, Code, Eye, FileText, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -515,8 +515,7 @@ export const SalesInvoicesModal = ({
               <TableBody>
                 {invoices.map((inv, index) => {
                   const typeCode = getInvoiceTypeCode(inv);
-                  const isINV = typeCode === "INV";
-                  const showEmitAction = !isINV && typeCode !== null && !inv.declared;
+                  const showEmitAction = typeCode !== "INV" && typeCode !== null && !inv.declared;
                   return (
                     <TableRow key={inv.id}>
                       <TableCell>{index + 1}</TableCell>
@@ -530,32 +529,7 @@ export const SalesInvoicesModal = ({
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          {isINV ? (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title="Ver comprobante"
-                                onClick={() => {
-                                  window.open(`/invoices/edit/${inv.id}`, "_blank");
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title="Imprimir ticket"
-                                onClick={() => {
-                                  window.open(`/invoices/print/${inv.id}`, "_blank");
-                                }}
-                              >
-                                <Printer className="h-4 w-4" />
-                              </Button>
-                            </>
-                          ) : inv.declared ? (
+                          {inv.declared ? (
                             <>
                               <Button
                                 variant="ghost"
