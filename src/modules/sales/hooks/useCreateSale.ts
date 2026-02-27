@@ -332,7 +332,7 @@ export const useCreateSale = () => {
     const currentSituation = salesData.situations.find(
       (s) => s.id.toString() === orderSituation,
     );
-    return currentSituation?.code === "PHY";
+    return currentSituation?.code?.endsWith("-PHY") ?? false;
   }, [orderSituation, salesData?.situations]);
 
   // Apply price rules whenever products change (skip when product editing is disabled — PHY situation)

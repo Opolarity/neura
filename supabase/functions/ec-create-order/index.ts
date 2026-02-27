@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       supabase
         .from('situations')
         .select('id, status_id, statuses!inner(code), modules!inner(code)')
-        .eq('code', 'VIR')
+        .like('code', '%-VIR')
         .eq('statuses.code', 'PEN')
         .eq('modules.code', 'ORD')
         .single(),
