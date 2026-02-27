@@ -11,6 +11,7 @@ import ProductsStep from "../components/pos/steps/ProductsStep";
 import CustomerDataStep from "../components/pos/steps/CustomerDataStep";
 import ShippingStep from "../components/pos/steps/ShippingStep";
 import PaymentStep from "../components/pos/steps/PaymentStep";
+import InvoicingStep from "../components/pos/steps/InvoicingStep";
 import type { POSStep } from "../types/POS.types";
 
 export default function POS() {
@@ -148,6 +149,15 @@ export default function POS() {
                 onRemoveChangeEntry={pos.removeChangeEntry}
               />
             )}
+
+            {pos.currentStep === 6 && pos.createdOrderId && pos.createdOrderSaleTypeId && (
+              <InvoicingStep
+                orderId={pos.createdOrderId}
+                orderTotal={pos.total}
+                saleTypeId={pos.createdOrderSaleTypeId}
+                onNewSale={pos.resetForNewSale}
+              />
+            )}
           </div>
 
           {/* Summary sidebar - visible from step 4 to 5 */}
@@ -179,6 +189,7 @@ export default function POS() {
           onFinalize={pos.submitOrder}
           onReset={pos.resetAll}
           onAnonymousPurchase={pos.currentStep === 2 ? pos.handleAnonymousPurchase : undefined}
+          onNewSale={pos.resetForNewSale}
         />
       )}
 

@@ -16,7 +16,7 @@ export default function POSStepIndicator({
   onStepClick,
   canProceedToStep,
 }: POSStepIndicatorProps) {
-  const steps: POSStep[] = requiresShipping ? [1, 2, 3, 4, 5] : [1, 2, 3, 5];
+  const steps: POSStep[] = requiresShipping ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 5, 6];
 
   return (
     <div className="flex items-center justify-center gap-0">
