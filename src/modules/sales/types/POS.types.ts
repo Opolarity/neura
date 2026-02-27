@@ -16,10 +16,10 @@ export const POS_STEPS = {
 };
 
 export const POS_STEP_NAMES: Record<POSStep, string> = {
-  1: "Configuracion",
+  1: "Configuración",
   2: "Productos",
   3: "Datos Cliente",
-  4: "Envio",
+  4: "Envío",
   5: "Pago",
 };
 
