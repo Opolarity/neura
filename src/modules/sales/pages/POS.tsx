@@ -73,7 +73,18 @@ export default function POS() {
               />
             )}
 
-            {pos.currentStep === 2 && (
+            {pos.currentStep === 2 && pos.formData && (
+              <CustomerDataStep
+                customer={pos.customer}
+                documentTypes={pos.formData.documentTypes}
+                clientFound={pos.clientFound}
+                searchingClient={pos.searchingClient}
+                onUpdateCustomer={pos.updateCustomer}
+                onSearchClient={pos.searchClient}
+              />
+            )}
+
+            {pos.currentStep === 3 && (
               <ProductsStep
                 searchQuery={pos.searchQuery}
                 onSearchChange={pos.setSearchQuery}
@@ -94,17 +105,6 @@ export default function POS() {
                 onStockTypeChange={pos.setSelectedStockTypeId}
                 generalDiscount={pos.generalDiscount}
                 onGeneralDiscountChange={pos.setGeneralDiscount}
-              />
-            )}
-
-            {pos.currentStep === 3 && pos.formData && (
-              <CustomerDataStep
-                customer={pos.customer}
-                documentTypes={pos.formData.documentTypes}
-                clientFound={pos.clientFound}
-                searchingClient={pos.searchingClient}
-                onUpdateCustomer={pos.updateCustomer}
-                onSearchClient={pos.searchClient}
               />
             )}
 
@@ -174,7 +174,7 @@ export default function POS() {
           onBack={pos.prevStep}
           onFinalize={pos.submitOrder}
           onReset={pos.resetAll}
-          onAnonymousPurchase={pos.currentStep === 3 ? pos.handleAnonymousPurchase : undefined}
+          onAnonymousPurchase={pos.currentStep === 2 ? pos.handleAnonymousPurchase : undefined}
         />
       )}
 

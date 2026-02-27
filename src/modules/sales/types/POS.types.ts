@@ -9,16 +9,16 @@ export type POSStep = 1 | 2 | 3 | 4 | 5;
 
 export const POS_STEPS = {
   CONFIGURATION: 1 as POSStep,
-  PRODUCTS: 2 as POSStep,
-  CUSTOMER_DATA: 3 as POSStep,
+  CUSTOMER_DATA: 2 as POSStep,
+  PRODUCTS: 3 as POSStep,
   SHIPPING: 4 as POSStep,
   PAYMENT: 5 as POSStep,
 };
 
 export const POS_STEP_NAMES: Record<POSStep, string> = {
   1: "Configuración",
-  2: "Productos",
-  3: "Datos Cliente",
+  2: "Datos Cliente",
+  3: "Productos",
   4: "Envío",
   5: "Pago",
 };
