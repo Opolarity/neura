@@ -105,6 +105,10 @@ export default function POS() {
                 onStockTypeChange={pos.setSelectedStockTypeId}
                 generalDiscount={pos.generalDiscount}
                 onGeneralDiscountChange={pos.setGeneralDiscount}
+                customerName={pos.customer.customerName}
+                customerLastname={pos.customer.customerLastname}
+                customerDocumentNumber={pos.customer.documentNumber}
+                isAnonymousPurchase={pos.isAnonymousPurchase}
               />
             )}
 
