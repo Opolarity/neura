@@ -88,7 +88,7 @@ export default function ProductsStep({
         <h2 className="text-lg font-semibold">Seleccion de Productos</h2>
       </div>
 
-      <div className="grid grid-cols-5 gap-6">
+      <div className="grid grid-cols-5 gap-6 h-[calc(100vh-220px)]">
         {/* Product search and list */}
         <div className="col-span-3 space-y-4">
           <Card>
@@ -219,7 +219,7 @@ export default function ProductsStep({
         </div>
 
         {/* Cart */}
-        <Card>
+        <Card className="h-full flex flex-col">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
@@ -233,7 +233,7 @@ export default function ProductsStep({
               )}
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 overflow-y-auto">
             {cart.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 Agregue productos al carrito
