@@ -113,30 +113,6 @@ export default function POSSummary({
           </div>
         )}
 
-        {/* Cart items */}
-        {cart.length > 0 && (
-          <div className="border-t pt-4">
-            <div className="text-xs text-muted-foreground font-medium mb-2">PRODUCTOS</div>
-            <div className="space-y-2 max-h-60 overflow-auto">
-              {cart.map((item) => (
-                <div
-                  key={`${item.variationId}-${item.stockTypeId}`}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="truncate font-medium text-xs">{item.productName}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {item.quantity} x S/ {formatCurrency(item.price)}
-                    </div>
-                  </div>
-                  <span className="font-medium text-xs ml-2">
-                    S/ {formatCurrency(item.quantity * item.price)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
