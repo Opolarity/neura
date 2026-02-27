@@ -69,6 +69,26 @@ export default function POSSummary({
           </div>
         </div>
 
+        {/* Selected customer */}
+        {customer.customerName && (
+          <div className="border-t pt-4">
+            <div className="bg-muted rounded-lg p-3">
+              <div className="flex items-center gap-2 text-xs text-primary font-medium mb-1">
+                <User className="w-3 h-3" />
+                CLIENTE SELECCIONADO
+              </div>
+              <div className="font-medium text-sm">
+                {customer.customerName} {customer.customerLastname}
+              </div>
+              {customer.documentNumber && (
+                <div className="text-xs text-muted-foreground">
+                  Doc: {customer.documentNumber}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Product list */}
         {showProducts && cart.length > 0 && (
           <div className="space-y-2 border-t pt-4">
@@ -90,26 +110,6 @@ export default function POSSummary({
                 </span>
               </div>
             ))}
-          </div>
-        )}
-
-        {/* Selected customer */}
-        {customer.customerName && (
-          <div className="border-t pt-4">
-            <div className="bg-muted rounded-lg p-3">
-              <div className="flex items-center gap-2 text-xs text-primary font-medium mb-1">
-                <User className="w-3 h-3" />
-                CLIENTE SELECCIONADO
-              </div>
-              <div className="font-medium text-sm">
-                {customer.customerName} {customer.customerLastname}
-              </div>
-              {customer.documentNumber && (
-                <div className="text-xs text-muted-foreground">
-                  Doc: {customer.documentNumber}
-                </div>
-              )}
-            </div>
           </div>
         )}
 
