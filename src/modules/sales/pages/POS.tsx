@@ -150,8 +150,8 @@ export default function POS() {
             )}
           </div>
 
-          {/* Summary sidebar - visible from step 3 to 5 */}
-          {pos.currentStep >= 3 && (
+          {/* Summary sidebar - visible from step 4 to 5 */}
+          {pos.currentStep >= 4 && (
             <div className="p-6 pl-0">
               <POSSummary
                 cart={pos.cart}
