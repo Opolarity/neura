@@ -67,58 +67,6 @@ export default function ShippingStep({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Shipping method + price */}
-          {shippingCosts.length > 0 && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Truck className="w-4 h-4" />
-                  Método de Envío
-                </Label>
-                <Select
-                  value={shipping.shippingMethodId}
-                  onValueChange={(value) => {
-                    onUpdateShipping("shippingMethodId", value);
-                    const matched = shippingCosts.find(
-                      (c) => c.shippingMethodId.toString() === value
-                    );
-                    if (matched) {
-                      onUpdateShipping("shippingCost", matched.cost);
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione método..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {uniqueMethods.map((cost) => (
-                      <SelectItem
-                        key={cost.shippingMethodId}
-                        value={cost.shippingMethodId.toString()}
-                      >
-                        {cost.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Costo de Envío (S/)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={shipping.shippingCost}
-                  onChange={(e) =>
-                    onUpdateShipping("shippingCost", parseFloat(e.target.value) || 0)
-                  }
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-          )}
-
           {/* Location selects */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -203,6 +151,58 @@ export default function ShippingStep({
               </Select>
             </div>
           </div>
+
+          {/* Shipping method + price - shown after location is selected */}
+          {shippingCosts.length > 0 && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Truck className="w-4 h-4" />
+                  Método de Envío
+                </Label>
+                <Select
+                  value={shipping.shippingMethodId}
+                  onValueChange={(value) => {
+                    onUpdateShipping("shippingMethodId", value);
+                    const matched = shippingCosts.find(
+                      (c) => c.shippingMethodId.toString() === value
+                    );
+                    if (matched) {
+                      onUpdateShipping("shippingCost", matched.cost);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione método..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {uniqueMethods.map((cost) => (
+                      <SelectItem
+                        key={cost.shippingMethodId}
+                        value={cost.shippingMethodId.toString()}
+                      >
+                        {cost.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Costo de Envío (S/)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={shipping.shippingCost}
+                  onChange={(e) =>
+                    onUpdateShipping("shippingCost", parseFloat(e.target.value) || 0)
+                  }
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Address */}
           <div className="space-y-2">
