@@ -65,7 +65,7 @@ export default function ShippingStep({
             <div className="space-y-2">
               <Label>Pais</Label>
               <Select
-                value={shipping.countryId}
+                value={shipping.countryId || undefined}
                 onValueChange={(value) => onUpdateShipping("countryId", value)}
               >
                 <SelectTrigger>
@@ -84,7 +84,7 @@ export default function ShippingStep({
             <div className="space-y-2">
               <Label>Departamento / Estado</Label>
               <Select
-                value={shipping.stateId}
+                value={shipping.stateId || undefined}
                 onValueChange={(value) => onUpdateShipping("stateId", value)}
                 disabled={!shipping.countryId}
               >
@@ -104,7 +104,7 @@ export default function ShippingStep({
             <div className="space-y-2">
               <Label>Ciudad / Provincia</Label>
               <Select
-                value={shipping.cityId}
+                value={shipping.cityId || undefined}
                 onValueChange={(value) => onUpdateShipping("cityId", value)}
                 disabled={!shipping.stateId}
               >
@@ -124,7 +124,7 @@ export default function ShippingStep({
             <div className="space-y-2">
               <Label>Distrito / Barrio</Label>
               <Select
-                value={shipping.neighborhoodId}
+                value={shipping.neighborhoodId || undefined}
                 onValueChange={(value) => onUpdateShipping("neighborhoodId", value)}
                 disabled={!shipping.cityId}
               >
@@ -155,7 +155,7 @@ export default function ShippingStep({
                 </Label>
                 {shippingCosts.length > 0 ? (
                   <Select
-                    value={shipping.shippingMethodId}
+                    value={shipping.shippingMethodId || undefined}
                     onValueChange={(value) => {
                       onUpdateShipping("shippingMethodId", value);
                       const matched = shippingCosts.find(
