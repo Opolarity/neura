@@ -5,7 +5,7 @@
 import { Type } from "@/types";
 
 // Wizard step type
-export type POSStep = 1 | 2 | 3 | 4 | 5;
+export type POSStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 export const POS_STEPS = {
   CONFIGURATION: 1 as POSStep,
@@ -13,6 +13,7 @@ export const POS_STEPS = {
   PRODUCTS: 3 as POSStep,
   SHIPPING: 4 as POSStep,
   PAYMENT: 5 as POSStep,
+  INVOICING: 6 as POSStep,
 };
 
 export const POS_STEP_NAMES: Record<POSStep, string> = {
@@ -21,6 +22,7 @@ export const POS_STEP_NAMES: Record<POSStep, string> = {
   3: "Productos",
   4: "Envío",
   5: "Pago",
+  6: "Facturación",
 };
 
 // =============================================
