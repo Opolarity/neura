@@ -44,13 +44,6 @@ export default function ShippingStep({
     (n) => n.cityId === parseInt(shipping.cityId)
   );
 
-  // Get unique shipping methods from costs
-  const uniqueMethods = shippingCosts.reduce((acc, cost) => {
-    if (!acc.find((m) => m.shippingMethodId === cost.shippingMethodId)) {
-      acc.push(cost);
-    }
-    return acc;
-  }, [] as ShippingCost[]);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -153,39 +146,45 @@ export default function ShippingStep({
           </div>
 
           {/* Shipping method + price - shown after location is selected */}
-          {shippingCosts.length > 0 && (
+          {shipping.countryId && shipping.stateId && shipping.cityId && shipping.neighborhoodId ? (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Truck className="w-4 h-4" />
                   Método de Envío
                 </Label>
-                <Select
-                  value={shipping.shippingMethodId}
-                  onValueChange={(value) => {
-                    onUpdateShipping("shippingMethodId", value);
-                    const matched = shippingCosts.find(
-                      (c) => c.shippingMethodId.toString() === value
-                    );
-                    if (matched) {
-                      onUpdateShipping("shippingCost", matched.cost);
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione método..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {uniqueMethods.map((cost) => (
-                      <SelectItem
-                        key={cost.shippingMethodId}
-                        value={cost.shippingMethodId.toString()}
-                      >
-                        {cost.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {shippingCosts.length > 0 ? (
+                  <Select
+                    value={shipping.shippingMethodId}
+                    onValueChange={(value) => {
+                      onUpdateShipping("shippingMethodId", value);
+                      const matched = shippingCosts.find(
+                        (c) => c.id.toString() === value
+                      );
+                      if (matched) {
+                        onUpdateShipping("shippingCost", matched.cost);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione método..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {shippingCosts.map((cost) => (
+                        <SelectItem
+                          key={cost.id}
+                          value={cost.id.toString()}
+                        >
+                          {cost.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
+                    No hay métodos de envío para esta ubicación.
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -201,6 +200,10 @@ export default function ShippingStep({
                   placeholder="0.00"
                 />
               </div>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
+              Seleccione la ubicación completa para ver los métodos de envío disponibles.
             </div>
           )}
 
