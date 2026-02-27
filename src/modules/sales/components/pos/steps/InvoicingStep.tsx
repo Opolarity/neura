@@ -503,7 +503,7 @@ export default function InvoicingStep({
                   <TableHead>Tipo</TableHead>
                   <TableHead>N. Comprobante</TableHead>
                   <TableHead>Serie</TableHead>
-                  <TableHead>Cliente</TableHead>
+                  
                   <TableHead>Total</TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead>Acciones</TableHead>
@@ -519,7 +519,7 @@ export default function InvoicingStep({
                       <TableCell>{invoiceTypes.find(t => t.id === inv.invoice_type_id)?.name || "-"}</TableCell>
                       <TableCell>{inv.invoice_number || "-"}</TableCell>
                       <TableCell>{inv.tax_serie || "-"}</TableCell>
-                      <TableCell>{inv.client_name || "-"}</TableCell>
+                      
                       <TableCell>S/ {inv.total_amount.toFixed(2)}</TableCell>
                       <TableCell>
                         {format(new Date(inv.created_at), "dd/MM/yyyy")}
