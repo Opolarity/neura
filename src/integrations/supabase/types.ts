@@ -4194,18 +4194,17 @@ export type Database = {
       }
       sp_ec_create_order: {
         Args: {
-          p_branch_id?: number
-          p_change_entries?: Json
-          p_initial_situation_id?: number
-          p_is_existing_client?: boolean
-          p_order_data?: Json
-          p_payments?: Json
-          p_price_list_id?: number
-          p_products?: Json
-          p_sale_type_id?: number
-          p_stock_type_id?: number
-          p_user_id?: number
-          p_warehouse_id?: number
+          p_branch_id: number
+          p_change_entries: Json
+          p_initial_situation_id: number
+          p_is_existing_client: boolean
+          p_order_data: Json
+          p_payments: Json
+          p_products: Json
+          p_sale_type_id: number
+          p_stock_type_id: number
+          p_user_id: string
+          p_warehouse_id: number
         }
         Returns: Json
       }
