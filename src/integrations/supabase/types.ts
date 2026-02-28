@@ -97,6 +97,68 @@ export type Database = {
           },
         ]
       }
+      bar_codes: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: number
+          price_list_id: number
+          product_variation_id: number
+          quantities: number | null
+          sequence: number
+          stock_movement_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          price_list_id: number
+          product_variation_id: number
+          quantities?: number | null
+          sequence: number
+          stock_movement_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          price_list_id?: number
+          product_variation_id?: number
+          quantities?: number | null
+          sequence?: number
+          stock_movement_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "bar_codes_price_list_id_fkey"
+            columns: ["price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_codes_product_variation_id_fkey"
+            columns: ["product_variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_codes_stock_movement_id_fkey"
+            columns: ["stock_movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           address: string
@@ -3049,7 +3111,7 @@ export type Database = {
         Row: {
           completed: boolean
           created_at: string | null
-          created_by: string
+          created_by: string | null
           id: number
           is_active: boolean
           movement_type: number
@@ -3062,7 +3124,7 @@ export type Database = {
         Insert: {
           completed: boolean
           created_at?: string | null
-          created_by: string
+          created_by?: string | null
           id?: never
           is_active?: boolean
           movement_type: number
@@ -3075,7 +3137,7 @@ export type Database = {
         Update: {
           completed?: boolean
           created_at?: string | null
-          created_by?: string
+          created_by?: string | null
           id?: never
           is_active?: boolean
           movement_type?: number

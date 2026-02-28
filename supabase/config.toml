@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.apply-price-rules]
 verify_jwt = false
+
+[functions.create-barcode]
+verify_jwt = false
