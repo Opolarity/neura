@@ -11,6 +11,7 @@ export interface POSSessionListItem {
   warehouseId: number;
   warehouseName: string;
   openingAmount: number;
+  openingDifference: number | null;
   closingAmount: number | null;
   expectedAmount: number | null;
   totalSales: number | null;
@@ -32,6 +33,7 @@ export interface POSSessionListApiItem {
   warehouse_id: number;
   warehouse_name: string;
   opening_amount: number;
+  opening_difference: number | null;
   closing_amount: number | null;
   expected_amount: number | null;
   total_sales: number | null;

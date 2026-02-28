@@ -26,7 +26,8 @@ export const adaptPOSSession = (
   };
 };
 
-export const formatCurrency = (amount: number): string => {
+export const formatCurrency = (amount: number | null | undefined): string => {
+  if (amount == null) return "0.00";
   return amount.toLocaleString("es-PE", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

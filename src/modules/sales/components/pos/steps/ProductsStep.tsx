@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, Barcode, Percent, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, Barcode, Percent, ChevronDown, ChevronUp, User } from "lucide-react";
 import type { POSCartItem } from "../../../types/POS.types";
 import type { PaginatedProductVariation, PaginationMeta } from "../../../types";
 import { formatCurrency } from "../../../adapters/POS.adapter";
@@ -42,6 +42,10 @@ interface ProductsStepProps {
   onStockTypeChange: (value: string) => void;
   generalDiscount: number;
   onGeneralDiscountChange: (value: number) => void;
+  customerName?: string;
+  customerLastname?: string;
+  customerDocumentNumber?: string;
+  isAnonymousPurchase?: boolean;
 }
 
 export default function ProductsStep({
@@ -63,6 +67,10 @@ export default function ProductsStep({
   onStockTypeChange,
   generalDiscount,
   onGeneralDiscountChange,
+  customerName,
+  customerLastname,
+  customerDocumentNumber,
+  isAnonymousPurchase,
 }: ProductsStepProps) {
   const [expandedDiscounts, setExpandedDiscounts] = useState<Set<number>>(new Set());
 
@@ -88,7 +96,7 @@ export default function ProductsStep({
         <h2 className="text-lg font-semibold">Seleccion de Productos</h2>
       </div>
 
-      <div className="grid grid-cols-5 gap-6">
+      <div className="grid grid-cols-5 gap-6 h-[calc(100vh-220px)]">
         {/* Product search and list */}
         <div className="col-span-3 space-y-4">
           <Card>
@@ -219,7 +227,7 @@ export default function ProductsStep({
         </div>
 
         {/* Cart */}
-        <Card>
+        <Card className="col-span-2 h-full flex flex-col">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
@@ -233,7 +241,24 @@ export default function ProductsStep({
               )}
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 overflow-y-auto">
+            {/* Customer info card */}
+            {(customerName || isAnonymousPurchase) && (
+              <div className="bg-muted rounded-lg p-3 mb-3">
+                <div className="flex items-center gap-2 text-xs text-primary font-medium mb-1">
+                  <User className="w-3 h-3" />
+                  CLIENTE SELECCIONADO
+                </div>
+                <div className="font-medium text-sm">
+                  {isAnonymousPurchase ? "Venta anónima" : `${customerName} ${customerLastname || ""}`}
+                </div>
+                {customerDocumentNumber && !isAnonymousPurchase && (
+                  <div className="text-xs text-muted-foreground">
+                    Doc: {customerDocumentNumber}
+                  </div>
+                )}
+              </div>
+            )}
             {cart.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 Agregue productos al carrito

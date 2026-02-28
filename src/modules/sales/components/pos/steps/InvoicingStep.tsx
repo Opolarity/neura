@@ -1,17 +1,13 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Table,
-  TableHeader,
   TableBody,
-  TableRow,
-  TableHead,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
   DropdownMenu,
@@ -19,11 +15,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { ArrowUp, ChevronDown, Code, Eye, FileText, Loader2, Printer } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -34,7 +25,10 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { ArrowUp, CheckCircle2, ChevronDown, Code, Eye, FileText, Loader2, Receipt } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 interface Invoice {
   id: number;
@@ -56,44 +50,40 @@ interface InvoiceType {
   code: string;
 }
 
-interface SalesInvoicesModalProps {
+interface InvoicingStepProps {
   orderId: number;
   orderTotal: number;
   saleTypeId: number;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onNewSale: () => void;
 }
 
-export const SalesInvoicesModal = ({
+export default function InvoicingStep({
   orderId,
   orderTotal,
   saleTypeId,
-  open,
-  onOpenChange,
-}: SalesInvoicesModalProps) => {
+  onNewSale,
+}: InvoicingStepProps) {
+  const { toast } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
   const [invoiceTypes, setInvoiceTypes] = useState<InvoiceType[]>([]);
   const [isFullyPaid, setIsFullyPaid] = useState(false);
   const [creating, setCreating] = useState(false);
-  const { toast } = useToast();
-
   const [pendingInvoiceType, setPendingInvoiceType] = useState<InvoiceType | null>(null);
   const [pendingEmitInvoice, setPendingEmitInvoice] = useState<Invoice | null>(null);
   const [emitting, setEmitting] = useState(false);
-
   const [pendingValidation, setPendingValidation] = useState<{
     vinculatedInvoiceId?: number;
     vinculatedTypeCode?: string;
   } | null>(null);
 
   useEffect(() => {
-    if (open && orderId) {
+    if (orderId) {
       fetchInvoices();
       checkPaymentStatus();
       fetchInvoiceTypes();
     }
-  }, [open, orderId]);
+  }, [orderId]);
 
   const fetchInvoices = async () => {
     setLoading(true);
@@ -110,7 +100,6 @@ export const SalesInvoicesModal = ({
       }
 
       const invoiceIds = data.map((oi) => oi.invoice_id);
-
       const { data: invoicesData, error: invoicesError } = await supabase
         .from("invoices")
         .select("id, tax_serie, total_amount, client_name, customer_document_number, created_at, invoice_type_id, declared, invoice_number, pdf_url, xml_url")
@@ -203,7 +192,6 @@ export const SalesInvoicesModal = ({
         return { valid: false, error: "Debe existir una Factura o Boleta antes de crear este tipo de comprobante." };
       }
 
-      // Check that the parent invoice (Factura/Boleta) has been declared (declared = true)
       const parentTypeId = existingCodes.find((t) => t.code === "1" || t.code === "2");
       if (parentTypeId) {
         const parentInvoice = invoices.find((i) => i.invoice_type_id === parentTypeId.id);
@@ -288,29 +276,7 @@ export const SalesInvoicesModal = ({
       return;
     }
 
-    const { data: lastSituation } = await supabase
-      .from("order_situations")
-      .select("status_id")
-      .eq("order_id", orderId)
-      .eq("last_row", true)
-      .single();
-
-    if (lastSituation) {
-      const { data: status } = await supabase
-        .from("statuses")
-        .select("code")
-        .eq("id", lastSituation.status_id)
-        .single();
-
-      if (!status || status.code !== "COM") {
-        toast({ title: "No se puede crear", description: "La orden debe estar en estado Completado para crear este tipo de comprobante.", variant: "destructive" });
-        return;
-      }
-    } else {
-      toast({ title: "No se puede crear", description: "No se pudo verificar el estado de la orden.", variant: "destructive" });
-      return;
-    }
-
+    // For POS, orders are already in "Completado" state, so skip that check
     const result = await validateNonInvInvoice(invoiceType);
     if (!result.valid) {
       toast({ title: "No se puede crear", description: result.error, variant: "destructive" });
@@ -379,6 +345,21 @@ export const SalesInvoicesModal = ({
           total: Math.round(lineTotal * 100) / 100,
         };
       });
+
+      // Add shipping cost as line item if applicable
+      if (order.shipping_cost && Number(order.shipping_cost) > 0) {
+        const shippingTotal = Number(order.shipping_cost);
+        const shippingIgv = shippingTotal - (shippingTotal / 1.18);
+        items.push({
+          description: "Costo de envío",
+          quantity: 1,
+          measurement_unit: "ZZ",
+          unit_price: shippingTotal,
+          discount: 0,
+          igv: Math.round(shippingIgv * 100) / 100,
+          total: Math.round(shippingTotal * 100) / 100,
+        });
+      }
 
       const clientName = [order.customer_name, order.customer_lastname].filter(Boolean).join(" ") || null;
 
@@ -452,16 +433,32 @@ export const SalesInvoicesModal = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[900px]">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      {/* Success banner */}
+      <Card className="border-green-200 bg-green-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-8 h-8 text-green-600 shrink-0" />
             <div>
-              <DialogTitle>Comprobantes vinculados</DialogTitle>
-              <DialogDescription>
-                Comprobantes asociados a esta orden.
-              </DialogDescription>
+              <h2 className="text-lg font-semibold text-green-800">
+                ¡Venta creada exitosamente!
+              </h2>
+              <p className="text-sm text-green-700">
+                Pedido <strong>#{orderId}</strong> registrado. Puedes crear comprobantes electrónicos o iniciar una nueva venta.
+              </p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Invoicing section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Receipt className="w-4 h-4" />
+              Comprobantes Electrónicos
+            </CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -472,7 +469,7 @@ export const SalesInvoicesModal = ({
                   {creating ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-1" />
                   ) : null}
-                  Crear
+                  Crear Comprobante
                   <ChevronDown className="h-4 w-4 ml-1" />
                 </Button>
               </DropdownMenuTrigger>
@@ -488,8 +485,8 @@ export const SalesInvoicesModal = ({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
+        </CardHeader>
+        <CardContent>
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -506,7 +503,7 @@ export const SalesInvoicesModal = ({
                   <TableHead>Tipo</TableHead>
                   <TableHead>N. Comprobante</TableHead>
                   <TableHead>Serie</TableHead>
-                  <TableHead>Cliente</TableHead>
+                  
                   <TableHead>Total</TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead>Acciones</TableHead>
@@ -522,7 +519,7 @@ export const SalesInvoicesModal = ({
                       <TableCell>{invoiceTypes.find(t => t.id === inv.invoice_type_id)?.name || "-"}</TableCell>
                       <TableCell>{inv.invoice_number || "-"}</TableCell>
                       <TableCell>{inv.tax_serie || "-"}</TableCell>
-                      <TableCell>{inv.client_name || "-"}</TableCell>
+                      
                       <TableCell>S/ {inv.total_amount.toFixed(2)}</TableCell>
                       <TableCell>
                         {format(new Date(inv.created_at), "dd/MM/yyyy")}
@@ -536,9 +533,7 @@ export const SalesInvoicesModal = ({
                                 size="icon"
                                 className="h-8 w-8"
                                 title="Ver comprobante"
-                                onClick={() => {
-                                  window.open(`/invoices/edit/${inv.id}`, "_blank");
-                                }}
+                                onClick={() => window.open(`/invoices/edit/${inv.id}`, "_blank")}
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -586,36 +581,9 @@ export const SalesInvoicesModal = ({
                                 size="icon"
                                 className="h-8 w-8"
                                 title="Ver comprobante"
-                                onClick={() => {
-                                  window.open(`/invoices/edit/${inv.id}`, "_blank");
-                                }}
+                                onClick={() => window.open(`/invoices/edit/${inv.id}`, "_blank")}
                               >
                                 <Eye className="h-4 w-4" />
-                              </Button>
-                            </>
-                          ) : typeCode === "INV" ? (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title="Ver comprobante"
-                                onClick={() => {
-                                  window.open(`/invoices/edit/${inv.id}`, "_blank");
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title="Imprimir ticket"
-                                onClick={() => {
-                                  window.open(`/invoices/print/${inv.id}`, "_blank");
-                                }}
-                              >
-                                <Printer className="h-4 w-4" />
                               </Button>
                             </>
                           ) : (
@@ -629,8 +597,8 @@ export const SalesInvoicesModal = ({
               </TableBody>
             </Table>
           )}
-        </div>
-      </DialogContent>
+        </CardContent>
+      </Card>
 
       {/* Confirm create invoice */}
       <AlertDialog open={!!pendingInvoiceType} onOpenChange={(alertOpen) => {
@@ -695,6 +663,6 @@ export const SalesInvoicesModal = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Dialog>
+    </div>
   );
-};
+}

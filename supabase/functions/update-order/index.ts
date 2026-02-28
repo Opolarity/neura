@@ -108,22 +108,18 @@ Deno.serve(async (req) => {
     console.log("Current order situation code:", currentSituationCode);
 
     if (currentSituationCode) {
-      switch (currentSituationCode) {
-        case "PHY":
-          stockIsActive = true;
-          stockCompleted = true;
-          break;
-        case "HDN":
-          stockIsActive = false;
-          stockCompleted = false;
-          break;
-        case "VIR":
-          stockIsActive = true;
-          stockCompleted = false;
-          break;
-        default:
-          stockIsActive = true;
-          stockCompleted = true;
+      if (currentSituationCode.endsWith("-PHY")) {
+        stockIsActive = true;
+        stockCompleted = true;
+      } else if (currentSituationCode.endsWith("-HDN")) {
+        stockIsActive = false;
+        stockCompleted = false;
+      } else if (currentSituationCode.endsWith("-VIR")) {
+        stockIsActive = true;
+        stockCompleted = false;
+      } else {
+        stockIsActive = true;
+        stockCompleted = true;
       }
     }
 

@@ -44,13 +44,6 @@ export default function ShippingStep({
     (n) => n.cityId === parseInt(shipping.cityId)
   );
 
-  // Get unique shipping methods from costs
-  const uniqueMethods = shippingCosts.reduce((acc, cost) => {
-    if (!acc.find((m) => m.shippingMethodId === cost.shippingMethodId)) {
-      acc.push(cost);
-    }
-    return acc;
-  }, [] as ShippingCost[]);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -67,64 +60,12 @@ export default function ShippingStep({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Shipping method + price */}
-          {shippingCosts.length > 0 && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Truck className="w-4 h-4" />
-                  Método de Envío
-                </Label>
-                <Select
-                  value={shipping.shippingMethodId}
-                  onValueChange={(value) => {
-                    onUpdateShipping("shippingMethodId", value);
-                    const matched = shippingCosts.find(
-                      (c) => c.shippingMethodId.toString() === value
-                    );
-                    if (matched) {
-                      onUpdateShipping("shippingCost", matched.cost);
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione método..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {uniqueMethods.map((cost) => (
-                      <SelectItem
-                        key={cost.shippingMethodId}
-                        value={cost.shippingMethodId.toString()}
-                      >
-                        {cost.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Costo de Envío (S/)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={shipping.shippingCost}
-                  onChange={(e) =>
-                    onUpdateShipping("shippingCost", parseFloat(e.target.value) || 0)
-                  }
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-          )}
-
           {/* Location selects */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Pais</Label>
               <Select
-                value={shipping.countryId}
+                value={shipping.countryId || undefined}
                 onValueChange={(value) => onUpdateShipping("countryId", value)}
               >
                 <SelectTrigger>
@@ -143,7 +84,7 @@ export default function ShippingStep({
             <div className="space-y-2">
               <Label>Departamento / Estado</Label>
               <Select
-                value={shipping.stateId}
+                value={shipping.stateId || undefined}
                 onValueChange={(value) => onUpdateShipping("stateId", value)}
                 disabled={!shipping.countryId}
               >
@@ -163,7 +104,7 @@ export default function ShippingStep({
             <div className="space-y-2">
               <Label>Ciudad / Provincia</Label>
               <Select
-                value={shipping.cityId}
+                value={shipping.cityId || undefined}
                 onValueChange={(value) => onUpdateShipping("cityId", value)}
                 disabled={!shipping.stateId}
               >
@@ -183,7 +124,7 @@ export default function ShippingStep({
             <div className="space-y-2">
               <Label>Distrito / Barrio</Label>
               <Select
-                value={shipping.neighborhoodId}
+                value={shipping.neighborhoodId || undefined}
                 onValueChange={(value) => onUpdateShipping("neighborhoodId", value)}
                 disabled={!shipping.cityId}
               >
@@ -203,6 +144,68 @@ export default function ShippingStep({
               </Select>
             </div>
           </div>
+
+          {/* Shipping method + price - shown after location is selected */}
+          {shipping.countryId && shipping.stateId && shipping.cityId && shipping.neighborhoodId ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Truck className="w-4 h-4" />
+                  Método de Envío
+                </Label>
+                {shippingCosts.length > 0 ? (
+                  <Select
+                    value={shipping.shippingMethodId || undefined}
+                    onValueChange={(value) => {
+                      onUpdateShipping("shippingMethodId", value);
+                      const matched = shippingCosts.find(
+                        (c) => c.id.toString() === value
+                      );
+                      if (matched) {
+                        onUpdateShipping("shippingCost", matched.cost);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione método..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {shippingCosts.map((cost) => (
+                        <SelectItem
+                          key={cost.id}
+                          value={cost.id.toString()}
+                        >
+                          {cost.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
+                    No hay métodos de envío para esta ubicación.
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Costo de Envío (S/)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={shipping.shippingCost}
+                  onChange={(e) =>
+                    onUpdateShipping("shippingCost", parseFloat(e.target.value) || 0)
+                  }
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
+              Seleccione la ubicación completa para ver los métodos de envío disponibles.
+            </div>
+          )}
 
           {/* Address */}
           <div className="space-y-2">

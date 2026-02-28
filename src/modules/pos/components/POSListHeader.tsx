@@ -19,7 +19,7 @@ const POSListHeader = ({ handleGoToPOS }: POSListHeaderProps) => {
       <div className="flex gap-2">
         <Button onClick={handleGoToPOS} className="gap-2">
           <Plus className="w-4 h-4" />
-          Ir al POS
+          Ir al Punto de Venta
         </Button>
       </div>
     </div>

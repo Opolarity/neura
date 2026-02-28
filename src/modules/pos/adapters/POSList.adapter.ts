@@ -17,6 +17,7 @@ export const adaptPOSSessionListItem = (
   userName: item.user_name,
   branchId: item.branch_id,
   branchName: item.branch_name,
+  openingDifference: item.opening_difference ?? null,
   warehouseId: item.warehouse_id,
   warehouseName: item.warehouse_name,
   openingAmount: item.opening_amount,

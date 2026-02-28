@@ -33,16 +33,6 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
     });
   };
 
-  const getStatusBadge = (statusCode: string, statusName: string) => {
-    if (statusCode === "OPE") {
-      return <Badge className="bg-green-500 hover:bg-green-500">{statusName}</Badge>;
-    }
-    if (statusCode === "CLO") {
-      return <Badge className="bg-gray-500 hover:bg-gray-500">{statusName}</Badge>;
-    }
-    return <Badge variant="outline">{statusName}</Badge>;
-  };
-
   const handleViewDetail = (sessionId: number) => {
     setSelectedSessionId(sessionId);
     setDetailOpen(true);
@@ -54,22 +44,19 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>
-            <TableHead>Usuario</TableHead>
+            <TableHead>Fecha Apertura</TableHead>
+            <TableHead>Fecha de Cierre</TableHead>
             <TableHead>Sucursal</TableHead>
-            <TableHead>Monto Apertura</TableHead>
-            <TableHead>Ventas</TableHead>
-            <TableHead>Monto Cierre</TableHead>
-            <TableHead>Diferencia</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Apertura</TableHead>
-            <TableHead>Cierre</TableHead>
+            <TableHead>Diferencia de Apertura</TableHead>
+            <TableHead>Ventas Totales</TableHead>
+            <TableHead>Diferencia de Cierre</TableHead>
             <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={11} className="text-center py-8">
+              <TableCell colSpan={8} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Cargando sesiones...
@@ -78,7 +65,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
             </TableRow>
           ) : sessions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                 {search
                   ? "No se encontraron sesiones"
                   : "No hay sesiones registradas"}
@@ -88,39 +75,6 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
             sessions.map((session) => (
               <TableRow key={session.id}>
                 <TableCell className="font-medium">{session.id}</TableCell>
-                <TableCell>{session.userName}</TableCell>
-                <TableCell>{session.branchName}</TableCell>
-                <TableCell>S/ {formatCurrency(session.openingAmount)}</TableCell>
-                <TableCell>
-                  {session.totalSales !== null
-                    ? `S/ ${formatCurrency(session.totalSales)}`
-                    : "-"}
-                </TableCell>
-                <TableCell>
-                  {session.closingAmount !== null
-                    ? `S/ ${formatCurrency(session.closingAmount)}`
-                    : "-"}
-                </TableCell>
-                <TableCell>
-                  {session.difference !== null ? (
-                    <span
-                      className={
-                        session.difference < 0
-                          ? "text-destructive"
-                          : session.difference > 0
-                          ? "text-green-500"
-                          : ""
-                      }
-                    >
-                      S/ {formatCurrency(session.difference)}
-                    </span>
-                  ) : (
-                    "-"
-                  )}
-                </TableCell>
-                <TableCell>
-                  {getStatusBadge(session.statusCode, session.statusName)}
-                </TableCell>
                 <TableCell>
                   <div className="text-sm">
                     <div>{formatDate(session.openedAt)}</div>
@@ -137,6 +91,46 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                         {formatTime(session.closedAt)}
                       </div>
                     </div>
+                  ) : (
+                    <Badge className="bg-green-500 hover:bg-green-500">Abierto</Badge>
+                  )}
+                </TableCell>
+                <TableCell>{session.branchName}</TableCell>
+                <TableCell>
+                  {session.openingDifference !== null ? (
+                    <span
+                      className={
+                        session.openingDifference < 0
+                          ? "text-destructive"
+                          : session.openingDifference > 0
+                          ? "text-green-500"
+                          : ""
+                      }
+                    >
+                      S/ {formatCurrency(session.openingDifference)}
+                    </span>
+                  ) : (
+                    "-"
+                  )}
+                </TableCell>
+                <TableCell>
+                  {session.totalSales !== null
+                    ? `S/ ${formatCurrency(session.totalSales)}`
+                    : "-"}
+                </TableCell>
+                <TableCell>
+                  {session.difference !== null ? (
+                    <span
+                      className={
+                        session.difference < 0
+                          ? "text-destructive"
+                          : session.difference > 0
+                          ? "text-green-500"
+                          : ""
+                      }
+                    >
+                      S/ {formatCurrency(session.difference)}
+                    </span>
                   ) : (
                     "-"
                   )}

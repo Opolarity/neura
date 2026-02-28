@@ -11,6 +11,7 @@ import ProductsStep from "../components/pos/steps/ProductsStep";
 import CustomerDataStep from "../components/pos/steps/CustomerDataStep";
 import ShippingStep from "../components/pos/steps/ShippingStep";
 import PaymentStep from "../components/pos/steps/PaymentStep";
+import InvoicingStep from "../components/pos/steps/InvoicingStep";
 import type { POSStep } from "../types/POS.types";
 
 export default function POS() {
@@ -73,7 +74,18 @@ export default function POS() {
               />
             )}
 
-            {pos.currentStep === 2 && (
+            {pos.currentStep === 2 && pos.formData && (
+              <CustomerDataStep
+                customer={pos.customer}
+                documentTypes={pos.formData.documentTypes}
+                clientFound={pos.clientFound}
+                searchingClient={pos.searchingClient}
+                onUpdateCustomer={pos.updateCustomer}
+                onSearchClient={pos.searchClient}
+              />
+            )}
+
+            {pos.currentStep === 3 && (
               <ProductsStep
                 searchQuery={pos.searchQuery}
                 onSearchChange={pos.setSearchQuery}
@@ -94,17 +106,10 @@ export default function POS() {
                 onStockTypeChange={pos.setSelectedStockTypeId}
                 generalDiscount={pos.generalDiscount}
                 onGeneralDiscountChange={pos.setGeneralDiscount}
-              />
-            )}
-
-            {pos.currentStep === 3 && pos.formData && (
-              <CustomerDataStep
-                customer={pos.customer}
-                documentTypes={pos.formData.documentTypes}
-                clientFound={pos.clientFound}
-                searchingClient={pos.searchingClient}
-                onUpdateCustomer={pos.updateCustomer}
-                onSearchClient={pos.searchClient}
+                customerName={pos.customer.customerName}
+                customerLastname={pos.customer.customerLastname}
+                customerDocumentNumber={pos.customer.documentNumber}
+                isAnonymousPurchase={pos.isAnonymousPurchase}
               />
             )}
 
@@ -144,10 +149,19 @@ export default function POS() {
                 onRemoveChangeEntry={pos.removeChangeEntry}
               />
             )}
+
+            {pos.currentStep === 6 && pos.createdOrderId && pos.createdOrderSaleTypeId && (
+              <InvoicingStep
+                orderId={pos.createdOrderId}
+                orderTotal={pos.total}
+                saleTypeId={pos.createdOrderSaleTypeId}
+                onNewSale={pos.resetForNewSale}
+              />
+            )}
           </div>
 
-          {/* Summary sidebar - visible from step 3 to 5 */}
-          {pos.currentStep >= 3 && (
+          {/* Summary sidebar - visible from step 4 to 5 */}
+          {pos.currentStep >= 4 && (
             <div className="p-6 pl-0">
               <POSSummary
                 cart={pos.cart}
@@ -174,7 +188,8 @@ export default function POS() {
           onBack={pos.prevStep}
           onFinalize={pos.submitOrder}
           onReset={pos.resetAll}
-          onAnonymousPurchase={pos.currentStep === 3 ? pos.handleAnonymousPurchase : undefined}
+          onAnonymousPurchase={pos.currentStep === 2 ? pos.handleAnonymousPurchase : undefined}
+          onNewSale={pos.resetForNewSale}
         />
       )}
 
