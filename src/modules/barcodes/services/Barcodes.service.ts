@@ -81,6 +81,42 @@ export const getActivePriceLists = async () => {
 };
 
 // =============================================================================
+// Obtener listado de barcodes
+// =============================================================================
+
+export const fetchBarcodesList = async () => {
+  const { data, error } = await (supabase as any)
+    .from("bar_codes")
+    .select(`
+      id,
+      product_variation_id,
+      price_list_id,
+      stock_movement_id,
+      sequence,
+      quantities,
+      created_at,
+      variations!inner(
+        id,
+        sku,
+        products!inner(title),
+        variation_terms(
+          term_id,
+          terms(
+            name,
+            term_group_id,
+            term_groups(name)
+          )
+        )
+      ),
+      price_list!inner(name)
+    `)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+};
+
+// =============================================================================
 // Obtener siguiente sequence para una variación
 // =============================================================================
 
