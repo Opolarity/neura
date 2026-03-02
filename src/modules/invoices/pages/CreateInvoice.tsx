@@ -28,7 +28,7 @@ import { Loader2, Plus, Trash2, ArrowLeft, Search, FileText, Send, FileDown, Eye
 import { useCreateInvoice } from "../hooks/useCreateInvoice";
 import { useToast } from "@/hooks/use-toast";
 
-const CreateInvoice = () => {
+const CreateInvoice = ({ viewOnly = false }: { viewOnly?: boolean }) => {
   const { toast } = useToast();
   const {
     formData,
@@ -74,8 +74,8 @@ const CreateInvoice = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">{isEditing ? "Editar Comprobante" : "Nuevo Comprobante"}</h1>
-            <p className="text-sm text-muted-foreground">{isEditing ? "Modificar comprobante existente" : "Crear un nuevo comprobante de pago"}</p>
+           <h1 className="text-2xl font-bold text-foreground">{viewOnly ? "Ver Comprobante" : isEditing ? "Editar Comprobante" : "Nuevo Comprobante"}</h1>
+            <p className="text-sm text-muted-foreground">{viewOnly ? "Detalle del comprobante de pago" : isEditing ? "Modificar comprobante existente" : "Crear un nuevo comprobante de pago"}</p>
           </div>
         </div>
         {isEditing && (pdfUrl || xmlUrl || cdrUrl) && (
@@ -114,6 +114,7 @@ const CreateInvoice = () => {
             <Select
               value={formData.invoiceTypeId}
               onValueChange={(v) => handleFormChange("invoiceTypeId", v)}
+              disabled={viewOnly}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar tipo" />
@@ -134,6 +135,7 @@ const CreateInvoice = () => {
             <Select
               value={formData.invoiceProviderId}
               onValueChange={(v) => handleFormChange("invoiceProviderId", v)}
+              disabled={viewOnly}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar proveedor" />
@@ -160,7 +162,7 @@ const CreateInvoice = () => {
                   handleFormChange("taxSerie", serie.serie || "");
                 }
               }}
-              disabled={!formData.invoiceProviderId}
+              disabled={viewOnly || !formData.invoiceProviderId}
             >
               <SelectTrigger>
                 <SelectValue placeholder={formData.invoiceProviderId ? "Seleccionar serie" : "Seleccione proveedor primero"} />
@@ -181,6 +183,7 @@ const CreateInvoice = () => {
             <Select
               value={formData.documentTypeId}
               onValueChange={(v) => handleFormChange("documentTypeId", v)}
+              disabled={viewOnly}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar tipo" />
@@ -206,7 +209,9 @@ const CreateInvoice = () => {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") searchClient();
                 }}
+                disabled={viewOnly}
               />
+              {!viewOnly && (
               <Button
                 variant="outline"
                 size="icon"
@@ -219,6 +224,7 @@ const CreateInvoice = () => {
                   <Search className="h-4 w-4" />
                 )}
               </Button>
+              )}
             </div>
             {formData.clientName && (
               <p className="text-sm text-muted-foreground">
@@ -235,6 +241,7 @@ const CreateInvoice = () => {
               placeholder="cliente@email.com"
               value={formData.clientEmail}
               onChange={(e) => handleFormChange("clientEmail", e.target.value)}
+              disabled={viewOnly}
             />
           </div>
 
@@ -245,6 +252,7 @@ const CreateInvoice = () => {
               placeholder="Dirección"
               value={formData.clientAddress}
               onChange={(e) => handleFormChange("clientAddress", e.target.value)}
+              disabled={viewOnly}
             />
           </div>
         </CardContent>
@@ -254,9 +262,11 @@ const CreateInvoice = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg">Items del Comprobante</CardTitle>
-          <Button size="sm" onClick={addItem}>
-            <Plus className="h-4 w-4 mr-1" /> Agregar Item
-          </Button>
+          {!viewOnly && (
+            <Button size="sm" onClick={addItem}>
+              <Plus className="h-4 w-4 mr-1" /> Agregar Item
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -270,7 +280,7 @@ const CreateInvoice = () => {
                   <TableHead className="w-[100px]">Descuento</TableHead>
                   <TableHead className="w-[100px]">IGV</TableHead>
                   <TableHead className="w-[110px]">Total</TableHead>
-                  <TableHead className="w-[50px]" />
+                  {!viewOnly && <TableHead className="w-[50px]" />}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -281,6 +291,7 @@ const CreateInvoice = () => {
                         placeholder="Descripción del item"
                         value={item.description}
                         onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                        disabled={viewOnly}
                       />
                     </TableCell>
                     <TableCell>
@@ -289,12 +300,14 @@ const CreateInvoice = () => {
                         min={1}
                         value={item.quantity}
                         onChange={(e) => updateItem(item.id, "quantity", +e.target.value)}
+                        disabled={viewOnly}
                       />
                     </TableCell>
                     <TableCell>
                       <Input
                         value={item.measurementUnit}
                         onChange={(e) => updateItem(item.id, "measurementUnit", e.target.value)}
+                        disabled={viewOnly}
                       />
                     </TableCell>
                     <TableCell>
@@ -304,6 +317,7 @@ const CreateInvoice = () => {
                         step="0.01"
                         value={item.unitPrice}
                         onChange={(e) => updateItem(item.id, "unitPrice", +e.target.value)}
+                        disabled={viewOnly}
                       />
                     </TableCell>
                     <TableCell>
@@ -313,6 +327,7 @@ const CreateInvoice = () => {
                         step="0.01"
                         value={item.discount}
                         onChange={(e) => updateItem(item.id, "discount", +e.target.value)}
+                        disabled={viewOnly}
                       />
                     </TableCell>
                     <TableCell>
@@ -321,6 +336,7 @@ const CreateInvoice = () => {
                     <TableCell>
                       <span className="text-sm font-semibold">{item.total.toFixed(2)}</span>
                     </TableCell>
+                    {!viewOnly && (
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -331,6 +347,7 @@ const CreateInvoice = () => {
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -358,9 +375,9 @@ const CreateInvoice = () => {
       {/* Actions */}
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={() => navigate("/invoices")}>
-          Cancelar
+          {viewOnly ? "Volver" : "Cancelar"}
         </Button>
-        {isEditing && !declared && (
+        {!viewOnly && isEditing && !declared && (
           <Button variant="secondary" onClick={handleEmit} disabled={emitting}>
             {emitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
             Emitir en SUNAT
@@ -371,10 +388,12 @@ const CreateInvoice = () => {
             ✓ Emitido en SUNAT
           </span>
         )}
-        <Button onClick={handleSave} disabled={saving}>
-          {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          {isEditing ? "Actualizar Comprobante" : "Guardar Comprobante"}
-        </Button>
+        {!viewOnly && (
+          <Button onClick={handleSave} disabled={saving}>
+            {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {isEditing ? "Actualizar Comprobante" : "Guardar Comprobante"}
+          </Button>
+        )}
       </div>
     </div>
   );
