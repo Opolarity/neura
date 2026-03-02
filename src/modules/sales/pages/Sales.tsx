@@ -44,7 +44,7 @@ const Sales = () => {
   const {
     sales,
     saleTypes,
-    saleStatuses,
+    saleSituations,
     loading,
     search,
     pagination,
@@ -202,7 +202,7 @@ const Sales = () => {
         isOpen={isOpenFilterModal}
         filters={filters}
         saleTypes={saleTypes}
-        saleStatuses={saleStatuses}
+        saleSituations={saleSituations}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}
         onClear={onClearFilters}

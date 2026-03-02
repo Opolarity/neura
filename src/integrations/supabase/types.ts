@@ -4593,6 +4593,22 @@ export type Database = {
             }
             Returns: Json
           }
+        | {
+            Args: {
+              p_branch_id?: number
+              p_end_date?: string
+              p_order?: string
+              p_page?: number
+              p_sale_type?: number
+              p_search?: string
+              p_situation_id?: number
+              p_size?: number
+              p_start_date?: string
+              p_status?: string
+              p_warehouse_id?: number
+            }
+            Returns: Json
+          }
       sp_get_shipping_methods: {
         Args: {
           p_cities?: number

@@ -5,12 +5,12 @@ import {
   SalesFilters,
   SalesPaginationState,
   SaleType,
-  SaleStatus,
+  SaleSituation,
 } from "../types/Sales.types";
 import {
   fetchSalesList,
   fetchSaleTypes,
-  fetchSaleStatuses,
+  fetchSaleSituations,
 } from "../services/Sales.service";
 import { salesListAdapter } from "../adapters/Sales.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 export const useSales = () => {
   const [sales, setSales] = useState<SaleListItem[]>([]);
   const [saleTypes, setSaleTypes] = useState<SaleType[]>([]);
-  const [saleStatuses, setSaleStatuses] = useState<SaleStatus[]>([]);
+  const [saleSituations, setSaleSituations] = useState<SaleSituation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -31,7 +31,7 @@ export const useSales = () => {
   const [isOpenFilterModal, setIsOpenFilterModal] = useState(false);
   const [filters, setFilters] = useState<SalesFilters>({
     search: null,
-    status: null,
+    situationId: null,
     saleType: null,
     startDate: null,
     endDate: null,
@@ -77,12 +77,12 @@ export const useSales = () => {
   useEffect(() => {
     const loadMetadata = async () => {
       try {
-        const [types, statuses] = await Promise.all([
+        const [types, situations] = await Promise.all([
           fetchSaleTypes(),
-          fetchSaleStatuses(),
+          fetchSaleSituations(),
         ]);
         setSaleTypes(types);
-        setSaleStatuses(statuses);
+        setSaleSituations(situations);
       } catch (err) {
         console.error("Error loading metadata:", err);
       }
@@ -167,7 +167,7 @@ export const useSales = () => {
   const onClearFilters = () => {
     const clearedFilters: SalesFilters = {
       search: null,
-      status: null,
+      situationId: null,
       saleType: null,
       startDate: null,
       endDate: null,
@@ -190,7 +190,7 @@ export const useSales = () => {
   };
 
   const hasActiveFilters =
-    filters.status !== null ||
+    filters.situationId !== null ||
     filters.saleType !== null ||
     filters.startDate !== null ||
     filters.endDate !== null;
@@ -198,7 +198,7 @@ export const useSales = () => {
   return {
     sales,
     saleTypes,
-    saleStatuses,
+    saleSituations,
     loading,
     error,
     search,
