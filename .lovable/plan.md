@@ -1,20 +1,17 @@
 
 
-## Plan: Permitir productos con stock cero para movimientos tipo MER
+## Plan: Mostrar spinner de carga en tabla de productos durante filtros/paginación
 
-### Cambios en `src/modules/inventory/hooks/useCreateMovements.ts`
+### Problema
+En `ProductsTable.tsx`, el spinner solo aparece cuando `loading && products.length === 0`. Al cambiar filtros, orden o página, ya hay productos cargados así que el spinner no se muestra.
 
-**1. `onSelectProduct` (línea 165)**
-- Cambiar la condición `if (product.stock === 0)` para que solo bloquee si el tipo de movimiento NO es `MER`
-- Si `movementType?.code === "MER"`, permitir seleccionar productos con stock 0
+### Solución
+Agregar un overlay de carga (similar al `PageLoader` del proyecto) sobre la tabla cuando `loading` es `true` y ya hay productos. La tabla seguirá visible de fondo pero con el spinner superpuesto.
 
-**2. `normalizeQuantity` (líneas 57-70)**
-- Agregar un parámetro opcional `isMER: boolean` (o similar) para que cuando sea tipo MER, no aplique el `Math.min(value, stock)` y permita cualquier cantidad positiva
+### Cambio en `src/modules/products/components/products/ProductsTable.tsx`
 
-**3. `handleQuantitySelectedProduct` (línea 86)**
-- Pasar el flag de MER a `normalizeQuantity` para que no limite la cantidad al stock disponible cuando el tipo es MER
+Envolver el `<Table>` en un `div` con `position: relative`, y cuando `loading && products.length > 0`, renderizar un overlay absoluto con el spinner `Loader2` encima de la tabla existente. Esto mantiene el comportamiento actual para carga inicial (tabla vacía + spinner centrado) y agrega el overlay para recarga de datos.
 
-### Resumen de cambios
-- Solo se modifica 1 archivo: `useCreateMovements.ts`
-- 3 puntos de cambio dentro del archivo
+### Archivos a modificar
+- `src/modules/products/components/products/ProductsTable.tsx` — agregar overlay de loading
 
