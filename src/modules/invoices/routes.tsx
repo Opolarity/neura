@@ -9,6 +9,7 @@ export const invoicesRoutes: RouteObject[] = [
   { path: 'invoices', element: <Invoices /> },
   { path: 'invoices/add', element: <CreateInvoice /> },
   { path: 'invoices/edit/:invoiceId', element: <CreateInvoice /> },
+  { path: 'invoices/view/:invoiceId', element: <CreateInvoice viewOnly /> },
   { path: 'invoices/print/:id', element: <InvoicePrintPage /> },
   { path: 'invoices/series', element: <InvoiceSeriesPage /> },
   { path: 'invoices/series/add', element: <InvoiceSeriesFormPage /> },
