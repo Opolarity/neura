@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   SaleListItem,
@@ -40,11 +40,17 @@ export const useSales = () => {
     size: 20,
   });
   const [selectedSales, setSelectedSales] = useState<number[]>([]);
+  const filtersRef = useRef(filters);
 
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const loadData = async (currentFilters: SalesFilters) => {
+  const updateFilters = useCallback((newFilters: SalesFilters) => {
+    filtersRef.current = newFilters;
+    setFilters(newFilters);
+  }, []);
+
+  const loadData = useCallback(async (currentFilters: SalesFilters) => {
     setLoading(true);
     setError(null);
 
@@ -65,7 +71,7 @@ export const useSales = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   // Load initial data and metadata
   useEffect(() => {
@@ -88,12 +94,13 @@ export const useSales = () => {
   const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
-    if (debouncedSearch !== filters.search) {
-      const newFilters = { ...filters, search: debouncedSearch || null, page: 1 };
-      setFilters(newFilters);
+    const currentFilters = filtersRef.current;
+    if (debouncedSearch !== currentFilters.search) {
+      const newFilters = { ...currentFilters, search: debouncedSearch || null, page: 1 };
+      updateFilters(newFilters);
       loadData(newFilters);
     }
-  }, [debouncedSearch]);
+  }, [debouncedSearch, loadData, updateFilters]);
 
   // Initial load
   useEffect(() => {
@@ -105,20 +112,20 @@ export const useSales = () => {
   };
 
   const onPageChange = (page: number) => {
-    const newFilters = { ...filters, page };
-    setFilters(newFilters);
+    const newFilters = { ...filtersRef.current, page };
+    updateFilters(newFilters);
     loadData(newFilters);
   };
 
   const onOrderChange = (order: string) => {
-    const newFilters = { ...filters, order, page: 1 };
-    setFilters(newFilters);
+    const newFilters = { ...filtersRef.current, order, page: 1 };
+    updateFilters(newFilters);
     loadData(newFilters);
   };
 
   const handlePageSizeChange = (size: number) => {
-    const newFilters = { ...filters, size, page: 1 };
-    setFilters(newFilters);
+    const newFilters = { ...filtersRef.current, size, page: 1 };
+    updateFilters(newFilters);
     loadData(newFilters);
   };
 
@@ -148,11 +155,11 @@ export const useSales = () => {
 
   const onApplyFilter = (newFilters: Partial<SalesFilters>) => {
     const updatedFilters = {
-      ...filters,
+      ...filtersRef.current,
       ...newFilters,
       page: 1,
     };
-    setFilters(updatedFilters);
+    updateFilters(updatedFilters);
     loadData(updatedFilters);
     setIsOpenFilterModal(false);
   };
@@ -166,9 +173,9 @@ export const useSales = () => {
       endDate: null,
       order: "date_desc",
       page: 1,
-      size: filters.size,
+      size: filtersRef.current.size,
     };
-    setFilters(clearedFilters);
+    updateFilters(clearedFilters);
     setSearch("");
     loadData(clearedFilters);
     setIsOpenFilterModal(false);
