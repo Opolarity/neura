@@ -76,16 +76,15 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
                 {item.declared ? "Declarado" : "Pendiente"}
               </span>
             </TableCell>
-            <TableCell>
-              {item.declared ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate(`/invoices/view/${item.id}`)}
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
-              ) : (
+            <TableCell className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(`/invoices/view/${item.id}`)}
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
+              {!item.declared && (
                 <Button
                   variant="ghost"
                   size="sm"
