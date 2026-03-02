@@ -217,6 +217,18 @@ export const useCreateMovements = () => {
     };
 
     const sendMovement = async () => {
+        const hasInvalidQuantity = selectedProducts.some(
+            (p) => p.quantity === null || p.quantity === undefined || p.quantity <= 0
+        );
+        if (hasInvalidQuantity || selectedProducts.length === 0) {
+            toast({
+                title: "Validación",
+                description: "Todos los productos deben tener una cantidad mayor a cero.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         try {
             if (movementType.code === "MER") {
                 const transformed = selectedProducts.map(item => ({
