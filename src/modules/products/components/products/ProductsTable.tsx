@@ -37,119 +37,126 @@ const ProductsTable = ({
   onDeleteClick,
 }: ProductsTableProps) => {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-12">
-            <Checkbox
-              checked={
-                selectedProducts.length === products.length &&
-                products.length > 0
-              }
-              onCheckedChange={() => onToggleAllProductsSelection()}
-            />
-          </TableHead>
-          <TableHead className="w-16">ID</TableHead>
-          <TableHead className="w-20">Imagen</TableHead>
-          <TableHead>Producto</TableHead>
-          <TableHead>Categoría</TableHead>
-          <TableHead>Precio</TableHead>
-          <TableHead>Stock</TableHead>
-          <TableHead>Estado</TableHead>
-          <TableHead>Acciones</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {loading && products.length === 0 ? (
+    <div className="relative">
+      {loading && products.length > 0 && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      )}
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={9} className="text-center py-8">
-              <div className="flex items-center justify-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Cargando productos...
-              </div>
-            </TableCell>
+            <TableHead className="w-12">
+              <Checkbox
+                checked={
+                  selectedProducts.length === products.length &&
+                  products.length > 0
+                }
+                onCheckedChange={() => onToggleAllProductsSelection()}
+              />
+            </TableHead>
+            <TableHead className="w-16">ID</TableHead>
+            <TableHead className="w-20">Imagen</TableHead>
+            <TableHead>Producto</TableHead>
+            <TableHead>Categoría</TableHead>
+            <TableHead>Precio</TableHead>
+            <TableHead>Stock</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead>Acciones</TableHead>
           </TableRow>
-        ) : products.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={9} className="text-center py-8 text-gray-500">
-              {search
-                ? "No se encontraron productos"
-                : "No hay productos registrados"}
-            </TableCell>
-          </TableRow>
-        ) : (
-          products.map((product) => (
-            <TableRow key={product.id}>
-              <TableCell>
-                <Checkbox
-                  checked={selectedProducts.includes(product.id)}
-                  onCheckedChange={() => onToggleProductSelection(product.id)}
-                />
-              </TableCell>
-              <TableCell className="font-mono text-muted-foreground">{product.id}</TableCell>
-              <TableCell>
-                <img
-                  src={product.image || placeholderImage}
-                  alt={product.name}
-                  className="w-12 h-12 object-cover rounded"
-                />
-              </TableCell>
-              <TableCell className="font-medium">{product.name}</TableCell>
-              <TableCell>{product.categories}</TableCell>
-              <TableCell>S/ {product.price}</TableCell>
-              <TableCell>{product.stock}</TableCell>
-              <TableCell>
-                <div className="flex gap-2">
-                  {product.estatus === true && (
-                    <Badge className="bg-green-400 hover:bg-green-400">
-                      Activo
-                    </Badge>
-                  )}
-                  {product.estatus === false && (
-                    <Badge className="bg-red-400 hover:bg-red-400">
-                      Inactivo
-                    </Badge>
-                  )}
-                  {product.web === true && (
-                    <Badge className="bg-green-400 hover:bg-green-400">
-                      Web
-                    </Badge>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onViewProduct(product.id)}
-                    title="Ver producto"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onGoToProductDetail(product.id)}
-                    title="Editar producto"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => onDeleteClick(product)}
-                    title="Eliminar producto"
-                  >
-                    <Trash className="w-4 h-4" />
-                  </Button>
+        </TableHeader>
+        <TableBody>
+          {loading && products.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={9} className="text-center py-8">
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Cargando productos...
                 </div>
               </TableCell>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+          ) : products.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                {search
+                  ? "No se encontraron productos"
+                  : "No hay productos registrados"}
+              </TableCell>
+            </TableRow>
+          ) : (
+            products.map((product) => (
+              <TableRow key={product.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedProducts.includes(product.id)}
+                    onCheckedChange={() => onToggleProductSelection(product.id)}
+                  />
+                </TableCell>
+                <TableCell className="font-mono text-muted-foreground">{product.id}</TableCell>
+                <TableCell>
+                  <img
+                    src={product.image || placeholderImage}
+                    alt={product.name}
+                    className="w-12 h-12 object-cover rounded"
+                  />
+                </TableCell>
+                <TableCell className="font-medium">{product.name}</TableCell>
+                <TableCell>{product.categories}</TableCell>
+                <TableCell>S/ {product.price}</TableCell>
+                <TableCell>{product.stock}</TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    {product.estatus === true && (
+                      <Badge className="bg-green-400 hover:bg-green-400">
+                        Activo
+                      </Badge>
+                    )}
+                    {product.estatus === false && (
+                      <Badge className="bg-red-400 hover:bg-red-400">
+                        Inactivo
+                      </Badge>
+                    )}
+                    {product.web === true && (
+                      <Badge className="bg-green-400 hover:bg-green-400">
+                        Web
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onViewProduct(product.id)}
+                      title="Ver producto"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onGoToProductDetail(product.id)}
+                      title="Editar producto"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => onDeleteClick(product)}
+                      title="Eliminar producto"
+                    >
+                      <Trash className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 
