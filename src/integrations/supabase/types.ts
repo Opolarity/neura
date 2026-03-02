@@ -1656,7 +1656,9 @@ export type Database = {
           active: boolean
           business_account_id: number | null
           code: string | null
+          description: string | null
           id: number
+          image_url: string | null
           is_active: boolean
           name: string
         }
@@ -1664,7 +1666,9 @@ export type Database = {
           active: boolean
           business_account_id?: number | null
           code?: string | null
+          description?: string | null
           id?: number
+          image_url?: string | null
           is_active?: boolean
           name: string
         }
@@ -1672,7 +1676,9 @@ export type Database = {
           active?: boolean
           business_account_id?: number | null
           code?: string | null
+          description?: string | null
           id?: number
+          image_url?: string | null
           is_active?: boolean
           name?: string
         }
