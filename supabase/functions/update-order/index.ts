@@ -86,12 +86,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (existingOrder.user_id !== user.id) {
-      return new Response(
-        JSON.stringify({ error: "You can only update your own orders" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     // Get the CURRENT situation of the order to determine stock movement flags
     let stockIsActive = true;
@@ -108,22 +102,18 @@ Deno.serve(async (req) => {
     console.log("Current order situation code:", currentSituationCode);
 
     if (currentSituationCode) {
-      switch (currentSituationCode) {
-        case "PHY":
-          stockIsActive = true;
-          stockCompleted = true;
-          break;
-        case "HDN":
-          stockIsActive = false;
-          stockCompleted = false;
-          break;
-        case "VIR":
-          stockIsActive = true;
-          stockCompleted = false;
-          break;
-        default:
-          stockIsActive = true;
-          stockCompleted = true;
+      if (currentSituationCode.endsWith("-PHY")) {
+        stockIsActive = true;
+        stockCompleted = true;
+      } else if (currentSituationCode.endsWith("-HDN")) {
+        stockIsActive = false;
+        stockCompleted = false;
+      } else if (currentSituationCode.endsWith("-VIR")) {
+        stockIsActive = true;
+        stockCompleted = false;
+      } else {
+        stockIsActive = true;
+        stockCompleted = true;
       }
     }
 

@@ -25,13 +25,13 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/shared/utils/utils";
-import { SalesFilters, SaleType, SaleStatus } from "../../types/Sales.types";
+import { SalesFilters, SaleType, SaleSituation } from "../../types/Sales.types";
 
 interface SalesFilterModalProps {
   isOpen: boolean;
   filters: SalesFilters;
   saleTypes: SaleType[];
-  saleStatuses: SaleStatus[];
+  saleSituations: SaleSituation[];
   onClose: () => void;
   onApply: (filters: Partial<SalesFilters>) => void;
   onClear: () => void;
@@ -41,12 +41,12 @@ const SalesFilterModal = ({
   isOpen,
   filters,
   saleTypes,
-  saleStatuses,
+  saleSituations,
   onClose,
   onApply,
   onClear,
 }: SalesFilterModalProps) => {
-  const [status, setStatus] = useState<string | null>(filters.status);
+  const [situationId, setSituationId] = useState<number | null>(filters.situationId);
   const [saleType, setSaleType] = useState<number | null>(filters.saleType);
   const [startDate, setStartDate] = useState<Date | undefined>(
     filters.startDate ? new Date(filters.startDate) : undefined
@@ -56,7 +56,7 @@ const SalesFilterModal = ({
   );
 
   useEffect(() => {
-    setStatus(filters.status);
+    setSituationId(filters.situationId);
     setSaleType(filters.saleType);
     setStartDate(filters.startDate ? new Date(filters.startDate) : undefined);
     setEndDate(filters.endDate ? new Date(filters.endDate) : undefined);
@@ -64,7 +64,7 @@ const SalesFilterModal = ({
 
   const handleApply = () => {
     onApply({
-      status,
+      situationId,
       saleType,
       startDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
       endDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
@@ -72,7 +72,7 @@ const SalesFilterModal = ({
   };
 
   const handleClear = () => {
-    setStatus(null);
+    setSituationId(null);
     setSaleType(null);
     setStartDate(undefined);
     setEndDate(undefined);
@@ -87,20 +87,20 @@ const SalesFilterModal = ({
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          {/* Status Filter */}
+          {/* Situation Filter */}
           <div className="grid gap-2">
             <Label>Estado</Label>
             <Select
-              value={status || "all"}
-              onValueChange={(val) => setStatus(val === "all" ? null : val)}
+              value={situationId?.toString() || "all"}
+              onValueChange={(val) => setSituationId(val === "all" ? null : parseInt(val))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los estados</SelectItem>
-                {saleStatuses.map((s) => (
-                  <SelectItem key={s.code} value={s.code}>
+                {saleSituations.map((s) => (
+                  <SelectItem key={s.id} value={s.id.toString()}>
                     {s.name}
                   </SelectItem>
                 ))}

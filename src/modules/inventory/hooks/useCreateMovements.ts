@@ -57,6 +57,7 @@ export const useCreateMovements = () => {
     const normalizeQuantity = (
         rawValue: string,
         stock: number,
+        isMER: boolean = false,
     ): number | null => {
         const sanitized = rawValue.replace(/\D/g, "");
 
@@ -66,7 +67,7 @@ export const useCreateMovements = () => {
 
         if (!value || value <= 0) return null;
 
-        return Math.min(value, stock);
+        return isMER ? value : Math.min(value, stock);
     };
 
     const handleMovementType = (type: Types | null) => {
@@ -94,7 +95,7 @@ export const useCreateMovements = () => {
                     return p;
                 }
 
-                const quantity = normalizeQuantity(value, p.stock);
+                const quantity = normalizeQuantity(value, p.stock, movementType?.code === "MER");
                 console.log("STOCK USADO:", p.stock, "INPUT:", value, "RESULT:", quantity);
 
                 return {
@@ -162,7 +163,7 @@ export const useCreateMovements = () => {
     };
 
     const onSelectProduct = (product: ProductSales) => {
-        if (product.stock === 0) {
+        if (product.stock === 0 && movementType?.code !== "MER") {
             console.log("Producto sin stock disponible");
             return;
         }
@@ -217,6 +218,18 @@ export const useCreateMovements = () => {
     };
 
     const sendMovement = async () => {
+        const hasInvalidQuantity = selectedProducts.some(
+            (p) => p.quantity === null || p.quantity === undefined || p.quantity <= 0
+        );
+        if (hasInvalidQuantity || selectedProducts.length === 0) {
+            toast({
+                title: "Validación",
+                description: "Todos los productos deben tener una cantidad mayor a cero.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         try {
             if (movementType.code === "MER") {
                 const transformed = selectedProducts.map(item => ({

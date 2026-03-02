@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Pause, XCircle, RefreshCw, UserX } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Pause, XCircle, RefreshCw, UserX, ShoppingCart } from "lucide-react";
 import type { POSStep } from "../../types/POS.types";
 
 interface POSWizardNavigationProps {
@@ -14,6 +14,7 @@ interface POSWizardNavigationProps {
   onPause?: () => void;
   onCancel?: () => void;
   onAnonymousPurchase?: () => void;
+  onNewSale?: () => void;
 }
 
 export default function POSWizardNavigation({
@@ -28,16 +29,18 @@ export default function POSWizardNavigation({
   onPause,
   onCancel,
   onAnonymousPurchase,
+  onNewSale,
 }: POSWizardNavigationProps) {
   const isFirstStep = currentStep === 1;
-  const isLastStep = currentStep === 5;
+  const isPaymentStep = currentStep === 5;
+  const isInvoicingStep = currentStep === 6;
 
   return (
     <footer className="bg-white border-t px-6 py-4 shrink-0">
       <div className="flex items-center justify-between">
         {/* Left side - Back button and info */}
         <div className="flex items-center gap-4">
-          {!isFirstStep && (
+          {!isFirstStep && !isInvoicingStep && (
             <Button
               variant="outline"
               onClick={onBack}
@@ -48,15 +51,17 @@ export default function POSWizardNavigation({
               Volver
             </Button>
           )}
-          <Button
-            variant="ghost"
-            onClick={onReset}
-            className="gap-2"
-            disabled={saving}
-          >
-            <RefreshCw className="w-4 h-4" />
-            Restablecer
-          </Button>
+          {!isInvoicingStep && (
+            <Button
+              variant="ghost"
+              onClick={onReset}
+              className="gap-2"
+              disabled={saving}
+            >
+              <RefreshCw className="w-4 h-4" />
+              Restablecer
+            </Button>
+          )}
         </div>
 
         {/* Center - Status info */}
@@ -102,7 +107,15 @@ export default function POSWizardNavigation({
             </Button>
           )}
 
-          {isLastStep ? (
+          {isInvoicingStep ? (
+            <Button
+              onClick={onNewSale}
+              className="gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Nueva Venta
+            </Button>
+          ) : isPaymentStep ? (
             <Button
               onClick={onFinalize}
               disabled={!canFinalize || saving}

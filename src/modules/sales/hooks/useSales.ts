@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   SaleListItem,
   SalesFilters,
   SalesPaginationState,
   SaleType,
-  SaleStatus,
+  SaleSituation,
 } from "../types/Sales.types";
 import {
   fetchSalesList,
   fetchSaleTypes,
-  fetchSaleStatuses,
+  fetchSaleSituations,
 } from "../services/Sales.service";
 import { salesListAdapter } from "../adapters/Sales.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 export const useSales = () => {
   const [sales, setSales] = useState<SaleListItem[]>([]);
   const [saleTypes, setSaleTypes] = useState<SaleType[]>([]);
-  const [saleStatuses, setSaleStatuses] = useState<SaleStatus[]>([]);
+  const [saleSituations, setSaleSituations] = useState<SaleSituation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -31,7 +31,7 @@ export const useSales = () => {
   const [isOpenFilterModal, setIsOpenFilterModal] = useState(false);
   const [filters, setFilters] = useState<SalesFilters>({
     search: null,
-    status: null,
+    situationId: null,
     saleType: null,
     startDate: null,
     endDate: null,
@@ -40,11 +40,17 @@ export const useSales = () => {
     size: 20,
   });
   const [selectedSales, setSelectedSales] = useState<number[]>([]);
+  const filtersRef = useRef(filters);
 
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const loadData = async (currentFilters: SalesFilters) => {
+  const updateFilters = useCallback((newFilters: SalesFilters) => {
+    filtersRef.current = newFilters;
+    setFilters(newFilters);
+  }, []);
+
+  const loadData = useCallback(async (currentFilters: SalesFilters) => {
     setLoading(true);
     setError(null);
 
@@ -65,18 +71,18 @@ export const useSales = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   // Load initial data and metadata
   useEffect(() => {
     const loadMetadata = async () => {
       try {
-        const [types, statuses] = await Promise.all([
+        const [types, situations] = await Promise.all([
           fetchSaleTypes(),
-          fetchSaleStatuses(),
+          fetchSaleSituations(),
         ]);
         setSaleTypes(types);
-        setSaleStatuses(statuses);
+        setSaleSituations(situations);
       } catch (err) {
         console.error("Error loading metadata:", err);
       }
@@ -88,12 +94,13 @@ export const useSales = () => {
   const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
-    if (debouncedSearch !== filters.search) {
-      const newFilters = { ...filters, search: debouncedSearch || null, page: 1 };
-      setFilters(newFilters);
+    const currentFilters = filtersRef.current;
+    if (debouncedSearch !== currentFilters.search) {
+      const newFilters = { ...currentFilters, search: debouncedSearch || null, page: 1 };
+      updateFilters(newFilters);
       loadData(newFilters);
     }
-  }, [debouncedSearch]);
+  }, [debouncedSearch, loadData, updateFilters]);
 
   // Initial load
   useEffect(() => {
@@ -105,20 +112,20 @@ export const useSales = () => {
   };
 
   const onPageChange = (page: number) => {
-    const newFilters = { ...filters, page };
-    setFilters(newFilters);
+    const newFilters = { ...filtersRef.current, page };
+    updateFilters(newFilters);
     loadData(newFilters);
   };
 
   const onOrderChange = (order: string) => {
-    const newFilters = { ...filters, order, page: 1 };
-    setFilters(newFilters);
+    const newFilters = { ...filtersRef.current, order, page: 1 };
+    updateFilters(newFilters);
     loadData(newFilters);
   };
 
   const handlePageSizeChange = (size: number) => {
-    const newFilters = { ...filters, size, page: 1 };
-    setFilters(newFilters);
+    const newFilters = { ...filtersRef.current, size, page: 1 };
+    updateFilters(newFilters);
     loadData(newFilters);
   };
 
@@ -148,11 +155,11 @@ export const useSales = () => {
 
   const onApplyFilter = (newFilters: Partial<SalesFilters>) => {
     const updatedFilters = {
-      ...filters,
+      ...filtersRef.current,
       ...newFilters,
       page: 1,
     };
-    setFilters(updatedFilters);
+    updateFilters(updatedFilters);
     loadData(updatedFilters);
     setIsOpenFilterModal(false);
   };
@@ -160,15 +167,15 @@ export const useSales = () => {
   const onClearFilters = () => {
     const clearedFilters: SalesFilters = {
       search: null,
-      status: null,
+      situationId: null,
       saleType: null,
       startDate: null,
       endDate: null,
       order: "date_desc",
       page: 1,
-      size: filters.size,
+      size: filtersRef.current.size,
     };
-    setFilters(clearedFilters);
+    updateFilters(clearedFilters);
     setSearch("");
     loadData(clearedFilters);
     setIsOpenFilterModal(false);
@@ -183,7 +190,7 @@ export const useSales = () => {
   };
 
   const hasActiveFilters =
-    filters.status !== null ||
+    filters.situationId !== null ||
     filters.saleType !== null ||
     filters.startDate !== null ||
     filters.endDate !== null;
@@ -191,7 +198,7 @@ export const useSales = () => {
   return {
     sales,
     saleTypes,
-    saleStatuses,
+    saleSituations,
     loading,
     error,
     search,

@@ -8,7 +8,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { Edit, Loader2 } from "lucide-react";
+import { Edit, Eye, Loader2 } from "lucide-react";
 import type { InvoiceRow } from "../../hooks/useInvoices";
 
 interface TableInvoicesProps {
@@ -76,14 +76,23 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
                 {item.declared ? "Declarado" : "Pendiente"}
               </span>
             </TableCell>
-            <TableCell>
+            <TableCell className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate(`/invoices/edit/${item.id}`)}
+                onClick={() => navigate(`/invoices/view/${item.id}`)}
               >
-                <Edit className="w-4 h-4" />
+                <Eye className="w-4 h-4" />
               </Button>
+              {!item.declared && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(`/invoices/edit/${item.id}`)}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              )}
             </TableCell>
           </TableRow>
         ))}

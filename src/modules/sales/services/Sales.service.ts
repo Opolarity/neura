@@ -11,7 +11,7 @@ export const fetchSalesList = async (
   };
 
   if (filters.search) params.search = filters.search;
-  if (filters.status) params.status = filters.status;
+  if (filters.situationId) params.situation_id = String(filters.situationId);
   if (filters.saleType) params.sale_type = String(filters.saleType);
   if (filters.startDate) params.start_date = filters.startDate;
   if (filters.endDate) params.end_date = filters.endDate;
@@ -41,12 +41,12 @@ export const fetchSaleTypes = async (): Promise<{ id: number; name: string }[]> 
   return data || [];
 };
 
-export const fetchSaleStatuses = async (): Promise<{ code: string; name: string }[]> => {
+export const fetchSaleSituations = async (): Promise<{ id: number; name: string }[]> => {
   const { data, error } = await supabase
-    .from("statuses")
-    .select("code, name")
-    .eq("module_id", 2); // Assuming module_id 2 is for orders
+    .from("situations")
+    .select("id, name, modules!inner(code)")
+    .eq("modules.code", "ORD");
 
   if (error) throw error;
-  return data || [];
+  return (data || []).map((s: any) => ({ id: s.id, name: s.name }));
 };

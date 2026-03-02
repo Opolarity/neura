@@ -97,6 +97,68 @@ export type Database = {
           },
         ]
       }
+      bar_codes: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: number
+          price_list_id: number
+          product_variation_id: number
+          quantities: number | null
+          sequence: number
+          stock_movement_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          price_list_id: number
+          product_variation_id: number
+          quantities?: number | null
+          sequence: number
+          stock_movement_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          price_list_id?: number
+          product_variation_id?: number
+          quantities?: number | null
+          sequence?: number
+          stock_movement_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "bar_codes_price_list_id_fkey"
+            columns: ["price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_codes_product_variation_id_fkey"
+            columns: ["product_variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_codes_stock_movement_id_fkey"
+            columns: ["stock_movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           address: string
@@ -1102,7 +1164,7 @@ export type Database = {
           id: number
           image_url: string | null
           message: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           code?: string | null
@@ -1110,7 +1172,7 @@ export type Database = {
           id?: number
           image_url?: string | null
           message?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Update: {
           code?: string | null
@@ -1118,7 +1180,7 @@ export type Database = {
           id?: number
           image_url?: string | null
           message?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1594,7 +1656,9 @@ export type Database = {
           active: boolean
           business_account_id: number | null
           code: string | null
+          description: string | null
           id: number
+          image_url: string | null
           is_active: boolean
           name: string
         }
@@ -1602,7 +1666,9 @@ export type Database = {
           active: boolean
           business_account_id?: number | null
           code?: string | null
+          description?: string | null
           id?: number
+          image_url?: string | null
           is_active?: boolean
           name: string
         }
@@ -1610,7 +1676,9 @@ export type Database = {
           active?: boolean
           business_account_id?: number | null
           code?: string | null
+          description?: string | null
           id?: number
+          image_url?: string | null
           is_active?: boolean
           name?: string
         }
@@ -3049,7 +3117,7 @@ export type Database = {
         Row: {
           completed: boolean
           created_at: string | null
-          created_by: string
+          created_by: string | null
           id: number
           is_active: boolean
           movement_type: number
@@ -3062,7 +3130,7 @@ export type Database = {
         Insert: {
           completed: boolean
           created_at?: string | null
-          created_by: string
+          created_by?: string | null
           id?: never
           is_active?: boolean
           movement_type: number
@@ -3075,7 +3143,7 @@ export type Database = {
         Update: {
           completed?: boolean
           created_at?: string | null
-          created_by?: string
+          created_by?: string | null
           id?: never
           is_active?: boolean
           movement_type?: number
@@ -4194,18 +4262,17 @@ export type Database = {
       }
       sp_ec_create_order: {
         Args: {
-          p_branch_id?: number
-          p_change_entries?: Json
-          p_initial_situation_id?: number
-          p_is_existing_client?: boolean
-          p_order_data?: Json
-          p_payments?: Json
-          p_price_list_id?: number
-          p_products?: Json
-          p_sale_type_id?: number
-          p_stock_type_id?: number
-          p_user_id?: number
-          p_warehouse_id?: number
+          p_branch_id: number
+          p_change_entries: Json
+          p_initial_situation_id: number
+          p_is_existing_client: boolean
+          p_order_data: Json
+          p_payments: Json
+          p_products: Json
+          p_sale_type_id: number
+          p_stock_type_id: number
+          p_user_id: string
+          p_warehouse_id: number
         }
         Returns: Json
       }
@@ -4519,6 +4586,7 @@ export type Database = {
               p_page?: number
               p_sale_type?: number
               p_search?: string
+              p_situation_id?: number
               p_size?: number
               p_start_date?: string
               p_status?: string

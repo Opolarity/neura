@@ -138,7 +138,7 @@ export const useProducts = () => {
   };
 
   const onOrderChange = (order: string) => {
-    const newFilters = { ...filters, order };
+    const newFilters = { ...filters, order, page: 1 };
     setFilters(newFilters);
     loadData(newFilters);
   };

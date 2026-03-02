@@ -234,16 +234,7 @@ export const useCreateSale = () => {
     load();
   }, [createdOrderId]);
 
-  // Apply price rules whenever products change
-  useEffect(() => {
-    if (products.length === 0) return;
-    const run = async () => {
-      const updated = await applyPriceRules(products);
-      const changed = updated.some((u, i) => u.price !== products[i].price);
-      if (changed) setProducts(updated);
-    };
-    run();
-  }, [products]);
+
 
   // Computed: Available shipping costs based on selected location
   const availableShippingCosts = useMemo(() => {
@@ -341,8 +332,20 @@ export const useCreateSale = () => {
     const currentSituation = salesData.situations.find(
       (s) => s.id.toString() === orderSituation,
     );
-    return currentSituation?.code === "PHY";
+    return currentSituation?.code?.endsWith("-PHY") ?? false;
   }, [orderSituation, salesData?.situations]);
+
+  // Apply price rules whenever products change (skip when product editing is disabled — PHY situation)
+  useEffect(() => {
+    if (isPhySituation) return;
+    if (products.length === 0) return;
+    const run = async () => {
+      const updated = await applyPriceRules(products);
+      const changed = updated.some((u, i) => u.price !== products[i].price);
+      if (changed) setProducts(updated);
+    };
+    run();
+  }, [products, isPhySituation]);
 
   // Computed: Check if current status has COM code (completed - no payment edits allowed)
   const isComSituation = useMemo(() => {
@@ -1093,6 +1096,7 @@ export const useCreateSale = () => {
       ...prev,
       {
         variationId: selectedVariation.id,
+        productId: selectedVariation.productId,
         productName: selectedVariation.productTitle,
         variationName: termsNames || selectedVariation.sku,
         sku: selectedVariation.sku,

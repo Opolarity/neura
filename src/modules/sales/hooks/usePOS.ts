@@ -78,6 +78,8 @@ export const usePOS = () => {
 
   // Step state
   const [currentStep, setCurrentStep] = useState<POSStep>(1);
+  const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
+  const [createdOrderSaleTypeId, setCreatedOrderSaleTypeId] = useState<number | null>(null);
 
   // Loading states
   const [loading, setLoading] = useState(true);
@@ -308,9 +310,7 @@ export const usePOS = () => {
       switch (step) {
         case 2: // Need configuration
           return !!configuration?.priceListId && !!configuration?.warehouseId;
-        case 3: // Need products in cart
-          return cart.length > 0;
-        case 4: // Need customer data (or anonymous purchase)
+        case 3: // Need customer data (or anonymous purchase)
           return (
             isAnonymousPurchase || (
               !!customer.documentTypeId &&
@@ -318,6 +318,8 @@ export const usePOS = () => {
               !!customer.customerName
             )
           );
+        case 4: // Need products in cart
+          return cart.length > 0;
         case 5: // If requires shipping, need shipping data
           if (customer.requiresShipping) {
             return (
@@ -328,7 +330,7 @@ export const usePOS = () => {
               !!shipping.address
             );
           }
-          return true;
+          return cart.length > 0;
         default:
           return true;
       }
@@ -337,7 +339,7 @@ export const usePOS = () => {
   );
 
   const nextStep = useCallback(() => {
-    if (currentStep < 5 && canProceedToStep((currentStep + 1) as POSStep)) {
+    if (currentStep < 6 && canProceedToStep((currentStep + 1) as POSStep)) {
       // Skip shipping step if not required
       if (currentStep === 3 && !customer.requiresShipping) {
         setCurrentStep(5);
@@ -348,6 +350,8 @@ export const usePOS = () => {
   }, [currentStep, canProceedToStep, customer.requiresShipping]);
 
   const prevStep = useCallback(() => {
+    // Can't go back from invoicing step (order already created)
+    if (currentStep === 6) return;
     if (currentStep > 1) {
       // Skip shipping step going back if not required
       if (currentStep === 5 && !customer.requiresShipping) {
@@ -360,10 +364,12 @@ export const usePOS = () => {
 
   const goToStep = useCallback(
     (step: POSStep) => {
+      // Can't navigate away from invoicing step
+      if (currentStep === 6) return;
       if (step <= currentStep || canProceedToStep(step)) {
         // Handle shipping step skip
         if (step === 4 && !customer.requiresShipping) {
-          return; // Can't go to shipping if not required
+          return;
         }
         setCurrentStep(step);
       }
@@ -453,6 +459,7 @@ export const usePOS = () => {
 
       const newItem: POSCartItem = {
         variationId: product.variationId,
+        productId: product.productId,
         productName: product.productTitle,
         variationName:
           product.terms.map((t) => t.name).join(" / ") || product.sku,
@@ -618,13 +625,9 @@ export const usePOS = () => {
     setIsAnonymousPurchase(true);
     setClientFound(false);
 
-    // Advance to next step (skip shipping if not required)
-    if (!customer.requiresShipping) {
-      setCurrentStep(5);
-    } else {
-      setCurrentStep(4);
-    }
-  }, [customer.requiresShipping]);
+    // Advance to products step
+    setCurrentStep(3);
+  }, []);
 
   // =============================================
   // SHIPPING (STEP 4)
@@ -977,13 +980,22 @@ export const usePOS = () => {
         }
       }
 
+      // Resolve the sale type id used
+      const resolvedSaleTypeId = parseInt(
+        tiendaFisicaType?.id?.toString() ||
+        formData?.saleTypes[0]?.id?.toString() ||
+        "1"
+      );
+
       toast({
         title: "Venta completada",
         description: `Pedido #${result.order.id} creado exitosamente`,
       });
 
-      // Reset for new sale
-      resetForNewSale();
+      // Move to invoicing step instead of resetting
+      setCreatedOrderId(result.order.id);
+      setCreatedOrderSaleTypeId(resolvedSaleTypeId);
+      setCurrentStep(6);
 
       return result;
     } catch (error: unknown) {
@@ -1017,7 +1029,7 @@ export const usePOS = () => {
   ]);
 
   const resetForNewSale = useCallback(() => {
-    setCurrentStep(2); // Go back to products step
+    setCurrentStep(2); // Go back to customer data step
     setCart([]);
     setGeneralDiscount(0);
     setCustomer(DEFAULT_CUSTOMER);
@@ -1027,6 +1039,8 @@ export const usePOS = () => {
     setClientFound(null);
     setIsAnonymousPurchase(false);
     setSearchQuery("");
+    setCreatedOrderId(null);
+    setCreatedOrderSaleTypeId(null);
     setCurrentPayment({
       id: crypto.randomUUID(),
       paymentMethodId: "",
@@ -1053,6 +1067,8 @@ export const usePOS = () => {
     setClientFound(null);
     setIsAnonymousPurchase(false);
     setSearchQuery("");
+    setCreatedOrderId(null);
+    setCreatedOrderSaleTypeId(null);
     setCurrentPayment({
       id: crypto.randomUUID(),
       paymentMethodId: "",
@@ -1238,6 +1254,10 @@ export const usePOS = () => {
     resetForNewSale,
     resetAll,
     exitPOS,
+
+    // Invoicing (Step 6)
+    createdOrderId,
+    createdOrderSaleTypeId,
     
     // Close session modal
     showCloseSessionModal,

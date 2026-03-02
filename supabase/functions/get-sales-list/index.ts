@@ -60,6 +60,9 @@ Deno.serve(async (req) => {
       p_order: url.searchParams.get("order") || "date_desc",
       p_branch_id: userBranchId,
       p_warehouse_id: userWarehouseId,
+      p_situation_id: url.searchParams.get("situation_id")
+        ? parseInt(url.searchParams.get("situation_id")!)
+        : null,
     };
 
     console.log("Calling sp_get_sales_list with params:", params);

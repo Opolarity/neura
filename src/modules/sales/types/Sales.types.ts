@@ -26,7 +26,7 @@ export interface SaleListItem {
 
 export interface SalesFilters {
   search: string | null;
-  status: string | null;
+  situationId: number | null;
   saleType: number | null;
   startDate: string | null;
   endDate: string | null;
@@ -55,7 +55,7 @@ export interface SaleType {
   name: string;
 }
 
-export interface SaleStatus {
-  code: string;
+export interface SaleSituation {
+  id: number;
   name: string;
 }

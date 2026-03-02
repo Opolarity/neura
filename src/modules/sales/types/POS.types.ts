@@ -5,22 +5,24 @@
 import { Type } from "@/types";
 
 // Wizard step type
-export type POSStep = 1 | 2 | 3 | 4 | 5;
+export type POSStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 export const POS_STEPS = {
   CONFIGURATION: 1 as POSStep,
-  PRODUCTS: 2 as POSStep,
-  CUSTOMER_DATA: 3 as POSStep,
+  CUSTOMER_DATA: 2 as POSStep,
+  PRODUCTS: 3 as POSStep,
   SHIPPING: 4 as POSStep,
   PAYMENT: 5 as POSStep,
+  INVOICING: 6 as POSStep,
 };
 
 export const POS_STEP_NAMES: Record<POSStep, string> = {
-  1: "Configuracion",
-  2: "Productos",
-  3: "Datos Cliente",
-  4: "Envio",
+  1: "Configuración",
+  2: "Datos Cliente",
+  3: "Productos",
+  4: "Envío",
   5: "Pago",
+  6: "Facturación",
 };
 
 // =============================================
@@ -104,6 +106,7 @@ export interface POSConfiguration {
 
 export interface POSCartItem {
   variationId: number;
+  productId?: number;
   productName: string;
   variationName: string;
   sku: string;

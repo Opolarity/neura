@@ -206,7 +206,8 @@ export const getBusinessAccountIsActiveTrue = async () => {
   const { data, error } = await supabase
     .from("business_accounts")
     .select("*")
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .gt("id", 0);
 
   if (error) {
     console.error("Error fetching active business accounts:", error.message);

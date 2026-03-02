@@ -78,7 +78,7 @@ export const usePOSList = () => {
   };
 
   const goToPOS = () => {
-    navigate("/pos");
+    navigate("/pos/open");
   };
 
   return {

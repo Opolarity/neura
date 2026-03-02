@@ -16,7 +16,7 @@ function PageLimit({ size, onPageSizeChange }: PageLimitProps) {
 
     return (
         <Select
-            value={size.toString()}
+            value={(size ?? 20).toString()}
             onValueChange={(value) => onPageSizeChange(Number(value))}
         >
             <SelectTrigger className="w-[80px]">

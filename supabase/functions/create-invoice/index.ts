@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -13,30 +13,39 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
       throw new Error("Missing environment variables");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Validate auth
-    const authHeader = req.headers.get("authorization")?.split(" ")[1];
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "No authorization header" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader);
-    if (authError || !user) {
+    // Validate auth using anon key + user's Authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userId = claimsData.claims.sub;
+
+    // Use service role for DB operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const input = await req.json();
 
@@ -57,7 +66,7 @@ serve(async (req) => {
         total_taxes: input.total_taxes || null,
         total_free: input.total_free || null,
         total_others: input.total_others || null,
-        created_by: user.id,
+        created_by: userId,
         customer_document_estate_code: input.customer_document_estate_code || null,
         vinculated_invoice_id: input.vinculated_invoice_id || null,
       })
@@ -107,7 +116,6 @@ serve(async (req) => {
 
       if (linkError) {
         console.error("Error linking invoice to order:", linkError);
-        // Non-fatal: invoice was created, just log the error
       }
     }
 
