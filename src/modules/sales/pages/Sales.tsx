@@ -82,7 +82,12 @@ const Sales = () => {
           />
         </CardHeader>
 
-        <CardContent className="p-0">
+        <CardContent className="p-0 relative">
+          {loading && sales.length > 0 && (
+            <div className="absolute inset-0 z-50 bg-background/80 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
           <Table>
             <TableHeader>
               <TableRow>
