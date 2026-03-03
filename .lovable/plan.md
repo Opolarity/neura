@@ -1,30 +1,39 @@
 
 
-## Analysis
+## Plan: Listado de Códigos de Barras en `/bar-codes`
 
-I've traced the complete flow of the order Select in `/sales`:
+### Situacion actual
+La página `/bar-codes` solo muestra un botón "Nuevo Código" y abre directamente el modal de configuración. No hay listado de registros existentes.
 
-1. **Frontend**: `SalesFilterBar` → `onOrderChange` → `useSales.onOrderChange` → updates `filters.order` and calls `loadData`
-2. **Service**: `fetchSalesList` sends `order` as query param via `buildEndpoint`
-3. **Edge Function**: `get-sales-list` reads `order` from URL params and passes as `p_order` to `sp_get_sales_list`
-4. **Stored Procedure**: Has correct `CASE` statements for `date_desc`, `date_asc`, `total_desc`, `total_asc`
+### Cambios propuestos
 
-I verified with a direct curl to the edge function that `total_asc` correctly returns data sorted by total ascending (0, 10, 10, 14, 19.99...). The backend works.
+**1. Nuevo servicio: `fetchBarcodesList`** en `Barcodes.service.ts`
+- Query a `bar_codes` con joins a `variations` (+ `products`), `price_list`, y opcionalmente `stock_movements`
+- Traer: id, sequence, quantities, created_at, producto (title), SKU, lista de precios (name)
+- Ordenado por `created_at DESC`
 
-The frontend code also appears correctly wired. However, there could be a subtle closure/state issue in `useSales.ts` — the `debouncedSearch` useEffect (line 90) captures `filters` from the closure, which could potentially overwrite a recent order change with stale filters if both fire close together.
+**2. Nuevo tipo `BarcodeListItem`** en `Barcodes.types.ts`
+- id, productTitle, sku, priceListName, sequence, quantities, createdAt
 
-## Plan
+**3. Nuevo adapter `barcodeListAdapter`** en `Barcodes.adapter.ts`
+- Transforma el raw data del query al tipo `BarcodeListItem`
 
-### 1. Add `filters` to `loadData` dependencies safety
-In `useSales.ts`, the `onOrderChange` function directly calls `loadData(newFilters)` passing the new filters explicitly, which should bypass any closure issues. The code appears correct as-is.
+**4. Nuevo componente `BarcodeListTable`**
+- Tabla con columnas: ID, Producto, SKU, Lista de Precio, Lote, Cantidad, Fecha
+- Acción para re-imprimir el PDF (icono de impresora)
+- Estado de carga con spinner overlay (mismo patrón de Sales)
 
-### 2. Verify via browser testing
-Test the order select in the preview to confirm it triggers a new network request with the correct `order` parameter and the results change accordingly.
+**5. Actualizar `useBarcodes` hook**
+- Agregar estado `barcodeList` y `listLoading`
+- Cargar lista al montar y después de cada creación exitosa (refresh)
 
-### 3. If issue persists: Add console logging
-Add temporary `console.log` in `onOrderChange` to confirm it fires, and check the network request to verify the `order` param changes.
+**6. Actualizar `BarcodesPage`**
+- Mostrar la tabla de listado como contenido principal
+- El botón "Nuevo Código" sigue abriendo el modal
+- Tras generar un barcode, se refresca la lista
 
-**Most likely root cause**: The code is correct and the ordering works. If the user sees no change, it may be because with few records filtered by branch/warehouse (only 6 records), the visual difference between some orderings is subtle. However, switching between `date_desc` and `total_asc` should produce a visible reorder.
-
-I'll implement by first testing end-to-end, and if any issue is found, fix it.
+### Flujo del usuario
+1. Entra a `/bar-codes` → ve la tabla con todos los códigos generados
+2. Puede hacer click en "Nuevo Código" → abre modal → genera → lista se actualiza
+3. Puede re-imprimir desde la tabla
 

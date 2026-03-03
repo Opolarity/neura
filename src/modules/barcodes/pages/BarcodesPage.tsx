@@ -2,12 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useBarcodes } from "../hooks/useBarcodes";
 import BarcodeConfigModal from "../components/BarcodeConfigModal";
+import BarcodeListTable from "../components/BarcodeListTable";
 
 const BarcodesPage = () => {
   const {
     variations,
     stockMovements,
     priceLists,
+    barcodeList,
     selectedVariationId,
     selectedStockMovementId,
     selectedPriceListId,
@@ -16,6 +18,7 @@ const BarcodesPage = () => {
     price,
     loading,
     initialLoading,
+    listLoading,
     modalOpen,
     setSelectedStockMovementId,
     setQuantities,
@@ -24,6 +27,7 @@ const BarcodesPage = () => {
     handlePriceListChange,
     handleSubmit,
     handleNewBarcode,
+    handleReprint,
   } = useBarcodes();
 
   return (
@@ -40,6 +44,12 @@ const BarcodesPage = () => {
           Nuevo Código
         </Button>
       </div>
+
+      <BarcodeListTable
+        items={barcodeList}
+        loading={listLoading}
+        onReprint={handleReprint}
+      />
 
       <BarcodeConfigModal
         open={modalOpen}

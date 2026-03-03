@@ -7,17 +7,20 @@ import {
   getNextSequence,
   getVariationPrice,
   createBarcodeApi,
+  fetchBarcodesList,
 } from "../services/Barcodes.service";
 import {
   variationsAdapter,
   stockMovementsAdapter,
   priceListsAdapter,
+  barcodeListAdapter,
 } from "../adapters/Barcodes.adapter";
 import {
   VariationOption,
   StockMovementOption,
   PriceListOption,
   BarcodeTicketData,
+  BarcodeListItem,
 } from "../types/Barcodes.types";
 import { generateBarcodePdf } from "../utils/generateBarcodePdf";
 
@@ -40,7 +43,27 @@ export const useBarcodes = () => {
   // UI state
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // Barcode list
+  const [barcodeList, setBarcodeList] = useState<BarcodeListItem[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+
+  // ==========================================================================
+  // Load barcode list
+  // ==========================================================================
+
+  const loadBarcodeList = useCallback(async () => {
+    try {
+      setListLoading(true);
+      const raw = await fetchBarcodesList();
+      setBarcodeList(barcodeListAdapter(raw));
+    } catch (error: any) {
+      console.error("Error loading barcode list:", error);
+    } finally {
+      setListLoading(false);
+    }
+  }, []);
 
   // ==========================================================================
   // Load initial data
@@ -72,7 +95,8 @@ export const useBarcodes = () => {
     };
 
     loadData();
-  }, []);
+    loadBarcodeList();
+  }, [loadBarcodeList]);
 
   // ==========================================================================
   // Handle variation change → compute sequence
@@ -176,6 +200,7 @@ export const useBarcodes = () => {
       });
 
       setModalOpen(false);
+      loadBarcodeList();
     } catch (error: any) {
       console.error("Error creating barcode:", error);
       toast({
@@ -202,11 +227,35 @@ export const useBarcodes = () => {
     setModalOpen(true);
   };
 
+  // ==========================================================================
+  // Reprint from list
+  // ==========================================================================
+
+  const handleReprint = async (item: BarcodeListItem) => {
+    try {
+      const priceData = await getVariationPrice(item.variationId, item.priceListId);
+      if (!priceData?.price) {
+        toast({ title: "Error", description: "No se encontró el precio", variant: "destructive" });
+        return;
+      }
+      const ticketData: BarcodeTicketData = {
+        productTitle: item.productTitle,
+        variationTerms: item.variationTerms,
+        price: priceData.price,
+        barcodeValue: item.barcodeValue,
+      };
+      generateBarcodePdf(ticketData, item.quantities ?? 1);
+    } catch (error: any) {
+      toast({ title: "Error", description: "No se pudo reimprimir", variant: "destructive" });
+    }
+  };
+
   return {
     // Data
     variations,
     stockMovements,
     priceLists,
+    barcodeList,
     // Selected
     selectedVariationId,
     selectedStockMovementId,
@@ -217,6 +266,7 @@ export const useBarcodes = () => {
     // State
     loading,
     initialLoading,
+    listLoading,
     modalOpen,
     // Handlers
     setSelectedStockMovementId,
@@ -226,5 +276,6 @@ export const useBarcodes = () => {
     handlePriceListChange,
     handleSubmit,
     handleNewBarcode,
+    handleReprint,
   };
 };

@@ -45,6 +45,25 @@ export interface BarcodeTicketData {
 }
 
 // =============================================================================
+// TIPOS PARA LISTADO
+// =============================================================================
+
+export interface BarcodeListItem {
+  id: number;
+  productTitle: string;
+  sku: string | null;
+  priceListName: string;
+  sequence: number;
+  quantities: number | null;
+  createdAt: string;
+  // For re-print
+  variationId: number;
+  variationTerms: string;
+  priceListId: number;
+  barcodeValue: string;
+}
+
+// =============================================================================
 // TIPOS PARA RESPUESTA DE API
 // =============================================================================
 

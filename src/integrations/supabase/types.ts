@@ -594,34 +594,31 @@ export type Database = {
       }
       customer_profile: {
         Row: {
-          account_id: number
           activity: string | null
           amount_spent: number | null
           id: number
-          orders_quantity: number | null
+          orders_quantity: number
           points: number | null
         }
         Insert: {
-          account_id: number
           activity?: string | null
           amount_spent?: number | null
           id?: number
-          orders_quantity?: number | null
+          orders_quantity: number
           points?: number | null
         }
         Update: {
-          account_id?: number
           activity?: string | null
           amount_spent?: number | null
           id?: number
-          orders_quantity?: number | null
+          orders_quantity?: number
           points?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "customer_profile_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
+            foreignKeyName: "customer_profile_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
             referencedRelation: "accounts"
             referencedColumns: ["id"]
           },
