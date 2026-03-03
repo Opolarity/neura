@@ -3995,6 +3995,32 @@ export type Database = {
         Args: { p_term_ids: number[]; p_variation_id: number }
         Returns: boolean
       }
+      create_bar_code: {
+        Args: {
+          p_created_by: string
+          p_price_list_id: number
+          p_product_variation_id: number
+          p_quantities: number
+          p_sequence: number
+          p_stock_movement_id?: number
+        }
+        Returns: {
+          created_at: string
+          created_by: string
+          id: number
+          price_list_id: number
+          product_variation_id: number
+          quantities: number | null
+          sequence: number
+          stock_movement_id: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "bar_codes"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_clients_list: {
         Args: {
           p_date_from?: string
@@ -4259,17 +4285,18 @@ export type Database = {
       }
       sp_ec_create_order: {
         Args: {
-          p_branch_id: number
-          p_change_entries: Json
-          p_initial_situation_id: number
-          p_is_existing_client: boolean
-          p_order_data: Json
-          p_payments: Json
-          p_products: Json
-          p_sale_type_id: number
-          p_stock_type_id: number
-          p_user_id: string
-          p_warehouse_id: number
+          p_branch_id?: number
+          p_change_entries?: Json
+          p_initial_situation_id?: number
+          p_is_existing_client?: boolean
+          p_order_data?: Json
+          p_payments?: Json
+          p_price_list_id?: number
+          p_products?: Json
+          p_sale_type_id?: number
+          p_stock_type_id?: number
+          p_user_id?: string
+          p_warehouse_id?: number
         }
         Returns: Json
       }
