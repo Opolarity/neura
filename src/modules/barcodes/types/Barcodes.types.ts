@@ -20,11 +20,19 @@ export interface VariationOption {
   productTitle: string;
   terms: string; // "TALLA - M"
   label: string; // "Producto - TALLA M"
+  stockTypeName: string | null;
 }
 
 export interface StockMovementOption {
   id: number;
   label: string;
+  productVariationId: number;
+  productTitle: string;
+  variationTerms: string;
+  sku: string | null;
+  quantity: number;
+  createdAt: string;
+  userName: string;
 }
 
 export interface PriceListOption {

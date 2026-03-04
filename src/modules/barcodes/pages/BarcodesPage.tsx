@@ -20,10 +20,13 @@ const BarcodesPage = () => {
     initialLoading,
     listLoading,
     modalOpen,
-    setSelectedStockMovementId,
+    productLocked,
     setQuantities,
+    setSequence,
     setModalOpen,
     handleVariationChange,
+    handleStockMovementChange,
+    handleProductClear,
     handlePriceListChange,
     handleSubmit,
     handleNewBarcode,
@@ -65,10 +68,13 @@ const BarcodesPage = () => {
         price={price}
         loading={loading}
         initialLoading={initialLoading}
-        onVariationChange={handleVariationChange}
-        onStockMovementChange={setSelectedStockMovementId}
+        productLocked={productLocked}
+        onVariationChange={(v) => handleVariationChange(v.variationId)}
+        onProductClear={handleProductClear}
+        onStockMovementChange={handleStockMovementChange}
         onPriceListChange={handlePriceListChange}
         onQuantitiesChange={setQuantities}
+        onSequenceChange={setSequence}
         onSubmit={handleSubmit}
       />
     </div>
