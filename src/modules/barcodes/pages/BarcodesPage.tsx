@@ -6,12 +6,10 @@ import BarcodeListTable from "../components/BarcodeListTable";
 
 const BarcodesPage = () => {
   const {
-    variations,
-    stockMovements,
     priceLists,
     barcodeList,
-    selectedVariationId,
-    selectedStockMovementId,
+    selectedVariation,
+    selectedMovement,
     selectedPriceListId,
     sequence,
     quantities,
@@ -57,11 +55,9 @@ const BarcodesPage = () => {
       <BarcodeConfigModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        variations={variations}
-        stockMovements={stockMovements}
         priceLists={priceLists}
-        selectedVariationId={selectedVariationId}
-        selectedStockMovementId={selectedStockMovementId}
+        selectedVariation={selectedVariation}
+        selectedMovement={selectedMovement}
         selectedPriceListId={selectedPriceListId}
         sequence={sequence}
         quantities={quantities}
@@ -69,7 +65,7 @@ const BarcodesPage = () => {
         loading={loading}
         initialLoading={initialLoading}
         productLocked={productLocked}
-        onVariationChange={(v) => handleVariationChange(v.variationId)}
+        onVariationChange={handleVariationChange}
         onProductClear={handleProductClear}
         onStockMovementChange={handleStockMovementChange}
         onPriceListChange={handlePriceListChange}

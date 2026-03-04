@@ -27,11 +27,9 @@ import ProductVariationSearcher from "./ProductVariationSearcher";
 interface BarcodeConfigModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  variations: VariationOption[];
-  stockMovements: StockMovementOption[];
   priceLists: PriceListOption[];
-  selectedVariationId: number | null;
-  selectedStockMovementId: number | null;
+  selectedVariation: VariationOption | null;
+  selectedMovement: StockMovementOption | null;
   selectedPriceListId: number | null;
   sequence: number;
   quantities: number;
@@ -51,11 +49,9 @@ interface BarcodeConfigModalProps {
 const BarcodeConfigModal = ({
   open,
   onOpenChange,
-  variations,
-  stockMovements,
   priceLists,
-  selectedVariationId,
-  selectedStockMovementId,
+  selectedVariation,
+  selectedMovement,
   selectedPriceListId,
   sequence,
   quantities,
@@ -72,7 +68,7 @@ const BarcodeConfigModal = ({
   onSubmit,
 }: BarcodeConfigModalProps) => {
   const isValid =
-    selectedVariationId !== null &&
+    selectedVariation !== null &&
     selectedPriceListId !== null &&
     quantities > 0 &&
     price !== null;
@@ -93,16 +89,14 @@ const BarcodeConfigModal = ({
           <div className="space-y-4">
             {/* 1. Movimiento de Stock (opcional, primero) */}
             <StockMovementSearcher
-              stockMovements={stockMovements}
-              selectedId={selectedStockMovementId}
+              selectedMovement={selectedMovement}
               onSelect={onStockMovementChange}
             />
 
             {/* 2. Producto / Variación */}
             <ProductVariationSearcher
-              variations={variations}
-              selectedVariationId={selectedVariationId}
-              onSelect={(v) => onVariationChange(v)}
+              selectedVariation={selectedVariation}
+              onSelect={onVariationChange}
               onClear={onProductClear}
               disabled={productLocked}
             />
