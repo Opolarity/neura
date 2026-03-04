@@ -1,39 +1,71 @@
 
 
-## Plan: Listado de Códigos de Barras en `/bar-codes`
+## Plan: Rediseñar el modal de creación de códigos de barras en `/bar-codes`
 
-### Situacion actual
-La página `/bar-codes` solo muestra un botón "Nuevo Código" y abre directamente el modal de configuración. No hay listado de registros existentes.
+### Contexto actual
 
-### Cambios propuestos
+El modal `BarcodeConfigModal` usa campos `Select` básicos para producto y movimiento de stock. El servicio `getStockMovementsByMER` ya filtra por tipo MER pero trae datos limitados (sin nombre de producto ni usuario). El campo Lote es read-only.
 
-**1. Nuevo servicio: `fetchBarcodesList`** en `Barcodes.service.ts`
-- Query a `bar_codes` con joins a `variations` (+ `products`), `price_list`, y opcionalmente `stock_movements`
-- Traer: id, sequence, quantities, created_at, producto (title), SKU, lista de precios (name)
-- Ordenado por `created_at DESC`
+### Cambios requeridos
 
-**2. Nuevo tipo `BarcodeListItem`** en `Barcodes.types.ts`
-- id, productTitle, sku, priceListName, sequence, quantities, createdAt
+#### 1. Nuevo componente: Buscador de Movimientos de Stock (campo opcional, va primero)
 
-**3. Nuevo adapter `barcodeListAdapter`** en `Barcodes.adapter.ts`
-- Transforma el raw data del query al tipo `BarcodeListItem`
+- Crear `StockMovementSearcher.tsx` -- un `Popover` + `Command` (similar al buscador de productos en `/sales/create`)
+- Servicio: modificar `getStockMovementsByMER` para traer datos adicionales:
+  - `product_variation_id`, variación (producto title, variation_terms, sku), `quantity`, `created_at`, `created_by` (perfil/nombre del usuario)
+- Cada resultado se renderiza como una **card** dentro del `CommandList` mostrando:
+  - Nombre del producto + variación (si es variable)
+  - Cantidad del movimiento
+  - Fecha
+  - Usuario que creó
+  - ID del movimiento
+- Al seleccionar un movimiento:
+  - Auto-rellenar el campo Producto con la variación vinculada y **bloquearlo** (disabled)
+  - Auto-rellenar el campo Cantidad con la cantidad del movimiento pero **dejarlo editable**
+  - Guardar el `selectedStockMovementId`
+- Al limpiar la selección: desbloquear producto y limpiar cantidad
 
-**4. Nuevo componente `BarcodeListTable`**
-- Tabla con columnas: ID, Producto, SKU, Lista de Precio, Lote, Cantidad, Fecha
-- Acción para re-imprimir el PDF (icono de impresora)
-- Estado de carga con spinner overlay (mismo patrón de Sales)
+#### 2. Nuevo componente: Buscador de Productos (campo obligatorio, segundo)
 
-**5. Actualizar `useBarcodes` hook**
-- Agregar estado `barcodeList` y `listLoading`
-- Cargar lista al montar y después de cada creación exitosa (refresh)
+- Crear `ProductVariationSearcher.tsx` -- `Popover` + `Command` con búsqueda por texto
+- Servicio: reutilizar/adaptar `getVariationsForSelect` para traer todas las variaciones con: producto title, variation_terms (nombre variación), SKU, stock_type (tipo de inventario)
+- Mostrar en cada item: nombre producto, variación si aplica, SKU, tipo de inventario
+- Este campo se bloquea si hay un movimiento de stock seleccionado
 
-**6. Actualizar `BarcodesPage`**
-- Mostrar la tabla de listado como contenido principal
-- El botón "Nuevo Código" sigue abriendo el modal
-- Tras generar un barcode, se refresca la lista
+#### 3. Modificar campo Lote
 
-### Flujo del usuario
-1. Entra a `/bar-codes` → ve la tabla con todos los códigos generados
-2. Puede hacer click en "Nuevo Código" → abre modal → genera → lista se actualiza
-3. Puede re-imprimir desde la tabla
+- Cambiar de `readOnly + disabled` a **editable** (quitar `readOnly` y `disabled`, quitar `bg-muted`)
+- Seguir calculando el valor automáticamente al cambiar variación, pero el usuario puede modificarlo
+
+#### 4. Actualizar `useBarcodes` hook
+
+- Añadir estado para "locked by movement" (producto bloqueado)
+- Nuevo handler `handleStockMovementChange` que:
+  - Busca la variación vinculada al movimiento
+  - Setea `selectedVariationId` y dispara cálculo de sequence
+  - Setea `quantities` con la cantidad del movimiento
+  - Marca el campo producto como bloqueado
+- Añadir `setSequence` al return para permitir edición manual del lote
+
+#### 5. Actualizar `BarcodeConfigModal`
+
+- Reordenar campos: Movimiento de Stock -> Producto -> Lista de Precio -> Lote -> Cantidad
+- Reemplazar los `Select` de movimiento y producto por los nuevos componentes buscadores
+- Pasar prop `disabled` al buscador de producto cuando hay movimiento seleccionado
+
+#### 6. Tipos
+
+- Ampliar `StockMovementOption` con campos adicionales: `productVariationId`, `productTitle`, `variationTerms`, `quantity`, `createdAt`, `userName`
+
+### Archivos a modificar/crear
+
+| Archivo | Acción |
+|---|---|
+| `src/modules/barcodes/components/StockMovementSearcher.tsx` | Crear |
+| `src/modules/barcodes/components/ProductVariationSearcher.tsx` | Crear |
+| `src/modules/barcodes/components/BarcodeConfigModal.tsx` | Modificar (reordenar campos, usar nuevos componentes) |
+| `src/modules/barcodes/hooks/useBarcodes.ts` | Modificar (nuevo handler movimiento, lote editable) |
+| `src/modules/barcodes/services/Barcodes.service.ts` | Modificar (ampliar queries) |
+| `src/modules/barcodes/adapters/Barcodes.adapter.ts` | Modificar (adapter movimientos con más datos) |
+| `src/modules/barcodes/types/Barcodes.types.ts` | Modificar (ampliar StockMovementOption) |
 
