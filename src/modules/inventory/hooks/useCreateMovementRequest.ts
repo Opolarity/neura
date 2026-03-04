@@ -4,6 +4,7 @@ import { toast } from "@/hooks/use-toast";
 import { getSaleProducts, getUserWarehouse } from "../services/Movements.service";
 import { getProductSalesAdapter, getUserWarehouseAdapter } from "../adapters/Movements.adapter";
 import { createMovementRequestApi } from "../services/MovementRequests.service";
+import { supabase } from "@/integrations/supabase/client";
 import { createMovementRequestAdapter } from "../adapters/MovementRequests.adapter";
 import { getWarehousesIsActiveTrue } from "@/shared/services/service";
 import { ProductSales, UserSummary, ProductSalesFilter } from "../types/Movements.types";
@@ -31,6 +32,10 @@ export const useCreateMovementRequest = () => {
 
   // Reason
   const [reason, setReason] = useState("");
+
+  // Situation & Status labels
+  const [situationName, setSituationName] = useState("");
+  const [statusName, setStatusName] = useState("");
 
   // Products search
   const [isOpen, setIsOpen] = useState(false);
@@ -75,6 +80,35 @@ export const useCreateMovementRequest = () => {
         .filter((w) => w.id !== userAdp.warehouse_id)
         .map((w) => ({ id: w.id, name: w.name }));
       setWarehouses(otherWarehouses);
+
+      // Fetch situation (REQ) and status (PEN) names for module STR
+      const { data: moduleData } = await supabase
+        .from("modules")
+        .select("id")
+        .eq("code", "STR")
+        .limit(1)
+        .single();
+
+      if (moduleData) {
+        const [sitRes, stRes] = await Promise.all([
+          supabase
+            .from("situations")
+            .select("name")
+            .eq("module_id", moduleData.id)
+            .eq("code", "REQ")
+            .limit(1)
+            .single(),
+          supabase
+            .from("statuses")
+            .select("name")
+            .eq("module_id", moduleData.id)
+            .eq("code", "PEN")
+            .limit(1)
+            .single(),
+        ]);
+        if (sitRes.data) setSituationName(sitRes.data.name);
+        if (stRes.data) setStatusName(stRes.data.name);
+      }
     } catch (error) {
       console.error("Error loading initial data:", error);
     } finally {
@@ -297,6 +331,8 @@ export const useCreateMovementRequest = () => {
     selectedWarehouse,
     reason,
     setReason,
+    situationName,
+    statusName,
     isOpen,
     setIsOpen,
     products,

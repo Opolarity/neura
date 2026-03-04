@@ -17,6 +17,8 @@ const CreateMovementRequest = () => {
     selectedWarehouse,
     reason,
     setReason,
+    situationName,
+    statusName,
     isOpen,
     setIsOpen,
     products,
@@ -66,6 +68,8 @@ const CreateMovementRequest = () => {
           warehouses={warehouses}
           selectedWarehouseId={selectedWarehouse?.id.toString()}
           reason={reason}
+          statusName={statusName}
+          situationName={situationName}
           onWarehouseChange={handleWarehouseChange}
           onReasonChange={setReason}
         />

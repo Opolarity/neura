@@ -314,30 +314,30 @@ export type Database = {
           cart_id: number
           id: number
           is_active: boolean
-          product_discount: number | null
           product_price: number
           product_variation_id: number
           quantity: number
+          sale_price: number | null
           warehouse_id: number | null
         }
         Insert: {
           cart_id: number
           id?: number
           is_active?: boolean
-          product_discount?: number | null
           product_price: number
           product_variation_id: number
           quantity: number
+          sale_price?: number | null
           warehouse_id?: number | null
         }
         Update: {
           cart_id?: number
           id?: number
           is_active?: boolean
-          product_discount?: number | null
           product_price?: number
           product_variation_id?: number
           quantity?: number
+          sale_price?: number | null
           warehouse_id?: number | null
         }
         Relationships: [
