@@ -158,6 +158,26 @@ export const getNextSequence = async (productVariationId: number): Promise<numbe
 };
 
 // =============================================================================
+// Obtener el último lote (sequence) vinculado a un movimiento de stock
+// =============================================================================
+
+export const getLastSequenceByStockMovement = async (stockMovementId: number): Promise<number | null> => {
+  const { data, error } = await supabase
+    .from("bar_codes")
+    .select("sequence")
+    .eq("stock_movement_id", stockMovementId)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (error) throw error;
+
+  if (data && data.length > 0) {
+    return data[0].sequence;
+  }
+  return null;
+};
+
+// =============================================================================
 // Obtener precio de una variación en una lista de precios
 // =============================================================================
 

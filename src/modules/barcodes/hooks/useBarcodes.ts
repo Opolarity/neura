@@ -3,6 +3,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   getActivePriceLists,
   getNextSequence,
+  getLastSequenceByStockMovement,
   getVariationPrice,
   createBarcodeApi,
   fetchBarcodesList,
@@ -136,6 +137,16 @@ export const useBarcodes = () => {
         stockTypeName: null,
       };
       await handleVariationChange(variationFromMovement);
+
+      // If this stock movement already has barcodes, reuse the last sequence
+      try {
+        const lastSeq = await getLastSequenceByStockMovement(movement.id);
+        if (lastSeq !== null) {
+          setSequence(lastSeq);
+        }
+      } catch (err) {
+        console.error("Error fetching last sequence for stock movement:", err);
+      }
     } else {
       setSelectedMovement(null);
       setProductLocked(false);
