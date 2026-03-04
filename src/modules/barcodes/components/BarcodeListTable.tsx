@@ -26,6 +26,7 @@ const BarcodeListTable = ({ items, loading, onReprint }: BarcodeListTableProps) 
           <TableRow>
             <TableHead className="w-16">ID</TableHead>
             <TableHead>Producto</TableHead>
+            <TableHead>Variación</TableHead>
             <TableHead>SKU</TableHead>
             <TableHead>Lista de Precio</TableHead>
             <TableHead className="w-20">Lote</TableHead>
@@ -37,7 +38,7 @@ const BarcodeListTable = ({ items, loading, onReprint }: BarcodeListTableProps) 
         <TableBody>
           {!loading && items.length === 0 && (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                 No hay códigos de barras generados
               </TableCell>
             </TableRow>
@@ -46,6 +47,7 @@ const BarcodeListTable = ({ items, loading, onReprint }: BarcodeListTableProps) 
             <TableRow key={item.id}>
               <TableCell>{item.id}</TableCell>
               <TableCell className="font-medium">{item.productTitle}</TableCell>
+              <TableCell>{item.variationTerms || "—"}</TableCell>
               <TableCell>{item.sku || "—"}</TableCell>
               <TableCell>{item.priceListName}</TableCell>
               <TableCell>{item.sequence}</TableCell>

@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Service client for insert
+    // Service client for RPC call
     const serviceClient = createClient(
       supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -52,33 +52,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    const insertData: Record<string, unknown> = {
-      product_variation_id,
-      price_list_id,
-      sequence,
-      quantities,
-      created_by: user.id,
-    };
-
-    if (stock_movement_id) {
-      insertData.stock_movement_id = stock_movement_id;
-    }
-
-    const { data, error } = await serviceClient
-      .from("bar_codes")
-      .insert(insertData)
-      .select()
-      .single();
+    const { data, error } = await serviceClient.rpc("create_bar_code", {
+      p_product_variation_id: product_variation_id,
+      p_price_list_id: price_list_id,
+      p_sequence: sequence,
+      p_quantities: quantities,
+      p_created_by: user.id,
+      p_stock_movement_id: stock_movement_id || null,
+    });
 
     if (error) {
-      console.error("Insert error:", error);
+      console.error("RPC error:", error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ success: true, barcode: data }), {
+    const barcode = Array.isArray(data) ? data[0] : data;
+
+    return new Response(JSON.stringify({ success: true, barcode }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
