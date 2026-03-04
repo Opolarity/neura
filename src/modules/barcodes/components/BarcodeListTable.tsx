@@ -31,6 +31,7 @@ const BarcodeListTable = ({ items, loading, onReprint }: BarcodeListTableProps) 
             <TableHead>Lista de Precio</TableHead>
             <TableHead className="w-20">Lote</TableHead>
             <TableHead className="w-24">Cantidad</TableHead>
+            <TableHead>Mov. Stock</TableHead>
             <TableHead>Fecha</TableHead>
             <TableHead className="w-20">Acciones</TableHead>
           </TableRow>
@@ -38,7 +39,7 @@ const BarcodeListTable = ({ items, loading, onReprint }: BarcodeListTableProps) 
         <TableBody>
           {!loading && items.length === 0 && (
             <TableRow>
-              <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                 No hay códigos de barras generados
               </TableCell>
             </TableRow>
@@ -52,6 +53,7 @@ const BarcodeListTable = ({ items, loading, onReprint }: BarcodeListTableProps) 
               <TableCell>{item.priceListName}</TableCell>
               <TableCell>{item.sequence}</TableCell>
               <TableCell>{item.quantities ?? "—"}</TableCell>
+              <TableCell>{item.stockMovementId ?? "—"}</TableCell>
               <TableCell>
                 {new Date(item.createdAt).toLocaleDateString("es-PE")}
               </TableCell>

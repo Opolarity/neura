@@ -64,6 +64,7 @@ export interface BarcodeListItem {
   sequence: number;
   quantities: number | null;
   createdAt: string;
+  stockMovementId: number | null;
   // For re-print
   variationId: number;
   variationTerms: string;

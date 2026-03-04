@@ -93,6 +93,7 @@ export const barcodeListAdapter = (rawData: any[]): BarcodeListItem[] => {
       sequence: bc.sequence,
       quantities: bc.quantities,
       createdAt: bc.created_at,
+      stockMovementId: bc.stock_movement_id ?? null,
       variationId: bc.product_variation_id,
       variationTerms: termsStr,
       priceListId: bc.price_list_id,
