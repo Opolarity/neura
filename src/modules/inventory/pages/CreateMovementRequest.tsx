@@ -98,8 +98,7 @@ const CreateMovementRequest = () => {
                 <Plus className="w-4 h-4 mr-2" /> Agregar
               </Button>
             </div>
-
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs italic text-muted-foreground -mt-3">
               El inventario mostrado corresponde al almacén <span className="font-medium text-foreground">{selectedWarehouse?.name}</span>
             </p>
 
