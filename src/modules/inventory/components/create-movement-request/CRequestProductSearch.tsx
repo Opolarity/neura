@@ -1,0 +1,184 @@
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Button } from "@/components/ui/button";
+import { Check, Search, Image as ImageIcon } from "lucide-react";
+import { ProductSales } from "../../types/Movements.types";
+import { PaginationState } from "@/shared/components/pagination/Pagination";
+import { cn } from "@/shared/utils/utils";
+
+interface CRequestProductSearchProps {
+  products: ProductSales[];
+  selectedIds: Set<number>;
+  selectedProduct: ProductSales | null;
+  isLoading: boolean;
+  search: string;
+  pagination: PaginationState;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  onSearchChange: (value: string) => void;
+  onPageChange: (page: number) => void;
+  onSelectProduct: (product: ProductSales) => void;
+}
+
+const CRequestProductSearch = ({
+  products,
+  selectedIds,
+  selectedProduct,
+  isLoading,
+  search,
+  pagination,
+  isOpen,
+  setIsOpen,
+  onSearchChange,
+  onPageChange,
+  onSelectProduct,
+}: CRequestProductSearchProps) => {
+  const totalPages = Math.ceil(pagination.total / pagination.p_size);
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          className="w-full justify-start text-muted-foreground font-normal overflow-hidden"
+        >
+          <Search className="w-4 h-4 mr-2 shrink-0" />
+          <span className="truncate">
+            {selectedProduct?.productTitle || "Buscar por nombre o SKU..."}
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[400px] p-0 bg-popover">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Escribe para buscar..."
+            value={search}
+            onValueChange={onSearchChange}
+          />
+          <CommandList>
+            {isLoading ? (
+              <div className="p-4 text-sm text-center text-muted-foreground">
+                Cargando productos...
+              </div>
+            ) : (
+              <>
+                <CommandEmpty>No se encontraron productos.</CommandEmpty>
+                <CommandGroup>
+                  {products.map((p) => {
+                    const termsNames = p.terms.map((t) => t.name).join(" / ");
+                    const displayTerms = termsNames
+                      ? `${termsNames} (${p.sku})`
+                      : p.sku;
+
+                    return (
+                      <CommandItem
+                        key={p.sku}
+                        className="flex items-center gap-3 py-2"
+                        onSelect={() => onSelectProduct(p)}
+                      >
+                        <Check
+                          className={cn(
+                            "h-4 w-4 shrink-0",
+                            selectedIds.has(p.variationId)
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
+                          {p.imageUrl ? (
+                            <img
+                              src={p.imageUrl}
+                              alt={p.productTitle}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex flex-1 flex-col min-w-0">
+                          <span className="font-medium truncate">
+                            {p.productTitle}
+                          </span>
+                          <span className="text-sm text-muted-foreground truncate">
+                            {displayTerms}
+                          </span>
+                        </div>
+
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                            p.stock > 0
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          }`}
+                        >
+                          {p.stock}
+                        </span>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </>
+            )}
+          </CommandList>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
+              <span className="text-xs text-muted-foreground">
+                {(pagination.p_page - 1) * pagination.p_size + 1}-
+                {Math.min(
+                  pagination.p_page * pagination.p_size,
+                  pagination.total
+                )}{" "}
+                de {pagination.total}
+              </span>
+              <div className="flex gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPageChange(pagination.p_page - 1);
+                  }}
+                  disabled={pagination.p_page <= 1 || isLoading}
+                >
+                  Anterior
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPageChange(pagination.p_page + 1);
+                  }}
+                  disabled={pagination.p_page >= totalPages || isLoading}
+                >
+                  Siguiente
+                </Button>
+              </div>
+            </div>
+          )}
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+export default CRequestProductSearch;
