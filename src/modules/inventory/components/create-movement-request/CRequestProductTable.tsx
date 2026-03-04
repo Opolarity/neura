@@ -13,12 +13,16 @@ import { SelectedRequestProduct } from "../../types/MovementRequests.types";
 
 interface CRequestProductTableProps {
   products: SelectedRequestProduct[];
+  sourceWarehouseName: string;
+  myWarehouseName: string;
   onQuantityChange: (variationId: number, value: string) => void;
   onRemoveProduct: (variationId: number) => void;
 }
 
 const CRequestProductTable = ({
   products,
+  sourceWarehouseName,
+  myWarehouseName,
   onQuantityChange,
   onRemoveProduct,
 }: CRequestProductTableProps) => {
@@ -28,15 +32,16 @@ const CRequestProductTable = ({
         <TableRow>
           <TableHead>Producto</TableHead>
           <TableHead className="text-center">Variación</TableHead>
-          <TableHead className="text-center">Stock Origen</TableHead>
+          <TableHead className="text-center">Inventario {sourceWarehouseName}</TableHead>
           <TableHead className="text-center">Cantidad Solicitar</TableHead>
+          <TableHead className="text-center">Inventario {myWarehouseName}</TableHead>
           <TableHead className="text-center w-[60px]">Acción</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {products.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
               No hay productos seleccionados. Busca y agrega productos.
             </TableCell>
           </TableRow>
@@ -68,6 +73,13 @@ const CRequestProductTable = ({
                     }
                     placeholder="0"
                     className="text-center"
+                  />
+                </TableCell>
+                <TableCell className="text-center">
+                  <Input
+                    className="bg-muted text-center"
+                    disabled
+                    value={product.myStock}
                   />
                 </TableCell>
                 <TableCell className="text-center">

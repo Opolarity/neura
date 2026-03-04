@@ -4464,11 +4464,7 @@ export type Database = {
           p_user_id?: string
           p_warehouse_id?: number
         }
-        Returns: {
-          cart_items: Json
-          total_amount: number
-          total_count: number
-        }[]
+        Returns: Json
       }
       sp_get_categories_product_count: {
         Args: {

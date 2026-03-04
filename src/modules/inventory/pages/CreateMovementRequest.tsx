@@ -97,6 +97,8 @@ const CreateMovementRequest = () => {
 
             <CRequestProductTable
               products={selectedProducts}
+              sourceWarehouseName={selectedWarehouse?.name || ""}
+              myWarehouseName={userSummary?.warehouse_name || ""}
               onQuantityChange={handleQuantityChange}
               onRemoveProduct={removeProduct}
             />

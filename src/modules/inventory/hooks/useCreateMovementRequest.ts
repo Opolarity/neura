@@ -145,15 +145,32 @@ export const useCreateMovementRequest = () => {
     setIsOpen(false);
   };
 
-  const addProduct = () => {
-    if (!selectedProduct) return;
+  const addProduct = async () => {
+    if (!selectedProduct || !userSummary) return;
 
     if (selectedIds.has(selectedProduct.variationId)) return;
+
+    // Fetch user's own warehouse stock for this product
+    let myStock = 0;
+    try {
+      const myRes = await getSaleProducts({
+        p_page: 1,
+        p_size: 1,
+        p_search: selectedProduct.sku,
+        p_warehouse_id: userSummary.warehouse_id,
+      });
+      const { data: myProducts } = getProductSalesAdapter(myRes);
+      const found = myProducts.find((p) => p.variationId === selectedProduct.variationId);
+      myStock = found?.stock ?? 0;
+    } catch (error) {
+      console.error("Error fetching user stock:", error);
+    }
 
     const newSelected: SelectedRequestProduct = {
       ...selectedProduct,
       quantity: null,
       sourceStock: selectedProduct.stock,
+      myStock,
     };
 
     setSelectedProducts((prev) => [...prev, newSelected]);
