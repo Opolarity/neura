@@ -176,7 +176,7 @@ serve(async (req) => {
             
             if (moveError) {
               console.error('Error moving image:', moveError);
-              // Continue with other images even if one fails
+              throw new Error(`Error al mover imagen de ${oldPath} a ${newPath}: ${moveError.message}`);
             } else {
               const { data: { publicUrl } } = supabaseAdmin.storage
                 .from('products')
