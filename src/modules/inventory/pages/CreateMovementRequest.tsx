@@ -99,6 +99,10 @@ const CreateMovementRequest = () => {
               </Button>
             </div>
 
+            <p className="text-sm text-muted-foreground">
+              El inventario mostrado corresponde al almacén <span className="font-medium text-foreground">{selectedWarehouse?.name}</span>
+            </p>
+
             <CRequestProductTable
               products={selectedProducts}
               sourceWarehouseName={selectedWarehouse?.name || ""}

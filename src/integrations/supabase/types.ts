@@ -3054,38 +3054,51 @@ export type Database = {
           created_by: string
           id: number
           in_warehouse_id: number | null
+          last_message: number
           module_id: number
           out_warehouse_id: number
           reason: string | null
           situation_id: number
           status_id: number
+          updated_at: string | null
         }
         Insert: {
           created_at?: string
           created_by?: string
           id?: number
           in_warehouse_id?: number | null
+          last_message: number
           module_id: number
           out_warehouse_id: number
           reason?: string | null
           situation_id: number
           status_id: number
+          updated_at?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string
           id?: number
           in_warehouse_id?: number | null
+          last_message?: number
           module_id?: number
           out_warehouse_id?: number
           reason?: string | null
           situation_id?: number
           status_id?: number
+          updated_at?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "stock_movement_requests_in_warehouse_id_fkey"
             columns: ["in_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movement_requests_last_message_fkey"
+            columns: ["last_message"]
             isOneToOne: false
             referencedRelation: "warehouses"
             referencedColumns: ["id"]
