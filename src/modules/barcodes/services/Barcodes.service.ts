@@ -12,7 +12,7 @@ export const getVariationsForSelect = async () => {
       id,
       sku,
       product_id,
-      products!inner(title),
+      products!inner(title, is_variable),
       variation_terms(
         term_id,
         terms(
@@ -20,6 +20,10 @@ export const getVariationsForSelect = async () => {
           term_group_id,
           term_groups(name)
         )
+      ),
+      product_stock(
+        stock_type_id,
+        types:stock_type_id(name)
       )
     `)
     .eq("is_active", true)
@@ -53,10 +57,35 @@ export const getStockMovementsByMER = async () => {
 
   if (typeError) throw typeError;
 
-  // 3. Obtener stock_movements con ese movement_type
+  // 3. Obtener stock_movements con datos enriquecidos
   const { data, error } = await (supabase as any)
     .from("stock_movements")
-    .select("id, created_at, quantity, warehouse_id, warehouses(name)")
+    .select(`
+      id,
+      created_at,
+      quantity,
+      product_variation_id,
+      warehouse_id,
+      warehouses(name),
+      created_by,
+      profiles!stock_movements_created_by_fkey(
+        account_id,
+        accounts(name, last_name)
+      ),
+      variations!stock_movements_product_variation_id_fkey(
+        id,
+        sku,
+        products!inner(title, is_variable),
+        variation_terms(
+          term_id,
+          terms(
+            name,
+            term_group_id,
+            term_groups(name)
+          )
+        )
+      )
+    `)
     .eq("movement_type", typeData.id)
     .eq("is_active", true)
     .order("created_at", { ascending: false });

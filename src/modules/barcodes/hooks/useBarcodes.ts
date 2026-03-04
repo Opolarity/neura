@@ -35,6 +35,9 @@ export const useBarcodes = () => {
   const [selectedStockMovementId, setSelectedStockMovementId] = useState<number | null>(null);
   const [selectedPriceListId, setSelectedPriceListId] = useState<number | null>(null);
 
+  // Locked state (when movement selected)
+  const [productLocked, setProductLocked] = useState(false);
+
   // Computed
   const [sequence, setSequence] = useState<number>(1);
   const [quantities, setQuantities] = useState<number>(1);
@@ -126,6 +129,37 @@ export const useBarcodes = () => {
   }, [selectedPriceListId]);
 
   // ==========================================================================
+  // Handle stock movement selection
+  // ==========================================================================
+
+  const handleStockMovementChange = useCallback(async (movement: StockMovementOption | null) => {
+    if (movement) {
+      setSelectedStockMovementId(movement.id);
+      setProductLocked(true);
+      setQuantities(movement.quantity);
+      // Auto-select the variation
+      await handleVariationChange(movement.productVariationId);
+    } else {
+      setSelectedStockMovementId(null);
+      setProductLocked(false);
+      setSelectedVariationId(null);
+      setQuantities(1);
+      setSequence(1);
+      setPrice(null);
+    }
+  }, [handleVariationChange]);
+
+  // ==========================================================================
+  // Handle product clear (when not locked)
+  // ==========================================================================
+
+  const handleProductClear = useCallback(() => {
+    setSelectedVariationId(null);
+    setSequence(1);
+    setPrice(null);
+  }, []);
+
+  // ==========================================================================
   // Handle price list change → fetch price
   // ==========================================================================
 
@@ -168,7 +202,6 @@ export const useBarcodes = () => {
     setLoading(true);
 
     try {
-      // 1. Create barcode record
       await createBarcodeApi({
         product_variation_id: selectedVariationId,
         price_list_id: selectedPriceListId,
@@ -177,7 +210,6 @@ export const useBarcodes = () => {
         quantities,
       });
 
-      // 2. Get variation data for PDF
       const selectedVariation = variations.find(
         (v) => v.variationId === selectedVariationId
       );
@@ -191,7 +223,6 @@ export const useBarcodes = () => {
         barcodeValue: `${selectedVariationId}-${sequence}`,
       };
 
-      // 3. Generate PDF
       generateBarcodePdf(ticketData, quantities);
 
       toast({
@@ -221,6 +252,7 @@ export const useBarcodes = () => {
     setSelectedVariationId(null);
     setSelectedStockMovementId(null);
     setSelectedPriceListId(null);
+    setProductLocked(false);
     setSequence(1);
     setQuantities(1);
     setPrice(null);
@@ -263,16 +295,19 @@ export const useBarcodes = () => {
     sequence,
     quantities,
     price,
+    productLocked,
     // State
     loading,
     initialLoading,
     listLoading,
     modalOpen,
     // Handlers
-    setSelectedStockMovementId,
     setQuantities,
+    setSequence,
     setModalOpen,
     handleVariationChange,
+    handleStockMovementChange,
+    handleProductClear,
     handlePriceListChange,
     handleSubmit,
     handleNewBarcode,
