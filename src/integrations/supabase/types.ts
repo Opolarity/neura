@@ -4754,6 +4754,14 @@ export type Database = {
             }
             Returns: Json
           }
+      sp_search_barcode_movements: {
+        Args: { p_page?: number; p_search?: string; p_size?: number }
+        Returns: Json
+      }
+      sp_search_barcode_variations: {
+        Args: { p_page?: number; p_search?: string; p_size?: number }
+        Returns: Json
+      }
       sp_update_business_account: {
         Args: {
           p_account_number: number

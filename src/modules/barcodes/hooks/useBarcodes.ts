@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import {
-  getVariationsForSelect,
-  getStockMovementsByMER,
   getActivePriceLists,
   getNextSequence,
   getVariationPrice,
@@ -10,8 +8,6 @@ import {
   fetchBarcodesList,
 } from "../services/Barcodes.service";
 import {
-  variationsAdapter,
-  stockMovementsAdapter,
   priceListsAdapter,
   barcodeListAdapter,
 } from "../adapters/Barcodes.adapter";
@@ -26,13 +22,11 @@ import { generateBarcodePdf } from "../utils/generateBarcodePdf";
 
 export const useBarcodes = () => {
   // Select options
-  const [variations, setVariations] = useState<VariationOption[]>([]);
-  const [stockMovements, setStockMovements] = useState<StockMovementOption[]>([]);
   const [priceLists, setPriceLists] = useState<PriceListOption[]>([]);
 
   // Selected values
-  const [selectedVariationId, setSelectedVariationId] = useState<number | null>(null);
-  const [selectedStockMovementId, setSelectedStockMovementId] = useState<number | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<VariationOption | null>(null);
+  const [selectedMovement, setSelectedMovement] = useState<StockMovementOption | null>(null);
   const [selectedPriceListId, setSelectedPriceListId] = useState<number | null>(null);
 
   // Locked state (when movement selected)
@@ -69,21 +63,14 @@ export const useBarcodes = () => {
   }, []);
 
   // ==========================================================================
-  // Load initial data
+  // Load initial data (only price lists now, searchers load their own data)
   // ==========================================================================
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setInitialLoading(true);
-        const [variationsRaw, stockMovementsRaw, priceListsRaw] = await Promise.all([
-          getVariationsForSelect(),
-          getStockMovementsByMER(),
-          getActivePriceLists(),
-        ]);
-
-        setVariations(variationsAdapter(variationsRaw));
-        setStockMovements(stockMovementsAdapter(stockMovementsRaw));
+        const priceListsRaw = await getActivePriceLists();
         setPriceLists(priceListsAdapter(priceListsRaw));
       } catch (error: any) {
         console.error("Error loading barcode data:", error);
@@ -105,12 +92,12 @@ export const useBarcodes = () => {
   // Handle variation change → compute sequence
   // ==========================================================================
 
-  const handleVariationChange = useCallback(async (variationId: number) => {
-    setSelectedVariationId(variationId);
+  const handleVariationChange = useCallback(async (variation: VariationOption) => {
+    setSelectedVariation(variation);
     setPrice(null);
 
     try {
-      const nextSeq = await getNextSequence(variationId);
+      const nextSeq = await getNextSequence(variation.variationId);
       setSequence(nextSeq);
     } catch (error) {
       console.error("Error getting sequence:", error);
@@ -120,7 +107,7 @@ export const useBarcodes = () => {
     // If price list already selected, fetch price
     if (selectedPriceListId) {
       try {
-        const priceData = await getVariationPrice(variationId, selectedPriceListId);
+        const priceData = await getVariationPrice(variation.variationId, selectedPriceListId);
         setPrice(priceData?.price ?? null);
       } catch {
         setPrice(null);
@@ -134,15 +121,25 @@ export const useBarcodes = () => {
 
   const handleStockMovementChange = useCallback(async (movement: StockMovementOption | null) => {
     if (movement) {
-      setSelectedStockMovementId(movement.id);
+      setSelectedMovement(movement);
       setProductLocked(true);
       setQuantities(movement.quantity);
-      // Auto-select the variation
-      await handleVariationChange(movement.productVariationId);
+      // Build a VariationOption from movement data
+      const variationFromMovement: VariationOption = {
+        variationId: movement.productVariationId,
+        sku: movement.sku,
+        productTitle: movement.productTitle,
+        terms: movement.variationTerms,
+        label: movement.variationTerms
+          ? `${movement.productTitle} (${movement.variationTerms})`
+          : movement.productTitle,
+        stockTypeName: null,
+      };
+      await handleVariationChange(variationFromMovement);
     } else {
-      setSelectedStockMovementId(null);
+      setSelectedMovement(null);
       setProductLocked(false);
-      setSelectedVariationId(null);
+      setSelectedVariation(null);
       setQuantities(1);
       setSequence(1);
       setPrice(null);
@@ -154,7 +151,7 @@ export const useBarcodes = () => {
   // ==========================================================================
 
   const handleProductClear = useCallback(() => {
-    setSelectedVariationId(null);
+    setSelectedVariation(null);
     setSequence(1);
     setPrice(null);
   }, []);
@@ -166,22 +163,22 @@ export const useBarcodes = () => {
   const handlePriceListChange = useCallback(async (priceListId: number) => {
     setSelectedPriceListId(priceListId);
 
-    if (selectedVariationId) {
+    if (selectedVariation) {
       try {
-        const priceData = await getVariationPrice(selectedVariationId, priceListId);
+        const priceData = await getVariationPrice(selectedVariation.variationId, priceListId);
         setPrice(priceData?.price ?? null);
       } catch {
         setPrice(null);
       }
     }
-  }, [selectedVariationId]);
+  }, [selectedVariation]);
 
   // ==========================================================================
   // Submit
   // ==========================================================================
 
   const handleSubmit = async () => {
-    if (!selectedVariationId || !selectedPriceListId || !quantities || quantities < 1) {
+    if (!selectedVariation || !selectedPriceListId || !quantities || quantities < 1) {
       toast({
         title: "Error",
         description: "Completa todos los campos requeridos",
@@ -203,24 +200,18 @@ export const useBarcodes = () => {
 
     try {
       await createBarcodeApi({
-        product_variation_id: selectedVariationId,
+        product_variation_id: selectedVariation.variationId,
         price_list_id: selectedPriceListId,
-        stock_movement_id: selectedStockMovementId,
+        stock_movement_id: selectedMovement?.id ?? null,
         sequence,
         quantities,
       });
-
-      const selectedVariation = variations.find(
-        (v) => v.variationId === selectedVariationId
-      );
-
-      if (!selectedVariation) throw new Error("Variación no encontrada");
 
       const ticketData: BarcodeTicketData = {
         productTitle: selectedVariation.productTitle,
         variationTerms: selectedVariation.terms,
         price: price,
-        barcodeValue: `${selectedVariationId}-${sequence}`,
+        barcodeValue: `${selectedVariation.variationId}-${sequence}`,
       };
 
       generateBarcodePdf(ticketData, quantities);
@@ -249,8 +240,8 @@ export const useBarcodes = () => {
   // ==========================================================================
 
   const handleNewBarcode = () => {
-    setSelectedVariationId(null);
-    setSelectedStockMovementId(null);
+    setSelectedVariation(null);
+    setSelectedMovement(null);
     setSelectedPriceListId(null);
     setProductLocked(false);
     setSequence(1);
@@ -284,13 +275,11 @@ export const useBarcodes = () => {
 
   return {
     // Data
-    variations,
-    stockMovements,
     priceLists,
     barcodeList,
     // Selected
-    selectedVariationId,
-    selectedStockMovementId,
+    selectedVariation,
+    selectedMovement,
     selectedPriceListId,
     sequence,
     quantities,
