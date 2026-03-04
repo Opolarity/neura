@@ -48,6 +48,7 @@ export interface PriceListOption {
 export interface BarcodeTicketData {
   productTitle: string;
   variationTerms: string;
+  sku: string | null;
   price: number;
   barcodeValue: string; // value to encode in barcode
 }
