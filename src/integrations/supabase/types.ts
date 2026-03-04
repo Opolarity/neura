@@ -546,6 +546,7 @@ export type Database = {
           id: number
           module_id: number
           name: string
+          parent_class_id: number | null
         }
         Insert: {
           code: string
@@ -553,6 +554,7 @@ export type Database = {
           id?: number
           module_id: number
           name: string
+          parent_class_id?: number | null
         }
         Update: {
           code?: string
@@ -560,6 +562,7 @@ export type Database = {
           id?: number
           module_id?: number
           name?: string
+          parent_class_id?: number | null
         }
         Relationships: [
           {
@@ -567,6 +570,13 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_parent_class_id_fkey"
+            columns: ["parent_class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
             referencedColumns: ["id"]
           },
         ]
@@ -4285,23 +4295,35 @@ export type Database = {
       }
       sp_ec_create_order: {
         Args: {
-          p_branch_id?: number
-          p_change_entries?: Json
-          p_initial_situation_id?: number
-          p_is_existing_client?: boolean
-          p_order_data?: Json
-          p_payments?: Json
-          p_price_list_id?: number
-          p_products?: Json
-          p_sale_type_id?: number
-          p_stock_type_id?: number
-          p_user_id?: string
-          p_warehouse_id?: number
+          p_branch_id: number
+          p_change_entries: Json
+          p_initial_situation_id: number
+          p_is_existing_client: boolean
+          p_is_mercadopago: boolean
+          p_order_data: Json
+          p_payments: Json
+          p_products: Json
+          p_sale_type_id: number
+          p_stock_type_id: number
+          p_user_id: string
+          p_warehouse_id: number
         }
         Returns: Json
       }
       sp_ec_get_categories_ids: {
         Args: { p_categories_ids?: number[] }
+        Returns: Json
+      }
+      sp_ec_get_complet_outfit: {
+        Args: {
+          p_branch_id: number
+          p_channel_id: number
+          p_exclude_category_id: number
+          p_price_list_id: number
+          p_sale_type_id: number
+          p_stock_type_id: number
+          p_warehouse_id: number
+        }
         Returns: Json
       }
       sp_ec_get_customer_orders: { Args: { p_user_id: string }; Returns: Json }
@@ -4368,6 +4390,15 @@ export type Database = {
           p_country_id: number
           p_neighborhood_id?: number
           p_state_id?: number
+        }
+        Returns: Json
+      }
+      sp_ec_get_similar_products: {
+        Args: {
+          p_category_id: number
+          p_channel_id: number
+          p_exclude_product_id: number
+          p_warehouse_id: number
         }
         Returns: Json
       }
