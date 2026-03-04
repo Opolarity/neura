@@ -108,7 +108,7 @@ const StockMovementSearcher = ({
           </Button>
         </div>
       ) : (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={setOpen} modal={false}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -126,7 +126,7 @@ const StockMovementSearcher = ({
                 value={search}
                 onValueChange={setSearch}
               />
-              <CommandList className="max-h-[300px] overflow-y-auto">
+              <CommandList className="max-h-[300px] overflow-y-auto" onWheel={(e) => e.stopPropagation()}>
                 {loading ? (
                   <div className="flex justify-center py-6">
                     <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
