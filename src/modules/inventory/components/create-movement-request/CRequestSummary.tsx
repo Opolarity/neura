@@ -21,6 +21,8 @@ interface CRequestSummaryProps {
   warehouses: SimpleWarehouse[];
   selectedWarehouseId: string | undefined;
   reason: string;
+  statusName: string;
+  situationName: string;
   onWarehouseChange: (value: string) => void;
   onReasonChange: (value: string) => void;
 }
@@ -31,6 +33,8 @@ const CRequestSummary = ({
   warehouses,
   selectedWarehouseId,
   reason,
+  statusName,
+  situationName,
   onWarehouseChange,
   onReasonChange,
 }: CRequestSummaryProps) => {
@@ -80,6 +84,27 @@ const CRequestSummary = ({
             disabled
             type="text"
             value={format(new Date(), "dd/MM/yyyy")}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-row gap-2">
+        <div className="flex-1 flex flex-col gap-2">
+          <Label>Estado</Label>
+          <Input
+            className="bg-muted"
+            disabled
+            type="text"
+            value={statusName || ""}
+          />
+        </div>
+        <div className="flex-1 flex flex-col gap-2">
+          <Label>Situación</Label>
+          <Input
+            className="bg-muted"
+            disabled
+            type="text"
+            value={situationName || ""}
           />
         </div>
       </div>
