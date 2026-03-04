@@ -140,10 +140,71 @@ serve(async (req) => {
       throw new Error(spError.message);
     }
 
+    console.log("SP result:", JSON.stringify(spResult));
+
+    // ── Use RPC outputs for image sync ─────────────────────────
+    const imageIdMap: Record<string, number> = spResult?.o_image_id_map || {};
+    const imagesToDelete: string[] = spResult?.o_images_to_delete || [];
+
+    // Delete only the images the RPC identified as removed
+    for (const imageUrl of imagesToDelete) {
+      const urlParts = imageUrl.split('/products/');
+      if (urlParts[1] && !urlParts[1].includes('default/')) {
+        const storagePath = urlParts[1];
+        console.log(`Deleting removed image from storage: ${storagePath}`);
+        const { error: deleteStorageError } = await supabaseAdmin.storage
+          .from('products')
+          .remove([storagePath]);
+        if (deleteStorageError) {
+          console.error('Error deleting image from storage:', deleteStorageError);
+        }
+      }
+    }
+
+    // Move new images from tmp/ to final location
+    for (const image of productImages) {
+      const rawPath = image.path;
+      const isExisting = rawPath && (rawPath.startsWith('http') || image.isExisting);
+      if (!isExisting && rawPath && rawPath.includes('products-images/tmp/')) {
+        const newDbId = imageIdMap[image.id];
+        if (!newDbId) continue;
+
+        const originalFileName = rawPath.split('/').pop() || '';
+        const extension = originalFileName.includes('.')
+          ? originalFileName.substring(originalFileName.lastIndexOf('.'))
+          : '.jpg';
+        const newFileName = `${newDbId}-${productId}${extension}`;
+        const newPath = `products-images/${productId}/${newFileName}`;
+
+        console.log(`Moving image from ${rawPath} to ${newPath}`);
+        const { error: moveError } = await supabaseAdmin.storage
+          .from('products')
+          .move(rawPath, newPath);
+
+        if (moveError) {
+          console.error('Error moving image:', moveError);
+          throw new Error(`Error al mover imagen de ${rawPath} a ${newPath}: ${moveError.message}`);
+        }
+
+        // Update the DB record with the final URL
+        const { data: { publicUrl } } = supabaseAdmin.storage
+          .from('products')
+          .getPublicUrl(newPath);
+
+        await supabaseAdmin
+          .from('product_images')
+          .update({ image_url: publicUrl })
+          .eq('id', newDbId);
+
+        console.log(`Image ${newDbId} moved successfully. New URL: ${publicUrl}`);
+      }
+    }
+
+    console.log('Images synced successfully. Map:', JSON.stringify(imageIdMap));
+
     // 2.5. Update channels
     console.log('Updating product channels...');
     await supabaseAdmin.from('product_channels').delete().eq('product_id', productId);
-
     if (selectedChannels && selectedChannels.length > 0) {
       const channelInserts = selectedChannels.map((channelId: number) => ({
         product_id: productId,
@@ -173,135 +234,7 @@ serve(async (req) => {
       .eq('product_id', productId)
       .eq('is_active', true);
 
-    // 4. Update images (delete all and recreate with proper references)
-
-    // First, fetch current images BEFORE deleting to identify which files to remove from storage
-    console.log('Fetching current images before deletion...');
-    const { data: currentImages } = await supabaseAdmin
-      .from('product_images')
-      .select('id, image_url')
-      .eq('product_id', productId);
-
-    // Identify existing images that should be kept (they have 'existing-' prefix in ID)
-    const existingImageIds = productImages
-      .filter((img: ProductImage) => img.id.startsWith('existing-'))
-      .map((img: ProductImage) => parseInt(img.id.replace('existing-', '')));
-
-    // Identify images to delete from storage (in DB but not in the request as existing)
-    const imagesToDeleteFromStorage = (currentImages || []).filter(
-      (img: { id: number; image_url: string }) => !existingImageIds.includes(img.id)
-    );
-
-    // Delete files from storage (except placeholder/default images)
-    for (const img of imagesToDeleteFromStorage) {
-      // Extract the relative path from the full URL
-      // URL example: https://xxx.supabase.co/storage/v1/object/public/products/products-images/123/file.jpg
-      const urlParts = img.image_url.split('/products/');
-      if (urlParts[1] && !urlParts[1].includes('default/')) {
-        const storagePath = urlParts[1];
-        console.log(`Deleting image from storage: ${storagePath}`);
-
-        const { error: deleteStorageError } = await supabaseAdmin.storage
-          .from('products')
-          .remove([storagePath]);
-
-        if (deleteStorageError) {
-          console.error('Error deleting image from storage:', deleteStorageError);
-          // Don't throw - continue with the process even if storage deletion fails
-        } else {
-          console.log(`Image deleted successfully from storage: ${storagePath}`);
-        }
-      }
-    }
-
-    // Now delete all image records from DB
-    console.log('Deleting old product images from database...');
-    await supabaseAdmin.from('product_images').delete().eq('product_id', productId);
-
-    // Map to track old image IDs to new DB IDs
-    const imageIdMap: Record<string, number> = {};
-
-    for (let i = 0; i < productImages.length; i++) {
-      const image = productImages[i];
-
-      // Get public URL from storage path
-      const rawPath = image.path;
-      let imageUrl: string;
-      let needsRename = false;
-
-      if (rawPath && (rawPath.startsWith('http') || image.isExisting)) {
-        // If it's already a full URL or marked as existing, use it directly
-        imageUrl = rawPath;
-      } else {
-        // For new images, use a temporary URL first (will be updated after insert)
-        const { data: { publicUrl } } = supabaseAdmin.storage
-          .from('products')
-          .getPublicUrl(rawPath);
-        imageUrl = publicUrl;
-        needsRename = Boolean(rawPath && rawPath.includes('products-images/tmp/'));
-      }
-
-      // Insert the image record first to get the DB ID
-      const { data: insertedImage, error: imageError } = await supabaseAdmin
-        .from('product_images')
-        .insert({
-          product_id: productId,
-          image_url: imageUrl,
-          image_order: image.order
-        })
-        .select('id')
-        .single();
-
-      if (imageError) {
-        console.error('Image record creation error:', imageError);
-        throw imageError;
-      }
-
-      // Map the temp ID to the new DB ID
-      imageIdMap[image.id] = insertedImage.id;
-
-      // Now move the file with proper naming if it's a new image from tmp/
-      if (needsRename && rawPath) {
-        // Get file extension from original path
-        const originalFileName = rawPath.split('/').pop() || '';
-        const extension = originalFileName.includes('.')
-          ? originalFileName.substring(originalFileName.lastIndexOf('.'))
-          : '.jpg';
-
-        // New file name format: {product_image_id}-{product_id}.{extension}
-        const newFileName = `${insertedImage.id}-${productId}${extension}`;
-        const newPath = `products-images/${productId}/${newFileName}`;
-
-        console.log(`Moving image from ${rawPath} to ${newPath}`);
-
-        const { error: moveError } = await supabaseAdmin.storage
-          .from('products')
-          .move(rawPath, newPath);
-
-        if (moveError) {
-          console.error('Error moving image:', moveError);
-          // Keep the original URL if move fails
-        } else {
-          // Get public URL from the new location and update the DB record
-          const { data: { publicUrl } } = supabaseAdmin.storage
-            .from('products')
-            .getPublicUrl(newPath);
-
-          const { error: updateError } = await supabaseAdmin
-            .from('product_images')
-            .update({ image_url: publicUrl })
-            .eq('id', insertedImage.id);
-
-          if (updateError) {
-            console.error('Error updating image URL:', updateError);
-          } else {
-            console.log(`Image ${insertedImage.id} moved successfully. New URL: ${publicUrl}`);
-          }
-        }
-      }
-    }
-
-    console.log('Images updated:', productImages.length);
+    // Images already handled above using RPC output
 
     // Get default stock type ID by looking up PRD code
     const { data: defaultTypeData } = await supabaseAdmin
