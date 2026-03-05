@@ -311,7 +311,7 @@ export const useCreateMovementRequest = () => {
         title: "Solicitud creada",
         description: `La solicitud #${adapted.requestId} fue creada exitosamente.`,
       });
-      navigate("/inventory/movements");
+      navigate("/inventory/movement-requests");
     } catch (error) {
       console.error("Error creating request:", error);
       toast({
