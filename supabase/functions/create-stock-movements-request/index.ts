@@ -176,6 +176,26 @@ Deno.serve(async (req) => {
       if (linkErr) throw linkErr
     }
 
+    // 6. Create Note with product listing
+    const noteLines = items.map((item: any) => {
+      const name = item.product_name || `Variación ${item.product_variation_id}`
+      const variation = item.variation_label ? ` (${item.variation_label})` : ''
+      return `${name}${variation}: ${item.quantity}`
+    }).join('\n')
+
+    const { error: noteError } = await supabase
+      .from('notes')
+      .insert([{
+        code: `STR-${requestData.id}`,
+        message: noteLines,
+        user_id: created_by
+      }])
+
+    if (noteError) {
+      console.error('Error creating note:', noteError)
+      // Non-blocking: don't fail the request if note creation fails
+    }
+
     return new Response(
       JSON.stringify({ success: true, request: requestData }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
