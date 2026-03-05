@@ -36,6 +36,7 @@ export const useEditMovementRequest = () => {
   const [products, setProducts] = useState<ProductSales[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<ProductSales | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<SelectedRequestProduct[]>([]);
+  const [originalQuantities, setOriginalQuantities] = useState<Map<number, number>>(new Map());
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState("");
   const [pagination, setPagination] = useState<PaginationState>({
@@ -162,7 +163,7 @@ export const useEditMovementRequest = () => {
           .eq("module_id", strModule.id)
           .neq("code", "REQ")
           .order("order", { ascending: true });
-        setSituationOptions((sitOptions || []).map((s: any) => ({ id: s.id, name: s.name, status_id: s.status_id })));
+        setSituationOptions((sitOptions || []).map((s: any) => ({ id: s.id, name: s.name, status_id: s.status_id, code: s.code })));
       }
       // Load linked products
       const { data: linkedData } = await supabase
@@ -224,6 +225,7 @@ export const useEditMovementRequest = () => {
         }
 
         setSelectedProducts(editProducts);
+        setOriginalQuantities(new Map(editProducts.map((p) => [p.variationId, Math.abs(p.quantity ?? 0)])));
         setSelectedIds(ids);
 
         // Also load products list for search
@@ -403,6 +405,11 @@ export const useEditMovementRequest = () => {
     }
   };
 
+  const quantitiesChanged = selectedProducts.some((p) => {
+    const original = originalQuantities.get(p.variationId);
+    return original !== undefined && (p.quantity ?? 0) !== original;
+  });
+
   return {
     requestId: id,
     loadingInitial,
@@ -420,6 +427,7 @@ export const useEditMovementRequest = () => {
     submittingNewSituation,
     generateNotes,
     submitNewSituation,
+    quantitiesChanged,
     isOpen,
     setIsOpen,
     products,

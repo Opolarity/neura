@@ -23,6 +23,7 @@ const EditMovementRequest = () => {
     submittingNewSituation,
     generateNotes,
     submitNewSituation,
+    quantitiesChanged,
     isOpen,
     setIsOpen,
     products,
@@ -91,6 +92,7 @@ const EditMovementRequest = () => {
               generatedNotes={generateNotes()}
               onSubmitNewSituation={submitNewSituation}
               submitting={submittingNewSituation}
+              quantitiesChanged={quantitiesChanged}
             />
           </>
         )}
