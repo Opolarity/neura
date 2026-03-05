@@ -93,6 +93,17 @@ export const SalesInvoicesModal = ({
       fetchInvoices();
       checkPaymentStatus();
       fetchInvoiceTypes();
+      // Resolve sale_type_id directly from the order to avoid stale formData
+      supabase
+        .from("orders")
+        .select("sale_type_id")
+        .eq("id", orderId)
+        .single()
+        .then(({ data }) => {
+          if (data?.sale_type_id) {
+            setResolvedSaleTypeId(data.sale_type_id);
+          }
+        });
     }
   }, [open, orderId]);
 
