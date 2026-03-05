@@ -6,7 +6,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
@@ -19,14 +18,6 @@ interface Props {
   requests: MovementRequestListItem[];
   loading: boolean;
 }
-
-const statusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-  const lower = status.toLowerCase();
-  if (lower.includes("pendiente")) return "secondary";
-  if (lower.includes("aprobado") || lower.includes("completado")) return "default";
-  if (lower.includes("rechazado") || lower.includes("cancelado")) return "destructive";
-  return "outline";
-};
 
 export default function MovementRequestsTable({ requests, loading }: Props) {
   const navigate = useNavigate();
