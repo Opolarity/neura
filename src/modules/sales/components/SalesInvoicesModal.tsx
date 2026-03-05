@@ -259,7 +259,7 @@ export const SalesInvoicesModal = ({
       const { data: saleType, error: stError } = await supabase
         .from("sale_types")
         .select("factura_serie_id, boleta_serie_id")
-        .eq("id", saleTypeId)
+        .eq("id", resolvedSaleTypeId)
         .single();
 
       if (stError || !saleType) return null;
