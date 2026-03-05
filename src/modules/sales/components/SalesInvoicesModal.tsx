@@ -67,7 +67,7 @@ interface SalesInvoicesModalProps {
 export const SalesInvoicesModal = ({
   orderId,
   orderTotal,
-  saleTypeId,
+  saleTypeId: saleTypeIdProp,
   open,
   onOpenChange,
 }: SalesInvoicesModalProps) => {
@@ -76,6 +76,7 @@ export const SalesInvoicesModal = ({
   const [invoiceTypes, setInvoiceTypes] = useState<InvoiceType[]>([]);
   const [isFullyPaid, setIsFullyPaid] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [resolvedSaleTypeId, setResolvedSaleTypeId] = useState<number>(saleTypeIdProp);
   const { toast } = useToast();
 
   const [pendingInvoiceType, setPendingInvoiceType] = useState<InvoiceType | null>(null);
