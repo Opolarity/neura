@@ -33,4 +33,5 @@ export interface SelectedRequestProduct extends ProductSales {
   quantity: number | null;
   sourceStock: number; // stock virtual del almacen origen (out_warehouse)
   myStock: number; // stock virtual del almacen del usuario (in_warehouse)
+  disapproved?: boolean;
 }
