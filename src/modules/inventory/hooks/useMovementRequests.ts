@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { MovementRequestListItem } from "../types/MovementRequestList.types";
+import { getUserWarehouse } from "../services/Movements.service";
+import { getUserWarehouseAdapter } from "../adapters/Movements.adapter";
 
 export const useMovementRequests = () => {
   const [requests, setRequests] = useState<MovementRequestListItem[]>([]);
