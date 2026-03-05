@@ -305,11 +305,26 @@ export const useCreateMovementRequest = () => {
       const response = await createMovementRequestApi(payload);
       const adapted = createMovementRequestAdapter(response);
 
+      // Build note with product list
+      const noteLines = selectedProducts.map((p) => {
+        const termsLabel = p.terms && p.terms.length > 0
+          ? ` (${p.terms.map((t) => t.name).join("-")})`
+          : "";
+        return `${p.productTitle}${termsLabel}: ${p.quantity}`;
+      });
+      const noteMessage = noteLines.join("\n");
+
+      // Save note linked to this request
+      await supabase.from("notes").insert({
+        message: noteMessage,
+        code: `STR-${adapted.requestId}`,
+      });
+
       toast({
         title: "Solicitud creada",
         description: `La solicitud #${adapted.requestId} fue creada exitosamente.`,
       });
-      navigate("/inventory/movements");
+      navigate("/inventory/movement-requests");
     } catch (error) {
       console.error("Error creating request:", error);
       toast({
