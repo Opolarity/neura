@@ -456,6 +456,7 @@ export const useEditMovementRequest = () => {
 
       // Update stock_movements and approval status if quantities changed or confirming (CFM)
       const isCFM = selectedSit.statusCode === "CFM";
+      const isCOM = selectedSit.statusCode === "COM";
       if (quantitiesChanged || isCFM) {
         const { data: linkedData } = await supabase
           .from("linked_stock_movement_requests")
@@ -493,6 +494,23 @@ export const useEditMovementRequest = () => {
               .update({ approved: newApproved })
               .eq("id", link.id);
           }
+        }
+      }
+
+      // COM: set is_active=true and completed=true for stock_movements with approved NULL or TRUE
+      if (isCOM) {
+        const { data: comLinks } = await supabase
+          .from("linked_stock_movement_requests")
+          .select("stock_movement_id, approved")
+          .eq("stock_movement_request_id", requestId)
+          .or("approved.is.null,approved.eq.true");
+
+        const comMovIds = comLinks?.map((l) => l.stock_movement_id) || [];
+        if (comMovIds.length > 0) {
+          await supabase
+            .from("stock_movements")
+            .update({ is_active: true, completed: true })
+            .in("id", comMovIds);
         }
       }
 
