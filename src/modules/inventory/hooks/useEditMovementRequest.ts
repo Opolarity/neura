@@ -30,6 +30,7 @@ export const useEditMovementRequest = () => {
   const [reason, setReason] = useState("");
   const [situationName, setSituationName] = useState("");
   const [statusName, setStatusName] = useState("");
+  const [statusCode, setStatusCode] = useState("");
   const [createdAt, setCreatedAt] = useState<string>("");
   const [situationsHistory, setSituationsHistory] = useState<SituationHistoryItem[]>([]);
   const [situationOptions, setSituationOptions] = useState<SituationOption[]>([]);
@@ -81,7 +82,7 @@ export const useEditMovementRequest = () => {
             id, created_by, out_warehouse_id, in_warehouse_id, created_at, updated_at,
             stock_movement_request_situations!inner(
               status_id, situation_id, message, last_row,
-              statuses(name),
+              statuses(name, code),
               situations(name)
             )
           `)
@@ -111,6 +112,7 @@ export const useEditMovementRequest = () => {
       const sit = reqData.stock_movement_request_situations?.[0];
       if (sit) {
         setStatusName(sit.statuses?.name ?? "");
+        setStatusCode(sit.statuses?.code ?? "");
         setSituationName(sit.situations?.name ?? "");
         setReason(sit.message ?? "");
       }
@@ -524,6 +526,7 @@ export const useEditMovementRequest = () => {
     if (s.statusCode === "COM" && userWh !== inWarehouseId) return false;
     return true;
   });
+  const isReadOnly = statusCode === "CFM" || statusCode === "COM";
 
   return {
     requestId: id,
@@ -561,5 +564,6 @@ export const useEditMovementRequest = () => {
     handlePageChange,
     toggleDisapprove,
     isSourceWarehouseUser,
+    isReadOnly,
   };
 };
