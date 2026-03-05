@@ -102,6 +102,7 @@ const EditMovementRequest = () => {
               submitting={submittingNewSituation}
               quantitiesChanged={quantitiesChanged}
               userWarehouseId={userSummary?.warehouse_id ?? null}
+              readOnly={isReadOnly}
             />
           </>
         )}
