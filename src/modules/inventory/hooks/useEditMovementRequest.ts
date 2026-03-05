@@ -114,15 +114,15 @@ export const useEditMovementRequest = () => {
         .select(`
           stock_movement_id,
           stock_movements!linked_stock_movement_requests_stock_movement_id_fkey(
-            id, product_variation_id, quantity, warehouse_id, output
+            id, product_variation_id, quantity, warehouse_id
           )
         `)
         .eq("stock_movement_request_id", requestId);
 
-      // Get the OUTPUT movements (from source warehouse)
+      // Get the OUTPUT movements (negative quantity = salida from source warehouse)
       const outputMovements = (linkedData || [])
         .map((l: any) => l.stock_movements)
-        .filter((m: any) => m && m.output === true);
+        .filter((m: any) => m && m.quantity < 0);
 
       if (outWh && outputMovements.length > 0) {
         // Load product details for each variation
@@ -159,7 +159,7 @@ export const useEditMovementRequest = () => {
           if (sourceProd) {
             editProducts.push({
               ...sourceProd,
-              quantity: mov.quantity,
+              quantity: Math.abs(mov.quantity),
               sourceStock: sourceProd.stock,
               myStock: myProd?.stock ?? 0,
             });

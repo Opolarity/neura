@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
 import { useEditMovementRequest } from "../hooks/useEditMovementRequest";
 import CRequestSummary from "../components/create-movement-request/CRequestSummary";
-import CRequestProductSearch from "../components/create-movement-request/CRequestProductSearch";
 import CRequestProductTable from "../components/create-movement-request/CRequestProductTable";
 
 const EditMovementRequest = () => {
@@ -72,32 +70,6 @@ const EditMovementRequest = () => {
 
         {selectedWarehouse && (
           <>
-            <div className="flex flex-row gap-2">
-              <CRequestProductSearch
-                products={products}
-                selectedIds={selectedIds}
-                selectedProduct={selectedProduct}
-                isLoading={loadingProducts}
-                search={search}
-                pagination={pagination}
-                isOpen={isOpen}
-                setIsOpen={setIsOpen}
-                onSearchChange={handleSearchChange}
-                onPageChange={handlePageChange}
-                onSelectProduct={onSelectProduct}
-              />
-              <Button
-                type="button"
-                onClick={addProduct}
-                disabled={!selectedProduct}
-              >
-                <Plus className="w-4 h-4 mr-2" /> Agregar
-              </Button>
-            </div>
-            <p className="text-xs italic text-muted-foreground -mt-3">
-              El inventario mostrado corresponde al almacén <span className="font-medium text-foreground">{selectedWarehouse?.name}</span>
-            </p>
-
             <CRequestProductTable
               products={selectedProducts}
               sourceWarehouseName={selectedWarehouse?.name || ""}
