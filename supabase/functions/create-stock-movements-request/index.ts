@@ -177,8 +177,8 @@ Deno.serve(async (req) => {
 
       // Link request to movements using the mandatory linked_stock_movement_requests table
       const { error: linkErr } = await supabase.from('linked_stock_movement_requests').insert([
-        { stock_movement_request_id: requestData.id, stock_movement_id: outMov.id, approved: false },
-        { stock_movement_request_id: requestData.id, stock_movement_id: inMov.id, approved: false }
+        { stock_movement_request_id: requestData.id, stock_movement_id: outMov.id, approved: null },
+        { stock_movement_request_id: requestData.id, stock_movement_id: inMov.id, approved: null }
       ])
 
       if (linkErr) throw linkErr
