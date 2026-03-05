@@ -7,7 +7,7 @@ import MovementRequestsTable from "../components/movement-requests/MovementReque
 
 const MovementRequests = () => {
   const navigate = useNavigate();
-  const { requests, loading } = useMovementRequests();
+  const { requests, loading, userWarehouseId } = useMovementRequests();
 
   return (
     <div className="space-y-6">
