@@ -151,6 +151,7 @@ export const useEditMovementRequest = () => {
         situationName: s.situations?.name ?? "",
         notes: s.notes,
         warehouseName: s.warehouses?.name ?? null,
+        warehouseId: s.warehouse_id ?? null,
       }));
       setSituationsHistory(historyItems);
 
