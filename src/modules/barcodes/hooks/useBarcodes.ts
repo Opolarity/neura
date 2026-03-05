@@ -221,7 +221,6 @@ export const useBarcodes = () => {
       const ticketData: BarcodeTicketData = {
         productTitle: selectedVariation.productTitle,
         variationTerms: selectedVariation.terms,
-        sku: selectedVariation.sku,
         price: price,
         barcodeValue: `${selectedVariation.variationId}-${sequence}`,
       };
@@ -276,7 +275,6 @@ export const useBarcodes = () => {
       const ticketData: BarcodeTicketData = {
         productTitle: item.productTitle,
         variationTerms: item.variationTerms,
-        sku: item.sku,
         price: priceData.price,
         barcodeValue: item.barcodeValue,
       };

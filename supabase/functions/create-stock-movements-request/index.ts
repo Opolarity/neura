@@ -93,6 +93,10 @@ Deno.serve(async (req) => {
     const { data: requestData, error: requestError } = await supabase
       .from('stock_movement_requests')
       .insert([{
+        reason,
+        module_id: moduleId,
+        status_id: statusId,
+        situation_id: situationId,
         created_by,
         out_warehouse_id,
         in_warehouse_id
@@ -110,8 +114,7 @@ Deno.serve(async (req) => {
         module_id: moduleId,
         status_id: statusId,
         situation_id: situationId,
-        warehouse_id: in_warehouse_id,
-        message: reason,
+        message: 'Request Created',
         last_row: true,
         created_by
       }])
@@ -174,26 +177,6 @@ Deno.serve(async (req) => {
       ])
 
       if (linkErr) throw linkErr
-    }
-
-    // 6. Create Note with product listing
-    const noteLines = items.map((item: any) => {
-      const name = item.product_name || `Variación ${item.product_variation_id}`
-      const variation = item.variation_label ? ` (${item.variation_label})` : ''
-      return `${name}${variation}: ${item.quantity}`
-    }).join('\n')
-
-    const { error: noteError } = await supabase
-      .from('notes')
-      .insert([{
-        code: `STR-${requestData.id}`,
-        message: noteLines,
-        user_id: created_by
-      }])
-
-    if (noteError) {
-      console.error('Error creating note:', noteError)
-      // Non-blocking: don't fail the request if note creation fails
     }
 
     return new Response(

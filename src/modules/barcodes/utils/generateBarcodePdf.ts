@@ -19,9 +19,9 @@ export const generateBarcodePdf = (
   for (let i = 0; i < quantity; i++) {
     if (i > 0) doc.addPage([30, 20], "landscape");
 
-    // Title: Product name + variation in parentheses
+    // Title: Product name + variation
     const title = ticketData.variationTerms
-      ? `${ticketData.productTitle} (${ticketData.variationTerms.replace(/,\s*/g, "-")})`
+      ? `${ticketData.productTitle} - ${ticketData.variationTerms.split(",")[0]?.trim() || ""}`
       : ticketData.productTitle;
 
     // Draw title (top)
@@ -29,6 +29,15 @@ export const generateBarcodePdf = (
     doc.setFont("helvetica", "bold");
     const titleLines = doc.splitTextToSize(title, 26);
     doc.text(titleLines, 15, 3, { align: "center" });
+
+    // Variation terms below title
+    if (ticketData.variationTerms) {
+      doc.setFontSize(4.5);
+      doc.setFont("helvetica", "normal");
+      doc.text(ticketData.variationTerms, 15, titleLines.length * 2 + 3, {
+        align: "center",
+      });
+    }
 
     // Generate barcode as canvas
     const canvas = document.createElement("canvas");
@@ -43,7 +52,7 @@ export const generateBarcodePdf = (
 
       const barcodeDataUrl = canvas.toDataURL("image/png");
       // Barcode in the center
-      const barcodeY = titleLines.length * 2 + 3;
+      const barcodeY = 7;
       const barcodeWidth = 24;
       const barcodeHeight = 7;
       doc.addImage(
@@ -55,17 +64,15 @@ export const generateBarcodePdf = (
         barcodeHeight
       );
 
-      // SKU-Lote text below barcode
-      const skuLabel = ticketData.sku
-        ? `${ticketData.sku}-${ticketData.barcodeValue.split("-").pop() || ""}`
-        : ticketData.barcodeValue;
+      // Barcode value text below barcode
       doc.setFontSize(4);
       doc.setFont("helvetica", "normal");
-      doc.text(skuLabel, 15, barcodeY + barcodeHeight + 1.5, {
+      doc.text(ticketData.barcodeValue, 15, barcodeY + barcodeHeight + 1.5, {
         align: "center",
       });
     } catch (e) {
       console.error("Error generating barcode:", e);
+      // Fallback: just text
       doc.setFontSize(5);
       doc.text(ticketData.barcodeValue, 15, 12, { align: "center" });
     }
