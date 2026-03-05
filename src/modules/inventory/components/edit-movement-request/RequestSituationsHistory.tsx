@@ -20,6 +20,7 @@ export interface SituationHistoryItem {
   situationName: string;
   notes: string | null;
   warehouseName: string | null;
+  warehouseId: number | null;
 }
 
 export interface SituationOption {
@@ -37,6 +38,7 @@ interface Props {
   onSubmitNewSituation: (message: string, situationId: number) => Promise<void>;
   submitting?: boolean;
   quantitiesChanged?: boolean;
+  userWarehouseId?: number | null;
 }
 
 const RequestSituationsHistory = ({
@@ -46,6 +48,7 @@ const RequestSituationsHistory = ({
   onSubmitNewSituation,
   submitting = false,
   quantitiesChanged = false,
+  userWarehouseId = null,
 }: Props) => {
   const [newMessage, setNewMessage] = useState("");
   const [selectedSituationId, setSelectedSituationId] = useState<string>("");
@@ -75,7 +78,11 @@ const RequestSituationsHistory = ({
           {situations.map((sit) => (
             <div
               key={sit.id}
-              className="rounded-lg border border-border bg-muted/40 p-4 space-y-1"
+              className={`rounded-lg border p-4 space-y-1 ${
+                userWarehouseId && sit.warehouseId && sit.warehouseId !== userWarehouseId
+                  ? "border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-700"
+                  : "border-border bg-muted/40"
+              }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground">

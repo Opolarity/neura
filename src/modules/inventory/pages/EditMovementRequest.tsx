@@ -99,6 +99,7 @@ const EditMovementRequest = () => {
               onSubmitNewSituation={submitNewSituation}
               submitting={submittingNewSituation}
               quantitiesChanged={quantitiesChanged}
+              userWarehouseId={userSummary?.warehouse_id ?? null}
             />
           </>
         )}
