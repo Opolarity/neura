@@ -7,7 +7,7 @@ import MovementRequestsTable from "../components/movement-requests/MovementReque
 
 const MovementRequests = () => {
   const navigate = useNavigate();
-  const { requests, loading } = useMovementRequests();
+  const { requests, loading, userWarehouseId } = useMovementRequests();
 
   return (
     <div className="space-y-6">
@@ -29,7 +29,7 @@ const MovementRequests = () => {
           <CardTitle>Solicitudes</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <MovementRequestsTable requests={requests} loading={loading} />
+          <MovementRequestsTable requests={requests} loading={loading} userWarehouseId={userWarehouseId} />
         </CardContent>
       </Card>
     </div>

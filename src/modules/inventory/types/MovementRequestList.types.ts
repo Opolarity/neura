@@ -4,6 +4,7 @@ export interface MovementRequestListItem {
   outWarehouseName: string;
   inWarehouseName: string;
   situationName: string;
+  lastMessageWarehouseId: number | null;
   lastMessageWarehouseName: string | null;
   message: string | null;
   createdAt: string;

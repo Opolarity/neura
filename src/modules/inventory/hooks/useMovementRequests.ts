@@ -2,10 +2,13 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { MovementRequestListItem } from "../types/MovementRequestList.types";
+import { getUserWarehouse } from "../services/Movements.service";
+import { getUserWarehouseAdapter } from "../adapters/Movements.adapter";
 
 export const useMovementRequests = () => {
   const [requests, setRequests] = useState<MovementRequestListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userWarehouseId, setUserWarehouseId] = useState<number | null>(null);
   const { toast } = useToast();
 
   const loadRequests = async () => {
@@ -46,6 +49,7 @@ export const useMovementRequests = () => {
           outWarehouseName: r.out_warehouse?.name ?? "—",
           inWarehouseName: r.in_warehouse?.name ?? "—",
           situationName: situation?.situations?.name ?? "—",
+          lastMessageWarehouseId: situation?.warehouse_id ?? null,
           lastMessageWarehouseName: situation?.situation_warehouse?.name ?? null,
           message: situation?.message ?? null,
           createdAt: r.created_at,
@@ -67,8 +71,18 @@ export const useMovementRequests = () => {
   };
 
   useEffect(() => {
-    loadRequests();
+    const init = async () => {
+      try {
+        const userRes = await getUserWarehouse();
+        const userAdp = getUserWarehouseAdapter(userRes);
+        setUserWarehouseId(userAdp.warehouse_id);
+      } catch (e) {
+        console.error("Error loading user warehouse:", e);
+      }
+      loadRequests();
+    };
+    init();
   }, []);
 
-  return { requests, loading, reload: loadRequests };
+  return { requests, loading, userWarehouseId, reload: loadRequests };
 };
