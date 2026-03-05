@@ -21,6 +21,7 @@ interface CRequestProductTableProps {
   isEditMode?: boolean;
   isSourceWarehouseUser?: boolean;
   onToggleDisapprove?: (variationId: number) => void;
+  readOnly?: boolean;
 }
 
 const CRequestProductTable = ({
@@ -32,6 +33,7 @@ const CRequestProductTable = ({
   isEditMode = false,
   isSourceWarehouseUser = false,
   onToggleDisapprove,
+  readOnly = false,
 }: CRequestProductTableProps) => {
   return (
     <Table>
@@ -86,8 +88,8 @@ const CRequestProductTable = ({
                       onQuantityChange(product.variationId, e.target.value)
                     }
                     placeholder="0"
-                    className={cn("text-center", isDisapproved && "bg-muted")}
-                    disabled={isDisapproved}
+                    className={cn("text-center", (isDisapproved || readOnly) && "bg-muted")}
+                    disabled={isDisapproved || readOnly}
                   />
                 </TableCell>
                 <TableCell className="text-center">
@@ -98,7 +100,7 @@ const CRequestProductTable = ({
                   />
                 </TableCell>
                 <TableCell className="text-center">
-                  {isEditMode ? (
+                  {readOnly ? null : isEditMode ? (
                     isSourceWarehouseUser && onToggleDisapprove ? (
                       <Button
                         variant={isDisapproved ? "destructive" : "ghost"}

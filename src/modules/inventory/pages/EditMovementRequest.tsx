@@ -42,6 +42,7 @@ const EditMovementRequest = () => {
     filteredSituationOptions,
     toggleDisapprove,
     isSourceWarehouseUser,
+    isReadOnly,
   } = useEditMovementRequest();
 
   if (loadingInitial) {
@@ -90,6 +91,7 @@ const EditMovementRequest = () => {
               isEditMode
               isSourceWarehouseUser={isSourceWarehouseUser}
               onToggleDisapprove={toggleDisapprove}
+              readOnly={isReadOnly}
             />
 
             <RequestSituationsHistory
