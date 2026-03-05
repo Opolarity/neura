@@ -21,14 +21,11 @@ export interface MovementRequestApiResponse {
   success: boolean;
   request: {
     id: number;
-    reason: string;
-    module_id: number;
-    status_id: number;
-    situation_id: number;
     created_by: string;
     out_warehouse_id: number;
     in_warehouse_id: number;
     created_at: string;
+    updated_at: string;
   };
 }
 

@@ -4,9 +4,9 @@ export const createMovementRequestAdapter = (response: MovementRequestApiRespons
   return {
     success: response.success,
     requestId: response.request.id,
-    reason: response.request.reason,
     outWarehouseId: response.request.out_warehouse_id,
     inWarehouseId: response.request.in_warehouse_id,
     createdAt: response.request.created_at,
+    updatedAt: response.request.updated_at,
   };
 };

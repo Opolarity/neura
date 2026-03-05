@@ -2992,6 +2992,7 @@ export type Database = {
           situation_id: number
           status_id: number
           stock_movement_request_id: number
+          warehouse_id: number
         }
         Insert: {
           created_at?: string
@@ -3004,6 +3005,7 @@ export type Database = {
           situation_id: number
           status_id: number
           stock_movement_request_id: number
+          warehouse_id: number
         }
         Update: {
           created_at?: string
@@ -3016,6 +3018,7 @@ export type Database = {
           situation_id?: number
           status_id?: number
           stock_movement_request_id?: number
+          warehouse_id?: number
         }
         Relationships: [
           {
@@ -3046,6 +3049,13 @@ export type Database = {
             referencedRelation: "statuses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "stock_movement_request_situations_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
         ]
       }
       stock_movement_requests: {
@@ -3054,12 +3064,7 @@ export type Database = {
           created_by: string
           id: number
           in_warehouse_id: number | null
-          last_message: number
-          module_id: number
           out_warehouse_id: number
-          reason: string | null
-          situation_id: number
-          status_id: number
           updated_at: string | null
         }
         Insert: {
@@ -3067,12 +3072,7 @@ export type Database = {
           created_by?: string
           id?: number
           in_warehouse_id?: number | null
-          last_message: number
-          module_id: number
           out_warehouse_id: number
-          reason?: string | null
-          situation_id: number
-          status_id: number
           updated_at?: string | null
         }
         Update: {
@@ -3080,12 +3080,7 @@ export type Database = {
           created_by?: string
           id?: number
           in_warehouse_id?: number | null
-          last_message?: number
-          module_id?: number
           out_warehouse_id?: number
-          reason?: string | null
-          situation_id?: number
-          status_id?: number
           updated_at?: string | null
         }
         Relationships: [
@@ -3097,38 +3092,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "stock_movement_requests_last_message_fkey"
-            columns: ["last_message"]
-            isOneToOne: false
-            referencedRelation: "warehouses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_movement_requests_module_id_fkey"
-            columns: ["module_id"]
-            isOneToOne: false
-            referencedRelation: "modules"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "stock_movement_requests_out_warehouse_id_fkey"
             columns: ["out_warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_movement_requests_situation_id_fkey"
-            columns: ["situation_id"]
-            isOneToOne: false
-            referencedRelation: "situations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_movement_requests_status_id_fkey"
-            columns: ["status_id"]
-            isOneToOne: false
-            referencedRelation: "statuses"
             referencedColumns: ["id"]
           },
         ]

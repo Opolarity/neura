@@ -93,10 +93,6 @@ Deno.serve(async (req) => {
     const { data: requestData, error: requestError } = await supabase
       .from('stock_movement_requests')
       .insert([{
-        reason,
-        module_id: moduleId,
-        status_id: statusId,
-        situation_id: situationId,
         created_by,
         out_warehouse_id,
         in_warehouse_id
@@ -114,7 +110,8 @@ Deno.serve(async (req) => {
         module_id: moduleId,
         status_id: statusId,
         situation_id: situationId,
-        message: 'Request Created',
+        warehouse_id: in_warehouse_id,
+        message: reason,
         last_row: true,
         created_by
       }])
