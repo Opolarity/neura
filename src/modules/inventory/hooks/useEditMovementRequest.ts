@@ -181,13 +181,13 @@ export const useEditMovementRequest = () => {
         `)
         .eq("stock_movement_request_id", requestId);
 
-      // Get the OUTPUT movements (negative quantity or zero for disapproved)
+      // Get the OUTPUT movements (from source warehouse)
       const outputMovements = (linkedData || [])
         .filter((l: any) => {
           const m = l.stock_movements;
           if (!m) return false;
-          // Output movements: negative qty OR zero qty (disapproved) from source warehouse
-          return m.quantity < 0 || (m.quantity === 0 && m.warehouse_id === reqData.out_warehouse_id);
+          // Identify output movements by warehouse matching the source (out) warehouse
+          return m.warehouse_id === reqData.out_warehouse_id;
         })
         .map((l: any) => ({ ...l.stock_movements, approved: l.approved }));
 
