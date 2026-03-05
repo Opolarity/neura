@@ -49,6 +49,7 @@ interface Props {
   submitting?: boolean;
   quantitiesChanged?: boolean;
   userWarehouseId?: number | null;
+  readOnly?: boolean;
 }
 
 const RequestSituationsHistory = ({
@@ -58,6 +59,7 @@ const RequestSituationsHistory = ({
   onSubmitNewSituation,
   submitting = false,
   quantitiesChanged = false,
+  readOnly = false,
   userWarehouseId = null,
 }: Props) => {
   const [newMessage, setNewMessage] = useState("");
@@ -146,6 +148,7 @@ const RequestSituationsHistory = ({
       )}
 
       {/* New message form */}
+      {!readOnly && (
       <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
         <h4 className="text-sm font-semibold text-foreground">Agregar actualización</h4>
 
@@ -198,6 +201,7 @@ const RequestSituationsHistory = ({
           {submitting ? "Enviando..." : "Enviar"}
         </Button>
       </div>
+      )}
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
