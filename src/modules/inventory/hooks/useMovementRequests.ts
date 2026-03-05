@@ -71,8 +71,18 @@ export const useMovementRequests = () => {
   };
 
   useEffect(() => {
-    loadRequests();
+    const init = async () => {
+      try {
+        const userRes = await getUserWarehouse();
+        const userAdp = getUserWarehouseAdapter(userRes);
+        setUserWarehouseId(userAdp.warehouse_id);
+      } catch (e) {
+        console.error("Error loading user warehouse:", e);
+      }
+      loadRequests();
+    };
+    init();
   }, []);
 
-  return { requests, loading, reload: loadRequests };
+  return { requests, loading, userWarehouseId, reload: loadRequests };
 };
