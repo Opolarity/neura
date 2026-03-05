@@ -395,8 +395,7 @@ export const useEditMovementRequest = () => {
 
       toast({ title: "Actualización enviada", description: "El historial ha sido actualizado." });
 
-      // Reload data
-      await loadInitialData();
+      navigate("/inventory/movement-requests");
     } catch (error) {
       console.error("Error submitting situation:", error);
       toast({ title: "Error", description: "No se pudo enviar la actualización.", variant: "destructive" });
