@@ -174,16 +174,22 @@ export const useEditMovementRequest = () => {
         .from("linked_stock_movement_requests")
         .select(`
           stock_movement_id,
+          approved,
           stock_movements!linked_stock_movement_requests_stock_movement_id_fkey(
             id, product_variation_id, quantity, warehouse_id
           )
         `)
         .eq("stock_movement_request_id", requestId);
 
-      // Get the OUTPUT movements (negative quantity = salida from source warehouse)
+      // Get the OUTPUT movements (negative quantity or zero for disapproved)
       const outputMovements = (linkedData || [])
-        .map((l: any) => l.stock_movements)
-        .filter((m: any) => m && m.quantity < 0);
+        .filter((l: any) => {
+          const m = l.stock_movements;
+          if (!m) return false;
+          // Output movements: negative qty OR zero qty (disapproved) from source warehouse
+          return m.quantity < 0 || (m.quantity === 0 && m.warehouse_id === reqData.out_warehouse_id);
+        })
+        .map((l: any) => ({ ...l.stock_movements, approved: l.approved }));
 
       if (outWh && outputMovements.length > 0) {
         // Load product details for each variation
@@ -218,18 +224,20 @@ export const useEditMovementRequest = () => {
           const myProd = myProducts.find((p) => p.variationId === varId);
 
           if (sourceProd) {
+            const isDisapproved = mov.approved === false;
             editProducts.push({
               ...sourceProd,
-              quantity: Math.abs(mov.quantity),
+              quantity: isDisapproved ? 0 : Math.abs(mov.quantity),
               sourceStock: sourceProd.stock,
               myStock: myProd?.stock ?? 0,
+              disapproved: isDisapproved,
             });
             ids.add(varId);
           }
         }
 
         setSelectedProducts(editProducts);
-        setOriginalQuantities(new Map(editProducts.map((p) => [p.variationId, Math.abs(p.quantity ?? 0)])));
+        setOriginalQuantities(new Map(editProducts.map((p) => [p.variationId, p.disapproved ? 0 : Math.abs(p.quantity ?? 0)])));
         setSelectedIds(ids);
 
         // Also load products list for search
