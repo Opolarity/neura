@@ -409,6 +409,20 @@ export const useEditMovementRequest = () => {
       const selectedSit = situationOptions.find((s) => s.id === situationId);
       if (!selectedSit) throw new Error("Situación inválida");
 
+      // CFM validation: at least one product must be non-disapproved (approved NULL or TRUE)
+      if (selectedSit.statusCode === "CFM") {
+        const approvedProducts = selectedProducts.filter((p) => !p.disapproved);
+        if (approvedProducts.length === 0) {
+          toast({
+            title: "No se puede confirmar",
+            description: "Debe haber al menos un producto aprobado (no desaprobado) para confirmar la solicitud.",
+            variant: "destructive",
+          });
+          setSubmittingNewSituation(false);
+          return;
+        }
+      }
+
       const { data: strModule } = await supabase
         .from("modules")
         .select("id")
@@ -438,8 +452,9 @@ export const useEditMovementRequest = () => {
           last_row: true,
         });
 
-      // Update stock_movements and approval status if quantities changed
-      if (quantitiesChanged) {
+      // Update stock_movements and approval status if quantities changed or confirming (CFM)
+      const isCFM = selectedSit.statusCode === "CFM";
+      if (quantitiesChanged || isCFM) {
         const { data: linkedData } = await supabase
           .from("linked_stock_movement_requests")
           .select(`
@@ -458,17 +473,19 @@ export const useEditMovementRequest = () => {
             const product = selectedProducts.find((p) => p.variationId === mov.product_variation_id);
             if (!product || product.quantity === null || product.quantity === undefined) continue;
 
-            // Output movement = negative, Input movement = positive
-            const newQty = mov.quantity < 0 ? -product.quantity : product.quantity;
-            if (newQty !== mov.quantity) {
-              await supabase
-                .from("stock_movements")
-                .update({ quantity: newQty })
-                .eq("id", mov.id);
+            // Update quantities if changed
+            if (quantitiesChanged) {
+              const newQty = mov.quantity < 0 ? -product.quantity : product.quantity;
+              if (newQty !== mov.quantity) {
+                await supabase
+                  .from("stock_movements")
+                  .update({ quantity: newQty })
+                  .eq("id", mov.id);
+              }
             }
 
-            // Update approved: false for disapproved, null for non-disapproved
-            const newApproved = product.disapproved ? false : null;
+            // Update approved: CFM sets non-disapproved to TRUE, otherwise NULL
+            const newApproved = product.disapproved ? false : (isCFM ? true : null);
             await supabase
               .from("linked_stock_movement_requests")
               .update({ approved: newApproved })
