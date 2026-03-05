@@ -1,47 +1,63 @@
 import { VariationOption, StockMovementOption, PriceListOption, BarcodeListItem } from "../types/Barcodes.types";
 
 // =============================================================================
-// Adapter para variaciones
+// Helper: build terms string from variation_terms (just term names, no group)
 // =============================================================================
 
-export const variationsAdapter = (rawData: any[]): VariationOption[] => {
-  return rawData.map((v) => {
-    const productTitle = v.products?.title || "Sin título";
+const buildTermsString = (variationTerms: any[]): string => {
+  return (variationTerms || [])
+    .map((vt: any) => vt.terms?.name || "")
+    .filter(Boolean)
+    .join("-");
+};
 
-    // Build terms string from variation_terms
-    const termsStr = (v.variation_terms || [])
-      .map((vt: any) => {
-        const groupName = vt.terms?.term_groups?.name || "";
-        const termName = vt.terms?.name || "";
-        return groupName ? `${groupName} - ${termName}` : termName;
-      })
-      .join(", ");
+// =============================================================================
+// Adapter para variaciones desde RPC
+// =============================================================================
 
-    const label = termsStr
-      ? `${productTitle} - ${termsStr}`
+export const variationsFromRpcAdapter = (rawData: any[]): VariationOption[] => {
+  return (rawData || []).map((v: any) => {
+    const productTitle = v.product_title || "Sin título";
+    const termsStr = v.terms_names || "";
+
+    const label = v.is_variable && termsStr
+      ? `${productTitle} (${termsStr})`
       : productTitle;
 
     return {
-      variationId: v.id,
+      variationId: v.variation_id,
       sku: v.sku,
       productTitle,
       terms: termsStr,
       label,
+      stockTypeName: v.stock_type_name || null,
     };
   });
 };
 
 // =============================================================================
-// Adapter para stock movements
+// Adapter para stock movements desde RPC
 // =============================================================================
 
-export const stockMovementsAdapter = (rawData: any[]): StockMovementOption[] => {
-  return rawData.map((sm) => {
-    const date = new Date(sm.created_at).toLocaleDateString("es-PE");
-    const warehouseName = sm.warehouses?.name || "";
+export const stockMovementsFromRpcAdapter = (rawData: any[]): StockMovementOption[] => {
+  return (rawData || []).map((sm: any) => {
+    const productTitle = sm.product_title || "Sin título";
+    const termsStr = sm.terms_names || "";
+
+    const displayName = sm.is_variable && termsStr
+      ? `${productTitle} (${termsStr})`
+      : productTitle;
+
     return {
       id: sm.id,
-      label: `#${sm.id} - ${warehouseName} - ${date} (Cant: ${sm.quantity})`,
+      label: displayName,
+      productVariationId: sm.product_variation_id,
+      productTitle,
+      variationTerms: termsStr,
+      sku: sm.sku || null,
+      quantity: sm.quantity,
+      createdAt: sm.created_at,
+      userName: sm.user_name || "—",
     };
   });
 };
@@ -67,15 +83,7 @@ export const barcodeListAdapter = (rawData: any[]): BarcodeListItem[] => {
     const productTitle = bc.variations?.products?.title || "Sin título";
     const sku = bc.variations?.sku || null;
     const priceListName = bc.price_list?.name || "—";
-
-    // Build variation terms
-    const termsStr = (bc.variations?.variation_terms || [])
-      .map((vt: any) => {
-        const groupName = vt.terms?.term_groups?.name || "";
-        const termName = vt.terms?.name || "";
-        return groupName ? `${groupName} - ${termName}` : termName;
-      })
-      .join(", ");
+    const termsStr = buildTermsString(bc.variations?.variation_terms);
 
     return {
       id: bc.id,
@@ -85,6 +93,7 @@ export const barcodeListAdapter = (rawData: any[]): BarcodeListItem[] => {
       sequence: bc.sequence,
       quantities: bc.quantities,
       createdAt: bc.created_at,
+      stockMovementId: bc.stock_movement_id ?? null,
       variationId: bc.product_variation_id,
       variationTerms: termsStr,
       priceListId: bc.price_list_id,

@@ -6,12 +6,10 @@ import BarcodeListTable from "../components/BarcodeListTable";
 
 const BarcodesPage = () => {
   const {
-    variations,
-    stockMovements,
     priceLists,
     barcodeList,
-    selectedVariationId,
-    selectedStockMovementId,
+    selectedVariation,
+    selectedMovement,
     selectedPriceListId,
     sequence,
     quantities,
@@ -20,10 +18,13 @@ const BarcodesPage = () => {
     initialLoading,
     listLoading,
     modalOpen,
-    setSelectedStockMovementId,
+    productLocked,
     setQuantities,
+    setSequence,
     setModalOpen,
     handleVariationChange,
+    handleStockMovementChange,
+    handleProductClear,
     handlePriceListChange,
     handleSubmit,
     handleNewBarcode,
@@ -54,21 +55,22 @@ const BarcodesPage = () => {
       <BarcodeConfigModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        variations={variations}
-        stockMovements={stockMovements}
         priceLists={priceLists}
-        selectedVariationId={selectedVariationId}
-        selectedStockMovementId={selectedStockMovementId}
+        selectedVariation={selectedVariation}
+        selectedMovement={selectedMovement}
         selectedPriceListId={selectedPriceListId}
         sequence={sequence}
         quantities={quantities}
         price={price}
         loading={loading}
         initialLoading={initialLoading}
+        productLocked={productLocked}
         onVariationChange={handleVariationChange}
-        onStockMovementChange={setSelectedStockMovementId}
+        onProductClear={handleProductClear}
+        onStockMovementChange={handleStockMovementChange}
         onPriceListChange={handlePriceListChange}
         onQuantitiesChange={setQuantities}
+        onSequenceChange={setSequence}
         onSubmit={handleSubmit}
       />
     </div>

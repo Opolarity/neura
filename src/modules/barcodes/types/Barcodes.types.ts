@@ -20,11 +20,19 @@ export interface VariationOption {
   productTitle: string;
   terms: string; // "TALLA - M"
   label: string; // "Producto - TALLA M"
+  stockTypeName: string | null;
 }
 
 export interface StockMovementOption {
   id: number;
   label: string;
+  productVariationId: number;
+  productTitle: string;
+  variationTerms: string;
+  sku: string | null;
+  quantity: number;
+  createdAt: string;
+  userName: string;
 }
 
 export interface PriceListOption {
@@ -40,6 +48,7 @@ export interface PriceListOption {
 export interface BarcodeTicketData {
   productTitle: string;
   variationTerms: string;
+  sku: string | null;
   price: number;
   barcodeValue: string; // value to encode in barcode
 }
@@ -56,6 +65,7 @@ export interface BarcodeListItem {
   sequence: number;
   quantities: number | null;
   createdAt: string;
+  stockMovementId: number | null;
   // For re-print
   variationId: number;
   variationTerms: string;

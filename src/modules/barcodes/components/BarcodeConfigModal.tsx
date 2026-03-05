@@ -21,50 +21,54 @@ import {
   StockMovementOption,
   PriceListOption,
 } from "../types/Barcodes.types";
+import StockMovementSearcher from "./StockMovementSearcher";
+import ProductVariationSearcher from "./ProductVariationSearcher";
 
 interface BarcodeConfigModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  variations: VariationOption[];
-  stockMovements: StockMovementOption[];
   priceLists: PriceListOption[];
-  selectedVariationId: number | null;
-  selectedStockMovementId: number | null;
+  selectedVariation: VariationOption | null;
+  selectedMovement: StockMovementOption | null;
   selectedPriceListId: number | null;
   sequence: number;
   quantities: number;
   price: number | null;
   loading: boolean;
   initialLoading: boolean;
-  onVariationChange: (id: number) => void;
-  onStockMovementChange: (id: number | null) => void;
+  productLocked: boolean;
+  onVariationChange: (variation: VariationOption) => void;
+  onProductClear: () => void;
+  onStockMovementChange: (movement: StockMovementOption | null) => void;
   onPriceListChange: (id: number) => void;
   onQuantitiesChange: (qty: number) => void;
+  onSequenceChange: (seq: number) => void;
   onSubmit: () => void;
 }
 
 const BarcodeConfigModal = ({
   open,
   onOpenChange,
-  variations,
-  stockMovements,
   priceLists,
-  selectedVariationId,
-  selectedStockMovementId,
+  selectedVariation,
+  selectedMovement,
   selectedPriceListId,
   sequence,
   quantities,
   price,
   loading,
   initialLoading,
+  productLocked,
   onVariationChange,
+  onProductClear,
   onStockMovementChange,
   onPriceListChange,
   onQuantitiesChange,
+  onSequenceChange,
   onSubmit,
 }: BarcodeConfigModalProps) => {
   const isValid =
-    selectedVariationId !== null &&
+    selectedVariation !== null &&
     selectedPriceListId !== null &&
     quantities > 0 &&
     price !== null;
@@ -83,50 +87,21 @@ const BarcodeConfigModal = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Producto / Variación */}
-            <div className="space-y-2">
-              <Label htmlFor="variation">Producto *</Label>
-              <Select
-                value={selectedVariationId?.toString() ?? ""}
-                onValueChange={(val) => onVariationChange(Number(val))}
-              >
-                <SelectTrigger id="variation">
-                  <SelectValue placeholder="Selecciona un producto" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {variations.map((v) => (
-                    <SelectItem key={v.variationId} value={v.variationId.toString()}>
-                      {v.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* 1. Movimiento de Stock (opcional, primero) */}
+            <StockMovementSearcher
+              selectedMovement={selectedMovement}
+              onSelect={onStockMovementChange}
+            />
 
-            {/* Movimiento de Stock */}
-            <div className="space-y-2">
-              <Label htmlFor="stockMovement">Movimiento de Stock (opcional)</Label>
-              <Select
-                value={selectedStockMovementId?.toString() ?? "none"}
-                onValueChange={(val) =>
-                  onStockMovementChange(val === "none" ? null : Number(val))
-                }
-              >
-                <SelectTrigger id="stockMovement">
-                  <SelectValue placeholder="Sin movimiento" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  <SelectItem value="none">Sin movimiento</SelectItem>
-                  {stockMovements.map((sm) => (
-                    <SelectItem key={sm.id} value={sm.id.toString()}>
-                      {sm.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* 2. Producto / Variación */}
+            <ProductVariationSearcher
+              selectedVariation={selectedVariation}
+              onSelect={onVariationChange}
+              onClear={onProductClear}
+              disabled={productLocked}
+            />
 
-            {/* Lista de Precio */}
+            {/* 3. Lista de Precio */}
             <div className="space-y-2">
               <Label htmlFor="priceList">Lista de Precio *</Label>
               <Select
@@ -151,20 +126,19 @@ const BarcodeConfigModal = ({
               )}
             </div>
 
-            {/* Lote (auto) */}
+            {/* 4. Lote (editable) */}
             <div className="space-y-2">
               <Label htmlFor="sequence">Lote</Label>
               <Input
                 id="sequence"
                 type="number"
+                min={1}
                 value={sequence}
-                readOnly
-                disabled
-                className="bg-muted"
+                onChange={(e) => onSequenceChange(Number(e.target.value))}
               />
             </div>
 
-            {/* Cantidad */}
+            {/* 5. Cantidad */}
             <div className="space-y-2">
               <Label htmlFor="quantities">Cantidad *</Label>
               <Input

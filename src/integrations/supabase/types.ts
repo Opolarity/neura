@@ -314,30 +314,30 @@ export type Database = {
           cart_id: number
           id: number
           is_active: boolean
-          product_discount: number | null
           product_price: number
           product_variation_id: number
           quantity: number
+          sale_price: number | null
           warehouse_id: number | null
         }
         Insert: {
           cart_id: number
           id?: number
           is_active?: boolean
-          product_discount?: number | null
           product_price: number
           product_variation_id: number
           quantity: number
+          sale_price?: number | null
           warehouse_id?: number | null
         }
         Update: {
           cart_id?: number
           id?: number
           is_active?: boolean
-          product_discount?: number | null
           product_price?: number
           product_variation_id?: number
           quantity?: number
+          sale_price?: number | null
           warehouse_id?: number | null
         }
         Relationships: [
@@ -546,6 +546,7 @@ export type Database = {
           id: number
           module_id: number
           name: string
+          parent_class_id: number | null
         }
         Insert: {
           code: string
@@ -553,6 +554,7 @@ export type Database = {
           id?: number
           module_id: number
           name: string
+          parent_class_id?: number | null
         }
         Update: {
           code?: string
@@ -560,6 +562,7 @@ export type Database = {
           id?: number
           module_id?: number
           name?: string
+          parent_class_id?: number | null
         }
         Relationships: [
           {
@@ -567,6 +570,13 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_parent_class_id_fkey"
+            columns: ["parent_class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
             referencedColumns: ["id"]
           },
         ]
@@ -2982,6 +2992,7 @@ export type Database = {
           situation_id: number
           status_id: number
           stock_movement_request_id: number
+          warehouse_id: number
         }
         Insert: {
           created_at?: string
@@ -2994,6 +3005,7 @@ export type Database = {
           situation_id: number
           status_id: number
           stock_movement_request_id: number
+          warehouse_id: number
         }
         Update: {
           created_at?: string
@@ -3006,6 +3018,7 @@ export type Database = {
           situation_id?: number
           status_id?: number
           stock_movement_request_id?: number
+          warehouse_id?: number
         }
         Relationships: [
           {
@@ -3036,6 +3049,13 @@ export type Database = {
             referencedRelation: "statuses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "stock_movement_request_situations_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
         ]
       }
       stock_movement_requests: {
@@ -3044,33 +3064,24 @@ export type Database = {
           created_by: string
           id: number
           in_warehouse_id: number | null
-          module_id: number
           out_warehouse_id: number
-          reason: string | null
-          situation_id: number
-          status_id: number
+          updated_at: string | null
         }
         Insert: {
           created_at?: string
           created_by?: string
           id?: number
           in_warehouse_id?: number | null
-          module_id: number
           out_warehouse_id: number
-          reason?: string | null
-          situation_id: number
-          status_id: number
+          updated_at?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string
           id?: number
           in_warehouse_id?: number | null
-          module_id?: number
           out_warehouse_id?: number
-          reason?: string | null
-          situation_id?: number
-          status_id?: number
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -3081,31 +3092,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "stock_movement_requests_module_id_fkey"
-            columns: ["module_id"]
-            isOneToOne: false
-            referencedRelation: "modules"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "stock_movement_requests_out_warehouse_id_fkey"
             columns: ["out_warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_movement_requests_situation_id_fkey"
-            columns: ["situation_id"]
-            isOneToOne: false
-            referencedRelation: "situations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_movement_requests_status_id_fkey"
-            columns: ["status_id"]
-            isOneToOne: false
-            referencedRelation: "statuses"
             referencedColumns: ["id"]
           },
         ]
@@ -4105,15 +4095,16 @@ export type Database = {
       }
       sp_add_to_cart: {
         Args: {
-          p_branch_id?: number
-          p_cart_id?: number
-          p_price_list_id?: number
-          p_quantity?: number
-          p_sale_type_id?: number
-          p_stock_type_id?: number
-          p_user_id?: string
-          p_variation_id?: number
-          p_warehouse_id?: number
+          p_branch_id: number
+          p_cart_id: number
+          p_price_list_id: number
+          p_product_discount?: number
+          p_quantity: number
+          p_sale_type_id: number
+          p_stock_type_id: number
+          p_user_id: string
+          p_variation_id: number
+          p_warehouse_id: number
         }
         Returns: Json
       }
@@ -4285,23 +4276,35 @@ export type Database = {
       }
       sp_ec_create_order: {
         Args: {
-          p_branch_id?: number
-          p_change_entries?: Json
-          p_initial_situation_id?: number
-          p_is_existing_client?: boolean
-          p_order_data?: Json
-          p_payments?: Json
-          p_price_list_id?: number
-          p_products?: Json
-          p_sale_type_id?: number
-          p_stock_type_id?: number
-          p_user_id?: string
-          p_warehouse_id?: number
+          p_branch_id: number
+          p_change_entries: Json
+          p_initial_situation_id: number
+          p_is_existing_client: boolean
+          p_is_mercadopago: boolean
+          p_order_data: Json
+          p_payments: Json
+          p_products: Json
+          p_sale_type_id: number
+          p_stock_type_id: number
+          p_user_id: string
+          p_warehouse_id: number
         }
         Returns: Json
       }
       sp_ec_get_categories_ids: {
         Args: { p_categories_ids?: number[] }
+        Returns: Json
+      }
+      sp_ec_get_complet_outfit: {
+        Args: {
+          p_branch_id: number
+          p_channel_id: number
+          p_exclude_category_id: number
+          p_price_list_id: number
+          p_sale_type_id: number
+          p_stock_type_id: number
+          p_warehouse_id: number
+        }
         Returns: Json
       }
       sp_ec_get_customer_orders: { Args: { p_user_id: string }; Returns: Json }
@@ -4371,6 +4374,15 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_ec_get_similar_products: {
+        Args: {
+          p_category_id: number
+          p_channel_id: number
+          p_exclude_product_id: number
+          p_warehouse_id: number
+        }
+        Returns: Json
+      }
       sp_ec_get_user_profile: { Args: { p_user_id: string }; Returns: Json }
       sp_ec_level_up_crew: {
         Args: { p_account_id: number; p_order_id: number }
@@ -4432,11 +4444,7 @@ export type Database = {
           p_user_id?: string
           p_warehouse_id?: number
         }
-        Returns: {
-          cart_items: Json
-          total_amount: number
-          total_count: number
-        }[]
+        Returns: Json
       }
       sp_get_categories_product_count: {
         Args: {
@@ -4723,6 +4731,14 @@ export type Database = {
             }
             Returns: Json
           }
+      sp_search_barcode_movements: {
+        Args: { p_page?: number; p_search?: string; p_size?: number }
+        Returns: Json
+      }
+      sp_search_barcode_variations: {
+        Args: { p_page?: number; p_search?: string; p_size?: number }
+        Returns: Json
+      }
       sp_update_business_account: {
         Args: {
           p_account_number: number

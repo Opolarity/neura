@@ -1,39 +1,32 @@
 
 
-## Plan: Listado de Códigos de Barras en `/bar-codes`
+## Cambios necesarios por reestructuración de `stock_movement_requests`
 
-### Situacion actual
-La página `/bar-codes` solo muestra un botón "Nuevo Código" y abre directamente el modal de configuración. No hay listado de registros existentes.
+### Contexto
+Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-### Cambios propuestos
+La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
 
-**1. Nuevo servicio: `fetchBarcodesList`** en `Barcodes.service.ts`
-- Query a `bar_codes` con joins a `variations` (+ `products`), `price_list`, y opcionalmente `stock_movements`
-- Traer: id, sequence, quantities, created_at, producto (title), SKU, lista de precios (name)
-- Ordenado por `created_at DESC`
+### Plan de cambios
 
-**2. Nuevo tipo `BarcodeListItem`** en `Barcodes.types.ts`
-- id, productTitle, sku, priceListName, sequence, quantities, createdAt
+**1. Actualizar la Edge Function `create-stock-movements-request`**
+- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
+- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
+- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
+- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
 
-**3. Nuevo adapter `barcodeListAdapter`** en `Barcodes.adapter.ts`
-- Transforma el raw data del query al tipo `BarcodeListItem`
+**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
+- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
+- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
 
-**4. Nuevo componente `BarcodeListTable`**
-- Tabla con columnas: ID, Producto, SKU, Lista de Precio, Lote, Cantidad, Fecha
-- Acción para re-imprimir el PDF (icono de impresora)
-- Estado de carga con spinner overlay (mismo patrón de Sales)
+**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
+- Remover `reason` del mapeo (ya no viene en la respuesta del request).
 
-**5. Actualizar `useBarcodes` hook**
-- Agregar estado `barcodeList` y `listLoading`
-- Cargar lista al montar y después de cada creación exitosa (refresh)
+**4. Hook `useCreateMovementRequest.ts`**
+- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
 
-**6. Actualizar `BarcodesPage`**
-- Mostrar la tabla de listado como contenido principal
-- El botón "Nuevo Código" sigue abriendo el modal
-- Tras generar un barcode, se refresca la lista
-
-### Flujo del usuario
-1. Entra a `/bar-codes` → ve la tabla con todos los códigos generados
-2. Puede hacer click en "Nuevo Código" → abre modal → genera → lista se actualiza
-3. Puede re-imprimir desde la tabla
+### Archivos a modificar
+- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
+- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
+- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
 

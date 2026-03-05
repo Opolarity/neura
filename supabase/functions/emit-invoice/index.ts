@@ -210,13 +210,14 @@ Deno.serve(async (req) => {
     }
 
     // 4. Update invoice via RPC - save invoice_number as "SERIE-NUMERO"
+    // Mark as declared when NubeFact returns a successful response (HTTP 200)
     const invoiceNumber = numeroPadded;
     await supabaseAdmin.rpc("sp_update_invoice_sunat_response", {
       p_invoice_id: invoice_id,
       p_pdf_url: nubefactResult.enlace_del_pdf || null,
       p_xml_url: nubefactResult.enlace_del_xml || null,
       p_cdr_url: nubefactResult.enlace_del_cdr || null,
-      p_declared: nubefactResult.aceptada_por_sunat ?? false,
+      p_declared: true,
       p_invoice_number: invoiceNumber,
     });
 

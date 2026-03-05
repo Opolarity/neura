@@ -2,67 +2,90 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreateBarcodePayload, CreateBarcodeResponse } from "../types/Barcodes.types";
 
 // =============================================================================
-// Obtener variaciones con producto y términos
+// Search variations for barcode (paginated, via edge function + RPC)
 // =============================================================================
 
-export const getVariationsForSelect = async () => {
-  const { data, error } = await (supabase as any)
-    .from("variations")
-    .select(`
-      id,
-      sku,
-      product_id,
-      products!inner(title),
-      variation_terms(
-        term_id,
-        terms(
-          name,
-          term_group_id,
-          term_groups(name)
-        )
-      )
-    `)
-    .eq("is_active", true)
-    .order("id", { ascending: true });
+export interface SearchVariationsParams {
+  page?: number;
+  size?: number;
+  search?: string;
+}
+
+export interface SearchVariationsResponse {
+  data: Array<{
+    variation_id: number;
+    sku: string | null;
+    product_title: string;
+    is_variable: boolean;
+    terms_names: string;
+    stock_type_name: string | null;
+  }>;
+  page: { page: number; size: number; total: number };
+}
+
+export const searchBarcodeVariations = async (
+  params: SearchVariationsParams
+): Promise<SearchVariationsResponse> => {
+  const queryParams = new URLSearchParams();
+  if (params.page) queryParams.set("p_page", String(params.page));
+  if (params.size) queryParams.set("p_size", String(params.size));
+  if (params.search) queryParams.set("p_search", params.search);
+
+  const endpoint = queryParams.toString()
+    ? `search-barcode-variations?${queryParams.toString()}`
+    : "search-barcode-variations";
+
+  const { data, error } = await supabase.functions.invoke(endpoint, {
+    method: "GET",
+  });
 
   if (error) throw error;
-  return data ?? [];
+  return data;
 };
 
 // =============================================================================
-// Obtener stock movements filtrados por tipo MER del módulo STM
+// Search stock movements MER for barcode (paginated, via edge function + RPC)
 // =============================================================================
 
-export const getStockMovementsByMER = async () => {
-  // 1. Obtener module_id de STM
-  const { data: moduleData, error: moduleError } = await (supabase as any)
-    .from("modules")
-    .select("id")
-    .eq("code", "STM")
-    .single();
+export interface SearchMovementsParams {
+  page?: number;
+  size?: number;
+  search?: string;
+}
 
-  if (moduleError) throw moduleError;
+export interface SearchMovementsResponse {
+  data: Array<{
+    id: number;
+    created_at: string;
+    quantity: number;
+    product_variation_id: number;
+    product_title: string;
+    is_variable: boolean;
+    terms_names: string;
+    sku: string | null;
+    user_name: string;
+  }>;
+  page: { page: number; size: number; total: number };
+}
 
-  // 2. Obtener type_id de MER en ese módulo
-  const { data: typeData, error: typeError } = await (supabase as any)
-    .from("types")
-    .select("id")
-    .eq("code", "MER")
-    .eq("module_id", moduleData.id)
-    .single();
+export const searchBarcodeMovements = async (
+  params: SearchMovementsParams
+): Promise<SearchMovementsResponse> => {
+  const queryParams = new URLSearchParams();
+  if (params.page) queryParams.set("p_page", String(params.page));
+  if (params.size) queryParams.set("p_size", String(params.size));
+  if (params.search) queryParams.set("p_search", params.search);
 
-  if (typeError) throw typeError;
+  const endpoint = queryParams.toString()
+    ? `search-barcode-movements?${queryParams.toString()}`
+    : "search-barcode-movements";
 
-  // 3. Obtener stock_movements con ese movement_type
-  const { data, error } = await (supabase as any)
-    .from("stock_movements")
-    .select("id, created_at, quantity, warehouse_id, warehouses(name)")
-    .eq("movement_type", typeData.id)
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
+  const { data, error } = await supabase.functions.invoke(endpoint, {
+    method: "GET",
+  });
 
   if (error) throw error;
-  return data ?? [];
+  return data;
 };
 
 // =============================================================================
@@ -102,9 +125,7 @@ export const fetchBarcodesList = async () => {
         variation_terms(
           term_id,
           terms(
-            name,
-            term_group_id,
-            term_groups(name)
+            name
           )
         )
       ),
@@ -134,6 +155,26 @@ export const getNextSequence = async (productVariationId: number): Promise<numbe
     return data[0].sequence + 1;
   }
   return 1;
+};
+
+// =============================================================================
+// Obtener el último lote (sequence) vinculado a un movimiento de stock
+// =============================================================================
+
+export const getLastSequenceByStockMovement = async (stockMovementId: number): Promise<number | null> => {
+  const { data, error } = await supabase
+    .from("bar_codes")
+    .select("sequence")
+    .eq("stock_movement_id", stockMovementId)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (error) throw error;
+
+  if (data && data.length > 0) {
+    return data[0].sequence;
+  }
+  return null;
 };
 
 // =============================================================================
