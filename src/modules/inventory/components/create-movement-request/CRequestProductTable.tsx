@@ -8,8 +8,9 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { SelectedRequestProduct } from "../../types/MovementRequests.types";
+import { cn } from "@/shared/utils/utils";
 
 interface CRequestProductTableProps {
   products: SelectedRequestProduct[];
@@ -17,6 +18,9 @@ interface CRequestProductTableProps {
   myWarehouseName: string;
   onQuantityChange: (variationId: number, value: string) => void;
   onRemoveProduct: (variationId: number) => void;
+  isEditMode?: boolean;
+  isSourceWarehouseUser?: boolean;
+  onToggleDisapprove?: (variationId: number) => void;
 }
 
 const CRequestProductTable = ({
@@ -25,6 +29,9 @@ const CRequestProductTable = ({
   myWarehouseName,
   onQuantityChange,
   onRemoveProduct,
+  isEditMode = false,
+  isSourceWarehouseUser = false,
+  onToggleDisapprove,
 }: CRequestProductTableProps) => {
   return (
     <Table>
@@ -48,10 +55,17 @@ const CRequestProductTable = ({
         ) : (
           products.map((product) => {
             const termsDisplay = product.terms.map((t) => t.name).join(" / ");
+            const isDisapproved = product.disapproved === true;
+
             return (
-              <TableRow key={product.variationId}>
+              <TableRow key={product.variationId} className={cn(isDisapproved && "opacity-60")}>
                 <TableCell>
-                  <span className="font-medium">{product.productTitle}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{product.productTitle}</span>
+                    {isDisapproved && (
+                      <span className="text-xs text-destructive font-semibold">Desaprobado</span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="text-center">
                   <span className="text-sm text-muted-foreground">
@@ -67,12 +81,13 @@ const CRequestProductTable = ({
                 </TableCell>
                 <TableCell className="text-center">
                   <Input
-                    value={product.quantity === null ? "" : String(product.quantity)}
+                    value={isDisapproved ? "0" : (product.quantity === null ? "" : String(product.quantity))}
                     onChange={(e) =>
                       onQuantityChange(product.variationId, e.target.value)
                     }
                     placeholder="0"
-                    className="text-center"
+                    className={cn("text-center", isDisapproved && "bg-muted")}
+                    disabled={isDisapproved}
                   />
                 </TableCell>
                 <TableCell className="text-center">
@@ -83,13 +98,26 @@ const CRequestProductTable = ({
                   />
                 </TableCell>
                 <TableCell className="text-center">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onRemoveProduct(product.variationId)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  {isEditMode ? (
+                    isSourceWarehouseUser && onToggleDisapprove ? (
+                      <Button
+                        variant={isDisapproved ? "destructive" : "ghost"}
+                        size="icon"
+                        onClick={() => onToggleDisapprove(product.variationId)}
+                        title={isDisapproved ? "Quitar desaprobación" : "Desaprobar producto"}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    ) : null
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onRemoveProduct(product.variationId)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             );

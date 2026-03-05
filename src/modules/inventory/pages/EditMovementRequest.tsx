@@ -40,6 +40,8 @@ const EditMovementRequest = () => {
     handleSearchChange,
     handlePageChange,
     filteredSituationOptions,
+    toggleDisapprove,
+    isSourceWarehouseUser,
   } = useEditMovementRequest();
 
   if (loadingInitial) {
@@ -85,6 +87,9 @@ const EditMovementRequest = () => {
               myWarehouseName={userSummary?.warehouse_name || ""}
               onQuantityChange={handleQuantityChange}
               onRemoveProduct={removeProduct}
+              isEditMode
+              isSourceWarehouseUser={isSourceWarehouseUser}
+              onToggleDisapprove={toggleDisapprove}
             />
 
             <RequestSituationsHistory

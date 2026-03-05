@@ -344,13 +344,37 @@ export const useEditMovementRequest = () => {
     loadProductsList(newFilters);
   };
 
+  const toggleDisapprove = (variationId: number) => {
+    setSelectedProducts((prev) =>
+      prev.map((p) => {
+        if (p.variationId !== variationId) return p;
+        const nowDisapproved = !p.disapproved;
+        if (nowDisapproved) {
+          return { ...p, disapproved: true, quantity: 0 };
+        } else {
+          // Restore original quantity
+          const origQty = originalQuantities.get(variationId) ?? null;
+          return { ...p, disapproved: false, quantity: origQty };
+        }
+      })
+    );
+  };
+
+  const isSourceWarehouseUser = userSummary ? userSummary.warehouse_id === outWarehouseId : false;
+
   const generateNotes = (): string => {
     return selectedProducts
-      .filter((p) => p.quantity && p.quantity > 0)
       .map((p) => {
         const variationLabel = p.terms && p.terms.length > 0 ? ` (${p.terms.map((t) => t.name).join("-")})` : "";
-        return `${p.productTitle}${variationLabel}: ${p.quantity}`;
+        if (p.disapproved) {
+          return `${p.productTitle}${variationLabel}: 0 - Desaprobado`;
+        }
+        if (p.quantity && p.quantity > 0) {
+          return `${p.productTitle}${variationLabel}: ${p.quantity}`;
+        }
+        return null;
       })
+      .filter(Boolean)
       .join("\n");
   };
 
@@ -410,7 +434,7 @@ export const useEditMovementRequest = () => {
             const mov = (link as any).stock_movements;
             if (!mov) continue;
             const product = selectedProducts.find((p) => p.variationId === mov.product_variation_id);
-            if (!product || !product.quantity) continue;
+            if (!product || product.quantity === null || product.quantity === undefined) continue;
 
             // Output movement = negative, Input movement = positive
             const newQty = mov.quantity < 0 ? -product.quantity : product.quantity;
@@ -489,5 +513,7 @@ export const useEditMovementRequest = () => {
     handleQuantityChange,
     handleSearchChange,
     handlePageChange,
+    toggleDisapprove,
+    isSourceWarehouseUser,
   };
 };
