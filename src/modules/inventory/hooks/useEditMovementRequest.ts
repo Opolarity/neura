@@ -393,6 +393,18 @@ export const useEditMovementRequest = () => {
       if (!requestId || !userSummary) throw new Error("Datos inválidos");
       if (!message.trim()) throw new Error("El mensaje es obligatorio");
 
+      // Validate: non-disapproved products must have quantity > 0
+      const invalidProducts = selectedProducts.filter((p) => !p.disapproved && (!p.quantity || p.quantity <= 0));
+      if (invalidProducts.length > 0) {
+        toast({
+          title: "Cantidad inválida",
+          description: "Todos los productos no desaprobados deben tener una cantidad mayor a cero.",
+          variant: "destructive",
+        });
+        setSubmittingNewSituation(false);
+        return;
+      }
+
       const selectedSit = situationOptions.find((s) => s.id === situationId);
       if (!selectedSit) throw new Error("Situación inválida");
 
