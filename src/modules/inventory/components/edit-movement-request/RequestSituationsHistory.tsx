@@ -27,6 +27,7 @@ export interface SituationOption {
   name: string;
   status_id: number;
   code: string | null;
+  statusCode: string | null;
 }
 
 interface Props {

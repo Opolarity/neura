@@ -39,6 +39,7 @@ const EditMovementRequest = () => {
     handleQuantityChange,
     handleSearchChange,
     handlePageChange,
+    filteredSituationOptions,
   } = useEditMovementRequest();
 
   if (loadingInitial) {
@@ -88,7 +89,7 @@ const EditMovementRequest = () => {
 
             <RequestSituationsHistory
               situations={situationsHistory}
-              situationOptions={situationOptions}
+              situationOptions={filteredSituationOptions}
               generatedNotes={generateNotes()}
               onSubmitNewSituation={submitNewSituation}
               submitting={submittingNewSituation}
