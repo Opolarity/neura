@@ -158,8 +158,9 @@ export const useEditMovementRequest = () => {
       if (strModule) {
         const { data: sitOptions } = await supabase
           .from("situations")
-          .select("id, name, status_id")
+          .select("id, name, status_id, code")
           .eq("module_id", strModule.id)
+          .neq("code", "REQ")
           .order("order", { ascending: true });
         setSituationOptions((sitOptions || []).map((s: any) => ({ id: s.id, name: s.name, status_id: s.status_id })));
       }
