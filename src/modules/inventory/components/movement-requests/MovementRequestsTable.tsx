@@ -60,7 +60,13 @@ export default function MovementRequestsTable({ requests, loading, userWarehouse
             <TableCell>{req.outWarehouseName}</TableCell>
             <TableCell>{req.inWarehouseName}</TableCell>
             <TableCell>{req.situationName}</TableCell>
-            <TableCell className="max-w-[300px]">
+            <TableCell
+              className={`max-w-[300px] ${
+                req.lastMessageWarehouseId && req.lastMessageWarehouseId !== userWarehouseId
+                  ? "bg-yellow-100 dark:bg-yellow-900/30"
+                  : ""
+              }`}
+            >
               {req.message ? (
                 <div className="space-y-0.5">
                   <span className="text-xs font-medium text-muted-foreground">
