@@ -19,6 +19,10 @@ const EditMovementRequest = () => {
     situationName,
     statusName,
     situationsHistory,
+    situationOptions,
+    submittingNewSituation,
+    generateNotes,
+    submitNewSituation,
     isOpen,
     setIsOpen,
     products,
@@ -68,6 +72,7 @@ const EditMovementRequest = () => {
           situationName={situationName}
           onWarehouseChange={handleWarehouseChange}
           onReasonChange={setReason}
+          isEditMode
         />
 
         {selectedWarehouse && (
@@ -80,7 +85,13 @@ const EditMovementRequest = () => {
               onRemoveProduct={removeProduct}
             />
 
-            <RequestSituationsHistory situations={situationsHistory} />
+            <RequestSituationsHistory
+              situations={situationsHistory}
+              situationOptions={situationOptions}
+              generatedNotes={generateNotes()}
+              onSubmitNewSituation={submitNewSituation}
+              submitting={submittingNewSituation}
+            />
           </>
         )}
       </Card>

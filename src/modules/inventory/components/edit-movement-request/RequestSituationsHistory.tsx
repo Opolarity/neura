@@ -1,5 +1,16 @@
+import { useState } from "react";
 import { formatDateTime } from "@/shared/utils/date";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export interface SituationHistoryItem {
   id: number;
@@ -8,14 +19,39 @@ export interface SituationHistoryItem {
   message: string | null;
   situationName: string;
   notes: string | null;
+  warehouseName: string | null;
+}
+
+export interface SituationOption {
+  id: number;
+  name: string;
+  status_id: number;
 }
 
 interface Props {
   situations: SituationHistoryItem[];
+  situationOptions: SituationOption[];
+  generatedNotes: string;
+  onSubmitNewSituation: (message: string, situationId: number) => Promise<void>;
+  submitting?: boolean;
 }
 
-const RequestSituationsHistory = ({ situations }: Props) => {
-  if (situations.length === 0) return null;
+const RequestSituationsHistory = ({
+  situations,
+  situationOptions,
+  generatedNotes,
+  onSubmitNewSituation,
+  submitting = false,
+}: Props) => {
+  const [newMessage, setNewMessage] = useState("");
+  const [selectedSituationId, setSelectedSituationId] = useState<string>("");
+
+  const handleSubmit = async () => {
+    if (!selectedSituationId || !newMessage.trim()) return;
+    await onSubmitNewSituation(newMessage.trim(), Number(selectedSituationId));
+    setNewMessage("");
+    setSelectedSituationId("");
+  };
 
   return (
     <div className="space-y-3">
@@ -23,35 +59,93 @@ const RequestSituationsHistory = ({ situations }: Props) => {
         <MessageSquare className="h-4 w-4" />
         Historial de la solicitud
       </h3>
-      <div className="space-y-3">
-        {situations.map((sit) => (
-          <div
-            key={sit.id}
-            className="rounded-lg border border-border bg-muted/40 p-4 space-y-1"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-foreground">
-                {sit.userName}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {formatDateTime(sit.created_at)}
-              </span>
+
+      {situations.length > 0 && (
+        <div className="space-y-3">
+          {situations.map((sit) => (
+            <div
+              key={sit.id}
+              className="rounded-lg border border-border bg-muted/40 p-4 space-y-1"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">
+                  {sit.userName}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {formatDateTime(sit.created_at)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                  {sit.situationName}
+                </span>
+                {sit.warehouseName && (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
+                    {sit.warehouseName}
+                  </span>
+                )}
+              </div>
+              {sit.message && (
+                <p className="text-sm text-foreground/80 pt-1">{sit.message}</p>
+              )}
+              {sit.notes && (
+                <pre className="text-xs text-muted-foreground whitespace-pre-wrap bg-background rounded p-2 mt-1 border border-border">
+                  {sit.notes}
+                </pre>
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                {sit.situationName}
-              </span>
-            </div>
-            {sit.message && (
-              <p className="text-sm text-foreground/80 pt-1">{sit.message}</p>
-            )}
-            {sit.notes && (
-              <pre className="text-xs text-muted-foreground whitespace-pre-wrap bg-background rounded p-2 mt-1 border border-border">
-                {sit.notes}
-              </pre>
-            )}
+          ))}
+        </div>
+      )}
+
+      {/* New message form */}
+      <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+        <h4 className="text-sm font-semibold text-foreground">Agregar actualización</h4>
+
+        <div className="flex flex-row gap-3">
+          <div className="flex-1 flex flex-col gap-1">
+            <Label className="text-xs">Situación</Label>
+            <Select value={selectedSituationId} onValueChange={setSelectedSituationId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona situación" />
+              </SelectTrigger>
+              <SelectContent>
+                {situationOptions.map((s) => (
+                  <SelectItem key={s.id} value={s.id.toString()}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        ))}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">Mensaje</Label>
+          <Textarea
+            placeholder="Escribe un mensaje..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            rows={2}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">Productos (auto-generado)</Label>
+          <pre className="text-xs text-muted-foreground whitespace-pre-wrap bg-background rounded p-2 border border-border">
+            {generatedNotes || "Sin productos"}
+          </pre>
+        </div>
+
+        <Button
+          size="sm"
+          onClick={handleSubmit}
+          disabled={submitting || !selectedSituationId || !newMessage.trim()}
+          className="gap-2"
+        >
+          <Send className="h-4 w-4" />
+          {submitting ? "Enviando..." : "Enviar"}
+        </Button>
       </div>
     </div>
   );
