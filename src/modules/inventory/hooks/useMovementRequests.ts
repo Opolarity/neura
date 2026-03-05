@@ -49,6 +49,7 @@ export const useMovementRequests = () => {
           outWarehouseName: r.out_warehouse?.name ?? "—",
           inWarehouseName: r.in_warehouse?.name ?? "—",
           situationName: situation?.situations?.name ?? "—",
+          lastMessageWarehouseId: situation?.warehouse_id ?? null,
           lastMessageWarehouseName: situation?.situation_warehouse?.name ?? null,
           message: situation?.message ?? null,
           createdAt: r.created_at,
