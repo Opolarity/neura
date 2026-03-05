@@ -466,13 +466,12 @@ export const useEditMovementRequest = () => {
                 .eq("id", mov.id);
             }
 
-            // Mark approved = false for disapproved products
-            if (product.disapproved) {
-              await supabase
-                .from("linked_stock_movement_requests")
-                .update({ approved: false })
-                .eq("id", link.id);
-            }
+            // Update approved: false for disapproved, null for non-disapproved
+            const newApproved = product.disapproved ? false : null;
+            await supabase
+              .from("linked_stock_movement_requests")
+              .update({ approved: newApproved })
+              .eq("id", link.id);
           }
         }
       }
