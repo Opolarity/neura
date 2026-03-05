@@ -67,7 +67,7 @@ interface SalesInvoicesModalProps {
 export const SalesInvoicesModal = ({
   orderId,
   orderTotal,
-  saleTypeId,
+  saleTypeId: saleTypeIdProp,
   open,
   onOpenChange,
 }: SalesInvoicesModalProps) => {
@@ -76,6 +76,7 @@ export const SalesInvoicesModal = ({
   const [invoiceTypes, setInvoiceTypes] = useState<InvoiceType[]>([]);
   const [isFullyPaid, setIsFullyPaid] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [resolvedSaleTypeId, setResolvedSaleTypeId] = useState<number>(saleTypeIdProp);
   const { toast } = useToast();
 
   const [pendingInvoiceType, setPendingInvoiceType] = useState<InvoiceType | null>(null);
@@ -92,6 +93,17 @@ export const SalesInvoicesModal = ({
       fetchInvoices();
       checkPaymentStatus();
       fetchInvoiceTypes();
+      // Resolve sale_type_id directly from the order to avoid stale formData
+      supabase
+        .from("orders")
+        .select("sale_type_id")
+        .eq("id", orderId)
+        .single()
+        .then(({ data }) => {
+          if (data?.sale_type_id) {
+            setResolvedSaleTypeId(data.sale_type_id);
+          }
+        });
     }
   }, [open, orderId]);
 
@@ -247,7 +259,7 @@ export const SalesInvoicesModal = ({
       const { data: saleType, error: stError } = await supabase
         .from("sale_types")
         .select("factura_serie_id, boleta_serie_id")
-        .eq("id", saleTypeId)
+        .eq("id", resolvedSaleTypeId)
         .single();
 
       if (stError || !saleType) return null;
