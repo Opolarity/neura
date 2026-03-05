@@ -417,11 +417,12 @@ export const useEditMovementRequest = () => {
           last_row: true,
         });
 
-      // Update stock_movements if quantities changed
+      // Update stock_movements and approval status if quantities changed
       if (quantitiesChanged) {
         const { data: linkedData } = await supabase
           .from("linked_stock_movement_requests")
           .select(`
+            id,
             stock_movement_id,
             stock_movements!linked_stock_movement_requests_stock_movement_id_fkey(
               id, product_variation_id, quantity
@@ -430,8 +431,8 @@ export const useEditMovementRequest = () => {
           .eq("stock_movement_request_id", requestId);
 
         if (linkedData) {
-          for (const link of linkedData) {
-            const mov = (link as any).stock_movements;
+          for (const link of linkedData as any[]) {
+            const mov = link.stock_movements;
             if (!mov) continue;
             const product = selectedProducts.find((p) => p.variationId === mov.product_variation_id);
             if (!product || product.quantity === null || product.quantity === undefined) continue;
@@ -443,6 +444,14 @@ export const useEditMovementRequest = () => {
                 .from("stock_movements")
                 .update({ quantity: newQty })
                 .eq("id", mov.id);
+            }
+
+            // Mark approved = false for disapproved products
+            if (product.disapproved) {
+              await supabase
+                .from("linked_stock_movement_requests")
+                .update({ approved: false })
+                .eq("id", link.id);
             }
           }
         }
