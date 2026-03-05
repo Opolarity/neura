@@ -294,7 +294,9 @@ export const useCreateMovementRequest = () => {
         items: selectedProducts.map((p) => ({
           product_variation_id: p.variationId,
           quantity: p.quantity!,
-          stock_type_code: "PRD", // Product stock type
+          stock_type_code: "PRD",
+          product_name: p.productTitle,
+          variation_label: p.terms.length > 0 ? p.terms.map(t => t.name).join("-") : null,
         })),
         module_code: "STR",
         status_code: "PEN",
