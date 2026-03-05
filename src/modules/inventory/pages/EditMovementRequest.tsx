@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useEditMovementRequest } from "../hooks/useEditMovementRequest";
 import CRequestSummary from "../components/create-movement-request/CRequestSummary";
 import CRequestProductTable from "../components/create-movement-request/CRequestProductTable";
+import RequestSituationsHistory from "../components/edit-movement-request/RequestSituationsHistory";
 
 const EditMovementRequest = () => {
   const {
@@ -17,6 +18,7 @@ const EditMovementRequest = () => {
     setReason,
     situationName,
     statusName,
+    situationsHistory,
     isOpen,
     setIsOpen,
     products,
@@ -77,6 +79,8 @@ const EditMovementRequest = () => {
               onQuantityChange={handleQuantityChange}
               onRemoveProduct={removeProduct}
             />
+
+            <RequestSituationsHistory situations={situationsHistory} />
           </>
         )}
       </Card>

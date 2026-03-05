@@ -9,6 +9,7 @@ import { ProductSales, UserSummary, ProductSalesFilter } from "../types/Movement
 import { SelectedRequestProduct } from "../types/MovementRequests.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks";
+import { SituationHistoryItem } from "../components/edit-movement-request/RequestSituationsHistory";
 
 interface SimpleWarehouse {
   id: number;
@@ -28,6 +29,7 @@ export const useEditMovementRequest = () => {
   const [situationName, setSituationName] = useState("");
   const [statusName, setStatusName] = useState("");
   const [createdAt, setCreatedAt] = useState<string>("");
+  const [situationsHistory, setSituationsHistory] = useState<SituationHistoryItem[]>([]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [products, setProducts] = useState<ProductSales[]>([]);
@@ -108,6 +110,35 @@ export const useEditMovementRequest = () => {
       }
       setCreatedAt(reqData.created_at);
 
+      // Load ALL situations history
+      const { data: allSituations } = await supabase
+        .from("stock_movement_request_situations")
+        .select(`
+          id, created_at, created_by, message, notes, situation_id,
+          situations(name),
+          profiles!stock_movement_request_situations_created_by_fkey(
+            account_id,
+            accounts!profiles_account_id_fkey(name, last_name, last_name2)
+          )
+        `)
+        .eq("stock_movement_request_id", requestId)
+        .order("created_at", { ascending: true });
+
+      const historyItems: SituationHistoryItem[] = (allSituations || []).map((s: any) => {
+        const acc = s.profiles?.accounts;
+        const userName = acc
+          ? [acc.name, acc.last_name, acc.last_name2].filter(Boolean).join(" ")
+          : "Usuario";
+        return {
+          id: s.id,
+          created_at: s.created_at,
+          userName,
+          message: s.message,
+          situationName: s.situations?.name ?? "",
+          notes: s.notes,
+        };
+      });
+      setSituationsHistory(historyItems);
       // Load linked products
       const { data: linkedData } = await supabase
         .from("linked_stock_movement_requests")
@@ -294,6 +325,7 @@ export const useEditMovementRequest = () => {
     situationName,
     statusName,
     createdAt,
+    situationsHistory,
     isOpen,
     setIsOpen,
     products,
