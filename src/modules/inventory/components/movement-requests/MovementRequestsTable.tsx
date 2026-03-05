@@ -17,9 +17,10 @@ import { es } from "date-fns/locale";
 interface Props {
   requests: MovementRequestListItem[];
   loading: boolean;
+  userWarehouseId: number | null;
 }
 
-export default function MovementRequestsTable({ requests, loading }: Props) {
+export default function MovementRequestsTable({ requests, loading, userWarehouseId }: Props) {
   const navigate = useNavigate();
   if (loading) {
     return (
