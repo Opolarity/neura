@@ -27,8 +27,10 @@ export const useMovementRequests = () => {
             situation_id,
             message,
             last_row,
+            warehouse_id,
             statuses(name),
-            situations(name)
+            situations(name),
+            situation_warehouse:warehouses!stock_movement_request_situations_warehouse_id_fkey(name)
           )
         `)
         .eq("stock_movement_request_situations.last_row", true)
@@ -43,8 +45,8 @@ export const useMovementRequests = () => {
           createdBy: r.created_by,
           outWarehouseName: r.out_warehouse?.name ?? "—",
           inWarehouseName: r.in_warehouse?.name ?? "—",
-          statusName: situation?.statuses?.name ?? "—",
           situationName: situation?.situations?.name ?? "—",
+          lastMessageWarehouseName: situation?.situation_warehouse?.name ?? null,
           message: situation?.message ?? null,
           createdAt: r.created_at,
           updatedAt: r.updated_at,

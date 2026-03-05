@@ -6,7 +6,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
@@ -19,14 +18,6 @@ interface Props {
   requests: MovementRequestListItem[];
   loading: boolean;
 }
-
-const statusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-  const lower = status.toLowerCase();
-  if (lower.includes("pendiente")) return "secondary";
-  if (lower.includes("aprobado") || lower.includes("completado")) return "default";
-  if (lower.includes("rechazado") || lower.includes("cancelado")) return "destructive";
-  return "outline";
-};
 
 export default function MovementRequestsTable({ requests, loading }: Props) {
   const navigate = useNavigate();
@@ -55,9 +46,8 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
           <TableHead>ID</TableHead>
           <TableHead>Almacén Origen</TableHead>
           <TableHead>Almacén Destino</TableHead>
-          <TableHead>Estado</TableHead>
           <TableHead>Situación</TableHead>
-          <TableHead>Motivo</TableHead>
+          <TableHead>Último Mensaje</TableHead>
           <TableHead>Fecha</TableHead>
           <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
@@ -68,14 +58,18 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
             <TableCell className="font-medium">#{req.id}</TableCell>
             <TableCell>{req.outWarehouseName}</TableCell>
             <TableCell>{req.inWarehouseName}</TableCell>
-            <TableCell>
-              <Badge variant={statusVariant(req.statusName)}>
-                {req.statusName}
-              </Badge>
-            </TableCell>
             <TableCell>{req.situationName}</TableCell>
-            <TableCell className="max-w-[200px] truncate">
-              {req.message || "—"}
+            <TableCell className="max-w-[300px]">
+              {req.message ? (
+                <div className="space-y-0.5">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {req.lastMessageWarehouseName ?? "—"}
+                  </span>
+                  <p className="truncate text-sm">{req.message}</p>
+                </div>
+              ) : (
+                "—"
+              )}
             </TableCell>
             <TableCell>
               {format(new Date(req.createdAt), "dd/MM/yyyy HH:mm", { locale: es })}

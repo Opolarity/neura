@@ -3,8 +3,8 @@ export interface MovementRequestListItem {
   createdBy: string;
   outWarehouseName: string;
   inWarehouseName: string;
-  statusName: string;
   situationName: string;
+  lastMessageWarehouseName: string | null;
   message: string | null;
   createdAt: string;
   updatedAt: string | null;
