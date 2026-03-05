@@ -8,6 +8,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { MovementRequestListItem } from "../../types/MovementRequestList.types";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -26,6 +29,7 @@ const statusVariant = (status: string): "default" | "secondary" | "destructive" 
 };
 
 export default function MovementRequestsTable({ requests, loading }: Props) {
+  const navigate = useNavigate();
   if (loading) {
     return (
       <div className="p-6 space-y-3">
@@ -55,6 +59,7 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
           <TableHead>Situación</TableHead>
           <TableHead>Motivo</TableHead>
           <TableHead>Fecha</TableHead>
+          <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -74,6 +79,15 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
             </TableCell>
             <TableCell>
               {format(new Date(req.createdAt), "dd/MM/yyyy HH:mm", { locale: es })}
+            </TableCell>
+            <TableCell className="text-right">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(`/inventory/movement-requests/edit/${req.id}`)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
             </TableCell>
           </TableRow>
         ))}
