@@ -389,6 +389,37 @@ export const useEditMovementRequest = () => {
           last_row: true,
         });
 
+      // Update stock_movements if quantities changed
+      if (quantitiesChanged) {
+        const { data: linkedData } = await supabase
+          .from("linked_stock_movement_requests")
+          .select(`
+            stock_movement_id,
+            stock_movements!linked_stock_movement_requests_stock_movement_id_fkey(
+              id, product_variation_id, quantity
+            )
+          `)
+          .eq("stock_movement_request_id", requestId);
+
+        if (linkedData) {
+          for (const link of linkedData) {
+            const mov = (link as any).stock_movements;
+            if (!mov) continue;
+            const product = selectedProducts.find((p) => p.variationId === mov.product_variation_id);
+            if (!product || !product.quantity) continue;
+
+            // Output movement = negative, Input movement = positive
+            const newQty = mov.quantity < 0 ? -product.quantity : product.quantity;
+            if (newQty !== mov.quantity) {
+              await supabase
+                .from("stock_movements")
+                .update({ quantity: newQty })
+                .eq("id", mov.id);
+            }
+          }
+        }
+      }
+
       // Update current status/situation display
       setStatusName("");
       setSituationName(selectedSit.name);
