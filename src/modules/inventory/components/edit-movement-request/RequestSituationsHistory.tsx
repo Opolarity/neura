@@ -11,6 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export interface SituationHistoryItem {
   id: number;
@@ -52,6 +62,7 @@ const RequestSituationsHistory = ({
 }: Props) => {
   const [newMessage, setNewMessage] = useState("");
   const [selectedSituationId, setSelectedSituationId] = useState<string>("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Auto-select NEG situation when quantities change
   const negOption = situationOptions.find((s) => s.code === "NEG");
@@ -59,11 +70,30 @@ const RequestSituationsHistory = ({
     ? negOption.id.toString()
     : selectedSituationId;
 
+  const getSelectedSituation = () => 
+    situationOptions.find((s) => s.id === Number(effectiveSituationId));
+
   const handleSubmit = async () => {
     if (!effectiveSituationId || !newMessage.trim()) return;
+
+    const selectedSit = getSelectedSituation();
+    if (selectedSit && (selectedSit.statusCode === "CFM" || selectedSit.statusCode === "COM")) {
+      setShowConfirmDialog(true);
+      return;
+    }
+
+    await executeSubmit();
+  };
+
+  const executeSubmit = async () => {
     await onSubmitNewSituation(newMessage.trim(), Number(effectiveSituationId));
     setNewMessage("");
     setSelectedSituationId("");
+  };
+
+  const handleConfirm = async () => {
+    setShowConfirmDialog(false);
+    await executeSubmit();
   };
 
   return (
@@ -168,6 +198,29 @@ const RequestSituationsHistory = ({
           {submitting ? "Enviando..." : "Enviar"}
         </Button>
       </div>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {getSelectedSituation()?.statusCode === "CFM" 
+                ? "¿Confirmar solicitud?" 
+                : "¿Completar solicitud?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {getSelectedSituation()?.statusCode === "CFM"
+                ? "Estás a punto de confirmar esta solicitud. Los productos aprobados serán marcados como confirmados. Esta acción no se puede deshacer fácilmente."
+                : "Estás a punto de completar esta solicitud. Esta acción no se puede deshacer fácilmente."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm}>
+              {getSelectedSituation()?.statusCode === "CFM" ? "Confirmar" : "Completar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
