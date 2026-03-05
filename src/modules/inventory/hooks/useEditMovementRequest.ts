@@ -25,6 +25,8 @@ export const useEditMovementRequest = () => {
   const [userSummary, setUserSummary] = useState<UserSummary | null>(null);
   const [warehouses, setWarehouses] = useState<SimpleWarehouse[]>([]);
   const [selectedWarehouse, setSelectedWarehouse] = useState<SimpleWarehouse | null>(null);
+  const [outWarehouseId, setOutWarehouseId] = useState<number | null>(null);
+  const [inWarehouseId, setInWarehouseId] = useState<number | null>(null);
   const [reason, setReason] = useState("");
   const [situationName, setSituationName] = useState("");
   const [statusName, setStatusName] = useState("");
@@ -102,6 +104,8 @@ export const useEditMovementRequest = () => {
       // Set selected warehouse (out_warehouse = origin)
       const outWh = allWarehouses.find((w) => w.id === reqData.out_warehouse_id);
       if (outWh) setSelectedWarehouse(outWh);
+      setOutWarehouseId(reqData.out_warehouse_id);
+      setInWarehouseId(reqData.in_warehouse_id);
 
       // Set situation data
       const sit = reqData.stock_movement_request_situations?.[0];
@@ -159,11 +163,11 @@ export const useEditMovementRequest = () => {
       if (strModule) {
         const { data: sitOptions } = await supabase
           .from("situations")
-          .select("id, name, status_id, code")
+          .select("id, name, status_id, code, statuses!inner(code)")
           .eq("module_id", strModule.id)
           .neq("code", "REQ")
           .order("order", { ascending: true });
-        setSituationOptions((sitOptions || []).map((s: any) => ({ id: s.id, name: s.name, status_id: s.status_id, code: s.code })));
+        setSituationOptions((sitOptions || []).map((s: any) => ({ id: s.id, name: s.name, status_id: s.status_id, code: s.code, statusCode: s.statuses?.code ?? null })));
       }
       // Load linked products
       const { data: linkedData } = await supabase
@@ -440,6 +444,17 @@ export const useEditMovementRequest = () => {
     return original !== undefined && (p.quantity ?? 0) !== original;
   });
 
+  // Filter situation options based on user's warehouse
+  const filteredSituationOptions = situationOptions.filter((s) => {
+    if (!userSummary) return true;
+    const userWh = userSummary.warehouse_id;
+    // CFM status: only for source warehouse users
+    if (s.statusCode === "CFM" && userWh !== outWarehouseId) return false;
+    // COM status: only for destination warehouse users
+    if (s.statusCode === "COM" && userWh !== inWarehouseId) return false;
+    return true;
+  });
+
   return {
     requestId: id,
     loadingInitial,
@@ -454,6 +469,7 @@ export const useEditMovementRequest = () => {
     createdAt,
     situationsHistory,
     situationOptions,
+    filteredSituationOptions,
     submittingNewSituation,
     generateNotes,
     submitNewSituation,
