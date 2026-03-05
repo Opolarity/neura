@@ -102,7 +102,14 @@ Deno.serve(async (req) => {
 
     if (requestError) throw requestError
 
-    // 4. Create Request Situation History
+    // 4. Build notes with product listing
+    const noteLines = items.map((item: any) => {
+      const name = item.product_name || `Variación ${item.product_variation_id}`
+      const variation = item.variation_label ? ` (${item.variation_label})` : ''
+      return `${name}${variation}: ${item.quantity}`
+    }).join('\n')
+
+    // 5. Create Request Situation History with notes
     const { error: sitError } = await supabase
       .from('stock_movement_request_situations')
       .insert([{
@@ -112,13 +119,14 @@ Deno.serve(async (req) => {
         situation_id: situationId,
         warehouse_id: in_warehouse_id,
         message: reason,
+        notes: noteLines,
         last_row: true,
         created_by
       }])
 
     if (sitError) throw sitError
 
-    // 5. Create Stock Movements (IN/OUT) and Link
+    // 6. Create Stock Movements (IN/OUT) and Link
     for (const item of items) {
       const { product_variation_id, quantity, stock_type_code } = item
 
