@@ -300,6 +300,32 @@ export const SalesInvoicesModal = ({
       return;
     }
 
+    // Validar que Facturas (code "1") solo se emitan a clientes con RUC
+    if (invoiceType.code === "1") {
+      const { data: order } = await supabase
+        .from("orders")
+        .select("document_type")
+        .eq("id", orderId)
+        .single();
+
+      if (order) {
+        const { data: docType } = await supabase
+          .from("document_types")
+          .select("code")
+          .eq("id", order.document_type)
+          .single();
+
+        if (!docType || docType.code !== "6") {
+          toast({
+            title: "No se puede crear Factura",
+            description: "Las Facturas solo pueden emitirse a clientes con tipo de documento RUC.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+
     const { data: lastSituation } = await supabase
       .from("order_situations")
       .select("status_id")
