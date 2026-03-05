@@ -315,7 +315,7 @@ export const SalesInvoicesModal = ({
           .eq("id", order.document_type)
           .single();
 
-        if (!docType || docType.code !== "6") {
+        if (!docType || docType.code !== "RUC") {
           toast({
             title: "No se puede crear Factura",
             description: "Las Facturas solo pueden emitirse a clientes con tipo de documento RUC.",
