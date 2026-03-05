@@ -8,6 +8,7 @@ import { getUserWarehouseAdapter } from "../adapters/Movements.adapter";
 export const useMovementRequests = () => {
   const [requests, setRequests] = useState<MovementRequestListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userWarehouseId, setUserWarehouseId] = useState<number | null>(null);
   const { toast } = useToast();
 
   const loadRequests = async () => {
