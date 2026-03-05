@@ -9,7 +9,7 @@ import { ProductSales, UserSummary, ProductSalesFilter } from "../types/Movement
 import { SelectedRequestProduct } from "../types/MovementRequests.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks";
-import { SituationHistoryItem } from "../components/edit-movement-request/RequestSituationsHistory";
+import { SituationHistoryItem, SituationOption } from "../components/edit-movement-request/RequestSituationsHistory";
 
 interface SimpleWarehouse {
   id: number;
@@ -30,7 +30,8 @@ export const useEditMovementRequest = () => {
   const [statusName, setStatusName] = useState("");
   const [createdAt, setCreatedAt] = useState<string>("");
   const [situationsHistory, setSituationsHistory] = useState<SituationHistoryItem[]>([]);
-
+  const [situationOptions, setSituationOptions] = useState<SituationOption[]>([]);
+  const [submittingNewSituation, setSubmittingNewSituation] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [products, setProducts] = useState<ProductSales[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<ProductSales | null>(null);
@@ -114,8 +115,9 @@ export const useEditMovementRequest = () => {
       const { data: allSituations } = await supabase
         .from("stock_movement_request_situations")
         .select(`
-          id, created_at, created_by, message, notes, situation_id,
-          situations(name)
+          id, created_at, created_by, message, notes, situation_id, warehouse_id,
+          situations(name),
+          warehouses!stock_movement_request_situations_warehouse_id_fkey(name)
         `)
         .eq("stock_movement_request_id", requestId)
         .order("created_at", { ascending: true });
@@ -143,8 +145,24 @@ export const useEditMovementRequest = () => {
         message: s.message,
         situationName: s.situations?.name ?? "",
         notes: s.notes,
+        warehouseName: s.warehouses?.name ?? null,
       }));
       setSituationsHistory(historyItems);
+
+      // Load available situations for STR module
+      const { data: strModule } = await supabase
+        .from("modules")
+        .select("id")
+        .eq("code", "STR")
+        .single();
+      if (strModule) {
+        const { data: sitOptions } = await supabase
+          .from("situations")
+          .select("id, name, status_id")
+          .eq("module_id", strModule.id)
+          .order("order", { ascending: true });
+        setSituationOptions((sitOptions || []).map((s: any) => ({ id: s.id, name: s.name, status_id: s.status_id })));
+      }
       // Load linked products
       const { data: linkedData } = await supabase
         .from("linked_stock_movement_requests")
@@ -319,6 +337,71 @@ export const useEditMovementRequest = () => {
     loadProductsList(newFilters);
   };
 
+  const generateNotes = (): string => {
+    return selectedProducts
+      .filter((p) => p.quantity && p.quantity > 0)
+      .map((p) => {
+        const variationLabel = p.terms && p.terms.length > 0 ? ` (${p.terms.map((t) => t.name).join("-")})` : "";
+        return `${p.productTitle}${variationLabel}: ${p.quantity}`;
+      })
+      .join("\n");
+  };
+
+  const submitNewSituation = async (message: string, situationId: number) => {
+    setSubmittingNewSituation(true);
+    try {
+      const requestId = Number(id);
+      if (!requestId || !userSummary) throw new Error("Datos inválidos");
+
+      const selectedSit = situationOptions.find((s) => s.id === situationId);
+      if (!selectedSit) throw new Error("Situación inválida");
+
+      const { data: strModule } = await supabase
+        .from("modules")
+        .select("id")
+        .eq("code", "STR")
+        .single();
+      if (!strModule) throw new Error("Módulo STR no encontrado");
+
+      const notes = generateNotes();
+
+      // Set current last_row to false
+      await supabase
+        .from("stock_movement_request_situations")
+        .update({ last_row: false })
+        .eq("stock_movement_request_id", requestId)
+        .eq("last_row", true);
+
+      // Insert new situation
+      await supabase
+        .from("stock_movement_request_situations")
+        .insert({
+          stock_movement_request_id: requestId,
+          situation_id: situationId,
+          status_id: selectedSit.status_id,
+          module_id: strModule.id,
+          message,
+          notes: notes || null,
+          warehouse_id: userSummary.warehouse_id,
+          last_row: true,
+        });
+
+      // Update current status/situation display
+      setStatusName("");
+      setSituationName(selectedSit.name);
+
+      toast({ title: "Actualización enviada", description: "El historial ha sido actualizado." });
+
+      // Reload data
+      await loadInitialData();
+    } catch (error) {
+      console.error("Error submitting situation:", error);
+      toast({ title: "Error", description: "No se pudo enviar la actualización.", variant: "destructive" });
+    } finally {
+      setSubmittingNewSituation(false);
+    }
+  };
+
   return {
     requestId: id,
     loadingInitial,
@@ -332,6 +415,10 @@ export const useEditMovementRequest = () => {
     statusName,
     createdAt,
     situationsHistory,
+    situationOptions,
+    submittingNewSituation,
+    generateNotes,
+    submitNewSituation,
     isOpen,
     setIsOpen,
     products,

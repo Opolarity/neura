@@ -25,6 +25,7 @@ interface CRequestSummaryProps {
   situationName: string;
   onWarehouseChange: (value: string) => void;
   onReasonChange: (value: string) => void;
+  isEditMode?: boolean;
 }
 
 const CRequestSummary = ({
@@ -37,6 +38,7 @@ const CRequestSummary = ({
   situationName,
   onWarehouseChange,
   onReasonChange,
+  isEditMode = false,
 }: CRequestSummaryProps) => {
   return (
     <>
@@ -64,18 +66,27 @@ const CRequestSummary = ({
       <div className="flex flex-row gap-2">
         <div className="flex-1 flex flex-col gap-2">
           <Label>Almacén Origen (Solicitar de)</Label>
-          <Select value={selectedWarehouseId} onValueChange={onWarehouseChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona un almacén" />
-            </SelectTrigger>
-            <SelectContent>
-              {warehouses.map((wh) => (
-                <SelectItem key={wh.id} value={wh.id.toString()}>
-                  {wh.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isEditMode ? (
+            <Input
+              className="bg-muted"
+              disabled
+              type="text"
+              value={warehouses.find((w) => w.id.toString() === selectedWarehouseId)?.name || ""}
+            />
+          ) : (
+            <Select value={selectedWarehouseId} onValueChange={onWarehouseChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona un almacén" />
+              </SelectTrigger>
+              <SelectContent>
+                {warehouses.map((wh) => (
+                  <SelectItem key={wh.id} value={wh.id.toString()}>
+                    {wh.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <div className="flex-1 flex flex-col gap-2">
           <Label>Fecha</Label>
@@ -109,15 +120,17 @@ const CRequestSummary = ({
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label>Motivo de la solicitud</Label>
-        <Textarea
-          placeholder="Ingresa el motivo de la solicitud..."
-          value={reason}
-          onChange={(e) => onReasonChange(e.target.value)}
-          rows={2}
-        />
-      </div>
+      {!isEditMode && (
+        <div className="flex flex-col gap-2">
+          <Label>Motivo de la solicitud</Label>
+          <Textarea
+            placeholder="Ingresa el motivo de la solicitud..."
+            value={reason}
+            onChange={(e) => onReasonChange(e.target.value)}
+            rows={2}
+          />
+        </div>
+      )}
     </>
   );
 };
