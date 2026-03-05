@@ -26,6 +26,7 @@ export interface SituationOption {
   id: number;
   name: string;
   status_id: number;
+  code: string | null;
 }
 
 interface Props {
@@ -34,6 +35,7 @@ interface Props {
   generatedNotes: string;
   onSubmitNewSituation: (message: string, situationId: number) => Promise<void>;
   submitting?: boolean;
+  quantitiesChanged?: boolean;
 }
 
 const RequestSituationsHistory = ({
@@ -42,13 +44,20 @@ const RequestSituationsHistory = ({
   generatedNotes,
   onSubmitNewSituation,
   submitting = false,
+  quantitiesChanged = false,
 }: Props) => {
   const [newMessage, setNewMessage] = useState("");
   const [selectedSituationId, setSelectedSituationId] = useState<string>("");
 
+  // Auto-select NEG situation when quantities change
+  const negOption = situationOptions.find((s) => s.code === "NEG");
+  const effectiveSituationId = quantitiesChanged && negOption
+    ? negOption.id.toString()
+    : selectedSituationId;
+
   const handleSubmit = async () => {
-    if (!selectedSituationId || !newMessage.trim()) return;
-    await onSubmitNewSituation(newMessage.trim(), Number(selectedSituationId));
+    if (!effectiveSituationId || !newMessage.trim()) return;
+    await onSubmitNewSituation(newMessage.trim(), Number(effectiveSituationId));
     setNewMessage("");
     setSelectedSituationId("");
   };
@@ -105,7 +114,11 @@ const RequestSituationsHistory = ({
         <div className="flex flex-row gap-3">
           <div className="flex-1 flex flex-col gap-1">
             <Label className="text-xs">Situación</Label>
-            <Select value={selectedSituationId} onValueChange={setSelectedSituationId}>
+            <Select
+              value={effectiveSituationId}
+              onValueChange={setSelectedSituationId}
+              disabled={quantitiesChanged && !!negOption}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Selecciona situación" />
               </SelectTrigger>
@@ -140,7 +153,7 @@ const RequestSituationsHistory = ({
         <Button
           size="sm"
           onClick={handleSubmit}
-          disabled={submitting || !selectedSituationId || !newMessage.trim()}
+          disabled={submitting || !effectiveSituationId || !newMessage.trim()}
           className="gap-2"
         >
           <Send className="h-4 w-4" />
