@@ -115,29 +115,35 @@ export const useEditMovementRequest = () => {
         .from("stock_movement_request_situations")
         .select(`
           id, created_at, created_by, message, notes, situation_id,
-          situations(name),
-          profiles!stock_movement_request_situations_created_by_fkey(
-            account_id,
-            accounts!profiles_account_id_fkey(name, last_name, last_name2)
-          )
+          situations(name)
         `)
         .eq("stock_movement_request_id", requestId)
         .order("created_at", { ascending: true });
 
-      const historyItems: SituationHistoryItem[] = (allSituations || []).map((s: any) => {
-        const acc = s.profiles?.accounts;
-        const userName = acc
-          ? [acc.name, acc.last_name, acc.last_name2].filter(Boolean).join(" ")
-          : "Usuario";
-        return {
-          id: s.id,
-          created_at: s.created_at,
-          userName,
-          message: s.message,
-          situationName: s.situations?.name ?? "",
-          notes: s.notes,
-        };
-      });
+      // Fetch user names for each created_by
+      const createdByIds = [...new Set((allSituations || []).map((s: any) => s.created_by).filter(Boolean))];
+      let profilesMap: Record<string, string> = {};
+      if (createdByIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("UID, accounts!profiles_account_id_fkey(name, last_name, last_name2)")
+          .in("UID", createdByIds);
+        for (const p of (profilesData || []) as any[]) {
+          const acc = p.accounts;
+          profilesMap[p.UID] = acc
+            ? [acc.name, acc.last_name, acc.last_name2].filter(Boolean).join(" ")
+            : "Usuario";
+        }
+      }
+
+      const historyItems: SituationHistoryItem[] = (allSituations || []).map((s: any) => ({
+        id: s.id,
+        created_at: s.created_at,
+        userName: profilesMap[s.created_by] || "Usuario",
+        message: s.message,
+        situationName: s.situations?.name ?? "",
+        notes: s.notes,
+      }));
       setSituationsHistory(historyItems);
       // Load linked products
       const { data: linkedData } = await supabase
