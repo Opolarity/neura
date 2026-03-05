@@ -355,6 +355,7 @@ export const useEditMovementRequest = () => {
     try {
       const requestId = Number(id);
       if (!requestId || !userSummary) throw new Error("Datos inválidos");
+      if (!message.trim()) throw new Error("El mensaje es obligatorio");
 
       const selectedSit = situationOptions.find((s) => s.id === situationId);
       if (!selectedSit) throw new Error("Situación inválida");
@@ -368,12 +369,11 @@ export const useEditMovementRequest = () => {
 
       const notes = generateNotes();
 
-      // Set current last_row to false
+      // Set ALL previous situations for this request to last_row = false
       await supabase
         .from("stock_movement_request_situations")
         .update({ last_row: false })
-        .eq("stock_movement_request_id", requestId)
-        .eq("last_row", true);
+        .eq("stock_movement_request_id", requestId);
 
       // Insert new situation
       await supabase
