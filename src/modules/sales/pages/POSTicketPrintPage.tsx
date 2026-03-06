@@ -181,8 +181,10 @@ export default function POSTicketPrintPage() {
       };
 
       // ============ LOGO ============
+      const invoiceLogoUrl = invoiceLogoRes.data?.value;
+      const logoSrc = invoice.declared && invoiceLogoUrl ? invoiceLogoUrl : "/images/logo-ticket.png";
       try {
-        const logoImg = await loadImage("/images/logo-ticket.png");
+        const logoImg = await loadImage(logoSrc);
         const logoSize = 22;
         doc.addImage(logoImg, "PNG", (pageWidth - logoSize) / 2, y, logoSize, logoSize);
         y += logoSize + 2;
