@@ -80,10 +80,20 @@ Deno.serve(async (req) => {
     // 2. Resolve Module, Status, Situation, and Movement Type IDs
     const moduleId = await resolveId('modules', module_code)
 
-    // Status and Situation are context-dependent (belong to module)
-    const statusId = await resolveId('statuses', status_code, { module_id: moduleId })
+    // Situation belongs to module; resolve it first, then get its status_id
     const situationId = await resolveId('situations', situation_code, { module_id: moduleId })
     const movementTypeId = await resolveId('types', movement_type_code)
+
+    // Resolve statusId from the situation's own status_id (statuses table has no module_id)
+    let statusId: number | null = null
+    if (situationId) {
+      const { data: sitRow } = await supabase
+        .from('situations')
+        .select('status_id')
+        .eq('id', situationId)
+        .single()
+      statusId = sitRow?.status_id ?? null
+    }
 
     if (!moduleId || !statusId || !situationId || !movementTypeId) {
       throw new Error(`Could not resolve codes: module(${module_code}:${moduleId}), status(${status_code}:${statusId}), situation(${situation_code}:${situationId}), movement_type(${movement_type_code}:${movementTypeId})`)
