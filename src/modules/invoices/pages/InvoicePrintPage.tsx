@@ -94,16 +94,12 @@ export default function InvoicePrintPage() {
   const loadImage = async (url: string): Promise<string> => {
     const response = await fetch(url);
     const blob = await response.blob();
-    const bitmap = await createImageBitmap(blob);
-    const canvas = document.createElement("canvas");
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(bitmap, 0, 0);
-    bitmap.close();
-    return canvas.toDataURL("image/jpeg", 0.95);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   };
 
   const generatePdf = async (invoiceId: number) => {
