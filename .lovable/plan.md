@@ -1,39 +1,48 @@
-## Cambios necesarios por reestructuración de `stock_movement_requests`
 
-### Contexto
-Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+## Problema: Logo aparece como rectángulo negro
 
-### Plan de cambios
+El logo de `InvoiceLogoUrl` apunta a una URL de Supabase Storage (`https://wwcdntjnpoaacarmmzir.supabase.co/storage/v1/object/public/sales/invoices-logo.png`). Cuando se carga con `new Image()` y se pasa a `jsPDF.addImage()`, la imagen se renderiza como un bloque negro. Esto es un problema conocido de CORS con jsPDF: aunque la imagen "carga", el canvas no puede leer sus datos correctamente desde un origen cruzado.
 
-**1. Actualizar la Edge Function `create-stock-movements-request`**
-- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
-- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
-- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
-- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
+## Solución
 
-**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
-- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
-- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
-
-**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
-- Remover `reason` del mapeo (ya no viene en la respuesta del request).
-
-**4. Hook `useCreateMovementRequest.ts`**
-- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
+Cambiar `loadImage` en ambos archivos para que, cuando la URL sea externa (http/https), use `fetch()` para obtener la imagen como blob y convertirla a base64 data URL. Esto evita el problema de CORS porque jsPDF recibe directamente los datos de la imagen en lugar de intentar leerlos de un canvas.
 
 ### Archivos a modificar
-- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
-- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
-- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
 
-## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
+1. **`src/modules/invoices/pages/InvoicePrintPage.tsx`** — Actualizar `loadImage` para usar `fetch` + blob → data URL cuando la URL es externa.
 
-### Cambios realizados
-1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
-2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
-3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
-4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
-5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
-6. **Dependencia `qrcode`** instalada.
+2. **`src/modules/sales/pages/POSTicketPrintPage.tsx`** — Misma corrección.
+
+### Lógica del nuevo `loadImage`
+
+```typescript
+const loadImage = async (url: string): Promise<string> => {
+  if (url.startsWith("http")) {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+  // Local images: use Image element as before
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext("2d")!.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+};
+```
+
+Y en `addImage`, pasar el data URL string directamente en lugar del HTMLImageElement.
+
