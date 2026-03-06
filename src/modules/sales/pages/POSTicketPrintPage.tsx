@@ -105,7 +105,7 @@ export default function POSTicketPrintPage() {
 
   const generatePdf = async (id: number) => {
     try {
-      const [invoiceRes, itemsRes, paramsRes] = await Promise.all([
+      const [invoiceRes, itemsRes, paramsRes, invoiceLogoRes] = await Promise.all([
         supabase
           .from("invoices")
           .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, qr_data, created_by")
@@ -118,6 +118,11 @@ export default function POSTicketPrintPage() {
         supabase
           .from("paremeters")
           .select("name, value, code"),
+        supabase
+          .from("parameters")
+          .select("name, value")
+          .eq("name", "InvoiceLogoUrl")
+          .maybeSingle(),
       ]);
 
       if (invoiceRes.error || !invoiceRes.data) {
@@ -176,8 +181,10 @@ export default function POSTicketPrintPage() {
       };
 
       // ============ LOGO ============
+      const invoiceLogoUrl = invoiceLogoRes.data?.value;
+      const logoSrc = invoice.declared && invoiceLogoUrl ? invoiceLogoUrl : "/images/logo-ticket.png";
       try {
-        const logoImg = await loadImage("/images/logo-ticket.png");
+        const logoImg = await loadImage(logoSrc);
         const logoSize = 22;
         doc.addImage(logoImg, "PNG", (pageWidth - logoSize) / 2, y, logoSize, logoSize);
         y += logoSize + 2;
