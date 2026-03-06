@@ -20,6 +20,7 @@ interface InvoiceData {
   declared: boolean;
   client_email: string | null;
   client_address: string | null;
+  qr_data: string | null;
 }
 
 interface InvoiceItem {
