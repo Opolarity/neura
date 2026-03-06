@@ -1044,10 +1044,11 @@ export const usePOS = () => {
 
     // Reload products to refresh stock after the sale
     if (configuration?.warehouseId) {
-      loadProducts(1, "", configuration.stockTypeId, configuration.warehouseId);
+      const stockType = selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined;
+      loadProducts(1, "", stockType, configuration.warehouseId);
       setProductPage(1);
     }
-  }, [configuration]);
+  }, [configuration, selectedStockTypeId]);
 
   const resetAll = useCallback(() => {
     setCurrentStep(1);
