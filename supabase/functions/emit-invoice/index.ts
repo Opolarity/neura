@@ -219,6 +219,7 @@ Deno.serve(async (req) => {
       p_cdr_url: nubefactResult.enlace_del_cdr || null,
       p_declared: true,
       p_invoice_number: invoiceNumber,
+      p_qr_data: nubefactResult.cadena_para_codigo_qr || null,
     });
 
     return new Response(JSON.stringify(nubefactResult), {
