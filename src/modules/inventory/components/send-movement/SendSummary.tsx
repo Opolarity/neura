@@ -15,6 +15,12 @@ interface SimpleWarehouse {
   name: string;
 }
 
+interface SimpleSituation {
+  id: number;
+  name: string;
+  code: string;
+}
+
 interface SendSummaryProps {
   userName: string;
   userWarehouseName: string;
@@ -22,9 +28,11 @@ interface SendSummaryProps {
   selectedWarehouseId: string | undefined;
   reason: string;
   statusName: string;
-  situationName: string;
+  situations: SimpleSituation[];
+  selectedSituationCode: string | undefined;
   onWarehouseChange: (value: string) => void;
   onReasonChange: (value: string) => void;
+  onSituationChange: (value: string) => void;
 }
 
 const SendSummary = ({
@@ -34,9 +42,11 @@ const SendSummary = ({
   selectedWarehouseId,
   reason,
   statusName,
-  situationName,
+  situations,
+  selectedSituationCode,
   onWarehouseChange,
   onReasonChange,
+  onSituationChange,
 }: SendSummaryProps) => {
   return (
     <>
@@ -80,7 +90,18 @@ const SendSummary = ({
         </div>
         <div className="flex-1 flex flex-col gap-2">
           <Label>Situación</Label>
-          <Input className="bg-muted" disabled type="text" value={situationName || ""} />
+          <Select value={selectedSituationCode} onValueChange={onSituationChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona una situación" />
+            </SelectTrigger>
+            <SelectContent>
+              {situations.map((sit) => (
+                <SelectItem key={sit.id} value={sit.code}>
+                  {sit.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
