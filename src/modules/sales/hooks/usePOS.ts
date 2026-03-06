@@ -896,16 +896,8 @@ export const usePOS = () => {
       // POS orders are always created with "Entregado" situation (id: 20)
       const situationId = 20;
 
-      // Get "Tienda Física" sale type or first available
-      const tiendaFisicaType = formData?.saleTypes.find(
-        (st) =>
-          st.name.toLowerCase().includes("tienda") ||
-          st.name.toLowerCase().includes("fisica")
-      );
-      const saleTypeId =
-        tiendaFisicaType?.id?.toString() ||
-        formData?.saleTypes[0]?.id?.toString() ||
-        "1";
+      // Use the sale type from the POS session
+      const saleTypeId = sessionSaleTypeId?.toString() || "1";
 
       const orderData: CreatePOSOrderRequest = {
         priceListId: configuration.priceListId,
