@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 import { Loader2 } from "lucide-react";
 
 interface InvoiceData {
@@ -19,6 +20,7 @@ interface InvoiceData {
   declared: boolean;
   client_email: string | null;
   client_address: string | null;
+  qr_data: string | null;
 }
 
 interface InvoiceItem {
@@ -122,7 +124,7 @@ export default function InvoicePrintPage() {
       const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes] = await Promise.all([
         supabase
           .from("invoices")
-          .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by")
+          .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by, qr_data")
           .eq("id", invoiceId)
           .single(),
         supabase
@@ -443,6 +445,23 @@ export default function InvoicePrintPage() {
       doc.setFontSize(fontSize.normal);
       doc.setFont("helvetica", "bold");
       doc.text("Gracias por tu confianza.", pageWidth / 2, y, { align: "center" });
+      y += 4;
+
+      // ============ QR CODE ============
+      if (invoice.qr_data) {
+        try {
+          const qrCodeDataUrl = await QRCode.toDataURL(invoice.qr_data, {
+            width: 200,
+            margin: 1,
+          });
+          const qrSize = 35;
+          const qrX = (pageWidth - qrSize) / 2;
+          doc.addImage(qrCodeDataUrl, "PNG", qrX, y, qrSize, qrSize);
+          y += qrSize + 2;
+        } catch (qrErr) {
+          console.error("Error generating QR:", qrErr);
+        }
+      }
 
       // Open PDF inline
       const pdfBlob = doc.output("blob");
