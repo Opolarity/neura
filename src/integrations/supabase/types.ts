@@ -902,6 +902,7 @@ export type Database = {
           invoice_number: string | null
           invoice_type_id: number
           pdf_url: string | null
+          qr_data: string | null
           tax_serie: string | null
           total_amount: number
           total_free: number | null
@@ -925,6 +926,7 @@ export type Database = {
           invoice_number?: string | null
           invoice_type_id: number
           pdf_url?: string | null
+          qr_data?: string | null
           tax_serie?: string | null
           total_amount: number
           total_free?: number | null
@@ -948,6 +950,7 @@ export type Database = {
           invoice_number?: string | null
           invoice_type_id?: number
           pdf_url?: string | null
+          qr_data?: string | null
           tax_serie?: string | null
           total_amount?: number
           total_free?: number | null
