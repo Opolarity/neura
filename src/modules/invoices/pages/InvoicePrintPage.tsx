@@ -445,6 +445,23 @@ export default function InvoicePrintPage() {
       doc.setFontSize(fontSize.normal);
       doc.setFont("helvetica", "bold");
       doc.text("Gracias por tu confianza.", pageWidth / 2, y, { align: "center" });
+      y += 4;
+
+      // ============ QR CODE ============
+      if (invoice.qr_data) {
+        try {
+          const qrCodeDataUrl = await QRCode.toDataURL(invoice.qr_data, {
+            width: 200,
+            margin: 1,
+          });
+          const qrSize = 35;
+          const qrX = (pageWidth - qrSize) / 2;
+          doc.addImage(qrCodeDataUrl, "PNG", qrX, y, qrSize, qrSize);
+          y += qrSize + 2;
+        } catch (qrErr) {
+          console.error("Error generating QR:", qrErr);
+        }
+      }
 
       // Open PDF inline
       const pdfBlob = doc.output("blob");
