@@ -242,30 +242,22 @@ export const usePOS = () => {
     }
   };
 
-  // Load filtered payment methods based on session's business account → sale type
+  // Load filtered payment methods based on session's sale_type_id
   useEffect(() => {
     const loadFilteredPaymentMethods = async () => {
-      if (!POSSessionHook.session?.businessAccountId) return;
+      if (!POSSessionHook.session?.saleTypeId) return;
       
-      // Find the sale type linked to this business account (POS sale type)
-      const { data: saleType } = await supabase
-        .from("sale_types")
-        .select("id")
-        .eq("business_acount_id", POSSessionHook.session.businessAccountId)
-        .eq("pos_sale_type", true)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      if (saleType?.id) {
-        setSessionSaleTypeId(saleType.id);
-        const methods = await getActivePaymentMethodsBySaleTypeId(saleType.id);
-        setFilteredPaymentMethods(methods.map(m => ({
-          id: m.id,
-          name: m.name,
-          businessAccountId: m.business_account_id,
-          code: m.code,
-        })));
-      }
+      // Use sale_type_id directly from the POS session
+      const saleTypeId = POSSessionHook.session.saleTypeId;
+      setSessionSaleTypeId(saleTypeId);
+      
+      const methods = await getActivePaymentMethodsBySaleTypeId(saleTypeId);
+      setFilteredPaymentMethods(methods.map(m => ({
+        id: m.id,
+        name: m.name,
+        businessAccountId: m.business_account_id,
+        code: m.code,
+      })));
 
       // Load business accounts for manual selection
       const accounts = await getBusinessAccountIsActiveTrue();
@@ -273,7 +265,7 @@ export const usePOS = () => {
     };
     
     loadFilteredPaymentMethods();
-  }, [POSSessionHook.session?.businessAccountId]);
+  }, [POSSessionHook.session?.saleTypeId]);
 
   const loadProducts = async (
     page: number,

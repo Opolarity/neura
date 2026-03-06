@@ -54,6 +54,7 @@ export interface POSSessionApiResponse {
   warehouse_id: number;
   branch_id: number;
   business_account: number;
+  sale_type_id: number;
   opening_amount: number;
   closing_amount?: number | null;
   expected_amount?: number | null;
