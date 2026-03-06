@@ -4299,7 +4299,7 @@ export type Database = {
         Args: {
           p_branch_id: number
           p_channel_id: number
-          p_exclude_category_id: number
+          p_exclude_category_id: number[]
           p_price_list_id: number
           p_sale_type_id: number
           p_stock_type_id: number
@@ -4378,7 +4378,7 @@ export type Database = {
         Args: {
           p_category_id: number
           p_channel_id: number
-          p_exclude_product_id: number
+          p_exclude_product_id: number[]
           p_warehouse_id: number
         }
         Returns: Json
