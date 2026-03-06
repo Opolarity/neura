@@ -196,7 +196,10 @@ export default function InvoicePrintPage() {
       try {
         const logoImg = await loadImage(logoUrl);
         const logoSize = 22;
-        doc.addImage(logoImg, "JPEG", (pageWidth - logoSize) / 2, y, logoSize, logoSize);
+        const logoX = (pageWidth - logoSize) / 2;
+        doc.setFillColor(255, 255, 255);
+        doc.rect(logoX, y, logoSize, logoSize, "F");
+        doc.addImage(logoImg, "PNG", logoX, y, logoSize, logoSize);
         y += logoSize + 2;
       } catch {
         y += 2;
