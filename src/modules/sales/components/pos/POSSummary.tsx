@@ -19,8 +19,7 @@ export default function POSSummary({
   subtotal,
   discountAmount,
   shippingCost,
-  total,
-  showProducts = false
+  total
 }: POSSummaryProps) {
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
