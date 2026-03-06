@@ -104,7 +104,7 @@ export default function InvoicePrintPage() {
   const generatePdf = async (invoiceId: number) => {
     try {
       // Fetch invoice, items, and company params in parallel
-      const [invoiceRes, itemsRes, paramsRes] = await Promise.all([
+      const [invoiceRes, itemsRes, paramsRes, parametersRes] = await Promise.all([
         supabase
           .from("invoices")
           .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by")
@@ -117,6 +117,11 @@ export default function InvoicePrintPage() {
         supabase
           .from("paremeters")
           .select("name, value, code"),
+        supabase
+          .from("parameters")
+          .select("name, value")
+          .eq("name", "InvoiceLogoUrl")
+          .maybeSingle(),
       ]);
 
       if (invoiceRes.error || !invoiceRes.data) {
@@ -181,8 +186,14 @@ export default function InvoicePrintPage() {
       };
 
       // ============ LOGO ============
+      // Use InvoiceLogoUrl from parameters for declared invoices, otherwise default logo
+      const invoiceLogoUrl = parametersRes.data?.value;
+      const logoUrl = invoice.declared && invoiceLogoUrl
+        ? invoiceLogoUrl
+        : "/images/logo-ticket.png";
+
       try {
-        const logoImg = await loadImage("/images/logo-ticket.png");
+        const logoImg = await loadImage(logoUrl);
         const logoSize = 22;
         doc.addImage(logoImg, "PNG", (pageWidth - logoSize) / 2, y, logoSize, logoSize);
         y += logoSize + 2;
