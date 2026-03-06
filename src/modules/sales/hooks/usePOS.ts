@@ -973,11 +973,7 @@ export const usePOS = () => {
       }
 
       // Resolve the sale type id used
-      const resolvedSaleTypeId = parseInt(
-        tiendaFisicaType?.id?.toString() ||
-        formData?.saleTypes[0]?.id?.toString() ||
-        "1"
-      );
+      const resolvedSaleTypeId = sessionSaleTypeId || 1;
 
       toast({
         title: "Venta completada",
