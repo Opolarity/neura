@@ -170,7 +170,7 @@ export default function POS() {
                 discountAmount={pos.discountAmount}
                 shippingCost={pos.customer.requiresShipping ? pos.shipping.shippingCost : 0}
                 total={pos.total}
-                showProducts={pos.currentStep >= 3}
+                
               />
             </div>
           )}
