@@ -1,36 +1,39 @@
+## Cambios necesarios por reestructuración de `stock_movement_requests`
 
+### Contexto
+Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-## Diagnostico
+La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
 
-El parametro `InvoiceLogoUrl` ya apunta correctamente a `invoices-logo.jpg`. Sin embargo, en ambos archivos el codigo tiene:
+### Plan de cambios
 
-```typescript
-doc.addImage(logoImg, "PNG", logoX, y, logoSize, logoSize);
-```
+**1. Actualizar la Edge Function `create-stock-movements-request`**
+- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
+- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
+- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
+- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
 
-Esto le dice a jsPDF que interprete los bytes como PNG cuando en realidad es un JPEG. Resultado: imagen corrupta que se renderiza como negro.
+**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
+- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
+- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
 
-Ademas, el fallback local sigue apuntando a `/images/logo-ticket.png`.
+**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
+- Remover `reason` del mapeo (ya no viene en la respuesta del request).
 
-## Solucion
-
-### 1. Auto-detectar formato desde el data URL
-
-Reemplazar el formato hardcodeado por deteccion automatica basada en el prefijo del data URL:
-
-```typescript
-const format = logoImg.startsWith("data:image/png") ? "PNG" : "JPEG";
-doc.addImage(logoImg, format, logoX, y, logoSize, logoSize);
-```
-
-### 2. Actualizar fallback local
-
-Cambiar `/images/logo-ticket.png` a `/images/logo-ticket.jpg` (o mantener `.png` si ese archivo existe, pero con la auto-deteccion ya no importa).
+**4. Hook `useCreateMovementRequest.ts`**
+- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
 
 ### Archivos a modificar
+- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
+- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
+- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
 
-1. **`src/modules/invoices/pages/InvoicePrintPage.tsx`** — linea 202: cambiar `"PNG"` por deteccion automatica
-2. **`src/modules/sales/pages/POSTicketPrintPage.tsx`** — linea 193: cambiar `"PNG"` por deteccion automatica
+## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
 
-Son cambios de 1 linea en cada archivo.
-
+### Cambios realizados
+1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
+2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
+3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
+4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
+5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
+6. **Dependencia `qrcode`** instalada.
