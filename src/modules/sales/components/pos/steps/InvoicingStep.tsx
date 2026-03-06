@@ -532,6 +532,15 @@ export default function InvoicingStep({
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
+                                title="Imprimir ticket"
+                                onClick={() => window.open(`/pos/ticket/${inv.id}`, "_blank")}
+                              >
+                                <Printer className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
                                 title="Ver comprobante"
                                 onClick={() => window.open(`/invoices/edit/${inv.id}`, "_blank")}
                               >
