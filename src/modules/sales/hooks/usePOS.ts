@@ -331,11 +331,13 @@ export const usePOS = () => {
             );
           }
           return cart.length > 0;
+        case 6: // Only after order is created
+          return !!createdOrderId;
         default:
-          return true;
+          return false;
       }
     },
-    [configuration, cart, customer, shipping, isAnonymousPurchase]
+    [configuration, cart, customer, shipping, isAnonymousPurchase, createdOrderId]
   );
 
   const nextStep = useCallback(() => {
