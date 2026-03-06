@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 import { Loader2 } from "lucide-react";
 
 interface InvoiceData {
