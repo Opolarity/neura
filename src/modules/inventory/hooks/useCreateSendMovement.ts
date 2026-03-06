@@ -17,6 +17,12 @@ interface SimpleWarehouse {
   name: string;
 }
 
+interface SimpleSituation {
+  id: number;
+  name: string;
+  code: string;
+}
+
 export const useCreateSendMovement = () => {
   const navigate = useNavigate();
   const [loadingInitial, setLoadingInitial] = useState(true);
@@ -30,7 +36,8 @@ export const useCreateSendMovement = () => {
 
   const [reason, setReason] = useState("");
 
-  const [situationName, setSituationName] = useState("");
+  const [situations, setSituations] = useState<SimpleSituation[]>([]);
+  const [selectedSituationCode, setSelectedSituationCode] = useState<string>("");
   const [statusName, setStatusName] = useState("");
 
   const [isOpen, setIsOpen] = useState(false);
@@ -70,13 +77,12 @@ export const useCreateSendMovement = () => {
       const userAdp = getUserWarehouseAdapter(userRes);
       setUserSummary(userAdp);
 
-      // Exclude user's own warehouse from destination list
       const otherWarehouses = (warehousesRes || [])
         .filter((w) => w.id !== userAdp.warehouse_id)
         .map((w) => ({ id: w.id, name: w.name }));
       setWarehouses(otherWarehouses);
 
-      // Fetch situation (CFM) and its parent status for module STR
+      // Fetch situations for CFM status in STR module
       const { data: moduleData } = await supabase
         .from("modules")
         .select("id")
@@ -87,25 +93,29 @@ export const useCreateSendMovement = () => {
       if (moduleData) {
         const { data: sitData } = await supabase
           .from("situations")
-          .select("name, status_id")
+          .select("id, name, code, status_id")
           .eq("module_id", moduleData.id)
+          .order("id");
+
+        // Get the CFM status
+        const { data: stData } = await supabase
+          .from("statuses")
+          .select("id, name, code")
           .eq("code", "CFM")
           .limit(1)
           .single();
 
-        if (sitData) {
-          setSituationName(sitData.name);
-          const { data: stData } = await supabase
-            .from("statuses")
-            .select("name, code")
-            .eq("id", sitData.status_id)
-            .limit(1)
-            .single();
-          if (stData) setStatusName(stData.name);
+        if (stData) {
+          setStatusName(stData.name);
+          // Filter situations belonging to CFM status
+          const cfmSituations = (sitData || [])
+            .filter((s) => s.status_id === stData.id)
+            .map((s) => ({ id: s.id, name: s.name, code: s.code || "" }));
+          setSituations(cfmSituations);
         }
       }
 
-      // Load products from user's own warehouse immediately
+      // Load products from user's own warehouse
       const initialFilters: ProductSalesFilter = {
         p_page: 1,
         p_size: 10,
@@ -132,6 +142,10 @@ export const useCreateSendMovement = () => {
     setSelectedProducts([]);
     setSelectedIds(new Set());
     setSelectedProduct(null);
+  };
+
+  const handleSituationChange = (code: string) => {
+    setSelectedSituationCode(code);
   };
 
   const loadProducts = async (newFilters: ProductSalesFilter) => {
@@ -176,7 +190,6 @@ export const useCreateSendMovement = () => {
     if (!selectedProduct || !userSummary || !selectedWarehouse) return;
     if (selectedIds.has(selectedProduct.variationId)) return;
 
-    // Fetch destination warehouse stock for this product
     let destStock = 0;
     try {
       const destRes = await getSaleProducts({
@@ -195,8 +208,8 @@ export const useCreateSendMovement = () => {
     const newSelected: SelectedRequestProduct = {
       ...selectedProduct,
       quantity: null,
-      sourceStock: selectedProduct.stock, // user's own stock
-      myStock: destStock, // destination warehouse stock
+      sourceStock: selectedProduct.stock,
+      myStock: destStock,
     };
 
     setSelectedProducts((prev) => [...prev, newSelected]);
@@ -246,6 +259,15 @@ export const useCreateSendMovement = () => {
       return;
     }
 
+    if (!selectedSituationCode) {
+      toast({
+        title: "Validación",
+        description: "Selecciona una situación.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (selectedProducts.length === 0) {
       toast({
         title: "Validación",
@@ -278,7 +300,6 @@ export const useCreateSendMovement = () => {
 
     setSubmitting(true);
     try {
-      // out_warehouse = user's warehouse (sender), in_warehouse = selected (receiver)
       const payload = {
         reason: reason.trim(),
         out_warehouse_id: userSummary.warehouse_id,
@@ -292,7 +313,7 @@ export const useCreateSendMovement = () => {
         })),
         module_code: "STR",
         status_code: "CFM",
-        situation_code: "CFM",
+        situation_code: selectedSituationCode,
         movement_type_code: "TRW",
       };
 
@@ -325,7 +346,8 @@ export const useCreateSendMovement = () => {
     selectedWarehouse,
     reason,
     setReason,
-    situationName,
+    situations,
+    selectedSituationCode,
     statusName,
     isOpen,
     setIsOpen,
@@ -336,6 +358,7 @@ export const useCreateSendMovement = () => {
     search,
     pagination,
     handleWarehouseChange,
+    handleSituationChange,
     onSelectProduct,
     addProduct,
     removeProduct,
