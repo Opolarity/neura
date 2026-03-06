@@ -10,7 +10,7 @@ interface POSSummaryProps {
   discountAmount: number;
   shippingCost: number;
   total: number;
-  showProducts?: boolean;
+  
 }
 
 export default function POSSummary({
