@@ -183,7 +183,7 @@ export default function POSTicketPrintPage() {
 
       // ============ LOGO ============
       const invoiceLogoUrl = invoiceLogoRes.data?.value;
-      const logoSrc = invoice.declared && invoiceLogoUrl ? invoiceLogoUrl : "/images/logo-ticket.jpg";
+      const logoSrc = invoice.declared && invoiceLogoUrl ? invoiceLogoUrl : "/images/logo-ticket.png";
       try {
         const logoImg = await loadImage(logoSrc);
         const logoSize = 22;
