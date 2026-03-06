@@ -191,7 +191,7 @@ export default function InvoicePrintPage() {
       const invoiceLogoUrl = parametersRes.data?.value;
       const logoUrl = invoice.declared && invoiceLogoUrl
         ? invoiceLogoUrl
-        : "/images/logo-ticket.jpg";
+        : "/images/logo-ticket.png";
 
       try {
         const logoImg = await loadImage(logoUrl);
