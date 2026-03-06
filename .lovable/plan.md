@@ -1,39 +1,42 @@
-## Cambios necesarios por reestructuración de `stock_movement_requests`
 
-### Contexto
-Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+## Diagnóstico
 
-### Plan de cambios
+El logo PNG existe y es válido en Supabase Storage. He confirmado que la URL `InvoiceLogoUrl` devuelve una imagen PNG real.
 
-**1. Actualizar la Edge Function `create-stock-movements-request`**
-- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
-- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
-- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
-- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
+El problema persiste porque el paso de `new Image()` + `img.src = dataUrl` no funciona correctamente en ciertos entornos de navegador (como iframes de preview). El `img.onload` puede no dispararse o el canvas puede no decodificar la imagen correctamente, resultando en datos JPEG corruptos que jsPDF renderiza como un bloque negro.
 
-**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
-- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
-- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+## Solución
 
-**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
-- Remover `reason` del mapeo (ya no viene en la respuesta del request).
+Reemplazar `new Image()` por `createImageBitmap(blob)`, que es una API moderna del navegador que decodifica la imagen directamente desde el blob sin necesidad de un elemento Image ni data URLs intermedios. Esto elimina el paso problemático por completo.
 
-**4. Hook `useCreateMovementRequest.ts`**
-- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
+### Nuevo `loadImage` (ambos archivos)
+
+```typescript
+const loadImage = async (url: string): Promise<string> => {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  const bitmap = await createImageBitmap(blob);
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  return canvas.toDataURL("image/jpeg", 0.95);
+};
+```
+
+**Por qué esto funciona:**
+- `createImageBitmap(blob)` decodifica la imagen directamente del blob binario, sin pasar por `new Image()` ni data URLs
+- El canvas con fondo blanco aplana cualquier transparencia PNG (evita que jsPDF la convierta en negro)
+- La salida es JPEG (sin canal alfa), lo cual jsPDF maneja sin problemas
+- Es más rápido y confiable que la cadena anterior de FileReader → data URL → Image → canvas
 
 ### Archivos a modificar
-- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
-- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
-- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
 
-## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
+1. `src/modules/invoices/pages/InvoicePrintPage.tsx` — reemplazar `loadImage` (líneas 94-119)
+2. `src/modules/sales/pages/POSTicketPrintPage.tsx` — reemplazar `loadImage` (líneas 96-121)
 
-### Cambios realizados
-1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
-2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
-3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
-4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
-5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
-6. **Dependencia `qrcode`** instalada.
