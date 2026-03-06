@@ -124,7 +124,7 @@ export default function InvoicePrintPage() {
       const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes] = await Promise.all([
         supabase
           .from("invoices")
-          .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by")
+          .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by, qr_data")
           .eq("id", invoiceId)
           .single(),
         supabase
