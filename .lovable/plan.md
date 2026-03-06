@@ -1,39 +1,25 @@
-## Cambios necesarios por reestructuración de `stock_movement_requests`
 
-### Contexto
-Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+## Error: `column "movement_type_id" of relation "stock_movements" does not exist`
 
-### Plan de cambios
+### Causa
 
-**1. Actualizar la Edge Function `create-stock-movements-request`**
-- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
-- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
-- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
-- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
+La migración reciente recreó `sp_create_order` y en la línea 169 del INSERT a `stock_movements` usa la columna `movement_type_id`. Pero la tabla `stock_movements` tiene la columna como **`movement_type`**, no `movement_type_id`.
 
-**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
-- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
-- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+Columnas reales de `stock_movements`:
+- `id`, `product_variation_id`, `quantity`, `created_by`, `created_at`, **`movement_type`**, `warehouse_id`, `completed`, `stock_type_id`, `vinculated_movement_id`, `is_active`
 
-**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
-- Remover `reason` del mapeo (ya no viene en la respuesta del request).
+### Corrección
 
-**4. Hook `useCreateMovementRequest.ts`**
-- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
+Crear una migración que recree `sp_create_order` cambiando solo la línea 169:
 
-### Archivos a modificar
-- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
-- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
-- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
+```sql
+-- Línea actual (incorrecta):
+movement_type_id,
 
-## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
+-- Corregir a:
+movement_type,
+```
 
-### Cambios realizados
-1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
-2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
-3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
-4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
-5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
-6. **Dependencia `qrcode`** instalada.
+Una sola línea en el INSERT de `stock_movements` (línea 169 del RPC). Todo lo demás queda igual.
+
