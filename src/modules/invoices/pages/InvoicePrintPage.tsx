@@ -94,11 +94,25 @@ export default function InvoicePrintPage() {
   const loadImage = async (url: string): Promise<string> => {
     const response = await fetch(url);
     const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(objectUrl);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Failed to load image"));
+      };
+      img.src = objectUrl;
     });
   };
 
@@ -200,19 +214,14 @@ export default function InvoicePrintPage() {
       // ============ LOGO ============
       // Use InvoiceLogoUrl from parameters for declared invoices, otherwise default logo
       const invoiceLogoUrl = parametersRes.data?.value;
-      const logoUrl = invoice.declared && invoiceLogoUrl
-        ? invoiceLogoUrl
-        : "/images/logo-ticket.png";
+      const logoUrl = invoiceLogoUrl || "/images/logo-ticket.png";
 
       try {
         const logoImg = await loadImage(logoUrl);
         const logoSize = 22;
         const logoX = (pageWidth - logoSize) / 2;
-        const imgFormat = logoImg.startsWith("data:image/png") ? "PNG" : "JPEG";
-        doc.setFillColor(255, 255, 255);
-        doc.rect(logoX, y, logoSize, logoSize, "F");
-        doc.addImage(logoImg, imgFormat, logoX, y, logoSize, logoSize);
-        y += logoSize + 2;
+        doc.addImage(logoImg, "PNG", logoX, y, logoSize, logoSize);
+        y += logoSize + 5;
       } catch {
         y += 2;
       }
