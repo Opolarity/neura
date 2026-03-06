@@ -1041,7 +1041,13 @@ export const usePOS = () => {
       amount: 0,
       confirmationCode: "",
     });
-  }, []);
+
+    // Reload products to refresh stock after the sale
+    if (configuration?.warehouseId) {
+      loadProducts(1, "", configuration.stockTypeId, configuration.warehouseId);
+      setProductPage(1);
+    }
+  }, [configuration]);
 
   const resetAll = useCallback(() => {
     setCurrentStep(1);
