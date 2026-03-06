@@ -337,7 +337,7 @@ export const usePOS = () => {
           return false;
       }
     },
-    [configuration, cart, customer, shipping, isAnonymousPurchase]
+    [configuration, cart, customer, shipping, isAnonymousPurchase, createdOrderId]
   );
 
   const nextStep = useCallback(() => {
