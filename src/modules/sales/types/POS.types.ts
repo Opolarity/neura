@@ -35,6 +35,7 @@ export interface POSSession {
   warehouseId: number;
   branchId: number;
   businessAccountId: number;
+  saleTypeId: number;
   openingAmount: number;
   closingAmount: number | null;
   expectedAmount: number | null;
