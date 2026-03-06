@@ -5,6 +5,7 @@ import CreateMovement from "./pages/CreateMovement";
 import CreateMovementRequest from "./pages/CreateMovementRequest";
 import EditMovementRequest from "./pages/EditMovementRequest";
 import MovementRequests from "./pages/MovementRequests";
+import CreateSendMovement from "./pages/CreateSendMovement";
 
 export const inventoryRoutes: RouteObject[] = [
   { path: "inventory", element: <Inventory /> },
@@ -13,4 +14,5 @@ export const inventoryRoutes: RouteObject[] = [
   { path: "inventory/movement-requests", element: <MovementRequests /> },
   { path: "inventory/movement-requests/create", element: <CreateMovementRequest /> },
   { path: "inventory/movement-requests/edit/:id", element: <EditMovementRequest /> },
+  { path: "inventory/movement-requests/send", element: <CreateSendMovement /> },
 ];
