@@ -1,39 +1,30 @@
-## Cambios necesarios por reestructuración de `stock_movement_requests`
 
-### Contexto
-Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+## Diagnostico
 
-### Plan de cambios
+`InvoicePrintPage.tsx` tiene dos problemas:
 
-**1. Actualizar la Edge Function `create-stock-movements-request`**
-- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
-- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
-- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
-- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
+1. **No incluye `qr_data`** en la interfaz `InvoiceData` ni en el query SELECT (linea 125)
+2. **No genera ni renderiza el QR** en el PDF — no importa `qrcode`, no tiene logica de QR
 
-**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
-- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
-- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+En contraste, `POSTicketPrintPage.tsx` ya tiene todo esto implementado correctamente.
 
-**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
-- Remover `reason` del mapeo (ya no viene en la respuesta del request).
+## Solucion
 
-**4. Hook `useCreateMovementRequest.ts`**
-- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
+Replicar la logica de QR del POS ticket en el invoice print page:
+
+### 1. Agregar `qr_data` a la interfaz y query
+- Agregar `qr_data: string | null` a `InvoiceData` (linea 22)
+- Agregar `qr_data` al SELECT de la query (linea 125)
+
+### 2. Importar la libreria `qrcode`
+- Agregar `import QRCode from "qrcode"` junto a los otros imports
+
+### 3. Generar el QR en el PDF
+- Despues del footer (antes de abrir el PDF, ~linea 445), agregar la misma logica que tiene `POSTicketPrintPage.tsx`:
+  - Si `invoice.qr_data` existe, generar el QR con `QRCode.toDataURL`
+  - Insertar la imagen QR centrada en el PDF
 
 ### Archivos a modificar
-- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
-- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
-- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
+- `src/modules/invoices/pages/InvoicePrintPage.tsx`
 
-## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
-
-### Cambios realizados
-1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
-2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
-3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
-4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
-5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
-6. **Dependencia `qrcode`** instalada.
