@@ -1,39 +1,41 @@
-## Cambios necesarios por reestructuración de `stock_movement_requests`
 
-### Contexto
-Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+## Bug: `sale_type` no se obtiene correctamente desde la sesión POS
 
-### Plan de cambios
+### Causa raíz
 
-**1. Actualizar la Edge Function `create-stock-movements-request`**
-- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
-- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
-- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
-- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
+El `sale_type_id` ya existe en la tabla `pos_sessions`, pero:
 
-**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
-- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
-- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+1. **El tipo `POSSessionApiResponse`** no incluye `sale_type_id`
+2. **El adapter `adaptPOSSession`** no lo mapea
+3. **El tipo `POSSession`** no tiene la propiedad `saleTypeId`
+4. **`usePOS.ts`** hace una query indirecta a `sale_types` buscando por `business_acount_id` para derivar el `sale_type_id`, en vez de leerlo directamente de la sesión
 
-**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
-- Remover `reason` del mapeo (ya no viene en la respuesta del request).
+Cuando la sesión ya estaba abierta y no se pasó por el paso de selección de canal de venta, esa query indirecta puede fallar o devolver null, causando que `sessionSaleTypeId` quede en null y se envíe `"1"` como fallback.
 
-**4. Hook `useCreateMovementRequest.ts`**
-- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
+### Corrección
 
-### Archivos a modificar
-- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
-- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
-- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
+**1. Agregar `sale_type_id` al tipo y adapter de sesión POS**
 
-## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
+- `POSSessionApiResponse`: agregar `sale_type_id: number`
+- `POSSession`: agregar `saleTypeId: number`
+- `adaptPOSSession`: mapear `sale_type_id → saleTypeId`
 
-### Cambios realizados
-1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
-2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
-3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
-4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
-5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
-6. **Dependencia `qrcode`** instalada.
+**2. En `usePOS.ts`, usar directamente `POSSessionHook.session.saleTypeId`**
+
+- Inicializar `sessionSaleTypeId` desde la sesión: `setSessionSaleTypeId(POSSessionHook.session.saleTypeId)`
+- Eliminar la query indirecta a `sale_types` que busca por `business_acount_id` (mantener solo la carga de métodos de pago usando el `saleTypeId` directo)
+- Eliminar el fallback `|| "1"` y `|| 1` ya que siempre se tendrá el valor real desde la sesión
+
+**3. Verificar que `getActivePOSSession` trae `sale_type_id`**
+
+- Confirmar que el servicio de sesión activa (`POSSession.service.ts`) incluye `sale_type_id` en su SELECT
+
+### Flujo corregido
+```text
+Sesión POS abierta (tiene sale_type_id en DB) →
+adaptPOSSession mapea sale_type_id → saleTypeId →
+usePOS lee session.saleTypeId directamente →
+Se pasa al crear orden sin depender de queries adicionales
+```
+
