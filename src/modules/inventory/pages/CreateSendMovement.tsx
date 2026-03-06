@@ -17,7 +17,8 @@ const CreateSendMovement = () => {
     selectedWarehouse,
     reason,
     setReason,
-    situationName,
+    situations,
+    selectedSituationCode,
     statusName,
     isOpen,
     setIsOpen,
@@ -28,6 +29,7 @@ const CreateSendMovement = () => {
     search,
     pagination,
     handleWarehouseChange,
+    handleSituationChange,
     onSelectProduct,
     addProduct,
     removeProduct,
@@ -69,9 +71,11 @@ const CreateSendMovement = () => {
           selectedWarehouseId={selectedWarehouse?.id.toString()}
           reason={reason}
           statusName={statusName}
-          situationName={situationName}
+          situations={situations}
+          selectedSituationCode={selectedSituationCode || undefined}
           onWarehouseChange={handleWarehouseChange}
           onReasonChange={setReason}
+          onSituationChange={handleSituationChange}
         />
 
         {selectedWarehouse && (
