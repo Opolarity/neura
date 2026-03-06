@@ -105,7 +105,7 @@ export default function InvoicePrintPage() {
   const generatePdf = async (invoiceId: number) => {
     try {
       // Fetch invoice, items, and company params in parallel
-      const [invoiceRes, itemsRes, paramsRes, parametersRes] = await Promise.all([
+      const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes] = await Promise.all([
         supabase
           .from("invoices")
           .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by")
@@ -123,7 +123,18 @@ export default function InvoicePrintPage() {
           .select("name, value")
           .eq("name", "InvoiceLogoUrl")
           .maybeSingle(),
+        supabase
+          .from("order_invoices")
+          .select("orders(*, branches(*))")
+          .eq("invoice_id", invoiceId)
+          .single(),
       ]);
+
+      const neighborhood = await supabase
+      .from("neighborhoods")
+      .select("name")
+      .eq("id", branchRes.data.orders.branches.neighborhood_id)
+      .single();
 
       if (invoiceRes.error || !invoiceRes.data) {
         setError("No se encontró el comprobante");
@@ -157,11 +168,11 @@ export default function InvoicePrintPage() {
         }
       }
 
-      const companyName = getParam("COMPANY_NAME") || "EMPRESA";
-      const companyAddress = getParam("COMPANY_ADDRESS") || "";
-      const companyPhone = getParam("COMPANY_PHONE") || "";
-      const companyEmail = getParam("COMPANY_EMAIL") || "";
-      const companyRuc = getParam("COMPANY_RUC") || "";
+      const companyName =  "OVERTAKE UNLIMITED EIRL" //getParam("COMPANY_NAME") || "EMPRESA";
+      const companyAddress = branchRes.data?.orders?.branches?.address + " " + neighborhood?.data?.name || ""; //getParam("COMPANY_ADDRESS") || "";
+      const companyPhone = "951 645 997"; //getParam("COMPANY_PHONE") || "";
+      const companyEmail = "overta.peru.empresa@gmail.com"; //getParam("COMPANY_EMAIL") || "";
+      const companyRuc = "20607798002" //getParam("COMPANY_RUC") || "";
 
       // Ticket width: 80mm
       const pageWidth = 80;
@@ -255,6 +266,13 @@ export default function InvoicePrintPage() {
       doc.text(docTypeName.toUpperCase(), pageWidth / 2, y, { align: "center" });
       y += 4;
 
+      // ============ NÚMERO DE PEDIDO ============
+      const orderNumber = "PEDIDO: #" + branchRes.data?.orders?.id || "";
+      doc.setFontSize(fontSize.title);
+      doc.setFont("helvetica", "bold");
+      doc.text(orderNumber.toUpperCase(), pageWidth / 2, y, { align: "center" });
+      y += 4;
+
       // ============ SERIE - NUMBER ============
       const serieNum = [invoice.tax_serie, invoice.invoice_number].filter(Boolean).join(" - ");
       if (serieNum) {
@@ -279,7 +297,7 @@ export default function InvoicePrintPage() {
       const detailLines: [string, string][] = [
         ["FECHA DE EMISIÓN:", dateStr],
         ["CLIENTE:", invoice.client_name || "Clientes Varios"],
-        [`${docTypeRes.data?.name || "Doc"}:`, invoice.customer_document_number],
+        [`${docTypeRes.data?.name || "Doc"}:`, invoice.customer_document_number]
       ];
 
       for (const [label, value] of detailLines) {
