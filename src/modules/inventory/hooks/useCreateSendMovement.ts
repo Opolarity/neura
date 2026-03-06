@@ -91,27 +91,25 @@ export const useCreateSendMovement = () => {
         .single();
 
       if (moduleData) {
+        // Fetch situations with their status info for this module
         const { data: sitData } = await supabase
           .from("situations")
-          .select("id, name, code, status_id")
+          .select("id, name, code, status_id, statuses(id, name, code)")
           .eq("module_id", moduleData.id)
           .order("id");
 
-        // Get the CFM status
-        const { data: stData } = await supabase
-          .from("statuses")
-          .select("id, name, code")
-          .eq("code", "CFM")
-          .limit(1)
-          .single();
-
-        if (stData) {
-          setStatusName(stData.name);
-          // Filter situations belonging to CFM status
-          const cfmSituations = (sitData || [])
-            .filter((s) => s.status_id === stData.id)
-            .map((s) => ({ id: s.id, name: s.name, code: s.code || "" }));
+        if (sitData && sitData.length > 0) {
+          // Filter situations whose parent status has code "CFM"
+          const cfmSituations = sitData
+            .filter((s: any) => s.statuses?.code === "CFM")
+            .map((s: any) => ({ id: s.id, name: s.name, code: s.code || "" }));
           setSituations(cfmSituations);
+
+          // Set status name from the first CFM situation
+          if (cfmSituations.length > 0) {
+            const firstCfm = sitData.find((s: any) => s.statuses?.code === "CFM");
+            if (firstCfm) setStatusName((firstCfm as any).statuses.name);
+          }
         }
       }
 
