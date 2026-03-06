@@ -4,12 +4,14 @@ import CreateSale from './pages/CreateSale';
 import POS from './pages/POS';
 import CreateShipping from './pages/CreateShipping';
 import Shipping from './pages/Shipping';
+import POSTicketPrintPage from './pages/POSTicketPrintPage';
 
 export const salesRoutes: RouteObject[] = [
   { path: 'sales', element: <Sales /> },
   { path: 'sales/create', element: <CreateSale /> },
   { path: 'sales/edit/:id', element: <CreateSale /> },
   { path: 'pos/open', element: <POS /> },
+  { path: 'pos/ticket/:invoiceId', element: <POSTicketPrintPage /> },
   { path: 'shipping', element: <Shipping /> },
   { path: 'shipping/create', element: <CreateShipping /> },
   { path: 'shipping/edit/:id', element: <CreateShipping /> },
