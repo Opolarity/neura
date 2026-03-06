@@ -1,39 +1,62 @@
-## Cambios necesarios por reestructuración de `stock_movement_requests`
 
-### Contexto
-Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+## Diagnostico
 
-### Plan de cambios
+He confirmado que:
+1. El logo `/images/logo-ticket.png` es un PNG con **transparencia** (fondo transparente)
+2. jsPDF tiene un **bug conocido** donde renderiza las areas transparentes de PNG como negro
+3. El enfoque con canvas + `createImageBitmap` + `toDataURL("image/jpeg")` no funciona de manera confiable en el entorno del preview (iframe con restricciones)
 
-**1. Actualizar la Edge Function `create-stock-movements-request`**
-- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
-- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
-- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
-- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
+## Solucion: Fondo blanco directamente en el PDF
 
-**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
-- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
-- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+En lugar de intentar convertir la imagen en el navegador (canvas), la solucion mas robusta es:
 
-**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
-- Remover `reason` del mapeo (ya no viene en la respuesta del request).
+1. **Cargar la imagen como base64 sin canvas** (solo fetch + FileReader)
+2. **Dibujar un rectangulo blanco en el PDF** antes de colocar la imagen
+3. **Usar formato "PNG"** en `addImage` (en vez de "JPEG")
 
-**4. Hook `useCreateMovementRequest.ts`**
-- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
+Esto hace que jsPDF dibuje la transparencia del PNG sobre un fondo blanco que ya existe en el PDF, eliminando el rectangulo negro.
+
+### Cambio en `loadImage` (ambos archivos)
+
+```typescript
+const loadImage = async (url: string): Promise<string> => {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+```
+
+### Cambio en la seccion de logo (ambos archivos)
+
+```typescript
+try {
+  const logoImg = await loadImage(logoUrl);
+  const logoSize = 22;
+  const logoX = (pageWidth - logoSize) / 2;
+  // Dibujar fondo blanco detras del logo para evitar transparencia negra
+  doc.setFillColor(255, 255, 255);
+  doc.rect(logoX, y, logoSize, logoSize, "F");
+  doc.addImage(logoImg, "PNG", logoX, y, logoSize, logoSize);
+  y += logoSize + 2;
+} catch {
+  y += 2;
+}
+```
 
 ### Archivos a modificar
-- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
-- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
-- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
 
-## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
+1. `src/modules/invoices/pages/InvoicePrintPage.tsx` — loadImage (lineas 94-107) y seccion logo (lineas 200-207)
+2. `src/modules/sales/pages/POSTicketPrintPage.tsx` — loadImage (lineas 96-109) y seccion logo (lineas ~190-197)
 
-### Cambios realizados
-1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
-2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
-3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
-4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
-5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
-6. **Dependencia `qrcode`** instalada.
+### Por que esto funciona
+
+- Sin canvas, sin `createImageBitmap`, sin conversion a JPEG — elimina todos los pasos problematicos
+- El rectangulo blanco en el PDF actua como fondo opaco para la transparencia del PNG
+- jsPDF maneja el PNG directamente sin necesidad de pre-procesamiento del navegador
+
