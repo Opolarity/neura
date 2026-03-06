@@ -4101,7 +4101,6 @@ export type Database = {
           p_branch_id: number
           p_cart_id: number
           p_price_list_id: number
-          p_product_discount?: number
           p_quantity: number
           p_sale_type_id: number
           p_stock_type_id: number
