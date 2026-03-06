@@ -902,6 +902,7 @@ export type Database = {
           invoice_number: string | null
           invoice_type_id: number
           pdf_url: string | null
+          qr_data: string | null
           tax_serie: string | null
           total_amount: number
           total_free: number | null
@@ -925,6 +926,7 @@ export type Database = {
           invoice_number?: string | null
           invoice_type_id: number
           pdf_url?: string | null
+          qr_data?: string | null
           tax_serie?: string | null
           total_amount: number
           total_free?: number | null
@@ -948,6 +950,7 @@ export type Database = {
           invoice_number?: string | null
           invoice_type_id?: number
           pdf_url?: string | null
+          qr_data?: string | null
           tax_serie?: string | null
           total_amount?: number
           total_free?: number | null
@@ -4753,6 +4756,18 @@ export type Database = {
         Returns: Json
       }
       sp_update_invoice_sunat_response:
+        | {
+            Args: {
+              p_cdr_url?: string
+              p_declared?: boolean
+              p_invoice_id: number
+              p_invoice_number?: string
+              p_pdf_url?: string
+              p_qr_data?: string
+              p_xml_url?: string
+            }
+            Returns: undefined
+          }
         | {
             Args: {
               p_cdr_url?: string

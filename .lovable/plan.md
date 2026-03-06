@@ -1,41 +1,39 @@
-
-
-## Plan: Ticket POS con QR de SUNAT
+## Cambios necesarios por reestructuración de `stock_movement_requests`
 
 ### Contexto
-Nubefact devuelve el campo `cadena_para_codigo_qr` en su respuesta al emitir un comprobante. Actualmente ese dato no se guarda. El objetivo es capturarlo y usarlo para generar un ticket propio (estilo térmico 80mm) similar al de comprobantes (`InvoicePrintPage.tsx`), pero con el QR del certificado SUNAT.
+Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-### Cambios
+La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
 
-**1. Migración de base de datos**
-- Agregar columna `qr_data` (text, nullable) a la tabla `invoices` para almacenar la cadena QR que devuelve Nubefact.
+### Plan de cambios
 
-**2. Actualizar edge function `emit-invoice`**
-- Descargar la versión desplegada, modificarla para que al recibir la respuesta de Nubefact, extraiga `cadena_para_codigo_qr` y la guarde en `invoices.qr_data`.
-- Redesplegar directamente sin guardar en el repo.
+**1. Actualizar la Edge Function `create-stock-movements-request`**
+- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
+- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
+- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
+- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
 
-**3. Crear página de ticket POS: `src/modules/sales/pages/POSTicketPrintPage.tsx`**
-- Ruta: `/pos/ticket/:orderId` (o `/pos/ticket/:invoiceId`)
-- Genera un PDF con jsPDF de 80mm similar a `InvoicePrintPage.tsx`:
-  - Logo, datos empresa (desde `paremeters`), tipo de comprobante, serie-número
-  - Datos del cliente, fecha, productos, totales, monto en letras, cajero
-  - **QR code** generado a partir de `invoices.qr_data` usando una librería QR (ej: `qrcode` para generar imagen base64)
-  - Política de cambios y devoluciones, mensaje de agradecimiento
+**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
+- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
+- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
 
-**4. Agregar botón de impresión en `InvoicingStep.tsx`**
-- En la tabla de comprobantes del POS, cuando un comprobante está emitido (`declared = true`), mostrar un botón de impresión de ticket que abra `/pos/ticket/:invoiceId` en nueva pestaña.
+**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
+- Remover `reason` del mapeo (ya no viene en la respuesta del request).
 
-**5. Dependencia nueva**
-- Instalar paquete `qrcode` para generar el QR como imagen base64 dentro del PDF con jsPDF.
+**4. Hook `useCreateMovementRequest.ts`**
+- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
 
-### Flujo
-```text
-Emitir comprobante → emit-invoice guarda qr_data → 
-Usuario click "Imprimir ticket" → POSTicketPrintPage carga invoice + items + qr_data →
-Genera PDF 80mm con QR → Abre en navegador
-```
+### Archivos a modificar
+- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
+- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
+- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
 
-### Notas
-- Los comprobantes ya emitidos antes del cambio no tendrán `qr_data`; el ticket se generará sin QR en ese caso.
-- La estructura del ticket reutiliza la misma lógica de `InvoicePrintPage.tsx` (logo, empresa, numberToWords, etc.).
+## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
 
+### Cambios realizados
+1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
+2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
+3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
+4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
+5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
+6. **Dependencia `qrcode`** instalada.

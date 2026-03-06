@@ -25,7 +25,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { ArrowUp, CheckCircle2, ChevronDown, Code, Eye, FileText, Loader2, Receipt } from "lucide-react";
+import { ArrowUp, CheckCircle2, ChevronDown, Code, Eye, FileText, Loader2, Printer, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -528,6 +528,15 @@ export default function InvoicingStep({
                         <div className="flex gap-1">
                           {inv.declared ? (
                             <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="Imprimir ticket"
+                                onClick={() => window.open(`/pos/ticket/${inv.id}`, "_blank")}
+                              >
+                                <Printer className="h-4 w-4" />
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
