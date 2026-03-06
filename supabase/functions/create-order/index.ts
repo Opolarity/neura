@@ -75,7 +75,7 @@ serve(async (req) => {
       customer_lastname2: input.customer_lastname2,
       email: input.email,
       phone: input.phone,
-      sale_type: input.sale_type,
+      sale_type_id: input.sale_type,
       price_list_code: priceListCode,
       shipping_method: input.shipping_method,
       shipping_cost: input.shipping_cost,
