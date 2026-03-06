@@ -1,5 +1,3 @@
-
-
 ## Cambios necesarios por reestructuración de `stock_movement_requests`
 
 ### Contexto
@@ -30,3 +28,12 @@ La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_wa
 - `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
 - `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
 
+## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
+
+### Cambios realizados
+1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
+2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
+3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
+4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
+5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
+6. **Dependencia `qrcode`** instalada.
