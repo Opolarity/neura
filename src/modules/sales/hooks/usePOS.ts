@@ -288,21 +288,7 @@ export const usePOS = () => {
   // Load filtered payment methods based on session's sale_type_id
   useEffect(() => {
     const loadFilteredPaymentMethods = async () => {
-<<<<<<< HEAD
-      if (!POSSessionHook.session?.saleTypeId) return;
-      
-      // Use sale_type_id directly from the POS session
-      const saleTypeId = POSSessionHook.session.saleTypeId;
-      setSessionSaleTypeId(saleTypeId);
-      
-      const methods = await getActivePaymentMethodsBySaleTypeId(saleTypeId);
-      setFilteredPaymentMethods(methods.map(m => ({
-        id: m.id,
-        name: m.name,
-        businessAccountId: m.business_account_id,
-        code: m.code,
-      })));
-=======
+
       if (!POSSessionHook.session?.businessAccountId) return;
 
       // Find the sale type linked to this business account (POS sale type)
@@ -324,7 +310,6 @@ export const usePOS = () => {
           code: m.code,
         })));
       }
->>>>>>> 310dac5 (reglas aplican a venta y a pos)
 
       // Load business accounts for manual selection
       const accounts = await getBusinessAccountIsActiveTrue();
