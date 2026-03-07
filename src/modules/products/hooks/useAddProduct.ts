@@ -22,6 +22,8 @@ export const useAddProduct = () => {
   const [promotionalText, setPromotionalText] = useState('');
   const [promotionalBgColor, setPromotionalBgColor] = useState('#ffffff');
   const [promotionalTextColor, setPromotionalTextColor] = useState('#000000');
+  const [sizesImageUrl, setSizesImageUrl] = useState<string | null>(null);
+  const [sizesImageFile, setSizesImageFile] = useState<File | null>(null);
   const [description, setDescription] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [isVariable, setIsVariable] = useState(false);
