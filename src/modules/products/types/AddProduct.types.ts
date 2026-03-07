@@ -126,6 +126,9 @@ export interface UpdateProductRequest extends CreateProductRequest {
 export interface AddProductState {
   productName: string;
   shortDescription: string;
+  promotionalText: string;
+  promotionalBgColor: string;
+  promotionalTextColor: string;
   description: string;
   selectedCategories: number[];
   isVariable: boolean;
