@@ -92,6 +92,9 @@ export interface ProductDetailsResponse {
 export interface CreateProductRequest {
   productName: string;
   shortDescription: string;
+  promotionalText: string;
+  promotionalBgColor: string;
+  promotionalTextColor: string;
   description: string;
   isVariable: boolean;
   isActive: boolean;
