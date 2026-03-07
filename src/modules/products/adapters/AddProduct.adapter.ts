@@ -254,6 +254,7 @@ export const AddProductAdapter = {
       promotionalText,
       promotionalBgColor,
       promotionalTextColor,
+      sizesImageUrl,
       description,
       isVariable,
       isActive,
