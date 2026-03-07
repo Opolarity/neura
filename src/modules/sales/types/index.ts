@@ -43,6 +43,7 @@ export interface SaleProduct {
   stockTypeId: number; // tipo de inventario del que se descontará
   stockTypeName: string; // nombre del tipo de inventario
   maxStock: number; // stock disponible para este producto/almacén/tipo
+  isGift?: boolean;
 }
 
 export interface SalePayment {

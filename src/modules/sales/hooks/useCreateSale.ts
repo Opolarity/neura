@@ -4,7 +4,7 @@
 // =============================================
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { applyPriceRules } from "../rules/applyPriceRules";
+import { applyPriceRules, type GiftItem } from "../rules/applyPriceRules";
 import { getPriceListIsActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -140,6 +140,8 @@ export const useCreateSale = () => {
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [isExistingClient, setIsExistingClient] = useState<boolean>(false); // true only if found in accounts table
   const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
+  const [customerUserId, setCustomerUserId] = useState<string | null>(null);
+  const [cartGifts, setCartGifts] = useState<GiftItem[]>([]);
   const [selectedVariation, setSelectedVariation] =
     useState<ProductVariation | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -335,17 +337,55 @@ export const useCreateSale = () => {
     return currentSituation?.code?.endsWith("-PHY") ?? false;
   }, [orderSituation, salesData?.situations]);
 
-  // Apply price rules whenever products change (skip when product editing is disabled — PHY situation)
+  // Apply price rules whenever products changes
   useEffect(() => {
-    if (isPhySituation) return;
-    if (products.length === 0) return;
+    const regularItems = products.filter(item => !item.isGift);
+
+    if (regularItems.length === 0 || !formData.priceListId) {
+      if (products.some(i => i.isGift)) setProducts(regularItems);
+      setCartGifts([]);
+      return;
+    }
+
     const run = async () => {
-      const updated = await applyPriceRules(products);
-      const changed = updated.some((u, i) => u.price !== products[i].price);
-      if (changed) setProducts(updated);
+      const { items: updated, gifts } = await applyPriceRules(
+        regularItems,
+        formData.priceListId,
+        customerUserId
+      );
+
+      const defaultStockTypeId = regularItems[0]?.stockTypeId ?? 1;
+      const defaultStockTypeName = regularItems[0]?.stockTypeName ?? "";
+
+      const giftItems: typeof products = gifts.map(gift => ({
+        variationId: gift.variationId,
+        productName: gift.productName,
+        variationName: "",
+        sku: gift.sku,
+        quantity: gift.quantity,
+        price: 0,
+        originalPrice: 0,
+        discountAmount: 0,
+        stockTypeId: defaultStockTypeId,
+        stockTypeName: defaultStockTypeName,
+        maxStock: 999,
+        isGift: true,
+      }));
+
+      setCartGifts(gifts);
+
+      const pricesChanged = updated.some((u, i) => u.price !== regularItems[i].price);
+      const currentGiftIds = products.filter(i => i.isGift).map(i => i.variationId).join(",");
+      const newGiftIds = giftItems.map(i => i.variationId).join(",");
+      const giftsChanged = currentGiftIds !== newGiftIds;
+
+      if (pricesChanged || giftsChanged) {
+        setProducts([...updated, ...giftItems]);
+      }
     };
+
     run();
-  }, [products, isPhySituation]);
+  }, [products, formData.priceListId, customerUserId]);
 
   // Computed: Check if current status has COM code (completed - no payment edits allowed)
   const isComSituation = useMemo(() => {
@@ -356,12 +396,12 @@ export const useCreateSale = () => {
   const filteredSituations = useMemo(() => {
     if (!salesData?.situations) return [];
     if (!orderSituation) return salesData.situations;
-    
+
     const currentSituation = salesData.situations.find(
       (s) => s.id.toString() === orderSituation,
     );
     if (!currentSituation || currentSituation.order == null) return salesData.situations;
-    
+
     return salesData.situations.filter(
       (s) => s.order != null && s.order >= currentSituation.order,
     );
@@ -548,11 +588,11 @@ export const useCreateSale = () => {
   const loadOrderData = async (id: number) => {
     try {
       setLoading(true);
-      
+
       // Single call to get all data
       const data = await fetchSaleById(id);
       const adapted = adaptSaleById(data);
-      
+
       // Set all state at once
       setFormData(adapted.formData);
       setProducts(adapted.products);
@@ -578,7 +618,7 @@ export const useCreateSale = () => {
       if (adapted.formData.documentType === "0" && adapted.formData.documentNumber === " ") {
         setIsAnonymousPurchase(true);
       }
-      
+
     } catch (error) {
       console.error("Error loading order:", error);
       toast({
@@ -598,7 +638,7 @@ export const useCreateSale = () => {
       if (field === "saleType") {
         setCurrentPayment(createEmptyPayment());
       }
-      
+
       // When document type changes to persona jurídica, clear lastname fields
       if (field === "documentType" && typeof value === "string") {
         const selectedDocType = salesData?.documentTypes.find(
@@ -678,6 +718,8 @@ export const useCreateSale = () => {
         customerLastname2: "",
       }));
       setClientFound(false);
+      setCustomerUserId(null);
+      setCartGifts([]);
     }
   }, []);
 
@@ -920,6 +962,13 @@ export const useCreateSale = () => {
             customerLastname: client.lastName,
             customerLastname2: client.lastName2 || "",
           }));
+          // Obtener UID del cliente desde profiles
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("UID")
+            .eq("account_id", client.id)
+            .maybeSingle();
+          setCustomerUserId(profileData?.UID ?? null);
         } else {
           setIsExistingClient(false); // Not in accounts table
           // Client not found - check document type code
@@ -1388,7 +1437,7 @@ export const useCreateSale = () => {
           await updateOrder(parseInt(orderId), orderData);
         } else {
           const response = await createOrder(orderData);
-          
+
           if (response?.order?.id) {
             createdOrderId = response.order.id;
             setCreatedOrderId(createdOrderId);
@@ -1404,13 +1453,13 @@ export const useCreateSale = () => {
           const validPayments = payments.filter(
             (p) => p.paymentMethodId && p.amount,
           );
-          
+
           for (let i = 0; i < validPayments.length; i++) {
             const payment = validPayments[i];
-            
+
             // Skip if no voucher file
             if (!payment.voucherFile) continue;
-            
+
             // Find the corresponding created payment by localIndex (which matches the filtered array index)
             const createdPayment = createdPayments.find(
               (cp) => cp.localIndex === i,
@@ -1482,6 +1531,7 @@ export const useCreateSale = () => {
     searchingClient,
     formData,
     products,
+    cartGifts,
     payments,
     currentPayment,
     orderSituation,
