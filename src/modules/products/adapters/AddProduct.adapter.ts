@@ -63,6 +63,9 @@ export const AddProductAdapter = {
     product: {
       title: string;
       shortDescription: string;
+      promotionalText: string;
+      promotionalBgColor: string;
+      promotionalTextColor: string;
       description: string;
       isVariable: boolean;
       isActive: boolean;
@@ -78,6 +81,9 @@ export const AddProductAdapter = {
     const product = {
       title: data.product.title,
       shortDescription: data.product.short_description || '',
+      promotionalText: data.product.promotional_text || '',
+      promotionalBgColor: data.product.promotional_bg_color || '#ffffff',
+      promotionalTextColor: data.product.promotional_text_color || '#000000',
       description: data.product.description || '',
       isVariable: data.product.is_variable,
       isActive: data.product.active,
