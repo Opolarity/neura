@@ -557,6 +557,19 @@ export const useAddProduct = () => {
 
     setLoading(true);
     try {
+      // Upload sizes image if a new file was selected
+      let finalSizesImageUrl = sizesImageUrl;
+      if (sizesImageFile) {
+        const fileExt = sizesImageFile.name.split('.').pop();
+        const filePath = `products-images/sizes/${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('products')
+          .upload(filePath, sizesImageFile);
+        if (uploadError) throw new Error('Error al subir imagen de tallas: ' + uploadError.message);
+        const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
+        finalSizesImageUrl = urlData.publicUrl;
+      }
+
       if (isEditMode) {
         const request = AddProductAdapter.prepareUpdateRequest(
           Number(productId),
@@ -565,6 +578,7 @@ export const useAddProduct = () => {
           promotionalText,
           promotionalBgColor,
           promotionalTextColor,
+          finalSizesImageUrl,
           description,
           isVariable,
           isActive,
@@ -594,6 +608,7 @@ export const useAddProduct = () => {
           promotionalText,
           promotionalBgColor,
           promotionalTextColor,
+          finalSizesImageUrl,
           description,
           isVariable,
           isActive,
