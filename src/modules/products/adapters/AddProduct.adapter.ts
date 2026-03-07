@@ -174,6 +174,9 @@ export const AddProductAdapter = {
   prepareCreateRequest(
     productName: string,
     shortDescription: string,
+    promotionalText: string,
+    promotionalBgColor: string,
+    promotionalTextColor: string,
     description: string,
     isVariable: boolean,
     isActive: boolean,
@@ -196,6 +199,9 @@ export const AddProductAdapter = {
     return {
       productName,
       shortDescription,
+      promotionalText,
+      promotionalBgColor,
+      promotionalTextColor,
       description,
       isVariable,
       isActive,
