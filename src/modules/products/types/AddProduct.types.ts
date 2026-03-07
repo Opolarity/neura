@@ -5,6 +5,9 @@ import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, V
 export interface ProductFormData {
   productName: string;
   shortDescription: string;
+  promotionalText: string;
+  promotionalBgColor: string;
+  promotionalTextColor: string;
   description: string;
   isVariable: boolean;
   isActive: boolean;
