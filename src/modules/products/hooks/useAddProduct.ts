@@ -150,6 +150,7 @@ export const useAddProduct = () => {
       setPromotionalText(adapted.product.promotionalText);
       setPromotionalBgColor(adapted.product.promotionalBgColor);
       setPromotionalTextColor(adapted.product.promotionalTextColor);
+      setSizesImageUrl(adapted.product.sizesImageUrl);
       setDescription(adapted.product.description);
       setIsVariable(adapted.product.isVariable);
       setIsActive(adapted.product.isActive);
