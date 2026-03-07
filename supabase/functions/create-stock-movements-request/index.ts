@@ -99,6 +99,19 @@ Deno.serve(async (req) => {
       throw new Error(`Could not resolve codes: module(${module_code}:${moduleId}), status(${status_code}:${statusId}), situation(${situation_code}:${situationId}), movement_type(${movement_type_code}:${movementTypeId})`)
     }
 
+    // 2.5 Resolve the user's warehouse from their profile
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('warehouse_id')
+      .eq('UID', created_by)
+      .single()
+
+    if (profileError || !profileData) {
+      throw new Error(`Could not resolve user profile warehouse: ${profileError?.message}`)
+    }
+
+    const userWarehouseId = profileData.warehouse_id
+
     // 3. Create Stock Movement Request
     const { data: requestData, error: requestError } = await supabase
       .from('stock_movement_requests')
@@ -119,7 +132,7 @@ Deno.serve(async (req) => {
       return `${name}${variation}: ${item.quantity}`
     }).join('\n')
 
-    // 5. Create Request Situation History with notes
+    // 5. Create Request Situation History with notes (warehouse_id = user's profile warehouse)
     const { error: sitError } = await supabase
       .from('stock_movement_request_situations')
       .insert([{
@@ -127,7 +140,7 @@ Deno.serve(async (req) => {
         module_id: moduleId,
         status_id: statusId,
         situation_id: situationId,
-        warehouse_id: in_warehouse_id,
+        warehouse_id: userWarehouseId,
         message: reason,
         notes: noteLines,
         last_row: true,
