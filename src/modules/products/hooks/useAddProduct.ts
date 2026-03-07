@@ -19,6 +19,9 @@ export const useAddProduct = () => {
   // Form state
   const [productName, setProductName] = useState('');
   const [shortDescription, setShortDescription] = useState('');
+  const [promotionalText, setPromotionalText] = useState('');
+  const [promotionalBgColor, setPromotionalBgColor] = useState('#ffffff');
+  const [promotionalTextColor, setPromotionalTextColor] = useState('#000000');
   const [description, setDescription] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [isVariable, setIsVariable] = useState(false);
