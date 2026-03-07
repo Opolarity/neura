@@ -66,6 +66,7 @@ export const AddProductAdapter = {
       promotionalText: string;
       promotionalBgColor: string;
       promotionalTextColor: string;
+      sizesImageUrl: string | null;
       description: string;
       isVariable: boolean;
       isActive: boolean;
