@@ -588,6 +588,9 @@ export const useAddProduct = () => {
         const request = AddProductAdapter.prepareCreateRequest(
           productName,
           shortDescription,
+          promotionalText,
+          promotionalBgColor,
+          promotionalTextColor,
           description,
           isVariable,
           isActive,
