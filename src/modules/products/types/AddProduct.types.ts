@@ -54,6 +54,9 @@ export interface ProductDetailsResponse {
     id: number;
     title: string;
     short_description: string;
+    promotional_text: string | null;
+    promotional_bg_color: string | null;
+    promotional_text_color: string | null;
     description: string;
     is_variable: boolean;
     active: boolean;
