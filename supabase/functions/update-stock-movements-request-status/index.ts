@@ -82,6 +82,19 @@ Deno.serve(async (req) => {
         const situationId = newSituation.id
         const statusId = newSituation.status_id
 
+        // Resolve the user's warehouse from their profile
+        const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('warehouse_id')
+            .eq('UID', created_by)
+            .single()
+
+        if (profileError || !profileData) {
+            throw new Error(`Could not resolve user profile warehouse: ${profileError?.message}`)
+        }
+
+        const userWarehouseId = profileData.warehouse_id
+
         // 1. Update Request Situation
         const { error: updateRequestError } = await supabase
             .from('stock_movement_requests')
@@ -90,12 +103,13 @@ Deno.serve(async (req) => {
 
         if (updateRequestError) throw updateRequestError
 
-        // 2. Log History
+        // 2. Log History (warehouse_id = user's profile warehouse)
         await supabase.from('stock_movement_request_situations').insert([{
             stock_movement_request_id: requestId,
             module_id: moduleId,
             status_id: statusId,
             situation_id: situationId,
+            warehouse_id: userWarehouseId,
             message: `Status updated to ${situation_code}`,
             last_row: true,
             created_by

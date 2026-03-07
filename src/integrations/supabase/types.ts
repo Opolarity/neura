@@ -1487,6 +1487,7 @@ export type Database = {
           shipping_method_code: string | null
           state_id: number | null
           subtotal: number
+          success_viewed: boolean
           total: number
           user_id: string | null
         }
@@ -1516,6 +1517,7 @@ export type Database = {
           shipping_method_code?: string | null
           state_id?: number | null
           subtotal: number
+          success_viewed?: boolean
           total: number
           user_id?: string | null
         }
@@ -1545,6 +1547,7 @@ export type Database = {
           shipping_method_code?: string | null
           state_id?: number | null
           subtotal?: number
+          success_viewed?: boolean
           total?: number
           user_id?: string | null
         }
