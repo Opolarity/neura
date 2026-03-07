@@ -4,7 +4,7 @@
 // =============================================
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { applyPriceRules } from "../rules/applyPriceRules";
+import { applyPriceRules, type GiftItem } from "../rules/applyPriceRules";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -118,10 +118,14 @@ export const usePOS = () => {
   const [selectedStockTypeId, setSelectedStockTypeId] = useState<string>("");
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Gifts (from price rules)
+  const [cartGifts, setCartGifts] = useState<GiftItem[]>([]);
+
   // Customer (Step 3)
   const [customer, setCustomer] = useState<POSCustomerData>(DEFAULT_CUSTOMER);
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
+  const [customerUserId, setCustomerUserId] = useState<string | null>(null);
 
   // Shipping (Step 4)
   const [shipping, setShipping] = useState<POSShippingData>(DEFAULT_SHIPPING);
@@ -178,14 +182,53 @@ export const usePOS = () => {
 
   // Apply price rules whenever cart changes
   useEffect(() => {
-    if (cart.length === 0) return;
+    const regularItems = cart.filter(item => !item.isGift);
+
+    if (regularItems.length === 0 || !configuration?.priceListId) {
+      if (cart.some(i => i.isGift)) setCart(regularItems);
+      setCartGifts([]);
+      return;
+    }
+
     const run = async () => {
-      const updated = await applyPriceRules(cart);
-      const changed = updated.some((u, i) => u.price !== cart[i].price);
-      if (changed) setCart(updated);
+      const { items: updated, gifts } = await applyPriceRules(
+        regularItems,
+        configuration.priceListId,
+        customerUserId
+      );
+
+      const defaultStockTypeId = regularItems[0]?.stockTypeId ?? parseInt(selectedStockTypeId) ?? 1;
+      const defaultStockTypeName = regularItems[0]?.stockTypeName ?? "";
+
+      const giftCartItems: POSCartItem[] = gifts.map(gift => ({
+        variationId: gift.variationId,
+        productName: gift.productName,
+        variationName: "",
+        sku: gift.sku,
+        quantity: gift.quantity,
+        price: 0,
+        originalPrice: 0,
+        discountAmount: 0,
+        stockTypeId: defaultStockTypeId,
+        stockTypeName: defaultStockTypeName,
+        maxStock: 999,
+        imageUrl: null,
+        isGift: true,
+      }));
+
+      setCartGifts(gifts);
+
+      const pricesChanged = updated.some((u, i) => u.price !== regularItems[i].price);
+      const currentGiftIds = cart.filter(i => i.isGift).map(i => i.variationId).join(",");
+      const newGiftIds = giftCartItems.map(i => i.variationId).join(",");
+      const giftsChanged = currentGiftIds !== newGiftIds;
+
+      if (pricesChanged || giftsChanged) {
+        setCart([...updated, ...giftCartItems]);
+      }
     };
     run();
-  }, [cart]);
+  }, [cart, configuration?.priceListId, customerUserId]);
 
   const loadInitialData = async () => {
     try {
@@ -245,6 +288,7 @@ export const usePOS = () => {
   // Load filtered payment methods based on session's sale_type_id
   useEffect(() => {
     const loadFilteredPaymentMethods = async () => {
+<<<<<<< HEAD
       if (!POSSessionHook.session?.saleTypeId) return;
       
       // Use sale_type_id directly from the POS session
@@ -258,12 +302,35 @@ export const usePOS = () => {
         businessAccountId: m.business_account_id,
         code: m.code,
       })));
+=======
+      if (!POSSessionHook.session?.businessAccountId) return;
+
+      // Find the sale type linked to this business account (POS sale type)
+      const { data: saleType } = await supabase
+        .from("sale_types")
+        .select("id")
+        .eq("business_acount_id", POSSessionHook.session.businessAccountId)
+        .eq("pos_sale_type", true)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (saleType?.id) {
+        setSessionSaleTypeId(saleType.id);
+        const methods = await getActivePaymentMethodsBySaleTypeId(saleType.id);
+        setFilteredPaymentMethods(methods.map(m => ({
+          id: m.id,
+          name: m.name,
+          businessAccountId: m.business_account_id,
+          code: m.code,
+        })));
+      }
+>>>>>>> 310dac5 (reglas aplican a venta y a pos)
 
       // Load business accounts for manual selection
       const accounts = await getBusinessAccountIsActiveTrue();
       setBusinessAccounts(accounts.map(a => ({ id: a.id, name: a.name, bank: a.bank })));
     };
-    
+
     loadFilteredPaymentMethods();
   }, [POSSessionHook.session?.saleTypeId]);
 
@@ -542,6 +609,13 @@ export const usePOS = () => {
           phone: client.phone || "",
           isExistingClient: true,
         }));
+        // Obtener UID del cliente desde profiles
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("UID")
+          .eq("account_id", client.id)
+          .maybeSingle();
+        setCustomerUserId(profileData?.UID ?? null);
         return;
       }
 
@@ -579,9 +653,11 @@ export const usePOS = () => {
       }
 
       setClientFound(false);
+      setCustomerUserId(null);
     } catch (error) {
       console.error("Error searching client:", error);
       setClientFound(false);
+      setCustomerUserId(null);
     } finally {
       setSearchingClient(false);
     }
@@ -618,6 +694,7 @@ export const usePOS = () => {
     }));
     setIsAnonymousPurchase(true);
     setClientFound(false);
+    setCustomerUserId(null);
 
     // Advance to products step
     setCurrentStep(3);
@@ -960,7 +1037,7 @@ export const usePOS = () => {
             pos_session_id: POSSessionHook.session.id,
             order_id: result.order.id,
           });
-        
+
         if (linkError) {
           console.error("Error linking order to POS session:", linkError);
         }
@@ -1013,6 +1090,7 @@ export const usePOS = () => {
   const resetForNewSale = useCallback(() => {
     setCurrentStep(2); // Go back to customer data step
     setCart([]);
+    setCartGifts([]);
     setGeneralDiscount(0);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
@@ -1048,6 +1126,7 @@ export const usePOS = () => {
     setCurrentStep(1);
     setConfiguration(null);
     setCart([]);
+    setCartGifts([]);
     setGeneralDiscount(0);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
@@ -1175,6 +1254,7 @@ export const usePOS = () => {
 
     // Products (Step 2)
     cart,
+    cartGifts,
     paginatedProducts,
     productPage,
     productPagination,
@@ -1247,7 +1327,7 @@ export const usePOS = () => {
     // Invoicing (Step 6)
     createdOrderId,
     createdOrderSaleTypeId,
-    
+
     // Close session modal
     showCloseSessionModal,
     sessionTotalCashSales,

@@ -396,325 +396,6 @@ const CreateSale = () => {
           className="flex-1 space-y-6"
           style={{ width: "70%" }}
         >
-          {/* Products Section - First */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Package className="w-5 h-5 text-primary" />
-                <CardTitle className="text-lg">Productos</CardTitle>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Agregue los artículos a la orden
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className={cn("flex gap-3", isPhySituation && "opacity-50 pointer-events-none")}>
-                {/* Stock Type Selector */}
-                <Select
-                  value={selectedStockTypeId}
-                  onValueChange={handleStockTypeChange}
-                >
-                  <SelectTrigger className="w-auto min-w-[160px]">
-                    <SelectValue placeholder="Tipo inventario" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {salesData?.stockTypes?.map((st) => (
-                      <SelectItem key={st.id} value={st.id.toString()}>
-                        {st.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Product Search */}
-                <div className="flex-1">
-                  <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-start text-muted-foreground font-normal"
-                      >
-                        <Search className="w-4 h-4 mr-2" />
-                        {selectedVariation
-                          ? `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`
-                          : "Buscar por nombre o SKU..."}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0 bg-popover">
-                      <Command shouldFilter={false}>
-                        <CommandInput
-                          placeholder="Buscar producto o SKU..."
-                          value={searchQuery}
-                          onValueChange={setSearchQuery}
-                        />
-                        <CommandList>
-                          {productsLoading ? (
-                            <div className="flex justify-center py-6">
-                              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                            </div>
-                          ) : (
-                            <>
-                              <CommandEmpty>
-                                No se encontraron productos.
-                              </CommandEmpty>
-                              <CommandGroup>
-                                {filteredVariations.map((variation) => {
-                                  const termsNames = variation.terms
-                                    .map((t) => t.name)
-                                    .join(" / ");
-                                  const displayTerms = termsNames
-                                    ? `${termsNames} (${variation.sku})`
-                                    : variation.sku;
-                                  return (
-                                    <CommandItem
-                                      key={variation.id}
-                                      value={`${variation.productTitle} ${variation.sku} ${termsNames}`}
-                                      onSelect={() => {
-                                        setSelectedVariation(variation);
-                                        setOpen(false);
-                                      }}
-                                      className="flex items-center gap-3 py-2"
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "h-4 w-4 shrink-0",
-                                          selectedVariation?.id === variation.id
-                                            ? "opacity-100"
-                                            : "opacity-0",
-                                        )}
-                                      />
-                                      {/* Product Image */}
-                                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
-                                        {variation.imageUrl ? (
-                                          <img
-                                            src={variation.imageUrl}
-                                            alt={variation.productTitle}
-                                            className="h-full w-full object-cover"
-                                          />
-                                        ) : (
-                                          <div className="flex h-full w-full items-center justify-center">
-                                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                                          </div>
-                                        )}
-                                      </div>
-                                      {/* Product Info */}
-                                      <div className="flex flex-1 flex-col min-w-0">
-                                        <span className="font-medium truncate">
-                                          {variation.productTitle}
-                                        </span>
-                                        <span className="text-sm text-muted-foreground truncate">
-                                          {displayTerms}
-                                        </span>
-                                      </div>
-                                      {/* Stock (filtered by selected stock type) */}
-                                      <span
-                                        className={cn(
-                                          "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
-                                          variation.stock > 0
-                                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-                                        )}
-                                      >
-                                        {variation.stock}
-                                      </span>
-                                    </CommandItem>
-                                  );
-                                })}
-                              </CommandGroup>
-                            </>
-                          )}
-                        </CommandList>
-                        {/* Pagination controls */}
-                        {totalProductPages > 1 && (
-                          <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
-                            <span className="text-xs text-muted-foreground">
-                              {(productPage - 1) * productPagination.size + 1}-
-                              {Math.min(
-                                productPage * productPagination.size,
-                                productPagination.total,
-                              )}{" "}
-                              de {productPagination.total}
-                            </span>
-                            <div className="flex gap-1">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-7 px-2 text-xs"
-                                onClick={() =>
-                                  handleProductPageChange(productPage - 1)
-                                }
-                                disabled={productPage <= 1 || productsLoading}
-                              >
-                                Anterior
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-7 px-2 text-xs"
-                                onClick={() =>
-                                  handleProductPageChange(productPage + 1)
-                                }
-                                disabled={
-                                  productPage >= totalProductPages ||
-                                  productsLoading
-                                }
-                              >
-                                Siguiente
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    const result = addProduct();
-                    if (!result.added && result.existingIndex !== undefined) {
-                      setHighlightedRowIndex(result.existingIndex);
-                      setTimeout(() => setHighlightedRowIndex(null), 1500);
-                    }
-                  }}
-                  disabled={!selectedVariation || !selectedStockTypeId}
-                >
-                  <Plus className="w-4 h-4 mr-2" /> Agregar
-                </Button>
-              </div>
-
-              {products.length > 0 && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Producto</TableHead>
-                      <TableHead className="w-20 text-center">
-                        Cantidad
-                      </TableHead>
-                      <TableHead className="w-28 text-center">
-                        Precio (S/)
-                      </TableHead>
-                      <TableHead className="w-24 text-center">
-                        Desc. (S/)
-                      </TableHead>
-                      <TableHead className="w-28 text-right">
-                        Subtotal
-                      </TableHead>
-                      <TableHead className="w-12"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {products.map((product, index) => (
-                      <TableRow
-                        key={index}
-                        className={cn(
-                          highlightedRowIndex === index && "animate-highlight-row"
-                        )}
-                      >
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {product.productName} (
-                              {product.variationName.replace(/ \/ /g, " - ")})
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              {product.stockTypeName}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col items-center">
-                            <Input
-                              type="number"
-                              value={
-                                product.quantity === 0 ? "" : product.quantity
-                              }
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (val === "") {
-                                  updateProduct(index, "quantity", 0);
-                                } else {
-                                  updateProduct(
-                                    index,
-                                    "quantity",
-                                    parseInt(val) || 0,
-                                  );
-                                }
-                              }}
-                              onBlur={() => {
-                                if (product.quantity < 1) {
-                                  updateProduct(index, "quantity", 1);
-                                }
-                              }}
-                              min="1"
-                              max={product.maxStock}
-                              className="w-16 text-center"
-                              disabled={isPhySituation}
-                            />
-                            <span className="text-xs text-muted-foreground mt-1">
-                              Stock: {product.maxStock}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={product.price}
-                            onChange={(e) =>
-                              updateProduct(
-                                index,
-                                "price",
-                                parseFloat(e.target.value) || 0,
-                              )
-                            }
-                            min="0"
-                            step="0.01"
-                            className="w-24"
-                            disabled={isPhySituation}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={product.discountAmount}
-                            onChange={(e) =>
-                              updateProduct(
-                                index,
-                                "discountAmount",
-                                parseFloat(e.target.value) || 0,
-                              )
-                            }
-                            min="0"
-                            step="0.01"
-                            className="w-20 text-center"
-                            disabled={isPhySituation}
-                          />
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(calculateLineSubtotal(product))}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeProduct(index)}
-                            className="text-destructive hover:text-destructive"
-                            disabled={isPhySituation}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
 
           {/* Sale & Client Info - Second */}
           <Card>
@@ -1095,6 +776,326 @@ const CreateSale = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Products Section - First */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-primary" />
+                <CardTitle className="text-lg">Productos</CardTitle>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Agregue los artículos a la orden
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className={cn("flex gap-3", isPhySituation && "opacity-50 pointer-events-none")}>
+                {/* Stock Type Selector */}
+                <Select
+                  value={selectedStockTypeId}
+                  onValueChange={handleStockTypeChange}
+                >
+                  <SelectTrigger className="w-auto min-w-[160px]">
+                    <SelectValue placeholder="Tipo inventario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {salesData?.stockTypes?.map((st) => (
+                      <SelectItem key={st.id} value={st.id.toString()}>
+                        {st.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Product Search */}
+                <div className="flex-1">
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-start text-muted-foreground font-normal"
+                      >
+                        <Search className="w-4 h-4 mr-2" />
+                        {selectedVariation
+                          ? `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`
+                          : "Buscar por nombre o SKU..."}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0 bg-popover">
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Buscar producto o SKU..."
+                          value={searchQuery}
+                          onValueChange={setSearchQuery}
+                        />
+                        <CommandList>
+                          {productsLoading ? (
+                            <div className="flex justify-center py-6">
+                              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                            </div>
+                          ) : (
+                            <>
+                              <CommandEmpty>
+                                No se encontraron productos.
+                              </CommandEmpty>
+                              <CommandGroup>
+                                {filteredVariations.map((variation) => {
+                                  const termsNames = variation.terms
+                                    .map((t) => t.name)
+                                    .join(" / ");
+                                  const displayTerms = termsNames
+                                    ? `${termsNames} (${variation.sku})`
+                                    : variation.sku;
+                                  return (
+                                    <CommandItem
+                                      key={variation.id}
+                                      value={`${variation.productTitle} ${variation.sku} ${termsNames}`}
+                                      onSelect={() => {
+                                        setSelectedVariation(variation);
+                                        setOpen(false);
+                                      }}
+                                      className="flex items-center gap-3 py-2"
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "h-4 w-4 shrink-0",
+                                          selectedVariation?.id === variation.id
+                                            ? "opacity-100"
+                                            : "opacity-0",
+                                        )}
+                                      />
+                                      {/* Product Image */}
+                                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
+                                        {variation.imageUrl ? (
+                                          <img
+                                            src={variation.imageUrl}
+                                            alt={variation.productTitle}
+                                            className="h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="flex h-full w-full items-center justify-center">
+                                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                          </div>
+                                        )}
+                                      </div>
+                                      {/* Product Info */}
+                                      <div className="flex flex-1 flex-col min-w-0">
+                                        <span className="font-medium truncate">
+                                          {variation.productTitle}
+                                        </span>
+                                        <span className="text-sm text-muted-foreground truncate">
+                                          {displayTerms}
+                                        </span>
+                                      </div>
+                                      {/* Stock (filtered by selected stock type) */}
+                                      <span
+                                        className={cn(
+                                          "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
+                                          variation.stock > 0
+                                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                                        )}
+                                      >
+                                        {variation.stock}
+                                      </span>
+                                    </CommandItem>
+                                  );
+                                })}
+                              </CommandGroup>
+                            </>
+                          )}
+                        </CommandList>
+                        {/* Pagination controls */}
+                        {totalProductPages > 1 && (
+                          <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
+                            <span className="text-xs text-muted-foreground">
+                              {(productPage - 1) * productPagination.size + 1}-
+                              {Math.min(
+                                productPage * productPagination.size,
+                                productPagination.total,
+                              )}{" "}
+                              de {productPagination.total}
+                            </span>
+                            <div className="flex gap-1">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() =>
+                                  handleProductPageChange(productPage - 1)
+                                }
+                                disabled={productPage <= 1 || productsLoading}
+                              >
+                                Anterior
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() =>
+                                  handleProductPageChange(productPage + 1)
+                                }
+                                disabled={
+                                  productPage >= totalProductPages ||
+                                  productsLoading
+                                }
+                              >
+                                Siguiente
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    const result = addProduct();
+                    if (!result.added && result.existingIndex !== undefined) {
+                      setHighlightedRowIndex(result.existingIndex);
+                      setTimeout(() => setHighlightedRowIndex(null), 1500);
+                    }
+                  }}
+                  disabled={!selectedVariation || !selectedStockTypeId}
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Agregar
+                </Button>
+              </div>
+
+              {products.length > 0 && (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Producto</TableHead>
+                      <TableHead className="w-20 text-center">
+                        Cantidad
+                      </TableHead>
+                      <TableHead className="w-28 text-center">
+                        Precio (S/)
+                      </TableHead>
+                      <TableHead className="w-24 text-center">
+                        Desc. (S/)
+                      </TableHead>
+                      <TableHead className="w-28 text-right">
+                        Subtotal
+                      </TableHead>
+                      <TableHead className="w-12"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {products.map((product, index) => (
+                      <TableRow
+                        key={index}
+                        className={cn(
+                          highlightedRowIndex === index && "animate-highlight-row"
+                        )}
+                      >
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {product.productName} (
+                              {product.variationName.replace(/ \/ /g, " - ")})
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              {product.stockTypeName}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col items-center">
+                            <Input
+                              type="number"
+                              value={
+                                product.quantity === 0 ? "" : product.quantity
+                              }
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === "") {
+                                  updateProduct(index, "quantity", 0);
+                                } else {
+                                  updateProduct(
+                                    index,
+                                    "quantity",
+                                    parseInt(val) || 0,
+                                  );
+                                }
+                              }}
+                              onBlur={() => {
+                                if (product.quantity < 1) {
+                                  updateProduct(index, "quantity", 1);
+                                }
+                              }}
+                              min="1"
+                              max={product.maxStock}
+                              className="w-16 text-center"
+                              disabled={isPhySituation}
+                            />
+                            <span className="text-xs text-muted-foreground mt-1">
+                              Stock: {product.maxStock}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={product.price}
+                            onChange={(e) =>
+                              updateProduct(
+                                index,
+                                "price",
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            min="0"
+                            step="0.01"
+                            className="w-24"
+                            disabled={isPhySituation}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={product.discountAmount}
+                            onChange={(e) =>
+                              updateProduct(
+                                index,
+                                "discountAmount",
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            min="0"
+                            step="0.01"
+                            className="w-20 text-center"
+                            disabled={isPhySituation}
+                          />
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(calculateLineSubtotal(product))}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeProduct(index)}
+                            className="text-destructive hover:text-destructive"
+                            disabled={isPhySituation}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </form>
 
         {/* Sidebar - 30% */}

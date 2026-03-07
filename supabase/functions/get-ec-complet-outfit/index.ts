@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-// CORS headers
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-channel-code'
@@ -38,78 +38,92 @@ async function getLevelDiscount(supabaseClient: any, userId: string | null): Pro
   const points = cp?.points ?? 0;
   return LEVELS.find(l => points >= l.min && points <= l.max)?.discount ?? 0;
 }
+
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: corsHeaders
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Método no permitido. Usa POST.'
+    }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
+
   const channel = req.headers.get('x-channel-code');
-  const url = new URL(req.url);
-  const search = url.searchParams.get('search') || null;
-  const category_id = Number(url.searchParams.get('category_id')) || null;
-  const size = Number(url.searchParams.get('size')) || 20;
-  const page = Number(url.searchParams.get('page')) || 1;
-  const sale_price = url.searchParams.get('sale_price') || false;
-  const order = url.searchParams.get('order') || null;
   const userId = getUserIdFromRequest(req);
+
   try {
-    // Create Supabase client
-    const supabaseClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
-      global: {
-        headers: {
-          Authorization: req.headers.get('Authorization')
+    // Leer body
+    const body = await req.json();
+    const category_id = body?.category_id;
+
+    if (!category_id || isNaN(Number(category_id))) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'El campo "category_id" es requerido y debe ser un número válido'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Crear cliente Supabase
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization') }
         }
       }
-    });
+    );
 
-    // Validate channel code
-    const channelInfo = await supabaseClient.from('channels').select('*').eq('code', channel).single();
+    // Validar canal
+    const channelInfo = await supabaseClient
+      .from('channels')
+      .select('*')
+      .eq('code', channel)
+      .single();
+
     if (channelInfo.error || !channelInfo.data) {
-      console.error('Channel validation error:', channelInfo.error);
       return new Response(JSON.stringify({
         success: false,
         error: 'Código de canal inválido',
         details: channelInfo.error ? channelInfo.error.message : 'No channel found'
       }), {
         status: 400,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Call the stored procedure
-    const { data, error } = await supabaseClient.rpc('sp_ec_get_product_list', {
-      p_search: search,
-      p_category_id: category_id,
-      p_sale_price: sale_price,
-      p_order: order,
-      p_price_list_id: channelInfo.data?.price_list_id,
-      p_branch_id: channelInfo.data?.branch_id,
-      p_warehouse_id: channelInfo.data?.warehouse_id,
-      p_stock_type_id: channelInfo.data?.stock_type_id,
-      p_channel_id: channelInfo.data?.id,
-      p_sale_type_id: channelInfo.data?.sale_type_id,
-      p_size: size,
-      p_page: page
+    // Llamar al SP — excluye la categoría recibida, 1 producto por categoría, máx 4
+    const { data, error } = await supabaseClient.rpc('sp_ec_get_complet_outfit', {
+      p_exclude_category_id: Number(category_id),
+      p_price_list_id:       channelInfo.data?.price_list_id,
+      p_branch_id:           channelInfo.data?.branch_id,
+      p_warehouse_id:        channelInfo.data?.warehouse_id,
+      p_stock_type_id:       channelInfo.data?.stock_type_id,
+      p_channel_id:          channelInfo.data?.id,
+      p_sale_type_id:        channelInfo.data?.sale_type_id,
     });
+
     if (error) {
       console.error('Database error:', error);
       return new Response(JSON.stringify({
         success: false,
-        error: 'Error al obtener los productos',
+        error: 'Error al obtener sugerencias de outfit',
         details: error.message
       }), {
         status: 500,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
     // Aplicar descuento de nivel si aplica
     const levelDiscount = await getLevelDiscount(supabaseClient, userId);
     if (levelDiscount > 0 && data?.data && Array.isArray(data.data)) {
@@ -119,17 +133,14 @@ Deno.serve(async (req) => {
       }));
     }
 
-    // Return the products
     return new Response(JSON.stringify({
       success: true,
       ...data
     }), {
       status: 200,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
+
   } catch (error) {
     console.error('Unexpected error:', error);
     return new Response(JSON.stringify({
@@ -138,10 +149,7 @@ Deno.serve(async (req) => {
       details: error instanceof Error ? error.message : 'Unknown error'
     }), {
       status: 500,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
