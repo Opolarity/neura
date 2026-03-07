@@ -5,6 +5,9 @@ import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, V
 export interface ProductFormData {
   productName: string;
   shortDescription: string;
+  promotionalText: string;
+  promotionalBgColor: string;
+  promotionalTextColor: string;
   description: string;
   isVariable: boolean;
   isActive: boolean;
@@ -51,6 +54,9 @@ export interface ProductDetailsResponse {
     id: number;
     title: string;
     short_description: string;
+    promotional_text: string | null;
+    promotional_bg_color: string | null;
+    promotional_text_color: string | null;
     description: string;
     is_variable: boolean;
     active: boolean;
@@ -86,6 +92,9 @@ export interface ProductDetailsResponse {
 export interface CreateProductRequest {
   productName: string;
   shortDescription: string;
+  promotionalText: string;
+  promotionalBgColor: string;
+  promotionalTextColor: string;
   description: string;
   isVariable: boolean;
   isActive: boolean;
@@ -117,6 +126,9 @@ export interface UpdateProductRequest extends CreateProductRequest {
 export interface AddProductState {
   productName: string;
   shortDescription: string;
+  promotionalText: string;
+  promotionalBgColor: string;
+  promotionalTextColor: string;
   description: string;
   selectedCategories: number[];
   isVariable: boolean;

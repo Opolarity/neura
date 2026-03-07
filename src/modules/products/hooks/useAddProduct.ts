@@ -19,6 +19,9 @@ export const useAddProduct = () => {
   // Form state
   const [productName, setProductName] = useState('');
   const [shortDescription, setShortDescription] = useState('');
+  const [promotionalText, setPromotionalText] = useState('');
+  const [promotionalBgColor, setPromotionalBgColor] = useState('#ffffff');
+  const [promotionalTextColor, setPromotionalTextColor] = useState('#000000');
   const [description, setDescription] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [isVariable, setIsVariable] = useState(false);
@@ -142,6 +145,9 @@ export const useAddProduct = () => {
 
       setProductName(adapted.product.title);
       setShortDescription(adapted.product.shortDescription);
+      setPromotionalText(adapted.product.promotionalText);
+      setPromotionalBgColor(adapted.product.promotionalBgColor);
+      setPromotionalTextColor(adapted.product.promotionalTextColor);
       setDescription(adapted.product.description);
       setIsVariable(adapted.product.isVariable);
       setIsActive(adapted.product.isActive);
@@ -553,6 +559,9 @@ export const useAddProduct = () => {
           Number(productId),
           productName,
           shortDescription,
+          promotionalText,
+          promotionalBgColor,
+          promotionalTextColor,
           description,
           isVariable,
           isActive,
@@ -579,6 +588,9 @@ export const useAddProduct = () => {
         const request = AddProductAdapter.prepareCreateRequest(
           productName,
           shortDescription,
+          promotionalText,
+          promotionalBgColor,
+          promotionalTextColor,
           description,
           isVariable,
           isActive,
@@ -625,6 +637,12 @@ export const useAddProduct = () => {
     setProductName,
     shortDescription,
     setShortDescription,
+    promotionalText,
+    setPromotionalText,
+    promotionalBgColor,
+    setPromotionalBgColor,
+    promotionalTextColor,
+    setPromotionalTextColor,
     description,
     setDescription,
     selectedCategories,

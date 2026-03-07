@@ -2170,7 +2170,11 @@ export type Database = {
           id: number
           is_active: boolean | null
           is_variable: boolean
+          promotional_bg_color: string | null
+          promotional_text: string | null
+          promotional_text_color: string | null
           short_description: string
+          sizes_image_url: string | null
           title: string
           web: boolean
         }
@@ -2181,7 +2185,11 @@ export type Database = {
           id?: number
           is_active?: boolean | null
           is_variable: boolean
+          promotional_bg_color?: string | null
+          promotional_text?: string | null
+          promotional_text_color?: string | null
           short_description?: string
+          sizes_image_url?: string | null
           title: string
           web?: boolean
         }
@@ -2192,7 +2200,11 @@ export type Database = {
           id?: number
           is_active?: boolean | null
           is_variable?: boolean
+          promotional_bg_color?: string | null
+          promotional_text?: string | null
+          promotional_text_color?: string | null
           short_description?: string
+          sizes_image_url?: string | null
           title?: string
           web?: boolean
         }
