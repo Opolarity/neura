@@ -56,4 +56,5 @@ export interface TermGroupOption {
   id: number;
   code: string;
   name: string;
+  description: string | null;
 }
