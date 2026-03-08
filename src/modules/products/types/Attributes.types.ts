@@ -7,6 +7,7 @@ export interface TermItem {
 export interface AttributeGroup {
   group_id: number;
   group_name: string;
+  group_description: string | null;
   terms: TermItem[];
 }
 
