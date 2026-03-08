@@ -4740,31 +4740,18 @@ export type Database = {
         Args: { p_page?: number; p_size?: number }
         Returns: Json
       }
-      sp_get_terms:
-        | {
-            Args: {
-              p_group?: number
-              p_max_pr?: number
-              p_min_pr?: number
-              p_order?: string
-              p_page?: number
-              p_search?: string
-              p_size?: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_group?: number
-              p_max_pr?: number
-              p_min_pr?: number
-              p_order?: string
-              p_page?: number
-              p_search?: string
-              p_size?: number
-            }
-            Returns: Json
-          }
+      sp_get_terms: {
+        Args: {
+          p_group?: number
+          p_max_pr?: number
+          p_min_pr?: number
+          p_order?: string
+          p_page?: number
+          p_search?: string
+          p_size?: number
+        }
+        Returns: Json
+      }
       sp_get_users: {
         Args: {
           p_branches?: number
