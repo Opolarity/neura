@@ -2129,6 +2129,57 @@ export type Database = {
           },
         ]
       }
+      product_template: {
+        Row: {
+          active: boolean | null
+          code: string | null
+          created_at: string | null
+          description: string | null
+          is_active: boolean | null
+          is_variable: boolean | null
+          product_template_id: number
+          promotional_bg_color: string | null
+          promotional_text: string | null
+          short_description: string | null
+          sizes_image_url: string | null
+          title: string
+          web: boolean | null
+          woo_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          code?: string | null
+          created_at?: string | null
+          description?: string | null
+          is_active?: boolean | null
+          is_variable?: boolean | null
+          product_template_id?: number
+          promotional_bg_color?: string | null
+          promotional_text?: string | null
+          short_description?: string | null
+          sizes_image_url?: string | null
+          title: string
+          web?: boolean | null
+          woo_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          code?: string | null
+          created_at?: string | null
+          description?: string | null
+          is_active?: boolean | null
+          is_variable?: boolean | null
+          product_template_id?: number
+          promotional_bg_color?: string | null
+          promotional_text?: string | null
+          short_description?: string | null
+          sizes_image_url?: string | null
+          title?: string
+          web?: boolean | null
+          woo_id?: string | null
+        }
+        Relationships: []
+      }
       product_variation_images: {
         Row: {
           id: number
@@ -2165,6 +2216,7 @@ export type Database = {
       products: {
         Row: {
           active: boolean
+          code: string | null
           created_at: string
           description: string | null
           id: number
@@ -2180,6 +2232,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          code?: string | null
           created_at?: string
           description?: string | null
           id?: number
@@ -2195,6 +2248,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          code?: string | null
           created_at?: string
           description?: string | null
           id?: number
@@ -4337,6 +4391,7 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_ec_get_order_success: { Args: { p_order_id: number }; Returns: Json }
       sp_ec_get_product_detail: {
         Args: {
           p_branch_id?: number
@@ -4685,18 +4740,31 @@ export type Database = {
         Args: { p_page?: number; p_size?: number }
         Returns: Json
       }
-      sp_get_terms: {
-        Args: {
-          p_group?: number
-          p_max_pr?: number
-          p_min_pr?: number
-          p_order?: string
-          p_page?: number
-          p_search?: string
-          p_size?: number
-        }
-        Returns: Json
-      }
+      sp_get_terms:
+        | {
+            Args: {
+              p_group?: number
+              p_max_pr?: number
+              p_min_pr?: number
+              p_order?: string
+              p_page?: number
+              p_search?: string
+              p_size?: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_group?: number
+              p_max_pr?: number
+              p_min_pr?: number
+              p_order?: string
+              p_page?: number
+              p_search?: string
+              p_size?: number
+            }
+            Returns: Json
+          }
       sp_get_users: {
         Args: {
           p_branches?: number

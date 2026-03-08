@@ -169,9 +169,11 @@ const AttributesPage = () => {
                               <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                             )}
                             <span className="font-semibold">{group.group_name}</span>
-                            <Badge variant="outline" className="text-xs">
-                              ATRIBUTO
-                            </Badge>
+                            {group.group_description && (
+                              <span className="text-xs text-muted-foreground font-normal">
+                                {group.group_description}
+                              </span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
