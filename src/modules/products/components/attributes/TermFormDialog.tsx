@@ -113,7 +113,14 @@ const TermFormDialog = ({
                     <SelectContent>
                       {termGroups.map((group) => (
                         <SelectItem key={group.id} value={group.id.toString()}>
-                          {group.name}
+                          <div className="flex items-center gap-2">
+                            <span>{group.name}</span>
+                            {group.description && (
+                              <span className="text-xs text-muted-foreground">
+                                — {group.description}
+                              </span>
+                            )}
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>

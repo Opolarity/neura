@@ -96,7 +96,7 @@ export const updateTermGroup = async (data: AttributeFormValues) => {
 export const getTermGroupsForSelect = async (): Promise<TermGroupOption[]> => {
   const { data, error } = await supabase
     .from("term_groups")
-    .select("id, code, name")
+    .select("id, code, name, description")
     .eq("is_active", true)
     .order("name");
 
