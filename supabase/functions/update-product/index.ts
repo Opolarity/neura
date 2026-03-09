@@ -137,6 +137,10 @@ serve(async (req) => {
       p_variations: variations,
       p_reset_variations: resetVariations,
       p_user_id: user.id,
+      p_promotional_text: promotionalText || null,
+      p_promotional_bg_color: promotionalBgColor || null,
+      p_promotional_text_color: promotionalTextColor || null,
+      p_sizes_image_url: sizesImageUrl || null,
     });
 
     if (spError) {
