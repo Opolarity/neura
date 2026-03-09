@@ -37,7 +37,7 @@ serve(async (req) => {
     // Fetch product basic data
     const { data: product, error: productError } = await supabase
       .from('products')
-      .select('id, title, short_description, description, is_variable, active, web')
+      .select('id, title, short_description, description, is_variable, active, web, promotional_text, promotional_bg_color, promotional_text_color, sizes_image_url')
       .eq('id', productId)
       .single();
 
@@ -87,7 +87,11 @@ serve(async (req) => {
         description: product.description,
         is_variable: product.is_variable,
         active: product.active,
-        web: product.web
+        web: product.web,
+        promotional_text: product.promotional_text,
+        promotional_bg_color: product.promotional_bg_color,
+        promotional_text_color: product.promotional_text_color,
+        sizes_image_url: product.sizes_image_url
       },
       categories: (categoriesResult.data || []).map((c: any) => c.category_id),
       images: (imagesResult.data || []).map((img: any) => ({
