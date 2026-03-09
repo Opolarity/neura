@@ -49,7 +49,11 @@ serve(async (req) => {
 
     const { 
       productName, 
-      shortDescription, 
+      shortDescription,
+      promotionalText,
+      promotionalBgColor,
+      promotionalTextColor,
+      sizesImageUrl,
       description, 
       isVariable, 
       isActive, 
