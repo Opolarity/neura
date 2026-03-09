@@ -37,7 +37,7 @@ serve(async (req) => {
     // Fetch product basic data
     const { data: product, error: productError } = await supabase
       .from('products')
-      .select('id, title, short_description, description, is_variable, active, web')
+      .select('id, title, short_description, description, is_variable, active, web, promotional_text, promotional_bg_color, promotional_text_color, sizes_image_url')
       .eq('id', productId)
       .single();
 
