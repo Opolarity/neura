@@ -35,6 +35,7 @@ export interface POSSession {
   warehouseId: number;
   branchId: number;
   businessAccountId: number;
+  saleTypeId: number;
   openingAmount: number;
   closingAmount: number | null;
   expectedAmount: number | null;
@@ -53,6 +54,7 @@ export interface POSSessionApiResponse {
   warehouse_id: number;
   branch_id: number;
   business_account: number;
+  sale_type_id: number;
   opening_amount: number;
   closing_amount?: number | null;
   expected_amount?: number | null;
@@ -118,6 +120,7 @@ export interface POSCartItem {
   stockTypeName: string;
   maxStock: number;
   imageUrl: string | null;
+  isGift?: boolean;
 }
 
 // =============================================

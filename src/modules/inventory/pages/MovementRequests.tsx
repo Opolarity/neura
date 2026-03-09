@@ -18,10 +18,16 @@ const MovementRequests = () => {
             Listado de solicitudes de movimiento de inventario entre almacenes
           </p>
         </div>
-        <Button onClick={() => navigate("/inventory/movement-requests/create")}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nueva Solicitud
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate("/inventory/movement-requests/send")}>
+            <Plus className="mr-2 h-4 w-4" />
+            Enviar Inventario
+          </Button>
+          <Button onClick={() => navigate("/inventory/movement-requests/create")}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nueva Solicitud
+          </Button>
+        </div>
       </div>
 
       <Card>

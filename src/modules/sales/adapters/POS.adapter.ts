@@ -15,6 +15,7 @@ export const adaptPOSSession = (
     warehouseId: apiResponse.warehouse_id,
     branchId: apiResponse.branch_id,
     businessAccountId: apiResponse.business_account,
+    saleTypeId: apiResponse.sale_type_id,
     openingAmount: apiResponse.opening_amount,
     closingAmount: apiResponse.closing_amount ?? null,
     expectedAmount: apiResponse.expected_amount ?? null,

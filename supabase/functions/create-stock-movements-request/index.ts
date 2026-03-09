@@ -80,14 +80,37 @@ Deno.serve(async (req) => {
     // 2. Resolve Module, Status, Situation, and Movement Type IDs
     const moduleId = await resolveId('modules', module_code)
 
-    // Status and Situation are context-dependent (belong to module)
-    const statusId = await resolveId('statuses', status_code, { module_id: moduleId })
+    // Situation belongs to module; resolve it first, then get its status_id
     const situationId = await resolveId('situations', situation_code, { module_id: moduleId })
     const movementTypeId = await resolveId('types', movement_type_code)
+
+    // Resolve statusId from the situation's own status_id (statuses table has no module_id)
+    let statusId: number | null = null
+    if (situationId) {
+      const { data: sitRow } = await supabase
+        .from('situations')
+        .select('status_id')
+        .eq('id', situationId)
+        .single()
+      statusId = sitRow?.status_id ?? null
+    }
 
     if (!moduleId || !statusId || !situationId || !movementTypeId) {
       throw new Error(`Could not resolve codes: module(${module_code}:${moduleId}), status(${status_code}:${statusId}), situation(${situation_code}:${situationId}), movement_type(${movement_type_code}:${movementTypeId})`)
     }
+
+    // 2.5 Resolve the user's warehouse from their profile
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('warehouse_id')
+      .eq('UID', created_by)
+      .single()
+
+    if (profileError || !profileData) {
+      throw new Error(`Could not resolve user profile warehouse: ${profileError?.message}`)
+    }
+
+    const userWarehouseId = profileData.warehouse_id
 
     // 3. Create Stock Movement Request
     const { data: requestData, error: requestError } = await supabase
@@ -109,7 +132,7 @@ Deno.serve(async (req) => {
       return `${name}${variation}: ${item.quantity}`
     }).join('\n')
 
-    // 5. Create Request Situation History with notes
+    // 5. Create Request Situation History with notes (warehouse_id = user's profile warehouse)
     const { error: sitError } = await supabase
       .from('stock_movement_request_situations')
       .insert([{
@@ -117,7 +140,7 @@ Deno.serve(async (req) => {
         module_id: moduleId,
         status_id: statusId,
         situation_id: situationId,
-        warehouse_id: in_warehouse_id,
+        warehouse_id: userWarehouseId,
         message: reason,
         notes: noteLines,
         last_row: true,

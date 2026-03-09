@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { AddProductService } from '../services/AddProduct.service';
 import { AddProductAdapter } from '../adapters/AddProduct.adapter';
 import type { 
@@ -19,6 +20,11 @@ export const useAddProduct = () => {
   // Form state
   const [productName, setProductName] = useState('');
   const [shortDescription, setShortDescription] = useState('');
+  const [promotionalText, setPromotionalText] = useState('');
+  const [promotionalBgColor, setPromotionalBgColor] = useState('#ffffff');
+  const [promotionalTextColor, setPromotionalTextColor] = useState('#000000');
+  const [sizesImageUrl, setSizesImageUrl] = useState<string | null>(null);
+  const [sizesImageFile, setSizesImageFile] = useState<File | null>(null);
   const [description, setDescription] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [isVariable, setIsVariable] = useState(false);
@@ -142,6 +148,10 @@ export const useAddProduct = () => {
 
       setProductName(adapted.product.title);
       setShortDescription(adapted.product.shortDescription);
+      setPromotionalText(adapted.product.promotionalText);
+      setPromotionalBgColor(adapted.product.promotionalBgColor);
+      setPromotionalTextColor(adapted.product.promotionalTextColor);
+      setSizesImageUrl(adapted.product.sizesImageUrl);
       setDescription(adapted.product.description);
       setIsVariable(adapted.product.isVariable);
       setIsActive(adapted.product.isActive);
@@ -548,11 +558,28 @@ export const useAddProduct = () => {
 
     setLoading(true);
     try {
+      // Upload sizes image if a new file was selected
+      let finalSizesImageUrl = sizesImageUrl;
+      if (sizesImageFile) {
+        const fileExt = sizesImageFile.name.split('.').pop();
+        const filePath = `products-images/sizes/${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('products')
+          .upload(filePath, sizesImageFile);
+        if (uploadError) throw new Error('Error al subir imagen de tallas: ' + uploadError.message);
+        const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
+        finalSizesImageUrl = urlData.publicUrl;
+      }
+
       if (isEditMode) {
         const request = AddProductAdapter.prepareUpdateRequest(
           Number(productId),
           productName,
           shortDescription,
+          promotionalText,
+          promotionalBgColor,
+          promotionalTextColor,
+          finalSizesImageUrl,
           description,
           isVariable,
           isActive,
@@ -579,6 +606,10 @@ export const useAddProduct = () => {
         const request = AddProductAdapter.prepareCreateRequest(
           productName,
           shortDescription,
+          promotionalText,
+          promotionalBgColor,
+          promotionalTextColor,
+          finalSizesImageUrl,
           description,
           isVariable,
           isActive,
@@ -625,6 +656,15 @@ export const useAddProduct = () => {
     setProductName,
     shortDescription,
     setShortDescription,
+    promotionalText,
+    setPromotionalText,
+    promotionalBgColor,
+    setPromotionalBgColor,
+    promotionalTextColor,
+    setPromotionalTextColor,
+    sizesImageUrl,
+    sizesImageFile,
+    setSizesImageFile,
     description,
     setDescription,
     selectedCategories,

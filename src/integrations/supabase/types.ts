@@ -902,6 +902,7 @@ export type Database = {
           invoice_number: string | null
           invoice_type_id: number
           pdf_url: string | null
+          qr_data: string | null
           tax_serie: string | null
           total_amount: number
           total_free: number | null
@@ -925,6 +926,7 @@ export type Database = {
           invoice_number?: string | null
           invoice_type_id: number
           pdf_url?: string | null
+          qr_data?: string | null
           tax_serie?: string | null
           total_amount: number
           total_free?: number | null
@@ -948,6 +950,7 @@ export type Database = {
           invoice_number?: string | null
           invoice_type_id?: number
           pdf_url?: string | null
+          qr_data?: string | null
           tax_serie?: string | null
           total_amount?: number
           total_free?: number | null
@@ -1484,6 +1487,7 @@ export type Database = {
           shipping_method_code: string | null
           state_id: number | null
           subtotal: number
+          success_viewed: boolean
           total: number
           user_id: string | null
         }
@@ -1513,6 +1517,7 @@ export type Database = {
           shipping_method_code?: string | null
           state_id?: number | null
           subtotal: number
+          success_viewed?: boolean
           total: number
           user_id?: string | null
         }
@@ -1542,6 +1547,7 @@ export type Database = {
           shipping_method_code?: string | null
           state_id?: number | null
           subtotal?: number
+          success_viewed?: boolean
           total?: number
           user_id?: string | null
         }
@@ -2123,6 +2129,57 @@ export type Database = {
           },
         ]
       }
+      product_template: {
+        Row: {
+          active: boolean | null
+          code: string | null
+          created_at: string | null
+          description: string | null
+          is_active: boolean | null
+          is_variable: boolean | null
+          product_template_id: number
+          promotional_bg_color: string | null
+          promotional_text: string | null
+          short_description: string | null
+          sizes_image_url: string | null
+          title: string
+          web: boolean | null
+          woo_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          code?: string | null
+          created_at?: string | null
+          description?: string | null
+          is_active?: boolean | null
+          is_variable?: boolean | null
+          product_template_id?: number
+          promotional_bg_color?: string | null
+          promotional_text?: string | null
+          short_description?: string | null
+          sizes_image_url?: string | null
+          title: string
+          web?: boolean | null
+          woo_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          code?: string | null
+          created_at?: string | null
+          description?: string | null
+          is_active?: boolean | null
+          is_variable?: boolean | null
+          product_template_id?: number
+          promotional_bg_color?: string | null
+          promotional_text?: string | null
+          short_description?: string | null
+          sizes_image_url?: string | null
+          title?: string
+          web?: boolean | null
+          woo_id?: string | null
+        }
+        Relationships: []
+      }
       product_variation_images: {
         Row: {
           id: number
@@ -2159,34 +2216,49 @@ export type Database = {
       products: {
         Row: {
           active: boolean
+          code: string | null
           created_at: string
           description: string | null
           id: number
           is_active: boolean | null
           is_variable: boolean
+          promotional_bg_color: string | null
+          promotional_text: string | null
+          promotional_text_color: string | null
           short_description: string
+          sizes_image_url: string | null
           title: string
           web: boolean
         }
         Insert: {
           active?: boolean
+          code?: string | null
           created_at?: string
           description?: string | null
           id?: number
           is_active?: boolean | null
           is_variable: boolean
+          promotional_bg_color?: string | null
+          promotional_text?: string | null
+          promotional_text_color?: string | null
           short_description?: string
+          sizes_image_url?: string | null
           title: string
           web?: boolean
         }
         Update: {
           active?: boolean
+          code?: string | null
           created_at?: string
           description?: string | null
           id?: number
           is_active?: boolean | null
           is_variable?: boolean
+          promotional_bg_color?: string | null
+          promotional_text?: string | null
+          promotional_text_color?: string | null
           short_description?: string
+          sizes_image_url?: string | null
           title?: string
           web?: boolean
         }
@@ -4098,7 +4170,6 @@ export type Database = {
           p_branch_id: number
           p_cart_id: number
           p_price_list_id: number
-          p_product_discount?: number
           p_quantity: number
           p_sale_type_id: number
           p_stock_type_id: number
@@ -4299,7 +4370,7 @@ export type Database = {
         Args: {
           p_branch_id: number
           p_channel_id: number
-          p_exclude_category_id: number
+          p_exclude_category_id: number[]
           p_price_list_id: number
           p_sale_type_id: number
           p_stock_type_id: number
@@ -4320,6 +4391,7 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_ec_get_order_success: { Args: { p_order_id: number }; Returns: Json }
       sp_ec_get_product_detail: {
         Args: {
           p_branch_id?: number
@@ -4378,7 +4450,7 @@ export type Database = {
         Args: {
           p_category_id: number
           p_channel_id: number
-          p_exclude_product_id: number
+          p_exclude_product_id: number[]
           p_warehouse_id: number
         }
         Returns: Json
@@ -4753,6 +4825,18 @@ export type Database = {
         Returns: Json
       }
       sp_update_invoice_sunat_response:
+        | {
+            Args: {
+              p_cdr_url?: string
+              p_declared?: boolean
+              p_invoice_id: number
+              p_invoice_number?: string
+              p_pdf_url?: string
+              p_qr_data?: string
+              p_xml_url?: string
+            }
+            Returns: undefined
+          }
         | {
             Args: {
               p_cdr_url?: string

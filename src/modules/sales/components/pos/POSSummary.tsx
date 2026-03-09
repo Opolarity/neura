@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, ShoppingBag, User } from "lucide-react";
+import { ShoppingCart, User } from "lucide-react";
 import type { POSCartItem, POSCustomerData } from "../../types/POS.types";
 import { formatCurrency } from "../../adapters/POS.adapter";
 
@@ -10,7 +10,7 @@ interface POSSummaryProps {
   discountAmount: number;
   shippingCost: number;
   total: number;
-  showProducts?: boolean;
+  
 }
 
 export default function POSSummary({
@@ -19,8 +19,7 @@ export default function POSSummary({
   subtotal,
   discountAmount,
   shippingCost,
-  total,
-  showProducts = false
+  total
 }: POSSummaryProps) {
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -69,29 +68,6 @@ export default function POSSummary({
           </div>
         </div>
 
-        {/* Product list */}
-        {showProducts && cart.length > 0 &&
-        <div className="space-y-2 border-t pt-4">
-            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1">
-              <ShoppingBag className="w-3 h-3" />
-              PRODUCTOS
-            </div>
-            {cart.map((item) =>
-          <div
-            key={item.variationId}
-            className="flex justify-between items-start text-sm border-b last:border-b-0 pb-2 last:pb-0">
-
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate text-xs">{item.productName}</p>
-                  <p className="text-xs text-muted-foreground">{item.variationName} × {item.quantity}</p>
-                </div>
-                <span className="text-xs font-medium ml-2 whitespace-nowrap">
-                  S/ {formatCurrency(item.price * item.quantity)}
-                </span>
-              </div>
-          )}
-          </div>
-        }
 
         {/* Selected customer */}
         {customer.customerName &&

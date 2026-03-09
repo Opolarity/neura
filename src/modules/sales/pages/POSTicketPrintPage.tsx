@@ -21,6 +21,7 @@ interface InvoiceData {
   client_email: string | null;
   client_address: string | null;
   qr_data: string | null;
+  created_by: string;
 }
 
 interface InvoiceItem {
@@ -84,53 +85,37 @@ function numberToWords(num: number): string {
   return words;
 }
 
-export default function InvoicePrintPage() {
-  const { id } = useParams<{ id: string }>();
-  const [loading, setLoading] = useState(true);
+export default function POSTicketPrintPage() {
+  const { invoiceId } = useParams<{ invoiceId: string }>();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) generatePdf(Number(id));
-  }, [id]);
+    if (invoiceId) generatePdf(Number(invoiceId));
+  }, [invoiceId]);
 
   const loadImage = async (url: string): Promise<string> => {
     const response = await fetch(url);
     const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
     return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext("2d")!;
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-        URL.revokeObjectURL(objectUrl);
-        resolve(canvas.toDataURL("image/png"));
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error("Failed to load image"));
-      };
-      img.src = objectUrl;
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
     });
   };
 
-  const generatePdf = async (invoiceId: number) => {
+  const generatePdf = async (id: number) => {
     try {
-      // Fetch invoice, items, and company params in parallel
-      const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes] = await Promise.all([
+      const [invoiceRes, itemsRes, paramsRes, invoiceLogoRes] = await Promise.all([
         supabase
           .from("invoices")
-          .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by, qr_data")
-          .eq("id", invoiceId)
+          .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, qr_data, created_by")
+          .eq("id", id)
           .single(),
         supabase
           .from("invoice_items")
           .select("description, quantity, unit_price, discount, igv, total, measurement_unit")
-          .eq("invoice_id", invoiceId),
+          .eq("invoice_id", id),
         supabase
           .from("paremeters")
           .select("name, value, code"),
@@ -139,33 +124,19 @@ export default function InvoicePrintPage() {
           .select("name, value")
           .eq("name", "InvoiceLogoUrl")
           .maybeSingle(),
-        supabase
-          .from("order_invoices")
-          .select("orders(*, branches(*))")
-          .eq("invoice_id", invoiceId)
-          .single(),
       ]);
-
-      const neighborhood = await supabase
-      .from("neighborhoods")
-      .select("name")
-      .eq("id", branchRes.data.orders.branches.neighborhood_id)
-      .single();
 
       if (invoiceRes.error || !invoiceRes.data) {
         setError("No se encontró el comprobante");
-        setLoading(false);
         return;
       }
 
-      const invoice = invoiceRes.data as InvoiceData & { created_by: string };
+      const invoice = invoiceRes.data as unknown as InvoiceData;
       const items = (itemsRes.data || []) as InvoiceItem[];
       const params = (paramsRes.data || []) as { name: string; value: string; code: string | null }[];
 
-      // Helper to get parameter by code
       const getParam = (code: string) => params.find((p) => p.code === code)?.value || "";
 
-      // Fetch doc type, invoice type, profile (cashier) in parallel
       const [docTypeRes, invTypeRes, profileRes] = await Promise.all([
         supabase.from("document_types").select("name").eq("id", invoice.customer_document_type_id).single(),
         supabase.from("types").select("name").eq("id", invoice.invoice_type_id).single(),
@@ -184,19 +155,16 @@ export default function InvoicePrintPage() {
         }
       }
 
-      const companyName =  "OVERTAKE UNLIMITED EIRL" //getParam("COMPANY_NAME") || "EMPRESA";
-      const companyAddress = branchRes.data?.orders?.branches?.address + " " + neighborhood?.data?.name || ""; //getParam("COMPANY_ADDRESS") || "";
-      const companyPhone = "951 645 997"; //getParam("COMPANY_PHONE") || "";
-      const companyEmail = "overta.peru.empresa@gmail.com"; //getParam("COMPANY_EMAIL") || "";
-      const companyRuc = "20607798002" //getParam("COMPANY_RUC") || "";
+      const companyName = getParam("COMPANY_NAME") || "EMPRESA";
+      const companyAddress = getParam("COMPANY_ADDRESS") || "";
+      const companyPhone = getParam("COMPANY_PHONE") || "";
+      const companyEmail = getParam("COMPANY_EMAIL") || "";
+      const companyRuc = getParam("COMPANY_RUC") || "";
 
-      // Ticket width: 80mm
       const pageWidth = 80;
       const margin = 3;
       const contentWidth = pageWidth - margin * 2;
-
-      // Estimate height generously
-      const estimatedHeight = 200 + items.length * 12;
+      const estimatedHeight = 250 + items.length * 12;
 
       const doc = new jsPDF({
         orientation: "portrait",
@@ -214,16 +182,17 @@ export default function InvoicePrintPage() {
       };
 
       // ============ LOGO ============
-      // Use InvoiceLogoUrl from parameters for declared invoices, otherwise default logo
-      const invoiceLogoUrl = parametersRes.data?.value;
-      const logoUrl = invoiceLogoUrl || "/images/logo-ticket.png";
-
+      const invoiceLogoUrl = invoiceLogoRes.data?.value;
+      const logoSrc = invoice.declared && invoiceLogoUrl ? invoiceLogoUrl : "/images/logo-ticket.png";
       try {
-        const logoImg = await loadImage(logoUrl);
+        const logoImg = await loadImage(logoSrc);
         const logoSize = 22;
         const logoX = (pageWidth - logoSize) / 2;
-        doc.addImage(logoImg, "PNG", logoX, y, logoSize, logoSize);
-        y += logoSize + 5;
+        const imgFormat = logoImg.startsWith("data:image/png") ? "PNG" : "JPEG";
+        doc.setFillColor(255, 255, 255);
+        doc.rect(logoX, y, logoSize, logoSize, "F");
+        doc.addImage(logoImg, imgFormat, logoX, y, logoSize, logoSize);
+        y += logoSize + 2;
       } catch {
         y += 2;
       }
@@ -277,13 +246,6 @@ export default function InvoicePrintPage() {
       doc.text(docTypeName.toUpperCase(), pageWidth / 2, y, { align: "center" });
       y += 4;
 
-      // ============ NÚMERO DE PEDIDO ============
-      const orderNumber = "PEDIDO: #" + branchRes.data?.orders?.id || "";
-      doc.setFontSize(fontSize.title);
-      doc.setFont("helvetica", "bold");
-      doc.text(orderNumber.toUpperCase(), pageWidth / 2, y, { align: "center" });
-      y += 4;
-
       // ============ SERIE - NUMBER ============
       const serieNum = [invoice.tax_serie, invoice.invoice_number].filter(Boolean).join(" - ");
       if (serieNum) {
@@ -308,7 +270,7 @@ export default function InvoicePrintPage() {
       const detailLines: [string, string][] = [
         ["FECHA DE EMISIÓN:", dateStr],
         ["CLIENTE:", invoice.client_name || "Clientes Varios"],
-        [`${docTypeRes.data?.name || "Doc"}:`, invoice.customer_document_number]
+        [`${docTypeRes.data?.name || "Doc"}:`, invoice.customer_document_number],
       ];
 
       for (const [label, value] of detailLines) {
@@ -344,7 +306,6 @@ export default function InvoicePrintPage() {
       doc.text("CANT.", col.cant, y);
       doc.text("DESCRIPCIÓN", col.desc, y);
       doc.text("P.U.", col.pu, y, { align: "right" });
-      // We don't add total per item to keep it clean like Odoo
 
       y += 2;
       doc.setLineWidth(0.1);
@@ -420,6 +381,23 @@ export default function InvoicePrintPage() {
         y += 4;
       }
 
+      // ============ QR CODE ============
+      if (invoice.qr_data) {
+        try {
+          const qrDataUrl = await QRCode.toDataURL(invoice.qr_data, {
+            width: 200,
+            margin: 1,
+            errorCorrectionLevel: "M",
+          });
+          const qrSize = 28;
+          doc.addImage(qrDataUrl, "PNG", (pageWidth - qrSize) / 2, y, qrSize, qrSize);
+          y += qrSize + 2;
+        } catch {
+          // QR generation failed, skip
+          y += 2;
+        }
+      }
+
       // ============ SEPARATOR ============
       doc.setLineWidth(0.3);
       doc.line(margin, y, pageWidth - margin, y);
@@ -445,23 +423,6 @@ export default function InvoicePrintPage() {
       doc.setFontSize(fontSize.normal);
       doc.setFont("helvetica", "bold");
       doc.text("Gracias por tu confianza.", pageWidth / 2, y, { align: "center" });
-      y += 4;
-
-      // ============ QR CODE ============
-      if (invoice.qr_data) {
-        try {
-          const qrCodeDataUrl = await QRCode.toDataURL(invoice.qr_data, {
-            width: 200,
-            margin: 1,
-          });
-          const qrSize = 35;
-          const qrX = (pageWidth - qrSize) / 2;
-          doc.addImage(qrCodeDataUrl, "PNG", qrX, y, qrSize, qrSize);
-          y += qrSize + 2;
-        } catch (qrErr) {
-          console.error("Error generating QR:", qrErr);
-        }
-      }
 
       // Open PDF inline
       const pdfBlob = doc.output("blob");
@@ -469,7 +430,6 @@ export default function InvoicePrintPage() {
       window.location.replace(url);
     } catch (err: any) {
       setError(err.message || "Error al generar el PDF");
-      setLoading(false);
     }
   };
 
@@ -484,7 +444,7 @@ export default function InvoicePrintPage() {
   return (
     <div className="flex items-center justify-center h-screen">
       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      <span className="ml-2 text-muted-foreground">Generando PDF...</span>
+      <span className="ml-2 text-muted-foreground">Generando ticket...</span>
     </div>
   );
 }

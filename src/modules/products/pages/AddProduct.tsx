@@ -26,6 +26,15 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     setProductName,
     shortDescription,
     setShortDescription,
+    promotionalText,
+    setPromotionalText,
+    promotionalBgColor,
+    setPromotionalBgColor,
+    promotionalTextColor,
+    setPromotionalTextColor,
+    sizesImageUrl,
+    sizesImageFile,
+    setSizesImageFile,
     description,
     setDescription,
     selectedCategories,
@@ -183,6 +192,50 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                 toolbar="basic"
                 disabled={viewOnly}
               />
+
+              <div className="space-y-3">
+                <Label>Texto promocional</Label>
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <Input
+                      value={promotionalText}
+                      onChange={(e) => setPromotionalText(e.target.value)}
+                      placeholder="Ej: ¡Oferta especial!"
+                      disabled={viewOnly}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="promotionalBgColor" className="text-xs whitespace-nowrap">Fondo</Label>
+                    <input
+                      id="promotionalBgColor"
+                      type="color"
+                      value={promotionalBgColor}
+                      onChange={(e) => setPromotionalBgColor(e.target.value)}
+                      disabled={viewOnly}
+                      className="w-9 h-9 rounded border border-border cursor-pointer p-0.5"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="promotionalTextColor" className="text-xs whitespace-nowrap">Texto</Label>
+                    <input
+                      id="promotionalTextColor"
+                      type="color"
+                      value={promotionalTextColor}
+                      onChange={(e) => setPromotionalTextColor(e.target.value)}
+                      disabled={viewOnly}
+                      className="w-9 h-9 rounded border border-border cursor-pointer p-0.5"
+                    />
+                  </div>
+                </div>
+                {promotionalText && (
+                  <div
+                    className="rounded px-3 py-1.5 text-sm text-center"
+                    style={{ backgroundColor: promotionalBgColor, color: promotionalTextColor }}
+                  >
+                    {promotionalText}
+                  </div>
+                )}
+              </div>
 
               <WysiwygEditor
                 label="Descripción"
@@ -345,6 +398,56 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Sizes Image Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Imagen de tallas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <input
+                id="sizesImage"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setSizesImageFile(file);
+                }}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('sizesImage')?.click()}
+                className="w-full"
+                disabled={loading || viewOnly}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Seleccionar imagen
+              </Button>
+              {(sizesImageFile || sizesImageUrl) && (
+                <div className="relative">
+                  <img
+                    src={sizesImageFile ? URL.createObjectURL(sizesImageFile) : sizesImageUrl!}
+                    alt="Imagen de tallas"
+                    className="w-full rounded-lg border object-contain max-h-[200px]"
+                  />
+                  {!viewOnly && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="absolute top-1 right-1 h-6 w-6 p-0"
+                      onClick={() => {
+                        setSizesImageFile(null);
+                      }}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
