@@ -5357,11 +5357,11 @@ export type Database = {
           p_promotional_bg_color?: string
           p_promotional_text?: string
           p_promotional_text_color?: string
-          p_reset_variations: boolean
+          p_reset_variations?: boolean
           p_selected_categories: number[]
           p_short_description: string
           p_sizes_image_url?: string
-          p_user_id: string
+          p_user_id?: string
           p_variations: Json
         }
         Returns: Record<string, unknown>
