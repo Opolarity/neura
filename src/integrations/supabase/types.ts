@@ -4737,6 +4737,7 @@ export type Database = {
               p_is_variable: boolean
               p_short_description: string
               p_title: string
+              p_user_id?: string
               p_variations: Json
               p_web: boolean
             }
@@ -4749,7 +4750,11 @@ export type Database = {
               p_description: string
               p_images: Json
               p_is_variable: boolean
+              p_promotional_bg_color?: string
+              p_promotional_text?: string
+              p_promotional_text_color?: string
               p_short_description: string
+              p_sizes_image_url?: string
               p_title: string
               p_user_id?: string
               p_variations: Json
@@ -5365,9 +5370,13 @@ export type Database = {
           p_product_id: number
           p_product_images: Json
           p_product_name: string
+          p_promotional_bg_color?: string
+          p_promotional_text?: string
+          p_promotional_text_color?: string
           p_reset_variations: boolean
           p_selected_categories: number[]
           p_short_description: string
+          p_sizes_image_url?: string
           p_user_id: string
           p_variations: Json
         }
