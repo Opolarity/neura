@@ -1491,7 +1491,7 @@ export type Database = {
           shipping_method_code: string | null
           state_id: number | null
           subtotal: number
-          success_viewed: boolean
+          success_viewed: boolean | null
           total: number
           user_id: string | null
         }
@@ -1522,7 +1522,7 @@ export type Database = {
           shipping_method_code?: string | null
           state_id?: number | null
           subtotal: number
-          success_viewed?: boolean
+          success_viewed?: boolean | null
           total: number
           user_id?: string | null
         }
@@ -1553,7 +1553,7 @@ export type Database = {
           shipping_method_code?: string | null
           state_id?: number | null
           subtotal?: number
-          success_viewed?: boolean
+          success_viewed?: boolean | null
           total?: number
           user_id?: string | null
         }
@@ -4474,6 +4474,30 @@ export type Database = {
         }
         Relationships: []
       }
+      woo_products_may: {
+        Row: {
+          name: string | null
+          product_template_id: number
+          product_tmpl_id: number | null
+          title: string
+          woo_id: string | null
+        }
+        Insert: {
+          name?: string | null
+          product_template_id?: number
+          product_tmpl_id?: number | null
+          title: string
+          woo_id?: string | null
+        }
+        Update: {
+          name?: string | null
+          product_template_id?: number
+          product_tmpl_id?: number | null
+          title?: string
+          woo_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       vw_product_stock_virtual: {
@@ -4798,13 +4822,12 @@ export type Database = {
       sp_ec_create_account_profile: {
         Args: {
           p_auth_uid: string
-          p_dni: string
-          p_email: string
-          p_lastname1: string
-          p_lastname2: string
-          p_nickname: string
-          p_nombre: string
-          p_tipo_documento_id: number
+          p_document_number?: string
+          p_document_type_id?: number
+          p_last_name?: string
+          p_last_name2?: string
+          p_middle_name?: string
+          p_name: string
         }
         Returns: Json
       }
