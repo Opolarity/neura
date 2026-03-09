@@ -3134,6 +3134,7 @@ export type Database = {
           branch_id_odoo: number | null
           branch_name_odoo: string | null
           date: string | null
+          document_number: string | null
           invoice_status: string | null
           note: string | null
           partner_id: number | null
@@ -3146,6 +3147,7 @@ export type Database = {
           sale_type_id_odoo: number | null
           sale_type_name: string | null
           status: string | null
+          vat: string | null
           warehouse_id_odoo: number | null
           woo_order_id: string | null
           woo_status: string | null
@@ -3155,6 +3157,7 @@ export type Database = {
           branch_id_odoo?: number | null
           branch_name_odoo?: string | null
           date?: string | null
+          document_number?: string | null
           invoice_status?: string | null
           note?: string | null
           partner_id?: number | null
@@ -3167,6 +3170,7 @@ export type Database = {
           sale_type_id_odoo?: number | null
           sale_type_name?: string | null
           status?: string | null
+          vat?: string | null
           warehouse_id_odoo?: number | null
           woo_order_id?: string | null
           woo_status?: string | null
@@ -3176,6 +3180,7 @@ export type Database = {
           branch_id_odoo?: number | null
           branch_name_odoo?: string | null
           date?: string | null
+          document_number?: string | null
           invoice_status?: string | null
           note?: string | null
           partner_id?: number | null
@@ -3188,6 +3193,7 @@ export type Database = {
           sale_type_id_odoo?: number | null
           sale_type_name?: string | null
           status?: string | null
+          vat?: string | null
           warehouse_id_odoo?: number | null
           woo_order_id?: string | null
           woo_status?: string | null
