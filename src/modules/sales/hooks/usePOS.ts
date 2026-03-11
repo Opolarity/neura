@@ -126,6 +126,7 @@ export const usePOS = () => {
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
   const [customerUserId, setCustomerUserId] = useState<string | null>(null);
+  const [customerAccountId, setCustomerAccountId] = useState<number | null>(null);
 
   // Shipping (Step 4)
   const [shipping, setShipping] = useState<POSShippingData>(DEFAULT_SHIPPING);
@@ -194,7 +195,8 @@ export const usePOS = () => {
       const { items: updated, gifts } = await applyPriceRules(
         regularItems,
         configuration.priceListId,
-        customerUserId
+        customerUserId,
+        customerAccountId
       );
 
       const defaultStockTypeId = regularItems[0]?.stockTypeId ?? parseInt(selectedStockTypeId) ?? 1;
@@ -228,7 +230,7 @@ export const usePOS = () => {
       }
     };
     run();
-  }, [cart, configuration?.priceListId, customerUserId]);
+  }, [cart, configuration?.priceListId, customerUserId, customerAccountId]);
 
   const loadInitialData = async () => {
     try {
@@ -601,6 +603,7 @@ export const usePOS = () => {
           .eq("account_id", client.id)
           .maybeSingle();
         setCustomerUserId(profileData?.UID ?? null);
+        setCustomerAccountId(client.id);
         return;
       }
 
@@ -639,10 +642,12 @@ export const usePOS = () => {
 
       setClientFound(false);
       setCustomerUserId(null);
+      setCustomerAccountId(null);
     } catch (error) {
       console.error("Error searching client:", error);
       setClientFound(false);
       setCustomerUserId(null);
+      setCustomerAccountId(null);
     } finally {
       setSearchingClient(false);
     }
@@ -680,6 +685,7 @@ export const usePOS = () => {
     setIsAnonymousPurchase(true);
     setClientFound(false);
     setCustomerUserId(null);
+    setCustomerAccountId(null);
 
     // Advance to products step
     setCurrentStep(3);
@@ -1083,6 +1089,8 @@ export const usePOS = () => {
     setChangeEntries([]);
     setClientFound(null);
     setIsAnonymousPurchase(false);
+    setCustomerUserId(null);
+    setCustomerAccountId(null);
     setSearchQuery("");
     setCreatedOrderId(null);
     setCreatedOrderSaleTypeId(null);
@@ -1119,6 +1127,8 @@ export const usePOS = () => {
     setChangeEntries([]);
     setClientFound(null);
     setIsAnonymousPurchase(false);
+    setCustomerUserId(null);
+    setCustomerAccountId(null);
     setSearchQuery("");
     setCreatedOrderId(null);
     setCreatedOrderSaleTypeId(null);
