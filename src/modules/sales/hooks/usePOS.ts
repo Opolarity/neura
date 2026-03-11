@@ -836,8 +836,16 @@ export const usePOS = () => {
       (sum, item) => sum + item.discountAmount * item.quantity,
       0
     );
-    return itemDiscounts + generalDiscount;
-  }, [cart, generalDiscount]);
+    const extraDiscounts = orderDiscounts.reduce((sum, d) => sum + d.amount, 0);
+    return itemDiscounts + extraDiscounts;
+  }, [cart, orderDiscounts]);
+
+  const productDiscountAmount = useMemo(() => {
+    return cart.reduce(
+      (sum, item) => sum + item.discountAmount * item.quantity,
+      0
+    );
+  }, [cart]);
 
   const shippingCostValue = customer.requiresShipping ? shipping.shippingCost : 0;
 
