@@ -12,6 +12,7 @@ export const UsersAdapter = (response: UsersApiResponse) => {
 
     return {
       id: item.id,
+      user_name: item.user_name || '',
       name: nameParts.join(" "),
       document_number: item.document_number,
       warehouse: item.warehouse,

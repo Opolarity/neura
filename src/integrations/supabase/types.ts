@@ -2483,6 +2483,7 @@ export type Database = {
           phone: number | null
           state_id: number | null
           UID: string
+          user_name: string
           warehouse_id: number
         }
         Insert: {
@@ -2499,6 +2500,7 @@ export type Database = {
           phone?: number | null
           state_id?: number | null
           UID: string
+          user_name: string
           warehouse_id?: number
         }
         Update: {
@@ -2515,6 +2517,7 @@ export type Database = {
           phone?: number | null
           state_id?: number | null
           UID?: string
+          user_name?: string
           warehouse_id?: number
         }
         Relationships: [

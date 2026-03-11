@@ -23,7 +23,7 @@ const UsersTable = ({ users, loading, onEdit, onDeleteClick }: UsersTableProps) 
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>ID</TableHead>
+          <TableHead>Usuario</TableHead>
           <TableHead>Nombres</TableHead>
           <TableHead>Documentos</TableHead>
           <TableHead>Almacen</TableHead>
@@ -52,7 +52,7 @@ const UsersTable = ({ users, loading, onEdit, onDeleteClick }: UsersTableProps) 
         ) : (
           users.map((u) => (
             <TableRow key={u.id}>
-              <TableCell>{u.id}</TableCell>
+              <TableCell>{u.user_name}</TableCell>
               <TableCell>{u.name}</TableCell>
               <TableCell>{u.document_number}</TableCell>
               <TableCell>{u.warehouse}</TableCell>
