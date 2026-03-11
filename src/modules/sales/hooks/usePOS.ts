@@ -1025,6 +1025,10 @@ export const usePOS = () => {
         change: changeAmount,
         initialSituationId: situationId,
         saleType: saleTypeId,
+        discounts: [
+          ...(productDiscountAmount > 0 ? [{ name: "Descuentos de productos", discount_amount: productDiscountAmount, code: "PRO" }] : []),
+          ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
+        ],
       };
 
       const result = await createPOSOrder(orderData);
