@@ -24,14 +24,40 @@ serve(async (req) => {
     );
 
     const url = new URL(req.url);
+    const uid = url.searchParams.get('uid');
     const userId = url.searchParams.get('id');
 
+    // Support both uid (new) and id (legacy) params
+    if (uid) {
+      console.log('=== Fetching user details by UID:', uid, '===');
+
+      const { data, error } = await supabase.rpc('sp_get_user_details_by_uid', {
+        p_uid: uid
+      });
+
+      if (error) {
+        console.error('RPC error:', error);
+        throw new Error(`Error fetching user: ${error.message}`);
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      console.log('=== Final response ===', JSON.stringify(data, null, 2));
+
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+
+    // Legacy: fetch by account id
     if (!userId) {
-      throw new Error('User ID is required');
+      throw new Error('User ID or UID is required');
     }
 
     console.log('=== Fetching user details for ID:', userId, '===');
-
 
     const { data: accountData, error: accountError } = await supabase
       .from("accounts")
@@ -63,28 +89,19 @@ serve(async (req) => {
     console.log('Profile data:', profileData);
 
     let email = "";
-    if (profileData?.UID) {
-      try {
-        const { data: { user: authUser }, error: authError } = await supabase.auth.admin.getUserById(profileData.UID);
-        if (!authError && authUser) {
-          email = authUser.email || "";
-        }
-      } catch (authErr) {
-        console.error('Error fetching auth user:', authErr);
-      }
-    }
-
     let phone = "";
     if (profileData?.UID) {
       try {
         const { data: { user: authUser }, error: authError } = await supabase.auth.admin.getUserById(profileData.UID);
         if (!authError && authUser) {
+          email = authUser.email || "";
           phone = authUser.phone || "";
         }
       } catch (authErr) {
         console.error('Error fetching auth user:', authErr);
       }
     }
+
     const { data: accountTypesData, error: accountTypesError } = await supabase
       .from("account_types")
       .select("account_type_id")
@@ -92,13 +109,10 @@ serve(async (req) => {
 
     if (accountTypesError) {
       console.error('Error fetching account types:', accountTypesError);
-      // No lanzar error, continuar con array vacío
     }
 
     console.log('Account types data:', accountTypesData);
 
-    // 5. Obtener los roles del usuario (user_roles table)
-    // Según tu esquema: user_roles.user_id referencia a profiles.UID
     let roleIds: number[] = [];
     if (profileData?.UID) {
       const { data: rolesData, error: rolesError } = await supabase
@@ -113,12 +127,9 @@ serve(async (req) => {
       }
     }
 
-
     console.log('Role IDs:', roleIds);
 
-    // 6. Construir la respuesta completa
     const responseData = {
-      // Datos de la cuenta
       id: accountData.id,
       name: accountData.name || '',
       middle_name: accountData.middle_name || '',
@@ -129,18 +140,11 @@ serve(async (req) => {
       show: accountData.show ?? true,
       is_active: accountData.is_active ?? true,
       created_at: accountData.created_at,
-
-
+      user_name: profileData?.user_name || '',
       email: email,
       phone: phone,
-
-
       role_ids: roleIds,
-
-
       account_types: accountTypesData || [],
-
-
       country_id: profileData?.country_id,
       state_id: profileData?.state_id,
       city_id: profileData?.city_id,
@@ -150,8 +154,6 @@ serve(async (req) => {
       warehouse_id: profileData?.warehouse_id,
       branch_id: profileData?.branch_id,
       profiles_id: profileData?.UID || null,
-
-
       profiles: profileData ? {
         UID: profileData.UID,
         account_id: profileData.account_id,

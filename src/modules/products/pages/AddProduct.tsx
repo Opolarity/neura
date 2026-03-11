@@ -471,7 +471,12 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
 
                   return (
                     <div key={group.id} className="space-y-2">
-                      <Label className="text-sm font-medium">{group.name}</Label>
+                      <Label className="text-sm font-medium">
+                        {group.name}
+                        {group.description && (
+                          <span className="text-xs text-muted-foreground font-normal ml-1">— {group.description}</span>
+                        )}
+                      </Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button

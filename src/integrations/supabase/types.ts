@@ -60,6 +60,7 @@ export type Database = {
           last_name: string | null
           last_name2: string | null
           middle_name: string | null
+          migracode: string | null
           name: string
           show: boolean
         }
@@ -72,6 +73,7 @@ export type Database = {
           last_name?: string | null
           last_name2?: string | null
           middle_name?: string | null
+          migracode?: string | null
           name: string
           show?: boolean
         }
@@ -84,6 +86,7 @@ export type Database = {
           last_name?: string | null
           last_name2?: string | null
           middle_name?: string | null
+          migracode?: string | null
           name?: string
           show?: boolean
         }
@@ -411,6 +414,7 @@ export type Database = {
           description: string | null
           id: number
           image_url: string | null
+          migracode: string | null
           name: string
           parent_category: number | null
         }
@@ -418,6 +422,7 @@ export type Database = {
           description?: string | null
           id?: number
           image_url?: string | null
+          migracode?: string | null
           name: string
           parent_category?: number | null
         }
@@ -425,6 +430,7 @@ export type Database = {
           description?: string | null
           id?: number
           image_url?: string | null
+          migracode?: string | null
           name?: string
           parent_category?: number | null
         }
@@ -1026,6 +1032,18 @@ export type Database = {
           },
         ]
       }
+      lista_imagenes_redimensionadas: {
+        Row: {
+          "24939-0.webp": string | null
+        }
+        Insert: {
+          "24939-0.webp"?: string | null
+        }
+        Update: {
+          "24939-0.webp"?: string | null
+        }
+        Relationships: []
+      }
       modules: {
         Row: {
           code: string
@@ -1477,6 +1495,7 @@ export type Database = {
           document_type: number
           email: string | null
           id: number
+          migracode: string | null
           neighborhood_id: number | null
           phone: number | null
           price_list_code: string
@@ -1487,7 +1506,7 @@ export type Database = {
           shipping_method_code: string | null
           state_id: number | null
           subtotal: number
-          success_viewed: boolean
+          success_viewed: boolean | null
           total: number
           user_id: string | null
         }
@@ -1507,6 +1526,7 @@ export type Database = {
           document_type: number
           email?: string | null
           id?: number
+          migracode?: string | null
           neighborhood_id?: number | null
           phone?: number | null
           price_list_code?: string
@@ -1517,7 +1537,7 @@ export type Database = {
           shipping_method_code?: string | null
           state_id?: number | null
           subtotal: number
-          success_viewed?: boolean
+          success_viewed?: boolean | null
           total: number
           user_id?: string | null
         }
@@ -1537,6 +1557,7 @@ export type Database = {
           document_type?: number
           email?: string | null
           id?: number
+          migracode?: string | null
           neighborhood_id?: number | null
           phone?: number | null
           price_list_code?: string
@@ -1547,7 +1568,7 @@ export type Database = {
           shipping_method_code?: string | null
           state_id?: number | null
           subtotal?: number
-          success_viewed?: boolean
+          success_viewed?: boolean | null
           total?: number
           user_id?: string | null
         }
@@ -1704,6 +1725,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pos_order: {
+        Row: {
+          amount_paid: number | null
+          amount_total: number | null
+          customer_name: string | null
+          date: string | null
+          location_id: number | null
+          movimiento_comprobante: number | null
+          note: string | null
+          partner_id: number | null
+          payment_gateway_id_odoo: number | null
+          payment_gateway_name_odoo: string | null
+          price_list_odoo: number | null
+          sale_id: number
+          sale_id_name: string
+          status: string | null
+          to_invoice: boolean | null
+          vat: string | null
+        }
+        Insert: {
+          amount_paid?: number | null
+          amount_total?: number | null
+          customer_name?: string | null
+          date?: string | null
+          location_id?: number | null
+          movimiento_comprobante?: number | null
+          note?: string | null
+          partner_id?: number | null
+          payment_gateway_id_odoo?: number | null
+          payment_gateway_name_odoo?: string | null
+          price_list_odoo?: number | null
+          sale_id?: number
+          sale_id_name: string
+          status?: string | null
+          to_invoice?: boolean | null
+          vat?: string | null
+        }
+        Update: {
+          amount_paid?: number | null
+          amount_total?: number | null
+          customer_name?: string | null
+          date?: string | null
+          location_id?: number | null
+          movimiento_comprobante?: number | null
+          note?: string | null
+          partner_id?: number | null
+          payment_gateway_id_odoo?: number | null
+          payment_gateway_name_odoo?: string | null
+          price_list_odoo?: number | null
+          sale_id?: number
+          sale_id_name?: string
+          status?: string | null
+          to_invoice?: boolean | null
+          vat?: string | null
+        }
+        Relationships: []
       }
       pos_session_orders: {
         Row: {
@@ -2050,6 +2128,96 @@ export type Database = {
           },
         ]
       }
+      product_pricelist_item: {
+        Row: {
+          active: boolean | null
+          applied_on: string
+          base: string
+          base_pricelist_id: number | null
+          categ_id: number | null
+          company_id: number | null
+          compute_price: string
+          create_date: string | null
+          create_uid: number | null
+          currency_id: number | null
+          date_end: string | null
+          date_start: string | null
+          discount_price: number | null
+          fixed_price: number | null
+          id: number
+          min_quantity: number | null
+          percent_price: number | null
+          price_discount: number | null
+          price_max_margin: number | null
+          price_min_margin: number | null
+          price_round: number | null
+          price_surcharge: number | null
+          pricelist_id: number
+          product_id: number | null
+          product_tmpl_id: number | null
+          write_date: string | null
+          write_uid: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          applied_on: string
+          base: string
+          base_pricelist_id?: number | null
+          categ_id?: number | null
+          company_id?: number | null
+          compute_price: string
+          create_date?: string | null
+          create_uid?: number | null
+          currency_id?: number | null
+          date_end?: string | null
+          date_start?: string | null
+          discount_price?: number | null
+          fixed_price?: number | null
+          id?: number
+          min_quantity?: number | null
+          percent_price?: number | null
+          price_discount?: number | null
+          price_max_margin?: number | null
+          price_min_margin?: number | null
+          price_round?: number | null
+          price_surcharge?: number | null
+          pricelist_id: number
+          product_id?: number | null
+          product_tmpl_id?: number | null
+          write_date?: string | null
+          write_uid?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          applied_on?: string
+          base?: string
+          base_pricelist_id?: number | null
+          categ_id?: number | null
+          company_id?: number | null
+          compute_price?: string
+          create_date?: string | null
+          create_uid?: number | null
+          currency_id?: number | null
+          date_end?: string | null
+          date_start?: string | null
+          discount_price?: number | null
+          fixed_price?: number | null
+          id?: number
+          min_quantity?: number | null
+          percent_price?: number | null
+          price_discount?: number | null
+          price_max_margin?: number | null
+          price_min_margin?: number | null
+          price_round?: number | null
+          price_surcharge?: number | null
+          pricelist_id?: number
+          product_id?: number | null
+          product_tmpl_id?: number | null
+          write_date?: string | null
+          write_uid?: number | null
+        }
+        Relationships: []
+      }
       product_stock: {
         Row: {
           id: number
@@ -2180,6 +2348,42 @@ export type Database = {
         }
         Relationships: []
       }
+      product_terms_woo_min: {
+        Row: {
+          object_id: number | null
+          term_order: number | null
+          term_taxonomy_id: number | null
+        }
+        Insert: {
+          object_id?: number | null
+          term_order?: number | null
+          term_taxonomy_id?: number | null
+        }
+        Update: {
+          object_id?: number | null
+          term_order?: number | null
+          term_taxonomy_id?: number | null
+        }
+        Relationships: []
+      }
+      product_terms_woo_min_padres: {
+        Row: {
+          product_template_id: number | null
+          woo_id: string | null
+          woo_instance: number | null
+        }
+        Insert: {
+          product_template_id?: number | null
+          woo_id?: string | null
+          woo_instance?: number | null
+        }
+        Update: {
+          product_template_id?: number | null
+          woo_id?: string | null
+          woo_instance?: number | null
+        }
+        Relationships: []
+      }
       product_variation_images: {
         Row: {
           id: number
@@ -2279,6 +2483,7 @@ export type Database = {
           phone: number | null
           state_id: number | null
           UID: string
+          user_name: string
           warehouse_id: number
         }
         Insert: {
@@ -2295,6 +2500,7 @@ export type Database = {
           phone?: number | null
           state_id?: number | null
           UID: string
+          user_name: string
           warehouse_id?: number
         }
         Update: {
@@ -2311,6 +2517,7 @@ export type Database = {
           phone?: number | null
           state_id?: number | null
           UID?: string
+          user_name?: string
           warehouse_id?: number
         }
         Relationships: [
@@ -2364,6 +2571,276 @@ export type Database = {
             referencedColumns: ["id", "country_id"]
           },
         ]
+      }
+      res_partner: {
+        Row: {
+          active: boolean | null
+          additional_info: string | null
+          barcode: string | null
+          calendar_last_notif_ack: string | null
+          city: string | null
+          city_id: number | null
+          color: number | null
+          comment: string | null
+          commercial_company_name: string | null
+          commercial_partner_id: number | null
+          company_id: number | null
+          company_name: string | null
+          country_id: number | null
+          create_date: string | null
+          create_uid: number | null
+          credit_blocking: number | null
+          credit_check: boolean | null
+          credit_limit: number | null
+          credit_warning: number | null
+          customer_rank: number | null
+          date: string | null
+          debit_limit: number | null
+          display_name: string | null
+          district_id: number | null
+          email: string | null
+          email_normalized: string | null
+          employee: boolean | null
+          es_conductor: boolean | null
+          es_empresa_transporte_publico: boolean | null
+          estado_contribuyente: string | null
+          function: string | null
+          id: number
+          industry_id: number | null
+          invoice_warn: string | null
+          invoice_warn_msg: string | null
+          is_company: boolean | null
+          is_woo_customer: boolean | null
+          l10n_latam_identification_type_id: number | null
+          l10n_pe_district: number | null
+          lang: string | null
+          last_time_entries_checked: string | null
+          licencia: string | null
+          message_bounce: number | null
+          message_main_attachment_id: number | null
+          mobile: string | null
+          msg_error: string | null
+          name: string | null
+          parent_id: number | null
+          partner_gid: number | null
+          partner_latitude: number | null
+          partner_longitude: number | null
+          partner_share: boolean | null
+          phone: string | null
+          phone_sanitized: string | null
+          picking_warn: string | null
+          picking_warn_msg: string | null
+          province_id: number | null
+          provincia: string | null
+          purchase_warn: string | null
+          purchase_warn_msg: string | null
+          ref: string | null
+          registration_name: string | null
+          role: string | null
+          sale_warn: string | null
+          sale_warn_msg: string | null
+          signup_expiration: string | null
+          signup_token: string | null
+          signup_type: string | null
+          state_id: number | null
+          street: string | null
+          street_name: string | null
+          street_number: string | null
+          street_number2: string | null
+          street2: string | null
+          supplier_rank: number | null
+          team_id: number | null
+          title: number | null
+          type: string | null
+          tz: string | null
+          ubigeo: string | null
+          user_id: number | null
+          vat: string | null
+          website: string | null
+          write_date: string | null
+          write_uid: number | null
+          x_provincia: string | null
+          zip: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          additional_info?: string | null
+          barcode?: string | null
+          calendar_last_notif_ack?: string | null
+          city?: string | null
+          city_id?: number | null
+          color?: number | null
+          comment?: string | null
+          commercial_company_name?: string | null
+          commercial_partner_id?: number | null
+          company_id?: number | null
+          company_name?: string | null
+          country_id?: number | null
+          create_date?: string | null
+          create_uid?: number | null
+          credit_blocking?: number | null
+          credit_check?: boolean | null
+          credit_limit?: number | null
+          credit_warning?: number | null
+          customer_rank?: number | null
+          date?: string | null
+          debit_limit?: number | null
+          display_name?: string | null
+          district_id?: number | null
+          email?: string | null
+          email_normalized?: string | null
+          employee?: boolean | null
+          es_conductor?: boolean | null
+          es_empresa_transporte_publico?: boolean | null
+          estado_contribuyente?: string | null
+          function?: string | null
+          id?: number
+          industry_id?: number | null
+          invoice_warn?: string | null
+          invoice_warn_msg?: string | null
+          is_company?: boolean | null
+          is_woo_customer?: boolean | null
+          l10n_latam_identification_type_id?: number | null
+          l10n_pe_district?: number | null
+          lang?: string | null
+          last_time_entries_checked?: string | null
+          licencia?: string | null
+          message_bounce?: number | null
+          message_main_attachment_id?: number | null
+          mobile?: string | null
+          msg_error?: string | null
+          name?: string | null
+          parent_id?: number | null
+          partner_gid?: number | null
+          partner_latitude?: number | null
+          partner_longitude?: number | null
+          partner_share?: boolean | null
+          phone?: string | null
+          phone_sanitized?: string | null
+          picking_warn?: string | null
+          picking_warn_msg?: string | null
+          province_id?: number | null
+          provincia?: string | null
+          purchase_warn?: string | null
+          purchase_warn_msg?: string | null
+          ref?: string | null
+          registration_name?: string | null
+          role?: string | null
+          sale_warn?: string | null
+          sale_warn_msg?: string | null
+          signup_expiration?: string | null
+          signup_token?: string | null
+          signup_type?: string | null
+          state_id?: number | null
+          street?: string | null
+          street_name?: string | null
+          street_number?: string | null
+          street_number2?: string | null
+          street2?: string | null
+          supplier_rank?: number | null
+          team_id?: number | null
+          title?: number | null
+          type?: string | null
+          tz?: string | null
+          ubigeo?: string | null
+          user_id?: number | null
+          vat?: string | null
+          website?: string | null
+          write_date?: string | null
+          write_uid?: number | null
+          x_provincia?: string | null
+          zip?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          additional_info?: string | null
+          barcode?: string | null
+          calendar_last_notif_ack?: string | null
+          city?: string | null
+          city_id?: number | null
+          color?: number | null
+          comment?: string | null
+          commercial_company_name?: string | null
+          commercial_partner_id?: number | null
+          company_id?: number | null
+          company_name?: string | null
+          country_id?: number | null
+          create_date?: string | null
+          create_uid?: number | null
+          credit_blocking?: number | null
+          credit_check?: boolean | null
+          credit_limit?: number | null
+          credit_warning?: number | null
+          customer_rank?: number | null
+          date?: string | null
+          debit_limit?: number | null
+          display_name?: string | null
+          district_id?: number | null
+          email?: string | null
+          email_normalized?: string | null
+          employee?: boolean | null
+          es_conductor?: boolean | null
+          es_empresa_transporte_publico?: boolean | null
+          estado_contribuyente?: string | null
+          function?: string | null
+          id?: number
+          industry_id?: number | null
+          invoice_warn?: string | null
+          invoice_warn_msg?: string | null
+          is_company?: boolean | null
+          is_woo_customer?: boolean | null
+          l10n_latam_identification_type_id?: number | null
+          l10n_pe_district?: number | null
+          lang?: string | null
+          last_time_entries_checked?: string | null
+          licencia?: string | null
+          message_bounce?: number | null
+          message_main_attachment_id?: number | null
+          mobile?: string | null
+          msg_error?: string | null
+          name?: string | null
+          parent_id?: number | null
+          partner_gid?: number | null
+          partner_latitude?: number | null
+          partner_longitude?: number | null
+          partner_share?: boolean | null
+          phone?: string | null
+          phone_sanitized?: string | null
+          picking_warn?: string | null
+          picking_warn_msg?: string | null
+          province_id?: number | null
+          provincia?: string | null
+          purchase_warn?: string | null
+          purchase_warn_msg?: string | null
+          ref?: string | null
+          registration_name?: string | null
+          role?: string | null
+          sale_warn?: string | null
+          sale_warn_msg?: string | null
+          signup_expiration?: string | null
+          signup_token?: string | null
+          signup_type?: string | null
+          state_id?: number | null
+          street?: string | null
+          street_name?: string | null
+          street_number?: string | null
+          street_number2?: string | null
+          street2?: string | null
+          supplier_rank?: number | null
+          team_id?: number | null
+          title?: number | null
+          type?: string | null
+          tz?: string | null
+          ubigeo?: string | null
+          user_id?: number | null
+          vat?: string | null
+          website?: string | null
+          write_date?: string | null
+          write_uid?: number | null
+          x_provincia?: string | null
+          zip?: string | null
+        }
+        Relationships: []
       }
       return_payments: {
         Row: {
@@ -2759,6 +3236,78 @@ export type Database = {
           created_at?: string
           id?: number
           name?: string
+        }
+        Relationships: []
+      }
+      sale_order: {
+        Row: {
+          amount_total: number | null
+          branch_id_odoo: number | null
+          branch_name_odoo: string | null
+          customer_name: string | null
+          date: string | null
+          invoice_status: string | null
+          note: string | null
+          partner_id: number | null
+          payment_gateway_id: number | null
+          payment_gateway_id_odoo: number | null
+          payment_gateway_name_odoo: string | null
+          price_list_odoo: number | null
+          sale_id: number
+          sale_id_name: string | null
+          sale_type_id_odoo: number | null
+          sale_type_name: string | null
+          status: string | null
+          vat: string | null
+          warehouse_id_odoo: number | null
+          woo_order_id: string | null
+          woo_status: string | null
+        }
+        Insert: {
+          amount_total?: number | null
+          branch_id_odoo?: number | null
+          branch_name_odoo?: string | null
+          customer_name?: string | null
+          date?: string | null
+          invoice_status?: string | null
+          note?: string | null
+          partner_id?: number | null
+          payment_gateway_id?: number | null
+          payment_gateway_id_odoo?: number | null
+          payment_gateway_name_odoo?: string | null
+          price_list_odoo?: number | null
+          sale_id?: number
+          sale_id_name?: string | null
+          sale_type_id_odoo?: number | null
+          sale_type_name?: string | null
+          status?: string | null
+          vat?: string | null
+          warehouse_id_odoo?: number | null
+          woo_order_id?: string | null
+          woo_status?: string | null
+        }
+        Update: {
+          amount_total?: number | null
+          branch_id_odoo?: number | null
+          branch_name_odoo?: string | null
+          customer_name?: string | null
+          date?: string | null
+          invoice_status?: string | null
+          note?: string | null
+          partner_id?: number | null
+          payment_gateway_id?: number | null
+          payment_gateway_id_odoo?: number | null
+          payment_gateway_name_odoo?: string | null
+          price_list_odoo?: number | null
+          sale_id?: number
+          sale_id_name?: string | null
+          sale_type_id_odoo?: number | null
+          sale_type_name?: string | null
+          status?: string | null
+          vat?: string | null
+          warehouse_id_odoo?: number | null
+          woo_order_id?: string | null
+          woo_status?: string | null
         }
         Relationships: []
       }
@@ -3257,6 +3806,57 @@ export type Database = {
           },
         ]
       }
+      stock_quant: {
+        Row: {
+          company_id: number | null
+          create_date: string | null
+          create_uid: number | null
+          id: number
+          in_date: string | null
+          location_id: number
+          lot_id: number | null
+          owner_id: number | null
+          package_id: number | null
+          product_id: number
+          quantity: number | null
+          reserved_quantity: number
+          write_date: string | null
+          write_uid: number | null
+        }
+        Insert: {
+          company_id?: number | null
+          create_date?: string | null
+          create_uid?: number | null
+          id?: number
+          in_date?: string | null
+          location_id: number
+          lot_id?: number | null
+          owner_id?: number | null
+          package_id?: number | null
+          product_id: number
+          quantity?: number | null
+          reserved_quantity: number
+          write_date?: string | null
+          write_uid?: number | null
+        }
+        Update: {
+          company_id?: number | null
+          create_date?: string | null
+          create_uid?: number | null
+          id?: number
+          in_date?: string | null
+          location_id?: number
+          lot_id?: number | null
+          owner_id?: number | null
+          package_id?: number | null
+          product_id?: number
+          quantity?: number | null
+          reserved_quantity?: number
+          write_date?: string | null
+          write_uid?: number | null
+        }
+        Relationships: []
+      }
       supplier_classes: {
         Row: {
           id: number
@@ -3706,6 +4306,33 @@ export type Database = {
           },
         ]
       }
+      terms_woo_min: {
+        Row: {
+          count: number | null
+          description: string | null
+          name: string | null
+          parent: number | null
+          slug: string | null
+          term_id: number | null
+        }
+        Insert: {
+          count?: number | null
+          description?: string | null
+          name?: string | null
+          parent?: number | null
+          slug?: string | null
+          term_id?: number | null
+        }
+        Update: {
+          count?: number | null
+          description?: string | null
+          name?: string | null
+          parent?: number | null
+          slug?: string | null
+          term_id?: number | null
+        }
+        Relationships: []
+      }
       types: {
         Row: {
           code: string | null
@@ -3774,6 +4401,66 @@ export type Database = {
           },
         ]
       }
+      user_migrate: {
+        Row: {
+          account_id: number | null
+          auth_user_id: string | null
+          created_at: string | null
+          dni: string | null
+          first_name: string | null
+          last_name: string | null
+          manual_spent: number | null
+          notes: string | null
+          order_spent: number | null
+          processed_at: string | null
+          reward_points: number | null
+          status: string | null
+          total_pedidos: number | null
+          ultima_compra: string | null
+          user_email: string | null
+          wp_hash: string | null
+          wp_id: number | null
+        }
+        Insert: {
+          account_id?: number | null
+          auth_user_id?: string | null
+          created_at?: string | null
+          dni?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          manual_spent?: number | null
+          notes?: string | null
+          order_spent?: number | null
+          processed_at?: string | null
+          reward_points?: number | null
+          status?: string | null
+          total_pedidos?: number | null
+          ultima_compra?: string | null
+          user_email?: string | null
+          wp_hash?: string | null
+          wp_id?: number | null
+        }
+        Update: {
+          account_id?: number | null
+          auth_user_id?: string | null
+          created_at?: string | null
+          dni?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          manual_spent?: number | null
+          notes?: string | null
+          order_spent?: number | null
+          processed_at?: string | null
+          reward_points?: number | null
+          status?: string | null
+          total_pedidos?: number | null
+          ultima_compra?: string | null
+          user_email?: string | null
+          wp_hash?: string | null
+          wp_id?: number | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: number
@@ -3806,6 +4493,42 @@ export type Database = {
             referencedColumns: ["UID"]
           },
         ]
+      }
+      variation_odoo: {
+        Row: {
+          atributo: string | null
+          atributo_id: number | null
+          is_variable: boolean | null
+          product_id: number
+          product_template_id: number
+          producto: string
+          sku: string | null
+          valor_atributo: string | null
+          valor_atributo_id: number | null
+        }
+        Insert: {
+          atributo?: string | null
+          atributo_id?: number | null
+          is_variable?: boolean | null
+          product_id?: number
+          product_template_id?: number
+          producto: string
+          sku?: string | null
+          valor_atributo?: string | null
+          valor_atributo_id?: number | null
+        }
+        Update: {
+          atributo?: string | null
+          atributo_id?: number | null
+          is_variable?: boolean | null
+          product_id?: number
+          product_template_id?: number
+          producto?: string
+          sku?: string | null
+          valor_atributo?: string | null
+          valor_atributo_id?: number | null
+        }
+        Relationships: []
       }
       variation_terms: {
         Row: {
@@ -3842,6 +4565,7 @@ export type Database = {
       }
       variations: {
         Row: {
+          code: string | null
           created_at: string
           id: number
           is_active: boolean
@@ -3850,6 +4574,7 @@ export type Database = {
           sku: string | null
         }
         Insert: {
+          code?: string | null
           created_at?: string
           id?: number
           is_active?: boolean
@@ -3858,6 +4583,7 @@ export type Database = {
           sku?: string | null
         }
         Update: {
+          code?: string | null
           created_at?: string
           id?: number
           is_active?: boolean
@@ -3966,11 +4692,13 @@ export type Database = {
           address: string
           address_reference: string | null
           city_id: number
+          code: string | null
           country_id: number
           id: number
           is_active: boolean
           name: string
           neighborhood_id: number
+          product_id: number
           state_id: number
           web: boolean
         }
@@ -3978,11 +4706,13 @@ export type Database = {
           address: string
           address_reference?: string | null
           city_id: number
+          code?: string | null
           country_id: number
           id?: number
           is_active?: boolean
           name: string
           neighborhood_id: number
+          product_id?: number
           state_id: number
           web?: boolean
         }
@@ -3990,13 +4720,90 @@ export type Database = {
           address?: string
           address_reference?: string | null
           city_id?: number
+          code?: string | null
           country_id?: number
           id?: number
           is_active?: boolean
           name?: string
           neighborhood_id?: number
+          product_id?: number
           state_id?: number
           web?: boolean
+        }
+        Relationships: []
+      }
+      wc_product_export: {
+        Row: {
+          ID: number | null
+          "Precio normal": number | null
+          "Precio rebajado": number | null
+          SKU: string | null
+          Tipo: string | null
+        }
+        Insert: {
+          ID?: number | null
+          "Precio normal"?: number | null
+          "Precio rebajado"?: number | null
+          SKU?: string | null
+          Tipo?: string | null
+        }
+        Update: {
+          ID?: number | null
+          "Precio normal"?: number | null
+          "Precio rebajado"?: number | null
+          SKU?: string | null
+          Tipo?: string | null
+        }
+        Relationships: []
+      }
+      woo_product_odoo: {
+        Row: {
+          code: string | null
+          product_id: number | null
+          product_template_id: number | null
+          woo_id: string | null
+          woo_instance: number | null
+        }
+        Insert: {
+          code?: string | null
+          product_id?: number | null
+          product_template_id?: number | null
+          woo_id?: string | null
+          woo_instance?: number | null
+        }
+        Update: {
+          code?: string | null
+          product_id?: number | null
+          product_template_id?: number | null
+          woo_id?: string | null
+          woo_instance?: number | null
+        }
+        Relationships: []
+      }
+      woo_products_may: {
+        Row: {
+          instance_id: number | null
+          name: string | null
+          product_template_id: number
+          product_tmpl_id: number | null
+          title: string
+          woo_id: string | null
+        }
+        Insert: {
+          instance_id?: number | null
+          name?: string | null
+          product_template_id?: number
+          product_tmpl_id?: number | null
+          title: string
+          woo_id?: string | null
+        }
+        Update: {
+          instance_id?: number | null
+          name?: string | null
+          product_template_id?: number
+          product_tmpl_id?: number | null
+          title?: string
+          woo_id?: string | null
         }
         Relationships: []
       }
@@ -4259,36 +5066,25 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_create_product:
-        | {
-            Args: {
-              p_active: boolean
-              p_categories: number[]
-              p_description: string
-              p_images: Json
-              p_is_variable: boolean
-              p_short_description: string
-              p_title: string
-              p_variations: Json
-              p_web: boolean
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_active: boolean
-              p_categories: number[]
-              p_description: string
-              p_images: Json
-              p_is_variable: boolean
-              p_short_description: string
-              p_title: string
-              p_user_id?: string
-              p_variations: Json
-              p_web: boolean
-            }
-            Returns: Json
-          }
+      sp_create_product: {
+        Args: {
+          p_active: boolean
+          p_categories: number[]
+          p_description: string
+          p_images: Json
+          p_is_variable: boolean
+          p_promotional_bg_color?: string
+          p_promotional_text?: string
+          p_promotional_text_color?: string
+          p_short_description: string
+          p_sizes_image_url?: string
+          p_title: string
+          p_user_id?: string
+          p_variations: Json
+          p_web: boolean
+        }
+        Returns: Json
+      }
       sp_create_return: {
         Args: { p_payload: Json; p_user_id: string }
         Returns: Json
@@ -4335,13 +5131,12 @@ export type Database = {
       sp_ec_create_account_profile: {
         Args: {
           p_auth_uid: string
-          p_dni: string
-          p_email: string
-          p_lastname1: string
-          p_lastname2: string
-          p_nickname: string
-          p_nombre: string
-          p_tipo_documento_id: number
+          p_document_number?: string
+          p_document_type_id?: number
+          p_last_name?: string
+          p_last_name2?: string
+          p_middle_name?: string
+          p_name: string
         }
         Returns: Json
       }
@@ -4752,6 +5547,7 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_user_details_by_uid: { Args: { p_uid: string }; Returns: Json }
       sp_get_users: {
         Args: {
           p_branches?: number
@@ -4897,10 +5693,14 @@ export type Database = {
           p_product_id: number
           p_product_images: Json
           p_product_name: string
-          p_reset_variations: boolean
+          p_promotional_bg_color?: string
+          p_promotional_text?: string
+          p_promotional_text_color?: string
+          p_reset_variations?: boolean
           p_selected_categories: number[]
           p_short_description: string
-          p_user_id: string
+          p_sizes_image_url?: string
+          p_user_id?: string
           p_variations: Json
         }
         Returns: Record<string, unknown>
