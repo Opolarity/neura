@@ -1453,6 +1453,12 @@ export const useCreateSale = () => {
               businessAccountId: e.businessAccountId ? parseInt(e.businessAccountId) : null,
             })),
           initialSituationId: parseInt(orderSituation),
+          discounts: [
+            // Product discounts as single record
+            ...(productDiscountAmount > 0 ? [{ name: "Descuentos de productos", discount_amount: productDiscountAmount, code: "PRO" }] : []),
+            // Custom discounts
+            ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
+          ],
         };
 
         let createdOrderId = orderId ? parseInt(orderId) : null;
