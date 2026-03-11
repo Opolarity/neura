@@ -78,6 +78,7 @@ export const createPOSOrder = async (orderData: CreatePOSOrderRequest) => {
         business_account_id: e.businessAccountId || null,
       })),
       initial_situation_id: orderData.initialSituationId,
+      discounts: orderData.discounts || [],
     },
   });
 

@@ -159,6 +159,7 @@ export const updateOrder = async (
         amount: e.amount,
         business_account_id: e.businessAccountId || null,
       })),
+      discounts: orderData.discounts || [],
     },
   });
   if (error) throw error;
