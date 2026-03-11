@@ -15,6 +15,7 @@ import { FilterOption, DocumentLookupPayload } from '../types/Users.types';
 import { typesByModuleCode } from '@/shared/services/service';
 
 interface FormData {
+    user_name: string;
     name: string;
     middle_name: string;
     last_name: string;
