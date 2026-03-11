@@ -58,7 +58,7 @@ const CreateUser = () => {
     isSearchingDocument,
     isDocumentFound,
     handleDocumentLookup,
-  } = useCreateUser(id, isEdit);
+  } = useCreateUser(id, isEdit, uid);
 
   if (fetchingUser) {
     return (
