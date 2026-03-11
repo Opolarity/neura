@@ -213,6 +213,17 @@ const CreateUser = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
+                    <Label htmlFor="user_name">Nombre de Usuario *</Label>
+                    <Input
+                      id="user_name"
+                      placeholder="nombre.usuario@ejemplo.com"
+                      value={formData.user_name}
+                      onChange={handleChange}
+                      required
+                      disabled={isEdit}
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="email">Email *</Label>
                     <Input
                       id="email"
