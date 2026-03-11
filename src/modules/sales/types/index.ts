@@ -243,6 +243,19 @@ export interface CreateOrderRequest {
     businessAccountId?: number | null;
   }>;
   initialSituationId: number;
+  discounts?: Array<{
+    name: string;
+    discount_amount: number;
+    code: string;
+  }>;
+}
+
+// Order Discount (for order_discounts table)
+export interface OrderDiscount {
+  id?: string;
+  name: string;
+  amount: number;
+  code: string;
 }
 
 // Client Search Result

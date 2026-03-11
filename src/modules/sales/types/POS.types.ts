@@ -258,6 +258,13 @@ export interface CreatePOSOrderRequest {
   // POS specific
   initialSituationId: number;
   saleType: string;
+
+  // Discounts
+  discounts?: Array<{
+    name: string;
+    discount_amount: number;
+    code: string;
+  }>;
 }
 
 // =============================================
