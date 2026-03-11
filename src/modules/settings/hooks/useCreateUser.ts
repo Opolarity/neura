@@ -39,7 +39,7 @@ interface FormData {
     profiles_id: string;
 }
 
-const useCreateUser = (id?: string | null, isEdit?: boolean) => {
+const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null) => {
     const navigate = useNavigate();
     const { toast } = useToast();
 
