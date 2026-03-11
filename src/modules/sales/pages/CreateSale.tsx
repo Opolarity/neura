@@ -1136,7 +1136,7 @@ const CreateSale = () => {
                   className="italic text-sm underline cursor-pointer"
                   onClick={() => setInvoicesModalOpen(true)}>
                   
-                    ver comprobantes
+                    comprobantes
                   </em>
                 </div>
               }
