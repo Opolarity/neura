@@ -314,4 +314,6 @@ export const adaptSaleById = (data: any) => {
   currentSituation: data.current_situation?.situation_id?.toString() || "",
   currentStatusCode: data.current_situation?.statuses?.code || "",
   orderWarehouseId: data.order?.warehouse_id || null,
+  orderDiscounts,
 });
+};
