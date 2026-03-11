@@ -312,16 +312,21 @@ export const useCreateSale = () => {
 
   // Computed: Totals
   const subtotal = useMemo(() => calculateSubtotal(products), [products]);
-  const discountAmount = useMemo(
+  const productDiscountAmount = useMemo(
     () => calculateDiscountAmount(products),
     [products],
   );
+  const extraDiscountsAmount = useMemo(
+    () => orderDiscounts.reduce((sum, d) => sum + d.amount, 0),
+    [orderDiscounts],
+  );
+  const discountAmount = productDiscountAmount + extraDiscountsAmount;
   const shippingCostValue = formData.shippingCost
     ? parseFloat(formData.shippingCost)
     : 0;
   const total = useMemo(
-    () => calculateTotal(products, shippingCostValue),
-    [products, shippingCostValue],
+    () => subtotal - discountAmount + shippingCostValue,
+    [subtotal, discountAmount, shippingCostValue],
   );
 
   // Computed: Check if selected document type is persona jurídica (company)
