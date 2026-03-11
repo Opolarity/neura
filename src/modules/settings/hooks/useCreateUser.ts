@@ -162,6 +162,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null
                     const roleIds = user.role_ids || user.roles?.map((r: any) => r.id) || [];
 
                     const newFormData = {
+                        user_name: user.user_name || '',
                         name: user.name || '',
                         middle_name: user.middle_name || '',
                         last_name: user.last_name || '',
@@ -175,7 +176,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null
                         role_ids: roleIds,
                         warehouse_id: user.warehouse_id?.toString() || profile?.warehouse_id?.toString() || '',
                         branches_id: user.branch_id?.toString() || profile?.branch_id?.toString() || profile?.branches_id?.toString() || '',
-                        phone: user.phone || profile?.phone || '',
+                        phone: user.phone?.toString() || profile?.phone?.toString() || '',
                         country_id: user.country_id?.toString() || '',
                         state_id: user.state_id?.toString() || '',
                         city_id: user.city_id?.toString() || '',
