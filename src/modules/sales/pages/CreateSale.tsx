@@ -174,6 +174,9 @@ const CreateSale = () => {
   } = useCreateSale();
 
   const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
+  const [showAddDiscount, setShowAddDiscount] = useState(false);
+  const [newDiscountName, setNewDiscountName] = useState("");
+  const [newDiscountAmount, setNewDiscountAmount] = useState("");
 
   const [open, setOpen] = useState(false);
   const [tempPriceListId, setTempPriceListId] = useState<string>("");
