@@ -168,6 +168,9 @@ export const useCreateSale = () => {
   const [noteImageFile, setNoteImageFile] = useState<File | null>(null);
   const [noteImagePreview, setNoteImagePreview] = useState<string | null>(null);
 
+  // Order discounts state
+  const [orderDiscounts, setOrderDiscounts] = useState<OrderDiscount[]>([]);
+
   // History modal state
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<number>(null);
