@@ -1270,8 +1270,14 @@ export const usePOS = () => {
     updateCartItem,
     removeFromCart,
     clearCart,
-    generalDiscount,
-    setGeneralDiscount,
+    orderDiscounts,
+    addOrderDiscount: (name: string, amount: number) => {
+      setOrderDiscounts((prev) => [...prev, { id: crypto.randomUUID(), name, amount, code: "CUSTOM" }]);
+    },
+    removeOrderDiscount: (id: string) => {
+      setOrderDiscounts((prev) => prev.filter((d) => d.id !== id));
+    },
+    productDiscountAmount,
     handleProductPageChange: (page: number) => {
       setProductPage(page);
       if (configuration?.warehouseId) {
