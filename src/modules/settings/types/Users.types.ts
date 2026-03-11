@@ -3,6 +3,7 @@ export interface UsersApiResponse {
     data: Array<{
       id: number;
       name: string;
+      user_name: string;
       role: string;
       show: boolean;
       role_id: number;
