@@ -166,7 +166,11 @@ const CreateSale = () => {
     historyModalOpen,
     createdOrderId,
     orderSituationTable,
-    setHistoryModalOpen
+    setHistoryModalOpen,
+    // Order discounts
+    orderDiscounts,
+    addOrderDiscount,
+    removeOrderDiscount,
   } = useCreateSale();
 
   const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
