@@ -617,6 +617,7 @@ export const useCreateSale = () => {
       setCurrentStatusCode(adapted.currentStatusCode || "");
       setClientFound(true);
       setCreatedOrderId(id);
+      setOrderDiscounts(adapted.orderDiscounts || []);
 
       // Load notes from DB
       await loadNotesFromDB(id);
