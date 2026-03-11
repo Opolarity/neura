@@ -23,7 +23,7 @@ const UsersTable = ({ users, loading, onEdit, onDeleteClick }: UsersTableProps) 
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>ID</TableHead>
+          <TableHead>Usuario</TableHead>
           <TableHead>Nombres</TableHead>
           <TableHead>Documentos</TableHead>
           <TableHead>Almacen</TableHead>
