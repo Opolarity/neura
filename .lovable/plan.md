@@ -1,39 +1,25 @@
-## Cambios necesarios por reestructuración de `stock_movement_requests`
 
-### Contexto
-Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+## Problem
+1. The total count and rows are based on `accounts`, so one account with multiple profiles creates duplicates.
+2. The "ID" column shows the account ID — should show "Usuario" with the `user_name` from `profiles`.
 
-### Plan de cambios
+## Changes
 
-**1. Actualizar la Edge Function `create-stock-movements-request`**
-- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
-- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
-- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
-- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
+### 1. Database migration — Update `sp_get_users`
+- Change `COUNT(*) OVER()` to count per profile row (already does, but duplicates come from the join). Add `DISTINCT ON (pr.id)` or simply use `pr.id` as the primary key of each row instead of `ac.id`.
+- Replace `ac.id AS id` with `pr."UID" AS id` and add `pr.user_name AS user_name` to the select.
+- Actually, the real fix: use **profiles as the driving table** — each row = one profile. The `COUNT(*) OVER()` then counts profiles, not accounts.
+- Add `user_name` field to the response.
 
-**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
-- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
-- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+### 2. Frontend — Types, Adapter, Table
+- **`Users.types.ts`**: Add `user_name` field to both `UsersApiResponse` and `Users` interface.
+- **`Users.adapters.ts`**: Map `user_name` from response.
+- **`UsersTable.tsx`**: Rename "ID" column header to "Usuario", display `user_name` instead of `id`.
 
-**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
-- Remover `reason` del mapeo (ya no viene en la respuesta del request).
+### Files to modify
+- New migration SQL (update `sp_get_users` to use `pr.id` as row key, add `user_name`, ensure count is per-profile)
+- `src/modules/settings/types/Users.types.ts`
+- `src/modules/settings/adapters/Users.adapters.ts`
+- `src/modules/settings/components/users/UsersTable.tsx`
 
-**4. Hook `useCreateMovementRequest.ts`**
-- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
-
-### Archivos a modificar
-- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
-- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
-- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
-
-## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
-
-### Cambios realizados
-1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
-2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
-3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
-4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
-5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
-6. **Dependencia `qrcode`** instalada.
