@@ -142,7 +142,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null
                     setFetchingUser(true);
                     console.log("=== Fetching user for ID:", id, "===");
 
-                    const response = await getUserByIdApi(parseInt(id));
+                    const response = await getUserByIdApi(parseInt(id), uid || undefined);
                     console.log("=== Raw API Response ===", JSON.stringify(response, null, 2));
 
                     if (!response) {
