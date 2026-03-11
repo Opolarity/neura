@@ -1,39 +1,76 @@
-## Cambios necesarios por reestructuración de `stock_movement_requests`
 
-### Contexto
-Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+## Problem
+Currently, discounts are only tracked at the product level (per-unit discount on each product). The `order_discounts` table exists but is never used. The user needs:
+1. Product discounts summed into a single `order_discounts` record (name: "Descuentos de productos", code: "PRO")
+2. UI to add additional named discounts (positive or negative) after the subtotal line
+3. `orders.discount` = sum of all `order_discounts` records
+4. On edit, load existing `order_discounts` and recalculate
+5. New discount section follows same blocking rules as product editing (`isPhySituation`)
+6. Same functionality in POS
 
-### Plan de cambios
+## Database
+The `order_discounts` table already exists with columns: `id`, `order_id`, `name`, `discount_amount`, `code`, `created_at`. No schema changes needed.
 
-**1. Actualizar la Edge Function `create-stock-movements-request`**
-- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
-- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
-- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
-- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
+## Changes
 
-**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
-- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
-- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+### 1. Backend — `sp_create_order` (migration)
+After creating the order and products, insert `order_discounts` records from a new `p_discounts` JSONB parameter:
+- Loop through `p_discounts` array, insert each into `order_discounts` (order_id, name, discount_amount, code)
+- No change to how `orders.discount` is set — it's already passed from frontend
 
-**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
-- Remover `reason` del mapeo (ya no viene en la respuesta del request).
+### 2. Backend — `update-order` Edge Function
+- Accept `discounts` array in the input
+- Delete existing `order_discounts` for the order
+- Insert new `order_discounts` records
+- `orders.discount` already updated from frontend-computed value
 
-**4. Hook `useCreateMovementRequest.ts`**
-- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
+### 3. Backend — `get-sale-by-id` Edge Function
+- Fetch `order_discounts` for the order
+- Include in response as `discounts` array
 
-### Archivos a modificar
-- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
-- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
-- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
+### 4. Frontend — Types (`src/modules/sales/types/index.ts`)
+- Add `OrderDiscount` interface: `{ id?: string; name: string; amount: number; code: string }`
+- Add `discounts` to `CreateOrderRequest`
+- Add `orderDiscounts` to `SaleProduct` related state (in the hook)
 
-## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
+### 5. Frontend — `useCreateSale.ts` Hook
+- Add `orderDiscounts` state: array of `{ id: string; name: string; amount: number; code: string }`
+- Recompute `discountAmount` = sum of product discounts + sum of orderDiscounts amounts
+- Recompute `total` = subtotal - discountAmount + shippingCost
+- On submit: build product discount record (`{ name: "Descuentos de productos", amount: productDiscountSum, code: "PRO" }`) + additional discounts → send as `discounts` array
+- On edit load: populate `orderDiscounts` from `get-sale-by-id` response (excluding PRO code, which is auto-calculated)
+- Expose `addOrderDiscount`, `removeOrderDiscount`, `orderDiscounts` 
 
-### Cambios realizados
-1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
-2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
-3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
-4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
-5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
-6. **Dependencia `qrcode`** instalada.
+### 6. Frontend — `CreateSale.tsx` UI
+- After the Subtotal line in the Resumen card, add a section showing:
+  - Product discount line (auto-calculated, read-only)
+  - List of additional discounts with name + amount + remove button
+  - Small "Añadir descuento" button that opens inline inputs for name + amount (positive or negative)
+- Disable this section when `isPhySituation` is true (same blocking rule as products)
+
+### 7. Frontend — POS (`usePOS.ts` + `ProductsStep.tsx`)
+- Replace the single `generalDiscount` with `orderDiscounts` array (same pattern)
+- In the cart area, after the products, add the same discount UI
+- On submit: build the same `discounts` array
+- The POS service already sends `discount` (total) — also send `discounts` array
+
+### 8. Frontend — Adapter (`adaptSaleById`)
+- Parse `discounts` from API response
+- Separate PRO-code discounts (don't show as editable) from custom discounts
+
+### Files to modify:
+- **Migration SQL**: Update `sp_create_order` to accept and insert discounts
+- **`supabase/functions/update-order/index.ts`**: Handle discounts CRUD
+- **`supabase/functions/get-sale-by-id/index.ts`**: Fetch and return discounts
+- **`src/modules/sales/types/index.ts`**: Add OrderDiscount type, update CreateOrderRequest
+- **`src/modules/sales/types/POS.types.ts`**: Update CreatePOSOrderRequest
+- **`src/modules/sales/hooks/useCreateSale.ts`**: Add discount state, recompute totals, handle CRUD
+- **`src/modules/sales/hooks/usePOS.ts`**: Replace generalDiscount with orderDiscounts array
+- **`src/modules/sales/pages/CreateSale.tsx`**: Add discount UI in Resumen section
+- **`src/modules/sales/components/pos/steps/ProductsStep.tsx`**: Add discount UI in cart
+- **`src/modules/sales/services/index.ts`**: Send discounts in create/update
+- **`src/modules/sales/services/POS.service.ts`**: Send discounts in POS create
+- **`src/modules/sales/adapters/index.ts`**: Parse discounts from edit response
+- **`src/modules/sales/utils/index.ts`**: Update calculateTotal to accept extra discounts
+
