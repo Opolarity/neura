@@ -106,6 +106,7 @@ const CreateSale = () => {
     filteredNeighborhoods,
     subtotal,
     discountAmount,
+    productDiscountAmount,
     total,
     orderId,
     isPersonaJuridica,
