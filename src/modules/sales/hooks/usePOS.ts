@@ -1129,7 +1129,7 @@ export const usePOS = () => {
     setConfiguration(null);
     setCart([]);
     setCartGifts([]);
-    setGeneralDiscount(0);
+    setOrderDiscounts([]);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
