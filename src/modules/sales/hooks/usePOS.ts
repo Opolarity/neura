@@ -21,6 +21,7 @@ import type {
   INITIAL_SHIPPING_DATA,
 } from "../types/POS.types";
 import type {
+  OrderDiscount,
   SalesFormDataResponse,
   ShippingCost,
   PriceList,
@@ -104,7 +105,7 @@ export const usePOS = () => {
 
   // Products (Step 2)
   const [cart, setCart] = useState<POSCartItem[]>([]);
-  const [generalDiscount, setGeneralDiscount] = useState<number>(0);
+  const [orderDiscounts, setOrderDiscounts] = useState<OrderDiscount[]>([]);
   const [paginatedProducts, setPaginatedProducts] = useState<
     PaginatedProductVariation[]
   >([]);
@@ -834,8 +835,16 @@ export const usePOS = () => {
       (sum, item) => sum + item.discountAmount * item.quantity,
       0
     );
-    return itemDiscounts + generalDiscount;
-  }, [cart, generalDiscount]);
+    const extraDiscounts = orderDiscounts.reduce((sum, d) => sum + d.amount, 0);
+    return itemDiscounts + extraDiscounts;
+  }, [cart, orderDiscounts]);
+
+  const productDiscountAmount = useMemo(() => {
+    return cart.reduce(
+      (sum, item) => sum + item.discountAmount * item.quantity,
+      0
+    );
+  }, [cart]);
 
   const shippingCostValue = customer.requiresShipping ? shipping.shippingCost : 0;
 
@@ -1016,6 +1025,10 @@ export const usePOS = () => {
         change: changeAmount,
         initialSituationId: situationId,
         saleType: saleTypeId,
+        discounts: [
+          ...(productDiscountAmount > 0 ? [{ name: "Descuentos de productos", discount_amount: productDiscountAmount, code: "PRO" }] : []),
+          ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
+        ],
       };
 
       const result = await createPOSOrder(orderData);
@@ -1082,7 +1095,7 @@ export const usePOS = () => {
     setCurrentStep(2); // Go back to customer data step
     setCart([]);
     setCartGifts([]);
-    setGeneralDiscount(0);
+    setOrderDiscounts([]);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
@@ -1120,7 +1133,7 @@ export const usePOS = () => {
     setConfiguration(null);
     setCart([]);
     setCartGifts([]);
-    setGeneralDiscount(0);
+    setOrderDiscounts([]);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
@@ -1261,8 +1274,14 @@ export const usePOS = () => {
     updateCartItem,
     removeFromCart,
     clearCart,
-    generalDiscount,
-    setGeneralDiscount,
+    orderDiscounts,
+    addOrderDiscount: (name: string, amount: number) => {
+      setOrderDiscounts((prev) => [...prev, { id: crypto.randomUUID(), name, amount, code: "CUSTOM" }]);
+    },
+    removeOrderDiscount: (id: string) => {
+      setOrderDiscounts((prev) => prev.filter((d) => d.id !== id));
+    },
+    productDiscountAmount,
     handleProductPageChange: (page: number) => {
       setProductPage(page);
       if (configuration?.warehouseId) {

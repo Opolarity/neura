@@ -94,6 +94,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
         business_account_id: e.businessAccountId || null,
       })),
       initial_situation_id: orderData.initialSituationId,
+      discounts: orderData.discounts || [],
     },
   });
   if (error) throw error;
@@ -158,6 +159,7 @@ export const updateOrder = async (
         amount: e.amount,
         business_account_id: e.businessAccountId || null,
       })),
+      discounts: orderData.discounts || [],
     },
   });
   if (error) throw error;

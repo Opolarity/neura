@@ -106,6 +106,7 @@ const CreateSale = () => {
     filteredNeighborhoods,
     subtotal,
     discountAmount,
+    productDiscountAmount,
     total,
     orderId,
     isPersonaJuridica,
@@ -165,10 +166,17 @@ const CreateSale = () => {
     historyModalOpen,
     createdOrderId,
     orderSituationTable,
-    setHistoryModalOpen
+    setHistoryModalOpen,
+    // Order discounts
+    orderDiscounts,
+    addOrderDiscount,
+    removeOrderDiscount,
   } = useCreateSale();
 
   const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
+  const [showAddDiscount, setShowAddDiscount] = useState(false);
+  const [newDiscountName, setNewDiscountName] = useState("");
+  const [newDiscountAmount, setNewDiscountAmount] = useState("");
 
   const [open, setOpen] = useState(false);
   const [tempPriceListId, setTempPriceListId] = useState<string>("");
@@ -1157,15 +1165,93 @@ const CreateSale = () => {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
+
+                {/* Product discount (auto-calculated) */}
+                {productDiscountAmount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground text-xs">Dcto. productos</span>
+                    <span className="text-destructive text-xs">-{formatCurrency(productDiscountAmount)}</span>
+                  </div>
+                )}
+
+                {/* Custom order discounts */}
+                {orderDiscounts.map((d) => (
+                  <div key={d.id} className="flex justify-between text-sm items-center">
+                    <span className="text-muted-foreground text-xs truncate max-w-[120px]">{d.name}</span>
+                    <div className="flex items-center gap-1">
+                      <span className={cn("text-xs", d.amount > 0 ? "text-destructive" : "text-emerald-600")}>
+                        {d.amount > 0 ? "-" : "+"}{formatCurrency(Math.abs(d.amount))}
+                      </span>
+                      {!isPhySituation && (
+                        <Button type="button" variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeOrderDiscount(d.id!)}>
+                          <X className="w-3 h-3 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Add discount button/form */}
+                {!isPhySituation && (
+                  showAddDiscount ? (
+                    <div className="space-y-2 p-2 border rounded-md bg-muted/30">
+                      <Input
+                        placeholder="Nombre del descuento"
+                        value={newDiscountName}
+                        onChange={(e) => setNewDiscountName(e.target.value)}
+                        className="h-7 text-xs"
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Monto (+/-)"
+                          value={newDiscountAmount}
+                          onChange={(e) => setNewDiscountAmount(e.target.value)}
+                          className="h-7 text-xs flex-1"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            const amt = parseFloat(newDiscountAmount);
+                            if (!newDiscountName.trim() || isNaN(amt) || amt === 0) return;
+                            addOrderDiscount(newDiscountName.trim(), amt);
+                            setNewDiscountName("");
+                            setNewDiscountAmount("");
+                            setShowAddDiscount(false);
+                          }}
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Añadir
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowAddDiscount(false)}>
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                      onClick={() => setShowAddDiscount(true)}
+                    >
+                      <Plus className="w-3 h-3" />
+                      Añadir descuento
+                    </button>
+                  )
+                )}
+
+                {/* Total discount summary */}
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Descuento</span>
+                  <span className="text-muted-foreground">Descuento Total</span>
                   <span className="text-destructive">
                     -{formatCurrency(discountAmount)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm items-center">
                   <span className="text-muted-foreground">Costo de Envío</span>
-                  {/* <Input type="number" value={formData.shippingCost} onChange={(e) => handleInputChange("shippingCost", e.target.value)} placeholder="0" className="w-20 h-8 text-right" disabled={!formData.withShipping} /> */}
                   {formData.shippingCost || 0}
                 </div>
                 <Separator />

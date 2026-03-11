@@ -234,7 +234,19 @@ export const getOrdersSituationsByIdAdapter = (
 };
 
 // Adapt sale by ID response for CreateSale form
-export const adaptSaleById = (data: any) => ({
+export const adaptSaleById = (data: any) => {
+  // Parse order_discounts - separate PRO (auto) from custom
+  const rawDiscounts = (data.discounts || []).map((d: any) => ({
+    id: crypto.randomUUID(),
+    name: d.name || "",
+    amount: d.discount_amount ?? 0,
+    code: d.code || "",
+  }));
+
+  // Custom discounts = non-PRO codes (user-created)
+  const orderDiscounts = rawDiscounts.filter((d: any) => d.code !== "PRO");
+
+  return ({
   formData: {
     documentType: data.order.document_type?.toString() || "",
     documentNumber: data.order.document_number || "",
@@ -302,4 +314,6 @@ export const adaptSaleById = (data: any) => ({
   currentSituation: data.current_situation?.situation_id?.toString() || "",
   currentStatusCode: data.current_situation?.statuses?.code || "",
   orderWarehouseId: data.order?.warehouse_id || null,
+  orderDiscounts,
 });
+};
