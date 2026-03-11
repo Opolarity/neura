@@ -1661,5 +1661,10 @@ export const useCreateSale = () => {
     createdOrderId,
     orderSituationTable,
     setHistoryModalOpen,
+
+    // Order discounts
+    orderDiscounts,
+    addOrderDiscount,
+    removeOrderDiscount,
   };
 };
