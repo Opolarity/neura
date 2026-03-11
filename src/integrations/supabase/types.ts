@@ -1073,6 +1073,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: number
+          migracode: string | null
           movement_class_id: number
           movement_date: string
           movement_type_id: number
@@ -1086,6 +1087,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          migracode?: string | null
           movement_class_id: number
           movement_date: string
           movement_type_id: number
@@ -1099,6 +1101,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          migracode?: string | null
           movement_class_id?: number
           movement_date?: string
           movement_type_id?: number
@@ -1217,6 +1220,59 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["UID"]
+          },
+        ]
+      }
+      odoo_users: {
+        Row: {
+          id: number | null
+          name: string | null
+          vat: string | null
+        }
+        Insert: {
+          id?: number | null
+          name?: string | null
+          vat?: string | null
+        }
+        Update: {
+          id?: number | null
+          name?: string | null
+          vat?: string | null
+        }
+        Relationships: []
+      }
+      order_discounts: {
+        Row: {
+          code: string | null
+          created_at: string
+          discount_amount: number | null
+          id: number
+          name: string | null
+          order_id: number
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          discount_amount?: number | null
+          id?: number
+          name?: string | null
+          order_id: number
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          discount_amount?: number | null
+          id?: number
+          name?: string | null
+          order_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_discounts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1357,6 +1413,7 @@ export type Database = {
       order_products: {
         Row: {
           id: number
+          migracode: string | null
           order_id: number
           product_discount: number
           product_name: string | null
@@ -1368,6 +1425,7 @@ export type Database = {
         }
         Insert: {
           id?: number
+          migracode?: string | null
           order_id: number
           product_discount?: number
           product_name?: string | null
@@ -1379,6 +1437,7 @@ export type Database = {
         }
         Update: {
           id?: number
+          migracode?: string | null
           order_id?: number
           product_discount?: number
           product_name?: string | null
@@ -1487,6 +1546,7 @@ export type Database = {
           city_id: number | null
           country_id: number | null
           created_at: string
+          created_by: string | null
           customer_lastname: string | null
           customer_name: string | null
           date: string | null
@@ -1518,6 +1578,7 @@ export type Database = {
           city_id?: number | null
           country_id?: number | null
           created_at?: string
+          created_by?: string | null
           customer_lastname?: string | null
           customer_name?: string | null
           date?: string | null
@@ -1549,6 +1610,7 @@ export type Database = {
           city_id?: number | null
           country_id?: number | null
           created_at?: string
+          created_by?: string | null
           customer_lastname?: string | null
           customer_name?: string | null
           date?: string | null
@@ -1579,6 +1641,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "branches"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
           },
           {
             foreignKeyName: "orders_document_type_fkey"
@@ -1734,6 +1803,7 @@ export type Database = {
           date: string | null
           location_id: number | null
           movimiento_comprobante: number | null
+          name: string | null
           note: string | null
           partner_id: number | null
           payment_gateway_id_odoo: number | null
@@ -1743,6 +1813,7 @@ export type Database = {
           sale_id_name: string
           status: string | null
           to_invoice: boolean | null
+          user_id: number | null
           vat: string | null
         }
         Insert: {
@@ -1752,6 +1823,7 @@ export type Database = {
           date?: string | null
           location_id?: number | null
           movimiento_comprobante?: number | null
+          name?: string | null
           note?: string | null
           partner_id?: number | null
           payment_gateway_id_odoo?: number | null
@@ -1761,6 +1833,7 @@ export type Database = {
           sale_id_name: string
           status?: string | null
           to_invoice?: boolean | null
+          user_id?: number | null
           vat?: string | null
         }
         Update: {
@@ -1770,6 +1843,7 @@ export type Database = {
           date?: string | null
           location_id?: number | null
           movimiento_comprobante?: number | null
+          name?: string | null
           note?: string | null
           partner_id?: number | null
           payment_gateway_id_odoo?: number | null
@@ -1779,6 +1853,7 @@ export type Database = {
           sale_id_name?: string
           status?: string | null
           to_invoice?: boolean | null
+          user_id?: number | null
           vat?: string | null
         }
         Relationships: []
@@ -2465,6 +2540,45 @@ export type Database = {
           sizes_image_url?: string | null
           title?: string
           web?: boolean
+        }
+        Relationships: []
+      }
+      products_general_sales_odoo: {
+        Row: {
+          is_delivery: boolean | null
+          order_id: number | null
+          order_name: string | null
+          price_total: number | null
+          price_unit: number | null
+          product_id: number
+          product_line_id: number | null
+          product_name: string | null
+          product_uom_qty: number | null
+          sale_id: number | null
+        }
+        Insert: {
+          is_delivery?: boolean | null
+          order_id?: number | null
+          order_name?: string | null
+          price_total?: number | null
+          price_unit?: number | null
+          product_id: number
+          product_line_id?: number | null
+          product_name?: string | null
+          product_uom_qty?: number | null
+          sale_id?: number | null
+        }
+        Update: {
+          is_delivery?: boolean | null
+          order_id?: number | null
+          order_name?: string | null
+          price_total?: number | null
+          price_unit?: number | null
+          product_id?: number
+          product_line_id?: number | null
+          product_name?: string | null
+          product_uom_qty?: number | null
+          sale_id?: number | null
         }
         Relationships: []
       }
@@ -3258,6 +3372,7 @@ export type Database = {
           sale_type_id_odoo: number | null
           sale_type_name: string | null
           status: string | null
+          user_id: number | null
           vat: string | null
           warehouse_id_odoo: number | null
           woo_order_id: string | null
@@ -3281,6 +3396,7 @@ export type Database = {
           sale_type_id_odoo?: number | null
           sale_type_name?: string | null
           status?: string | null
+          user_id?: number | null
           vat?: string | null
           warehouse_id_odoo?: number | null
           woo_order_id?: string | null
@@ -3304,6 +3420,7 @@ export type Database = {
           sale_type_id_odoo?: number | null
           sale_type_name?: string | null
           status?: string | null
+          user_id?: number | null
           vat?: string | null
           warehouse_id_odoo?: number | null
           woo_order_id?: string | null
@@ -3728,6 +3845,7 @@ export type Database = {
           created_by: string | null
           id: number
           is_active: boolean
+          migracode: string | null
           movement_type: number
           product_variation_id: number
           quantity: number
@@ -3741,6 +3859,7 @@ export type Database = {
           created_by?: string | null
           id?: never
           is_active?: boolean
+          migracode?: string | null
           movement_type: number
           product_variation_id: number
           quantity: number
@@ -3754,6 +3873,7 @@ export type Database = {
           created_by?: string | null
           id?: never
           is_active?: boolean
+          migracode?: string | null
           movement_type?: number
           product_variation_id?: number
           quantity?: number
