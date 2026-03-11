@@ -21,6 +21,8 @@ import type {
   INITIAL_SHIPPING_DATA,
 } from "../types/POS.types";
 import type {
+  OrderDiscount,
+import type {
   SalesFormDataResponse,
   ShippingCost,
   PriceList,
