@@ -1602,6 +1602,7 @@ export const useCreateSale = () => {
     filteredNeighborhoods,
     subtotal,
     discountAmount,
+    productDiscountAmount,
     total,
     orderId,
     isPersonaJuridica,
