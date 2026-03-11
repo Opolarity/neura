@@ -22,7 +22,6 @@ import type {
 } from "../types/POS.types";
 import type {
   OrderDiscount,
-import type {
   SalesFormDataResponse,
   ShippingCost,
   PriceList,
