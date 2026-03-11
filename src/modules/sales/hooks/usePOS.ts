@@ -1091,7 +1091,7 @@ export const usePOS = () => {
     setCurrentStep(2); // Go back to customer data step
     setCart([]);
     setCartGifts([]);
-    setGeneralDiscount(0);
+    setOrderDiscounts([]);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
