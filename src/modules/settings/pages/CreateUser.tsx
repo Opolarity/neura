@@ -29,6 +29,7 @@ import useCreateUser from "../hooks/useCreateUser";
 const CreateUser = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
+  const uid = searchParams.get("uid");
   const isEdit = !!id;
 
   const {
@@ -57,7 +58,7 @@ const CreateUser = () => {
     isSearchingDocument,
     isDocumentFound,
     handleDocumentLookup,
-  } = useCreateUser(id, isEdit);
+  } = useCreateUser(id, isEdit, uid);
 
   if (fetchingUser) {
     return (
@@ -211,6 +212,17 @@ const CreateUser = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="user_name">Nombre de Usuario *</Label>
+                    <Input
+                      id="user_name"
+                      placeholder="nombre.usuario@ejemplo.com"
+                      value={formData.user_name}
+                      onChange={handleChange}
+                      required
+                      disabled={isEdit}
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email *</Label>
                     <Input

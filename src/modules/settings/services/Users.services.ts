@@ -124,9 +124,10 @@ export const getUsersFormDataApi = async (params?: {
   return data;
 };
 
-export const getUserByIdApi = async (id: number) => {
+export const getUserByIdApi = async (id: number, uid?: string) => {
+  const queryParam = uid ? `uid=${uid}` : `id=${id}`;
   const { data, error } = await supabase.functions.invoke(
-    `get-users-details?id=${id}`,
+    `get-users-details?${queryParam}`,
     {
       method: "GET",
     },

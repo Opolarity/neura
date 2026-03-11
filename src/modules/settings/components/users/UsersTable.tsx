@@ -51,7 +51,7 @@ const UsersTable = ({ users, loading, onEdit, onDeleteClick }: UsersTableProps) 
           </TableRow>
         ) : (
           users.map((u) => (
-            <TableRow key={u.id}>
+            <TableRow key={u.profiles_id}>
               <TableCell>{u.user_name}</TableCell>
               <TableCell>{u.name}</TableCell>
               <TableCell>{u.document_number}</TableCell>

@@ -80,7 +80,7 @@ const UsersList = () => {
           <UsersTable
             users={users}
             loading={loading}
-            onEdit={(user) => navigate(`/settings/users/create?id=${user.id}`)}
+            onEdit={(user) => navigate(`/settings/users/create?id=${user.id}&uid=${user.profiles_id}`)}
             onDeleteClick={setUserToDelete}
           />
         </CardContent>
