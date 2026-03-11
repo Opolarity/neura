@@ -22,6 +22,7 @@ import type {
   PaginationMeta,
   OrdersSituationsById,
   BusinessAccountOption,
+  OrderDiscount,
 } from "../types";
 import {
   adaptSalesFormData,
