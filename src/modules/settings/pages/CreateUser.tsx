@@ -29,6 +29,7 @@ import useCreateUser from "../hooks/useCreateUser";
 const CreateUser = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
+  const uid = searchParams.get("uid");
   const isEdit = !!id;
 
   const {
