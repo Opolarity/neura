@@ -1346,6 +1346,18 @@ export const useCreateSale = () => {
     setNoteImagePreview(null);
   }, []);
 
+  // Order discount CRUD
+  const addOrderDiscount = useCallback((name: string, amount: number) => {
+    setOrderDiscounts((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), name, amount, code: "CUSTOM" },
+    ]);
+  }, []);
+
+  const removeOrderDiscount = useCallback((id: string) => {
+    setOrderDiscounts((prev) => prev.filter((d) => d.id !== id));
+  }, []);
+
   // Handle form submission
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
