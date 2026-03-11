@@ -65,6 +65,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null
 
     // Form state
     const [formData, setFormData] = useState<FormData>({
+        user_name: '',
         name: '',
         middle_name: '',
         last_name: '',
