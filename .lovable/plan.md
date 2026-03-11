@@ -1,39 +1,24 @@
-## Cambios necesarios por reestructuración de `stock_movement_requests`
 
-### Contexto
-Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+## Problem
+The user listing at `/settings/users` currently shows ALL users (2072 total), including clients and other types. It should only show users who have the type with code `'COL'` (Colaborador, id=22) linked via the `account_types` table.
 
-### Plan de cambios
+## Solution
+Modify the `sp_get_users` stored procedure to add an `INNER JOIN` to `account_types` and `types` tables, filtering only accounts that have a linked type with `code = 'COL'`.
 
-**1. Actualizar la Edge Function `create-stock-movements-request`**
-- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
-- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
-- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
-- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
+## Change
 
-**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
-- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
-- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+**Database migration** — Update `sp_get_users`:
+- Change the existing `LEFT JOIN LATERAL` for `acc_type` to an `INNER JOIN` (or add a `WHERE EXISTS`) that requires the account to have a record in `account_types` where the associated `types.code = 'COL'`.
 
-**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
-- Remover `reason` del mapeo (ya no viene en la respuesta del request).
+Specifically, add this condition to the `WHERE` clause:
+```sql
+AND EXISTS (
+    SELECT 1 FROM account_types act2
+    JOIN types ty2 ON ty2.id = act2.account_type_id
+    WHERE act2.account_id = ac.id AND ty2.code = 'COL'
+)
+```
 
-**4. Hook `useCreateMovementRequest.ts`**
-- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
+This is the minimal, non-breaking change — no frontend or edge function modifications needed. The total count will also be corrected automatically since `COUNT(*) OVER()` runs after the filter.
 
-### Archivos a modificar
-- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
-- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
-- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
-
-## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
-
-### Cambios realizados
-1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
-2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
-3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
-4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
-5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
-6. **Dependencia `qrcode`** instalada.
