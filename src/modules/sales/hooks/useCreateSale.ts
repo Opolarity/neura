@@ -1547,6 +1547,8 @@ export const useCreateSale = () => {
       orderId,
       subtotal,
       discountAmount,
+      productDiscountAmount,
+      orderDiscounts,
       total,
       isExistingClient,
       isAnonymousPurchase,
