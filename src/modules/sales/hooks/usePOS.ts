@@ -106,7 +106,7 @@ export const usePOS = () => {
 
   // Products (Step 2)
   const [cart, setCart] = useState<POSCartItem[]>([]);
-  const [generalDiscount, setGeneralDiscount] = useState<number>(0);
+  const [orderDiscounts, setOrderDiscounts] = useState<OrderDiscount[]>([]);
   const [paginatedProducts, setPaginatedProducts] = useState<
     PaginatedProductVariation[]
   >([]);
