@@ -5547,6 +5547,7 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_user_details_by_uid: { Args: { p_uid: string }; Returns: Json }
       sp_get_users: {
         Args: {
           p_branches?: number
