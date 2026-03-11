@@ -141,6 +141,7 @@ export const useCreateSale = () => {
   const [isExistingClient, setIsExistingClient] = useState<boolean>(false); // true only if found in accounts table
   const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
   const [customerUserId, setCustomerUserId] = useState<string | null>(null);
+  const [customerAccountId, setCustomerAccountId] = useState<number | null>(null);
   const [cartGifts, setCartGifts] = useState<GiftItem[]>([]);
   const [selectedVariation, setSelectedVariation] =
     useState<ProductVariation | null>(null);
@@ -351,7 +352,8 @@ export const useCreateSale = () => {
       const { items: updated, gifts } = await applyPriceRules(
         regularItems,
         formData.priceListId,
-        customerUserId
+        customerUserId,
+        customerAccountId
       );
 
       const defaultStockTypeId = regularItems[0]?.stockTypeId ?? 1;
@@ -385,7 +387,7 @@ export const useCreateSale = () => {
     };
 
     run();
-  }, [products, formData.priceListId, customerUserId]);
+  }, [products, formData.priceListId, customerUserId, customerAccountId]);
 
   // Computed: Check if current status has COM code (completed - no payment edits allowed)
   const isComSituation = useMemo(() => {
@@ -969,6 +971,7 @@ export const useCreateSale = () => {
             .eq("account_id", client.id)
             .maybeSingle();
           setCustomerUserId(profileData?.UID ?? null);
+          setCustomerAccountId(client.id);
         } else {
           setIsExistingClient(false); // Not in accounts table
           // Client not found - check document type code
