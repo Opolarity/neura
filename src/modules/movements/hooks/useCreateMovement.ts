@@ -17,7 +17,7 @@ import {
   MovementClass,
   CurrentUserProfile,
 } from "../types/Movements.types";
-import { getPaymentMethodsIsActiveTrueAndActiveTrue } from "@/shared/services/service";
+import { getPaymentMethodsIsActiveTrueAndActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 
 const movementSchema = z.object({
   amount: z
@@ -49,6 +49,9 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
   const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfile | null>(null);
   const [selectedBusinessAccount, setSelectedBusinessAccount] = useState<string>("");
   const [movementTypeId, setMovementTypeId] = useState<number | null>(null);
+  const [businessAccounts, setBusinessAccounts] = useState<{ id: number; name: string }[]>([]);
+  const [needsManualBusinessAccount, setNeedsManualBusinessAccount] = useState(false);
+  const [selectedManualBusinessAccountId, setSelectedManualBusinessAccountId] = useState<string>("");
 
   const isIncome = movementType === "income";
 
@@ -85,13 +88,24 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
       const selected = paymentMethods.find(
         (pm) => pm.id.toString() === selectedPaymentMethodId
       );
-      if (selected && selected.business_accounts) {
-        setSelectedBusinessAccount(selected.business_accounts.name);
+      if (selected) {
+        if (selected.business_account_id === 0 || !selected.business_account_id) {
+          setNeedsManualBusinessAccount(true);
+          setSelectedBusinessAccount("");
+          setSelectedManualBusinessAccountId("");
+        } else {
+          setNeedsManualBusinessAccount(false);
+          setSelectedManualBusinessAccountId("");
+          setSelectedBusinessAccount(selected.business_accounts?.name || "");
+        }
       } else {
+        setNeedsManualBusinessAccount(false);
         setSelectedBusinessAccount("");
       }
     } else {
+      setNeedsManualBusinessAccount(false);
       setSelectedBusinessAccount("");
+      setSelectedManualBusinessAccountId("");
     }
   }, [selectedPaymentMethodId, paymentMethods]);
 
@@ -99,15 +113,17 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     if (!user) return;
 
     try {
-      const [pmData, classesData, userProfile, movementTypes] = await Promise.all([
+      const [pmData, classesData, userProfile, movementTypes, baData] = await Promise.all([
         getPaymentMethodsIsActiveTrueAndActiveTrue(),
         movementClassesApi(),
         currentUserProfileApi(user.id),
         movementTypesApi(),
+        getBusinessAccountIsActiveTrue(),
       ]);
 
       setPaymentMethods(pmData as any as PaymentMethodWithAccount[]);
       setClasses(classesData);
+      setBusinessAccounts(baData as any || []);
       setCurrentUserProfile(userProfile);
 
       const typeName = isIncome ? "Ingreso" : "Egreso";
@@ -144,14 +160,20 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     setLoading(true);
 
     try {
-      await createMovementApi({
+      const payload: any = {
         amount: Number(data.amount),
         movement_date: data.movement_date,
         description: data.description,
         payment_method_id: Number(data.payment_method_id),
         movement_type_id: movementTypeId,
         movement_class_id: Number(data.movement_class_id),
-      });
+      };
+
+      if (needsManualBusinessAccount && selectedManualBusinessAccountId) {
+        payload.business_account_id = Number(selectedManualBusinessAccountId);
+      }
+
+      await createMovementApi(payload);
 
       toast({
         title: "Éxito",
@@ -186,5 +208,9 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     messages,
     onSubmit,
     goBack,
+    businessAccounts,
+    needsManualBusinessAccount,
+    selectedManualBusinessAccountId,
+    setSelectedManualBusinessAccountId,
   };
 };
