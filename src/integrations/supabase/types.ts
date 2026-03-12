@@ -1248,6 +1248,45 @@ export type Database = {
         }
         Relationships: []
       }
+      new_products_general_sales_odoo: {
+        Row: {
+          is_delivery: boolean | null
+          order_id: number | null
+          order_name: string | null
+          price_total: number | null
+          price_unit: number | null
+          product_id: number | null
+          product_line_id: number | null
+          product_name: string | null
+          product_uom_qty: number | null
+          sale_id: number | null
+        }
+        Insert: {
+          is_delivery?: boolean | null
+          order_id?: number | null
+          order_name?: string | null
+          price_total?: number | null
+          price_unit?: number | null
+          product_id?: number | null
+          product_line_id?: number | null
+          product_name?: string | null
+          product_uom_qty?: number | null
+          sale_id?: number | null
+        }
+        Update: {
+          is_delivery?: boolean | null
+          order_id?: number | null
+          order_name?: string | null
+          price_total?: number | null
+          price_unit?: number | null
+          product_id?: number | null
+          product_line_id?: number | null
+          product_name?: string | null
+          product_uom_qty?: number | null
+          sale_id?: number | null
+        }
+        Relationships: []
+      }
       new_sale_order: {
         Row: {
           amount_total: number | null
