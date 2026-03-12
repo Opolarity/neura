@@ -202,5 +202,9 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     messages,
     onSubmit,
     goBack,
+    businessAccounts,
+    needsManualBusinessAccount,
+    selectedManualBusinessAccountId,
+    setSelectedManualBusinessAccountId,
   };
 };
