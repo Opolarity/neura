@@ -29,6 +29,10 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
     messages,
     onSubmit,
     goBack,
+    businessAccounts,
+    needsManualBusinessAccount,
+    selectedManualBusinessAccountId,
+    setSelectedManualBusinessAccountId,
   } = useCreateMovement({ movementType });
 
   const {
