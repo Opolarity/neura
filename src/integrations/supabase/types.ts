@@ -5106,6 +5106,7 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_cleanup_anonymous_cart: { Args: { p_cart_id: number }; Returns: Json }
       sp_close_pos_session: {
         Args: {
           p_closing_amount: number
@@ -5441,6 +5442,7 @@ export type Database = {
         Args: {
           p_branch_id?: number
           p_cart_id?: number
+          p_create_if_not_exists?: boolean
           p_price_list_id?: number
           p_sale_type_id?: number
           p_stock_type_id?: number

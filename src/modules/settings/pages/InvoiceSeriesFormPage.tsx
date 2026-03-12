@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +10,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { ArrowLeft, Loader2, ChevronsUpDown, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useInvoiceSeriesForm } from "../hooks/useInvoiceSeriesForm";
+import { cn } from "@/shared/utils/utils";
 
 const InvoiceSeriesFormPage = () => {
   const navigate = useNavigate();
@@ -26,6 +41,13 @@ const InvoiceSeriesFormPage = () => {
     updateField,
     saveSerie,
   } = useInvoiceSeriesForm();
+
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  const selectedAccount = useMemo(
+    () => accounts.find((a) => a.id.toString() === form.account_id),
+    [accounts, form.account_id]
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,21 +93,51 @@ const InvoiceSeriesFormPage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Cuenta</Label>
-                <Select
-                  value={form.account_id}
-                  onValueChange={(v) => updateField("account_id", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar cuenta" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accounts.map((a) => (
-                      <SelectItem key={a.id} value={a.id.toString()}>
-                        {a.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={accountOpen} onOpenChange={setAccountOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={accountOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {selectedAccount
+                        ? `${selectedAccount.document_number} — ${selectedAccount.name}`
+                        : "Buscar cuenta..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar por nombre o documento..." />
+                      <CommandList>
+                        <CommandEmpty>No se encontraron cuentas.</CommandEmpty>
+                        <CommandGroup>
+                          {accounts.map((a) => (
+                            <CommandItem
+                              key={a.id}
+                              value={`${a.document_number} ${a.name}`}
+                              onSelect={() => {
+                                updateField("account_id", a.id.toString());
+                                setAccountOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  form.account_id === a.id.toString()
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {a.document_number} — {a.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <Label>Proveedor de facturación</Label>
