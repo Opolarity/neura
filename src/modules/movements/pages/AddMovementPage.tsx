@@ -29,6 +29,10 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
     messages,
     onSubmit,
     goBack,
+    businessAccounts,
+    needsManualBusinessAccount,
+    selectedManualBusinessAccountId,
+    setSelectedManualBusinessAccountId,
   } = useCreateMovement({ movementType });
 
   const {
@@ -113,16 +117,34 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
                 )}
               </div>
 
-              {/* Cuenta de Negocio (Bloqueada) */}
+              {/* Cuenta de Negocio */}
               <div className="space-y-2">
                 <Label htmlFor="business_account">Cuenta de Negocio</Label>
-                <Input
-                  id="business_account"
-                  value={selectedBusinessAccount}
-                  disabled
-                  className="bg-muted"
-                  placeholder="Selecciona un método de pago"
-                />
+                {needsManualBusinessAccount ? (
+                  <Select
+                    value={selectedManualBusinessAccountId}
+                    onValueChange={(value) => setSelectedManualBusinessAccountId(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar cuenta de negocio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {businessAccounts.map((ba) => (
+                        <SelectItem key={ba.id} value={ba.id.toString()}>
+                          {ba.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    id="business_account"
+                    value={selectedBusinessAccount}
+                    disabled
+                    className="bg-muted"
+                    placeholder="Selecciona un método de pago"
+                  />
+                )}
               </div>
 
               {/* Categoría (Classes del módulo MOV) */}
