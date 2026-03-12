@@ -1468,6 +1468,7 @@ export const useCreateSale = () => {
           await updateOrder(parseInt(orderId), orderData);
         } else {
           const response = await createOrder(orderData);
+          console.log("[CreateSale] Edge function response:", JSON.stringify(response));
 
           if (response?.order?.id) {
             createdOrderId = response.order.id;
@@ -1476,6 +1477,8 @@ export const useCreateSale = () => {
           if (response?.payments) {
             createdPayments = response.payments;
           }
+          console.log("[CreateSale] createdOrderId:", createdOrderId, "createdPayments:", JSON.stringify(createdPayments));
+          console.log("[CreateSale] validPayments with voucherFile:", payments.filter(p => p.paymentMethodId && p.amount).map((p, i) => ({ index: i, hasVoucher: !!p.voucherFile, fileName: p.voucherFile?.name })));
         }
 
         // Upload vouchers to storage after order is created
