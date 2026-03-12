@@ -17,7 +17,7 @@ import {
   MovementClass,
   CurrentUserProfile,
 } from "../types/Movements.types";
-import { getPaymentMethodsIsActiveTrueAndActiveTrue } from "@/shared/services/service";
+import { getPaymentMethodsIsActiveTrueAndActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 
 const movementSchema = z.object({
   amount: z
