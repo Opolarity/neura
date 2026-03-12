@@ -1246,8 +1246,8 @@ const CreateSale = () => {
                 {/* Total discount summary */}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Descuento Total</span>
-                  <span className="text-destructive">
-                    -{formatCurrency(discountAmount)}
+                  <span className={cn("font-medium", discountAmount > 0 ? "text-emerald-600" : discountAmount < 0 ? "text-destructive" : "text-muted-foreground")}>
+                    {discountAmount > 0 ? "+" : discountAmount < 0 ? "-" : ""}{formatCurrency(Math.abs(discountAmount))}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm items-center">
