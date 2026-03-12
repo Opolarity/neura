@@ -24,7 +24,7 @@ export const useInvoiceSeriesForm = () => {
       supabase.from("invoice_providers").select("id, url, branch_id, description").order("id"),
       supabase.from("types").select("id, name, code, modules!inner(code)").eq("modules.code", "INV").order("id"),
     ]);
-    if (accRes.data) setAccounts(accRes.data);
+    if (accRes.data) setAccounts((accRes.data as any[]).map(a => ({ id: a.id, name: a.name, document_number: a.document_number })));
     if (provRes.data) setProviders(provRes.data);
     if (typesRes.data) setInvoiceTypes((typesRes.data as any[]).map(t => ({ id: t.id, name: t.name, code: t.code })));
   }, []);
