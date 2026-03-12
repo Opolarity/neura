@@ -112,14 +112,16 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     if (!user) return;
 
     try {
-      const [pmData, classesData, userProfile, movementTypes] = await Promise.all([
+      const [pmData, classesData, userProfile, movementTypes, baData] = await Promise.all([
         getPaymentMethodsIsActiveTrueAndActiveTrue(),
         movementClassesApi(),
         currentUserProfileApi(user.id),
         movementTypesApi(),
+        getBusinessAccountIsActiveTrue(),
       ]);
 
       setPaymentMethods(pmData as any as PaymentMethodWithAccount[]);
+      setBusinessAccounts((baData || []).map((ba: any) => ({ id: ba.id, name: ba.name })));
       setClasses(classesData);
       setCurrentUserProfile(userProfile);
 
