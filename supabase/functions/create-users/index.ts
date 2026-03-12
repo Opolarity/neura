@@ -13,6 +13,7 @@ Deno.serve(async (req) => {
   try {
     const payload = await req.json();
     const {
+      user_name,
       name,
       middle_name,
       last_name,
@@ -139,6 +140,7 @@ Deno.serve(async (req) => {
       p_branch_id: branch_id,
       p_type_ids: type_ids,
       p_role_ids: final_role_ids,
+      p_user_name: user_name ?? null,
     });
 
     if (spError) {
