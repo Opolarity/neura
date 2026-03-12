@@ -1179,8 +1179,8 @@ const CreateSale = () => {
                   <div key={d.id} className="flex justify-between text-sm items-center">
                     <span className="text-muted-foreground text-xs truncate max-w-[120px]">{d.name}</span>
                     <div className="flex items-center gap-1">
-                      <span className={cn("text-xs", d.amount > 0 ? "text-destructive" : "text-emerald-600")}>
-                        {d.amount > 0 ? "-" : "+"}{formatCurrency(Math.abs(d.amount))}
+                      <span className={cn("text-xs", d.amount >= 0 ? "text-emerald-600" : "text-destructive")}>
+                        {d.amount >= 0 ? "+" : "-"}{formatCurrency(Math.abs(d.amount))}
                       </span>
                       {!isPhySituation && (
                         <Button type="button" variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeOrderDiscount(d.id!)}>

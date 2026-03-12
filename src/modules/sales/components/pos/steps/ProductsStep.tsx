@@ -412,8 +412,8 @@ export default function ProductsStep({
                     <div key={d.id} className="flex justify-between text-xs items-center">
                       <span className="text-muted-foreground truncate max-w-[100px]">{d.name}</span>
                       <div className="flex items-center gap-1">
-                        <span className={cn("text-xs", d.amount > 0 ? "text-destructive" : "text-emerald-600")}>
-                          {d.amount > 0 ? "-" : "+"}S/ {formatCurrency(Math.abs(d.amount))}
+                        <span className={cn("text-xs", d.amount >= 0 ? "text-emerald-600" : "text-destructive")}>
+                          {d.amount >= 0 ? "+" : "-"}S/ {formatCurrency(Math.abs(d.amount))}
                         </span>
                         <Button type="button" variant="ghost" size="icon" className="h-4 w-4" onClick={() => onRemoveOrderDiscount(d.id!)}>
                           <X className="w-3 h-3 text-destructive" />
