@@ -1,39 +1,31 @@
-## Cambios necesarios por reestructuración de `stock_movement_requests`
 
-### Contexto
-Las columnas `reason`, `module_id`, `status_id`, `situation_id` y `last_message` fueron eliminadas de `stock_movement_requests`. Ahora esa información vive en `stock_movement_request_situations` con las columnas: `message`, `module_id`, `status_id`, `situation_id`, `warehouse_id`, `last_row`.
 
-La tabla `stock_movement_requests` ahora solo tiene: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+## Problem
+1. The "Cuenta" dropdown in `/invoices/series/add` shows blank items — likely because it loads all active accounts into a basic Select which can't handle many items well.
+2. No search capability — users need to find accounts by name or document number.
+3. No filtering by `person_type = 2` (persona jurídica) — only accounts with a document type where `person_type = 2` should appear.
 
-### Plan de cambios
+## Changes
 
-**1. Actualizar la Edge Function `create-stock-movements-request`**
-- Remover `reason`, `module_id`, `status_id`, `situation_id` del INSERT a `stock_movement_requests` (ya no existen esas columnas).
-- Solo insertar: `created_by`, `out_warehouse_id`, `in_warehouse_id`.
-- En el INSERT a `stock_movement_request_situations`, agregar `warehouse_id: in_warehouse_id` (el almacen del usuario que crea la solicitud).
-- El campo `message` ya se usa para guardar el motivo ("Request Created" actualmente), cambiarlo para usar el `reason` del payload.
+### 1. Hook — `useInvoiceSeriesForm.ts`
+- Update the accounts query to join `document_types` and filter by `person_type = 2`:
+  ```
+  supabase.from("accounts")
+    .select("id, name, document_number, document_types!inner(person_type)")
+    .eq("is_active", true)
+    .eq("document_types.person_type", 2)
+    .order("name")
+  ```
+- Include `document_number` in the accounts state type so it can be displayed and searched.
 
-**2. Actualizar tipos frontend (`MovementRequests.types.ts`)**
-- `MovementRequestPayload`: se mantiene igual (el frontend sigue enviando los mismos datos, la edge function resuelve).
-- `MovementRequestApiResponse`: actualizar el shape de `request` para reflejar la tabla actual (sin `reason`, `module_id`, `status_id`, `situation_id`). Solo: `id`, `created_by`, `out_warehouse_id`, `in_warehouse_id`, `created_at`, `updated_at`.
+### 2. UI — `InvoiceSeriesFormPage.tsx`
+- Replace the `<Select>` for "Cuenta" with a searchable Combobox using `cmdk` (already installed) + Popover pattern:
+  - Text input for searching by name or document number.
+  - Filtered dropdown list showing matching accounts as `{document_number} — {name}`.
+  - On select, set `account_id` and close popover.
+  - Show selected account name in the trigger when a value is chosen.
 
-**3. Actualizar adapter (`MovementRequests.adapter.ts`)**
-- Remover `reason` del mapeo (ya no viene en la respuesta del request).
+### Files to modify
+- `src/modules/settings/hooks/useInvoiceSeriesForm.ts` — filter query + add `document_number` to state
+- `src/modules/settings/pages/InvoiceSeriesFormPage.tsx` — replace Select with searchable Combobox
 
-**4. Hook `useCreateMovementRequest.ts`**
-- Sin cambios de lógica significativos; el payload que envía ya incluye `reason` y los codes, la edge function se encarga del resto.
-
-### Archivos a modificar
-- `supabase/functions/create-stock-movements-request/index.ts` — actualizar insert a tabla sin columnas eliminadas, agregar `warehouse_id` al insert de situations, usar `reason` como `message`.
-- `src/modules/inventory/types/MovementRequests.types.ts` — actualizar `MovementRequestApiResponse`.
-- `src/modules/inventory/adapters/MovementRequests.adapter.ts` — remover campos eliminados.
-
-## Plan: Ticket POS con QR de SUNAT — ✅ COMPLETADO
-
-### Cambios realizados
-1. **Migración**: Columna `qr_data` (text, nullable) agregada a `invoices`.
-2. **RPC actualizado**: `sp_update_invoice_sunat_response` ahora acepta `p_qr_data`.
-3. **Edge function `emit-invoice`**: Extrae `cadena_para_codigo_qr` de la respuesta de Nubefact y la guarda via RPC.
-4. **`POSTicketPrintPage.tsx`**: Ticket 80mm con jsPDF + QR code generado con `qrcode`. Ruta: `/pos/ticket/:invoiceId`.
-5. **`InvoicingStep.tsx`**: Botón de impresión (icono Printer) visible cuando `declared = true`.
-6. **Dependencia `qrcode`** instalada.
