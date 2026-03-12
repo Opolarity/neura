@@ -17,7 +17,7 @@ import {
   MovementClass,
   CurrentUserProfile,
 } from "../types/Movements.types";
-import { getPaymentMethodsIsActiveTrueAndActiveTrue } from "@/shared/services/service";
+import { getPaymentMethodsIsActiveTrueAndActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 
 const movementSchema = z.object({
   amount: z
@@ -49,6 +49,9 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
   const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfile | null>(null);
   const [selectedBusinessAccount, setSelectedBusinessAccount] = useState<string>("");
   const [movementTypeId, setMovementTypeId] = useState<number | null>(null);
+  const [businessAccounts, setBusinessAccounts] = useState<{ id: number; name: string }[]>([]);
+  const [needsManualBusinessAccount, setNeedsManualBusinessAccount] = useState(false);
+  const [selectedManualBusinessAccountId, setSelectedManualBusinessAccountId] = useState<string>("");
 
   const isIncome = movementType === "income";
 
