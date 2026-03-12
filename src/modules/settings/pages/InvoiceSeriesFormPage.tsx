@@ -26,7 +26,7 @@ import {
 import { ArrowLeft, Loader2, ChevronsUpDown, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useInvoiceSeriesForm } from "../hooks/useInvoiceSeriesForm";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils/utils";
 
 const InvoiceSeriesFormPage = () => {
   const navigate = useNavigate();
