@@ -123,6 +123,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
 
       setPaymentMethods(pmData as any as PaymentMethodWithAccount[]);
       setClasses(classesData);
+      setBusinessAccounts(baData as any || []);
       setCurrentUserProfile(userProfile);
 
       const typeName = isIncome ? "Ingreso" : "Egreso";
