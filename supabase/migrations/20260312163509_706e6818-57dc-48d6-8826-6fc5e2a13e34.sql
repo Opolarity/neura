@@ -1,0 +1,1 @@
+UPDATE payment_methods SET code = 'CASH' WHERE id = 35;
