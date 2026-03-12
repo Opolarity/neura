@@ -1188,6 +1188,141 @@ export type Database = {
           },
         ]
       }
+      new_pos_order: {
+        Row: {
+          amount_paid: number | null
+          amount_total: number | null
+          customer_name: string | null
+          date: string | null
+          location_id: number | null
+          movimiento_comprobante: number | null
+          note: string | null
+          partner_id: number | null
+          payment_gateway_id_odoo: number | null
+          payment_gateway_name_odoo: string | null
+          price_list_odoo: number | null
+          sale_id: number | null
+          sale_id_name: string | null
+          status: string | null
+          to_invoice: boolean | null
+          user_id: number | null
+          vat: string | null
+        }
+        Insert: {
+          amount_paid?: number | null
+          amount_total?: number | null
+          customer_name?: string | null
+          date?: string | null
+          location_id?: number | null
+          movimiento_comprobante?: number | null
+          note?: string | null
+          partner_id?: number | null
+          payment_gateway_id_odoo?: number | null
+          payment_gateway_name_odoo?: string | null
+          price_list_odoo?: number | null
+          sale_id?: number | null
+          sale_id_name?: string | null
+          status?: string | null
+          to_invoice?: boolean | null
+          user_id?: number | null
+          vat?: string | null
+        }
+        Update: {
+          amount_paid?: number | null
+          amount_total?: number | null
+          customer_name?: string | null
+          date?: string | null
+          location_id?: number | null
+          movimiento_comprobante?: number | null
+          note?: string | null
+          partner_id?: number | null
+          payment_gateway_id_odoo?: number | null
+          payment_gateway_name_odoo?: string | null
+          price_list_odoo?: number | null
+          sale_id?: number | null
+          sale_id_name?: string | null
+          status?: string | null
+          to_invoice?: boolean | null
+          user_id?: number | null
+          vat?: string | null
+        }
+        Relationships: []
+      }
+      new_sale_order: {
+        Row: {
+          amount_total: number | null
+          branch_id_odoo: number | null
+          branch_name_odoo: string | null
+          customer_name: string | null
+          date: string | null
+          invoice_status: string | null
+          note: string | null
+          partner_id: number | null
+          payment_gateway_id: number | null
+          payment_gateway_id_odoo: number | null
+          payment_gateway_name_odoo: string | null
+          price_list_odoo: number | null
+          sale_id: number | null
+          sale_id_name: string | null
+          sale_type_id_odoo: number | null
+          sale_type_name: string | null
+          status: string | null
+          user_id: number | null
+          vat: string | null
+          warehouse_id_odoo: number | null
+          woo_order_id: string | null
+          woo_status: string | null
+        }
+        Insert: {
+          amount_total?: number | null
+          branch_id_odoo?: number | null
+          branch_name_odoo?: string | null
+          customer_name?: string | null
+          date?: string | null
+          invoice_status?: string | null
+          note?: string | null
+          partner_id?: number | null
+          payment_gateway_id?: number | null
+          payment_gateway_id_odoo?: number | null
+          payment_gateway_name_odoo?: string | null
+          price_list_odoo?: number | null
+          sale_id?: number | null
+          sale_id_name?: string | null
+          sale_type_id_odoo?: number | null
+          sale_type_name?: string | null
+          status?: string | null
+          user_id?: number | null
+          vat?: string | null
+          warehouse_id_odoo?: number | null
+          woo_order_id?: string | null
+          woo_status?: string | null
+        }
+        Update: {
+          amount_total?: number | null
+          branch_id_odoo?: number | null
+          branch_name_odoo?: string | null
+          customer_name?: string | null
+          date?: string | null
+          invoice_status?: string | null
+          note?: string | null
+          partner_id?: number | null
+          payment_gateway_id?: number | null
+          payment_gateway_id_odoo?: number | null
+          payment_gateway_name_odoo?: string | null
+          price_list_odoo?: number | null
+          sale_id?: number | null
+          sale_id_name?: string | null
+          sale_type_id_odoo?: number | null
+          sale_type_name?: string | null
+          status?: string | null
+          user_id?: number | null
+          vat?: string | null
+          warehouse_id_odoo?: number | null
+          woo_order_id?: string | null
+          woo_status?: string | null
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           code: string | null
@@ -2501,6 +2636,7 @@ export type Database = {
           id: number
           is_active: boolean | null
           is_variable: boolean
+          migracodde: string | null
           promotional_bg_color: string | null
           promotional_text: string | null
           promotional_text_color: string | null
@@ -2517,6 +2653,7 @@ export type Database = {
           id?: number
           is_active?: boolean | null
           is_variable: boolean
+          migracodde?: string | null
           promotional_bg_color?: string | null
           promotional_text?: string | null
           promotional_text_color?: string | null
@@ -2533,6 +2670,7 @@ export type Database = {
           id?: number
           is_active?: boolean | null
           is_variable?: boolean
+          migracodde?: string | null
           promotional_bg_color?: string | null
           promotional_text?: string | null
           promotional_text_color?: string | null
@@ -2593,6 +2731,7 @@ export type Database = {
           country_id: number | null
           created_at: string | null
           is_active: boolean
+          las_account_id: number | null
           neighborhood_id: number | null
           phone: number | null
           state_id: number | null
@@ -2610,6 +2749,7 @@ export type Database = {
           country_id?: number | null
           created_at?: string | null
           is_active: boolean
+          las_account_id?: number | null
           neighborhood_id?: number | null
           phone?: number | null
           state_id?: number | null
@@ -2627,6 +2767,7 @@ export type Database = {
           country_id?: number | null
           created_at?: string | null
           is_active?: boolean
+          las_account_id?: number | null
           neighborhood_id?: number | null
           phone?: number | null
           state_id?: number | null
@@ -2685,6 +2826,27 @@ export type Database = {
             referencedColumns: ["id", "country_id"]
           },
         ]
+      }
+      promotional_texts: {
+        Row: {
+          meta_id: number | null
+          meta_key: string | null
+          meta_value: string | null
+          post_id: number | null
+        }
+        Insert: {
+          meta_id?: number | null
+          meta_key?: string | null
+          meta_value?: string | null
+          post_id?: number | null
+        }
+        Update: {
+          meta_id?: number | null
+          meta_key?: string | null
+          meta_value?: string | null
+          post_id?: number | null
+        }
+        Relationships: []
       }
       res_partner: {
         Row: {
