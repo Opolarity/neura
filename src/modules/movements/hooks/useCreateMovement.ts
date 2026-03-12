@@ -88,13 +88,24 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
       const selected = paymentMethods.find(
         (pm) => pm.id.toString() === selectedPaymentMethodId
       );
-      if (selected && selected.business_accounts) {
-        setSelectedBusinessAccount(selected.business_accounts.name);
+      if (selected) {
+        if (selected.business_account_id === 0 || !selected.business_account_id) {
+          setNeedsManualBusinessAccount(true);
+          setSelectedBusinessAccount("");
+          setSelectedManualBusinessAccountId("");
+        } else {
+          setNeedsManualBusinessAccount(false);
+          setSelectedManualBusinessAccountId("");
+          setSelectedBusinessAccount(selected.business_accounts?.name || "");
+        }
       } else {
+        setNeedsManualBusinessAccount(false);
         setSelectedBusinessAccount("");
       }
     } else {
+      setNeedsManualBusinessAccount(false);
       setSelectedBusinessAccount("");
+      setSelectedManualBusinessAccountId("");
     }
   }, [selectedPaymentMethodId, paymentMethods]);
 
