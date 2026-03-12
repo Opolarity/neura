@@ -81,6 +81,35 @@ serve(async (req) => {
         );
       }
 
+      // Resolve sale_type_id: use provided value, or look up from sale_types by business_acount_id
+      let resolvedSaleTypeId = saleTypeId || null;
+      if (!resolvedSaleTypeId) {
+        const { data: saleType, error: stError } = await supabase
+          .from("sale_types")
+          .select("id")
+          .eq("business_acount_id", businessAccountId)
+          .eq("pos_sale_type", true)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (stError) {
+          console.error("Error looking up sale_type:", stError);
+        }
+        if (saleType) {
+          resolvedSaleTypeId = saleType.id;
+        }
+      }
+
+      if (!resolvedSaleTypeId) {
+        return new Response(
+          JSON.stringify({ error: "No se encontró un canal de venta POS asociado a esta caja" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
       const { data, error } = await supabase.rpc("sp_open_pos_session", {
         p_user_id: user.id,
         p_warehouse_id: profile.warehouse_id,
@@ -88,7 +117,7 @@ serve(async (req) => {
         p_opening_amount: openingAmount || 0,
         p_business_account_id: businessAccountId,
         p_notes: notes || null,
-        p_sale_type_id: saleTypeId || null,
+        p_sale_type_id: resolvedSaleTypeId,
       });
 
       if (error) {
