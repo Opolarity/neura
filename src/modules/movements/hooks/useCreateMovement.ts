@@ -160,14 +160,20 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     setLoading(true);
 
     try {
-      await createMovementApi({
+      const payload: any = {
         amount: Number(data.amount),
         movement_date: data.movement_date,
         description: data.description,
         payment_method_id: Number(data.payment_method_id),
         movement_type_id: movementTypeId,
         movement_class_id: Number(data.movement_class_id),
-      });
+      };
+
+      if (needsManualBusinessAccount && selectedManualBusinessAccountId) {
+        payload.business_account_id = Number(selectedManualBusinessAccountId);
+      }
+
+      await createMovementApi(payload);
 
       toast({
         title: "Éxito",
