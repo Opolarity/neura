@@ -30,7 +30,8 @@ export interface GiftItem {
 export async function applyPriceRules<T extends CartItemForRules>(
   items: T[],
   priceListId: number | string,
-  userId?: string | null
+  userId?: string | null,
+  accountId?: number | null
 ): Promise<{ items: T[]; gifts: GiftItem[]; appliedRules: AppliedRule[] }> {
   try {
     if (items.length === 0) return { items, gifts: [], appliedRules: [] };
@@ -47,8 +48,9 @@ export async function applyPriceRules<T extends CartItemForRules>(
     const { data, error } = await supabase.functions.invoke("apply-price-rules", {
       body: {
         items: payloadItems,
-        priceListId: Number(priceListId),  // ← ahora se pasa correctamente
+        priceListId: Number(priceListId),
         userId: userId ?? null,
+        accountId: accountId ?? null,
       },
     });
 

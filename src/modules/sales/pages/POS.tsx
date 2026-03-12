@@ -104,8 +104,10 @@ export default function POS() {
                 stockTypes={pos.formData?.stockTypes || []}
                 selectedStockTypeId={pos.selectedStockTypeId}
                 onStockTypeChange={pos.setSelectedStockTypeId}
-                generalDiscount={pos.generalDiscount}
-                onGeneralDiscountChange={pos.setGeneralDiscount}
+                orderDiscounts={pos.orderDiscounts}
+                onAddOrderDiscount={pos.addOrderDiscount}
+                onRemoveOrderDiscount={pos.removeOrderDiscount}
+                productDiscountAmount={pos.productDiscountAmount}
                 customerName={pos.customer.customerName}
                 customerLastname={pos.customer.customerLastname}
                 customerDocumentNumber={pos.customer.documentNumber}

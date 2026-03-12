@@ -12,7 +12,7 @@ export const useInvoiceSeriesForm = () => {
   const { toast } = useToast();
 
   const [form, setForm] = useState<InvoiceSerieForm>(emptyForm);
-  const [accounts, setAccounts] = useState<{ id: number; name: string }[]>([]);
+  const [accounts, setAccounts] = useState<{ id: number; name: string; document_number: string }[]>([]);
   const [providers, setProviders] = useState<{ id: number; url: string; branch_id: number; description: string | null }[]>([]);
   const [invoiceTypes, setInvoiceTypes] = useState<{ id: number; name: string; code: string | null }[]>([]);
   const [loading, setLoading] = useState(false);
@@ -20,11 +20,11 @@ export const useInvoiceSeriesForm = () => {
 
   const fetchDropdowns = useCallback(async () => {
     const [accRes, provRes, typesRes] = await Promise.all([
-      supabase.from("accounts").select("id, name").eq("is_active", true).order("name"),
+      supabase.from("accounts").select("id, name, document_number, document_types!inner(person_type)").eq("is_active", true).eq("document_types.person_type", 2).order("name"),
       supabase.from("invoice_providers").select("id, url, branch_id, description").order("id"),
       supabase.from("types").select("id, name, code, modules!inner(code)").eq("modules.code", "INV").order("id"),
     ]);
-    if (accRes.data) setAccounts(accRes.data);
+    if (accRes.data) setAccounts((accRes.data as any[]).map(a => ({ id: a.id, name: a.name, document_number: a.document_number })));
     if (provRes.data) setProviders(provRes.data);
     if (typesRes.data) setInvoiceTypes((typesRes.data as any[]).map(t => ({ id: t.id, name: t.name, code: t.code })));
   }, []);

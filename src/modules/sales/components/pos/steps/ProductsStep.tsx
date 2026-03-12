@@ -16,11 +16,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, Barcode, Percent, ChevronDown, ChevronUp, User } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, Barcode, Percent, ChevronDown, ChevronUp, User, X } from "lucide-react";
 import type { POSCartItem } from "../../../types/POS.types";
-import type { PaginatedProductVariation, PaginationMeta } from "../../../types";
+import type { PaginatedProductVariation, PaginationMeta, OrderDiscount } from "../../../types";
 import { formatCurrency } from "../../../adapters/POS.adapter";
 import { useState } from "react";
+import { cn } from "@/shared/utils/utils";
+import { Separator } from "@/components/ui/separator";
 
 interface ProductsStepProps {
   searchQuery: string;
@@ -40,8 +42,10 @@ interface ProductsStepProps {
   stockTypes: Array<{ id: number; name: string }>;
   selectedStockTypeId: string;
   onStockTypeChange: (value: string) => void;
-  generalDiscount: number;
-  onGeneralDiscountChange: (value: number) => void;
+  orderDiscounts: OrderDiscount[];
+  onAddOrderDiscount: (name: string, amount: number) => void;
+  onRemoveOrderDiscount: (id: string) => void;
+  productDiscountAmount: number;
   customerName?: string;
   customerLastname?: string;
   customerDocumentNumber?: string;
@@ -65,14 +69,19 @@ export default function ProductsStep({
   stockTypes,
   selectedStockTypeId,
   onStockTypeChange,
-  generalDiscount,
-  onGeneralDiscountChange,
+  orderDiscounts,
+  onAddOrderDiscount,
+  onRemoveOrderDiscount,
+  productDiscountAmount,
   customerName,
   customerLastname,
   customerDocumentNumber,
   isAnonymousPurchase,
 }: ProductsStepProps) {
   const [expandedDiscounts, setExpandedDiscounts] = useState<Set<number>>(new Set());
+  const [showAddDiscount, setShowAddDiscount] = useState(false);
+  const [newDiscountName, setNewDiscountName] = useState("");
+  const [newDiscountAmount, setNewDiscountAmount] = useState("");
 
   const toggleDiscount = (index: number) => {
     setExpandedDiscounts(prev => {
@@ -92,7 +101,7 @@ export default function ProductsStep({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <ShoppingCart className="w-5 h-5 text-gray-700" />
+        <ShoppingCart className="w-5 h-5 text-muted-foreground" />
         <h2 className="text-lg font-semibold">Seleccion de Productos</h2>
       </div>
 
@@ -104,7 +113,7 @@ export default function ProductsStep({
               {/* Search bar and stock type selector */}
               <div className="flex gap-2 mb-4">
                 <div className="flex-1 relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
@@ -144,7 +153,7 @@ export default function ProductsStep({
                   {productsLoading ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-8">
-                        <div className="flex items-center justify-center gap-2 text-gray-500">
+                        <div className="flex items-center justify-center gap-2 text-muted-foreground">
                           <Loader2 className="w-4 h-4 animate-spin" />
                           Buscando productos...
                         </div>
@@ -152,7 +161,7 @@ export default function ProductsStep({
                     </TableRow>
                   ) : products.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                         {searchQuery
                           ? "No se encontraron productos"
                           : "Ingrese un termino de busqueda"}
@@ -170,15 +179,15 @@ export default function ProductsStep({
                                 className="w-10 h-10 rounded object-cover"
                               />
                             ) : (
-                              <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
-                                <ShoppingCart className="w-4 h-4 text-gray-400" />
+                              <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
+                                <ShoppingCart className="w-4 h-4 text-muted-foreground" />
                               </div>
                             )}
                             <div>
                               <div className="font-medium text-sm">
                                 {product.productTitle}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-muted-foreground">
                                 {product.terms.map((t) => t.name).join(" / ") ||
                                   product.sku}
                               </div>
@@ -189,8 +198,8 @@ export default function ProductsStep({
                           <span
                             className={
                               product.stock > 0
-                                ? "text-green-600"
-                                : "text-red-600"
+                                ? "text-emerald-600"
+                                : "text-destructive"
                             }
                           >
                             {product.stock}
@@ -205,7 +214,7 @@ export default function ProductsStep({
                             variant="ghost"
                             onClick={() => onAddToCart(product)}
                             disabled={product.stock <= 0}
-                            className="text-blue-600 hover:text-blue-700"
+                            className="text-primary hover:text-primary/80"
                           >
                             <Plus className="w-4 h-4" />
                           </Button>
@@ -218,7 +227,7 @@ export default function ProductsStep({
 
               {/* Pagination info */}
               {pagination.total > 0 && (
-                <div className="text-xs text-gray-500 mt-4 text-center">
+                <div className="text-xs text-muted-foreground mt-4 text-center">
                   Mostrando {products.length} de {pagination.total} productos
                 </div>
               )}
@@ -381,6 +390,93 @@ export default function ProductsStep({
                     </div>
                   );
                 })}
+
+                {/* Summary section with discounts */}
+                <Separator className="my-2" />
+                <div className="space-y-1 px-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>S/ {formatCurrency(subtotal)}</span>
+                  </div>
+
+                  {/* Product discounts (auto) */}
+                  {productDiscountAmount > 0 && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Dcto. productos</span>
+                      <span className="text-destructive">-S/ {formatCurrency(productDiscountAmount)}</span>
+                    </div>
+                  )}
+
+                  {/* Custom order discounts */}
+                  {orderDiscounts.map((d) => (
+                    <div key={d.id} className="flex justify-between text-xs items-center">
+                      <span className="text-muted-foreground truncate max-w-[100px]">{d.name}</span>
+                      <div className="flex items-center gap-1">
+                        <span className={cn("text-xs", d.amount >= 0 ? "text-emerald-600" : "text-destructive")}>
+                          {d.amount >= 0 ? "+" : "-"}S/ {formatCurrency(Math.abs(d.amount))}
+                        </span>
+                        <Button type="button" variant="ghost" size="icon" className="h-4 w-4" onClick={() => onRemoveOrderDiscount(d.id!)}>
+                          <X className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add discount */}
+                  {showAddDiscount ? (
+                    <div className="space-y-1 p-2 border rounded-md bg-muted/30">
+                      <Input
+                        placeholder="Nombre"
+                        value={newDiscountName}
+                        onChange={(e) => setNewDiscountName(e.target.value)}
+                        className="h-6 text-xs"
+                      />
+                      <div className="flex gap-1">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Monto (+/-)"
+                          value={newDiscountAmount}
+                          onChange={(e) => setNewDiscountAmount(e.target.value)}
+                          className="h-6 text-xs flex-1"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-6 text-xs px-2"
+                          onClick={() => {
+                            const amt = parseFloat(newDiscountAmount);
+                            if (!newDiscountName.trim() || isNaN(amt) || amt === 0) return;
+                            onAddOrderDiscount(newDiscountName.trim(), amt);
+                            setNewDiscountName("");
+                            setNewDiscountAmount("");
+                            setShowAddDiscount(false);
+                          }}
+                        >
+                          <Plus className="w-3 h-3" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => setShowAddDiscount(false)}>
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                      onClick={() => setShowAddDiscount(true)}
+                    >
+                      <Plus className="w-3 h-3" />
+                      Añadir descuento
+                    </button>
+                  )}
+
+                  {/* Total discount */}
+                  <div className="flex justify-between text-xs font-medium">
+                    <span className="text-muted-foreground">Descuento Total</span>
+                    <span className="text-destructive">-S/ {formatCurrency(discountAmount)}</span>
+                  </div>
+                </div>
               </div>
             )}
           </CardContent>

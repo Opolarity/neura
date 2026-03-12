@@ -22,6 +22,7 @@ import type {
   PaginationMeta,
   OrdersSituationsById,
   BusinessAccountOption,
+  OrderDiscount,
 } from "../types";
 import {
   adaptSalesFormData,
@@ -141,6 +142,7 @@ export const useCreateSale = () => {
   const [isExistingClient, setIsExistingClient] = useState<boolean>(false); // true only if found in accounts table
   const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
   const [customerUserId, setCustomerUserId] = useState<string | null>(null);
+  const [customerAccountId, setCustomerAccountId] = useState<number | null>(null);
   const [cartGifts, setCartGifts] = useState<GiftItem[]>([]);
   const [selectedVariation, setSelectedVariation] =
     useState<ProductVariation | null>(null);
@@ -165,6 +167,9 @@ export const useCreateSale = () => {
   const [newNoteText, setNewNoteText] = useState("");
   const [noteImageFile, setNoteImageFile] = useState<File | null>(null);
   const [noteImagePreview, setNoteImagePreview] = useState<string | null>(null);
+
+  // Order discounts state
+  const [orderDiscounts, setOrderDiscounts] = useState<OrderDiscount[]>([]);
 
   // History modal state
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -307,16 +312,21 @@ export const useCreateSale = () => {
 
   // Computed: Totals
   const subtotal = useMemo(() => calculateSubtotal(products), [products]);
-  const discountAmount = useMemo(
+  const productDiscountAmount = useMemo(
     () => calculateDiscountAmount(products),
     [products],
   );
+  const extraDiscountsAmount = useMemo(
+    () => orderDiscounts.reduce((sum, d) => sum + d.amount, 0),
+    [orderDiscounts],
+  );
+  const discountAmount = productDiscountAmount + extraDiscountsAmount;
   const shippingCostValue = formData.shippingCost
     ? parseFloat(formData.shippingCost)
     : 0;
   const total = useMemo(
-    () => calculateTotal(products, shippingCostValue),
-    [products, shippingCostValue],
+    () => subtotal - discountAmount + shippingCostValue,
+    [subtotal, discountAmount, shippingCostValue],
   );
 
   // Computed: Check if selected document type is persona jurídica (company)
@@ -351,7 +361,8 @@ export const useCreateSale = () => {
       const { items: updated, gifts } = await applyPriceRules(
         regularItems,
         formData.priceListId,
-        customerUserId
+        customerUserId,
+        customerAccountId
       );
 
       const defaultStockTypeId = regularItems[0]?.stockTypeId ?? 1;
@@ -385,7 +396,7 @@ export const useCreateSale = () => {
     };
 
     run();
-  }, [products, formData.priceListId, customerUserId]);
+  }, [products, formData.priceListId, customerUserId, customerAccountId]);
 
   // Computed: Check if current status has COM code (completed - no payment edits allowed)
   const isComSituation = useMemo(() => {
@@ -606,6 +617,7 @@ export const useCreateSale = () => {
       setCurrentStatusCode(adapted.currentStatusCode || "");
       setClientFound(true);
       setCreatedOrderId(id);
+      setOrderDiscounts(adapted.orderDiscounts || []);
 
       // Load notes from DB
       await loadNotesFromDB(id);
@@ -969,6 +981,7 @@ export const useCreateSale = () => {
             .eq("account_id", client.id)
             .maybeSingle();
           setCustomerUserId(profileData?.UID ?? null);
+          setCustomerAccountId(client.id);
         } else {
           setIsExistingClient(false); // Not in accounts table
           // Client not found - check document type code
@@ -1333,6 +1346,18 @@ export const useCreateSale = () => {
     setNoteImagePreview(null);
   }, []);
 
+  // Order discount CRUD
+  const addOrderDiscount = useCallback((name: string, amount: number) => {
+    setOrderDiscounts((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), name, amount, code: "CUSTOM" },
+    ]);
+  }, []);
+
+  const removeOrderDiscount = useCallback((id: string) => {
+    setOrderDiscounts((prev) => prev.filter((d) => d.id !== id));
+  }, []);
+
   // Handle form submission
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -1428,6 +1453,12 @@ export const useCreateSale = () => {
               businessAccountId: e.businessAccountId ? parseInt(e.businessAccountId) : null,
             })),
           initialSituationId: parseInt(orderSituation),
+          discounts: [
+            // Product discounts as single record
+            ...(productDiscountAmount > 0 ? [{ name: "Descuentos de productos", discount_amount: productDiscountAmount, code: "PRO" }] : []),
+            // Custom discounts
+            ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
+          ],
         };
 
         let createdOrderId = orderId ? parseInt(orderId) : null;
@@ -1516,6 +1547,8 @@ export const useCreateSale = () => {
       orderId,
       subtotal,
       discountAmount,
+      productDiscountAmount,
+      orderDiscounts,
       total,
       isExistingClient,
       isAnonymousPurchase,
@@ -1569,6 +1602,7 @@ export const useCreateSale = () => {
     filteredNeighborhoods,
     subtotal,
     discountAmount,
+    productDiscountAmount,
     total,
     orderId,
     isPersonaJuridica,
@@ -1627,5 +1661,10 @@ export const useCreateSale = () => {
     createdOrderId,
     orderSituationTable,
     setHistoryModalOpen,
+
+    // Order discounts
+    orderDiscounts,
+    addOrderDiscount,
+    removeOrderDiscount,
   };
 };

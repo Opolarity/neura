@@ -21,6 +21,7 @@ import type {
   INITIAL_SHIPPING_DATA,
 } from "../types/POS.types";
 import type {
+  OrderDiscount,
   SalesFormDataResponse,
   ShippingCost,
   PriceList,
@@ -104,7 +105,7 @@ export const usePOS = () => {
 
   // Products (Step 2)
   const [cart, setCart] = useState<POSCartItem[]>([]);
-  const [generalDiscount, setGeneralDiscount] = useState<number>(0);
+  const [orderDiscounts, setOrderDiscounts] = useState<OrderDiscount[]>([]);
   const [paginatedProducts, setPaginatedProducts] = useState<
     PaginatedProductVariation[]
   >([]);
@@ -126,6 +127,7 @@ export const usePOS = () => {
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
   const [customerUserId, setCustomerUserId] = useState<string | null>(null);
+  const [customerAccountId, setCustomerAccountId] = useState<number | null>(null);
 
   // Shipping (Step 4)
   const [shipping, setShipping] = useState<POSShippingData>(DEFAULT_SHIPPING);
@@ -194,7 +196,8 @@ export const usePOS = () => {
       const { items: updated, gifts } = await applyPriceRules(
         regularItems,
         configuration.priceListId,
-        customerUserId
+        customerUserId,
+        customerAccountId
       );
 
       const defaultStockTypeId = regularItems[0]?.stockTypeId ?? parseInt(selectedStockTypeId) ?? 1;
@@ -228,7 +231,7 @@ export const usePOS = () => {
       }
     };
     run();
-  }, [cart, configuration?.priceListId, customerUserId]);
+  }, [cart, configuration?.priceListId, customerUserId, customerAccountId]);
 
   const loadInitialData = async () => {
     try {
@@ -601,6 +604,7 @@ export const usePOS = () => {
           .eq("account_id", client.id)
           .maybeSingle();
         setCustomerUserId(profileData?.UID ?? null);
+        setCustomerAccountId(client.id);
         return;
       }
 
@@ -639,10 +643,12 @@ export const usePOS = () => {
 
       setClientFound(false);
       setCustomerUserId(null);
+      setCustomerAccountId(null);
     } catch (error) {
       console.error("Error searching client:", error);
       setClientFound(false);
       setCustomerUserId(null);
+      setCustomerAccountId(null);
     } finally {
       setSearchingClient(false);
     }
@@ -680,6 +686,7 @@ export const usePOS = () => {
     setIsAnonymousPurchase(true);
     setClientFound(false);
     setCustomerUserId(null);
+    setCustomerAccountId(null);
 
     // Advance to products step
     setCurrentStep(3);
@@ -828,8 +835,16 @@ export const usePOS = () => {
       (sum, item) => sum + item.discountAmount * item.quantity,
       0
     );
-    return itemDiscounts + generalDiscount;
-  }, [cart, generalDiscount]);
+    const extraDiscounts = orderDiscounts.reduce((sum, d) => sum + d.amount, 0);
+    return itemDiscounts + extraDiscounts;
+  }, [cart, orderDiscounts]);
+
+  const productDiscountAmount = useMemo(() => {
+    return cart.reduce(
+      (sum, item) => sum + item.discountAmount * item.quantity,
+      0
+    );
+  }, [cart]);
 
   const shippingCostValue = customer.requiresShipping ? shipping.shippingCost : 0;
 
@@ -1010,6 +1025,10 @@ export const usePOS = () => {
         change: changeAmount,
         initialSituationId: situationId,
         saleType: saleTypeId,
+        discounts: [
+          ...(productDiscountAmount > 0 ? [{ name: "Descuentos de productos", discount_amount: productDiscountAmount, code: "PRO" }] : []),
+          ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
+        ],
       };
 
       const result = await createPOSOrder(orderData);
@@ -1076,13 +1095,15 @@ export const usePOS = () => {
     setCurrentStep(2); // Go back to customer data step
     setCart([]);
     setCartGifts([]);
-    setGeneralDiscount(0);
+    setOrderDiscounts([]);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
     setChangeEntries([]);
     setClientFound(null);
     setIsAnonymousPurchase(false);
+    setCustomerUserId(null);
+    setCustomerAccountId(null);
     setSearchQuery("");
     setCreatedOrderId(null);
     setCreatedOrderSaleTypeId(null);
@@ -1112,13 +1133,15 @@ export const usePOS = () => {
     setConfiguration(null);
     setCart([]);
     setCartGifts([]);
-    setGeneralDiscount(0);
+    setOrderDiscounts([]);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
     setChangeEntries([]);
     setClientFound(null);
     setIsAnonymousPurchase(false);
+    setCustomerUserId(null);
+    setCustomerAccountId(null);
     setSearchQuery("");
     setCreatedOrderId(null);
     setCreatedOrderSaleTypeId(null);
@@ -1251,8 +1274,14 @@ export const usePOS = () => {
     updateCartItem,
     removeFromCart,
     clearCart,
-    generalDiscount,
-    setGeneralDiscount,
+    orderDiscounts,
+    addOrderDiscount: (name: string, amount: number) => {
+      setOrderDiscounts((prev) => [...prev, { id: crypto.randomUUID(), name, amount, code: "CUSTOM" }]);
+    },
+    removeOrderDiscount: (id: string) => {
+      setOrderDiscounts((prev) => prev.filter((d) => d.id !== id));
+    },
+    productDiscountAmount,
     handleProductPageChange: (page: number) => {
       setProductPage(page);
       if (configuration?.warehouseId) {
