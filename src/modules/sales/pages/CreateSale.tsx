@@ -71,6 +71,7 @@ import {
 import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
+import { generateDeliveryLabel } from "../utils/generateDeliveryLabel";
 import { useToast } from "@/hooks/use-toast";
 import { VoucherPreviewModal } from "../components/sales/VoucherPreviewModal";
 import { SalesHistoryModal } from "../components/SalesHistoryModal";
