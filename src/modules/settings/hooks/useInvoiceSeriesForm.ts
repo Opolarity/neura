@@ -20,7 +20,7 @@ export const useInvoiceSeriesForm = () => {
 
   const fetchDropdowns = useCallback(async () => {
     const [accRes, provRes, typesRes] = await Promise.all([
-      supabase.from("accounts").select("id, name").eq("is_active", true).order("name"),
+      supabase.from("accounts").select("id, name, document_number, document_types!inner(person_type)").eq("is_active", true).eq("document_types.person_type", 2).order("name"),
       supabase.from("invoice_providers").select("id, url, branch_id, description").order("id"),
       supabase.from("types").select("id, name, code, modules!inner(code)").eq("modules.code", "INV").order("id"),
     ]);
