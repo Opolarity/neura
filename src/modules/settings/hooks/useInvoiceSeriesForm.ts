@@ -12,7 +12,7 @@ export const useInvoiceSeriesForm = () => {
   const { toast } = useToast();
 
   const [form, setForm] = useState<InvoiceSerieForm>(emptyForm);
-  const [accounts, setAccounts] = useState<{ id: number; name: string }[]>([]);
+  const [accounts, setAccounts] = useState<{ id: number; name: string; document_number: string }[]>([]);
   const [providers, setProviders] = useState<{ id: number; url: string; branch_id: number; description: string | null }[]>([]);
   const [invoiceTypes, setInvoiceTypes] = useState<{ id: number; name: string; code: string | null }[]>([]);
   const [loading, setLoading] = useState(false);
