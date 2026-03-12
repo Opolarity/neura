@@ -1462,54 +1462,47 @@ export const useCreateSale = () => {
         };
 
         let createdOrderId = orderId ? parseInt(orderId) : null;
-        let createdPayments: Array<{ id: number; localIndex: number }> = [];
 
         if (orderId) {
           await updateOrder(parseInt(orderId), orderData);
         } else {
           const response = await createOrder(orderData);
-          console.log("[CreateSale] Edge function response:", JSON.stringify(response));
 
           if (response?.order?.id) {
             createdOrderId = response.order.id;
             setCreatedOrderId(createdOrderId);
           }
-          if (response?.payments) {
-            createdPayments = response.payments;
-          }
-          console.log("[CreateSale] createdOrderId:", createdOrderId, "createdPayments:", JSON.stringify(createdPayments));
-          console.log("[CreateSale] validPayments with voucherFile:", payments.filter(p => p.paymentMethodId && p.amount).map((p, i) => ({ index: i, hasVoucher: !!p.voucherFile, fileName: p.voucherFile?.name })));
         }
 
         // Upload vouchers to storage after order is created
-        if (createdOrderId && createdPayments.length > 0) {
-          // Get the filtered payments that were actually sent to the API
+        if (createdOrderId) {
           const validPayments = payments.filter(
             (p) => p.paymentMethodId && p.amount,
           );
+          const paymentsWithVoucher = validPayments.filter((p) => p.voucherFile);
 
-          for (let i = 0; i < validPayments.length; i++) {
-            const payment = validPayments[i];
+          if (paymentsWithVoucher.length > 0) {
+            const { data: orderPayments } = await supabase
+              .from("order_payment")
+              .select("id")
+              .eq("order_id", createdOrderId)
+              .order("id", { ascending: true });
 
-            // Skip if no voucher file
-            if (!payment.voucherFile) continue;
+            if (orderPayments && orderPayments.length > 0) {
+              for (let i = 0; i < validPayments.length; i++) {
+                const payment = validPayments[i];
+                if (!payment.voucherFile || !orderPayments[i]) continue;
 
-            // Find the corresponding created payment by localIndex (which matches the filtered array index)
-            const createdPayment = createdPayments.find(
-              (cp) => cp.localIndex === i,
-            );
-
-            if (createdPayment && payment.voucherFile) {
-              try {
-                const voucherUrl = await uploadPaymentVoucher(
-                  createdOrderId,
-                  createdPayment.id,
-                  payment.voucherFile,
-                );
-                await updatePaymentVoucherUrl(createdPayment.id, voucherUrl);
-              } catch (voucherError) {
-                console.error("Error uploading voucher:", voucherError);
-                // Continue with other vouchers even if one fails
+                try {
+                  const voucherUrl = await uploadPaymentVoucher(
+                    createdOrderId,
+                    orderPayments[i].id,
+                    payment.voucherFile,
+                  );
+                  await updatePaymentVoucherUrl(orderPayments[i].id, voucherUrl);
+                } catch (voucherError) {
+                  console.error("Error uploading voucher:", voucherError);
+                }
               }
             }
           }

@@ -89,22 +89,21 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
         (pm) => pm.id.toString() === selectedPaymentMethodId
       );
       if (selected) {
-        if (selected.business_account_id === 0 || !selected.business_account_id) {
-          setNeedsManualBusinessAccount(true);
+        const needsManual = !selected.business_account_id || selected.business_account_id === 0;
+        setNeedsManualBusinessAccount(needsManual);
+        if (needsManual) {
           setSelectedBusinessAccount("");
           setSelectedManualBusinessAccountId("");
-        } else {
-          setNeedsManualBusinessAccount(false);
+        } else if (selected.business_accounts) {
+          setSelectedBusinessAccount(selected.business_accounts.name);
           setSelectedManualBusinessAccountId("");
-          setSelectedBusinessAccount(selected.business_accounts?.name || "");
+        } else {
+          setSelectedBusinessAccount("");
         }
-      } else {
-        setNeedsManualBusinessAccount(false);
-        setSelectedBusinessAccount("");
       }
     } else {
-      setNeedsManualBusinessAccount(false);
       setSelectedBusinessAccount("");
+      setNeedsManualBusinessAccount(false);
       setSelectedManualBusinessAccountId("");
     }
   }, [selectedPaymentMethodId, paymentMethods]);
@@ -122,8 +121,8 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
       ]);
 
       setPaymentMethods(pmData as any as PaymentMethodWithAccount[]);
+      setBusinessAccounts((baData || []).map((ba: any) => ({ id: ba.id, name: ba.name })));
       setClasses(classesData);
-      setBusinessAccounts(baData as any || []);
       setCurrentUserProfile(userProfile);
 
       const typeName = isIncome ? "Ingreso" : "Egreso";
