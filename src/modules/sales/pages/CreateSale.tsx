@@ -1146,6 +1146,32 @@ const CreateSale = () => {
                   
                     comprobantes
                   </em>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors"
+                    title="Generar etiqueta de envío"
+                    onClick={() => {
+                      const cityObj = filteredCities.find(c => c.id.toString() === formData.cityId);
+                      const stateObj = filteredStates.find(s => s.id.toString() === formData.stateId);
+                      const neighObj = filteredNeighborhoods.find(n => n.id.toString() === formData.neighborhoodId);
+                      generateDeliveryLabel({
+                        customerName: formData.customerName,
+                        customerLastname: formData.customerLastname,
+                        customerLastname2: formData.customerLastname2,
+                        documentNumber: formData.documentNumber,
+                        address: formData.address,
+                        addressReference: formData.addressReference,
+                        receptionPerson: formData.receptionPerson,
+                        receptionPhone: formData.receptionPhone,
+                        phone: formData.phone,
+                        cityName: cityObj?.name,
+                        stateName: stateObj?.name,
+                        neighborhoodName: neighObj?.name,
+                      });
+                    }}
+                  >
+                    <Truck className="w-4 h-4" />
+                  </button>
                 </div>
               }
             </CardFooter>
