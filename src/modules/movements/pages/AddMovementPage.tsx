@@ -119,11 +119,11 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
 
               {/* Cuenta de Negocio */}
               <div className="space-y-2">
-                <Label htmlFor="business_account">Cuenta de Negocio</Label>
+                <Label htmlFor="business_account">Cuenta de Negocio{needsManualBusinessAccount ? " *" : ""}</Label>
                 {needsManualBusinessAccount ? (
                   <Select
                     value={selectedManualBusinessAccountId}
-                    onValueChange={(value) => setSelectedManualBusinessAccountId(value)}
+                    onValueChange={setSelectedManualBusinessAccountId}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar cuenta de negocio" />
@@ -139,7 +139,7 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
                 ) : (
                   <Input
                     id="business_account"
-                    value={selectedBusinessAccount}
+                    value={selectedBusinessAccount || "No especificado"}
                     disabled
                     className="bg-muted"
                     placeholder="Selecciona un método de pago"
