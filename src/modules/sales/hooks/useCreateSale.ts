@@ -130,6 +130,7 @@ export const useCreateSale = () => {
   const [orderSituation, setOrderSituation] = useState<string>("");
   const [savedOrderSituation, setSavedOrderSituation] = useState<string>("");
   const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
+  const [orderSaleType, setOrderSaleType] = useState<{ id: number; name: string } | null>(null);
 
   // Dropdown data
   const [salesData, setSalesData] = useState<SalesFormDataResponse | null>(
@@ -420,6 +421,15 @@ export const useCreateSale = () => {
     );
   }, [savedOrderSituation, orderSituation, salesData?.situations]);
 
+  // Computed: Available sale types — always includes the order's current sale type (e.g. POS)
+  const availableSaleTypes = useMemo(() => {
+    const base = salesData?.saleTypes || [];
+    if (!orderSaleType) return base;
+    const alreadyIncluded = base.some((st) => st.id === orderSaleType.id);
+    if (alreadyIncluded) return base;
+    return [orderSaleType, ...base];
+  }, [salesData?.saleTypes, orderSaleType]);
+
   // Computed: Filter payment methods based on selected sale type
   const filteredPaymentMethods = useMemo(() => {
     if (!salesData?.paymentMethods) return [];
@@ -618,6 +628,7 @@ export const useCreateSale = () => {
       setOrderSituation(adapted.currentSituation);
       setSavedOrderSituation(adapted.currentSituation);
       setCurrentStatusCode(adapted.currentStatusCode || "");
+      setOrderSaleType(adapted.orderSaleType || null);
       setClientFound(true);
       setCreatedOrderId(id);
       setOrderDiscounts(adapted.orderDiscounts || []);
@@ -1609,6 +1620,7 @@ export const useCreateSale = () => {
     isPhySituation,
     isComSituation,
     filteredSituations,
+    availableSaleTypes,
     filteredPaymentMethods,
     allPaymentMethods: salesData?.paymentMethods ?? [],
     isAnonymousPurchase,

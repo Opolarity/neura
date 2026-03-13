@@ -114,6 +114,7 @@ const CreateSale = () => {
     isPhySituation,
     isComSituation,
     filteredSituations,
+    availableSaleTypes,
     filteredPaymentMethods,
     allPaymentMethods,
     isAnonymousPurchase,
@@ -330,16 +331,16 @@ const CreateSale = () => {
                 {/* Sale Channel Select */}
                 <div className="space-y-1">
                   <Label>Canal de Venta</Label>
-                  {salesData?.saleTypes && salesData.saleTypes.length > 0 ?
+                  {availableSaleTypes.length > 0 ?
                 <Select
                   value={tempSaleTypeId}
                   onValueChange={setTempSaleTypeId}>
-                  
+
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Seleccione un canal de venta" />
                       </SelectTrigger>
                       <SelectContent>
-                        {salesData.saleTypes.map((st) =>
+                        {availableSaleTypes.map((st) =>
                     <SelectItem key={st.id} value={st.id.toString()}>
                             {st.name}
                           </SelectItem>
@@ -750,7 +751,7 @@ const CreateSale = () => {
                       <SelectValue placeholder="Seleccione" />
                     </SelectTrigger>
                     <SelectContent>
-                      {salesData?.saleTypes.map((st) =>
+                      {availableSaleTypes.map((st) =>
                       <SelectItem key={st.id} value={st.id.toString()}>
                           {st.name}
                         </SelectItem>
