@@ -16,16 +16,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ChevronsUpDown, Check, Search } from "lucide-react";
+import { ChevronsUpDown, Check, Search, Loader2 } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import {
   BusinessAccount,
   BusinessAccountPayload,
 } from "../../types/BusinessAccount.types";
 import { useForm, Controller } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { typesByModuleCode } from "@/shared/services/service";
 import { supabase } from "@/integrations/supabase/client";
+
+type AccountOption = { id: number; name: string | null; last_name: string | null; document_number: string | null };
+
+const buildAccountLabel = (a: AccountOption) => {
+  const parts = [a.name?.trim(), a.last_name?.trim()].filter(Boolean);
+  return parts.length > 0
+    ? parts.join(" ") + (a.document_number ? ` (${a.document_number})` : "")
+    : (a.document_number ?? `Cuenta #${a.id}`);
+};
 
 interface BusinessAccountFormDialogProps {
   open: boolean;
@@ -42,14 +51,14 @@ export const BusinessAccountFormDialog = ({
   onSaved,
   onOpenChange,
 }: BusinessAccountFormDialogProps) => {
-  const [accountTypes, setAccountTypes] = useState<
-    { id: number; name: string }[]
-  >([]);
-  const [accounts, setAccounts] = useState<{ id: number; name: string; last_name: string | null; document_number: string | null }[]>([]);
+  const [accountTypes, setAccountTypes] = useState<{ id: number; name: string }[]>([]);
   const [typesLoading, setTypesLoading] = useState(false);
-  const [accountsLoading, setAccountsLoading] = useState(false);
   const [accountPopoverOpen, setAccountPopoverOpen] = useState(false);
   const [accountSearch, setAccountSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<AccountOption[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<AccountOption | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { register, handleSubmit, control, reset } =
     useForm<BusinessAccountPayload>({
@@ -72,6 +81,7 @@ export const BusinessAccountFormDialog = ({
           },
     });
 
+  // Load account types on open
   useEffect(() => {
     if (!open) return;
     setTypesLoading(true);
@@ -79,19 +89,44 @@ export const BusinessAccountFormDialog = ({
       .then(setAccountTypes)
       .catch(console.error)
       .finally(() => setTypesLoading(false));
+  }, [open]);
 
-    setAccountsLoading(true);
+  // When editing, fetch the currently selected account to show its label
+  useEffect(() => {
+    if (!open || !item?.account_id) {
+      setSelectedAccount(null);
+      return;
+    }
     supabase
       .from("accounts")
       .select("id, name, last_name, document_number")
-      .eq("is_active", true)
-      .eq("show", true)
-      .order("name")
-      .then(({ data }) => {
-        setAccounts(data ?? []);
-        setAccountsLoading(false);
-      });
-  }, [open]);
+      .eq("id", item.account_id)
+      .single()
+      .then(({ data }) => setSelectedAccount(data ?? null));
+  }, [open, item?.account_id]);
+
+  // Debounced server-side search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const term = accountSearch.trim();
+    if (!term) {
+      setSearchResults([]);
+      return;
+    }
+    setSearchLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      const { data } = await supabase
+        .from("accounts")
+        .select("id, name, last_name, document_number")
+        .eq("is_active", true)
+        .eq("show", true)
+        .or(`name.ilike.%${term}%,last_name.ilike.%${term}%,document_number.ilike.%${term}%`)
+        .limit(20);
+      setSearchResults(data ?? []);
+      setSearchLoading(false);
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [accountSearch]);
 
   const onSubmit = async (data: BusinessAccountPayload) => {
     const payload: BusinessAccountPayload = {
@@ -212,59 +247,54 @@ export const BusinessAccountFormDialog = ({
               control={control}
               rules={{ required: true }}
               render={({ field }) => {
-                const buildLabel = (a: typeof accounts[0]) => {
-                  const parts = [a.name?.trim(), a.last_name?.trim()].filter(s => !!s);
-                  return parts.length > 0
-                    ? parts.join(" ") + (a.document_number ? ` (${a.document_number})` : "")
-                    : (a.document_number ?? `Cuenta #${a.id}`);
-                };
-                const selected = accounts.find((a) => a.id === field.value);
-                const selectedLabel = selected ? buildLabel(selected) : null;
+                const displayLabel = selectedAccount
+                  ? buildAccountLabel(selectedAccount)
+                  : field.value
+                  ? `Cuenta #${field.value}`
+                  : null;
                 return (
-                  <Popover open={accountPopoverOpen} onOpenChange={(o) => { setAccountPopoverOpen(o); if (!o) setAccountSearch(""); }}>
+                  <Popover
+                    open={accountPopoverOpen}
+                    onOpenChange={(o) => {
+                      setAccountPopoverOpen(o);
+                      if (!o) { setAccountSearch(""); setSearchResults([]); }
+                    }}
+                  >
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         role="combobox"
-                        disabled={accountsLoading}
                         className="w-full justify-between font-normal"
                       >
-                        <span className="truncate">
-                          {accountsLoading
-                            ? "Cargando..."
-                            : selectedLabel ?? "Buscar cuenta..."}
-                        </span>
+                        <span className="truncate">{displayLabel ?? "Buscar cuenta..."}</span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }} align="start">
                       {/* Search input */}
                       <div className="flex items-center border-b px-3">
-                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                        {searchLoading
+                          ? <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
+                          : <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                        }
                         <input
                           className="flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
-                          placeholder="Buscar por nombre o documento..."
+                          placeholder="Buscar por nombre, apellido o documento..."
                           value={accountSearch}
                           onChange={(e) => setAccountSearch(e.target.value)}
+                          autoFocus
                           autoComplete="off"
                         />
                       </div>
                       {/* Results list */}
                       <div className="max-h-60 overflow-auto p-1">
-                        {(() => {
-                          const filtered = accounts.filter((a) => {
-                            if (!accountSearch) return true;
-                            const haystack = [a.name?.trim(), a.last_name?.trim(), a.document_number]
-                              .filter(s => !!s)
-                              .join(" ")
-                              .toLowerCase();
-                            return haystack.includes(accountSearch.toLowerCase());
-                          });
-                          if (filtered.length === 0) {
-                            return <p className="py-6 text-center text-sm text-muted-foreground">No se encontraron cuentas.</p>;
-                          }
-                          return filtered.map((account) => {
-                            const label = buildLabel(account);
+                        {!accountSearch.trim() ? (
+                          <p className="py-6 text-center text-sm text-muted-foreground">Escribe para buscar cuentas.</p>
+                        ) : searchResults.length === 0 && !searchLoading ? (
+                          <p className="py-6 text-center text-sm text-muted-foreground">No se encontraron cuentas.</p>
+                        ) : (
+                          searchResults.map((account) => {
+                            const label = buildAccountLabel(account);
                             const isSelected = field.value === account.id;
                             return (
                               <div
@@ -275,16 +305,18 @@ export const BusinessAccountFormDialog = ({
                                 )}
                                 onClick={() => {
                                   field.onChange(account.id);
+                                  setSelectedAccount(account);
                                   setAccountPopoverOpen(false);
                                   setAccountSearch("");
+                                  setSearchResults([]);
                                 }}
                               >
                                 <Check className={cn("mr-2 h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
                                 {label}
                               </div>
                             );
-                          });
-                        })()}
+                          })
+                        )}
                       </div>
                     </PopoverContent>
                   </Popover>
