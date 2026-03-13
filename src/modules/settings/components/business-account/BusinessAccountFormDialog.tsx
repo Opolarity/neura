@@ -56,6 +56,7 @@ export const BusinessAccountFormDialog = ({
   const [typesLoading, setTypesLoading] = useState(false);
   const [accountsLoading, setAccountsLoading] = useState(false);
   const [accountPopoverOpen, setAccountPopoverOpen] = useState(false);
+  const [accountSearch, setAccountSearch] = useState("");
 
   const { register, handleSubmit, control, reset } =
     useForm<BusinessAccountPayload>({
@@ -224,7 +225,7 @@ export const BusinessAccountFormDialog = ({
                     (selected.document_number ? ` (${selected.document_number})` : "")
                   : null;
                 return (
-                  <Popover open={accountPopoverOpen} onOpenChange={setAccountPopoverOpen}>
+                  <Popover open={accountPopoverOpen} onOpenChange={(o) => { setAccountPopoverOpen(o); if (!o) setAccountSearch(""); }}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
@@ -241,21 +242,24 @@ export const BusinessAccountFormDialog = ({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0" align="start">
-                      <Command
-                        filter={(value, search) => {
-                          const account = accounts.find((a) => a.id.toString() === value);
-                          if (!account) return 0;
-                          const haystack = [account.name, account.last_name, account.document_number]
-                            .filter(Boolean)
-                            .join(" ")
-                            .toLowerCase();
-                          return haystack.includes(search.toLowerCase()) ? 1 : 0;
-                        }}
-                      >
-                        <CommandInput placeholder="Buscar por nombre o documento..." />
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Buscar por nombre o documento..."
+                          value={accountSearch}
+                          onValueChange={setAccountSearch}
+                        />
                         <CommandEmpty>No se encontraron cuentas.</CommandEmpty>
                         <CommandGroup className="max-h-60 overflow-auto">
-                          {accounts.map((account) => {
+                          {accounts
+                            .filter((a) => {
+                              if (!accountSearch) return true;
+                              const haystack = [a.name, a.last_name, a.document_number]
+                                .filter(Boolean)
+                                .join(" ")
+                                .toLowerCase();
+                              return haystack.includes(accountSearch.toLowerCase());
+                            })
+                            .map((account) => {
                             const label =
                               [account.name, account.last_name].filter(Boolean).join(" ") +
                               (account.document_number ? ` (${account.document_number})` : "");
