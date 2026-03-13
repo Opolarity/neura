@@ -677,20 +677,12 @@ const CreateSale = () => {
                             <Input
                           type="number"
                           value={product.price}
-                          onChange={(e) =>
-                          updateProduct(
-                            index,
-                            "price",
-                            parseFloat(e.target.value) || 0
-                          )
-                          }
+                          readOnly
                           min="0"
                           step="0.01"
-                          className={cn("w-24", product.fromOrder && "bg-muted text-muted-foreground cursor-not-allowed pr-7")}
-                          disabled={isPhySituation || !!product.fromOrder} />
-                            {product.fromOrder && (
-                              <Lock className="absolute right-2 w-3 h-3 text-muted-foreground pointer-events-none" />
-                            )}
+                          className="w-24 bg-muted text-muted-foreground cursor-not-allowed pr-7"
+                          disabled />
+                            <Lock className="absolute right-2 w-3 h-3 text-muted-foreground pointer-events-none" />
                           </div>
                         </TableCell>
                         <TableCell>
