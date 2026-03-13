@@ -860,11 +860,21 @@ export const usePOS = () => {
     return Math.max(0, totalPaid - total);
   }, [totalPaid, total]);
 
+  const changeEntriesTotal = useMemo(() => {
+    return changeEntries.reduce((sum, e) => sum + e.amount, 0);
+  }, [changeEntries]);
+
+  const netPayment = useMemo(() => {
+    return totalPaid - changeEntriesTotal;
+  }, [totalPaid, changeEntriesTotal]);
+
   const canFinalize = useMemo(() => {
     return (
-      totalPaid >= total && cart.length > 0 && POSSessionHook.hasActiveSession
+      cart.length > 0 &&
+      POSSessionHook.hasActiveSession &&
+      Math.round(netPayment * 100) === Math.round(total * 100)
     );
-  }, [totalPaid, total, cart, POSSessionHook.hasActiveSession]);
+  }, [netPayment, total, cart, POSSessionHook.hasActiveSession]);
 
   // =============================================
   // CHANGE ENTRIES (VUELTO)

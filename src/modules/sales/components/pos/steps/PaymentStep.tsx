@@ -37,6 +37,7 @@ interface PaymentStepProps {
   total: number;
   totalPaid: number;
   changeAmount: number;
+  canFinalize: boolean;
   onUpdateCurrentPayment: (field: keyof POSPayment, value: string | number) => void;
   onAddPayment: () => void;
   onRemovePayment: (id: string) => void;
@@ -61,6 +62,7 @@ export default function PaymentStep({
   total,
   totalPaid,
   changeAmount,
+  canFinalize,
   onUpdateCurrentPayment,
   onAddPayment,
   onRemovePayment,
@@ -432,7 +434,7 @@ export default function PaymentStep({
               )}
 
               {/* Ready indicator */}
-              {totalPaid >= total && (
+              {canFinalize && (
                 <div className="flex items-center gap-2 text-green-600 justify-center p-2">
                   <CheckCircle className="w-5 h-5" />
                   <span className="font-medium">Listo para completar venta</span>

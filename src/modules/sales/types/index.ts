@@ -44,6 +44,7 @@ export interface SaleProduct {
   stockTypeName: string; // nombre del tipo de inventario
   maxStock: number; // stock disponible para este producto/almacén/tipo
   isGift?: boolean;
+  fromOrder?: boolean; // true si fue cargado desde order_products (edición)
 }
 
 export interface SalePayment {

@@ -22,9 +22,13 @@ const REMITENTE = {
   address: "AV. BRASIL 817. JESÚS MARÍA - LIMA.",
 };
 
-/**
- * Loads an image as a base64 data URL using fetch + FileReader
- */
+const BLUE: [number, number, number] = [60, 78, 145]; // #3c4e91
+const BLUE_RUC: [number, number, number] = [47, 146, 198]; // #2f92c6
+const GREEN: [number, number, number] = [32, 118, 32]; // #207620
+const BLACK: [number, number, number] = [0, 0, 0];
+
+const CHAR_SPACE = 0.35; // subtle letter spacing for static text
+
 const loadImageAsDataUrl = (url: string): Promise<string> =>
   new Promise((resolve, reject) => {
     fetch(url)
@@ -38,125 +42,247 @@ const loadImageAsDataUrl = (url: string): Promise<string> =>
       .catch(reject);
   });
 
+/**
+ * Static text: heavier bold (double-draw) + letter spacing.
+ * Use for hardcoded strings that don't come from outside data.
+ */
+const staticText = (
+  doc: jsPDF,
+  text: string | string[],
+  x: number,
+  y: number,
+) => {
+  doc.setCharSpace(CHAR_SPACE);
+  doc.text(text, x, y);
+  doc.text(text, x + 0.25, y);
+  doc.setCharSpace(0);
+};
+
+/**
+ * Draws a label + value inline, returns y after last value line.
+ * - label: always static → heavy + charspace
+ * - value: dynamic by default (just bold/normal); pass heavyValue=true if static
+ */
+const inlineText = (
+  doc: jsPDF,
+  label: string,
+  value: string,
+  x: number,
+  y: number,
+  labelColor: [number, number, number],
+  fontSize: number,
+  maxW: number,
+  heavyValue = false,
+): number => {
+  doc.setFontSize(fontSize);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...labelColor);
+  staticText(doc, label, x, y);
+  const labelW = doc.getTextWidth(label) + CHAR_SPACE * label.length;
+
+  doc.setTextColor(...BLACK);
+  const valueLines = doc.splitTextToSize(value, maxW - labelW);
+  if (heavyValue) {
+    doc.setFont("helvetica", "bold");
+    staticText(doc, valueLines, x + labelW, y);
+  } else {
+    doc.setFont("helvetica", "bold");
+    doc.text(valueLines, x + labelW, y);
+  }
+  return y + valueLines.length * (fontSize * 0.45);
+};
+
 export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
-  const W = 100; // mm
-  const H = 140; // mm
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [W, H] });
-  const margin = 5;
+  const W = 100;
+  const H = 140;
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: [W, H],
+  });
+  const margin = 4;
   const contentW = W - margin * 2;
-  let y = margin;
+  const innerX = margin + 2;
+  const innerW = contentW - 4;
 
-  // Background
-  doc.setFillColor(255, 255, 255);
-  doc.rect(0, 0, W, H, "F");
+  // ── Outer border ──
+  doc.setDrawColor(...BLACK);
+  doc.setLineWidth(0.5);
+  doc.rect(margin, margin, contentW, H - margin * 2);
 
-  // Load logo
+  // ── Header: logo | divider | RUC ──
+  const headerH = 18;
+  const headerY = margin;
+  const dividerX = margin + 44;
+
+  let logoLoaded = false;
   try {
-    const logoDataUrl = await loadImageAsDataUrl("/images/logo-ticket.png");
-    const logoW = 25;
-    const logoH = 12;
-    doc.addImage(logoDataUrl, "PNG", margin, y, logoW, logoH);
-    // RUC next to logo
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "bold");
-    doc.text(`RUC: ${REMITENTE.ruc}`, margin + logoW + 3, y + 5);
-    doc.setFontSize(6);
-    doc.setFont("helvetica", "normal");
-    doc.text(REMITENTE.name, margin + logoW + 3, y + 9);
-    y += logoH + 3;
+    const logoDataUrl = await loadImageAsDataUrl("/images/logo-rotulo-pdf.png");
+    const logoW = 38;
+    const nativeLogo = new Image();
+    nativeLogo.src = logoDataUrl;
+    await new Promise<void>((res) => {
+      nativeLogo.onload = () => res();
+    });
+    const logoH = logoW * (nativeLogo.naturalHeight / nativeLogo.naturalWidth);
+    doc.addImage(logoDataUrl, "PNG", innerX + 1, headerY + 3, logoW, logoH);
+    logoLoaded = true;
   } catch {
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.text(REMITENTE.name, margin, y + 4);
-    doc.text(`RUC: ${REMITENTE.ruc}`, margin, y + 8);
-    y += 12;
+    // fallback
   }
 
-  // Separator
-  doc.setDrawColor(0);
+  if (!logoLoaded) {
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...BLACK);
+    staticText(doc, "OVERTAKE", innerX, headerY + 10);
+  }
+
+  // Vertical divider
   doc.setLineWidth(0.3);
-  doc.line(margin, y, W - margin, y);
-  y += 4;
+  doc.line(dividerX, headerY, dividerX, headerY + headerH);
 
-  // ── REMITENTE ──
-  doc.setFontSize(8);
+  // RUC in header — "RUC:" static (#2f92c6), value static (BLACK)
+  const rucX = dividerX + 3;
+  doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text("REMITENTE:", margin, y);
-  y += 4;
+  doc.setTextColor(...BLUE_RUC);
+  staticText(doc, "RUC:", rucX, headerY + 10);
+  const rucLabelW = doc.getTextWidth("RUC:") + CHAR_SPACE * 5 + 1;
+  doc.setTextColor(...BLACK);
+  staticText(doc, REMITENTE.ruc, rucX + rucLabelW, headerY + 10);
 
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "normal");
-  doc.text(REMITENTE.name, margin, y);
-  y += 3.5;
-  doc.text(`CEL: ${REMITENTE.phone}`, margin, y);
-  y += 3.5;
+  // Horizontal separator after header
+  const sep1Y = margin + headerH;
+  doc.setLineWidth(0.4);
+  doc.line(margin, sep1Y, W - margin, sep1Y);
 
-  const addrLines = doc.splitTextToSize(`DIRECCIÓN: ${REMITENTE.address}`, contentW);
-  doc.text(addrLines, margin, y);
-  y += addrLines.length * 3.5;
-  doc.text(`RUC: ${REMITENTE.ruc}`, margin, y);
-  y += 5;
+  let y = sep1Y + 8;
 
-  // Separator
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, W - margin, y);
-  y += 5;
-
-  // ── DESTINATARIO ──
-  doc.setFontSize(9);
+  // ── REMITENTE title (static) ──
+  doc.setFontSize(17);
   doc.setFont("helvetica", "bold");
-  doc.text("DESTINATARIO:", margin, y);
-  y += 5;
+  doc.setTextColor(...BLACK);
+  staticText(doc, "REMITENTE", innerX, y);
+  y += 9;
 
-  // Name
-  const fullName = [data.customerName, data.customerLastname, data.customerLastname2]
+  // Company name — static, blue bold
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...BLUE);
+  const nameLines = doc.splitTextToSize(REMITENTE.name, innerW);
+  staticText(doc, nameLines, innerX, y);
+  y += nameLines.length * 5.5;
+
+  // CEL: static label + static value (REMITENTE.phone)
+  y = inlineText(
+    doc,
+    "CEL: ",
+    REMITENTE.phone,
+    innerX,
+    y,
+    BLUE,
+    11,
+    innerW,
+    true,
+  );
+  y += 3;
+
+  // DIRECCIÓN: static label + static value (REMITENTE.address)
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...BLUE);
+  staticText(doc, "DIRECCIÓN: ", innerX, y);
+  y += 5.5;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...BLACK);
+  const addrLines = doc.splitTextToSize(REMITENTE.address, innerW);
+  staticText(doc, addrLines, innerX, y);
+  y += addrLines.length * 5.5 + 13;
+
+  // ── DESTINATARIO title (static) ──
+  doc.setFontSize(17);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...BLACK);
+  staticText(doc, "DESTINATARIO", innerX, y);
+  y += 9;
+
+  // Customer name — dynamic, green bold
+  const fullName = [
+    data.customerName,
+    data.customerLastname,
+    data.customerLastname2,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toUpperCase();
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...GREEN);
+  const custLines = doc.splitTextToSize(fullName, innerW);
+  doc.text(custLines, innerX, y);
+  y += custLines.length * 5.5 + 2;
+
+  // RUC/DNI: static label (#3c4e91) + dynamic value
+  if (data.documentNumber) {
+    y = inlineText(
+      doc,
+      "RUC/DNI: ",
+      data.documentNumber,
+      innerX,
+      y,
+      BLUE,
+      11,
+      innerW,
+    );
+    y += 3;
+  }
+
+  // DESTINO: static label (BLACK) + dynamic value (address)
+  const destParts = [
+    data.address,
+    data.neighborhoodName,
+    data.cityName,
+    data.stateName,
+  ]
     .filter(Boolean)
     .join(" ");
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "bold");
-  const nameLines = doc.splitTextToSize(fullName, contentW);
-  doc.text(nameLines, margin, y);
-  y += nameLines.length * 4;
-
-  // Document
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "normal");
-  if (data.documentNumber) {
-    doc.text(`DOC: ${data.documentNumber}`, margin, y);
-    y += 4;
-  }
-
-  // Address / Destination
-  const destParts = [data.address, data.neighborhoodName, data.cityName, data.stateName]
-    .filter(Boolean)
-    .join(", ");
   if (destParts) {
+    doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.text("DESTINO:", margin, y);
-    y += 3.5;
-    doc.setFont("helvetica", "normal");
-    const destLines = doc.splitTextToSize(destParts, contentW);
-    doc.text(destLines, margin, y);
-    y += destLines.length * 3.5;
+    doc.setTextColor(...BLUE);
+    staticText(doc, "DESTINO: ", innerX, y);
+    const destLabelW = doc.getTextWidth("DESTINO: ") + CHAR_SPACE * 9 + 1;
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...BLACK);
+    const destLines = doc.splitTextToSize(destParts, innerW - destLabelW);
+    doc.text(destLines, innerX + destLabelW, y);
+    y += destLines.length * 5.5 + 2;
   }
 
-  if (data.addressReference) {
-    doc.text(`REF: ${data.addressReference}`, margin, y);
-    y += 4;
-  }
-
-  // Reception person
-  if (data.receptionPerson) {
-    doc.text(`RECIBE: ${data.receptionPerson}`, margin, y);
-    y += 4;
-  }
-
-  // Phone
+  // CEL: static label (BLUE) + dynamic value (phone)
   const phone = data.receptionPhone || data.phone;
   if (phone) {
-    doc.setFont("helvetica", "bold");
-    doc.text(`CEL: ${phone}`, margin, y);
-    y += 4;
+    inlineText(doc, "CEL: ", `+51 ${phone}`, innerX, y, BLUE, 11, innerW);
+  }
+
+  // ── Alien image — absolute, bottom-right, on top of content ──
+  try {
+    const alienDataUrl = await loadImageAsDataUrl(
+      "/images/alien-rotulo-pdf.png",
+    );
+    const imgH = 28; // doble del alto del logo
+    const nativeImg = new Image();
+    nativeImg.src = alienDataUrl;
+    await new Promise<void>((res) => {
+      nativeImg.onload = () => res();
+    });
+    const imgW = imgH * (nativeImg.naturalWidth / nativeImg.naturalHeight);
+    const imgX = W - margin - 2 - imgW + 1; // ← ajusta este valor para mover en X
+    const imgY = H - margin - 2 - imgH + 8.5; // ← ajusta este valor para mover en Y
+    doc.addImage(alienDataUrl, "PNG", imgX, imgY, imgW, imgH);
+  } catch {
+    // silently skip if image not found
   }
 
   // Open in new tab

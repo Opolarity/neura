@@ -360,12 +360,23 @@ export const useCreateSale = () => {
     }
 
     const run = async () => {
-      const { items: updated, gifts } = await applyPriceRules(
-        regularItems,
-        formData.priceListId,
-        customerUserId,
-        customerAccountId
-      );
+      // Products loaded from order_products keep their exact prices — skip rules engine
+      const orderItems = regularItems.filter(item => item.fromOrder);
+      const newItems = regularItems.filter(item => !item.fromOrder);
+
+      let updatedNewItems = newItems;
+      let gifts: any[] = [];
+
+      if (newItems.length > 0) {
+        const result = await applyPriceRules(
+          newItems,
+          formData.priceListId,
+          customerUserId,
+          customerAccountId
+        );
+        updatedNewItems = result.items;
+        gifts = result.gifts;
+      }
 
       const defaultStockTypeId = regularItems[0]?.stockTypeId ?? 1;
       const defaultStockTypeName = regularItems[0]?.stockTypeName ?? "";
@@ -387,13 +398,19 @@ export const useCreateSale = () => {
 
       setCartGifts(gifts);
 
-      const pricesChanged = updated.some((u, i) => u.price !== regularItems[i].price);
+      // Rebuild in original order: fromOrder items keep their price, new items get ruled prices
+      const updatedRegular = regularItems.map(item => {
+        if (item.fromOrder) return item;
+        return updatedNewItems.find(u => u.variationId === item.variationId) ?? item;
+      });
+
+      const pricesChanged = updatedRegular.some((u, i) => u.price !== regularItems[i].price);
       const currentGiftIds = products.filter(i => i.isGift).map(i => i.variationId).join(",");
       const newGiftIds = giftItems.map(i => i.variationId).join(",");
       const giftsChanged = currentGiftIds !== newGiftIds;
 
       if (pricesChanged || giftsChanged) {
-        setProducts([...updated, ...giftItems]);
+        setProducts([...updatedRegular, ...giftItems]);
       }
     };
 
