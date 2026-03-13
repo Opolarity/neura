@@ -27,14 +27,20 @@ export interface GiftItem {
   quantity: number;
 }
 
+export interface DiscountResult {
+  name: string;
+  amount: number; // mapped from edge function's `discount` field
+  code: string;
+}
+
 export async function applyPriceRules<T extends CartItemForRules>(
   items: T[],
   priceListId: number | string,
   userId?: string | null,
   accountId?: number | null
-): Promise<{ items: T[]; gifts: GiftItem[]; appliedRules: AppliedRule[] }> {
+): Promise<{ items: T[]; gifts: GiftItem[]; appliedRules: AppliedRule[]; discounts: DiscountResult[] }> {
   try {
-    if (items.length === 0) return { items, gifts: [], appliedRules: [] };
+    if (items.length === 0) return { items, gifts: [], appliedRules: [], discounts: [] };
 
     // Mapear campos de Neura → formato que espera la EF
     const payloadItems = items.map((item) => ({
@@ -56,7 +62,7 @@ export async function applyPriceRules<T extends CartItemForRules>(
 
     if (error) {
       console.error("Error calling apply-price-rules:", error);
-      return { items, gifts: [], appliedRules: [] };
+      return { items, gifts: [], appliedRules: [], discounts: [] };
     }
 
     const returnedItems = (data?.items || []) as any[];
@@ -66,6 +72,11 @@ export async function applyPriceRules<T extends CartItemForRules>(
       productName: g.product_name,
       sku: g.sku,
       quantity: g.quantity,
+    }));
+    const discounts: DiscountResult[] = (data?.discounts || []).map((d: any) => ({
+      name: d.name,
+      amount: d.discount,
+      code: d.code,
     }));
 
     // Mapa variationId → product_price calculado por la EF
@@ -81,10 +92,10 @@ export async function applyPriceRules<T extends CartItemForRules>(
       };
     });
 
-    return { items: updatedItems, gifts, appliedRules };
+    return { items: updatedItems, gifts, appliedRules, discounts };
 
   } catch (err) {
     console.error("Error in applyPriceRules:", err);
-    return { items, gifts: [], appliedRules: [] };
+    return { items, gifts: [], appliedRules: [], discounts: [] };
   }
 }

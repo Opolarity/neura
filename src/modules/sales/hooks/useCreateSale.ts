@@ -376,6 +376,22 @@ export const useCreateSale = () => {
         );
         updatedNewItems = result.items;
         gifts = result.gifts;
+
+        // Merge discounts returned by price rules — update existing by name, add new ones
+        if (result.discounts.length > 0) {
+          setOrderDiscounts((prev) => {
+            const merged = [...prev];
+            for (const disc of result.discounts) {
+              const idx = merged.findIndex((d) => d.name === disc.name);
+              if (idx >= 0) {
+                merged[idx] = { ...merged[idx], amount: disc.amount };
+              } else {
+                merged.push({ id: crypto.randomUUID(), name: disc.name, amount: disc.amount, code: disc.code });
+              }
+            }
+            return merged;
+          });
+        }
       }
 
       const defaultStockTypeId = regularItems[0]?.stockTypeId ?? 1;
