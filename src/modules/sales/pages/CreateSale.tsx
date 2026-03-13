@@ -886,6 +886,28 @@ const CreateSale = () => {
                 }
               </div>
 
+              {/* Email y Celular */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    placeholder="Opcional"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Celular</Label>
+                  <Input
+                    type="tel"
+                    placeholder="Opcional"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                  />
+                </div>
+              </div>
+
               <div className="flex items-center space-x-4 pt-2">
                 <div className="flex items-center space-x-2">
                   <Checkbox
