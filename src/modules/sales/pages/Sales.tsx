@@ -104,7 +104,7 @@ const Sales = () => {
                 <TableHead>ID</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Documento</TableHead>
-                <TableHead className="max-w-[150px]">Cliente</TableHead>
+                <TableHead className="w-[200px]">Cliente</TableHead>
                 <TableHead>Canal</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Total</TableHead>
