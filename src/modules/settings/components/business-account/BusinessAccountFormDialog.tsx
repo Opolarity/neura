@@ -16,14 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import { ChevronsUpDown, Check } from "lucide-react";
+import { ChevronsUpDown, Check, Search } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import {
   BusinessAccount,
@@ -244,47 +237,55 @@ export const BusinessAccountFormDialog = ({
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <Command shouldFilter={false}>
-                        <CommandInput
+                    <PopoverContent className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }} align="start">
+                      {/* Search input */}
+                      <div className="flex items-center border-b px-3">
+                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                        <input
+                          className="flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
                           placeholder="Buscar por nombre o documento..."
                           value={accountSearch}
-                          onValueChange={setAccountSearch}
+                          onChange={(e) => setAccountSearch(e.target.value)}
+                          autoComplete="off"
                         />
-                        <CommandEmpty>No se encontraron cuentas.</CommandEmpty>
-                        <CommandGroup className="max-h-60 overflow-auto">
-                          {accounts
-                            .filter((a) => {
-                              if (!accountSearch) return true;
-                              const haystack = [a.name?.trim(), a.last_name?.trim(), a.document_number]
-                                .filter(s => !!s)
-                                .join(" ")
-                                .toLowerCase();
-                              return haystack.includes(accountSearch.toLowerCase());
-                            })
-                            .map((account) => {
+                      </div>
+                      {/* Results list */}
+                      <div className="max-h-60 overflow-auto p-1">
+                        {(() => {
+                          const filtered = accounts.filter((a) => {
+                            if (!accountSearch) return true;
+                            const haystack = [a.name?.trim(), a.last_name?.trim(), a.document_number]
+                              .filter(s => !!s)
+                              .join(" ")
+                              .toLowerCase();
+                            return haystack.includes(accountSearch.toLowerCase());
+                          });
+                          if (filtered.length === 0) {
+                            return <p className="py-6 text-center text-sm text-muted-foreground">No se encontraron cuentas.</p>;
+                          }
+                          return filtered.map((account) => {
                             const label = buildLabel(account);
+                            const isSelected = field.value === account.id;
                             return (
-                              <CommandItem
+                              <div
                                 key={account.id}
-                                value={account.id.toString()}
-                                onSelect={(val) => {
-                                  field.onChange(Number(val));
+                                className={cn(
+                                  "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
+                                  isSelected && "bg-accent text-accent-foreground"
+                                )}
+                                onClick={() => {
+                                  field.onChange(account.id);
                                   setAccountPopoverOpen(false);
+                                  setAccountSearch("");
                                 }}
                               >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    field.value === account.id ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
+                                <Check className={cn("mr-2 h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
                                 {label}
-                              </CommandItem>
+                              </div>
                             );
-                          })}
-                        </CommandGroup>
-                      </Command>
+                          });
+                        })()}
+                      </div>
                     </PopoverContent>
                   </Popover>
                 );
