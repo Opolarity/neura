@@ -66,7 +66,8 @@ import {
   Send,
   X,
   Image as ImageIcon,
-  Warehouse } from
+  Warehouse,
+  Lock } from
 "lucide-react";
 import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
@@ -672,38 +673,46 @@ const CreateSale = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Input
-                        type="number"
-                        value={product.price}
-                        onChange={(e) =>
-                        updateProduct(
-                          index,
-                          "price",
-                          parseFloat(e.target.value) || 0
-                        )
-                        }
-                        min="0"
-                        step="0.01"
-                        className="w-24"
-                        disabled={isPhySituation} />
-                      
+                          <div className="relative flex items-center">
+                            <Input
+                          type="number"
+                          value={product.price}
+                          onChange={(e) =>
+                          updateProduct(
+                            index,
+                            "price",
+                            parseFloat(e.target.value) || 0
+                          )
+                          }
+                          min="0"
+                          step="0.01"
+                          className={cn("w-24", product.fromOrder && "bg-muted text-muted-foreground cursor-not-allowed pr-7")}
+                          disabled={isPhySituation || !!product.fromOrder} />
+                            {product.fromOrder && (
+                              <Lock className="absolute right-2 w-3 h-3 text-muted-foreground pointer-events-none" />
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <Input
-                        type="number"
-                        value={product.discountAmount}
-                        onChange={(e) =>
-                        updateProduct(
-                          index,
-                          "discountAmount",
-                          parseFloat(e.target.value) || 0
-                        )
-                        }
-                        min="0"
-                        step="0.01"
-                        className="w-20 text-center"
-                        disabled={isPhySituation} />
-                      
+                          <div className="relative flex items-center">
+                            <Input
+                          type="number"
+                          value={product.discountAmount}
+                          onChange={(e) =>
+                          updateProduct(
+                            index,
+                            "discountAmount",
+                            parseFloat(e.target.value) || 0
+                          )
+                          }
+                          min="0"
+                          step="0.01"
+                          className={cn("w-20 text-center", product.fromOrder && "bg-muted text-muted-foreground cursor-not-allowed pr-7")}
+                          disabled={isPhySituation || !!product.fromOrder} />
+                            {product.fromOrder && (
+                              <Lock className="absolute right-2 w-3 h-3 text-muted-foreground pointer-events-none" />
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right font-medium">
                           {formatCurrency(calculateLineSubtotal(product))}
