@@ -128,7 +128,9 @@ export const useCreateSale = () => {
   const [currentChangeEntry, setCurrentChangeEntry] =
     useState<SalePayment>(createEmptyPayment());
   const [orderSituation, setOrderSituation] = useState<string>("");
+  const [savedOrderSituation, setSavedOrderSituation] = useState<string>("");
   const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
+  const [orderSaleType, setOrderSaleType] = useState<{ id: number; name: string } | null>(null);
 
   // Dropdown data
   const [salesData, setSalesData] = useState<SalesFormDataResponse | null>(
@@ -325,8 +327,8 @@ export const useCreateSale = () => {
     ? parseFloat(formData.shippingCost)
     : 0;
   const total = useMemo(
-    () => subtotal - discountAmount + shippingCostValue,
-    [subtotal, discountAmount, shippingCostValue],
+    () => subtotal - productDiscountAmount + extraDiscountsAmount + shippingCostValue,
+    [subtotal, productDiscountAmount, extraDiscountsAmount, shippingCostValue],
   );
 
   // Computed: Check if selected document type is persona jurídica (company)
@@ -403,20 +405,30 @@ export const useCreateSale = () => {
     return currentStatusCode === "COM";
   }, [currentStatusCode]);
 
-  // Computed: Filter situations to only show those with order >= current situation's order
+  // Computed: Filter situations to only show those with order >= saved (DB) situation's order
   const filteredSituations = useMemo(() => {
     if (!salesData?.situations) return [];
-    if (!orderSituation) return salesData.situations;
+    const baseId = savedOrderSituation || orderSituation;
+    if (!baseId) return salesData.situations;
 
-    const currentSituation = salesData.situations.find(
-      (s) => s.id.toString() === orderSituation,
+    const baseSituation = salesData.situations.find(
+      (s) => s.id.toString() === baseId,
     );
-    if (!currentSituation || currentSituation.order == null) return salesData.situations;
+    if (!baseSituation || baseSituation.order == null) return salesData.situations;
 
     return salesData.situations.filter(
-      (s) => s.order != null && s.order >= currentSituation.order,
+      (s) => s.order != null && s.order >= baseSituation.order,
     );
-  }, [orderSituation, salesData?.situations]);
+  }, [savedOrderSituation, orderSituation, salesData?.situations]);
+
+  // Computed: Available sale types — always includes the order's current sale type (e.g. POS)
+  const availableSaleTypes = useMemo(() => {
+    const base = salesData?.saleTypes || [];
+    if (!orderSaleType) return base;
+    const alreadyIncluded = base.some((st) => st.id === orderSaleType.id);
+    if (alreadyIncluded) return base;
+    return [orderSaleType, ...base];
+  }, [salesData?.saleTypes, orderSaleType]);
 
   // Computed: Filter payment methods based on selected sale type
   const filteredPaymentMethods = useMemo(() => {
@@ -614,7 +626,9 @@ export const useCreateSale = () => {
       );
       setChangeEntries(adapted.changeEntries || []);
       setOrderSituation(adapted.currentSituation);
+      setSavedOrderSituation(adapted.currentSituation);
       setCurrentStatusCode(adapted.currentStatusCode || "");
+      setOrderSaleType(adapted.orderSaleType || null);
       setClientFound(true);
       setCreatedOrderId(id);
       setOrderDiscounts(adapted.orderDiscounts || []);
@@ -1511,6 +1525,7 @@ export const useCreateSale = () => {
         // Update order situation - only in edit mode (creation handles it in sp_create_order)
         if (orderId && orderSituation && createdOrderId) {
           await updateOrderSituation(createdOrderId, parseInt(orderSituation));
+          setSavedOrderSituation(orderSituation);
         }
 
         toast({
@@ -1605,6 +1620,7 @@ export const useCreateSale = () => {
     isPhySituation,
     isComSituation,
     filteredSituations,
+    availableSaleTypes,
     filteredPaymentMethods,
     allPaymentMethods: salesData?.paymentMethods ?? [],
     isAnonymousPurchase,

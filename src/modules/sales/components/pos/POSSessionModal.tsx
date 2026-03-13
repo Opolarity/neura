@@ -52,11 +52,30 @@ export default function POSSessionModal({
   const loadSaleTypes = async () => {
     try {
       setLoadingSaleTypes(true);
-      const { data, error } = await supabase
+
+      // Get user's branch_id from profile
+      const { data: { user } } = await supabase.auth.getUser();
+      let branchId: number | null = null;
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("branch_id")
+          .eq("UID", user.id)
+          .single();
+        branchId = profile?.branch_id ?? null;
+      }
+
+      let query = supabase
         .from("sale_types")
-        .select("id, name, business_acount_id, pos_sale_type")
+        .select("id, name, business_acount_id, pos_sale_type, sale_type_branches!inner(branch_id)")
         .eq("pos_sale_type", true)
         .eq("is_active", true);
+
+      if (branchId) {
+        query = query.eq("sale_type_branches.branch_id", branchId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 

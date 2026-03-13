@@ -114,6 +114,7 @@ const CreateSale = () => {
     isPhySituation,
     isComSituation,
     filteredSituations,
+    availableSaleTypes,
     filteredPaymentMethods,
     allPaymentMethods,
     isAnonymousPurchase,
@@ -330,16 +331,16 @@ const CreateSale = () => {
                 {/* Sale Channel Select */}
                 <div className="space-y-1">
                   <Label>Canal de Venta</Label>
-                  {salesData?.saleTypes && salesData.saleTypes.length > 0 ?
+                  {availableSaleTypes.length > 0 ?
                 <Select
                   value={tempSaleTypeId}
                   onValueChange={setTempSaleTypeId}>
-                  
+
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Seleccione un canal de venta" />
                       </SelectTrigger>
                       <SelectContent>
-                        {salesData.saleTypes.map((st) =>
+                        {availableSaleTypes.map((st) =>
                     <SelectItem key={st.id} value={st.id.toString()}>
                             {st.name}
                           </SelectItem>
@@ -750,7 +751,7 @@ const CreateSale = () => {
                       <SelectValue placeholder="Seleccione" />
                     </SelectTrigger>
                     <SelectContent>
-                      {salesData?.saleTypes.map((st) =>
+                      {availableSaleTypes.map((st) =>
                       <SelectItem key={st.id} value={st.id.toString()}>
                           {st.name}
                         </SelectItem>
@@ -886,6 +887,28 @@ const CreateSale = () => {
                 }
               </div>
 
+              {/* Email y Celular */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    placeholder="Opcional"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Celular</Label>
+                  <Input
+                    type="tel"
+                    placeholder="Opcional"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                  />
+                </div>
+              </div>
+
               <div className="flex items-center space-x-4 pt-2">
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -935,42 +958,39 @@ const CreateSale = () => {
                   <div>
                     <Label>Método de Envío</Label>
                     {availableShippingCosts.length > 0 ?
-                  <Select
-                    value={formData.shippingMethod}
-                    onValueChange={(v) =>
-                    handleInputChange("shippingMethod", v)
-                    }>
-                    
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione método de envío" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableShippingCosts.map((sc) =>
-                      <SelectItem key={sc.id} value={sc.id.toString()}>
-                              {sc.name}
-                            </SelectItem>
-                      )}
-                        </SelectContent>
-                      </Select> :
+                    <Select
+                      value={formData.shippingMethod}
+                      onValueChange={(v) =>
+                      handleInputChange("shippingMethod", v)
+                      }>
 
-                  <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
-                        Elige ubicación para ver envíos.
-                      </div>
-                  }
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccione método de envío" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableShippingCosts.map((sc) =>
+                        <SelectItem key={sc.id} value={sc.id.toString()}>
+                                {sc.name}
+                              </SelectItem>
+                        )}
+                          </SelectContent>
+                        </Select> :
+
+                    <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
+                          Elige ubicación para ver envíos.
+                        </div>
+                    }
                   </div>
-
                   <div>
                     <Label>Costo de envío</Label>
                     <Input
-                    type="number"
-                    value={formData.shippingCost}
-                    onChange={(e) =>
-                    handleInputChange("shippingCost", e.target.value)
-                    }
-                    placeholder="0"
-                    className="w-full  text-right"
-                    disabled={!formData.withShipping} />
-                  
+                      type="number"
+                      value={formData.shippingCost}
+                      onChange={(e) => handleInputChange("shippingCost", e.target.value)}
+                      placeholder="0"
+                      className="w-full text-right"
+                      disabled={!(formData.countryId && formData.stateId && formData.cityId && formData.neighborhoodId && formData.address)}
+                    />
                   </div>
                 </div>
 
@@ -1069,19 +1089,20 @@ const CreateSale = () => {
                     handleInputChange("address", e.target.value)
                     }
                     placeholder="Calle, número..." />
-                  
+
                   </div>
                   <div>
-                    <Label>Referencia</Label>
+                    <Label>Referencia <span className="text-muted-foreground text-xs">(opcional)</span></Label>
                     <Input
                     value={formData.addressReference}
                     onChange={(e) =>
                     handleInputChange("addressReference", e.target.value)
                     }
                     placeholder="Cerca de, frente a..." />
-                  
+
                   </div>
                 </div>
+
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>

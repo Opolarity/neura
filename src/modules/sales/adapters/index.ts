@@ -315,5 +315,8 @@ export const adaptSaleById = (data: any) => {
   currentStatusCode: data.current_situation?.statuses?.code || "",
   orderWarehouseId: data.order?.warehouse_id || null,
   orderDiscounts,
+  orderSaleType: data.order.sale_type_id
+    ? { id: data.order.sale_type_id, name: data.order.sale_type_name || "" }
+    : null,
 });
 };
