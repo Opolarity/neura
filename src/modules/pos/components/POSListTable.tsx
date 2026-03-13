@@ -11,7 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Eye } from "lucide-react";
 import type { POSSessionListItem } from "../types/POSList.types";
-import { formatCurrency, formatTime } from "@/modules/sales/adapters/POS.adapter";
+import {
+  formatCurrency,
+  formatTime,
+} from "@/modules/sales/adapters/POS.adapter";
 import POSSessionDetailDialog from "./POSSessionDetailDialog";
 
 interface POSListTableProps {
@@ -21,7 +24,9 @@ interface POSListTableProps {
 }
 
 const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
+    null,
+  );
   const [detailOpen, setDetailOpen] = useState(false);
 
   const formatDate = (dateString: string) => {
@@ -44,6 +49,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>
+            <TableHead>Usuario</TableHead>
             <TableHead>Fecha Apertura</TableHead>
             <TableHead>Fecha de Cierre</TableHead>
             <TableHead>Sucursal</TableHead>
@@ -65,7 +71,10 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
             </TableRow>
           ) : sessions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+              <TableCell
+                colSpan={8}
+                className="text-center py-8 text-muted-foreground"
+              >
                 {search
                   ? "No se encontraron sesiones"
                   : "No hay sesiones registradas"}
@@ -75,6 +84,9 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
             sessions.map((session) => (
               <TableRow key={session.id}>
                 <TableCell className="font-medium">{session.id}</TableCell>
+                <TableCell className="font-medium">
+                  {session.userName}
+                </TableCell>
                 <TableCell>
                   <div className="text-sm">
                     <div>{formatDate(session.openedAt)}</div>
@@ -92,7 +104,9 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                       </div>
                     </div>
                   ) : (
-                    <Badge className="bg-green-500 hover:bg-green-500">Abierto</Badge>
+                    <Badge className="bg-green-500 hover:bg-green-500">
+                      Abierto
+                    </Badge>
                   )}
                 </TableCell>
                 <TableCell>{session.branchName}</TableCell>
@@ -103,8 +117,8 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                         session.openingDifference < 0
                           ? "text-destructive"
                           : session.openingDifference > 0
-                          ? "text-green-500"
-                          : ""
+                            ? "text-green-500"
+                            : ""
                       }
                     >
                       S/ {formatCurrency(session.openingDifference)}
@@ -125,8 +139,8 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                         session.difference < 0
                           ? "text-destructive"
                           : session.difference > 0
-                          ? "text-green-500"
-                          : ""
+                            ? "text-green-500"
+                            : ""
                       }
                     >
                       S/ {formatCurrency(session.difference)}
