@@ -104,7 +104,7 @@ const Sales = () => {
                 <TableHead>ID</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Documento</TableHead>
-                <TableHead>Cliente</TableHead>
+                <TableHead className="max-w-[150px]">Cliente</TableHead>
                 <TableHead>Canal</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Total</TableHead>
@@ -148,7 +148,7 @@ const Sales = () => {
                         : "-"}
                     </TableCell>
                     <TableCell>{sale.documentNumber}</TableCell>
-                    <TableCell>
+                    <TableCell className="max-w-[150px] truncate">
                       {sale.customerName} {sale.customerLastname}
                     </TableCell>
                     <TableCell>{sale.saleTypeName || "-"}</TableCell>
