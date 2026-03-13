@@ -24,18 +24,20 @@ import { format } from "date-fns";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useNavigate } from "react-router-dom";
 
-const getStatusVariant = (
-  statusCode: string
-): "default" | "secondary" | "destructive" | "outline" => {
-  switch (statusCode) {
-    case "CFM":
-      return "default";
-    case "CAN":
-      return "destructive";
-    case "RES":
-      return "secondary";
+const getStatusClassName = (statusCode: string): string => {
+  switch (statusCode.toLowerCase()) {
+    case "cfm":
+      return "bg-teal-400 hover:bg-teal-500 text-white";
+    case "com":
+      return "bg-green-500 hover:bg-green-600 text-white";
+    case "pen":
+      return "bg-yellow-400 hover:bg-yellow-500 text-white";
+    case "drf":
+      return "bg-cyan-200 hover:bg-cyan-300 text-cyan-900";
+    case "can":
+      return "bg-red-500 hover:bg-red-600 text-white";
     default:
-      return "outline";
+      return "bg-muted text-muted-foreground";
   }
 };
 
@@ -152,14 +154,7 @@ const Sales = () => {
                     <TableCell>{sale.saleTypeName || "-"}</TableCell>
                     <TableCell>
                       {sale.situationName ? (
-                        <Badge
-                          variant={getStatusVariant(sale.statusCode)}
-                          className={
-                            sale.statusCode === "RES"
-                              ? "bg-yellow-500 hover:bg-yellow-600 text-white"
-                              : ""
-                          }
-                        >
+                        <Badge className={getStatusClassName(sale.statusCode)}>
                           {sale.situationName}
                         </Badge>
                       ) : (
