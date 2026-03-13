@@ -326,8 +326,8 @@ export const useCreateSale = () => {
     ? parseFloat(formData.shippingCost)
     : 0;
   const total = useMemo(
-    () => subtotal - discountAmount + shippingCostValue,
-    [subtotal, discountAmount, shippingCostValue],
+    () => subtotal - productDiscountAmount + extraDiscountsAmount + shippingCostValue,
+    [subtotal, productDiscountAmount, extraDiscountsAmount, shippingCostValue],
   );
 
   // Computed: Check if selected document type is persona jurídica (company)
