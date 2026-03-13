@@ -141,6 +141,7 @@ export default function POS() {
                 total={pos.total}
                 totalPaid={pos.totalPaid}
                 changeAmount={pos.changeAmount}
+                canFinalize={pos.canFinalize}
                 onUpdateCurrentPayment={pos.updateCurrentPayment}
                 onAddPayment={pos.addPayment}
                 onRemovePayment={pos.removePayment}
