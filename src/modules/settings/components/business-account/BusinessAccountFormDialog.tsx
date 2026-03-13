@@ -24,7 +24,7 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { ChevronsUpDown, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils/utils";
 import {
   BusinessAccount,
   BusinessAccountPayload,
