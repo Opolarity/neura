@@ -219,11 +219,14 @@ export const BusinessAccountFormDialog = ({
               control={control}
               rules={{ required: true }}
               render={({ field }) => {
+                const buildLabel = (a: typeof accounts[0]) => {
+                  const parts = [a.name?.trim(), a.last_name?.trim()].filter(s => !!s);
+                  return parts.length > 0
+                    ? parts.join(" ") + (a.document_number ? ` (${a.document_number})` : "")
+                    : (a.document_number ?? `Cuenta #${a.id}`);
+                };
                 const selected = accounts.find((a) => a.id === field.value);
-                const selectedLabel = selected
-                  ? [selected.name, selected.last_name].filter(Boolean).join(" ") +
-                    (selected.document_number ? ` (${selected.document_number})` : "")
-                  : null;
+                const selectedLabel = selected ? buildLabel(selected) : null;
                 return (
                   <Popover open={accountPopoverOpen} onOpenChange={(o) => { setAccountPopoverOpen(o); if (!o) setAccountSearch(""); }}>
                     <PopoverTrigger asChild>
@@ -253,16 +256,14 @@ export const BusinessAccountFormDialog = ({
                           {accounts
                             .filter((a) => {
                               if (!accountSearch) return true;
-                              const haystack = [a.name, a.last_name, a.document_number]
-                                .filter(Boolean)
+                              const haystack = [a.name?.trim(), a.last_name?.trim(), a.document_number]
+                                .filter(s => !!s)
                                 .join(" ")
                                 .toLowerCase();
                               return haystack.includes(accountSearch.toLowerCase());
                             })
                             .map((account) => {
-                            const label =
-                              [account.name, account.last_name].filter(Boolean).join(" ") +
-                              (account.document_number ? ` (${account.document_number})` : "");
+                            const label = buildLabel(account);
                             return (
                               <CommandItem
                                 key={account.id}
