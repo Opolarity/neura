@@ -15,6 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { ChevronsUpDown, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   BusinessAccount,
   BusinessAccountPayload,
@@ -42,9 +52,10 @@ export const BusinessAccountFormDialog = ({
   const [accountTypes, setAccountTypes] = useState<
     { id: number; name: string }[]
   >([]);
-  const [accounts, setAccounts] = useState<{ id: number; name: string }[]>([]);
+  const [accounts, setAccounts] = useState<{ id: number; name: string; last_name: string | null; document_number: string | null }[]>([]);
   const [typesLoading, setTypesLoading] = useState(false);
   const [accountsLoading, setAccountsLoading] = useState(false);
+  const [accountPopoverOpen, setAccountPopoverOpen] = useState(false);
 
   const { register, handleSubmit, control, reset } =
     useForm<BusinessAccountPayload>({
@@ -78,8 +89,9 @@ export const BusinessAccountFormDialog = ({
     setAccountsLoading(true);
     supabase
       .from("accounts")
-      .select("id, name")
+      .select("id, name, last_name, document_number")
       .eq("is_active", true)
+      .eq("show", true)
       .order("name")
       .then(({ data }) => {
         setAccounts(data ?? []);
@@ -205,28 +217,73 @@ export const BusinessAccountFormDialog = ({
               name="account_id"
               control={control}
               rules={{ required: true }}
-              render={({ field }) => (
-                <Select
-                  value={field.value?.toString() ?? ""}
-                  onValueChange={(val) => field.onChange(Number(val))}
-                  disabled={accountsLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        accountsLoading ? "Cargando..." : "Seleccionar cuenta"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id.toString()}>
-                        {account.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              render={({ field }) => {
+                const selected = accounts.find((a) => a.id === field.value);
+                const selectedLabel = selected
+                  ? [selected.name, selected.last_name].filter(Boolean).join(" ") +
+                    (selected.document_number ? ` (${selected.document_number})` : "")
+                  : null;
+                return (
+                  <Popover open={accountPopoverOpen} onOpenChange={setAccountPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        disabled={accountsLoading}
+                        className="w-full justify-between font-normal"
+                      >
+                        <span className="truncate">
+                          {accountsLoading
+                            ? "Cargando..."
+                            : selectedLabel ?? "Buscar cuenta..."}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command
+                        filter={(value, search) => {
+                          const account = accounts.find((a) => a.id.toString() === value);
+                          if (!account) return 0;
+                          const haystack = [account.name, account.last_name, account.document_number]
+                            .filter(Boolean)
+                            .join(" ")
+                            .toLowerCase();
+                          return haystack.includes(search.toLowerCase()) ? 1 : 0;
+                        }}
+                      >
+                        <CommandInput placeholder="Buscar por nombre o documento..." />
+                        <CommandEmpty>No se encontraron cuentas.</CommandEmpty>
+                        <CommandGroup className="max-h-60 overflow-auto">
+                          {accounts.map((account) => {
+                            const label =
+                              [account.name, account.last_name].filter(Boolean).join(" ") +
+                              (account.document_number ? ` (${account.document_number})` : "");
+                            return (
+                              <CommandItem
+                                key={account.id}
+                                value={account.id.toString()}
+                                onSelect={(val) => {
+                                  field.onChange(Number(val));
+                                  setAccountPopoverOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === account.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {label}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                );
+              }}
             />
           </div>
         </form>
