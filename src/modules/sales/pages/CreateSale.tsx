@@ -953,16 +953,15 @@ const CreateSale = () => {
                 </div>
               </CardHeader>
               <CardContent className={cn("space-y-4", isPhySituation && "opacity-50 pointer-events-none")}>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Método de Envío</Label>
-                    {availableShippingCosts.length > 0 ?
+                <div>
+                  <Label>Método de Envío</Label>
+                  {availableShippingCosts.length > 0 ?
                   <Select
                     value={formData.shippingMethod}
                     onValueChange={(v) =>
                     handleInputChange("shippingMethod", v)
                     }>
-                    
+
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccione método de envío" />
                         </SelectTrigger>
@@ -979,21 +978,6 @@ const CreateSale = () => {
                         Elige ubicación para ver envíos.
                       </div>
                   }
-                  </div>
-
-                  <div>
-                    <Label>Costo de envío</Label>
-                    <Input
-                    type="number"
-                    value={formData.shippingCost}
-                    onChange={(e) =>
-                    handleInputChange("shippingCost", e.target.value)
-                    }
-                    placeholder="0"
-                    className="w-full  text-right"
-                    disabled={!formData.withShipping} />
-                  
-                  </div>
                 </div>
 
                 {/* Fila 1: País y Departamento */}
@@ -1091,19 +1075,33 @@ const CreateSale = () => {
                     handleInputChange("address", e.target.value)
                     }
                     placeholder="Calle, número..." />
-                  
+
                   </div>
                   <div>
-                    <Label>Referencia</Label>
+                    <Label>Referencia <span className="text-muted-foreground text-xs">(opcional)</span></Label>
                     <Input
                     value={formData.addressReference}
                     onChange={(e) =>
                     handleInputChange("addressReference", e.target.value)
                     }
                     placeholder="Cerca de, frente a..." />
-                  
+
                   </div>
                 </div>
+
+                {/* Costo de envío: visible solo cuando se completan los campos de dirección */}
+                {formData.countryId && formData.stateId && formData.cityId && formData.neighborhoodId && formData.address &&
+                <div>
+                  <Label>Costo de envío</Label>
+                  <Input
+                    type="number"
+                    value={formData.shippingCost}
+                    onChange={(e) => handleInputChange("shippingCost", e.target.value)}
+                    placeholder="0"
+                    className="w-full text-right"
+                  />
+                </div>
+                }
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
