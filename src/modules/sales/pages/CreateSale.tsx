@@ -953,31 +953,44 @@ const CreateSale = () => {
                 </div>
               </CardHeader>
               <CardContent className={cn("space-y-4", isPhySituation && "opacity-50 pointer-events-none")}>
-                <div>
-                  <Label>Método de Envío</Label>
-                  {availableShippingCosts.length > 0 ?
-                  <Select
-                    value={formData.shippingMethod}
-                    onValueChange={(v) =>
-                    handleInputChange("shippingMethod", v)
-                    }>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Método de Envío</Label>
+                    {availableShippingCosts.length > 0 ?
+                    <Select
+                      value={formData.shippingMethod}
+                      onValueChange={(v) =>
+                      handleInputChange("shippingMethod", v)
+                      }>
 
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione método de envío" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableShippingCosts.map((sc) =>
-                      <SelectItem key={sc.id} value={sc.id.toString()}>
-                              {sc.name}
-                            </SelectItem>
-                      )}
-                        </SelectContent>
-                      </Select> :
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccione método de envío" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableShippingCosts.map((sc) =>
+                        <SelectItem key={sc.id} value={sc.id.toString()}>
+                                {sc.name}
+                              </SelectItem>
+                        )}
+                          </SelectContent>
+                        </Select> :
 
-                  <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
-                        Elige ubicación para ver envíos.
-                      </div>
-                  }
+                    <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
+                          Elige ubicación para ver envíos.
+                        </div>
+                    }
+                  </div>
+                  <div>
+                    <Label>Costo de envío</Label>
+                    <Input
+                      type="number"
+                      value={formData.shippingCost}
+                      onChange={(e) => handleInputChange("shippingCost", e.target.value)}
+                      placeholder="0"
+                      className="w-full text-right"
+                      disabled={!(formData.countryId && formData.stateId && formData.cityId && formData.neighborhoodId && formData.address)}
+                    />
+                  </div>
                 </div>
 
                 {/* Fila 1: País y Departamento */}
@@ -1089,19 +1102,6 @@ const CreateSale = () => {
                   </div>
                 </div>
 
-                {/* Costo de envío: visible solo cuando se completan los campos de dirección */}
-                {formData.countryId && formData.stateId && formData.cityId && formData.neighborhoodId && formData.address &&
-                <div>
-                  <Label>Costo de envío</Label>
-                  <Input
-                    type="number"
-                    value={formData.shippingCost}
-                    onChange={(e) => handleInputChange("shippingCost", e.target.value)}
-                    placeholder="0"
-                    className="w-full text-right"
-                  />
-                </div>
-                }
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
