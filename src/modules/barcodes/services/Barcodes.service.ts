@@ -184,16 +184,19 @@ export const getLastSequenceByStockMovement = async (stockMovementId: number): P
 export const getVariationPrice = async (
   productVariationId: number,
   priceListId: number
-) => {
+): Promise<{ price: number | null } | null> => {
   const { data, error } = await supabase
     .from("product_price")
     .select("price, sale_price")
     .eq("product_variation_id", productVariationId)
     .eq("price_list_id", priceListId)
-    .single();
+    .order("id", { ascending: false })
+    .limit(1);
 
   if (error) throw error;
-  return data;
+  if (!data || data.length === 0) return null;
+  const row = data[0];
+  return { price: row.sale_price ?? row.price };
 };
 
 // =============================================================================
