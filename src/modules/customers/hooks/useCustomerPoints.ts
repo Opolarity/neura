@@ -11,6 +11,7 @@ export interface CustomerPoint {
   documentNumber: string;
   documentType: string;
   customerSince: string;
+  email: string | null;
 }
 
 export const useCustomerPoints = () => {
@@ -43,6 +44,7 @@ export const useCustomerPoints = () => {
             last_name2,
             document_number,
             created_at,
+            email,
             document_types(name)
           )
         `,
@@ -75,6 +77,7 @@ export const useCustomerPoints = () => {
           documentNumber: acc.document_number ?? "—",
           documentType: acc.document_types?.name ?? "—",
           customerSince: acc.created_at ?? "",
+          email: acc.email ?? null,
         };
       });
 
