@@ -190,11 +190,13 @@ export const getVariationPrice = async (
     .select("price, sale_price")
     .eq("product_variation_id", productVariationId)
     .eq("price_list_id", priceListId)
-    .maybeSingle();
+    .order("id", { ascending: false })
+    .limit(1);
 
   if (error) throw error;
-  if (!data) return null;
-  return { price: data.sale_price ?? data.price };
+  if (!data || data.length === 0) return null;
+  const row = data[0];
+  return { price: row.sale_price ?? row.price };
 };
 
 // =============================================================================
