@@ -142,6 +142,15 @@ const ProductsTable = ({
                       <Edit className="w-4 h-4" />
                     </Button>
                     <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(`/products/edit/${product.id}`, "_blank")}
+                      title="Editar producto en nueva pestaña"
+                      className="text-yellow-600 border-yellow-400 hover:bg-yellow-50 hover:text-yellow-700"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => onDeleteClick(product)}
