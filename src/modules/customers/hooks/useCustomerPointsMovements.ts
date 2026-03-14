@@ -110,5 +110,6 @@ export const useCustomerPointsMovements = () => {
     handleSearchChange,
     handlePageChange,
     handlePageSizeChange,
+    reload: fetchData,
   };
 };
