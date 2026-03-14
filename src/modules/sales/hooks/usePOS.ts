@@ -1173,20 +1173,22 @@ export const usePOS = () => {
   const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
   const [sessionTotalCashSales, setSessionTotalCashSales] = useState(0);
   const [sessionBusinessAccountTotal, setSessionBusinessAccountTotal] = useState(0);
+  const [sessionOtherMovements, setSessionOtherMovements] = useState(0);
 
-  // Load session cash sales and business account total
+  // Load session cash sales, business account total, and external movements
   const loadSessionCloseData = useCallback(async () => {
     if (!POSSessionHook.session?.id) {
       setSessionTotalCashSales(0);
       setSessionBusinessAccountTotal(0);
+      setSessionOtherMovements(0);
       return;
     }
 
     try {
-      // Load total_cash_sales and business_account from pos_sessions
+      // Load total_cash_sales, business_account and opened_at from pos_sessions
       const { data: sessionData, error: sessionError } = await supabase
         .from("pos_sessions")
-        .select("total_cash_sales, business_account")
+        .select("total_cash_sales, business_account, opened_at")
         .eq("id", POSSessionHook.session.id)
         .single();
 
@@ -1195,8 +1197,8 @@ export const usePOS = () => {
       const cashSales = sessionData?.total_cash_sales ?? 0;
       setSessionTotalCashSales(cashSales);
 
-      // Load total_amount from business_accounts
       if (sessionData?.business_account) {
+        // Load total_amount from business_accounts
         const { data: baData, error: baError } = await supabase
           .from("business_accounts")
           .select("total_amount")
@@ -1205,11 +1207,25 @@ export const usePOS = () => {
 
         if (baError) throw baError;
         setSessionBusinessAccountTotal(baData?.total_amount ?? 0);
+
+        // Load external movements linked to this business_account in the session time range
+        const { data: movData, error: movError } = await supabase
+          .from("movements")
+          .select("amount")
+          .eq("business_account_id", sessionData.business_account)
+          .gte("created_at", sessionData.opened_at)
+          .lte("created_at", new Date().toISOString());
+
+        if (!movError) {
+          const total = (movData || []).reduce((acc, m) => acc + (m.amount ?? 0), 0);
+          setSessionOtherMovements(total);
+        }
       }
     } catch (error) {
       console.error("Error loading session close data:", error);
       setSessionTotalCashSales(0);
       setSessionBusinessAccountTotal(0);
+      setSessionOtherMovements(0);
     }
   }, [POSSessionHook.session?.id]);
 
@@ -1356,6 +1372,7 @@ export const usePOS = () => {
     showCloseSessionModal,
     sessionTotalCashSales,
     sessionBusinessAccountTotal,
+    sessionOtherMovements,
     handleCloseSession,
     cancelCloseSession,
   };

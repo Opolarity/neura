@@ -202,6 +202,7 @@ export default function POS() {
         session={pos.session}
         totalCashSales={pos.sessionTotalCashSales}
         businessAccountTotal={pos.sessionBusinessAccountTotal}
+        otherMovements={pos.sessionOtherMovements}
         isClosing={pos.closingSession}
         onClose={pos.handleCloseSession}
         onCancel={pos.cancelCloseSession}
