@@ -3,6 +3,7 @@ import Customers from './pages/Customers';
 import AccountsList from './pages/AccountsList';
 import CreateClient from './pages/CreateClient';
 import EditClient from './pages/EditClient';
+import CustomerPoints from './pages/CustomerPoints';
 
 export const customersRoutes: RouteObject[] = [
   {
@@ -12,6 +13,7 @@ export const customersRoutes: RouteObject[] = [
       { path: 'list', element: <AccountsList /> },
       { path: 'create', element: <CreateClient /> },
       { path: 'edit/:id', element: <EditClient /> },
+      { path: 'points', element: <CustomerPoints /> },
     ]
   },
 ];
