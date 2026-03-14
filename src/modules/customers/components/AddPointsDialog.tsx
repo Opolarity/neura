@@ -92,24 +92,27 @@ export const AddPointsDialog = ({ open, onOpenChange, onSuccess }: AddPointsDial
       if (movErr) throw movErr;
 
       // 2. Upsert customer_profile points (increment)
-      const { data: profile } = await supabase
+      const { data: profile, error: profileReadErr } = await (supabase as any)
         .from("customer_profile")
         .select("id, points")
         .eq("id", selectedAccount.id)
         .maybeSingle();
+      if (profileReadErr) throw profileReadErr;
 
-      const currentPoints = (profile as any)?.points ?? 0;
+      const currentPoints = profile?.points ?? 0;
       const newPoints = currentPoints + qty;
 
       if (profile) {
-        await supabase
+        const { error: updateErr } = await (supabase as any)
           .from("customer_profile")
           .update({ points: newPoints })
           .eq("id", selectedAccount.id);
+        if (updateErr) throw updateErr;
       } else {
-        await supabase
+        const { error: insertErr } = await (supabase as any)
           .from("customer_profile")
           .insert({ id: selectedAccount.id, points: newPoints, orders_quantity: 0 });
+        if (insertErr) throw insertErr;
       }
 
       toast.success(`${qty > 0 ? "+" : ""}${qty} puntos aplicados a ${buildLabel(selectedAccount)}`);
