@@ -148,6 +148,7 @@ export default function POSSessionModal({
       openingAmount: amount,
       businessAccountId: selectedSaleType.businessAccountId,
       openingDifference: difference ?? 0,
+      saleTypeId: parseInt(selectedSaleTypeId),
       notes: notes || undefined,
     });
   };

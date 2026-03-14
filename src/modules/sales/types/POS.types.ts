@@ -71,6 +71,7 @@ export interface OpenPOSSessionRequest {
   openingAmount: number;
   businessAccountId: number;
   openingDifference: number;
+  saleTypeId: number;
   notes?: string;
 }
 

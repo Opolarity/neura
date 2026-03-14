@@ -990,7 +990,7 @@ const CreateSale = () => {
                       onChange={(e) => handleInputChange("shippingCost", e.target.value)}
                       placeholder="0"
                       className="w-full text-right"
-                      disabled={!(formData.countryId && formData.stateId && formData.cityId && formData.neighborhoodId && formData.address)}
+                      disabled={!formData.shippingMethod}
                     />
                   </div>
                 </div>
