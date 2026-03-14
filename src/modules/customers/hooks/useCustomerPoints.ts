@@ -116,5 +116,6 @@ export const useCustomerPoints = () => {
     handleSearchChange,
     handlePageChange,
     handlePageSizeChange,
+    reload: fetchData,
   };
 };

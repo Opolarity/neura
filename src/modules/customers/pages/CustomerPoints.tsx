@@ -1,9 +1,12 @@
-import { Search } from "lucide-react";
+import { useState } from "react";
+import { Search, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useCustomerPoints } from "../hooks/useCustomerPoints";
 import { CustomerPointsTable } from "../components/CustomerPointsTable";
+import { AddPointsDialog } from "../components/AddPointsDialog";
 
 const CustomerPoints = () => {
   const {
@@ -14,14 +17,29 @@ const CustomerPoints = () => {
     handleSearchChange,
     handlePageChange,
     handlePageSizeChange,
+    reload,
   } = useCustomerPoints();
+
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   return (
     <div className="p-6">
+      <AddPointsDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        onSuccess={reload}
+      />
+
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Puntos de Clientes</h1>
-        <p className="text-muted-foreground">Ranking de puntos por cliente</p>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Puntos de Clientes</h1>
+          <p className="text-muted-foreground">Ranking de puntos por cliente</p>
+        </div>
+        <Button onClick={() => setAddDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Sumar Puntos
+        </Button>
       </div>
 
       <Card>
