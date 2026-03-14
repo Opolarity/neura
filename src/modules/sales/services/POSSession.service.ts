@@ -68,8 +68,11 @@ export const openPOSSession = async (
     }
   );
 
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
+  if (error) {
+    const body = data as any;
+    throw new Error(body?.details || body?.error || error.message);
+  }
+  if (data?.error) throw new Error(data.details || data.error);
   return data;
 };
 
@@ -88,8 +91,11 @@ export const closePOSSession = async (
     }
   );
 
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
+  if (error) {
+    const body = data as any;
+    throw new Error(body?.details || body?.error || error.message);
+  }
+  if (data?.error) throw new Error(data.details || data.error);
   return data;
 };
 
