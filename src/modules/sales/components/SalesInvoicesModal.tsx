@@ -504,8 +504,7 @@ export const SalesInvoicesModal = ({
               <DropdownMenuTrigger asChild>
                 <Button
                   size="sm"
-                  disabled={!isFullyPaid || creating}
-                  title={!isFullyPaid ? "La orden debe estar cancelada al 100%" : ""}
+                  disabled={creating}
                 >
                   {creating ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-1" />
@@ -642,6 +641,17 @@ export const SalesInvoicesModal = ({
                             </>
                           ) : typeCode === "INV" ? (
                             <>
+                              {!inv.declared && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  title="Emitir comprobante"
+                                  onClick={() => setPendingEmitInvoice(inv)}
+                                >
+                                  <ArrowUp className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="icon"
