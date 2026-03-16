@@ -89,7 +89,10 @@ export const AddProductAdapter = {
       description: data.product.description || '',
       isVariable: data.product.is_variable,
       isActive: data.product.active,
-      isWeb: data.product.web
+      isWeb: data.product.web,
+      createdAt: data.product.created_at
+        ? new Date(data.product.created_at).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0],
     };
 
     const categories = data.categories || [];
@@ -187,7 +190,8 @@ export const AddProductAdapter = {
     selectedCategories: number[],
     selectedChannels: number[],
     productImages: ProductImage[],
-    variations: ProductVariation[]
+    variations: ProductVariation[],
+    createdAt?: string
   ): CreateProductRequest {
     const sortedImages = [...productImages].sort((a, b) => a.order - b.order);
     
@@ -213,7 +217,8 @@ export const AddProductAdapter = {
       selectedCategories,
       selectedChannels,
       productImages: imageRefs,
-      variations: sanitizedVariations
+      variations: sanitizedVariations,
+      createdAt,
     };
   },
 
@@ -237,7 +242,8 @@ export const AddProductAdapter = {
     selectedChannels: number[],
     productImages: ProductImage[],
     variations: ProductVariation[],
-    resetVariations: boolean = false
+    resetVariations: boolean = false,
+    createdAt?: string
   ): UpdateProductRequest {
     const imageRefs = productImages.map(img => ({
       id: img.id,
@@ -264,7 +270,8 @@ export const AddProductAdapter = {
       selectedChannels,
       productImages: imageRefs,
       variations: sanitizedVariations,
-      resetVariations
+      resetVariations,
+      createdAt,
     };
   },
 

@@ -41,9 +41,11 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     isVariable,
     isActive,
     isWeb,
+    createdAt,
     setIsVariable,
     setIsActive,
     setIsWeb,
+    setCreatedAt,
     productImages,
     variations,
     variationSkus,
@@ -289,6 +291,21 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                   />
                 </div>
               ))}
+
+              {/* Fecha de creación */}
+              <div className="pt-2 border-t">
+                <Label htmlFor="createdAt" className="text-sm text-muted-foreground mb-1 block">
+                  Fecha de creación
+                </Label>
+                <Input
+                  id="createdAt"
+                  type="date"
+                  value={createdAt}
+                  onChange={(e) => setCreatedAt(e.target.value)}
+                  disabled={viewOnly}
+                  className="w-full"
+                />
+              </div>
             </CardContent>
           </Card>
 
