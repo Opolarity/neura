@@ -30,6 +30,7 @@ export const useAddProduct = () => {
   const [isVariable, setIsVariable] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [isWeb, setIsWeb] = useState(false);
+  const [createdAt, setCreatedAt] = useState<string>(new Date().toISOString().split('T')[0]);
   const [originalIsVariable, setOriginalIsVariable] = useState(false);
   
   // Images state
@@ -156,6 +157,7 @@ export const useAddProduct = () => {
       setIsVariable(adapted.product.isVariable);
       setIsActive(adapted.product.isActive);
       setIsWeb(adapted.product.isWeb);
+      if (adapted.product.createdAt) setCreatedAt(adapted.product.createdAt);
       setOriginalIsVariable(adapted.product.isVariable);
       setSelectedCategories(adapted.categories);
       setSelectedChannels(adapted.channels);
@@ -589,7 +591,8 @@ export const useAddProduct = () => {
           selectedChannels,
           productImages,
           variations,
-          attributesHaveChanged
+          attributesHaveChanged,
+          createdAt
         );
 
         const result = await AddProductService.updateProduct(request);
@@ -617,7 +620,8 @@ export const useAddProduct = () => {
           selectedCategories,
           selectedChannels,
           productImages,
-          variations
+          variations,
+          createdAt
         );
 
         const result = await AddProductService.createProduct(request);
@@ -671,9 +675,11 @@ export const useAddProduct = () => {
     isVariable,
     isActive,
     isWeb,
+    createdAt,
     setIsVariable,
     setIsActive,
     setIsWeb,
+    setCreatedAt,
     
     // Images
     productImages,
