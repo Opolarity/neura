@@ -111,9 +111,10 @@ export const useCreateSale = () => {
   const [showPriceListModal, setShowPriceListModal] = useState(true);
   const [priceLists, setPriceLists] = useState<PriceList[]>([]);
 
-  // User warehouse state
+  // User warehouse / branch state
   const [userWarehouseId, setUserWarehouseId] = useState<number | null>(null);
   const [userWarehouseName, setUserWarehouseName] = useState<string>("");
+  const [userBranchAddress, setUserBranchAddress] = useState<string>("");
 
   // Form data
   const [formData, setFormData] = useState<SaleFormData>(INITIAL_FORM_DATA);
@@ -610,7 +611,7 @@ export const useCreateSale = () => {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("warehouse_id, warehouses(id, name)")
+        .select("warehouse_id, branch_id, warehouses(id, name), branches(id, address)")
         .eq("UID", user.id)
         .single();
 
@@ -626,6 +627,13 @@ export const useCreateSale = () => {
           ? profile.warehouses[0]
           : profile.warehouses;
         setUserWarehouseName(warehouse?.name || "");
+      }
+
+      if (profile?.branch_id) {
+        const branch = Array.isArray(profile.branches)
+          ? profile.branches[0]
+          : profile.branches;
+        setUserBranchAddress((branch as { address?: string } | null)?.address || "");
       }
     } catch (error) {
       console.error("Error loading user warehouse:", error);
@@ -1633,9 +1641,10 @@ export const useCreateSale = () => {
     priceLists,
     priceListsLoading,
 
-    // User warehouse
+    // User warehouse / branch
     userWarehouseId,
     userWarehouseName,
+    userBranchAddress,
     loadingWarehouse,
 
     // Computed

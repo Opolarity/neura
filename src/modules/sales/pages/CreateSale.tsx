@@ -73,6 +73,7 @@ import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
 import { generateDeliveryLabel } from "../utils/generateDeliveryLabel";
+import { generateRemisionGuide } from "../utils/generateRemisionGuide";
 import { useToast } from "@/hooks/use-toast";
 import { VoucherPreviewModal } from "../components/sales/VoucherPreviewModal";
 import { SalesHistoryModal } from "../components/SalesHistoryModal";
@@ -100,6 +101,7 @@ const CreateSale = () => {
     priceListsLoading,
     userWarehouseId,
     userWarehouseName,
+    userBranchAddress,
     loadingWarehouse,
     availableShippingCosts,
     filteredVariations,
@@ -1200,6 +1202,36 @@ const CreateSale = () => {
                   >
                     <Truck className="w-4 h-4" />
                   </button>
+                  <em
+                    className="italic text-sm underline cursor-pointer"
+                    onClick={() => {
+                      const cityObj = filteredCities.find(c => c.id.toString() === formData.cityId);
+                      const neighObj = filteredNeighborhoods.find(n => n.id.toString() === formData.neighborhoodId);
+                      const shippingObj = availableShippingCosts.find(s => s.id.toString() === formData.shippingMethod);
+                      generateRemisionGuide({
+                        customerName: formData.customerName,
+                        customerLastname: formData.customerLastname,
+                        customerLastname2: formData.customerLastname2,
+                        documentType: formData.documentType,
+                        documentNumber: formData.documentNumber,
+                        address: formData.address,
+                        cityName: cityObj?.name,
+                        neighborhoodName: neighObj?.name,
+                        shippingMethodName: shippingObj?.name,
+                        saleDate: formData.saleDate,
+                        orderId: createdOrderId ?? undefined,
+                        direccionPartida: userBranchAddress,
+                        items: products.map((p) => ({
+                          sku: p.sku,
+                          productName: p.productName,
+                          variationName: p.variationName,
+                          quantity: p.quantity,
+                        })),
+                      });
+                    }}
+                  >
+                    guía
+                  </em>
                 </div>
               }
             </CardFooter>
