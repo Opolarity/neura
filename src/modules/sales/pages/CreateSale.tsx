@@ -677,12 +677,17 @@ const CreateSale = () => {
                             <Input
                           type="number"
                           value={product.price}
-                          readOnly
+                          readOnly={isComSituation || isPhySituation}
+                          onChange={(e) =>
+                            updateProduct(index, "price", parseFloat(e.target.value) || 0)
+                          }
                           min="0"
                           step="0.01"
-                          className="w-24 bg-muted text-muted-foreground cursor-not-allowed pr-7"
-                          disabled />
-                            <Lock className="absolute right-2 w-3 h-3 text-muted-foreground pointer-events-none" />
+                          className={cn("w-24 text-center", (isComSituation || isPhySituation) && "bg-muted text-muted-foreground cursor-not-allowed pr-7")}
+                          disabled={isComSituation || isPhySituation} />
+                            {(isComSituation || isPhySituation) && (
+                              <Lock className="absolute right-2 w-3 h-3 text-muted-foreground pointer-events-none" />
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
