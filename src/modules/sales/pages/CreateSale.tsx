@@ -74,6 +74,7 @@ import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
 import { generateDeliveryLabel } from "../utils/generateDeliveryLabel";
 import { generateRemisionGuide } from "../utils/generateRemisionGuide";
+import { generateSaleExcel } from "../utils/generateSaleExcel";
 import { useToast } from "@/hooks/use-toast";
 import { VoucherPreviewModal } from "../components/sales/VoucherPreviewModal";
 import { SalesHistoryModal } from "../components/SalesHistoryModal";
@@ -1226,6 +1227,28 @@ const CreateSale = () => {
                     }}
                   >
                     guía
+                  </em>
+                  <em
+                    className="italic text-sm underline cursor-pointer"
+                    onClick={() => {
+                      generateSaleExcel({
+                        orderId: createdOrderId ?? undefined,
+                        saleDate: formData.saleDate,
+                        customerName: formData.customerName,
+                        customerLastname: formData.customerLastname,
+                        customerLastname2: formData.customerLastname2,
+                        documentNumber: formData.documentNumber,
+                        items: products.map((p) => ({
+                          sku: p.sku,
+                          productName: p.productName,
+                          variationName: p.variationName,
+                          quantity: p.quantity,
+                          price: p.price,
+                        })),
+                      });
+                    }}
+                  >
+                    excel
                   </em>
                 </div>
               }
