@@ -35,8 +35,10 @@ export interface RemisionGuideData {
 export function generateRemisionGuide(data: RemisionGuideData): void {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = 210;
+  const pageH = 297;
   const margin = 14;
   const contentW = pageW - 2 * margin;
+  const bottomMargin = pageH - 14; // max y before new page
 
   const gray50: [number, number, number] = [240, 240, 240];
   const gray200: [number, number, number] = [180, 180, 180];
@@ -222,26 +224,47 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
   // ── DETALLE DE ENVÍO ─────────────────────────────────────────────────────
   drawSectionHeader("Detalle de Envío");
 
-  // Table header row
-  doc.setFillColor(220, 220, 220);
-  doc.setDrawColor(...gray200);
-  doc.rect(margin, y, contentW, 7, "FD");
+  // Helper: draw the column-header row for "Detalle de Envío" table
+  // (defined here so it can be called on page 1 and on continuation pages)
+  const drawTableHeader = () => {
+    doc.setFillColor(220, 220, 220);
+    doc.setDrawColor(...gray200);
+    doc.rect(margin, y, contentW, 7, "FD");
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...dark);
+    doc.text("#", margin + 4, y + 5);
+    doc.text("Descripción", margin + 14, y + 5);
+    doc.text("Unidad de Medida", margin + 120, y + 5);
+    doc.text("Cantidad", margin + 155, y + 5);
+    y += 8;
+  };
 
-  doc.setFontSize(7.5);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...dark);
-  doc.text("#", margin + 4, y + 5);
-  doc.text("Descripción", margin + 14, y + 5);
-  doc.text("Unidad de Medida", margin + 120, y + 5);
-  doc.text("Cantidad", margin + 155, y + 5);
-  y += 8;
+  // Draw header for first page
+  drawTableHeader();
 
-  // Table rows
+  // Table rows — with automatic page breaks
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
 
+  const rowH = 7;
+
   data.items.forEach((item, idx) => {
-    const rowH = 7;
+    // If this row would overflow the page, add a new page and re-draw the header
+    if (y + rowH > bottomMargin) {
+      doc.addPage();
+      y = 14;
+      // Minimal page header on continuation pages
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...dark);
+      const guideNumber = `T001-${String(data.orderId || 0).padStart(8, "0")}`;
+      doc.text(`GUÍA DE REMISIÓN ${guideNumber} — Detalle de Envío (cont.)`, margin, y + 5);
+      doc.setDrawColor(...gray200);
+      doc.line(margin, y + 7, margin + contentW, y + 7);
+      y += 12;
+      drawTableHeader();
+    }
 
     if (idx % 2 === 1) {
       doc.setFillColor(248, 248, 248);
@@ -251,7 +274,6 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
     const desc = `[${item.sku}] ${item.productName}${item.variationName ? ` - ${item.variationName}` : ""}`;
     const maxDescW = 104;
 
-    // Truncate if needed
     let finalDesc = desc;
     if (doc.getTextWidth(desc) > maxDescW) {
       let truncated = desc;
@@ -261,6 +283,8 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
       finalDesc = truncated + "…";
     }
 
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
     doc.setTextColor(...dark);
     doc.text(String(idx + 1), margin + 4, y + 4.5);
     doc.text(finalDesc, margin + 14, y + 4.5);
