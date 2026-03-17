@@ -267,6 +267,7 @@ export const adaptSaleById = (data: any) => {
     saleDate: data.order.date?.split("T")[0] || "",
     vendorName: "",
     shippingMethod: data.order.shipping_method_code || "",
+    shippingMethodId: data.order.shipping_method_id?.toString() || "",
     shippingCost: data.order.shipping_cost?.toString() || "",
     countryId: data.order.country_id?.toString() || "",
     stateId: data.order.state_id?.toString() || "",
