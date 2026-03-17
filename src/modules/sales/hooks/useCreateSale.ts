@@ -70,6 +70,7 @@ const INITIAL_FORM_DATA: SaleFormData = {
   saleDate: getTodayDate(),
   vendorName: "",
   shippingMethod: "",
+  shippingMethodId: "",
   shippingCost: "",
   countryId: "",
   stateId: "",
@@ -734,6 +735,7 @@ export const useCreateSale = () => {
           setFormData((prev) => ({
             ...prev,
             shippingCost: selectedCost.cost.toString(),
+            shippingMethodId: selectedCost.shippingMethodId.toString(),
           }));
         }
       }
@@ -1462,6 +1464,7 @@ export const useCreateSale = () => {
           saleType: formData.saleType,
           priceListId: formData.priceListId || null,
           shippingMethod: formData.shippingMethod || null,
+          shippingMethodId: formData.shippingMethodId ? parseInt(formData.shippingMethodId) : null,
           shippingCost: formData.shippingCost
             ? parseFloat(formData.shippingCost)
             : null,
