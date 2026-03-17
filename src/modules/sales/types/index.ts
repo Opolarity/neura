@@ -16,6 +16,7 @@ export interface SaleFormData {
   saleDate: string;
   vendorName: string;
   shippingMethod: string;
+  shippingMethodId: string;
   shippingCost: string;
   countryId: string;
   stateId: string;

@@ -103,6 +103,7 @@ export interface CreateProductRequest {
   isWeb: boolean;
   selectedCategories: number[];
   selectedChannels: number[];
+  createdAt?: string;
   productImages: {
     id: string;
     path: string;
