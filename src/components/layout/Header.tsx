@@ -1,10 +1,10 @@
-import React from 'react';
-import { Bell, User, LogOut, ExternalLink, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
-import { getHeaderUserData } from '@/shared/services/service';
-import { supabase } from '@/integrations/supabase/client';
-import { useEcommerceSso } from '@/modules/ecommerce/hooks/useEcommerceSso';
+import React from "react";
+import { Bell, User, LogOut, ExternalLink, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { getHeaderUserData } from "@/shared/services/service";
+import { supabase } from "@/integrations/supabase/client";
+import { useEcommerceSso } from "@/modules/ecommerce/hooks/useEcommerceSso";
 
 interface HeaderProps {
   onSignOut: () => void;
@@ -14,12 +14,17 @@ interface HeaderProps {
 }
 
 const Header = ({ onSignOut }: HeaderProps) => {
-  const [userData, setUserData] = useState({ account: 'Cargando...', role: 'Sin Rol' });
+  const [userData, setUserData] = useState({
+    account: "Cargando...",
+    role: "Sin Rol",
+  });
   const { redirectToEcommerce, loading: ssoLoading } = useEcommerceSso();
 
   useEffect(() => {
     const initHeader = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (user) {
         const profile = await getHeaderUserData(user.id);
@@ -27,7 +32,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
         if (profile) {
           setUserData({
             account: profile.accountName,
-            role: profile.roleName
+            role: profile.roleName,
           });
         }
       }
@@ -44,7 +49,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-4">
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             onClick={redirectToEcommerce}
@@ -57,7 +62,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
               <ExternalLink className="w-4 h-4" />
             )}
             Editar Ecommerce
-          </Button>
+          </Button> */}
 
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
             <Bell className="w-5 h-5" />
@@ -69,9 +74,9 @@ const Header = ({ onSignOut }: HeaderProps) => {
               <User className="w-5 h-5 text-white" />
             </div>
             <div className="text-sm">
-              <p className="font-medium">{userData.account || 'Cargando...'}</p>
+              <p className="font-medium">{userData.account || "Cargando..."}</p>
               <p className="text-gray-500 text-xs">
-                {userData.role || 'Sin Rol'}
+                {userData.role || "Sin Rol"}
               </p>
             </div>
             <Button
