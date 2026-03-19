@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { Mark, mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
@@ -18,9 +19,45 @@ import {
   List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Link as LinkIcon, Unlink, Heading1, Heading2, Heading3,
   Undo, Redo, Highlighter, RemoveFormatting, Quote,
-  Code, Code2, Pilcrow, ListChecks, Palette,
+  Code, Code2, Pilcrow, ListChecks, Palette, Tag,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
+
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    customClass: {
+      setCustomClass: (className: string) => ReturnType;
+      unsetCustomClass: () => ReturnType;
+    };
+  }
+}
+
+const CustomClass = Mark.create({
+  name: 'customClass',
+  addAttributes() {
+    return {
+      class: { default: null },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'span[class]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes(HTMLAttributes), 0];
+  },
+  addCommands() {
+    return {
+      setCustomClass:
+        (className: string) =>
+        ({ commands }) =>
+          commands.setMark(this.name, { class: className }),
+      unsetCustomClass:
+        () =>
+        ({ commands }) =>
+          commands.unsetMark(this.name),
+    };
+  },
+});
 
 interface WysiwygEditorProps {
   label: string;
@@ -98,6 +135,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
       Placeholder.configure({ placeholder }),
       TaskList,
       TaskItem.configure({ nested: true }),
+      CustomClass,
     ],
     content: value,
     editable: !disabled,
@@ -120,6 +158,18 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
     }
     isInternalChange.current = false;
   }, [value, editor]);
+
+  const applyClass = useCallback(() => {
+    if (!editor) return;
+    const current = editor.getAttributes('customClass').class ?? '';
+    const className = window.prompt('Clase CSS:', current);
+    if (className === null) return;
+    if (className === '') {
+      editor.chain().focus().unsetCustomClass().run();
+      return;
+    }
+    editor.chain().focus().setCustomClass(className).run();
+  }, [editor]);
 
   const setLink = useCallback(() => {
     if (!editor) return;
@@ -267,6 +317,9 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
             </ToolbarButton>
             <ToolbarButton onClick={() => editor.chain().focus().unsetLink().run()} disabled={!editor.isActive('link')} tooltip="Quitar enlace">
               <Unlink className="h-4 w-4" />
+            </ToolbarButton>
+            <ToolbarButton onClick={applyClass} isActive={editor.isActive('customClass')} tooltip="Clase CSS">
+              <Tag className="h-4 w-4" />
             </ToolbarButton>
 
             <ToolbarSeparator />
