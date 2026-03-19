@@ -20,7 +20,6 @@ interface ProductsTableProps {
   selectedProducts: number[];
   onToggleProductSelection: (productId: number) => void;
   onToggleAllProductsSelection: () => void;
-  onGoToProductDetail: (id: number) => void;
   onViewProduct: (id: number) => void;
   onDeleteClick: (product: Product) => void;
 }
@@ -32,7 +31,6 @@ const ProductsTable = ({
   selectedProducts,
   onToggleAllProductsSelection,
   onToggleProductSelection,
-  onGoToProductDetail,
   onViewProduct,
   onDeleteClick,
 }: ProductsTableProps) => {
@@ -133,23 +131,13 @@ const ProductsTable = ({
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onGoToProductDetail(product.id)}
+                    <a
+                      href={`/products/edit/${product.id}`}
                       title="Editar producto"
+                      className="inline-flex items-center justify-center rounded-md border border-input bg-background px-2 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground h-8 w-8"
                     >
                       <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(`/products/edit/${product.id}`, "_blank")}
-                      title="Editar producto en nueva pestaña"
-                      className="text-yellow-600 border-yellow-400 hover:bg-yellow-50 hover:text-yellow-700"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    </a>
                     <Button
                       variant="destructive"
                       size="sm"
