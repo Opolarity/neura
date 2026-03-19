@@ -25,7 +25,7 @@ export const useCategories = () => {
     parentcategory: null,
     minproducts: null,
     maxproducts: null,
-    order: null,
+    order: 'prd-dsc',
     image: null,
   });
 
