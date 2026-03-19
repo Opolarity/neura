@@ -14,6 +14,7 @@ import { settingsRoutes } from "@/modules/settings";
 import { priceListRoutes } from "@/modules/price-list";
 import { ecommerceRoutes } from "@/modules/ecommerce";
 import { barcodesRoutes } from "@/modules/barcodes";
+import { discountsRoutes } from "@/modules/discounts";
 import NotFound from "@/shared/components/NotFound";
 import { ProtectedLayout } from "./ProtectedLayout";
 
@@ -38,6 +39,7 @@ const AppRouter = () => {
         ...priceListRoutes,
         ...ecommerceRoutes,
         ...barcodesRoutes,
+        ...discountsRoutes,
       ],
     },
     { path: "*", element: <NotFound /> },
