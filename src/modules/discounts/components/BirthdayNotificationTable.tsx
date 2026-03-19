@@ -37,8 +37,8 @@ function formatBirthday(birthdayDay: string): string {
   return `${parts[2]}/${parts[1]}`;
 }
 
-function openWhatsApp(phone: string, name: string) {
-  const message = `Hola ${name}! 🎂 Desde ${STORE_NAME} queremos felicitarte en tu día especial. Tenemos una sorpresa para ti, ¡visítanos pronto!`;
+function openWhatsApp(phone: string) {
+  const message = `🎂Un detalle de ${STORE_NAME} para ti 🎈\n¡Feliz cumple 🥳! 👽🙌\nPor ser parte de nuestra comunidad tienes un 20% OFF 🎊 en tus prendas para que estes renovado por tu cumple🛍️\n🍰 Canjéalo ingresando a la web, escoge tus productos y de manera automatica se registra tu dscto 🎁\n⏳ Disponible desde hoy por 7 días`;
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
   window.open(url, '_blank');
 }
@@ -85,7 +85,7 @@ export const BirthdayNotificationTable = ({
                 <Button
                   size="sm"
                   className="bg-green-600 hover:bg-green-700 text-white gap-2"
-                  onClick={() => openWhatsApp(profile.phone, profile.name)}
+                  onClick={() => openWhatsApp(profile.phone)}
                 >
                   <MessageCircle className="w-4 h-4" />
                   Enviar WhatsApp
