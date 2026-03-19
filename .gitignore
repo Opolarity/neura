@@ -28,3 +28,5 @@ supabase/functions
 
 # Local AI / tooling
 .claude/
+
+.env
