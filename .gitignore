@@ -7,9 +7,17 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies & build
 node_modules
 dist
 dist-ssr
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Local files
 *.local
 
 # Editor directories and files
@@ -23,7 +31,7 @@ dist-ssr
 *.sln
 *.sw?
 
-#supabase edge functions
+# Supabase edge functions
 supabase/functions
 
 # Local AI / tooling
