@@ -75,7 +75,10 @@ const ProductsTable = ({
             </TableRow>
           ) : products.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+              <TableCell
+                colSpan={9}
+                className="text-center py-8 text-muted-foreground"
+              >
                 {search
                   ? "No se encontraron productos"
                   : "No hay productos registrados"}
@@ -90,7 +93,9 @@ const ProductsTable = ({
                     onCheckedChange={() => onToggleProductSelection(product.id)}
                   />
                 </TableCell>
-                <TableCell className="font-mono text-muted-foreground">{product.id}</TableCell>
+                <TableCell className="font-mono text-muted-foreground">
+                  {product.id}
+                </TableCell>
                 <TableCell>
                   <img
                     src={product.image || placeholderImage}
@@ -134,7 +139,7 @@ const ProductsTable = ({
                     <a
                       href={`/products/edit/${product.id}`}
                       title="Editar producto"
-                      className="inline-flex items-center justify-center rounded-md border border-input bg-background px-2 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                      className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
                     >
                       <Edit className="w-4 h-4" />
                     </a>
