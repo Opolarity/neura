@@ -208,8 +208,23 @@ export default function InvoicePrintPage() {
       const invoiceLogoUrl = parametersRes.data?.value;
       const logoUrl = invoiceLogoUrl || "/images/logo-ticket.png";
 
-      let logoImg: { dataUrl: string; width: number; height: number } | null = null;
-      try { logoImg = await loadImage(logoUrl); } catch { }
+      try {
+        const { dataUrl: logoImg, width: imgW, height: imgH } = await loadImage(logoUrl);
+        const logoMaxWidth = 40;
+        const logoMaxHeight = 30;
+        const aspectRatio = imgW / imgH;
+        let renderW = logoMaxWidth;
+        let renderH = logoMaxWidth / aspectRatio;
+        if (renderH > logoMaxHeight) {
+          renderH = logoMaxHeight;
+          renderW = logoMaxHeight * aspectRatio;
+        }
+        const logoX = (pageWidth - renderW) / 2;
+        doc.addImage(logoImg, "PNG", logoX, y, renderW, renderH);
+        y += renderH + 5;
+      } catch {
+        y += 2;
+      }
 
       let qrCodeDataUrl: string | null = null;
       if (invoice.qr_data) {
