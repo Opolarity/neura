@@ -208,22 +208,11 @@ export default function InvoicePrintPage() {
       const invoiceLogoUrl = parametersRes.data?.value;
       const logoUrl = invoiceLogoUrl || "/images/logo-ticket.png";
 
+      let logoData: { dataUrl: string; width: number; height: number } | null = null;
       try {
-        const { dataUrl: logoImg, width: imgW, height: imgH } = await loadImage(logoUrl);
-        const logoMaxWidth = 40;
-        const logoMaxHeight = 30;
-        const aspectRatio = imgW / imgH;
-        let renderW = logoMaxWidth;
-        let renderH = logoMaxWidth / aspectRatio;
-        if (renderH > logoMaxHeight) {
-          renderH = logoMaxHeight;
-          renderW = logoMaxHeight * aspectRatio;
-        }
-        const logoX = (pageWidth - renderW) / 2;
-        doc.addImage(logoImg, "PNG", logoX, y, renderW, renderH);
-        y += renderH + 5;
+        logoData = await loadImage(logoUrl);
       } catch {
-        y += 2;
+        // logo failed to load, will skip
       }
 
       let qrCodeDataUrl: string | null = null;
@@ -240,12 +229,19 @@ export default function InvoicePrintPage() {
         let y = 4;
 
         // ============ LOGO ============
-        if (logoImg) {
-          const logoW = 22;
-          const logoH = logoW * (logoImg.height / logoImg.width);
-          const logoX = (pageWidth - logoW) / 2;
-          doc.addImage(logoImg.dataUrl, "PNG", logoX, y, logoW, logoH);
-          y += logoH + 2;
+        if (logoData) {
+          const logoMaxWidth = 40;
+          const logoMaxHeight = 30;
+          const aspectRatio = logoData.width / logoData.height;
+          let renderW = logoMaxWidth;
+          let renderH = logoMaxWidth / aspectRatio;
+          if (renderH > logoMaxHeight) {
+            renderH = logoMaxHeight;
+            renderW = logoMaxHeight * aspectRatio;
+          }
+          const logoX = (pageWidth - renderW) / 2;
+          doc.addImage(logoData.dataUrl, "PNG", logoX, y, renderW, renderH);
+          y += renderH + 2;
           doc.setFontSize(fontSize.tiny);
           doc.setFont("helvetica", "normal");
           doc.text("www.perception.pe", pageWidth / 2, y, { align: "center" });
