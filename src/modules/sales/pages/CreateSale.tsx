@@ -1282,14 +1282,6 @@ const CreateSale = () => {
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
 
-                {/* Product discount (auto-calculated) */}
-                {productDiscountAmount > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground text-xs">Dcto. productos</span>
-                    <span className="text-destructive text-xs">-{formatCurrency(productDiscountAmount)}</span>
-                  </div>
-                )}
-
                 {/* Custom order discounts */}
                 {orderDiscounts.map((d) => (
                   <div key={d.id} className="flex justify-between text-sm items-center">

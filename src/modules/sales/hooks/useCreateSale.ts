@@ -324,13 +324,13 @@ export const useCreateSale = () => {
     () => orderDiscounts.reduce((sum, d) => sum + d.amount, 0),
     [orderDiscounts],
   );
-  const discountAmount = productDiscountAmount + extraDiscountsAmount;
+  const discountAmount = extraDiscountsAmount;
   const shippingCostValue = formData.shippingCost
     ? parseFloat(formData.shippingCost)
     : 0;
   const total = useMemo(
-    () => subtotal - productDiscountAmount + extraDiscountsAmount + shippingCostValue,
-    [subtotal, productDiscountAmount, extraDiscountsAmount, shippingCostValue],
+    () => subtotal + extraDiscountsAmount + shippingCostValue,
+    [subtotal, extraDiscountsAmount, shippingCostValue],
   );
 
   // Computed: Check if selected document type is persona jurídica (company)
@@ -1512,9 +1512,7 @@ export const useCreateSale = () => {
             })),
           initialSituationId: parseInt(orderSituation),
           discounts: [
-            // Product discounts as single record
-            ...(productDiscountAmount > 0 ? [{ name: "Descuentos de productos", discount_amount: productDiscountAmount, code: "PRO" }] : []),
-            // Custom discounts
+            // Custom discounts only (product discounts are saved per-unit in order_products)
             ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
           ],
         };
