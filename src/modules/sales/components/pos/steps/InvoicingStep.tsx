@@ -595,6 +595,42 @@ export default function InvoicingStep({
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </>
+                          ) : typeCode === "INV" ? (
+                            <>
+                              {!inv.declared && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  title="Emitir comprobante"
+                                  onClick={() => setPendingEmitInvoice(inv)}
+                                >
+                                  <ArrowUp className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="Ver comprobante"
+                                onClick={() => {
+                                  window.open(`/invoices/edit/${inv.id}`, "_blank");
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="Imprimir ticket"
+                                onClick={() => {
+                                  window.open(`/invoices/print/${inv.id}`, "_blank");
+                                }}
+                              >
+                                <Printer className="h-4 w-4" />
+                              </Button>
+                            </>
                           ) : (
                             "-"
                           )}
