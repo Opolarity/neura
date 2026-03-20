@@ -5,6 +5,7 @@ import { useEditMovementRequest } from "../hooks/useEditMovementRequest";
 import CRequestSummary from "../components/create-movement-request/CRequestSummary";
 import CRequestProductTable from "../components/create-movement-request/CRequestProductTable";
 import RequestSituationsHistory from "../components/edit-movement-request/RequestSituationsHistory";
+import { PageLoader } from "@/shared/components/page-loader";
 
 const EditMovementRequest = () => {
   const {
@@ -46,11 +47,7 @@ const EditMovementRequest = () => {
   } = useEditMovementRequest();
 
   if (loadingInitial) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <span className="text-muted-foreground">Cargando solicitud...</span>
-      </div>
-    );
+    return <PageLoader message="Cargando solicitud..." />;
   }
 
   return (

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, X } from "lucide-react";
 import { SelectedRequestProduct } from "../../types/MovementRequests.types";
 import { cn } from "@/shared/utils/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface CRequestProductTableProps {
   products: SelectedRequestProduct[];
@@ -65,7 +66,7 @@ const CRequestProductTable = ({
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{product.productTitle}</span>
                     {isDisapproved && (
-                      <span className="text-xs text-destructive font-semibold">Desaprobado</span>
+                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5">Desaprobado</Badge>
                     )}
                   </div>
                 </TableCell>

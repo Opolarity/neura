@@ -31,6 +31,8 @@ export const useEditMovementRequest = () => {
   const [situationName, setSituationName] = useState("");
   const [statusName, setStatusName] = useState("");
   const [statusCode, setStatusCode] = useState("");
+  const [currentSituationCode, setCurrentSituationCode] = useState("");
+  const [isDirectSend, setIsDirectSend] = useState(false);
   const [createdAt, setCreatedAt] = useState<string>("");
   const [situationsHistory, setSituationsHistory] = useState<SituationHistoryItem[]>([]);
   const [situationOptions, setSituationOptions] = useState<SituationOption[]>([]);
@@ -72,30 +74,25 @@ export const useEditMovementRequest = () => {
       const requestId = Number(id);
       if (!requestId) throw new Error("ID inválido");
 
-      // Load user, warehouses, and request data in parallel
-      const [userRes, warehousesRes, requestRes] = await Promise.all([
+      // Load user, warehouses, and request data from edge function
+      const [userRes, warehousesRes, edgeRes] = await Promise.all([
         getUserWarehouse(),
         getWarehousesIsActiveTrue(),
-        supabase
-          .from("stock_movement_requests")
-          .select(`
-            id, created_by, out_warehouse_id, in_warehouse_id, created_at, updated_at,
-            stock_movement_request_situations!inner(
-              status_id, situation_id, message, last_row,
-              statuses(name, code),
-              situations(name)
-            )
-          `)
-          .eq("id", requestId)
-          .eq("stock_movement_request_situations.last_row", true)
-          .single(),
+        supabase.functions.invoke(`get-stock-movement-request?id=${requestId}`, {
+          method: "GET",
+        }),
       ]);
 
       const userAdp = getUserWarehouseAdapter(userRes);
       setUserSummary(userAdp);
 
-      if (requestRes.error) throw requestRes.error;
-      const reqData = requestRes.data as any;
+      if (edgeRes.error) throw edgeRes.error;
+      const respData = edgeRes.data;
+      if (!respData.success || !respData.request) {
+        throw new Error(respData.error || "Error al obtener la solicitud");
+      }
+
+      const reqData = respData.request;
 
       // Set warehouses (exclude user's own)
       const allWarehouses = (warehousesRes || []).map((w) => ({ id: w.id, name: w.name }));
@@ -103,35 +100,35 @@ export const useEditMovementRequest = () => {
       setWarehouses(otherWarehouses);
 
       // Set selected warehouse (out_warehouse = origin)
-      const outWh = allWarehouses.find((w) => w.id === reqData.out_warehouse_id);
+      const outWarehouseIdNum = reqData.out_warehouse?.id;
+      const inWarehouseIdNum = reqData.in_warehouse?.id;
+      const outWh = allWarehouses.find((w) => w.id === outWarehouseIdNum);
       if (outWh) setSelectedWarehouse(outWh);
-      setOutWarehouseId(reqData.out_warehouse_id);
-      setInWarehouseId(reqData.in_warehouse_id);
+      setOutWarehouseId(outWarehouseIdNum ?? null);
+      setInWarehouseId(inWarehouseIdNum ?? null);
 
       // Set situation data
-      const sit = reqData.stock_movement_request_situations?.[0];
-      if (sit) {
-        setStatusName(sit.statuses?.name ?? "");
-        setStatusCode(sit.statuses?.code ?? "");
-        setSituationName(sit.situations?.name ?? "");
-        setReason(sit.message ?? "");
+      const currentSit = reqData.current_situation;
+      if (currentSit) {
+        setStatusName(currentSit.status?.name ?? "");
+        setStatusCode(currentSit.status?.code ?? "");
+        setSituationName(currentSit.situation?.name ?? "");
+        setCurrentSituationCode(currentSit.situation?.code ?? "");
+        setReason(currentSit.message ?? "");
       }
       setCreatedAt(reqData.created_at);
 
-      // Load ALL situations history
-      const { data: allSituations } = await supabase
-        .from("stock_movement_request_situations")
-        .select(`
-          id, created_at, created_by, message, notes, situation_id, warehouse_id,
-          situations(name),
-          warehouses!stock_movement_request_situations_warehouse_id_fkey(name)
-        `)
-        .eq("stock_movement_request_id", requestId)
-        .order("created_at", { ascending: true });
-
-      // Fetch user names for each created_by
-      const createdByIds = [...new Set((allSituations || []).map((s: any) => s.created_by).filter(Boolean))];
+      // Fetch user names for history
+      const historyList = reqData.history || [];
+      const createdByIds = [...new Set<string>(historyList.map((s: any) => s.created_by).filter(Boolean))];
       let profilesMap: Record<string, string> = {};
+      
+      if (historyList.length > 0) {
+        // Evaluate if this movement was a CreateSendMovement (initial situation was ENV)
+        const firstSit = historyList[historyList.length - 1]; // Last item since it is descending by created_at
+        setIsDirectSend(firstSit.situation?.code === "ENV");
+      }
+
       if (createdByIds.length > 0) {
         const { data: profilesData } = await supabase
           .from("profiles")
@@ -145,15 +142,15 @@ export const useEditMovementRequest = () => {
         }
       }
 
-      const historyItems: SituationHistoryItem[] = (allSituations || []).map((s: any) => ({
+      const historyItems: SituationHistoryItem[] = (reqData.history || []).map((s: any) => ({
         id: s.id,
         created_at: s.created_at,
         userName: profilesMap[s.created_by] || "Usuario",
         message: s.message,
-        situationName: s.situations?.name ?? "",
+        situationName: s.situation?.name ?? "",
         notes: s.notes,
-        warehouseName: s.warehouses?.name ?? null,
-        warehouseId: s.warehouse_id ?? null,
+        warehouseName: s.warehouse?.name ?? null,
+        warehouseId: s.warehouse?.id ?? null,
       }));
       setSituationsHistory(historyItems);
 
@@ -172,78 +169,51 @@ export const useEditMovementRequest = () => {
           .order("order", { ascending: true });
         setSituationOptions((sitOptions || []).map((s: any) => ({ id: s.id, name: s.name, status_id: s.status_id, code: s.code, statusCode: s.statuses?.code ?? null })));
       }
-      // Load linked products
-      const { data: linkedData } = await supabase
-        .from("linked_stock_movement_requests")
-        .select(`
-          stock_movement_id,
-          approved,
-          stock_movements!linked_stock_movement_requests_stock_movement_id_fkey(
-            id, product_variation_id, quantity, warehouse_id
-          )
-        `)
-        .eq("stock_movement_request_id", requestId);
 
-      // Get the OUTPUT movements (from source warehouse)
-      const outputMovements = (linkedData || [])
-        .filter((l: any) => {
-          const m = l.stock_movements;
-          if (!m) return false;
-          // Identify output movements by warehouse matching the source (out) warehouse
-          return m.warehouse_id === reqData.out_warehouse_id;
-        })
-        .map((l: any) => ({ ...l.stock_movements, approved: l.approved }));
-
-      if (outWh && outputMovements.length > 0) {
-        // Load product details for each variation
-        const variationIds = outputMovements.map((m: any) => m.product_variation_id);
-        
-        // Fetch current stock for source warehouse
-        const sourceFilters: ProductSalesFilter = {
-          p_page: 1,
-          p_size: 100,
-          p_search: "",
-          p_warehouse_id: outWh.id,
-        };
-        const sourceRes = await getSaleProducts(sourceFilters);
-        const { data: sourceProducts } = getProductSalesAdapter(sourceRes);
-
-        // Fetch current stock for user's warehouse
-        const myFilters: ProductSalesFilter = {
-          p_page: 1,
-          p_size: 100,
-          p_search: "",
-          p_warehouse_id: userAdp.warehouse_id,
-        };
-        const myRes = await getSaleProducts(myFilters);
-        const { data: myProducts } = getProductSalesAdapter(myRes);
-
+      // Map products based on items from edge function
+      const items = reqData.items || [];
+      if (outWh && items.length > 0) {
         const editProducts: SelectedRequestProduct[] = [];
         const ids = new Set<number>();
 
-        for (const mov of outputMovements) {
-          const varId = mov.product_variation_id;
-          const sourceProd = sourceProducts.find((p) => p.variationId === varId);
-          const myProd = myProducts.find((p) => p.variationId === varId);
+        for (const it of items) {
+          const varId = it.variation_id;
+          const isDisapproved = it.out_movement?.approved === false;
+          const movQuantity = it.out_movement?.quantity ?? 0;
 
-          if (sourceProd) {
-            const isDisapproved = mov.approved === false;
-            editProducts.push({
-              ...sourceProd,
-              quantity: isDisapproved ? 0 : Math.abs(mov.quantity),
-              sourceStock: sourceProd.stock,
-              myStock: myProd?.stock ?? 0,
-              disapproved: isDisapproved,
-            });
-            ids.add(varId);
-          }
+          // Optional terms mapping for the UI
+          const mappedTerms = (it.variation_terms || []).map((vt: any) => ({
+            id: vt.term?.id,
+            name: vt.term?.name,
+            groupCode: vt.term?.term_group?.code,
+          }));
+
+          editProducts.push({
+            productId: it.product?.id ?? 0,
+            productTitle: it.product?.title ?? "",
+            sku: it.sku ?? "",
+            variationId: varId,
+            stock: 0, 
+            imageUrl: null,
+            terms: mappedTerms,
+            
+            quantity: isDisapproved ? 0 : Math.abs(movQuantity),
+            sourceStock: it.stock_out_warehouse ?? 0,
+            myStock: it.stock_in_warehouse ?? 0,
+            disapproved: isDisapproved,
+            
+            outMovementId: it.out_movement?.id,
+            inMovementId: it.in_movement?.id,
+            stockTypeId: it.out_movement?.stock_type?.id,
+          });
+          ids.add(varId);
         }
 
         setSelectedProducts(editProducts);
         setOriginalQuantities(new Map(editProducts.map((p) => [p.variationId, p.disapproved ? 0 : Math.abs(p.quantity ?? 0)])));
         setSelectedIds(ids);
 
-        // Also load products list for search
+        // Load products list for search
         const defaultFilters: ProductSalesFilter = {
           p_page: 1,
           p_size: 10,
@@ -411,13 +381,16 @@ export const useEditMovementRequest = () => {
       const selectedSit = situationOptions.find((s) => s.id === situationId);
       if (!selectedSit) throw new Error("Situación inválida");
 
-      // CFM validation: at least one product must be non-disapproved (approved NULL or TRUE)
-      if (selectedSit.statusCode === "CFM") {
+      // Map payload items from selectedProducts
+      const isApproving = selectedSit.code === "APR" || selectedSit.code === "ENV";
+      
+      // CFM validation equivalent:
+      if (isApproving) {
         const approvedProducts = selectedProducts.filter((p) => !p.disapproved);
         if (approvedProducts.length === 0) {
           toast({
             title: "No se puede confirmar",
-            description: "Debe haber al menos un producto aprobado (no desaprobado) para confirmar la solicitud.",
+            description: "Debe haber al menos un producto aprobado (no desaprobado).",
             variant: "destructive",
           });
           setSubmittingNewSituation(false);
@@ -425,105 +398,54 @@ export const useEditMovementRequest = () => {
         }
       }
 
-      const { data: strModule } = await supabase
-        .from("modules")
-        .select("id")
-        .eq("code", "STR")
-        .single();
-      if (!strModule) throw new Error("Módulo STR no encontrado");
+      const payloadItems = selectedProducts
+        .filter((p) => p.outMovementId && p.inMovementId)
+        .map((p) => {
+          let approvedValue: boolean | null = null;
+          if (p.disapproved) {
+            approvedValue = false;
+          } else if (isApproving || selectedSit.code === "REC") {
+            approvedValue = true;
+          }
 
-      const notes = generateNotes();
-
-      // Set ALL previous situations for this request to last_row = false
-      await supabase
-        .from("stock_movement_request_situations")
-        .update({ last_row: false })
-        .eq("stock_movement_request_id", requestId);
-
-      // Insert new situation
-      await supabase
-        .from("stock_movement_request_situations")
-        .insert({
-          stock_movement_request_id: requestId,
-          situation_id: situationId,
-          status_id: selectedSit.status_id,
-          module_id: strModule.id,
-          message,
-          notes: notes || null,
-          warehouse_id: userSummary.warehouse_id,
-          last_row: true,
+          return {
+            out_movement_id: p.outMovementId,
+            in_movement_id: p.inMovementId,
+            approved: approvedValue,
+            quantity: p.quantity ?? 0,
+            stock_type_id: p.stockTypeId,
+          };
         });
 
-      // Update stock_movements and approval status if quantities changed or confirming (CFM)
-      const isCFM = selectedSit.statusCode === "CFM";
-      const isCOM = selectedSit.statusCode === "COM";
-      if (quantitiesChanged || isCFM) {
-        const { data: linkedData } = await supabase
-          .from("linked_stock_movement_requests")
-          .select(`
-            id,
-            stock_movement_id,
-            stock_movements!linked_stock_movement_requests_stock_movement_id_fkey(
-              id, product_variation_id, quantity
-            )
-          `)
-          .eq("stock_movement_request_id", requestId);
-
-        if (linkedData) {
-          for (const link of linkedData as any[]) {
-            const mov = link.stock_movements;
-            if (!mov) continue;
-            const product = selectedProducts.find((p) => p.variationId === mov.product_variation_id);
-            if (!product || product.quantity === null || product.quantity === undefined) continue;
-
-            // Update quantities if changed
-            if (quantitiesChanged) {
-              const newQty = mov.quantity < 0 ? -product.quantity : product.quantity;
-              if (newQty !== mov.quantity) {
-                await supabase
-                  .from("stock_movements")
-                  .update({ quantity: newQty })
-                  .eq("id", mov.id);
-              }
-            }
-
-            // Update approved: CFM sets non-disapproved to TRUE, otherwise NULL
-            const newApproved = product.disapproved ? false : (isCFM ? true : null);
-            await supabase
-              .from("linked_stock_movement_requests")
-              .update({ approved: newApproved })
-              .eq("id", link.id);
-          }
-        }
+      if (payloadItems.length === 0) {
+        throw new Error("No hay items para enviar en la solicitud.");
       }
 
-      // COM: set is_active=true and completed=true for stock_movements with approved NULL or TRUE
-      if (isCOM) {
-        const { data: comLinks } = await supabase
-          .from("linked_stock_movement_requests")
-          .select("stock_movement_id, approved")
-          .eq("stock_movement_request_id", requestId)
-          .or("approved.is.null,approved.eq.true");
+      const notes = generateNotes();
+      const combinedMessage = notes ? `${message}\n\n${notes}` : message;
 
-        const comMovIds = comLinks?.map((l) => l.stock_movement_id) || [];
-        if (comMovIds.length > 0) {
-          await supabase
-            .from("stock_movements")
-            .update({ is_active: true, completed: true })
-            .in("id", comMovIds);
-        }
-      }
+      const { data, error } = await supabase.functions.invoke('approve-stock-movement-items', {
+        body: {
+          stock_movement_request_id: requestId,
+          situation_code: selectedSit.code,
+          message: combinedMessage,
+          items: payloadItems,
+        },
+      });
 
-      // Update current status/situation display
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Error al procesar la actualización");
+
+      // Update current status/situation display locally if we were to stay on page
       setStatusName("");
       setSituationName(selectedSit.name);
 
       toast({ title: "Actualización enviada", description: "El historial ha sido actualizado." });
 
       navigate("/inventory/movement-requests");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting situation:", error);
-      toast({ title: "Error", description: "No se pudo enviar la actualización.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "No se pudo enviar la actualización.", variant: "destructive" });
     } finally {
       setSubmittingNewSituation(false);
     }
@@ -536,15 +458,34 @@ export const useEditMovementRequest = () => {
 
   // Filter situation options based on user's warehouse
   const filteredSituationOptions = situationOptions.filter((s) => {
-    if (!userSummary) return true;
+    if (!userSummary) return false;
     const userWh = userSummary.warehouse_id;
-    // CFM status: only for source warehouse users
-    if (s.statusCode === "CFM" && userWh !== outWarehouseId) return false;
-    // COM status: only for destination warehouse users
-    if (s.statusCode === "COM" && userWh !== inWarehouseId) return false;
+    const isSender = userWh === outWarehouseId;
+    const isReceiver = userWh === inWarehouseId;
+
+    if (s.code === "CAN") {
+      return isSender || isReceiver; // Ambos pueden cancelar
+    }
+
+    if (s.code === "REC") {
+      // Solo el que recibe puede marcar como recibido, si el estado actual es ENV
+      return isReceiver && currentSituationCode === "ENV";
+    }
+
+    if (s.code === "NEG") {
+      // Solo el que recibe puede negociar, PERO no en envios directos, y no si ya esta enviado o recibido
+      return isReceiver && !isDirectSend && currentSituationCode !== "ENV" && currentSituationCode !== "REC";
+    }
+
+    if (s.code === "ENV" || s.code === "APR") {
+      // Solo el que envia puede aprobar/enviar, PERO no si ya esta enviado
+      return isSender && currentSituationCode !== "ENV";
+    }
+
     return true;
   });
-  const isReadOnly = statusCode === "CFM" || statusCode === "COM";
+  
+  const isReadOnly = currentSituationCode === "CAN" || currentSituationCode === "REC";
 
   return {
     requestId: id,
