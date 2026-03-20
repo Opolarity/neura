@@ -181,6 +181,7 @@ export const useCreateSale = () => {
   const [orderSituationTable, setOrderSituationTable] = useState<
     OrdersSituationsById[]
   >([]);
+  const [originalState, setOriginalState] = useState<string | null>(null);
 
   // Load initial form data, user warehouse, and business accounts
   useEffect(() => {
@@ -344,12 +345,13 @@ export const useCreateSale = () => {
 
   // Computed: Check if current situation has PHY code (physical - no edits allowed)
   const isPhySituation = useMemo(() => {
+    if (!orderId) return false;
     if (!orderSituation || !salesData?.situations) return false;
     const currentSituation = salesData.situations.find(
       (s) => s.id.toString() === orderSituation,
     );
     return currentSituation?.code?.endsWith("-PHY") ?? false;
-  }, [orderSituation, salesData?.situations]);
+  }, [orderSituation, salesData?.situations, orderId]);
 
   // Apply price rules whenever products changes
   useEffect(() => {
@@ -437,12 +439,15 @@ export const useCreateSale = () => {
 
   // Computed: Check if current status has COM code (completed - no payment edits allowed)
   const isComSituation = useMemo(() => {
+    if (!orderId) return false;
     return currentStatusCode === "COM";
-  }, [currentStatusCode]);
+  }, [currentStatusCode, orderId]);
 
   // Computed: Filter situations to only show those with order >= saved (DB) situation's order
   const filteredSituations = useMemo(() => {
     if (!salesData?.situations) return [];
+    if (!orderId) return salesData.situations;
+
     const baseId = savedOrderSituation || orderSituation;
     if (!baseId) return salesData.situations;
 
@@ -454,7 +459,7 @@ export const useCreateSale = () => {
     return salesData.situations.filter(
       (s) => s.order != null && s.order >= baseSituation.order,
     );
-  }, [savedOrderSituation, orderSituation, salesData?.situations]);
+  }, [savedOrderSituation, orderSituation, salesData?.situations, orderId]);
 
   // Computed: Available sale types — always includes the order's current sale type (e.g. POS)
   const availableSaleTypes = useMemo(() => {
@@ -686,6 +691,17 @@ export const useCreateSale = () => {
       if (adapted.formData.documentType === "0" && adapted.formData.documentNumber === " ") {
         setIsAnonymousPurchase(true);
       }
+
+      // Snapshot for dirty checking
+      const snap = {
+        formData: adapted.formData,
+        products: adapted.products.map(p => ({ ...p })),
+        payments: adapted.payments.map(p => ({ ...p, voucherFile: undefined, voucherPreview: undefined })),
+        changeEntries: adapted.changeEntries ? adapted.changeEntries.map(c => ({ ...c, voucherFile: undefined, voucherPreview: undefined })) : [],
+        orderSituation: adapted.currentSituation,
+        orderDiscounts: adapted.orderDiscounts || [],
+      };
+      setOriginalState(JSON.stringify(snap));
 
     } catch (error) {
       console.error("Error loading order:", error);
@@ -1415,6 +1431,20 @@ export const useCreateSale = () => {
     setOrderDiscounts((prev) => prev.filter((d) => d.id !== id));
   }, []);
 
+  // Check if form is dirty
+  const isDirty = useMemo(() => {
+    if (!orderId || !originalState) return false;
+    const currentSnap = {
+      formData,
+      products: products.map(p => ({ ...p })),
+      payments: payments.map(p => ({ ...p, voucherFile: undefined, voucherPreview: undefined })),
+      changeEntries: changeEntries.map(c => ({ ...c, voucherFile: undefined, voucherPreview: undefined })),
+      orderSituation,
+      orderDiscounts,
+    };
+    return JSON.stringify(currentSnap) !== originalState;
+  }, [formData, products, payments, changeEntries, orderSituation, orderDiscounts, orderId, originalState]);
+
   // Handle form submission
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -1660,8 +1690,8 @@ export const useCreateSale = () => {
     total,
     orderId,
     isPersonaJuridica,
-    isPhySituation,
-    isComSituation,
+    isPhySituation: !orderId ? false : isPhySituation, // Short-circuit if not editing an order
+    isComSituation: !orderId ? false : isComSituation, // Short-circuit if not editing an order
     filteredSituations,
     availableSaleTypes,
     filteredPaymentMethods,
@@ -1721,5 +1751,8 @@ export const useCreateSale = () => {
     orderDiscounts,
     addOrderDiscount,
     removeOrderDiscount,
+
+    // Is dirty
+    isDirty,
   };
 };

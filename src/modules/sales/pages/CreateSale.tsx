@@ -177,6 +177,7 @@ const CreateSale = () => {
     orderDiscounts,
     addOrderDiscount,
     removeOrderDiscount,
+    isDirty,
   } = useCreateSale();
 
   const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
@@ -395,7 +396,7 @@ const CreateSale = () => {
           <Button variant="outline" onClick={() => navigate("/sales")}>
             Cancelar
           </Button>
-          <Button type="submit" form="sale-form" disabled={saving}>
+          <Button type="submit" form="sale-form" disabled={saving || (!!orderId && !isDirty)}>
             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {orderId ? "Actualizar Venta" : "Crear Venta"}
           </Button>
