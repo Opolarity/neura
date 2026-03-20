@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Pencil, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { MovementRequestListItem } from "../../types/MovementRequestList.types";
 import { format } from "date-fns";
@@ -20,27 +21,23 @@ interface Props {
   userWarehouseId: number | null;
 }
 
+const getSituationBadgeColor = (name?: string) => {
+  if (name === 'Aprobado' || name === 'Recibido' || name === 'Enviado' || name === 'Completado') return 'bg-green-500 hover:bg-green-500 text-white border-transparent';
+  if (name === 'Negociación' || name === 'Solicitado') return 'bg-yellow-500 hover:bg-yellow-500 text-white border-transparent';
+  if (name === 'Cancelado') return 'bg-red-500 hover:bg-red-500 text-white border-transparent';
+  return 'bg-secondary text-secondary-foreground hover:bg-secondary';
+};
+
 export default function MovementRequestsTable({ requests, loading, userWarehouseId }: Props) {
   const navigate = useNavigate();
-  if (loading) {
-    return (
-      <div className="p-6 space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-full" />
-        ))}
-      </div>
-    );
-  }
-
-  if (requests.length === 0) {
-    return (
-      <div className="p-6 text-center text-muted-foreground">
-        No se encontraron solicitudes de traspaso.
-      </div>
-    );
-  }
 
   return (
+    <div className="relative">
+      {loading && requests.length > 0 && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      )}
     <Table>
       <TableHeader>
         <TableRow>
@@ -54,12 +51,35 @@ export default function MovementRequestsTable({ requests, loading, userWarehouse
         </TableRow>
       </TableHeader>
       <TableBody>
-        {requests.map((req) => (
+          {loading && requests.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-8">
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Cargando solicitudes...
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : requests.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={7}
+                className="text-center py-8 text-muted-foreground"
+              >
+                No se encontraron solicitudes de traspaso.
+              </TableCell>
+            </TableRow>
+          ) : (
+        requests.map((req) => (
           <TableRow key={req.id}>
             <TableCell className="font-medium">#{req.id}</TableCell>
             <TableCell>{req.outWarehouseName}</TableCell>
             <TableCell>{req.inWarehouseName}</TableCell>
-            <TableCell>{req.situationName}</TableCell>
+            <TableCell>
+              <Badge className={getSituationBadgeColor(req.situationName)}>
+                {req.situationName}
+              </Badge>
+            </TableCell>
             <TableCell
               className={`max-w-[300px] ${
                 req.lastMessageWarehouseId && req.lastMessageWarehouseId !== userWarehouseId
@@ -91,8 +111,9 @@ export default function MovementRequestsTable({ requests, loading, userWarehouse
               </Button>
             </TableCell>
           </TableRow>
-        ))}
+        )))}
       </TableBody>
     </Table>
+    </div>
   );
 }
