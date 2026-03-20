@@ -1202,6 +1202,8 @@ const CreateSale = () => {
                   <em
                     className="italic text-sm underline cursor-pointer"
                     onClick={() => {
+                      const countryObj = salesData?.countries.find(c => c.id.toString() === formData.countryId);
+                      const stateObj = filteredStates.find(s => s.id.toString() === formData.stateId);
                       const cityObj = filteredCities.find(c => c.id.toString() === formData.cityId);
                       const neighObj = filteredNeighborhoods.find(n => n.id.toString() === formData.neighborhoodId);
                       const shippingObj = availableShippingCosts.find(s => s.id.toString() === formData.shippingMethod);
@@ -1212,6 +1214,8 @@ const CreateSale = () => {
                         documentType: formData.documentType,
                         documentNumber: formData.documentNumber,
                         address: formData.address,
+                        countryName: countryObj?.name,
+                        stateName: stateObj?.name,
                         cityName: cityObj?.name,
                         neighborhoodName: neighObj?.name,
                         shippingMethodName: shippingObj?.name,

@@ -17,8 +17,9 @@ export interface RemisionGuideData {
   documentType?: string;
   documentNumber: string;
   address?: string;
-  cityName?: string;
+  countryName?: string;
   stateName?: string;
+  cityName?: string;
   neighborhoodName?: string;
   shippingMethodName?: string;
   saleDate: string;
@@ -142,7 +143,13 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
     .join(" ")
     .toUpperCase();
 
-  const direccionPrincipal = [data.cityName, data.neighborhoodName]
+  const direccionPrincipal = [
+    data.countryName,
+    data.stateName,
+    data.cityName,
+    data.neighborhoodName,
+    data.address,
+  ]
     .filter(Boolean)
     .join(" / ")
     .toUpperCase();
@@ -150,7 +157,7 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
   labelValue("Destinatario", fullName, margin + 3, y + 5, 24);
   labelValue(
     "Dirección principal",
-    direccionPrincipal || data.address?.toUpperCase() || "-",
+    direccionPrincipal || "-",
     pageW / 2,
     y + 5,
     36
@@ -198,7 +205,7 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
 
   labelValue(
     "Dirección de llegada",
-    (data.cityName || data.address || "-").toUpperCase(),
+    direccionPrincipal || "-",
     margin + 3,
     y + 3,
     38
