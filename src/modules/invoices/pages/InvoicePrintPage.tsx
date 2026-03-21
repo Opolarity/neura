@@ -146,11 +146,26 @@ export default function InvoicePrintPage() {
           .single(),
       ]);
 
+      const shippingMethodCode = branchRes.data?.orders?.shipping_method_code;
+      const shippingMethod = shippingMethodCode
+        ? await supabase
+          .from("shipping_methods")
+          .select("name")
+          .eq("code", shippingMethodCode)
+          .single()
+        : null;
+
+      const discountOrders = await supabase
+        .from("order_discounts")
+        .select("name, discount_amount")
+        .eq("order_id", branchRes.data.orders.id)
+
+
       const neighborhood = await supabase
-      .from("neighborhoods")
-      .select("name")
-      .eq("id", branchRes.data.orders.branches.neighborhood_id)
-      .single();
+        .from("neighborhoods")
+        .select("name")
+        .eq("id", branchRes.data.orders.branches.neighborhood_id)
+        .single();
 
       if (invoiceRes.error || !invoiceRes.data) {
         setError("No se encontró el comprobante");
@@ -184,7 +199,7 @@ export default function InvoicePrintPage() {
         }
       }
 
-      const companyName =  "OVERTAKE UNLIMITED EIRL" //getParam("COMPANY_NAME") || "EMPRESA";
+      const companyName = "OVERTAKE UNLIMITED EIRL" //getParam("COMPANY_NAME") || "EMPRESA";
       const companyAddress = branchRes.data?.orders?.branches?.address + " " + neighborhood?.data?.name || ""; //getParam("COMPANY_ADDRESS") || "";
       const companyPhone = "951 645 997"; //getParam("COMPANY_PHONE") || "";
       const companyEmail = "overta.peru.empresa@gmail.com"; //getParam("COMPANY_EMAIL") || "";
@@ -195,16 +210,6 @@ export default function InvoicePrintPage() {
       const margin = 3;
       const contentWidth = pageWidth - margin * 2;
 
-      // Estimate height generously
-      const estimatedHeight = 200 + items.length * 12;
-
-      const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: [pageWidth, estimatedHeight],
-      });
-
-      let y = 4;
       const fontSize = {
         title: 9,
         subtitle: 7.5,
@@ -213,255 +218,295 @@ export default function InvoicePrintPage() {
         tiny: 5.5,
       };
 
-      // ============ LOGO ============
-      // Use InvoiceLogoUrl from parameters for declared invoices, otherwise default logo
+      // Pre-load assets (logo and QR) before drawing so the draw function is synchronous
       const invoiceLogoUrl = parametersRes.data?.value;
       const logoUrl = invoiceLogoUrl || "/images/logo-ticket.png";
 
-      try {
-        const logoImg = await loadImage(logoUrl);
-        const logoSize = 22;
-        const logoX = (pageWidth - logoSize) / 2;
-        doc.addImage(logoImg, "PNG", logoX, y, logoSize, logoSize);
-        y += logoSize + 5;
-      } catch {
-        y += 2;
-      }
+      let logoImg: string | null = null;
+      try { logoImg = await loadImage(logoUrl); } catch { }
 
-      // ============ COMPANY NAME ============
-      doc.setFontSize(fontSize.title);
-      doc.setFont("helvetica", "bold");
-      const companyLines = doc.splitTextToSize(companyName.toUpperCase(), contentWidth);
-      for (const line of companyLines) {
-        doc.text(line, pageWidth / 2, y, { align: "center" });
-        y += 3.5;
-      }
-      y += 0.5;
-
-      // ============ COMPANY DETAILS ============
-      doc.setFontSize(fontSize.small);
-      doc.setFont("helvetica", "normal");
-
-      if (companyAddress) {
-        const addrLines = doc.splitTextToSize(companyAddress, contentWidth);
-        for (const line of addrLines) {
-          doc.text(line, pageWidth / 2, y, { align: "center" });
-          y += 2.5;
-        }
-      }
-      if (companyPhone) {
-        doc.text(`Teléfono: ${companyPhone}`, pageWidth / 2, y, { align: "center" });
-        y += 2.5;
-      }
-      if (companyEmail) {
-        doc.text(`E-mail: ${companyEmail}`, pageWidth / 2, y, { align: "center" });
-        y += 2.5;
-      }
-      if (companyRuc) {
-        doc.setFont("helvetica", "bold");
-        doc.text(`R.U.C.: ${companyRuc}`, pageWidth / 2, y, { align: "center" });
-        doc.setFont("helvetica", "normal");
-        y += 3;
-      }
-
-      // ============ SEPARATOR ============
-      y += 1;
-      doc.setLineWidth(0.3);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 3;
-
-      // ============ DOCUMENT TYPE TITLE ============
-      const docTypeName = invTypeRes.data?.name || "COMPROBANTE";
-      doc.setFontSize(fontSize.title);
-      doc.setFont("helvetica", "bold");
-      doc.text(docTypeName.toUpperCase(), pageWidth / 2, y, { align: "center" });
-      y += 4;
-
-      // ============ NÚMERO DE PEDIDO ============
-      const orderNumber = "PEDIDO: #" + branchRes.data?.orders?.id || "";
-      doc.setFontSize(fontSize.title);
-      doc.setFont("helvetica", "bold");
-      doc.text(orderNumber.toUpperCase(), pageWidth / 2, y, { align: "center" });
-      y += 4;
-
-      // ============ SERIE - NUMBER ============
-      const serieNum = [invoice.tax_serie, invoice.invoice_number].filter(Boolean).join(" - ");
-      if (serieNum) {
-        doc.setFontSize(fontSize.subtitle);
-        doc.setFont("helvetica", "bold");
-        doc.text(serieNum, pageWidth / 2, y, { align: "center" });
-        y += 4;
-      }
-
-      // ============ SEPARATOR ============
-      doc.setLineWidth(0.2);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 3;
-
-      // ============ INVOICE DETAILS ============
-      doc.setFontSize(fontSize.normal);
-      doc.setFont("helvetica", "normal");
-
-      const date = new Date(invoice.created_at);
-      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${date.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
-
-      const detailLines: [string, string][] = [
-        ["FECHA DE EMISIÓN:", dateStr],
-        ["CLIENTE:", invoice.client_name || "Clientes Varios"],
-        [`${docTypeRes.data?.name || "Doc"}:`, invoice.customer_document_number]
-      ];
-
-      for (const [label, value] of detailLines) {
-        doc.setFont("helvetica", "bold");
-        doc.text(label, margin, y);
-        doc.setFont("helvetica", "normal");
-        const labelWidth = doc.getTextWidth(label) + 1;
-        const valueLines = doc.splitTextToSize(value, contentWidth - labelWidth);
-        for (let i = 0; i < valueLines.length; i++) {
-          doc.text(valueLines[i], margin + labelWidth, y + i * 2.5);
-        }
-        y += Math.max(valueLines.length * 2.5, 3);
-      }
-
-      y += 1;
-
-      // ============ SEPARATOR ============
-      doc.setLineWidth(0.2);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 3;
-
-      // ============ ITEMS TABLE HEADER ============
-      doc.setFontSize(fontSize.small);
-      doc.setFont("helvetica", "bold");
-
-      const col = {
-        cant: margin,
-        desc: margin + 10,
-        pu: pageWidth - margin - 12,
-        total: pageWidth - margin,
-      };
-
-      doc.text("CANT.", col.cant, y);
-      doc.text("DESCRIPCIÓN", col.desc, y);
-      doc.text("P.U.", col.pu, y, { align: "right" });
-      // We don't add total per item to keep it clean like Odoo
-
-      y += 2;
-      doc.setLineWidth(0.1);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 2.5;
-
-      // ============ ITEMS ============
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(fontSize.small);
-
-      for (const item of items) {
-        const qtyStr = item.quantity % 1 === 0 ? String(item.quantity) : item.quantity.toFixed(2);
-        doc.text(qtyStr, col.cant, y);
-
-        const descWidth = col.pu - col.desc - 14;
-        const descLines = doc.splitTextToSize(item.description, descWidth > 0 ? descWidth : 30);
-        for (let i = 0; i < descLines.length; i++) {
-          doc.text(descLines[i], col.desc, y + i * 2.5);
-        }
-
-        doc.text(item.unit_price.toFixed(2), col.pu, y, { align: "right" });
-
-        y += Math.max(descLines.length * 2.5, 3) + 0.5;
-      }
-
-      // ============ SEPARATOR ============
-      y += 1;
-      doc.setLineWidth(0.2);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 3;
-
-      // ============ TOTALS ============
-      doc.setFontSize(fontSize.normal);
-
-      const subtotal = invoice.total_amount - (invoice.total_taxes || 0);
-      const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
-
-      const totalLines: [string, string][] = [
-        ["TOTAL CANT.", totalQty % 1 === 0 ? String(totalQty) : totalQty.toFixed(2)],
-        ["OP. GRAVADAS", `S/ ${subtotal.toFixed(2)}`],
-        ["IGV 18%", `S/ ${(invoice.total_taxes || 0).toFixed(2)}`],
-        ["IMPORTE TOTAL:", `S/ ${invoice.total_amount.toFixed(2)}`],
-      ];
-
-      for (const [label, value] of totalLines) {
-        const isTotal = label === "IMPORTE TOTAL:";
-        doc.setFont("helvetica", isTotal ? "bold" : "normal");
-        if (isTotal) doc.setFontSize(fontSize.subtitle);
-        doc.text(label, margin, y);
-        doc.text(value, pageWidth - margin, y, { align: "right" });
-        if (isTotal) doc.setFontSize(fontSize.normal);
-        y += 3;
-      }
-
-      // Amount in words
-      y += 0.5;
-      doc.setFont("helvetica", "bold");
-      doc.text("SON:", margin, y);
-      doc.setFont("helvetica", "normal");
-      const wordsText = numberToWords(invoice.total_amount);
-      const wordsLines = doc.splitTextToSize(wordsText, contentWidth - 8);
-      for (let i = 0; i < wordsLines.length; i++) {
-        doc.text(wordsLines[i], margin + 8, y + i * 2.5);
-      }
-      y += wordsLines.length * 2.5 + 1;
-
-      // Cashier
-      if (cashierName) {
-        doc.setFont("helvetica", "bold");
-        doc.text("CAJERO:", margin, y);
-        doc.setFont("helvetica", "normal");
-        doc.text(cashierName.toUpperCase(), margin + 14, y);
-        y += 4;
-      }
-
-      // ============ SEPARATOR ============
-      doc.setLineWidth(0.3);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 4;
-
-      // ============ FOOTER - RETURNS POLICY ============
-      doc.setFontSize(fontSize.subtitle);
-      doc.setFont("helvetica", "bold");
-      doc.text("CAMBIOS Y DEVOLUCIONES", pageWidth / 2, y, { align: "center" });
-      y += 3;
-
-      doc.setFontSize(fontSize.tiny);
-      doc.setFont("helvetica", "normal");
-      const policyText =
-        "Recuerda que puedes realizar cambios y devoluciones dentro de los 15 días posteriores a la compra, siempre y cuando el producto esté en su estado original y con el ticket de compra.";
-      const policyLines = doc.splitTextToSize(policyText, contentWidth);
-      for (const line of policyLines) {
-        doc.text(line, pageWidth / 2, y, { align: "center" });
-        y += 2.2;
-      }
-
-      y += 2;
-      doc.setFontSize(fontSize.normal);
-      doc.setFont("helvetica", "bold");
-      doc.text("Gracias por tu confianza.", pageWidth / 2, y, { align: "center" });
-      y += 4;
-
-      // ============ QR CODE ============
+      let qrCodeDataUrl: string | null = null;
       if (invoice.qr_data) {
         try {
-          const qrCodeDataUrl = await QRCode.toDataURL(invoice.qr_data, {
-            width: 200,
-            margin: 1,
-          });
-          const qrSize = 35;
-          const qrX = (pageWidth - qrSize) / 2;
-          doc.addImage(qrCodeDataUrl, "PNG", qrX, y, qrSize, qrSize);
-          y += qrSize + 2;
+          qrCodeDataUrl = await QRCode.toDataURL(invoice.qr_data, { width: 200, margin: 1 });
         } catch (qrErr) {
           console.error("Error generating QR:", qrErr);
         }
       }
+
+      // drawContent renders all content onto `doc` and returns the final y position
+      const drawContent = (doc: jsPDF): number => {
+        let y = 4;
+
+        // ============ LOGO ============
+        if (logoImg) {
+          const logoSize = 22;
+          const logoX = (pageWidth - logoSize) / 2;
+          doc.addImage(logoImg, "PNG", logoX, y, logoSize, logoSize);
+          y += logoSize + 5;
+        } else {
+          y += 2;
+        }
+
+        // ============ COMPANY NAME ============
+        doc.setFontSize(fontSize.title);
+        doc.setFont("helvetica", "bold");
+        const companyLines = doc.splitTextToSize(companyName.toUpperCase(), contentWidth);
+        for (const line of companyLines) {
+          doc.text(line, pageWidth / 2, y, { align: "center" });
+          y += 3.5;
+        }
+        y += 0.5;
+
+        // ============ COMPANY DETAILS ============
+        doc.setFontSize(fontSize.small);
+        doc.setFont("helvetica", "normal");
+
+        if (companyAddress) {
+          const addrLines = doc.splitTextToSize(companyAddress, contentWidth);
+          for (const line of addrLines) {
+            doc.text(line, pageWidth / 2, y, { align: "center" });
+            y += 2.5;
+          }
+        }
+        if (companyPhone) {
+          doc.text(`Teléfono: ${companyPhone}`, pageWidth / 2, y, { align: "center" });
+          y += 2.5;
+        }
+        if (companyEmail) {
+          doc.text(`E-mail: ${companyEmail}`, pageWidth / 2, y, { align: "center" });
+          y += 2.5;
+        }
+        if (companyRuc) {
+          doc.setFont("helvetica", "bold");
+          doc.text(`R.U.C.: ${companyRuc}`, pageWidth / 2, y, { align: "center" });
+          doc.setFont("helvetica", "normal");
+          y += 3;
+        }
+
+        // ============ SEPARATOR ============
+        y += 1;
+        doc.setLineWidth(0.3);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 3;
+
+        // ============ DOCUMENT TYPE TITLE ============
+        const docTypeName = invTypeRes.data?.name || "COMPROBANTE";
+        doc.setFontSize(fontSize.title);
+        doc.setFont("helvetica", "bold");
+        doc.text(docTypeName.toUpperCase(), pageWidth / 2, y, { align: "center" });
+        y += 4;
+
+        // ============ NÚMERO DE PEDIDO ============
+        const orderNumber = "PEDIDO: #" + branchRes.data?.orders?.id || "";
+        doc.setFontSize(fontSize.title);
+        doc.setFont("helvetica", "bold");
+        doc.text(orderNumber.toUpperCase(), pageWidth / 2, y, { align: "center" });
+        y += 4;
+
+        // ============ SERIE - NUMBER ============
+        const serieNum = [invoice.tax_serie, invoice.invoice_number].filter(Boolean).join(" - ");
+        if (serieNum) {
+          doc.setFontSize(fontSize.subtitle);
+          doc.setFont("helvetica", "bold");
+          doc.text(serieNum, pageWidth / 2, y, { align: "center" });
+          y += 4;
+        }
+
+        // ============ SEPARATOR ============
+        doc.setLineWidth(0.2);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 3;
+
+        // ============ INVOICE DETAILS ============
+        doc.setFontSize(fontSize.normal);
+        doc.setFont("helvetica", "normal");
+
+        const date = new Date(invoice.created_at);
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${date.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
+
+        const detailLines: [string, string][] = [
+          ["FECHA DE EMISIÓN:", dateStr],
+          ["CLIENTE:", invoice.client_name || "Clientes Varios"],
+          [`${docTypeRes.data?.name || "Doc"}:`, invoice.customer_document_number],
+        ];
+
+        for (const [label, value] of detailLines) {
+          doc.setFont("helvetica", "bold");
+          doc.text(label, margin, y);
+          doc.setFont("helvetica", "normal");
+          const labelWidth = doc.getTextWidth(label) + 1;
+          const valueLines = doc.splitTextToSize(value, contentWidth - labelWidth);
+          for (let i = 0; i < valueLines.length; i++) {
+            doc.text(valueLines[i], margin + labelWidth, y + i * 2.5);
+          }
+          y += Math.max(valueLines.length * 2.5, 3);
+        }
+
+        y += 1;
+
+        // ============ SEPARATOR ============
+        doc.setLineWidth(0.2);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 3;
+
+        // ============ ITEMS TABLE HEADER ============
+        doc.setFontSize(fontSize.small);
+        doc.setFont("helvetica", "bold");
+
+        const col = {
+          cant: margin,
+          desc: margin + 10,
+          pu: pageWidth - margin - 12,
+          total: pageWidth - margin,
+        };
+
+        doc.text("CANT.", col.cant, y);
+        doc.text("DESCRIPCIÓN", col.desc, y);
+        doc.text("P.U.", col.pu, y, { align: "right" });
+
+        y += 2;
+        doc.setLineWidth(0.1);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 2.5;
+
+        // ============ ITEMS ============
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(fontSize.small);
+
+        for (const item of items) {
+          const qtyStr = item.quantity % 1 === 0 ? String(item.quantity) : item.quantity.toFixed(2);
+          doc.text(qtyStr, col.cant, y);
+
+          const descWidth = col.pu - col.desc - 14;
+          const descLines = doc.splitTextToSize(item.description, descWidth > 0 ? descWidth : 30);
+          for (let i = 0; i < descLines.length; i++) {
+            doc.text(descLines[i], col.desc, y + i * 2.5);
+          }
+
+          doc.text(item.unit_price.toFixed(2), col.pu, y, { align: "right" });
+
+          y += Math.max(descLines.length * 2.5, 3) + 0.5;
+        }
+
+        // ============ IF HAVE SHIPPING ============
+        if (shippingMethodCode) {
+          const shippingLabel = shippingMethod?.data?.name || shippingMethodCode;
+          const descWidth = col.pu - col.desc - 14;
+          const shippingLines = doc.splitTextToSize(shippingLabel, descWidth > 0 ? descWidth : 30);
+          for (let i = 0; i < shippingLines.length; i++) {
+            doc.text(shippingLines[i], col.desc, y + i * 2.5);
+          }
+          doc.text(branchRes.data.orders.shipping_cost.toFixed(2), col.pu, y, { align: "right" });
+          y += Math.max(shippingLines.length * 2.5, 3) + 0.5;
+        }
+
+        // ============ IF HAVE DISCOUNTS ============
+        for (const discount of (discountOrders.data ?? [])) {
+          const descWidth = col.pu - col.desc - 14;
+          const descLines = doc.splitTextToSize(discount.name, descWidth > 0 ? descWidth : 30);
+          for (let i = 0; i < descLines.length; i++) {
+            doc.text(descLines[i], col.desc, y + i * 2.5);
+          }
+          doc.text("-" + discount.discount_amount.toFixed(2), col.pu, y, { align: "right" });
+          y += Math.max(descLines.length * 2.5, 3) + 0.5;
+        }
+
+        // ============ SEPARATOR ============
+        y += 1;
+        doc.setLineWidth(0.2);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 3;
+
+        // ============ TOTALS ============
+        doc.setFontSize(fontSize.normal);
+
+        const subtotal = invoice.total_amount - (invoice.total_taxes || 0);
+        const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
+
+        const totalLines: [string, string][] = [
+          ["TOTAL CANT.", totalQty % 1 === 0 ? String(totalQty) : totalQty.toFixed(2)],
+          ["OP. GRAVADAS", `S/ ${subtotal.toFixed(2)}`],
+          ["IGV 18%", `S/ ${(invoice.total_taxes || 0).toFixed(2)}`],
+          ["IMPORTE TOTAL:", `S/ ${invoice.total_amount.toFixed(2)}`],
+        ];
+
+        for (const [label, value] of totalLines) {
+          const isTotal = label === "IMPORTE TOTAL:";
+          doc.setFont("helvetica", isTotal ? "bold" : "normal");
+          if (isTotal) doc.setFontSize(fontSize.subtitle);
+          doc.text(label, margin, y);
+          doc.text(value, pageWidth - margin, y, { align: "right" });
+          if (isTotal) doc.setFontSize(fontSize.normal);
+          y += 3;
+        }
+
+        // Amount in words
+        y += 0.5;
+        doc.setFont("helvetica", "bold");
+        doc.text("SON:", margin, y);
+        doc.setFont("helvetica", "normal");
+        const wordsText = numberToWords(invoice.total_amount);
+        const wordsLines = doc.splitTextToSize(wordsText, contentWidth - 8);
+        for (let i = 0; i < wordsLines.length; i++) {
+          doc.text(wordsLines[i], margin + 8, y + i * 2.5);
+        }
+        y += wordsLines.length * 2.5 + 1;
+
+        // Cashier
+        if (cashierName) {
+          doc.setFont("helvetica", "bold");
+          doc.text("CAJERO:", margin, y);
+          doc.setFont("helvetica", "normal");
+          doc.text(cashierName.toUpperCase(), margin + 14, y);
+          y += 4;
+        }
+
+        // ============ SEPARATOR ============
+        doc.setLineWidth(0.3);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 4;
+
+        // ============ FOOTER - RETURNS POLICY ============
+        doc.setFontSize(fontSize.subtitle);
+        doc.setFont("helvetica", "bold");
+        doc.text("CAMBIOS Y DEVOLUCIONES", pageWidth / 2, y, { align: "center" });
+        y += 3;
+
+        doc.setFontSize(fontSize.tiny);
+        doc.setFont("helvetica", "normal");
+        const policyText =
+          "Recuerda que puedes realizar cambios y devoluciones dentro de los 15 días posteriores a la compra, siempre y cuando el producto esté en su estado original y con el ticket de compra.";
+        const policyLines = doc.splitTextToSize(policyText, contentWidth);
+        for (const line of policyLines) {
+          doc.text(line, pageWidth / 2, y, { align: "center" });
+          y += 2.2;
+        }
+
+        y += 2;
+        doc.setFontSize(fontSize.normal);
+        doc.setFont("helvetica", "bold");
+        doc.text("Gracias por tu confianza.", pageWidth / 2, y, { align: "center" });
+        y += 4;
+
+        // ============ QR CODE ============
+        if (qrCodeDataUrl) {
+          const qrSize = 35;
+          const qrX = (pageWidth - qrSize) / 2;
+          doc.addImage(qrCodeDataUrl, "PNG", qrX, y, qrSize, qrSize);
+          y += qrSize + 2;
+        }
+
+        return y;
+      };
+
+      // First pass: measure exact content height using a throwaway doc
+      const measureDoc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pageWidth, 9999] });
+      const finalY = drawContent(measureDoc);
+
+      // Second pass: create doc with exact height and render for real
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pageWidth, finalY + 4] });
+      drawContent(doc);
 
       // Open PDF inline
       const pdfBlob = doc.output("blob");

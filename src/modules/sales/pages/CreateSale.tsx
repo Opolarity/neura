@@ -7,23 +7,26 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue } from
-"@/components/ui/select";
+  SelectValue
+} from
+  "@/components/ui/select";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-  CardTitle } from
-"@/components/ui/card";
+  CardTitle
+} from
+  "@/components/ui/card";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow } from
-"@/components/ui/table";
+  TableRow
+} from
+  "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Command,
@@ -31,20 +34,23 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList } from
-"@/components/ui/command";
+  CommandList
+} from
+  "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger } from
-"@/components/ui/popover";
+  PopoverTrigger
+} from
+  "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle } from
-"@/components/ui/dialog";
+  DialogTitle
+} from
+  "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -67,8 +73,9 @@ import {
   X,
   Image as ImageIcon,
   Warehouse,
-  Lock } from
-"lucide-react";
+  Lock
+} from
+  "lucide-react";
 import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
@@ -191,7 +198,7 @@ const CreateSale = () => {
   const [voucherModalOpen, setVoucherModalOpen] = useState(false);
   const [selectedVoucherPreview, setSelectedVoucherPreview] = useState<
     string | null>(
-    null);
+      null);
   const [highlightedRowIndex, setHighlightedRowIndex] = useState<number | null>(null);
   const noteFileInputRef = useRef<HTMLInputElement>(null);
   const voucherFileInputRef = useRef<HTMLInputElement>(null);
@@ -265,7 +272,7 @@ const CreateSale = () => {
             navigate("/sales");
           }
         }}>
-        
+
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -279,39 +286,39 @@ const CreateSale = () => {
 
           <div className="space-y-4 py-4">
             {priceListsLoading || loadingWarehouse ?
-            <div className="flex justify-center py-8">
+              <div className="flex justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div> :
 
-            <>
+              <>
                 {/* Price List Select */}
                 <div className="space-y-1">
                   <Label>Lista de precios</Label>
                   {priceLists.length === 0 ?
-                <p className="text-sm text-muted-foreground py-2">
+                    <p className="text-sm text-muted-foreground py-2">
                       No hay listas de precios disponibles
                     </p> :
 
-                <Select
-                  value={tempPriceListId}
-                  onValueChange={setTempPriceListId}>
-                  
+                    <Select
+                      value={tempPriceListId}
+                      onValueChange={setTempPriceListId}>
+
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Seleccione una lista de precios" />
                       </SelectTrigger>
                       <SelectContent>
                         {priceLists.map((priceList) =>
-                    <SelectItem
-                      key={priceList.id}
-                      value={priceList.id.toString()}>
-                      
+                          <SelectItem
+                            key={priceList.id}
+                            value={priceList.id.toString()}>
+
                             {priceList.name}{" "}
                             {priceList.code && `(${priceList.code})`}
                           </SelectItem>
-                    )}
+                        )}
                       </SelectContent>
                     </Select>
-                }
+                  }
                 </div>
 
                 {/* Warehouse Select (Locked) */}
@@ -325,10 +332,10 @@ const CreateSale = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {userWarehouseId &&
-                    <SelectItem value={userWarehouseId.toString()}>
+                        <SelectItem value={userWarehouseId.toString()}>
                           {userWarehouseName}
                         </SelectItem>
-                    }
+                      }
                     </SelectContent>
                   </Select>
                 </div>
@@ -337,26 +344,26 @@ const CreateSale = () => {
                 <div className="space-y-1">
                   <Label>Canal de Venta</Label>
                   {availableSaleTypes.length > 0 ?
-                <Select
-                  value={tempSaleTypeId}
-                  onValueChange={setTempSaleTypeId}>
+                    <Select
+                      value={tempSaleTypeId}
+                      onValueChange={setTempSaleTypeId}>
 
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Seleccione un canal de venta" />
                       </SelectTrigger>
                       <SelectContent>
                         {availableSaleTypes.map((st) =>
-                    <SelectItem key={st.id} value={st.id.toString()}>
+                          <SelectItem key={st.id} value={st.id.toString()}>
                             {st.name}
                           </SelectItem>
-                    )}
+                        )}
                       </SelectContent>
                     </Select> :
 
-                <p className="text-sm text-muted-foreground py-2">
+                    <p className="text-sm text-muted-foreground py-2">
                       No hay canales de venta disponibles
                     </p>
-                }
+                  }
                 </div>
               </>
             }
@@ -372,7 +379,7 @@ const CreateSale = () => {
                 handleSelectPriceList(tempPriceListId, tempSaleTypeId);
               }}
               disabled={!tempPriceListId || !userWarehouseId || !tempSaleTypeId}>
-              
+
               Aceptar
             </Button>
           </div>
@@ -385,7 +392,7 @@ const CreateSale = () => {
             variant="ghost"
             size="icon"
             onClick={() => navigate("/sales")}>
-            
+
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-2xl font-semibold text-foreground">
@@ -410,7 +417,7 @@ const CreateSale = () => {
           onSubmit={handleSubmit}
           className="flex-1 space-y-6"
           style={{ width: "70%" }}>
-          
+
 
 
           {/* Products Section - First */}
@@ -430,13 +437,13 @@ const CreateSale = () => {
                 <Select
                   value={selectedStockTypeId}
                   onValueChange={handleStockTypeChange}>
-                  
+
                   <SelectTrigger className="w-auto min-w-[160px]">
                     <SelectValue placeholder="Tipo inventario" />
                   </SelectTrigger>
                   <SelectContent>
                     {salesData?.stockTypes?.map((st) =>
-                    <SelectItem key={st.id} value={st.id.toString()}>
+                      <SelectItem key={st.id} value={st.id.toString()}>
                         {st.name}
                       </SelectItem>
                     )}
@@ -451,11 +458,11 @@ const CreateSale = () => {
                         variant="outline"
                         role="combobox"
                         className="w-full justify-start text-muted-foreground font-normal">
-                        
+
                         <Search className="w-4 h-4 mr-2" />
                         {selectedVariation ?
-                        `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}` :
-                        "Buscar por nombre o SKU..."}
+                          `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}` :
+                          "Buscar por nombre o SKU..."}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[400px] p-0 bg-popover">
@@ -464,56 +471,56 @@ const CreateSale = () => {
                           placeholder="Buscar producto o SKU..."
                           value={searchQuery}
                           onValueChange={setSearchQuery} />
-                        
+
                         <CommandList>
                           {productsLoading ?
-                          <div className="flex justify-center py-6">
+                            <div className="flex justify-center py-6">
                               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                             </div> :
 
-                          <>
+                            <>
                               <CommandEmpty>
                                 No se encontraron productos.
                               </CommandEmpty>
                               <CommandGroup>
                                 {filteredVariations.map((variation) => {
-                                const termsNames = variation.terms.
-                                map((t) => t.name).
-                                join(" / ");
-                                const displayTerms = termsNames ?
-                                `${termsNames} (${variation.sku})` :
-                                variation.sku;
-                                return (
-                                  <CommandItem
-                                    key={variation.id}
-                                    value={`${variation.productTitle} ${variation.sku} ${termsNames}`}
-                                    onSelect={() => {
-                                      setSelectedVariation(variation);
-                                      setOpen(false);
-                                    }}
-                                    className="flex items-center gap-3 py-2">
-                                    
+                                  const termsNames = variation.terms.
+                                    map((t) => t.name).
+                                    join(" / ");
+                                  const displayTerms = termsNames ?
+                                    `${termsNames} (${variation.sku})` :
+                                    variation.sku;
+                                  return (
+                                    <CommandItem
+                                      key={variation.id}
+                                      value={`${variation.productTitle} ${variation.sku} ${termsNames}`}
+                                      onSelect={() => {
+                                        setSelectedVariation(variation);
+                                        setOpen(false);
+                                      }}
+                                      className="flex items-center gap-3 py-2">
+
                                       <Check
-                                      className={cn(
-                                        "h-4 w-4 shrink-0",
-                                        selectedVariation?.id === variation.id ?
-                                        "opacity-100" :
-                                        "opacity-0"
-                                      )} />
-                                    
+                                        className={cn(
+                                          "h-4 w-4 shrink-0",
+                                          selectedVariation?.id === variation.id ?
+                                            "opacity-100" :
+                                            "opacity-0"
+                                        )} />
+
                                       {/* Product Image */}
                                       <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
                                         {variation.imageUrl ?
-                                      <img
-                                        src={variation.imageUrl}
-                                        alt={variation.productTitle}
-                                        className="h-full w-full object-cover" /> :
+                                          <img
+                                            src={variation.imageUrl}
+                                            alt={variation.productTitle}
+                                            className="h-full w-full object-cover" /> :
 
 
-                                      <div className="flex h-full w-full items-center justify-center">
+                                          <div className="flex h-full w-full items-center justify-center">
                                             <ImageIcon className="h-4 w-4 text-muted-foreground" />
                                           </div>
-                                      }
+                                        }
                                       </div>
                                       {/* Product Info */}
                                       <div className="flex flex-1 flex-col min-w-0">
@@ -526,59 +533,59 @@ const CreateSale = () => {
                                       </div>
                                       {/* Stock (filtered by selected stock type) */}
                                       <span
-                                      className={cn(
-                                        "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
-                                        variation.stock > 0 ?
-                                        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
-                                        "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                      )}>
-                                      
+                                        className={cn(
+                                          "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
+                                          variation.stock > 0 ?
+                                            "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                                            "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                        )}>
+
                                         {variation.stock}
                                       </span>
                                     </CommandItem>);
 
-                              })}
+                                })}
                               </CommandGroup>
                             </>
                           }
                         </CommandList>
                         {/* Pagination controls */}
                         {totalProductPages > 1 &&
-                        <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
+                          <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
                             <span className="text-xs text-muted-foreground">
                               {(productPage - 1) * productPagination.size + 1}-
                               {Math.min(
-                              productPage * productPagination.size,
-                              productPagination.total
-                            )}{" "}
+                                productPage * productPagination.size,
+                                productPagination.total
+                              )}{" "}
                               de {productPagination.total}
                             </span>
                             <div className="flex gap-1">
                               <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-7 px-2 text-xs"
-                              onClick={() =>
-                              handleProductPageChange(productPage - 1)
-                              }
-                              disabled={productPage <= 1 || productsLoading}>
-                              
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() =>
+                                  handleProductPageChange(productPage - 1)
+                                }
+                                disabled={productPage <= 1 || productsLoading}>
+
                                 Anterior
                               </Button>
                               <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-7 px-2 text-xs"
-                              onClick={() =>
-                              handleProductPageChange(productPage + 1)
-                              }
-                              disabled={
-                              productPage >= totalProductPages ||
-                              productsLoading
-                              }>
-                              
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() =>
+                                  handleProductPageChange(productPage + 1)
+                                }
+                                disabled={
+                                  productPage >= totalProductPages ||
+                                  productsLoading
+                                }>
+
                                 Siguiente
                               </Button>
                             </div>
@@ -598,13 +605,13 @@ const CreateSale = () => {
                     }
                   }}
                   disabled={!selectedVariation || !selectedStockTypeId}>
-                  
+
                   <Plus className="w-4 h-4 mr-2" /> Agregar
                 </Button>
               </div>
 
               {products.length > 0 &&
-              <Table>
+                <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Producto</TableHead>
@@ -625,12 +632,12 @@ const CreateSale = () => {
                   </TableHeader>
                   <TableBody>
                     {products.map((product, index) =>
-                  <TableRow
-                    key={index}
-                    className={cn(
-                      highlightedRowIndex === index && "animate-highlight-row"
-                    )}>
-                    
+                      <TableRow
+                        key={index}
+                        className={cn(
+                          highlightedRowIndex === index && "animate-highlight-row"
+                        )}>
+
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">
@@ -645,32 +652,32 @@ const CreateSale = () => {
                         <TableCell>
                           <div className="flex flex-col items-center">
                             <Input
-                          type="number"
-                          value={
-                          product.quantity === 0 ? "" : product.quantity
-                          }
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === "") {
-                              updateProduct(index, "quantity", 0);
-                            } else {
-                              updateProduct(
-                                index,
-                                "quantity",
-                                parseInt(val) || 0
-                              );
-                            }
-                          }}
-                          onBlur={() => {
-                            if (product.quantity < 1) {
-                              updateProduct(index, "quantity", 1);
-                            }
-                          }}
-                          min="1"
-                          max={product.maxStock}
-                          className="w-16 text-center"
-                          disabled={isPhySituation} />
-                        
+                              type="number"
+                              value={
+                                product.quantity === 0 ? "" : product.quantity
+                              }
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === "") {
+                                  updateProduct(index, "quantity", 0);
+                                } else {
+                                  updateProduct(
+                                    index,
+                                    "quantity",
+                                    parseInt(val) || 0
+                                  );
+                                }
+                              }}
+                              onBlur={() => {
+                                if (product.quantity < 1) {
+                                  updateProduct(index, "quantity", 1);
+                                }
+                              }}
+                              min="1"
+                              max={product.maxStock}
+                              className="w-16 text-center"
+                              disabled={isPhySituation} />
+
                             <span className="text-xs text-muted-foreground mt-1">
                               Stock: {product.maxStock}
                             </span>
@@ -679,33 +686,38 @@ const CreateSale = () => {
                         <TableCell>
                           <div className="relative flex items-center">
                             <Input
-                          type="number"
-                          value={product.price}
-                          readOnly
-                          min="0"
-                          step="0.01"
-                          className="w-24 bg-muted text-muted-foreground cursor-not-allowed pr-7"
-                          disabled />
-                            <Lock className="absolute right-2 w-3 h-3 text-muted-foreground pointer-events-none" />
+                              type="number"
+                              value={product.price}
+                              onChange={(e) =>
+                                updateProduct(index, "price", parseFloat(e.target.value) || 0)
+                              }
+                              min="0"
+                              step="0.01"
+                              className={cn("w-24 text-center", product.fromOrder && "bg-muted text-muted-foreground cursor-not-allowed pr-7")}
+                              disabled={isPhySituation || !!product.fromOrder} />
+                            {product.fromOrder && (
+                              <Lock className="absolute right-2 w-3 h-3 text-muted-foreground pointer-events-none" />
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="relative flex items-center">
                             <Input
-                          type="number"
-                          value={product.discountAmount}
-                          onChange={(e) =>
-                          updateProduct(
-                            index,
-                            "discountAmount",
-                            parseFloat(e.target.value) || 0
-                          )
-                          }
-                          min="0"
-                          step="0.01"
-                          className={cn("w-20 text-center", product.fromOrder && "bg-muted text-muted-foreground cursor-not-allowed pr-7")}
-                          disabled={isPhySituation || !!product.fromOrder} />
-                            {product.fromOrder && (
+                              type="number"
+                              value={product.discountAmount}
+                              readOnly={isComSituation || isPhySituation}
+                              onChange={(e) =>
+                                updateProduct(
+                                  index,
+                                  "discountAmount",
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              min="0"
+                              step="0.01"
+                              className={cn("w-20 text-center", (isComSituation || isPhySituation) && "bg-muted text-muted-foreground cursor-not-allowed pr-7")}
+                              disabled={isComSituation || isPhySituation} />
+                            {(isComSituation || isPhySituation) && (
                               <Lock className="absolute right-2 w-3 h-3 text-muted-foreground pointer-events-none" />
                             )}
                           </div>
@@ -715,18 +727,18 @@ const CreateSale = () => {
                         </TableCell>
                         <TableCell>
                           <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeProduct(index)}
-                        className="text-destructive hover:text-destructive"
-                        disabled={isPhySituation}>
-                        
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeProduct(index)}
+                            className="text-destructive hover:text-destructive"
+                            disabled={isPhySituation}>
+
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
-                  )}
+                    )}
                   </TableBody>
                 </Table>
               }
@@ -751,13 +763,13 @@ const CreateSale = () => {
                     value={formData.saleType}
                     onValueChange={(v) => handleInputChange("saleType", v)}
                     disabled={!orderId}>
-                    
+
                     <SelectTrigger className={!orderId ? "bg-muted cursor-not-allowed" : ""}>
                       <SelectValue placeholder="Seleccione" />
                     </SelectTrigger>
                     <SelectContent>
                       {availableSaleTypes.map((st) =>
-                      <SelectItem key={st.id} value={st.id.toString()}>
+                        <SelectItem key={st.id} value={st.id.toString()}>
                           {st.name}
                         </SelectItem>
                       )}
@@ -774,13 +786,13 @@ const CreateSale = () => {
                         if (formData.documentNumber) handleSearchClient(v);
                       }}
                       disabled={isAnonymousPurchase}>
-                      
+
                       <SelectTrigger className={isAnonymousPurchase ? "opacity-50" : ""}>
                         <SelectValue placeholder="Seleccione" />
                       </SelectTrigger>
                       <SelectContent>
                         {salesData?.documentTypes.map((dt) =>
-                        <SelectItem key={dt.id} value={dt.id.toString()}>
+                          <SelectItem key={dt.id} value={dt.id.toString()}>
                             {dt.name}
                           </SelectItem>
                         )}
@@ -793,14 +805,14 @@ const CreateSale = () => {
                       <Input
                         value={formData.documentNumber}
                         onChange={(e) =>
-                        handleInputChange("documentNumber", e.target.value)
+                          handleInputChange("documentNumber", e.target.value)
                         }
                         onBlur={() => handleSearchClient()}
                         disabled={isAnonymousPurchase}
                         className={isAnonymousPurchase ? "opacity-50" : ""} />
-                      
+
                       {searchingClient &&
-                      <Loader2 className="w-5 h-5 animate-spin self-center" />
+                        <Loader2 className="w-5 h-5 animate-spin self-center" />
                       }
                     </div>
                   </div>
@@ -815,7 +827,7 @@ const CreateSale = () => {
                       value={selectedPriceListName || "Sin seleccionar"}
                       disabled
                       className="bg-muted" />
-                    
+
                   </div>
                   <div>
                     <Label>Almacén</Label>
@@ -823,7 +835,7 @@ const CreateSale = () => {
                       value={userWarehouseName || "Sin asignar"}
                       disabled
                       className="bg-muted cursor-not-allowed" />
-                    
+
                   </div>
                 </div>
                 <div>
@@ -831,11 +843,11 @@ const CreateSale = () => {
                   <Input
                     value={formData.customerName}
                     onChange={(e) =>
-                    handleInputChange("customerName", e.target.value)
+                      handleInputChange("customerName", e.target.value)
                     }
                     disabled={isAnonymousPurchase || clientFound === true}
                     className={isAnonymousPurchase || clientFound === true ? "bg-muted" : ""} />
-                  
+
                 </div>
               </div>
 
@@ -849,7 +861,7 @@ const CreateSale = () => {
                       disabled
                       placeholder="Juan Pérez"
                       className="bg-muted" />
-                    
+
                   </div>
                   <div>
                     <Label>Fecha</Label>
@@ -857,36 +869,36 @@ const CreateSale = () => {
                       type="date"
                       value={formData.saleDate}
                       onChange={(e) =>
-                      handleInputChange("saleDate", e.target.value)
+                        handleInputChange("saleDate", e.target.value)
                       } />
-                    
+
                   </div>
                 </div>
 
                 {/* Lado derecho: Apellidos (solo para persona natural) */}
                 {!isPersonaJuridica &&
-                <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label>Apellido Paterno</Label>
                       <Input
-                      value={formData.customerLastname}
-                      onChange={(e) =>
-                      handleInputChange("customerLastname", e.target.value)
-                      }
-                      disabled={isAnonymousPurchase || clientFound === true}
-                      className={isAnonymousPurchase || clientFound === true ? "bg-muted" : ""} />
-                    
+                        value={formData.customerLastname}
+                        onChange={(e) =>
+                          handleInputChange("customerLastname", e.target.value)
+                        }
+                        disabled={isAnonymousPurchase || clientFound === true}
+                        className={isAnonymousPurchase || clientFound === true ? "bg-muted" : ""} />
+
                     </div>
                     <div>
                       <Label>Apellido Materno</Label>
                       <Input
-                      value={formData.customerLastname2}
-                      onChange={(e) =>
-                      handleInputChange("customerLastname2", e.target.value)
-                      }
-                      disabled={isAnonymousPurchase || clientFound === true}
-                      className={isAnonymousPurchase || clientFound === true ? "bg-muted" : ""} />
-                    
+                        value={formData.customerLastname2}
+                        onChange={(e) =>
+                          handleInputChange("customerLastname2", e.target.value)
+                        }
+                        disabled={isAnonymousPurchase || clientFound === true}
+                        className={isAnonymousPurchase || clientFound === true ? "bg-muted" : ""} />
+
                     </div>
                   </div>
                 }
@@ -920,13 +932,13 @@ const CreateSale = () => {
                     id="withShipping"
                     checked={formData.withShipping}
                     onCheckedChange={(checked) =>
-                    handleInputChange("withShipping", checked as boolean)
+                      handleInputChange("withShipping", checked as boolean)
                     } />
-                  
+
                   <Label
                     htmlFor="withShipping"
                     className="cursor-pointer font-medium">
-                    
+
                     Requiere Envío
                   </Label>
                 </div>
@@ -935,13 +947,13 @@ const CreateSale = () => {
                     id="anonymousPurchase"
                     checked={isAnonymousPurchase}
                     onCheckedChange={(checked) =>
-                    handleAnonymousToggle(checked as boolean)
+                      handleAnonymousToggle(checked as boolean)
                     } />
-                  
+
                   <Label
                     htmlFor="anonymousPurchase"
                     className="cursor-pointer font-medium">
-                    
+
                     Compra anónima
                   </Label>
                 </div>
@@ -951,7 +963,7 @@ const CreateSale = () => {
 
           {/* Shipping Address - Conditional */}
           {formData.withShipping &&
-          <Card>
+            <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <Truck className="w-5 h-5 text-primary" />
@@ -963,27 +975,27 @@ const CreateSale = () => {
                   <div>
                     <Label>Método de Envío</Label>
                     {availableShippingCosts.length > 0 ?
-                    <Select
-                      value={formData.shippingMethod}
-                      onValueChange={(v) =>
-                      handleInputChange("shippingMethod", v)
-                      }>
+                      <Select
+                        value={formData.shippingMethod}
+                        onValueChange={(v) =>
+                          handleInputChange("shippingMethod", v)
+                        }>
 
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccione método de envío" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableShippingCosts.map((sc) =>
-                        <SelectItem key={sc.id} value={sc.id.toString()}>
-                                {sc.name}
-                              </SelectItem>
-                        )}
-                          </SelectContent>
-                        </Select> :
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione método de envío" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableShippingCosts.map((sc) =>
+                            <SelectItem key={sc.id} value={sc.id.toString()}>
+                              {sc.name}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select> :
 
-                    <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
-                          Elige ubicación para ver envíos.
-                        </div>
+                      <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
+                        Elige ubicación para ver envíos.
+                      </div>
                     }
                   </div>
                   <div>
@@ -1004,37 +1016,37 @@ const CreateSale = () => {
                   <div>
                     <Label>País</Label>
                     <Select
-                    value={formData.countryId}
-                    onValueChange={(v) => handleInputChange("countryId", v)}>
-                    
+                      value={formData.countryId}
+                      onValueChange={(v) => handleInputChange("countryId", v)}>
+
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione" />
                       </SelectTrigger>
                       <SelectContent>
                         {salesData?.countries.map((c) =>
-                      <SelectItem key={c.id} value={c.id.toString()}>
+                          <SelectItem key={c.id} value={c.id.toString()}>
                             {c.name}
                           </SelectItem>
-                      )}
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>Departamento</Label>
                     <Select
-                    value={formData.stateId}
-                    onValueChange={(v) => handleInputChange("stateId", v)}
-                    disabled={!formData.countryId}>
-                    
+                      value={formData.stateId}
+                      onValueChange={(v) => handleInputChange("stateId", v)}
+                      disabled={!formData.countryId}>
+
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione" />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredStates.map((s) =>
-                      <SelectItem key={s.id} value={s.id.toString()}>
+                          <SelectItem key={s.id} value={s.id.toString()}>
                             {s.name}
                           </SelectItem>
-                      )}
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1045,40 +1057,40 @@ const CreateSale = () => {
                   <div>
                     <Label>Provincia</Label>
                     <Select
-                    value={formData.cityId}
-                    onValueChange={(v) => handleInputChange("cityId", v)}
-                    disabled={!formData.stateId}>
-                    
+                      value={formData.cityId}
+                      onValueChange={(v) => handleInputChange("cityId", v)}
+                      disabled={!formData.stateId}>
+
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione" />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredCities.map((c) =>
-                      <SelectItem key={c.id} value={c.id.toString()}>
+                          <SelectItem key={c.id} value={c.id.toString()}>
                             {c.name}
                           </SelectItem>
-                      )}
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>Distrito</Label>
                     <Select
-                    value={formData.neighborhoodId}
-                    onValueChange={(v) =>
-                    handleInputChange("neighborhoodId", v)
-                    }
-                    disabled={!formData.cityId}>
-                    
+                      value={formData.neighborhoodId}
+                      onValueChange={(v) =>
+                        handleInputChange("neighborhoodId", v)
+                      }
+                      disabled={!formData.cityId}>
+
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione" />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredNeighborhoods.map((n) =>
-                      <SelectItem key={n.id} value={n.id.toString()}>
+                          <SelectItem key={n.id} value={n.id.toString()}>
                             {n.name}
                           </SelectItem>
-                      )}
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1089,21 +1101,21 @@ const CreateSale = () => {
                   <div>
                     <Label>Dirección</Label>
                     <Input
-                    value={formData.address}
-                    onChange={(e) =>
-                    handleInputChange("address", e.target.value)
-                    }
-                    placeholder="Calle, número..." />
+                      value={formData.address}
+                      onChange={(e) =>
+                        handleInputChange("address", e.target.value)
+                      }
+                      placeholder="Calle, número..." />
 
                   </div>
                   <div>
                     <Label>Referencia <span className="text-muted-foreground text-xs">(opcional)</span></Label>
                     <Input
-                    value={formData.addressReference}
-                    onChange={(e) =>
-                    handleInputChange("addressReference", e.target.value)
-                    }
-                    placeholder="Cerca de, frente a..." />
+                      value={formData.addressReference}
+                      onChange={(e) =>
+                        handleInputChange("addressReference", e.target.value)
+                      }
+                      placeholder="Cerca de, frente a..." />
 
                   </div>
                 </div>
@@ -1113,20 +1125,20 @@ const CreateSale = () => {
                   <div>
                     <Label>Persona que Recibe</Label>
                     <Input
-                    value={formData.receptionPerson}
-                    onChange={(e) =>
-                    handleInputChange("receptionPerson", e.target.value)
-                    } />
-                  
+                      value={formData.receptionPerson}
+                      onChange={(e) =>
+                        handleInputChange("receptionPerson", e.target.value)
+                      } />
+
                   </div>
                   <div>
                     <Label>Teléfono de Contacto</Label>
                     <Input
-                    value={formData.receptionPhone}
-                    onChange={(e) =>
-                    handleInputChange("receptionPhone", e.target.value)
-                    } />
-                  
+                      value={formData.receptionPhone}
+                      onChange={(e) =>
+                        handleInputChange("receptionPhone", e.target.value)
+                      } />
+
                   </div>
                 </div>
               </CardContent>
@@ -1138,7 +1150,7 @@ const CreateSale = () => {
         <aside
           className="flex-shrink-0 sticky top-6 space-y-4"
           style={{ width: "30%" }}>
-          
+
           {/* Order Status */}
           <Card>
             <CardHeader className="pb-2">
@@ -1151,7 +1163,7 @@ const CreateSale = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {filteredSituations.map((s) =>
-                  <SelectItem key={s.id} value={s.id.toString()}>
+                    <SelectItem key={s.id} value={s.id.toString()}>
                       {s.name}
                     </SelectItem>
                   )}
@@ -1160,17 +1172,17 @@ const CreateSale = () => {
             </CardContent>
             <CardFooter>
               {createdOrderId &&
-              <div className="flex gap-3">
+                <div className="flex gap-3">
                   <em
-                  className="italic text-sm underline cursor-pointer"
-                  onClick={() => setHistoryModalOpen(true)}>
-                  
+                    className="italic text-sm underline cursor-pointer"
+                    onClick={() => setHistoryModalOpen(true)}>
+
                     historial
                   </em>
                   <em
-                  className="italic text-sm underline cursor-pointer"
-                  onClick={() => setInvoicesModalOpen(true)}>
-                  
+                    className="italic text-sm underline cursor-pointer"
+                    onClick={() => setInvoicesModalOpen(true)}>
+
                     comprobantes
                   </em>
                   <button
@@ -1361,7 +1373,7 @@ const CreateSale = () => {
                   <span className="text-primary">{formatCurrency(total)}</span>
                 </div>
                 {changeAmount > 0 &&
-                <div className="flex justify-between font-medium text-green-600 mt-2">
+                  <div className="flex justify-between font-medium text-green-600 mt-2">
                     <span>Vuelto</span>
                     <span>{formatCurrency(changeAmount)}</span>
                   </div>
@@ -1372,21 +1384,21 @@ const CreateSale = () => {
 
               {/* Lista de pagos agregados */}
               {payments.filter((p) => p.paymentMethodId).length > 0 &&
-              <div className="space-y-2">
+                <div className="space-y-2">
                   <Label className="text-sm font-medium">
                     Pagos Registrados
                   </Label>
                   {payments.
-                filter((p) => p.paymentMethodId).
-                map((p) => {
-                  const method = allPaymentMethods.find(
-                    (pm) => pm.id.toString() === p.paymentMethodId
-                  );
-                  return (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
-                      
+                    filter((p) => p.paymentMethodId).
+                    map((p) => {
+                      const method = allPaymentMethods.find(
+                        (pm) => pm.id.toString() === p.paymentMethodId
+                      );
+                      return (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+
                           <div className="flex items-center gap-2">
                             <CreditCard className="w-4 h-4 text-muted-foreground" />
                             <span className="text-sm">
@@ -1396,36 +1408,36 @@ const CreateSale = () => {
                               {formatCurrency(parseFloat(p.amount) || 0)}
                             </span>
                             {p.voucherPreview &&
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => {
-                            setSelectedVoucherPreview(
-                              p.voucherPreview || null
-                            );
-                            setVoucherModalOpen(true);
-                          }}
-                          title="Ver comprobante">
-                          
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  setSelectedVoucherPreview(
+                                    p.voucherPreview || null
+                                  );
+                                  setVoucherModalOpen(true);
+                                }}
+                                title="Ver comprobante">
+
                                 <Paperclip className="w-3 h-3 text-primary" />
                               </Button>
-                        }
+                            }
                           </div>
                           {!isComSituation &&
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => removePayment(p.id)}>
-                        
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => removePayment(p.id)}>
+
                               <Trash2 className="w-3 h-3 text-destructive" />
                             </Button>
-                      }
+                          }
                         </div>);
 
-                })}
+                    })}
                 </div>
               }
 
@@ -1437,15 +1449,15 @@ const CreateSale = () => {
                     <Select
                       value={currentPayment.paymentMethodId}
                       onValueChange={(v) =>
-                      handlePaymentChange("paymentMethodId", v)
+                        handlePaymentChange("paymentMethodId", v)
                       }>
-                      
+
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione" />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredPaymentMethods.map((pm) =>
-                        <SelectItem key={pm.id} value={pm.id.toString()}>
+                          <SelectItem key={pm.id} value={pm.id.toString()}>
                             {pm.name}
                           </SelectItem>
                         )}
@@ -1466,27 +1478,27 @@ const CreateSale = () => {
                         }
                       }}
                       placeholder={Math.max(0, total - totalPaid).toFixed(2)} />
-                    
+
                   </div>
                 </div>
 
                 {/* Business Account Select - shown when payment method has business_account_id = 0 */}
                 {needsBusinessAccountSelect &&
-                <div>
+                  <div>
                     <Label>Cuenta de destino</Label>
                     <Select
-                    value={currentPayment.businessAccountId || ""}
-                    onValueChange={(v) => handlePaymentChange("businessAccountId" as any, v)}>
-                    
+                      value={currentPayment.businessAccountId || ""}
+                      onValueChange={(v) => handlePaymentChange("businessAccountId" as any, v)}>
+
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione cuenta" />
                       </SelectTrigger>
                       <SelectContent>
                         {businessAccounts?.map((ba) =>
-                      <SelectItem key={ba.id} value={ba.id.toString()}>
+                          <SelectItem key={ba.id} value={ba.id.toString()}>
                             {ba.name}
                           </SelectItem>
-                      )}
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1494,23 +1506,23 @@ const CreateSale = () => {
 
                 {/* Voucher preview */}
                 {currentPayment.voucherPreview &&
-                <div className="relative group">
+                  <div className="relative group">
                     <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
                       <img
-                      src={currentPayment.voucherPreview}
-                      alt="Comprobante"
-                      className="h-12 w-12 object-cover rounded" />
-                    
+                        src={currentPayment.voucherPreview}
+                        alt="Comprobante"
+                        className="h-12 w-12 object-cover rounded" />
+
                       <span className="text-xs text-muted-foreground flex-1 truncate">
                         {currentPayment.voucherFile?.name}
                       </span>
                       <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={removeVoucher}>
-                      
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={removeVoucher}>
+
                         <X className="w-3 h-3 text-destructive" />
                       </Button>
                     </div>
@@ -1530,16 +1542,16 @@ const CreateSale = () => {
                       }
                       e.target.value = "";
                     }} />
-                  
+
                   <Button
                     type="button"
                     variant={
-                    currentPayment.voucherPreview ? "default" : "outline"
+                      currentPayment.voucherPreview ? "default" : "outline"
                     }
                     size="sm"
                     className="w-full"
                     onClick={() => voucherFileInputRef.current?.click()}>
-                    
+
                     <Upload className="w-4 h-4 mr-0.5" />
                     {currentPayment.voucherPreview ? "Cambiar" : "Comprobante"}
                   </Button>
@@ -1549,7 +1561,7 @@ const CreateSale = () => {
                     size="sm"
                     className="w-full"
                     onClick={addPayment}>
-                    
+
                     <Plus className="w-4 h-4 mr-0.5" />
                     Agregar
                   </Button>
@@ -1558,7 +1570,7 @@ const CreateSale = () => {
 
               {/* Sección de Vuelto - aparece cuando el pago supera el total */}
               {changeAmount > 0 &&
-              <>
+                <>
                   <Separator />
                   <div className="space-y-3">
                     <Label className="text-sm font-medium text-green-600 dark:text-green-400">
@@ -1567,18 +1579,18 @@ const CreateSale = () => {
 
                     {/* Lista de vueltos registrados */}
                     {changeEntries.filter((e) => e.paymentMethodId).length > 0 &&
-                  <div className="space-y-2">
+                      <div className="space-y-2">
                         {changeEntries.
-                    filter((e) => e.paymentMethodId).
-                    map((e) => {
-                      const method = allPaymentMethods.find(
-                        (pm) => pm.id.toString() === e.paymentMethodId
-                      );
-                      return (
-                        <div
-                          key={e.id}
-                          className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
-                          
+                          filter((e) => e.paymentMethodId).
+                          map((e) => {
+                            const method = allPaymentMethods.find(
+                              (pm) => pm.id.toString() === e.paymentMethodId
+                            );
+                            return (
+                              <div
+                                key={e.id}
+                                className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
+
                                 <div className="flex items-center gap-2">
                                   <CreditCard className="w-4 h-4 text-green-600 dark:text-green-400" />
                                   <span className="text-sm">{method?.name || "Método"}</span>
@@ -1586,164 +1598,164 @@ const CreateSale = () => {
                                     {formatCurrency(parseFloat(e.amount) || 0)}
                                   </span>
                                   {e.voucherPreview &&
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => {
-                                setSelectedVoucherPreview(e.voucherPreview || null);
-                                setVoucherModalOpen(true);
-                              }}
-                              title="Ver comprobante">
-                              
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6"
+                                      onClick={() => {
+                                        setSelectedVoucherPreview(e.voucherPreview || null);
+                                        setVoucherModalOpen(true);
+                                      }}
+                                      title="Ver comprobante">
+
                                       <Paperclip className="w-3 h-3 text-primary" />
                                     </Button>
-                            }
+                                  }
                                 </div>
                                 {!isComSituation &&
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => removeChangeEntry(e.id)}>
-                            
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => removeChangeEntry(e.id)}>
+
                                     <Trash2 className="w-3 h-3 text-destructive" />
                                   </Button>
-                          }
+                                }
                               </div>);
 
-                    })}
+                          })}
                       </div>
-                  }
+                    }
 
                     {/* Formulario para agregar vuelto */}
                     {(() => {
-                    const existingChangeTotal = changeEntries.reduce(
-                      (acc, e) => acc + (parseFloat(e.amount) || 0), 0
-                    );
-                    const remainingChange = changeAmount - existingChangeTotal;
-                    if (remainingChange <= 0) return null;
-                    return (
-                      <div className={cn("space-y-3 p-3 border border-green-200 dark:border-green-800 rounded-md bg-green-50/30 dark:bg-green-900/10", isComSituation && "opacity-50 pointer-events-none")}>
+                      const existingChangeTotal = changeEntries.reduce(
+                        (acc, e) => acc + (parseFloat(e.amount) || 0), 0
+                      );
+                      const remainingChange = changeAmount - existingChangeTotal;
+                      if (remainingChange <= 0) return null;
+                      return (
+                        <div className={cn("space-y-3 p-3 border border-green-200 dark:border-green-800 rounded-md bg-green-50/30 dark:bg-green-900/10", isComSituation && "opacity-50 pointer-events-none")}>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <Label>Método de Pago</Label>
                               <Select
-                              value={currentChangeEntry.paymentMethodId}
-                              onValueChange={(v) => handleChangeEntryChange("paymentMethodId", v)}>
-                              
+                                value={currentChangeEntry.paymentMethodId}
+                                onValueChange={(v) => handleChangeEntryChange("paymentMethodId", v)}>
+
                                 <SelectTrigger>
                                   <SelectValue placeholder="Seleccione" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {filteredPaymentMethods.map((pm) =>
-                                <SelectItem key={pm.id} value={pm.id.toString()}>
+                                    <SelectItem key={pm.id} value={pm.id.toString()}>
                                       {pm.name}
                                     </SelectItem>
-                                )}
+                                  )}
                                 </SelectContent>
                               </Select>
                             </div>
                             <div>
                               <Label>Monto</Label>
                               <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={currentChangeEntry.amount}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (val === '' || parseFloat(val) >= 0) {
-                                  handleChangeEntryChange("amount", val);
-                                }
-                              }}
-                              placeholder={remainingChange.toFixed(2)} />
-                            
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={currentChangeEntry.amount}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === '' || parseFloat(val) >= 0) {
+                                    handleChangeEntryChange("amount", val);
+                                  }
+                                }}
+                                placeholder={remainingChange.toFixed(2)} />
+
                             </div>
                           </div>
 
                           {needsChangeBusinessAccountSelect &&
-                        <div>
+                            <div>
                               <Label>Cuenta de origen</Label>
                               <Select
-                            value={currentChangeEntry.businessAccountId || ""}
-                            onValueChange={(v) => handleChangeEntryChange("businessAccountId" as any, v)}>
-                            
+                                value={currentChangeEntry.businessAccountId || ""}
+                                onValueChange={(v) => handleChangeEntryChange("businessAccountId" as any, v)}>
+
                                 <SelectTrigger>
                                   <SelectValue placeholder="Seleccione cuenta" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {businessAccounts?.map((ba) =>
-                              <SelectItem key={ba.id} value={ba.id.toString()}>
+                                    <SelectItem key={ba.id} value={ba.id.toString()}>
                                       {ba.name}
                                     </SelectItem>
-                              )}
+                                  )}
                                 </SelectContent>
                               </Select>
                             </div>
-                        }
+                          }
 
                           {currentChangeEntry.voucherPreview &&
-                        <div className="relative group">
+                            <div className="relative group">
                               <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
                                 <img
-                              src={currentChangeEntry.voucherPreview}
-                              alt="Comprobante"
-                              className="h-12 w-12 object-cover rounded" />
-                            
+                                  src={currentChangeEntry.voucherPreview}
+                                  alt="Comprobante"
+                                  className="h-12 w-12 object-cover rounded" />
+
                                 <span className="text-xs text-muted-foreground flex-1 truncate">
                                   {currentChangeEntry.voucherFile?.name}
                                 </span>
                                 <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={removeChangeVoucher}>
-                              
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={removeChangeVoucher}>
+
                                   <X className="w-3 h-3 text-destructive" />
                                 </Button>
                               </div>
                             </div>
-                        }
+                          }
 
                           <div className="grid grid-cols-2 gap-2">
                             <input
-                            type="file"
-                            ref={changeVoucherFileInputRef}
-                            className="hidden"
-                            accept="image/*,.pdf"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleChangeVoucherSelect(file);
-                              e.target.value = "";
-                            }} />
-                          
+                              type="file"
+                              ref={changeVoucherFileInputRef}
+                              className="hidden"
+                              accept="image/*,.pdf"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleChangeVoucherSelect(file);
+                                e.target.value = "";
+                              }} />
+
                             <Button
-                            type="button"
-                            variant={currentChangeEntry.voucherPreview ? "default" : "outline"}
-                            size="sm"
-                            className="w-full"
-                            onClick={() => changeVoucherFileInputRef.current?.click()}>
-                            
+                              type="button"
+                              variant={currentChangeEntry.voucherPreview ? "default" : "outline"}
+                              size="sm"
+                              className="w-full"
+                              onClick={() => changeVoucherFileInputRef.current?.click()}>
+
                               <Upload className="w-4 h-4 mr-0.5" />
                               {currentChangeEntry.voucherPreview ? "Cambiar" : "Comprobante"}
                             </Button>
                             <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            className="w-full"
-                            onClick={addChangeEntry}>
-                            
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="w-full"
+                              onClick={addChangeEntry}>
+
                               <Plus className="w-4 h-4 mr-0.5" />
                               Agregar
                             </Button>
                           </div>
                         </div>);
 
-                  })()}
+                    })()}
                   </div>
                 </>
               }
@@ -1762,63 +1774,63 @@ const CreateSale = () => {
               {/* Notes list - Chat style */}
               <ScrollArea className="h-[200px] pr-2">
                 {notes.length === 0 ?
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
                     <MessageSquare className="w-8 h-8 mb-2 opacity-50" />
                     <p className="text-sm">No hay notas aún</p>
                   </div> :
 
-                <div className="space-y-3">
+                  <div className="space-y-3">
                     {notes.map((note) =>
-                  <div
-                    key={note.id}
-                    className="bg-muted/50 p-3 rounded-lg relative group">
-                    
+                      <div
+                        key={note.id}
+                        className="bg-muted/50 p-3 rounded-lg relative group">
+
                         <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => removeNote(note.id)}>
-                      
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => removeNote(note.id)}>
+
                           <X className="w-3 h-3 text-destructive" />
                         </Button>
                         {note.message &&
-                    <p className="text-sm pr-6">{note.message}</p>
-                    }
+                          <p className="text-sm pr-6">{note.message}</p>
+                        }
                         {note.imagePreview &&
-                    <div className="mt-2">
+                          <div className="mt-2">
                             <img
-                        src={note.imagePreview}
-                        alt="Imagen adjunta"
-                        className="max-w-full max-h-32 rounded-md object-cover" />
-                      
+                              src={note.imagePreview}
+                              alt="Imagen adjunta"
+                              className="max-w-full max-h-32 rounded-md object-cover" />
+
                           </div>
-                    }
+                        }
                         <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                           <span className="font-medium">{note.userName}</span>
                           <span>{formatNoteDate(note.createdAt)}</span>
                         </div>
                       </div>
-                  )}
+                    )}
                   </div>
                 }
               </ScrollArea>
 
               {/* Image preview before sending */}
               {noteImagePreview &&
-              <div className="relative inline-block">
+                <div className="relative inline-block">
                   <img
-                  src={noteImagePreview}
-                  alt="Preview"
-                  className="max-h-16 rounded-md object-cover" />
-                
+                    src={noteImagePreview}
+                    alt="Preview"
+                    className="max-h-16 rounded-md object-cover" />
+
                   <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute -top-2 -right-2 h-5 w-5"
-                  onClick={removeNoteImage}>
-                  
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-5 w-5"
+                    onClick={removeNoteImage}>
+
                     <X className="w-3 h-3" />
                   </Button>
                 </div>
@@ -1832,7 +1844,7 @@ const CreateSale = () => {
                   onChange={handleNoteFileChange}
                   accept="image/*"
                   className="hidden" />
-                
+
                 <Button
                   type="button"
                   variant="outline"
@@ -1846,7 +1858,7 @@ const CreateSale = () => {
                       toast({
                         title: "Acción no disponible",
                         description:
-                        "Primero debe crear la venta para agregar notas",
+                          "Primero debe crear la venta para agregar notas",
                         variant: "destructive"
                       });
                       return;
@@ -1854,7 +1866,7 @@ const CreateSale = () => {
                     noteFileInputRef.current?.click();
                   }}
                   disabled={!orderId}>
-                  
+
                   <Paperclip className="w-4 h-4" />
                 </Button>
                 <div
@@ -1864,24 +1876,24 @@ const CreateSale = () => {
                       toast({
                         title: "Acción no disponible",
                         description:
-                        "Primero debe crear la venta para agregar notas",
+                          "Primero debe crear la venta para agregar notas",
                         variant: "destructive"
                       });
                     }
                   }}>
-                  
+
                   <Input
                     placeholder={
-                    orderId ?
-                    "Escribir nota..." :
-                    "Guarde la venta para agregar notas"
+                      orderId ?
+                        "Escribir nota..." :
+                        "Guarde la venta para agregar notas"
                     }
                     value={newNoteText}
                     onChange={(e) => setNewNoteText(e.target.value)}
                     onKeyDown={handleNoteKeyDown}
                     disabled={!orderId}
                     className={cn("w-full", !orderId && "cursor-not-allowed")} />
-                  
+
                 </div>
                 <Button
                   type="button"
@@ -1895,7 +1907,7 @@ const CreateSale = () => {
                       toast({
                         title: "Acción no disponible",
                         description:
-                        "Primero debe crear la venta para agregar notas",
+                          "Primero debe crear la venta para agregar notas",
                         variant: "destructive"
                       });
                       return;
@@ -1903,9 +1915,9 @@ const CreateSale = () => {
                     addNote();
                   }}
                   disabled={
-                  !orderId || !newNoteText.trim() && !noteImagePreview
+                    !orderId || !newNoteText.trim() && !noteImagePreview
                   }>
-                  
+
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
@@ -1919,20 +1931,20 @@ const CreateSale = () => {
         open={voucherModalOpen}
         onOpenChange={setVoucherModalOpen}
         voucherSrc={selectedVoucherPreview || ""} />
-      
+
 
       <SalesHistoryModal
         orders={orderSituationTable}
         open={historyModalOpen}
         onOpenChange={setHistoryModalOpen} />
-      
+
       {createdOrderId &&
-      <SalesInvoicesModal
-        orderId={createdOrderId}
-        orderTotal={total}
-        saleTypeId={Number(formData.saleType) || 0}
-        open={invoicesModalOpen}
-        onOpenChange={setInvoicesModalOpen} />
+        <SalesInvoicesModal
+          orderId={createdOrderId}
+          orderTotal={total}
+          saleTypeId={Number(formData.saleType) || 0}
+          open={invoicesModalOpen}
+          onOpenChange={setInvoicesModalOpen} />
 
       }
     </div>);
