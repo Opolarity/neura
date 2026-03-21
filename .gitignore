@@ -25,3 +25,4 @@ dist-ssr
 
 #supabase edge functions
 supabase/functions
+ .env
