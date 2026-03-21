@@ -184,6 +184,7 @@ const CreateSale = () => {
     orderDiscounts,
     addOrderDiscount,
     removeOrderDiscount,
+    isDirty,
   } = useCreateSale();
 
   const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
@@ -402,7 +403,7 @@ const CreateSale = () => {
           <Button variant="outline" onClick={() => navigate("/sales")}>
             Cancelar
           </Button>
-          <Button type="submit" form="sale-form" disabled={saving}>
+          <Button type="submit" form="sale-form" disabled={saving || (!!orderId && !isDirty)}>
             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {orderId ? "Actualizar Venta" : "Crear Venta"}
           </Button>
@@ -1213,6 +1214,8 @@ const CreateSale = () => {
                   <em
                     className="italic text-sm underline cursor-pointer"
                     onClick={() => {
+                      const countryObj = salesData?.countries.find(c => c.id.toString() === formData.countryId);
+                      const stateObj = filteredStates.find(s => s.id.toString() === formData.stateId);
                       const cityObj = filteredCities.find(c => c.id.toString() === formData.cityId);
                       const neighObj = filteredNeighborhoods.find(n => n.id.toString() === formData.neighborhoodId);
                       const shippingObj = availableShippingCosts.find(s => s.id.toString() === formData.shippingMethod);
@@ -1223,6 +1226,8 @@ const CreateSale = () => {
                         documentType: formData.documentType,
                         documentNumber: formData.documentNumber,
                         address: formData.address,
+                        countryName: countryObj?.name,
+                        stateName: stateObj?.name,
                         cityName: cityObj?.name,
                         neighborhoodName: neighObj?.name,
                         shippingMethodName: shippingObj?.name,

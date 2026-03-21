@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 
 export interface SituationHistoryItem {
   id: number;
@@ -28,10 +29,18 @@ export interface SituationHistoryItem {
   userName: string;
   message: string | null;
   situationName: string;
+  situationCode?: string;
   notes: string | null;
   warehouseName: string | null;
   warehouseId: number | null;
 }
+
+const getSituationBadgeColor = (code?: string) => {
+  if (code === 'APR' || code === 'REC' || code === 'ENV' || code === 'COM') return 'bg-green-500 hover:bg-green-500 text-white border-transparent';
+  if (code === 'NEG' || code === 'REQ') return 'bg-yellow-500 hover:bg-yellow-500 text-white border-transparent';
+  if (code === 'CAN') return 'bg-red-500 hover:bg-red-500 text-white border-transparent';
+  return 'bg-secondary text-secondary-foreground hover:bg-secondary';
+};
 
 export interface SituationOption {
   id: number;
@@ -125,13 +134,13 @@ const RequestSituationsHistory = ({
                 </span>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                <Badge className={getSituationBadgeColor(sit.situationCode)}>
                   {sit.situationName}
-                </span>
+                </Badge>
                 {sit.warehouseName && (
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
+                  <Badge variant="secondary">
                     {sit.warehouseName}
-                  </span>
+                  </Badge>
                 )}
               </div>
               {sit.message && (

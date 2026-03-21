@@ -17,8 +17,9 @@ export interface RemisionGuideData {
   documentType?: string;
   documentNumber: string;
   address?: string;
-  cityName?: string;
+  countryName?: string;
   stateName?: string;
+  cityName?: string;
   neighborhoodName?: string;
   shippingMethodName?: string;
   saleDate: string;
@@ -142,20 +143,31 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
     .join(" ")
     .toUpperCase();
 
-  const direccionPrincipal = [data.cityName, data.neighborhoodName]
+  const direccionPrincipal = [
+    data.countryName,
+    data.stateName,
+    data.cityName,
+    data.neighborhoodName,
+    data.address,
+  ]
     .filter(Boolean)
     .join(" / ")
     .toUpperCase();
 
   labelValue("Destinatario", fullName, margin + 3, y + 5, 24);
-  labelValue(
-    "Dirección principal",
-    direccionPrincipal || data.address?.toUpperCase() || "-",
-    pageW / 2,
-    y + 5,
-    36
-  );
   y += 8;
+
+  // Wrap long address text to fit within the content area
+  const dirMaxW = contentW - 42;
+  doc.setFontSize(7.5);
+  const dirLines = doc.splitTextToSize(direccionPrincipal || "-", dirMaxW);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...muted);
+  doc.text("Dirección principal:", margin + 3, y + 3);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...dark);
+  doc.text(dirLines, margin + 42, y + 3);
+  y += Math.max(dirLines.length, 1) * 5 + 2;
 
   labelValue(
     "Tipo Documento Identidad",
@@ -198,7 +210,7 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
 
   labelValue(
     "Dirección de llegada",
-    (data.cityName || data.address || "-").toUpperCase(),
+    direccionPrincipal || "-",
     margin + 3,
     y + 3,
     38
