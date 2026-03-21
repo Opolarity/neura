@@ -121,19 +121,11 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
   };
 
   // ── FORMAT DATE ──────────────────────────────────────────────────────────
-  let fechaStr = data.saleDate ?? "";
-  try {
-    const d = new Date(data.saleDate);
-    if (!isNaN(d.getTime())) {
-      fechaStr = d.toLocaleDateString("es-PE", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-    }
-  } catch {
-    // keep original
-  }
+  const fechaStr = new Date().toLocaleDateString("es-PE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 
   // ── DESTINATARIO ─────────────────────────────────────────────────────────
   drawSectionHeader("Destinatario");
