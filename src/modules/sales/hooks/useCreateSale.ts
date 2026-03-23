@@ -1189,11 +1189,12 @@ export const useCreateSale = () => {
     );
 
     if (existingIndex !== -1) {
-      // Product already exists with the same stock type
-      toast({
-        title: "Producto ya agregado",
-        description:
-          "Este producto ya está en la lista con el mismo tipo de inventario",
+      setProducts((prev) => {
+        const updated = [...prev];
+        const existing = updated[existingIndex];
+        const newQuantity = Math.min(existing.quantity + 1, existing.maxStock);
+        updated[existingIndex] = { ...existing, quantity: newQuantity };
+        return updated;
       });
       return { added: false, existingIndex };
     }
