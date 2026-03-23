@@ -18,7 +18,7 @@ BEGIN
   WHERE date_trunc('month', created_at) = date_trunc('month', current_date);
 
   -- Productos en stock (suma de stock en variations)
-  SELECT COALESCE(SUM(stock), 0) INTO v_productos_stock
+  SELECT COALESCE(SUM(product_stock), 0) INTO v_productos_stock
   FROM variations;
 
   -- Órdenes pendientes (orders donde el estado más reciente NO es COM o CAN)
@@ -51,12 +51,12 @@ BEGIN
   FROM (
     SELECT 
       pr.title as name,
-      pv.stock,
+      pv.product_stock as stock,
       10 as min
     FROM variations pv
     JOIN products pr ON pr.id = pv.product_id
-    WHERE pv.stock < 10 AND pv.stock >= 0
-    ORDER BY pv.stock ASC
+    WHERE pv.product_stock < 10 AND pv.product_stock >= 0
+    ORDER BY pv.product_stock ASC
     LIMIT 5
   ) p;
 
