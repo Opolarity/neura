@@ -56,7 +56,9 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
       sale_type: orderData.saleType,
       price_list_id: orderData.priceListId,
       shipping_method: orderData.shippingMethod,
-      shipping_method_id: orderData.shippingMethodId ? parseInt(orderData.shippingMethodId) : null,
+      shipping_method_id: orderData.shippingMethodId
+        ? parseInt(orderData.shippingMethodId)
+        : null,
       shipping_cost: orderData.shippingCost,
       country_id: orderData.countryId,
       state_id: orderData.stateId,
@@ -124,7 +126,9 @@ export const updateOrder = async (
       sale_type: orderData.saleType,
       price_list_id: orderData.priceListId,
       shipping_method: orderData.shippingMethod,
-      shipping_method_id: orderData.shippingMethodId ? parseInt(orderData.shippingMethodId) : null,
+      shipping_method_id: orderData.shippingMethodId
+        ? parseInt(orderData.shippingMethodId)
+        : null,
       shipping_cost: orderData.shippingCost,
       country_id: orderData.countryId,
       state_id: orderData.stateId,
@@ -444,8 +448,58 @@ export const getOrdersSituationsById = async (id: number) => {
 // Fetch sale by ID (consolidated data for editing)
 export const fetchSaleById = async (orderId: number) => {
   const { data, error } = await supabase.functions.invoke(
-    `get-sale-by-id?id=${orderId}`
+    `get-sale-by-id?id=${orderId}`,
   );
   if (error) throw error;
   return data;
 };
+
+export async function getOrderNotes(orderId: number) {
+  const { data, error } = await supabase.functions.invoke("get-order-notes", {
+    body: { order_id: orderId },
+  });
+  if (error) throw error;
+
+  return data;
+}
+
+export async function addOrderNotes(
+  text: string,
+  userId: string,
+  orderId: number,
+  imagen: File | null,
+) {
+  const { data: note, error: noteError } = await supabase
+    .from("notes")
+    .insert({ message: text, user_id: userId, code: "ORD" })
+    .select()
+    .single();
+  if (noteError) throw noteError;
+
+  const { error: orderNotesError } = await (supabase as any)
+    .from("order_notes")
+    .insert({ order_id: orderId, note_id: note.id });
+  if (orderNotesError) throw orderNotesError;
+
+  if (imagen) {
+    const fileExt = imagen.name.split(".").pop() || "jpg";
+    const filePath = `sales-notes/${orderId}/${note.id}-${orderId}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("sales")
+      .upload(filePath, imagen, { upsert: true });
+    if (uploadError) throw uploadError;
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("sales").getPublicUrl(filePath);
+
+    const { error: updateError } = await supabase
+      .from("notes")
+      .update({ image_url: publicUrl })
+      .eq("id", note.id);
+    if (updateError) throw updateError;
+  }
+
+  return getOrderNotes(orderId);
+}
