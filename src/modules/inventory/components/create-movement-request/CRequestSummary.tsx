@@ -9,6 +9,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+
+const getSituationBadgeColor = (name?: string) => {
+  if (name === 'Aprobado' || name === 'Recibido' || name === 'Enviado' || name === 'Completado') return 'bg-green-500 hover:bg-green-500 text-white border-transparent';
+  if (name === 'Negociación' || name === 'Solicitado') return 'bg-yellow-500 hover:bg-yellow-500 text-white border-transparent';
+  if (name === 'Cancelado') return 'bg-red-500 hover:bg-red-500 text-white border-transparent';
+  return 'bg-secondary text-secondary-foreground hover:bg-secondary';
+};
 
 interface SimpleWarehouse {
   id: number;
@@ -102,21 +110,15 @@ const CRequestSummary = ({
       <div className="flex flex-row gap-2">
         <div className="flex-1 flex flex-col gap-2">
           <Label>Estado</Label>
-          <Input
-            className="bg-muted"
-            disabled
-            type="text"
-            value={statusName || ""}
-          />
+          <div className="flex items-center h-10 px-3 py-2 border rounded-md bg-muted/50">
+             {statusName ? <Badge className={getSituationBadgeColor(statusName)}>{statusName}</Badge> : <span className="text-muted-foreground text-sm">---</span>}
+          </div>
         </div>
         <div className="flex-1 flex flex-col gap-2">
           <Label>Situación</Label>
-          <Input
-            className="bg-muted"
-            disabled
-            type="text"
-            value={situationName || ""}
-          />
+          <div className="flex items-center h-10 px-3 py-2 border rounded-md bg-muted/50">
+             {situationName ? <Badge className={getSituationBadgeColor(situationName)}>{situationName}</Badge> : <span className="text-muted-foreground text-sm">---</span>}
+          </div>
         </div>
       </div>
 

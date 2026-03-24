@@ -37,7 +37,6 @@ const Products = () => {
     onCloseFilterModal,
     onApplyFilter,
     goToNewProduct,
-    goToProductDetail,
     goToViewProduct,
     onPageChange,
     onSearchChange,
@@ -82,7 +81,6 @@ const Products = () => {
             loading={loading}
             selectedProducts={selectedProducts}
             onDeleteClick={handleDeleteClick}
-            onGoToProductDetail={goToProductDetail}
             onViewProduct={goToViewProduct}
             onToggleAllProductsSelection={toggleSelectAll}
             onToggleProductSelection={toggleProductSelection}

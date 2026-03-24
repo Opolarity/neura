@@ -93,7 +93,7 @@ export default function InvoicePrintPage() {
     if (id) generatePdf(Number(id));
   }, [id]);
 
-  const loadImage = async (url: string): Promise<{ dataUrl: string; width: number; height: number }> => {
+  const loadImage = async (url: string): Promise<string> => {
     const response = await fetch(url);
     const blob = await response.blob();
     const objectUrl = URL.createObjectURL(blob);
@@ -108,7 +108,7 @@ export default function InvoicePrintPage() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(objectUrl);
-        resolve({ dataUrl: canvas.toDataURL("image/png"), width: img.width, height: img.height });
+        resolve(canvas.toDataURL("image/png"));
       };
       img.onerror = () => {
         URL.revokeObjectURL(objectUrl);
@@ -145,6 +145,21 @@ export default function InvoicePrintPage() {
           .eq("invoice_id", invoiceId)
           .single(),
       ]);
+
+      const shippingMethodCode = branchRes.data?.orders?.shipping_method_code;
+      const shippingMethod = shippingMethodCode
+        ? await supabase
+          .from("shipping_methods")
+          .select("name")
+          .eq("code", shippingMethodCode)
+          .single()
+        : null;
+
+      const discountOrders = await supabase
+        .from("order_discounts")
+        .select("name, discount_amount")
+        .eq("order_id", branchRes.data.orders.id)
+
 
       const neighborhood = await supabase
         .from("neighborhoods")
@@ -184,12 +199,11 @@ export default function InvoicePrintPage() {
         }
       }
 
-      const companyName = "PERCEPTION ENDLESS COMPANY E.I.R.L." //getParam("COMPANY_NAME") || "EMPRESA";
-      const companyAddress = "CAL. SEBASTIAN BARRANCA NRO. 1556 INT. A513 URB. EL PORVENIR - LIMA LIMA LA VICTORIA"; //getParam("COMPANY_ADDRESS") || "";
-      const companyBranch = branchRes.data?.orders?.branches?.address || "Jr Agustín Gamarra 1095 la victoria";
-      const companyPhone = "977862202"; //getParam("COMPANY_PHONE") || "";
-      const companyEmail = ""; //getParam("COMPANY_EMAIL") || "";
-      const companyRuc = "20611215895" //getParam("COMPANY_RUC") || "";
+      const companyName = "OVERTAKE UNLIMITED EIRL" //getParam("COMPANY_NAME") || "EMPRESA";
+      const companyAddress = branchRes.data?.orders?.branches?.address + " " + neighborhood?.data?.name || ""; //getParam("COMPANY_ADDRESS") || "";
+      const companyPhone = "951 645 997"; //getParam("COMPANY_PHONE") || "";
+      const companyEmail = "overta.peru.empresa@gmail.com"; //getParam("COMPANY_EMAIL") || "";
+      const companyRuc = "20607798002" //getParam("COMPANY_RUC") || "";
 
       // Ticket width: 80mm
       const pageWidth = 80;
@@ -204,16 +218,12 @@ export default function InvoicePrintPage() {
         tiny: 5.5,
       };
 
-      // Pre-load assets before drawing so drawContent is synchronous
+      // Pre-load assets (logo and QR) before drawing so the draw function is synchronous
       const invoiceLogoUrl = parametersRes.data?.value;
       const logoUrl = invoiceLogoUrl || "/images/logo-ticket.png";
 
-      let logoData: { dataUrl: string; width: number; height: number } | null = null;
-      try {
-        logoData = await loadImage(logoUrl);
-      } catch {
-        // logo failed to load, will skip
-      }
+      let logoImg: string | null = null;
+      try { logoImg = await loadImage(logoUrl); } catch { }
 
       let qrCodeDataUrl: string | null = null;
       if (invoice.qr_data) {
@@ -229,23 +239,11 @@ export default function InvoicePrintPage() {
         let y = 4;
 
         // ============ LOGO ============
-        if (logoData) {
-          const logoMaxWidth = 40;
-          const logoMaxHeight = 30;
-          const aspectRatio = logoData.width / logoData.height;
-          let renderW = logoMaxWidth;
-          let renderH = logoMaxWidth / aspectRatio;
-          if (renderH > logoMaxHeight) {
-            renderH = logoMaxHeight;
-            renderW = logoMaxHeight * aspectRatio;
-          }
-          const logoX = (pageWidth - renderW) / 2;
-          doc.addImage(logoData.dataUrl, "PNG", logoX, y, renderW, renderH);
-          y += renderH + 2;
-          doc.setFontSize(fontSize.tiny);
-          doc.setFont("helvetica", "normal");
-          doc.text("www.perception.pe", pageWidth / 2, y, { align: "center" });
-          y += 7;
+        if (logoImg) {
+          const logoSize = 22;
+          const logoX = (pageWidth - logoSize) / 2;
+          doc.addImage(logoImg, "PNG", logoX, y, logoSize, logoSize);
+          y += logoSize + 5;
         } else {
           y += 2;
         }
@@ -267,13 +265,6 @@ export default function InvoicePrintPage() {
         if (companyAddress) {
           const addrLines = doc.splitTextToSize(companyAddress, contentWidth);
           for (const line of addrLines) {
-            doc.text(line, pageWidth / 2, y, { align: "center" });
-            y += 2.5;
-          }
-        }
-        if (companyBranch) {
-          const branchLines = doc.splitTextToSize(`Sucursal: ${companyBranch}`, contentWidth);
-          for (const line of branchLines) {
             doc.text(line, pageWidth / 2, y, { align: "center" });
             y += 2.5;
           }
@@ -398,6 +389,29 @@ export default function InvoicePrintPage() {
           y += Math.max(descLines.length * 2.5, 3) + 0.5;
         }
 
+        // ============ IF HAVE SHIPPING ============
+        if (shippingMethodCode) {
+          const shippingLabel = shippingMethod?.data?.name || shippingMethodCode;
+          const descWidth = col.pu - col.desc - 14;
+          const shippingLines = doc.splitTextToSize(shippingLabel, descWidth > 0 ? descWidth : 30);
+          for (let i = 0; i < shippingLines.length; i++) {
+            doc.text(shippingLines[i], col.desc, y + i * 2.5);
+          }
+          doc.text(branchRes.data.orders.shipping_cost.toFixed(2), col.pu, y, { align: "right" });
+          y += Math.max(shippingLines.length * 2.5, 3) + 0.5;
+        }
+
+        // ============ IF HAVE DISCOUNTS ============
+        for (const discount of (discountOrders.data ?? [])) {
+          const descWidth = col.pu - col.desc - 14;
+          const descLines = doc.splitTextToSize(discount.name, descWidth > 0 ? descWidth : 30);
+          for (let i = 0; i < descLines.length; i++) {
+            doc.text(descLines[i], col.desc, y + i * 2.5);
+          }
+          doc.text("-" + discount.discount_amount.toFixed(2), col.pu, y, { align: "right" });
+          y += Math.max(descLines.length * 2.5, 3) + 0.5;
+        }
+
         // ============ SEPARATOR ============
         y += 1;
         doc.setLineWidth(0.2);
@@ -456,8 +470,18 @@ export default function InvoicePrintPage() {
         // ============ FOOTER - RETURNS POLICY ============
         doc.setFontSize(fontSize.subtitle);
         doc.setFont("helvetica", "bold");
-        doc.text("NO SE ACEPTAN CAMBIOS Y DEVOLUCIONES", pageWidth / 2, y, { align: "center" });
+        doc.text("CAMBIOS Y DEVOLUCIONES", pageWidth / 2, y, { align: "center" });
         y += 3;
+
+        doc.setFontSize(fontSize.tiny);
+        doc.setFont("helvetica", "normal");
+        const policyText =
+          "Recuerda que puedes realizar cambios y devoluciones dentro de los 15 días posteriores a la compra, siempre y cuando el producto esté en su estado original y con el ticket de compra.";
+        const policyLines = doc.splitTextToSize(policyText, contentWidth);
+        for (const line of policyLines) {
+          doc.text(line, pageWidth / 2, y, { align: "center" });
+          y += 2.2;
+        }
 
         y += 2;
         doc.setFontSize(fontSize.normal);

@@ -20,7 +20,6 @@ interface ProductsTableProps {
   selectedProducts: number[];
   onToggleProductSelection: (productId: number) => void;
   onToggleAllProductsSelection: () => void;
-  onGoToProductDetail: (id: number) => void;
   onViewProduct: (id: number) => void;
   onDeleteClick: (product: Product) => void;
 }
@@ -32,7 +31,6 @@ const ProductsTable = ({
   selectedProducts,
   onToggleAllProductsSelection,
   onToggleProductSelection,
-  onGoToProductDetail,
   onViewProduct,
   onDeleteClick,
 }: ProductsTableProps) => {
@@ -77,7 +75,10 @@ const ProductsTable = ({
             </TableRow>
           ) : products.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+              <TableCell
+                colSpan={9}
+                className="text-center py-8 text-muted-foreground"
+              >
                 {search
                   ? "No se encontraron productos"
                   : "No hay productos registrados"}
@@ -92,7 +93,9 @@ const ProductsTable = ({
                     onCheckedChange={() => onToggleProductSelection(product.id)}
                   />
                 </TableCell>
-                <TableCell className="font-mono text-muted-foreground">{product.id}</TableCell>
+                <TableCell className="font-mono text-muted-foreground">
+                  {product.id}
+                </TableCell>
                 <TableCell>
                   <img
                     src={product.image || placeholderImage}
@@ -133,23 +136,13 @@ const ProductsTable = ({
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onGoToProductDetail(product.id)}
+                    <a
+                      href={`/products/edit/${product.id}`}
                       title="Editar producto"
+                      className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
                     >
                       <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(`/products/edit/${product.id}`, "_blank")}
-                      title="Editar producto en nueva pestaña"
-                      className="text-yellow-600 border-yellow-400 hover:bg-yellow-50 hover:text-yellow-700"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    </a>
                     <Button
                       variant="destructive"
                       size="sm"
