@@ -39,7 +39,7 @@ export interface Shipping {
 }
 
 //LOCATION
-export interface Countrie {
+export interface Country {
   id: number;
   name: string;
 }
@@ -47,22 +47,22 @@ export interface Countrie {
 export interface State {
   id: number;
   name: string;
-  country_id?: number;
+  countryId: number; // ✅ camelCase
 }
 
 export interface City {
   id: number;
   name: string;
-  country_id?: number;
-  state_id?: number;
+  countryId: number; // ✅ camelCase
+  stateId: number;   // ✅ camelCase
 }
 
 export interface Neighborhood {
   id: number;
   name: string;
-  country_id?: number;
-  state_id?: number;
-  city_id?: number;
+  countryId: number; // ✅ camelCase
+  stateId: number;   // ✅ camelCase
+  cityId: number;    // ✅ camelCase
 }
 
 //SHIPING CREATE

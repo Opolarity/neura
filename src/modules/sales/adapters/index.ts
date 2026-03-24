@@ -98,21 +98,24 @@ export const adaptStates = (data: any[]): State[] => {
   }));
 };
 
-// Adapt cities from API
+
+
 export const adaptCities = (data: any[]): City[] => {
   return data.map((item) => ({
     id: item.id,
     name: item.name,
     stateId: item.state_id,
+    countryId: item.country_id, // ✅ agregar
   }));
 };
 
-// Adapt neighborhoods from API
 export const adaptNeighborhoods = (data: any[]): Neighborhood[] => {
   return data.map((item) => ({
     id: item.id,
     name: item.name,
     cityId: item.city_id,
+    stateId: item.state_id,   // ✅ agregar
+    countryId: item.country_id, // ✅ agregar
   }));
 };
 
@@ -247,78 +250,78 @@ export const adaptSaleById = (data: any) => {
   const orderDiscounts = rawDiscounts.filter((d: any) => d.code !== "PRO");
 
   return ({
-  formData: {
-    documentType: data.order.document_type?.toString() || "",
-    documentNumber: data.order.document_number || "",
-    customerName: data.order.customer_name || "",
-    customerLastname: (() => {
-      const full = data.order.customer_lastname || "";
-      return full.split(" ")[0] || "";
-    })(),
-    customerLastname2: (() => {
-      const full = data.order.customer_lastname || "";
-      const parts = full.split(" ");
-      return parts.slice(1).join(" ") || "";
-    })(),
-    email: data.order.email || "",
-    phone: data.order.phone?.toString() || "",
-    saleType: data.order.sale_type_id?.toString() || "",
-    priceListId: data.order.price_list_id?.toString() || "",
-    saleDate: data.order.date?.split("T")[0] || "",
-    vendorName: "",
-    shippingMethod: data.order.shipping_method_code || "",
-    shippingMethodId: data.order.shipping_method_id?.toString() || "",
-    shippingCost: data.order.shipping_cost?.toString() || "",
-    countryId: data.order.country_id?.toString() || "",
-    stateId: data.order.state_id?.toString() || "",
-    cityId: data.order.city_id?.toString() || "",
-    neighborhoodId: data.order.neighborhood_id?.toString() || "",
-    address: data.order.address || "",
-    addressReference: data.order.address_reference || "",
-    receptionPerson: data.order.reception_person || "",
-    receptionPhone: data.order.reception_phone?.toString() || "",
-    withShipping: data.order.shipping_cost != null,
-    employeeSale: false,
-    notes: "",
-  },
-  products: (data.products || []).map((p: any) => ({
-    variationId: p.variation_id,
-    productId: p.product_id,
-    productName: p.product_name,
-    variationName: p.variation_name,
-    sku: p.sku,
-    quantity: p.quantity,
-    price: p.price,
-    originalPrice: p.price,
-    discountAmount: p.discount_amount,
-    stockTypeId: p.stock_type_id,
-    stockTypeName: p.stock_type_name,
-    maxStock: p.max_stock,
-    fromOrder: true,
-  })),
-  payments: (data.payments || []).map((p: any) => ({
-    id: crypto.randomUUID(),
-    paymentMethodId: p.payment_method_id?.toString() || "",
-    amount: p.amount?.toString() || "",
-    confirmationCode: p.confirmation_code || "",
-    voucherUrl: p.voucher_url || "",
-    voucherPreview: p.voucher_url || undefined,
-    businessAccountId: p.business_account_id?.toString() || "",
-  })),
-  changeEntries: (data.change_entries || []).map((e: any) => ({
-    id: crypto.randomUUID(),
-    paymentMethodId: e.payment_method_id?.toString() || "",
-    amount: e.amount?.toString() || "",
-    confirmationCode: "",
-    voucherUrl: "",
-    businessAccountId: e.business_account_id?.toString() || "",
-  })),
-  currentSituation: data.current_situation?.situation_id?.toString() || "",
-  currentStatusCode: data.current_situation?.statuses?.code || "",
-  orderWarehouseId: data.order?.warehouse_id || null,
-  orderDiscounts,
-  orderSaleType: data.order.sale_type_id
-    ? { id: data.order.sale_type_id, name: data.order.sale_type_name || "" }
-    : null,
-});
+    formData: {
+      documentType: data.order.document_type?.toString() || "",
+      documentNumber: data.order.document_number || "",
+      customerName: data.order.customer_name || "",
+      customerLastname: (() => {
+        const full = data.order.customer_lastname || "";
+        return full.split(" ")[0] || "";
+      })(),
+      customerLastname2: (() => {
+        const full = data.order.customer_lastname || "";
+        const parts = full.split(" ");
+        return parts.slice(1).join(" ") || "";
+      })(),
+      email: data.order.email || "",
+      phone: data.order.phone?.toString() || "",
+      saleType: data.order.sale_type_id?.toString() || "",
+      priceListId: data.order.price_list_id?.toString() || "",
+      saleDate: data.order.date?.split("T")[0] || "",
+      vendorName: "",
+      shippingMethod: data.order.shipping_method_code || "",
+      shippingMethodId: data.order.shipping_method_id?.toString() || "",
+      shippingCost: data.order.shipping_cost?.toString() || "",
+      countryId: data.order.country_id?.toString() || "",
+      stateId: data.order.state_id?.toString() || "",
+      cityId: data.order.city_id?.toString() || "",
+      neighborhoodId: data.order.neighborhood_id?.toString() || "",
+      address: data.order.address || "",
+      addressReference: data.order.address_reference || "",
+      receptionPerson: data.order.reception_person || "",
+      receptionPhone: data.order.reception_phone?.toString() || "",
+      withShipping: data.order.shipping_cost != null,
+      employeeSale: false,
+      notes: "",
+    },
+    products: (data.products || []).map((p: any) => ({
+      variationId: p.variation_id,
+      productId: p.product_id,
+      productName: p.product_name,
+      variationName: p.variation_name,
+      sku: p.sku,
+      quantity: p.quantity,
+      price: p.price,
+      originalPrice: p.price,
+      discountAmount: p.discount_amount,
+      stockTypeId: p.stock_type_id,
+      stockTypeName: p.stock_type_name,
+      maxStock: p.max_stock,
+      fromOrder: true,
+    })),
+    payments: (data.payments || []).map((p: any) => ({
+      id: crypto.randomUUID(),
+      paymentMethodId: p.payment_method_id?.toString() || "",
+      amount: p.amount?.toString() || "",
+      confirmationCode: p.confirmation_code || "",
+      voucherUrl: p.voucher_url || "",
+      voucherPreview: p.voucher_url || undefined,
+      businessAccountId: p.business_account_id?.toString() || "",
+    })),
+    changeEntries: (data.change_entries || []).map((e: any) => ({
+      id: crypto.randomUUID(),
+      paymentMethodId: e.payment_method_id?.toString() || "",
+      amount: e.amount?.toString() || "",
+      confirmationCode: "",
+      voucherUrl: "",
+      businessAccountId: e.business_account_id?.toString() || "",
+    })),
+    currentSituation: data.current_situation?.situation_id?.toString() || "",
+    currentStatusCode: data.current_situation?.statuses?.code || "",
+    orderWarehouseId: data.order?.warehouse_id || null,
+    orderDiscounts,
+    orderSaleType: data.order.sale_type_id
+      ? { id: data.order.sale_type_id, name: data.order.sale_type_name || "" }
+      : null,
+  });
 };
