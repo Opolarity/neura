@@ -81,6 +81,7 @@ import { SalesHistoryModal } from "../components/SalesHistoryModal";
 import { SalesInvoicesModal } from "../components/SalesInvoicesModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
+import { OrderNotes } from "../components/sales/OrderNotes";
 
 const CreateSale = () => {
   const {
@@ -1228,7 +1229,7 @@ const CreateSale = () => {
               {createdOrderId && formData.phone && (
                 <a
                   href={`https://api.whatsapp.com/send?phone=${formData.phone}&text=Hola%20${formData.customerName ?? "Crew"}%20%F0%9F%91%BD%F0%9F%91%8B%20Te%20comento%20que%20tu%20pedido%20${createdOrderId}%20est%C3%A1%20siendo%20procesado%20%F0%9F%9A%80.%20En%20un%20momento%20pasaremos%20a%20armar%20tu%20pedido%20%F0%9F%93%A6.`}
-                  className="inline-flex items-center gap-2 bg-[#25D366] text-white mt-4 px-4 py-2 rounded-md font-medium hover:bg-[#1ebe5d] transition-colors"
+                  className="w-full justify-center items-center inline-flex items-center gap-2 bg-[#25D366] text-white mt-4 px-4 py-2 rounded-md font-medium hover:bg-[#1ebe5d] transition-colors"
                 >
                   <svg
                     viewBox="0 0 31 30"
@@ -1246,7 +1247,7 @@ const CreateSale = () => {
                       fill="currentColor"
                     ></path>
                   </svg>
-                  <span>WhatsApp</span>
+                  <span>Escribir a WhatsApp</span>
                 </a>
               )}
             </CardContent>
@@ -1944,168 +1945,7 @@ const CreateSale = () => {
           </Card>
 
           {/* Notes Card - Chat Style */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-primary" />
-                <CardTitle className="text-lg">Notas del Pedido</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {/* Notes list - Chat style */}
-              <ScrollArea className="h-[200px] pr-2">
-                {notes.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
-                    <MessageSquare className="w-8 h-8 mb-2 opacity-50" />
-                    <p className="text-sm">No hay notas aún</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {notes.map((note) => (
-                      <div
-                        key={note.id}
-                        className="bg-muted/50 p-3 rounded-lg relative group"
-                      >
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => removeNote(note.id)}
-                        >
-                          <X className="w-3 h-3 text-destructive" />
-                        </Button>
-                        {note.message && (
-                          <p className="text-sm pr-6">{note.message}</p>
-                        )}
-                        {note.imagePreview && (
-                          <div className="mt-2">
-                            <img
-                              src={note.imagePreview}
-                              alt="Imagen adjunta"
-                              className="max-w-full max-h-32 rounded-md object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                          <span className="font-medium">{note.userName}</span>
-                          <span>{formatNoteDate(note.createdAt)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-
-              {/* Image preview before sending */}
-              {noteImagePreview && (
-                <div className="relative inline-block">
-                  <img
-                    src={noteImagePreview}
-                    alt="Preview"
-                    className="max-h-16 rounded-md object-cover"
-                  />
-
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-5 w-5"
-                    onClick={removeNoteImage}
-                  >
-                    <X className="w-3 h-3" />
-                  </Button>
-                </div>
-              )}
-
-              {/* Input area */}
-              <div className="flex gap-2 pt-2 border-t">
-                <input
-                  type="file"
-                  ref={noteFileInputRef}
-                  onChange={handleNoteFileChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className={cn(
-                    "flex-shrink-0",
-                    !orderId && "opacity-50 cursor-not-allowed",
-                  )}
-                  onClick={() => {
-                    if (!orderId) {
-                      toast({
-                        title: "Acción no disponible",
-                        description:
-                          "Primero debe crear la venta para agregar notas",
-                        variant: "destructive",
-                      });
-                      return;
-                    }
-                    noteFileInputRef.current?.click();
-                  }}
-                  disabled={!orderId}
-                >
-                  <Paperclip className="w-4 h-4" />
-                </Button>
-                <div
-                  className="flex-1"
-                  onClick={() => {
-                    if (!orderId) {
-                      toast({
-                        title: "Acción no disponible",
-                        description:
-                          "Primero debe crear la venta para agregar notas",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  <Input
-                    placeholder={
-                      orderId
-                        ? "Escribir nota..."
-                        : "Guarde la venta para agregar notas"
-                    }
-                    value={newNoteText}
-                    onChange={(e) => setNewNoteText(e.target.value)}
-                    onKeyDown={handleNoteKeyDown}
-                    disabled={!orderId}
-                    className={cn("w-full", !orderId && "cursor-not-allowed")}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  size="icon"
-                  className={cn(
-                    "flex-shrink-0",
-                    !orderId && "opacity-50 cursor-not-allowed",
-                  )}
-                  onClick={() => {
-                    if (!orderId) {
-                      toast({
-                        title: "Acción no disponible",
-                        description:
-                          "Primero debe crear la venta para agregar notas",
-                        variant: "destructive",
-                      });
-                      return;
-                    }
-                    addNote();
-                  }}
-                  disabled={
-                    !orderId || (!newNoteText.trim() && !noteImagePreview)
-                  }
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <OrderNotes orderId={Number(orderId)} />
         </aside>
       </div>
 
