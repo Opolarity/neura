@@ -1229,7 +1229,7 @@ const CreateSale = () => {
               {createdOrderId && formData.phone && (
                 <a
                   href={`https://api.whatsapp.com/send?phone=${formData.phone}&text=Hola%20${formData.customerName ?? "Crew"}%20%F0%9F%91%BD%F0%9F%91%8B%20Te%20comento%20que%20tu%20pedido%20${createdOrderId}%20est%C3%A1%20siendo%20procesado%20%F0%9F%9A%80.%20En%20un%20momento%20pasaremos%20a%20armar%20tu%20pedido%20%F0%9F%93%A6.`}
-                  className="inline-flex items-center gap-2 bg-[#25D366] text-white mt-4 px-4 py-2 rounded-md font-medium hover:bg-[#1ebe5d] transition-colors"
+                  className="w-full justify-center items-center inline-flex items-center gap-2 bg-[#25D366] text-white mt-4 px-4 py-2 rounded-md font-medium hover:bg-[#1ebe5d] transition-colors"
                 >
                   <svg
                     viewBox="0 0 31 30"
@@ -1247,7 +1247,7 @@ const CreateSale = () => {
                       fill="currentColor"
                     ></path>
                   </svg>
-                  <span>WhatsApp</span>
+                  <span>Escribir a WhatsApp</span>
                 </a>
               )}
             </CardContent>
