@@ -1,12 +1,12 @@
 import jsPDF from "jspdf";
 
 const EMPRESA = {
-  name: "OVERTAKE UNLIMITED E.I.R.L.",
-  ruc: "20607798002",
-  phone: "951645997",
-  address: "AV. BRASIL 817. JESÚS MARÍA - LIMA.",
-  email: "overtake.peru.empresa@gmail.com",
-  website: "https://overtake.com.pe",
+  name: "PERCEPTION ENDLESS COMPANY E.I.R.L.",
+  ruc: "20611215895",
+  phone: "977862202",
+  address: "URB. EL PORVENIR CAL. SEBASTIAN BARRANCA - LA VICTORIA - LIMA.",
+  email: "ariasveramanuel@gmail.com",
+  website: "https://perception.pe",
   direccionPartida: "GAMARRA GALERIA PARAISO - LA VICTORIA - LIMA",
 };
 
@@ -69,7 +69,9 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...dark);
-  doc.text("GUÍA DE REMISIÓN", rightBoxX + rightBoxW / 2, y + 11, { align: "center" });
+  doc.text("GUÍA DE REMISIÓN", rightBoxX + rightBoxW / 2, y + 11, {
+    align: "center",
+  });
 
   // Guide number
   const guideNumber = `T001-${String(data.orderId || 0).padStart(8, "0")}`;
@@ -86,7 +88,11 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...muted);
   doc.text(EMPRESA.address, margin + 3, y + 14);
-  doc.text(`Email: ${EMPRESA.email}   R.U.C. ${EMPRESA.ruc}`, margin + 3, y + 20);
+  doc.text(
+    `Email: ${EMPRESA.email}   R.U.C. ${EMPRESA.ruc}`,
+    margin + 3,
+    y + 20,
+  );
   doc.text(`Teléfono: ${EMPRESA.phone}`, margin + 3, y + 26);
   doc.text(`Website: ${EMPRESA.website}`, margin + 3, y + 32);
 
@@ -109,7 +115,7 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
     value: string,
     x: number,
     yPos: number,
-    labelW = 46
+    labelW = 46,
   ) => {
     doc.setFontSize(7.5);
     doc.setFont("helvetica", "bold");
@@ -130,7 +136,11 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
   // ── DESTINATARIO ─────────────────────────────────────────────────────────
   drawSectionHeader("Destinatario");
 
-  const fullName = [data.customerName, data.customerLastname, data.customerLastname2]
+  const fullName = [
+    data.customerName,
+    data.customerLastname,
+    data.customerLastname2,
+  ]
     .filter(Boolean)
     .join(" ")
     .toUpperCase();
@@ -166,7 +176,7 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
     (data.documentType || "DNI").toUpperCase(),
     margin + 3,
     y + 3,
-    50
+    50,
   );
   y += 7;
 
@@ -175,7 +185,7 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
     data.documentNumber || "-",
     margin + 3,
     y + 3,
-    64
+    64,
   );
   y += 9;
 
@@ -187,7 +197,13 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
   y += 8;
 
   labelValue("Fecha inicio de traslado", fechaStr, margin + 3, y + 3, 50);
-  labelValue("Modalidad de Transporte", "Transporte Público", pageW / 2, y + 3, 42);
+  labelValue(
+    "Modalidad de Transporte",
+    "Transporte Público",
+    pageW / 2,
+    y + 3,
+    42,
+  );
   y += 7;
 
   labelValue(
@@ -195,7 +211,7 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
     (data.direccionPartida || EMPRESA.direccionPartida).toUpperCase(),
     margin + 3,
     y + 3,
-    38
+    38,
   );
   labelValue("Peso bruto total(KGM)", "0.0", pageW / 2, y + 3, 42);
   y += 7;
@@ -205,7 +221,7 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
     direccionPrincipal || "-",
     margin + 3,
     y + 3,
-    38
+    38,
   );
   y += 9;
 
@@ -217,7 +233,7 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
     data.shippingMethodName?.toUpperCase() || "-",
     margin + 3,
     y + 5,
-    40
+    40,
   );
   labelValue("Conductor", "", pageW / 2, y + 5, 22);
   y += 8;
@@ -263,7 +279,11 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...dark);
       const guideNumber = `T001-${String(data.orderId || 0).padStart(8, "0")}`;
-      doc.text(`GUÍA DE REMISIÓN ${guideNumber} — Detalle de Envío (cont.)`, margin, y + 5);
+      doc.text(
+        `GUÍA DE REMISIÓN ${guideNumber} — Detalle de Envío (cont.)`,
+        margin,
+        y + 5,
+      );
       doc.setDrawColor(...gray200);
       doc.line(margin, y + 7, margin + contentW, y + 7);
       y += 12;
@@ -281,7 +301,10 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
     let finalDesc = desc;
     if (doc.getTextWidth(desc) > maxDescW) {
       let truncated = desc;
-      while (doc.getTextWidth(truncated + "…") > maxDescW && truncated.length > 0) {
+      while (
+        doc.getTextWidth(truncated + "…") > maxDescW &&
+        truncated.length > 0
+      ) {
         truncated = truncated.slice(0, -1);
       }
       finalDesc = truncated + "…";

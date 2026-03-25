@@ -143,7 +143,7 @@ const Dashboard = () => {
           <CardContent>
             <div className="space-y-4">
               {[
-                { name: "Camiseta OVERTAKE Classic", stock: 5, min: 10 },
+                { name: "Camiseta PERCEPTION Classic", stock: 5, min: 10 },
                 { name: "Pantalón Deportivo Pro", stock: 3, min: 15 },
                 { name: "Sudadera Urban Style", stock: 8, min: 12 },
               ].map((product, index) => (

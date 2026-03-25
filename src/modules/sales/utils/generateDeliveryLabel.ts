@@ -16,10 +16,10 @@ export interface DeliveryLabelData {
 }
 
 const REMITENTE = {
-  name: "OVERTAKE UNLIMITED E.I.R.L.",
-  ruc: "20607798002",
-  phone: "951645997",
-  address: "AV. BRASIL 817. JESÚS MARÍA - LIMA.",
+  name: "PERCEPTION ENDLESS COMPANY E.I.R.L.",
+  ruc: "20611215895",
+  phone: "977862202",
+  address: "URB. EL PORVENIR CAL. SEBASTIAN BARRANCA - LA VICTORIA - LIMA.",
 };
 
 const BLUE: [number, number, number] = [60, 78, 145]; // #3c4e91
@@ -135,7 +135,7 @@ export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...BLACK);
-    staticText(doc, "OVERTAKE", innerX, headerY + 10);
+    staticText(doc, "PERCEPTION", innerX, headerY + 10);
   }
 
   // Vertical divider

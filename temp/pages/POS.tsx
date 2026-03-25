@@ -1,52 +1,82 @@
-import React, { useState } from 'react';
-import { Card, CardHeader, CardContent } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Plus, Minus, ShoppingCart, CreditCard, DollarSign, Trash } from 'lucide-react';
+import React, { useState } from "react";
+import { Card, CardHeader, CardContent } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import {
+  Plus,
+  Minus,
+  ShoppingCart,
+  CreditCard,
+  DollarSign,
+  Trash,
+} from "lucide-react";
 
 const POS = () => {
   const [cartItems, setCartItems] = useState([]);
   const [total, setTotal] = useState(0);
 
   const products = [
-    { id: 1, name: 'Camiseta OVERTAKE Classic', price: 29.99, image: '/placeholder.svg' },
-    { id: 2, name: 'Pantalón Deportivo Pro', price: 89.99, image: '/placeholder.svg' },
-    { id: 3, name: 'Sudadera Urban Style', price: 65.99, image: '/placeholder.svg' },
-    { id: 4, name: 'Gorra Streetwear', price: 24.99, image: '/placeholder.svg' },
-    { id: 5, name: 'Zapatillas OVERTAKE', price: 129.99, image: '/placeholder.svg' },
-    { id: 6, name: 'Chaqueta Bomber', price: 99.99, image: '/placeholder.svg' }
+    {
+      id: 1,
+      name: "Camiseta PERCEPTION Classic",
+      price: 29.99,
+      image: "/placeholder.svg",
+    },
+    {
+      id: 2,
+      name: "Pantalón Deportivo Pro",
+      price: 89.99,
+      image: "/placeholder.svg",
+    },
+    {
+      id: 3,
+      name: "Sudadera Urban Style",
+      price: 65.99,
+      image: "/placeholder.svg",
+    },
+    {
+      id: 4,
+      name: "Gorra Streetwear",
+      price: 24.99,
+      image: "/placeholder.svg",
+    },
+    {
+      id: 5,
+      name: "Zapatillas PERCEPTION",
+      price: 129.99,
+      image: "/placeholder.svg",
+    },
+    { id: 6, name: "Chaqueta Bomber", price: 99.99, image: "/placeholder.svg" },
   ];
 
   const addToCart = (product) => {
-    setCartItems(prev => {
-      const existing = prev.find(item => item.id === product.id);
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
       if (existing) {
-        return prev.map(item => 
-          item.id === product.id 
+        return prev.map((item) =>
+          item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
-            : item
+            : item,
         );
       }
       return [...prev, { ...product, quantity: 1 }];
     });
-    setTotal(prev => prev + product.price);
+    setTotal((prev) => prev + product.price);
   };
 
   const updateQuantity = (id, change) => {
-    setCartItems(prev => {
-      const item = prev.find(item => item.id === id);
+    setCartItems((prev) => {
+      const item = prev.find((item) => item.id === id);
       if (!item) return prev;
-      
+
       const newQuantity = item.quantity + change;
       if (newQuantity <= 0) {
-        setTotal(prev => prev - (item.price * item.quantity));
-        return prev.filter(item => item.id !== id);
+        setTotal((prev) => prev - item.price * item.quantity);
+        return prev.filter((item) => item.id !== id);
       }
-      
-      setTotal(prev => prev + (item.price * change));
-      return prev.map(item => 
-        item.id === id 
-          ? { ...item, quantity: newQuantity }
-          : item
+
+      setTotal((prev) => prev + item.price * change);
+      return prev.map((item) =>
+        item.id === id ? { ...item, quantity: newQuantity } : item,
       );
     });
   };
@@ -88,7 +118,9 @@ const POS = () => {
                       <ShoppingCart className="w-8 h-8 text-gray-400" />
                     </div>
                     <h4 className="font-medium text-sm mb-1">{product.name}</h4>
-                    <p className="text-lg font-bold text-blue-600">${product.price}</p>
+                    <p className="text-lg font-bold text-blue-600">
+                      ${product.price}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -115,7 +147,10 @@ const POS = () => {
               ) : (
                 <div className="space-y-3">
                   {cartItems.map((item) => (
-                    <div key={item.id} className="flex justify-between items-center py-2 border-b">
+                    <div
+                      key={item.id}
+                      className="flex justify-between items-center py-2 border-b"
+                    >
                       <div className="flex-1">
                         <p className="font-medium text-sm">{item.name}</p>
                         <p className="text-blue-600">${item.price}</p>
@@ -150,22 +185,24 @@ const POS = () => {
               <CardContent className="p-6">
                 <div className="text-center mb-6">
                   <p className="text-sm text-gray-600">Total a Pagar</p>
-                  <p className="text-3xl font-bold text-green-600">${total.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-green-600">
+                    ${total.toFixed(2)}
+                  </p>
                 </div>
 
                 <div className="space-y-3">
                   <Button
                     className="w-full gap-2"
-                    onClick={() => processPayment('Efectivo')}
+                    onClick={() => processPayment("Efectivo")}
                   >
                     <DollarSign className="w-4 h-4" />
                     Pagar en Efectivo
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     className="w-full gap-2"
-                    onClick={() => processPayment('Tarjeta')}
+                    onClick={() => processPayment("Tarjeta")}
                   >
                     <CreditCard className="w-4 h-4" />
                     Pagar con Tarjeta
