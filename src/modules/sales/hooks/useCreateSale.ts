@@ -291,27 +291,25 @@ export const useCreateSale = () => {
     }));
   }, [paginatedProducts]);
 
-  // Computed: Filtered states by country
   const filteredStates = useMemo(() => {
     if (!salesData?.states || !formData.countryId) return [];
     return salesData.states.filter(
-      (s) => s.countryId === Number(formData.countryId),
+      (s) => s.countryId === Number(formData.countryId) // ✅ camelCase
     );
   }, [salesData?.states, formData.countryId]);
 
-  // Computed: Filtered cities by state
   const filteredCities = useMemo(() => {
     if (!salesData?.cities || !formData.stateId) return [];
     return salesData.cities.filter(
-      (c) => c.stateId === Number(formData.stateId),
+      (c) => c.stateId === Number(formData.stateId) // ✅ camelCase
     );
   }, [salesData?.cities, formData.stateId]);
 
-  // Computed: Filtered neighborhoods by city
+  // ✅ Corregido (camelCase — coincide con el adapter)
   const filteredNeighborhoods = useMemo(() => {
     if (!salesData?.neighborhoods || !formData.cityId) return [];
     return salesData.neighborhoods.filter(
-      (n) => n.cityId === Number(formData.cityId),
+      (n) => n.cityId === Number(formData.cityId) // ← camelCase
     );
   }, [salesData?.neighborhoods, formData.cityId]);
 
@@ -617,7 +615,13 @@ export const useCreateSale = () => {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("warehouse_id, branch_id, warehouses(id, name), branches(id, address)")
+        .select(`
+          warehouse_id, 
+          branch_id, 
+          warehouses(id, name), 
+          branches(id, address),
+          accounts!inner(name, last_name)
+        `)
         .eq("UID", user.id)
         .single();
 
@@ -633,6 +637,12 @@ export const useCreateSale = () => {
           ? profile.warehouses[0]
           : profile.warehouses;
         setUserWarehouseName(warehouse?.name || "");
+      }
+
+      if (profile?.accounts) {
+        const account = Array.isArray(profile.accounts) ? profile.accounts[0] : profile.accounts;
+        const name = [account?.name, account?.last_name].filter(Boolean).join(" ");
+        setFormData((prev) => ({ ...prev, vendorName: name }));
       }
 
       if (profile?.branch_id) {
@@ -654,23 +664,26 @@ export const useCreateSale = () => {
     setShowPriceListModal(false);
   }, []);
 
-  // Load order data for editing (using consolidated Edge Function)
   const loadOrderData = async (id: number) => {
     try {
       setLoading(true);
 
-      // Single call to get all data
       const data = await fetchSaleById(id);
       const adapted = adaptSaleById(data);
 
-      // Set all state at once
-      setFormData(adapted.formData);
+      const { countryId, stateId, cityId, neighborhoodId, ...restFormData } = adapted.formData;
+
+      // 1. Setear TODO excepto ubicación
+      setFormData({
+        ...adapted.formData,
+        countryId: "",
+        stateId: "",
+        cityId: "",
+        neighborhoodId: "",
+      });
+
       setProducts(adapted.products);
-      setPayments(
-        adapted.payments.length > 0
-          ? adapted.payments
-          : [createEmptyPayment()]
-      );
+      setPayments(adapted.payments.length > 0 ? adapted.payments : [createEmptyPayment()]);
       setChangeEntries(adapted.changeEntries || []);
       setOrderSituation(adapted.currentSituation);
       setSavedOrderSituation(adapted.currentSituation);
@@ -680,28 +693,66 @@ export const useCreateSale = () => {
       setCreatedOrderId(id);
       setOrderDiscounts(adapted.orderDiscounts || []);
 
-      // Load notes from DB
       await loadNotesFromDB(id);
-      // Override warehouse with order's warehouse when editing
+
+      // Fetch vendor name for existing order - be extra sure we have the created_by UID
+      let creatorId = data.order?.created_by;
+      if (!creatorId) {
+        const { data: orderData } = await supabase
+          .from("orders")
+          .select("created_by")
+          .eq("id", id)
+          .single();
+        creatorId = orderData?.created_by;
+      }
+
+      let fetchedVendorName = "";
+      if (creatorId) {
+        const { data: vendorProfile } = await supabase
+          .from("profiles")
+          .select("accounts!inner(name, last_name)")
+          .eq("UID", creatorId)
+          .single();
+
+        if (vendorProfile?.accounts) {
+          const account = Array.isArray(vendorProfile.accounts) ? vendorProfile.accounts[0] : (vendorProfile.accounts as any);
+          fetchedVendorName = [account?.name, account?.last_name].filter(Boolean).join(" ");
+        }
+      }
+
       if (adapted.orderWarehouseId) {
         setUserWarehouseId(adapted.orderWarehouseId);
       }
 
-      // Detect anonymous purchase: document_type = "0" and document_number = " "
       if (adapted.formData.documentType === "0" && adapted.formData.documentNumber === " ") {
         setIsAnonymousPurchase(true);
       }
 
-      // Snapshot for dirty checking
       const snap = {
         formData: adapted.formData,
         products: adapted.products.map(p => ({ ...p })),
         payments: adapted.payments.map(p => ({ ...p, voucherFile: undefined, voucherPreview: undefined })),
-        changeEntries: adapted.changeEntries ? adapted.changeEntries.map(c => ({ ...c, voucherFile: undefined, voucherPreview: undefined })) : [],
+        changeEntries: adapted.changeEntries
+          ? adapted.changeEntries.map(c => ({ ...c, voucherFile: undefined, voucherPreview: undefined }))
+          : [],
         orderSituation: adapted.currentSituation,
         orderDiscounts: adapted.orderDiscounts || [],
       };
       setOriginalState(JSON.stringify(snap));
+
+      // 2. Setear ubicación Y quitar loading juntos en el siguiente tick
+      setTimeout(() => {
+        setFormData(prev => ({
+          ...prev,
+          countryId,
+          stateId,
+          cityId,
+          neighborhoodId,
+          // Ensure vendorName is preserved if we fetched it, otherwise use what's in adapted
+          vendorName: fetchedVendorName || prev.vendorName || adapted.formData.vendorName,
+        }));
+        setLoading(false);
+      }, 0);
 
     } catch (error) {
       console.error("Error loading order:", error);
@@ -710,9 +761,9 @@ export const useCreateSale = () => {
         description: "No se pudo cargar la venta",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
+      setLoading(false); // ← solo en error
     }
+    // finally eliminado — loading se maneja arriba
   };
 
   // Handle form input changes
