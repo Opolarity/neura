@@ -615,7 +615,13 @@ export const useCreateSale = () => {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("warehouse_id, branch_id, warehouses(id, name), branches(id, address)")
+        .select(`
+          warehouse_id, 
+          branch_id, 
+          warehouses(id, name), 
+          branches(id, address),
+          accounts!inner(name, last_name)
+        `)
         .eq("UID", user.id)
         .single();
 
@@ -631,6 +637,12 @@ export const useCreateSale = () => {
           ? profile.warehouses[0]
           : profile.warehouses;
         setUserWarehouseName(warehouse?.name || "");
+      }
+
+      if (profile?.accounts) {
+        const account = Array.isArray(profile.accounts) ? profile.accounts[0] : profile.accounts;
+        const name = [account?.name, account?.last_name].filter(Boolean).join(" ");
+        setFormData((prev) => ({ ...prev, vendorName: name }));
       }
 
       if (profile?.branch_id) {
@@ -683,6 +695,31 @@ export const useCreateSale = () => {
 
       await loadNotesFromDB(id);
 
+      // Fetch vendor name for existing order - be extra sure we have the created_by UID
+      let creatorId = data.order?.created_by;
+      if (!creatorId) {
+        const { data: orderData } = await supabase
+          .from("orders")
+          .select("created_by")
+          .eq("id", id)
+          .single();
+        creatorId = orderData?.created_by;
+      }
+
+      let fetchedVendorName = "";
+      if (creatorId) {
+        const { data: vendorProfile } = await supabase
+          .from("profiles")
+          .select("accounts!inner(name, last_name)")
+          .eq("UID", creatorId)
+          .single();
+
+        if (vendorProfile?.accounts) {
+          const account = Array.isArray(vendorProfile.accounts) ? vendorProfile.accounts[0] : (vendorProfile.accounts as any);
+          fetchedVendorName = [account?.name, account?.last_name].filter(Boolean).join(" ");
+        }
+      }
+
       if (adapted.orderWarehouseId) {
         setUserWarehouseId(adapted.orderWarehouseId);
       }
@@ -711,8 +748,10 @@ export const useCreateSale = () => {
           stateId,
           cityId,
           neighborhoodId,
+          // Ensure vendorName is preserved if we fetched it, otherwise use what's in adapted
+          vendorName: fetchedVendorName || prev.vendorName || adapted.formData.vendorName,
         }));
-        setLoading(false); // ← acá, no en finally
+        setLoading(false);
       }, 0);
 
     } catch (error) {

@@ -641,7 +641,7 @@ const CreateSale = () => {
                         key={index}
                         className={cn(
                           highlightedRowIndex === index &&
-                            "animate-highlight-row",
+                          "animate-highlight-row",
                         )}
                       >
                         <TableCell>
@@ -707,7 +707,7 @@ const CreateSale = () => {
                               className={cn(
                                 "w-24 text-center",
                                 product.fromOrder &&
-                                  "bg-muted text-muted-foreground cursor-not-allowed pr-7",
+                                "bg-muted text-muted-foreground cursor-not-allowed pr-7",
                               )}
                               disabled={isPhySituation || !!product.fromOrder}
                             />
@@ -734,7 +734,7 @@ const CreateSale = () => {
                               className={cn(
                                 "w-20 text-center",
                                 (isComSituation || isPhySituation) &&
-                                  "bg-muted text-muted-foreground cursor-not-allowed pr-7",
+                                "bg-muted text-muted-foreground cursor-not-allowed pr-7",
                               )}
                               disabled={isComSituation || isPhySituation}
                             />
@@ -894,7 +894,6 @@ const CreateSale = () => {
                     <Input
                       value={formData.vendorName}
                       disabled
-                      placeholder="Juan Pérez"
                       className="bg-muted"
                     />
                   </div>
@@ -1725,59 +1724,59 @@ const CreateSale = () => {
                     {/* Lista de vueltos registrados */}
                     {changeEntries.filter((e) => e.paymentMethodId).length >
                       0 && (
-                      <div className="space-y-2">
-                        {changeEntries
-                          .filter((e) => e.paymentMethodId)
-                          .map((e) => {
-                            const method = allPaymentMethods.find(
-                              (pm) => pm.id.toString() === e.paymentMethodId,
-                            );
-                            return (
-                              <div
-                                key={e.id}
-                                className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-md"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <CreditCard className="w-4 h-4 text-green-600 dark:text-green-400" />
-                                  <span className="text-sm">
-                                    {method?.name || "Método"}
-                                  </span>
-                                  <span className="text-sm font-medium">
-                                    {formatCurrency(parseFloat(e.amount) || 0)}
-                                  </span>
-                                  {e.voucherPreview && (
+                        <div className="space-y-2">
+                          {changeEntries
+                            .filter((e) => e.paymentMethodId)
+                            .map((e) => {
+                              const method = allPaymentMethods.find(
+                                (pm) => pm.id.toString() === e.paymentMethodId,
+                              );
+                              return (
+                                <div
+                                  key={e.id}
+                                  className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-md"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <CreditCard className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                    <span className="text-sm">
+                                      {method?.name || "Método"}
+                                    </span>
+                                    <span className="text-sm font-medium">
+                                      {formatCurrency(parseFloat(e.amount) || 0)}
+                                    </span>
+                                    {e.voucherPreview && (
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => {
+                                          setSelectedVoucherPreview(
+                                            e.voucherPreview || null,
+                                          );
+                                          setVoucherModalOpen(true);
+                                        }}
+                                        title="Ver comprobante"
+                                      >
+                                        <Paperclip className="w-3 h-3 text-primary" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                  {!isComSituation && (
                                     <Button
-                                      type="button"
                                       variant="ghost"
                                       size="icon"
                                       className="h-6 w-6"
-                                      onClick={() => {
-                                        setSelectedVoucherPreview(
-                                          e.voucherPreview || null,
-                                        );
-                                        setVoucherModalOpen(true);
-                                      }}
-                                      title="Ver comprobante"
+                                      onClick={() => removeChangeEntry(e.id)}
                                     >
-                                      <Paperclip className="w-3 h-3 text-primary" />
+                                      <Trash2 className="w-3 h-3 text-destructive" />
                                     </Button>
                                   )}
                                 </div>
-                                {!isComSituation && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6"
-                                    onClick={() => removeChangeEntry(e.id)}
-                                  >
-                                    <Trash2 className="w-3 h-3 text-destructive" />
-                                  </Button>
-                                )}
-                              </div>
-                            );
-                          })}
-                      </div>
-                    )}
+                              );
+                            })}
+                        </div>
+                      )}
 
                     {/* Formulario para agregar vuelto */}
                     {(() => {
