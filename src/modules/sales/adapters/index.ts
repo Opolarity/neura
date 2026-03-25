@@ -105,7 +105,6 @@ export const adaptCities = (data: any[]): City[] => {
     id: item.id,
     name: item.name,
     stateId: item.state_id,
-    countryId: item.country_id, // ✅ agregar
   }));
 };
 
@@ -114,8 +113,7 @@ export const adaptNeighborhoods = (data: any[]): Neighborhood[] => {
     id: item.id,
     name: item.name,
     cityId: item.city_id,
-    stateId: item.state_id,   // ✅ agregar
-    countryId: item.country_id, // ✅ agregar
+
   }));
 };
 
