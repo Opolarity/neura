@@ -1,1 +1,5 @@
 /* Additional app-specific styles can go here */
+.required-label::after{
+    content: "*";
+    color: red;
+}

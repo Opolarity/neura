@@ -1,3 +1,4 @@
+import React from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Label } from "@/components/ui/label"
 import {
@@ -10,7 +11,15 @@ import {
 import { useLocationSelector } from "./LocationContext"
 import { getCities } from "@/shared/services/service"
 
-export function CitySelect() {
+type Props = {
+  value?: string
+  onChange?: (v: string) => void
+  error?: string
+  className?: string
+  labelClassName?: string
+}
+
+export const CitySelect = React.memo(function CitySelect({ value, onChange, error, className, labelClassName }: Props) {
   const { city, setCity, state } = useLocationSelector()
 
   const { data: cities = [], isLoading } = useQuery({
@@ -21,11 +30,16 @@ export function CitySelect() {
     gcTime: 10 * 60 * 1000,
   })
 
+  const handleChange = (v: string) => {
+    setCity(v)
+    onChange?.(v)
+  }
+
   return (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor="city">Provincia</Label>
-      <Select value={city} onValueChange={setCity} disabled={!state || (!isLoading && cities.length === 0)}>
-        <SelectTrigger id="city">
+    <div className={`relative flex flex-col gap-2 pb-5${className ? ` ${className}` : ""}`}>
+      <Label htmlFor="city" className={labelClassName}>Provincia</Label>
+      <Select value={value ?? city} onValueChange={handleChange} disabled={!state || (!isLoading && cities.length === 0)}>
+        <SelectTrigger id="city" className={error ? "border-destructive" : ""}>
           <SelectValue placeholder="Seleccione" />
         </SelectTrigger>
         <SelectContent>
@@ -40,6 +54,7 @@ export function CitySelect() {
           )}
         </SelectContent>
       </Select>
+      {error && <p className="absolute left-0 bottom-0 text-sm text-destructive">{error}</p>}
     </div>
   )
-}
+})

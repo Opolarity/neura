@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { LocationContext } from "./LocationContext";
 
 import { CountrySelect } from "./CountrySelect";
@@ -12,6 +12,10 @@ type Props = {
   state_id?: string;
   city_id?: string;
   neighborhood_id?: string;
+  onCountryChange?: (v: string) => void;
+  onStateChange?: (v: string) => void;
+  onCityChange?: (v: string) => void;
+  onNeighborhoodChange?: (v: string) => void;
 };
 
 function LocationSelector({
@@ -20,29 +24,47 @@ function LocationSelector({
   state_id,
   city_id,
   neighborhood_id,
+  onCountryChange,
+  onStateChange,
+  onCityChange,
+  onNeighborhoodChange,
 }: Props) {
   const [country, setCountry] = useState(country_id ?? "")
   const [state, setState] = useState(state_id ?? "")
   const [city, setCity] = useState(city_id ?? "")
   const [neighborhood, setNeighborhood] = useState(neighborhood_id ?? "")
 
-  const handleSetCountry = (v: string) => {
+  const handleSetCountry = useCallback((v: string) => {
     setCountry(v)
     setState("")
     setCity("")
     setNeighborhood("")
-  }
+    onCountryChange?.(v)
+    onStateChange?.("")
+    onCityChange?.("")
+    onNeighborhoodChange?.("")
+  }, [onCountryChange, onStateChange, onCityChange, onNeighborhoodChange])
 
-  const handleSetState = (v: string) => {
+  const handleSetState = useCallback((v: string) => {
     setState(v)
     setCity("")
     setNeighborhood("")
-  }
+    onStateChange?.(v)
+    onCityChange?.("")
+    onNeighborhoodChange?.("")
+  }, [onStateChange, onCityChange, onNeighborhoodChange])
 
-  const handleSetCity = (v: string) => {
+  const handleSetCity = useCallback((v: string) => {
     setCity(v)
     setNeighborhood("")
-  }
+    onCityChange?.(v)
+    onNeighborhoodChange?.("")
+  }, [onCityChange, onNeighborhoodChange])
+
+  const handleSetNeighborhood = useCallback((v: string) => {
+    setNeighborhood(v)
+    onNeighborhoodChange?.(v)
+  }, [onNeighborhoodChange])
 
   return (
     <LocationContext.Provider
@@ -54,7 +76,7 @@ function LocationSelector({
         setCountry: handleSetCountry,
         setState: handleSetState,
         setCity: handleSetCity,
-        setNeighborhood,
+        setNeighborhood: handleSetNeighborhood,
       }}
     >
       <div className="flex flex-col gap-2">{children}</div>

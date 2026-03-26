@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
+import LocationSelector from "@/shared/components/location-selector/LocationSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,6 +70,7 @@ import {
   Warehouse,
   Lock,
 } from "lucide-react";
+import { useForm, Controller } from "react-hook-form";
 import { useCreateSale } from "../hooks/useCreateSale";
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
@@ -196,6 +198,21 @@ const CreateSale = () => {
   const [highlightedRowIndex, setHighlightedRowIndex] = useState<number | null>(
     null,
   );
+  const locationForm = useForm<{
+    countryId: string;
+    stateId: string;
+    cityId: string;
+    neighborhoodId: string;
+  }>({
+    mode: "onTouched",
+    defaultValues: {
+      countryId: formData.countryId,
+      stateId: formData.stateId,
+      cityId: formData.cityId,
+      neighborhoodId: formData.neighborhoodId,
+    },
+  });
+
   const noteFileInputRef = useRef<HTMLInputElement>(null);
   const voucherFileInputRef = useRef<HTMLInputElement>(null);
   const changeVoucherFileInputRef = useRef<HTMLInputElement>(null);
@@ -414,7 +431,29 @@ const CreateSale = () => {
         {/* Main Form - 70% */}
         <form
           id="sale-form"
-          onSubmit={handleSubmit}
+          onSubmit={async (e) => {
+            const locationValid = await locationForm.trigger();
+            if (!locationValid) {
+              e.preventDefault();
+              const vals = locationForm.getValues();
+              const missing = [
+                !vals.countryId && "País",
+                !vals.stateId && "Departamento",
+                !vals.cityId && "Provincia",
+                !vals.neighborhoodId && "Distrito",
+              ].filter(Boolean).join(", ");
+              toast({
+                title: "Campos de ubicación requeridos",
+                description: `Completa: ${missing}`,
+                variant: "destructive",
+              });
+              (["countryId", "stateId", "cityId", "neighborhoodId"] as const).forEach((key) => {
+                locationForm.setValue(key, vals[key], { shouldTouch: true });
+              });
+              return;
+            }
+            handleSubmit(e);
+          }}
           className="flex-1 space-y-6"
           style={{ width: "70%" }}
         >
@@ -1062,90 +1101,87 @@ const CreateSale = () => {
                   </div>
                 </div>
 
-                {/* Fila 1: País y Departamento */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>País</Label>
-                    <Select
-                      value={formData.countryId}
-                      onValueChange={(v) => handleInputChange("countryId", v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {salesData?.countries.map((c) => (
-                          <SelectItem key={c.id} value={c.id.toString()}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                {/* Fila 1-2: Ubicación */}
+                <LocationSelector
+                  onCountryChange={(v) => {
+                    handleInputChange("countryId", v);
+                    handleInputChange("stateId", "");
+                    handleInputChange("cityId", "");
+                    handleInputChange("neighborhoodId", "");
+                    locationForm.setValue("stateId", "");
+                    locationForm.setValue("cityId", "");
+                    locationForm.setValue("neighborhoodId", "");
+                  }}
+                  onStateChange={(v) => {
+                    handleInputChange("stateId", v);
+                    handleInputChange("cityId", "");
+                    handleInputChange("neighborhoodId", "");
+                    locationForm.setValue("cityId", "");
+                    locationForm.setValue("neighborhoodId", "");
+                  }}
+                  onCityChange={(v) => {
+                    handleInputChange("cityId", v);
+                    handleInputChange("neighborhoodId", "");
+                    locationForm.setValue("neighborhoodId", "");
+                  }}
+                  onNeighborhoodChange={(v) => {
+                    handleInputChange("neighborhoodId", v);
+                  }}
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    <Controller
+                      control={locationForm.control}
+                      name="countryId"
+                      rules={{ required: "País requerido" }}
+                      render={({ field, fieldState }) => (
+                        <LocationSelector.Country
+                          value={field.value}
+                          onChange={field.onChange}
+                          error={fieldState.error?.message}
+                          labelClassName="required-label"
+                        />
+                      )}
+                    />
+                    <Controller
+                      control={locationForm.control}
+                      name="stateId"
+                      rules={{ required: "Departamento requerido" }}
+                      render={({ field, fieldState }) => (
+                        <LocationSelector.State
+                          value={field.value}
+                          onChange={field.onChange}
+                          error={fieldState.error?.message}
+                        />
+                      )}
+                    />
                   </div>
-                  <div>
-                    <Label>Departamento</Label>
-                    <Select
-                      value={formData.stateId}
-                      onValueChange={(v) => handleInputChange("stateId", v)}
-                      disabled={!formData.countryId}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filteredStates.map((s) => (
-                          <SelectItem key={s.id} value={s.id.toString()}>
-                            {s.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Controller
+                      control={locationForm.control}
+                      name="cityId"
+                      rules={{ required: "Provincia requerida" }}
+                      render={({ field, fieldState }) => (
+                        <LocationSelector.City
+                          value={field.value}
+                          onChange={field.onChange}
+                          error={fieldState.error?.message}
+                        />
+                      )}
+                    />
+                    <Controller
+                      control={locationForm.control}
+                      name="neighborhoodId"
+                      rules={{ required: "Distrito requerido" }}
+                      render={({ field, fieldState }) => (
+                        <LocationSelector.Neighborhood
+                          value={field.value}
+                          onChange={field.onChange}
+                          error={fieldState.error?.message}
+                        />
+                      )}
+                    />
                   </div>
-                </div>
-
-                {/* Fila 2: Provincia y Distrito */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Provincia</Label>
-                    <Select
-                      value={formData.cityId}
-                      onValueChange={(v) => handleInputChange("cityId", v)}
-                      disabled={!formData.stateId}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filteredCities.map((c) => (
-                          <SelectItem key={c.id} value={c.id.toString()}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Distrito</Label>
-                    <Select
-                      value={formData.neighborhoodId}
-                      onValueChange={(v) =>
-                        handleInputChange("neighborhoodId", v)
-                      }
-                      disabled={!formData.cityId}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filteredNeighborhoods.map((n) => (
-                          <SelectItem key={n.id} value={n.id.toString()}>
-                            {n.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                </LocationSelector>
 
                 {/* Fila 3: Dirección y Referencia */}
                 <div className="grid grid-cols-2 gap-4">
