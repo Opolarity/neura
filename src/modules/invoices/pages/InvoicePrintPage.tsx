@@ -137,7 +137,7 @@ export default function InvoicePrintPage() {
     if (id) generatePdf(Number(id));
   }, [id]);
 
-  const loadImage = async (url: string): Promise<string> => {
+  const loadImage = async (url: string): Promise<{ dataUrl: string; width: number; height: number }> => {
     const response = await fetch(url);
     const blob = await response.blob();
     const objectUrl = URL.createObjectURL(blob);
@@ -152,7 +152,7 @@ export default function InvoicePrintPage() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(objectUrl);
-        resolve(canvas.toDataURL("image/png"));
+        resolve({ dataUrl: canvas.toDataURL("image/png"), width: img.width, height: img.height });
       };
       img.onerror = () => {
         URL.revokeObjectURL(objectUrl);
@@ -290,7 +290,7 @@ export default function InvoicePrintPage() {
       const invoiceLogoUrl = parametersRes.data?.value;
       const logoUrl = invoiceLogoUrl || "/images/logo-ticket.png";
 
-      let logoImg: string | null = null;
+      let logoImg: { dataUrl: string; width: number; height: number } | null = null;
       try {
         logoImg = await loadImage(logoUrl);
       } catch {}
@@ -313,10 +313,16 @@ export default function InvoicePrintPage() {
 
         // ============ LOGO ============
         if (logoImg) {
-          const logoSize = 22;
-          const logoX = (pageWidth - logoSize) / 2;
-          doc.addImage(logoImg, "PNG", logoX, y, logoSize, logoSize);
-          y += logoSize + 5;
+          const maxW = 60;
+          const maxH = 22;
+          const ratio = Math.min(maxW / logoImg.width, maxH / logoImg.height);
+          const w = logoImg.width * ratio;
+          const h = logoImg.height * ratio;
+          const logoX = (pageWidth - maxW) / 2;
+          const offsetX = (maxW - w) / 2;
+          const offsetY = (maxH - h) / 2;
+          doc.addImage(logoImg.dataUrl, "PNG", logoX + offsetX, y + offsetY, w, h);
+          y += offsetY + h + 5;
         } else {
           y += 2;
         }
