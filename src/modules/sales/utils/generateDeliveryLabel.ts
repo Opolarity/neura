@@ -118,14 +118,19 @@ export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
   let logoLoaded = false;
   try {
     const logoDataUrl = await loadImageAsDataUrl("/images/logo-rotulo-pdf.png");
-    const logoW = 38;
     const nativeLogo = new Image();
     nativeLogo.src = logoDataUrl;
     await new Promise<void>((res) => {
       nativeLogo.onload = () => res();
     });
-    const logoH = logoW * (nativeLogo.naturalHeight / nativeLogo.naturalWidth);
-    doc.addImage(logoDataUrl, "PNG", innerX + 1, headerY + 3, logoW, logoH);
+    const maxW = 38;
+    const maxH = 12;
+    const ratio = Math.min(maxW / nativeLogo.naturalWidth, maxH / nativeLogo.naturalHeight);
+    const w = nativeLogo.naturalWidth * ratio;
+    const h = nativeLogo.naturalHeight * ratio;
+    const offsetX = (maxW - w) / 2;
+    const offsetY = (maxH - h) / 2;
+    doc.addImage(logoDataUrl, "PNG", innerX + 1 + offsetX, headerY + 3 + offsetY, w, h);
     logoLoaded = true;
   } catch {
     // fallback
