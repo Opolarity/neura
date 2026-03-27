@@ -17,6 +17,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 import { useFunctions } from "@/hooks/useFunctions";
+import { getParameter } from "@/modules/settings/services/Parameters.service";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
     Record<number, boolean>
   >({});
   const [isCollapsed, setIsCollapsed] = useState(!initialOpen);
+  const [companyShortName, setCompanyShortName] = useState("");
   const [hoveredItem, setHoveredItem] = useState<{
     id: number;
     name: string;
@@ -59,6 +61,12 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
     subItems: any[];
   } | null>(null);
   const subMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    getParameter("CompanyShortName").then((value) => {
+      if (value) setCompanyShortName(value);
+    });
+  }, []);
 
   // Update internal state when prop changes
   useEffect(() => {
@@ -138,7 +146,7 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
         {!isCollapsed && (
           <div className="flex flex-col overflow-hidden">
             <h1 className="font-bold text-lg leading-none tracking-tight whitespace-nowrap">
-              PERCEPTION
+              {companyShortName.toUpperCase() || "ERP"}
             </h1>
             <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-semibold whitespace-nowrap">
               ERP System
