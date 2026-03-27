@@ -93,14 +93,20 @@ export default function POSTicketPrintPage() {
     if (invoiceId) generatePdf(Number(invoiceId));
   }, [invoiceId]);
 
-  const loadImage = async (url: string): Promise<string> => {
+  const loadImage = async (url: string): Promise<{ dataUrl: string; width: number; height: number }> => {
     const response = await fetch(url);
     const blob = await response.blob();
-    return new Promise((resolve, reject) => {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
       reader.onerror = reject;
       reader.readAsDataURL(blob);
+    });
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve({ dataUrl, width: img.width, height: img.height });
+      img.onerror = reject;
+      img.src = dataUrl;
     });
   };
 
@@ -185,14 +191,22 @@ export default function POSTicketPrintPage() {
       const invoiceLogoUrl = invoiceLogoRes.data?.value;
       const logoSrc = invoice.declared && invoiceLogoUrl ? invoiceLogoUrl : "/images/logo-ticket.png";
       try {
-        const logoImg = await loadImage(logoSrc);
-        const logoSize = 22;
-        const logoX = (pageWidth - logoSize) / 2;
+        const { dataUrl: logoImg, width: imgW, height: imgH } = await loadImage(logoSrc);
+        const logoMaxWidth = 40;
+        const logoMaxHeight = 30;
+        const aspectRatio = imgW / imgH;
+        let renderW = logoMaxWidth;
+        let renderH = logoMaxWidth / aspectRatio;
+        if (renderH > logoMaxHeight) {
+          renderH = logoMaxHeight;
+          renderW = logoMaxHeight * aspectRatio;
+        }
+        const logoX = (pageWidth - renderW) / 2;
         const imgFormat = logoImg.startsWith("data:image/png") ? "PNG" : "JPEG";
         doc.setFillColor(255, 255, 255);
-        doc.rect(logoX, y, logoSize, logoSize, "F");
-        doc.addImage(logoImg, imgFormat, logoX, y, logoSize, logoSize);
-        y += logoSize + 2;
+        doc.rect(logoX, y, renderW, renderH, "F");
+        doc.addImage(logoImg, imgFormat, logoX, y, renderW, renderH);
+        y += renderH + 2;
       } catch {
         y += 2;
       }

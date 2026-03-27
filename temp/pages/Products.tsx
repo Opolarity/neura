@@ -1,54 +1,63 @@
-import React, { useState } from 'react';
-import { Card, CardHeader, CardContent } from '../components/ui/card';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table';
-import { Button } from '../components/ui/button';
-import { Plus, Edit, Trash, Search } from 'lucide-react';
+import React, { useState } from "react";
+import { Card, CardHeader, CardContent } from "../components/ui/card";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "../components/ui/table";
+import { Button } from "../components/ui/button";
+import { Plus, Edit, Trash, Search } from "lucide-react";
 
 const Products = () => {
   const [products] = useState([
     {
       id: 1,
-      name: 'Camiseta OVERTAKE Classic',
-      sku: 'OVT-001',
-      category: 'Camisetas',
+      name: "Camiseta PERCEPTION Classic",
+      sku: "OVT-001",
+      category: "Camisetas",
       price: 29.99,
       stock: 45,
-      status: 'Activo'
+      status: "Activo",
     },
     {
       id: 2,
-      name: 'Pantalón Deportivo Pro',
-      sku: 'OVT-002',
-      category: 'Pantalones',
+      name: "Pantalón Deportivo Pro",
+      sku: "OVT-002",
+      category: "Pantalones",
       price: 89.99,
       stock: 23,
-      status: 'Activo'
+      status: "Activo",
     },
     {
       id: 3,
-      name: 'Sudadera Urban Style',
-      sku: 'OVT-003',
-      category: 'Sudaderas',
+      name: "Sudadera Urban Style",
+      sku: "OVT-003",
+      category: "Sudaderas",
       price: 65.99,
       stock: 8,
-      status: 'Stock Bajo'
+      status: "Stock Bajo",
     },
     {
       id: 4,
-      name: 'Gorra Streetwear',
-      sku: 'OVT-004',
-      category: 'Accesorios',
+      name: "Gorra Streetwear",
+      sku: "OVT-004",
+      category: "Accesorios",
       price: 24.99,
       stock: 67,
-      status: 'Activo'
-    }
+      status: "Activo",
+    },
   ]);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Productos</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Gestión de Productos
+          </h1>
           <p className="text-gray-600">Administra tu catálogo de productos</p>
         </div>
         <Button className="gap-2">
@@ -93,11 +102,13 @@ const Products = () => {
                   <TableCell>${product.price}</TableCell>
                   <TableCell>{product.stock}</TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      product.status === 'Activo' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        product.status === "Activo"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
                       {product.status}
                     </span>
                   </TableCell>

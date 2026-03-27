@@ -138,7 +138,7 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
         {!isCollapsed && (
           <div className="flex flex-col overflow-hidden">
             <h1 className="font-bold text-lg leading-none tracking-tight whitespace-nowrap">
-              OVERTAKE
+              PERCEPTION
             </h1>
             <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-semibold whitespace-nowrap">
               ERP System

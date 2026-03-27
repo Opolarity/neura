@@ -16,10 +16,10 @@ export interface DeliveryLabelData {
 }
 
 const REMITENTE = {
-  name: "OVERTAKE UNLIMITED E.I.R.L.",
-  ruc: "20607798002",
-  phone: "951645997",
-  address: "AV. BRASIL 817. JESÚS MARÍA - LIMA.",
+  name: "PERCEPTION ENDLESS COMPANY E.I.R.L.",
+  ruc: "20611215895",
+  phone: "977862202",
+  address: "URB. EL PORVENIR CAL. SEBASTIAN BARRANCA - LA VICTORIA - LIMA.",
 };
 
 const BLUE: [number, number, number] = [60, 78, 145]; // #3c4e91
@@ -118,14 +118,19 @@ export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
   let logoLoaded = false;
   try {
     const logoDataUrl = await loadImageAsDataUrl("/images/logo-rotulo-pdf.png");
-    const logoW = 38;
     const nativeLogo = new Image();
     nativeLogo.src = logoDataUrl;
     await new Promise<void>((res) => {
       nativeLogo.onload = () => res();
     });
-    const logoH = logoW * (nativeLogo.naturalHeight / nativeLogo.naturalWidth);
-    doc.addImage(logoDataUrl, "PNG", innerX + 1, headerY + 3, logoW, logoH);
+    const maxW = 38;
+    const maxH = 12;
+    const ratio = Math.min(maxW / nativeLogo.naturalWidth, maxH / nativeLogo.naturalHeight);
+    const w = nativeLogo.naturalWidth * ratio;
+    const h = nativeLogo.naturalHeight * ratio;
+    const offsetX = (maxW - w) / 2;
+    const offsetY = (maxH - h) / 2;
+    doc.addImage(logoDataUrl, "PNG", innerX + 1 + offsetX, headerY + 3 + offsetY, w, h);
     logoLoaded = true;
   } catch {
     // fallback
@@ -135,7 +140,7 @@ export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...BLACK);
-    staticText(doc, "OVERTAKE", innerX, headerY + 10);
+    staticText(doc, "PERCEPTION", innerX, headerY + 10);
   }
 
   // Vertical divider

@@ -34,10 +34,54 @@ interface InvoiceItem {
 }
 
 function numberToWords(num: number): string {
-  const units = ["", "UNO", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
-  const teens = ["DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE", "DIECISÉIS", "DIECISIETE", "DIECIOCHO", "DIECINUEVE"];
-  const tens = ["", "", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
-  const hundreds = ["", "CIENTO", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
+  const units = [
+    "",
+    "UNO",
+    "DOS",
+    "TRES",
+    "CUATRO",
+    "CINCO",
+    "SEIS",
+    "SIETE",
+    "OCHO",
+    "NUEVE",
+  ];
+  const teens = [
+    "DIEZ",
+    "ONCE",
+    "DOCE",
+    "TRECE",
+    "CATORCE",
+    "QUINCE",
+    "DIECISÉIS",
+    "DIECISIETE",
+    "DIECIOCHO",
+    "DIECINUEVE",
+  ];
+  const tens = [
+    "",
+    "",
+    "VEINTE",
+    "TREINTA",
+    "CUARENTA",
+    "CINCUENTA",
+    "SESENTA",
+    "SETENTA",
+    "OCHENTA",
+    "NOVENTA",
+  ];
+  const hundreds = [
+    "",
+    "CIENTO",
+    "DOSCIENTOS",
+    "TRESCIENTOS",
+    "CUATROCIENTOS",
+    "QUINIENTOS",
+    "SEISCIENTOS",
+    "SETECIENTOS",
+    "OCHOCIENTOS",
+    "NOVECIENTOS",
+  ];
 
   if (num === 0) return "CERO";
 
@@ -93,7 +137,7 @@ export default function InvoicePrintPage() {
     if (id) generatePdf(Number(id));
   }, [id]);
 
-  const loadImage = async (url: string): Promise<string> => {
+  const loadImage = async (url: string): Promise<{ dataUrl: string; width: number; height: number }> => {
     const response = await fetch(url);
     const blob = await response.blob();
     const objectUrl = URL.createObjectURL(blob);
@@ -108,7 +152,7 @@ export default function InvoicePrintPage() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(objectUrl);
-        resolve(canvas.toDataURL("image/png"));
+        resolve({ dataUrl: canvas.toDataURL("image/png"), width: img.width, height: img.height });
       };
       img.onerror = () => {
         URL.revokeObjectURL(objectUrl);
@@ -121,45 +165,47 @@ export default function InvoicePrintPage() {
   const generatePdf = async (invoiceId: number) => {
     try {
       // Fetch invoice, items, and company params in parallel
-      const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes] = await Promise.all([
-        supabase
-          .from("invoices")
-          .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by, qr_data")
-          .eq("id", invoiceId)
-          .single(),
-        supabase
-          .from("invoice_items")
-          .select("description, quantity, unit_price, discount, igv, total, measurement_unit")
-          .eq("invoice_id", invoiceId),
-        supabase
-          .from("paremeters")
-          .select("name, value, code"),
-        supabase
-          .from("parameters")
-          .select("name, value")
-          .eq("name", "InvoiceLogoUrl")
-          .maybeSingle(),
-        supabase
-          .from("order_invoices")
-          .select("orders(*, branches(*))")
-          .eq("invoice_id", invoiceId)
-          .single(),
-      ]);
+      const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes] =
+        await Promise.all([
+          supabase
+            .from("invoices")
+            .select(
+              "id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by, qr_data",
+            )
+            .eq("id", invoiceId)
+            .single(),
+          supabase
+            .from("invoice_items")
+            .select(
+              "description, quantity, unit_price, discount, igv, total, measurement_unit",
+            )
+            .eq("invoice_id", invoiceId),
+          supabase.from("paremeters").select("name, value, code"),
+          supabase
+            .from("parameters")
+            .select("name, value")
+            .eq("name", "InvoiceLogoUrl")
+            .maybeSingle(),
+          supabase
+            .from("order_invoices")
+            .select("orders(*, branches(*))")
+            .eq("invoice_id", invoiceId)
+            .single(),
+        ]);
 
       const shippingMethodCode = branchRes.data?.orders?.shipping_method_code;
       const shippingMethod = shippingMethodCode
         ? await supabase
-          .from("shipping_methods")
-          .select("name")
-          .eq("code", shippingMethodCode)
-          .single()
+            .from("shipping_methods")
+            .select("name")
+            .eq("code", shippingMethodCode)
+            .single()
         : null;
 
       const discountOrders = await supabase
         .from("order_discounts")
         .select("name, discount_amount")
-        .eq("order_id", branchRes.data.orders.id)
-
+        .eq("order_id", branchRes.data.orders.id);
 
       const neighborhood = await supabase
         .from("neighborhoods")
@@ -175,16 +221,33 @@ export default function InvoicePrintPage() {
 
       const invoice = invoiceRes.data as InvoiceData & { created_by: string };
       const items = (itemsRes.data || []) as InvoiceItem[];
-      const params = (paramsRes.data || []) as { name: string; value: string; code: string | null }[];
+      const params = (paramsRes.data || []) as {
+        name: string;
+        value: string;
+        code: string | null;
+      }[];
 
       // Helper to get parameter by code
-      const getParam = (code: string) => params.find((p) => p.code === code)?.value || "";
+      const getParam = (code: string) =>
+        params.find((p) => p.code === code)?.value || "";
 
       // Fetch doc type, invoice type, profile (cashier) in parallel
       const [docTypeRes, invTypeRes, profileRes] = await Promise.all([
-        supabase.from("document_types").select("name").eq("id", invoice.customer_document_type_id).single(),
-        supabase.from("types").select("name").eq("id", invoice.invoice_type_id).single(),
-        supabase.from("profiles").select("account_id").eq("UID", invoice.created_by).single(),
+        supabase
+          .from("document_types")
+          .select("name")
+          .eq("id", invoice.customer_document_type_id)
+          .single(),
+        supabase
+          .from("types")
+          .select("name")
+          .eq("id", invoice.invoice_type_id)
+          .single(),
+        supabase
+          .from("profiles")
+          .select("account_id")
+          .eq("UID", invoice.created_by)
+          .single(),
       ]);
 
       let cashierName = "";
@@ -195,15 +258,20 @@ export default function InvoicePrintPage() {
           .eq("id", profileRes.data.account_id)
           .single();
         if (account) {
-          cashierName = [account.name, account.last_name].filter(Boolean).join(" ");
+          cashierName = [account.name, account.last_name]
+            .filter(Boolean)
+            .join(" ");
         }
       }
 
-      const companyName = "OVERTAKE UNLIMITED EIRL" //getParam("COMPANY_NAME") || "EMPRESA";
-      const companyAddress = branchRes.data?.orders?.branches?.address + " " + neighborhood?.data?.name || ""; //getParam("COMPANY_ADDRESS") || "";
-      const companyPhone = "951 645 997"; //getParam("COMPANY_PHONE") || "";
-      const companyEmail = "overta.peru.empresa@gmail.com"; //getParam("COMPANY_EMAIL") || "";
-      const companyRuc = "20607798002" //getParam("COMPANY_RUC") || "";
+      const companyName = "PERCEPTION ENDLESS COMPANY E.I.R.L."; //getParam("COMPANY_NAME") || "EMPRESA";
+      const companyAddress =
+        branchRes.data?.orders?.branches?.address +
+          " " +
+          neighborhood?.data?.name || ""; //getParam("COMPANY_ADDRESS") || "";
+      const companyPhone = "977 862 202"; //getParam("COMPANY_PHONE") || "";
+      const companyEmail = "ariasveramanuel@gmail.com"; //getParam("COMPANY_EMAIL") || "";
+      const companyRuc = "20611215895"; //getParam("COMPANY_RUC") || "";
 
       // Ticket width: 80mm
       const pageWidth = 80;
@@ -222,13 +290,18 @@ export default function InvoicePrintPage() {
       const invoiceLogoUrl = parametersRes.data?.value;
       const logoUrl = invoiceLogoUrl || "/images/logo-ticket.png";
 
-      let logoImg: string | null = null;
-      try { logoImg = await loadImage(logoUrl); } catch { }
+      let logoImg: { dataUrl: string; width: number; height: number } | null = null;
+      try {
+        logoImg = await loadImage(logoUrl);
+      } catch {}
 
       let qrCodeDataUrl: string | null = null;
       if (invoice.qr_data) {
         try {
-          qrCodeDataUrl = await QRCode.toDataURL(invoice.qr_data, { width: 200, margin: 1 });
+          qrCodeDataUrl = await QRCode.toDataURL(invoice.qr_data, {
+            width: 200,
+            margin: 1,
+          });
         } catch (qrErr) {
           console.error("Error generating QR:", qrErr);
         }
@@ -240,10 +313,16 @@ export default function InvoicePrintPage() {
 
         // ============ LOGO ============
         if (logoImg) {
-          const logoSize = 22;
-          const logoX = (pageWidth - logoSize) / 2;
-          doc.addImage(logoImg, "PNG", logoX, y, logoSize, logoSize);
-          y += logoSize + 5;
+          const maxW = 60;
+          const maxH = 22;
+          const ratio = Math.min(maxW / logoImg.width, maxH / logoImg.height);
+          const w = logoImg.width * ratio;
+          const h = logoImg.height * ratio;
+          const logoX = (pageWidth - maxW) / 2;
+          const offsetX = (maxW - w) / 2;
+          const offsetY = (maxH - h) / 2;
+          doc.addImage(logoImg.dataUrl, "PNG", logoX + offsetX, y + offsetY, w, h);
+          y += offsetY + h + 5;
         } else {
           y += 2;
         }
@@ -251,7 +330,10 @@ export default function InvoicePrintPage() {
         // ============ COMPANY NAME ============
         doc.setFontSize(fontSize.title);
         doc.setFont("helvetica", "bold");
-        const companyLines = doc.splitTextToSize(companyName.toUpperCase(), contentWidth);
+        const companyLines = doc.splitTextToSize(
+          companyName.toUpperCase(),
+          contentWidth,
+        );
         for (const line of companyLines) {
           doc.text(line, pageWidth / 2, y, { align: "center" });
           y += 3.5;
@@ -270,16 +352,22 @@ export default function InvoicePrintPage() {
           }
         }
         if (companyPhone) {
-          doc.text(`Teléfono: ${companyPhone}`, pageWidth / 2, y, { align: "center" });
+          doc.text(`Teléfono: ${companyPhone}`, pageWidth / 2, y, {
+            align: "center",
+          });
           y += 2.5;
         }
         if (companyEmail) {
-          doc.text(`E-mail: ${companyEmail}`, pageWidth / 2, y, { align: "center" });
+          doc.text(`E-mail: ${companyEmail}`, pageWidth / 2, y, {
+            align: "center",
+          });
           y += 2.5;
         }
         if (companyRuc) {
           doc.setFont("helvetica", "bold");
-          doc.text(`R.U.C.: ${companyRuc}`, pageWidth / 2, y, { align: "center" });
+          doc.text(`R.U.C.: ${companyRuc}`, pageWidth / 2, y, {
+            align: "center",
+          });
           doc.setFont("helvetica", "normal");
           y += 3;
         }
@@ -294,18 +382,24 @@ export default function InvoicePrintPage() {
         const docTypeName = invTypeRes.data?.name || "COMPROBANTE";
         doc.setFontSize(fontSize.title);
         doc.setFont("helvetica", "bold");
-        doc.text(docTypeName.toUpperCase(), pageWidth / 2, y, { align: "center" });
+        doc.text(docTypeName.toUpperCase(), pageWidth / 2, y, {
+          align: "center",
+        });
         y += 4;
 
         // ============ NÚMERO DE PEDIDO ============
         const orderNumber = "PEDIDO: #" + branchRes.data?.orders?.id || "";
         doc.setFontSize(fontSize.title);
         doc.setFont("helvetica", "bold");
-        doc.text(orderNumber.toUpperCase(), pageWidth / 2, y, { align: "center" });
+        doc.text(orderNumber.toUpperCase(), pageWidth / 2, y, {
+          align: "center",
+        });
         y += 4;
 
         // ============ SERIE - NUMBER ============
-        const serieNum = [invoice.tax_serie, invoice.invoice_number].filter(Boolean).join(" - ");
+        const serieNum = [invoice.tax_serie, invoice.invoice_number]
+          .filter(Boolean)
+          .join(" - ");
         if (serieNum) {
           doc.setFontSize(fontSize.subtitle);
           doc.setFont("helvetica", "bold");
@@ -328,7 +422,10 @@ export default function InvoicePrintPage() {
         const detailLines: [string, string][] = [
           ["FECHA DE EMISIÓN:", dateStr],
           ["CLIENTE:", invoice.client_name || "Clientes Varios"],
-          [`${docTypeRes.data?.name || "Doc"}:`, invoice.customer_document_number],
+          [
+            `${docTypeRes.data?.name || "Doc"}:`,
+            invoice.customer_document_number,
+          ],
         ];
 
         for (const [label, value] of detailLines) {
@@ -336,7 +433,10 @@ export default function InvoicePrintPage() {
           doc.text(label, margin, y);
           doc.setFont("helvetica", "normal");
           const labelWidth = doc.getTextWidth(label) + 1;
-          const valueLines = doc.splitTextToSize(value, contentWidth - labelWidth);
+          const valueLines = doc.splitTextToSize(
+            value,
+            contentWidth - labelWidth,
+          );
           for (let i = 0; i < valueLines.length; i++) {
             doc.text(valueLines[i], margin + labelWidth, y + i * 2.5);
           }
@@ -375,11 +475,17 @@ export default function InvoicePrintPage() {
         doc.setFontSize(fontSize.small);
 
         for (const item of items) {
-          const qtyStr = item.quantity % 1 === 0 ? String(item.quantity) : item.quantity.toFixed(2);
+          const qtyStr =
+            item.quantity % 1 === 0
+              ? String(item.quantity)
+              : item.quantity.toFixed(2);
           doc.text(qtyStr, col.cant, y);
 
           const descWidth = col.pu - col.desc - 14;
-          const descLines = doc.splitTextToSize(item.description, descWidth > 0 ? descWidth : 30);
+          const descLines = doc.splitTextToSize(
+            item.description,
+            descWidth > 0 ? descWidth : 30,
+          );
           for (let i = 0; i < descLines.length; i++) {
             doc.text(descLines[i], col.desc, y + i * 2.5);
           }
@@ -391,24 +497,35 @@ export default function InvoicePrintPage() {
 
         // ============ IF HAVE SHIPPING ============
         if (shippingMethodCode) {
-          const shippingLabel = shippingMethod?.data?.name || shippingMethodCode;
+          const shippingLabel =
+            shippingMethod?.data?.name || shippingMethodCode;
           const descWidth = col.pu - col.desc - 14;
-          const shippingLines = doc.splitTextToSize(shippingLabel, descWidth > 0 ? descWidth : 30);
+          const shippingLines = doc.splitTextToSize(
+            shippingLabel,
+            descWidth > 0 ? descWidth : 30,
+          );
           for (let i = 0; i < shippingLines.length; i++) {
             doc.text(shippingLines[i], col.desc, y + i * 2.5);
           }
-          doc.text(branchRes.data.orders.shipping_cost.toFixed(2), col.pu, y, { align: "right" });
+          doc.text(branchRes.data.orders.shipping_cost.toFixed(2), col.pu, y, {
+            align: "right",
+          });
           y += Math.max(shippingLines.length * 2.5, 3) + 0.5;
         }
 
         // ============ IF HAVE DISCOUNTS ============
-        for (const discount of (discountOrders.data ?? [])) {
+        for (const discount of discountOrders.data ?? []) {
           const descWidth = col.pu - col.desc - 14;
-          const descLines = doc.splitTextToSize(discount.name, descWidth > 0 ? descWidth : 30);
+          const descLines = doc.splitTextToSize(
+            discount.name,
+            descWidth > 0 ? descWidth : 30,
+          );
           for (let i = 0; i < descLines.length; i++) {
             doc.text(descLines[i], col.desc, y + i * 2.5);
           }
-          doc.text("-" + discount.discount_amount.toFixed(2), col.pu, y, { align: "right" });
+          doc.text("-" + discount.discount_amount.toFixed(2), col.pu, y, {
+            align: "right",
+          });
           y += Math.max(descLines.length * 2.5, 3) + 0.5;
         }
 
@@ -425,7 +542,10 @@ export default function InvoicePrintPage() {
         const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
 
         const totalLines: [string, string][] = [
-          ["TOTAL CANT.", totalQty % 1 === 0 ? String(totalQty) : totalQty.toFixed(2)],
+          [
+            "TOTAL CANT.",
+            totalQty % 1 === 0 ? String(totalQty) : totalQty.toFixed(2),
+          ],
           ["OP. GRAVADAS", `S/ ${subtotal.toFixed(2)}`],
           ["IGV 18%", `S/ ${(invoice.total_taxes || 0).toFixed(2)}`],
           ["IMPORTE TOTAL:", `S/ ${invoice.total_amount.toFixed(2)}`],
@@ -470,7 +590,9 @@ export default function InvoicePrintPage() {
         // ============ FOOTER - RETURNS POLICY ============
         doc.setFontSize(fontSize.subtitle);
         doc.setFont("helvetica", "bold");
-        doc.text("CAMBIOS Y DEVOLUCIONES", pageWidth / 2, y, { align: "center" });
+        doc.text("CAMBIOS Y DEVOLUCIONES", pageWidth / 2, y, {
+          align: "center",
+        });
         y += 3;
 
         doc.setFontSize(fontSize.tiny);
@@ -486,7 +608,9 @@ export default function InvoicePrintPage() {
         y += 2;
         doc.setFontSize(fontSize.normal);
         doc.setFont("helvetica", "bold");
-        doc.text("Gracias por tu confianza.", pageWidth / 2, y, { align: "center" });
+        doc.text("Gracias por tu confianza.", pageWidth / 2, y, {
+          align: "center",
+        });
         y += 4;
 
         // ============ QR CODE ============
@@ -501,11 +625,19 @@ export default function InvoicePrintPage() {
       };
 
       // First pass: measure exact content height using a throwaway doc
-      const measureDoc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pageWidth, 9999] });
+      const measureDoc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: [pageWidth, 9999],
+      });
       const finalY = drawContent(measureDoc);
 
       // Second pass: create doc with exact height and render for real
-      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pageWidth, finalY + 4] });
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: [pageWidth, finalY + 4],
+      });
       drawContent(doc);
 
       // Open PDF inline
