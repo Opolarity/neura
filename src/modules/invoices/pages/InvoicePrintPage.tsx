@@ -264,7 +264,7 @@ export default function InvoicePrintPage() {
         }
       }
 
-      const companyName = "PERCEPTION ENDLESS COMPANY E.I.R.L."; //getParam("COMPANY_NAME") || "EMPRESA";
+      const companyName = "OVERTAKE UNLIMITED EIRL"; //getParam("COMPANY_NAME") || "EMPRESA";
       const companyAddress =
         branchRes.data?.orders?.branches?.address +
           " " +
