@@ -17,7 +17,7 @@ export interface DeliveryLabelData {
 }
 
 const REMITENTE = {
-  name: "PERCEPTION ENDLESS COMPANY E.I.R.L.",
+  name: "OVERTAKE UNLIMITED EIRL",
   ruc: "20611215895",
   phone: "977862202",
   address: "URB. EL PORVENIR CAL. SEBASTIAN BARRANCA - LA VICTORIA - LIMA.",
