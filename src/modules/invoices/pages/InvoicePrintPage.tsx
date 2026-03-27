@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { Loader2 } from "lucide-react";
+import { getParameters } from "@/modules/settings/services/Parameters.service";
 
 interface InvoiceData {
   id: number;
@@ -165,7 +166,7 @@ export default function InvoicePrintPage() {
   const generatePdf = async (invoiceId: number) => {
     try {
       // Fetch invoice, items, and company params in parallel
-      const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes] =
+      const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes, companyParams] =
         await Promise.all([
           supabase
             .from("invoices")
@@ -191,6 +192,7 @@ export default function InvoicePrintPage() {
             .select("orders(*, branches(*))")
             .eq("invoice_id", invoiceId)
             .single(),
+          getParameters(["CompanyName", "CompanyPhoneNumber", "CompanyDocumentNumber", "CompanyEmail", "InvoiceFooterMessage"]),
         ]);
 
       const shippingMethodCode = branchRes.data?.orders?.shipping_method_code;
@@ -264,14 +266,14 @@ export default function InvoicePrintPage() {
         }
       }
 
-      const companyName = "OVERTAKE UNLIMITED EIRL"; //getParam("COMPANY_NAME") || "EMPRESA";
+      const companyName = companyParams["CompanyName"] || "EMPRESA";
       const companyAddress =
         branchRes.data?.orders?.branches?.address +
           " " +
-          neighborhood?.data?.name || ""; //getParam("COMPANY_ADDRESS") || "";
-      const companyPhone = "977 862 202"; //getParam("COMPANY_PHONE") || "";
-      const companyEmail = "ariasveramanuel@gmail.com"; //getParam("COMPANY_EMAIL") || "";
-      const companyRuc = "20611215895"; //getParam("COMPANY_RUC") || "";
+          neighborhood?.data?.name || "";
+      const companyPhone = companyParams["CompanyPhoneNumber"];
+      const companyEmail = companyParams["CompanyEmail"];
+      const companyRuc = companyParams["CompanyDocumentNumber"];
 
       // Ticket width: 80mm
       const pageWidth = 80;
@@ -598,6 +600,7 @@ export default function InvoicePrintPage() {
         doc.setFontSize(fontSize.tiny);
         doc.setFont("helvetica", "normal");
         const policyText =
+          companyParams["InvoiceFooterMessage"] ||
           "Recuerda que puedes realizar cambios y devoluciones dentro de los 15 días posteriores a la compra, siempre y cuando el producto esté en su estado original y con el ticket de compra.";
         const policyLines = doc.splitTextToSize(policyText, contentWidth);
         for (const line of policyLines) {
