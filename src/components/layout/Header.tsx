@@ -49,7 +49,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* <Button
+          <Button
             variant="outline"
             size="sm"
             onClick={redirectToEcommerce}
@@ -62,7 +62,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
               <ExternalLink className="w-4 h-4" />
             )}
             Editar Ecommerce
-          </Button> */}
+          </Button>
 
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
             <Bell className="w-5 h-5" />
