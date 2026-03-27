@@ -560,20 +560,20 @@ export const useAddProduct = () => {
 
     setLoading(true);
     try {
-      // Upload sizes image if a new file was selected
-      let finalSizesImageUrl = sizesImageUrl;
-      if (sizesImageFile) {
-        const fileExt = sizesImageFile.name.split('.').pop();
-        const filePath = `products-images/sizes/${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('products')
-          .upload(filePath, sizesImageFile);
-        if (uploadError) throw new Error('Error al subir imagen de tallas: ' + uploadError.message);
-        const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
-        finalSizesImageUrl = urlData.publicUrl;
-      }
-
       if (isEditMode) {
+        // In edit mode, productId is known → upload with product ID
+        let finalSizesImageUrl = sizesImageUrl;
+        if (sizesImageFile) {
+          const fileExt = sizesImageFile.name.split('.').pop();
+          const filePath = `products-images/sizes/size-img-${productId}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from('products')
+            .upload(filePath, sizesImageFile, { upsert: true });
+          if (uploadError) throw new Error('Error al subir imagen de tallas: ' + uploadError.message);
+          const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
+          finalSizesImageUrl = urlData.publicUrl;
+        }
+
         const request = AddProductAdapter.prepareUpdateRequest(
           Number(productId),
           productName,
@@ -596,23 +596,30 @@ export const useAddProduct = () => {
         );
 
         const result = await AddProductService.updateProduct(request);
-        
+
         if (!result.success) {
           throw new Error(result.error || 'Error al actualizar el producto');
         }
+
+        // Save sizes_image_url directly to the products table
+        await supabase
+          .from('products')
+          .update({ sizes_image_url: finalSizesImageUrl })
+          .eq('id', Number(productId));
 
         toast({
           title: "Éxito",
           description: "Producto actualizado correctamente"
         });
       } else {
+        // In create mode: create product first, then upload sizes image with the new product ID
         const request = AddProductAdapter.prepareCreateRequest(
           productName,
           shortDescription,
           promotionalText,
           promotionalBgColor,
           promotionalTextColor,
-          finalSizesImageUrl,
+          sizesImageFile ? null : sizesImageUrl,
           description,
           isVariable,
           isActive,
@@ -625,9 +632,25 @@ export const useAddProduct = () => {
         );
 
         const result = await AddProductService.createProduct(request);
-        
+
         if (!result.success) {
           throw new Error(result.error || 'Error al crear el producto');
+        }
+
+        // Upload sizes image with the new product ID and save URL to products table
+        if (sizesImageFile && result.product?.id) {
+          const newProductId = result.product.id;
+          const fileExt = sizesImageFile.name.split('.').pop();
+          const filePath = `products-images/sizes/size-img-${newProductId}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from('products')
+            .upload(filePath, sizesImageFile, { upsert: true });
+          if (uploadError) throw new Error('Error al subir imagen de tallas: ' + uploadError.message);
+          const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
+          await supabase
+            .from('products')
+            .update({ sizes_image_url: urlData.publicUrl })
+            .eq('id', newProductId);
         }
 
         toast({
