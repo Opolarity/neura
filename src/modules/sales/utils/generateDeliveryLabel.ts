@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { getParameters } from "@/modules/settings/services/Parameters.service";
 
 export interface DeliveryLabelData {
   customerName: string;
@@ -93,6 +94,10 @@ const inlineText = (
 };
 
 export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
+  const params = await getParameters(["CompanyName", "CompanyDocumentNumber", "CompanyPhoneNumber"]);
+  const companyName = params["CompanyName"] || REMITENTE.name;
+  const companyRuc = params["CompanyDocumentNumber"] || REMITENTE.ruc;
+  const companyPhone = params["CompanyPhoneNumber"] || REMITENTE.phone;
   const W = 100;
   const H = 140;
   const doc = new jsPDF({
@@ -155,7 +160,7 @@ export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
   staticText(doc, "RUC:", rucX, headerY + 10);
   const rucLabelW = doc.getTextWidth("RUC:") + CHAR_SPACE * 5 + 1;
   doc.setTextColor(...BLACK);
-  staticText(doc, REMITENTE.ruc, rucX + rucLabelW, headerY + 10);
+  staticText(doc, companyRuc, rucX + rucLabelW, headerY + 10);
 
   // Horizontal separator after header
   const sep1Y = margin + headerH;
@@ -175,7 +180,7 @@ export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...BLUE);
-  const nameLines = doc.splitTextToSize(REMITENTE.name, innerW);
+  const nameLines = doc.splitTextToSize(companyName, innerW);
   staticText(doc, nameLines, innerX, y);
   y += nameLines.length * 5.5;
 
@@ -183,7 +188,7 @@ export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
   y = inlineText(
     doc,
     "CEL: ",
-    REMITENTE.phone,
+    companyPhone,
     innerX,
     y,
     BLUE,
