@@ -1680,6 +1680,7 @@ export const useCreateSale = () => {
     loadingWarehouse,
 
     // Computed
+    allShippingCosts,
     availableShippingCosts,
     filteredVariations,
     filteredStates,

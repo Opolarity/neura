@@ -104,6 +104,7 @@ const CreateSale = () => {
     userWarehouseName,
     userBranchAddress,
     loadingWarehouse,
+    allShippingCosts,
     availableShippingCosts,
     filteredVariations,
     filteredStates,
@@ -1041,6 +1042,10 @@ const CreateSale = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                    ) : formData.shippingMethod ? (
+                      <div className="text-sm p-2 border rounded-md bg-muted/50">
+                        {allShippingCosts.find(sc => sc.id.toString() === formData.shippingMethod)?.name ?? formData.shippingMethod}
+                      </div>
                     ) : (
                       <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
                         Elige ubicación para ver envíos.
