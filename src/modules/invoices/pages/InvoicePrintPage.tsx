@@ -34,6 +34,42 @@ interface InvoiceItem {
   measurement_unit: string;
 }
 
+export interface OrderPaymentWithMethod {
+  amount: number;
+  payment_method_name: string;
+}
+
+interface SupabaseOrderPaymentResponse {
+  amount: number;
+  payment_methods: {
+    name: string;
+  } | null;
+}
+
+export const getOrderPaymentsWithMethod = async (
+  orderId: number,
+): Promise<OrderPaymentWithMethod[]> => {
+  const { data, error } = await supabase
+    .from("order_payment")
+    .select(`
+      amount,
+      payment_methods:payment_method_id (
+        name
+      )
+    `)
+    .eq("order_id", orderId);
+
+  if (error) {
+    console.error("Error fetching order payments:", error.message);
+    throw new Error(error.message);
+  }
+
+  return (data as SupabaseOrderPaymentResponse[] | null)?.map((item) => ({
+    amount: item.amount,
+    payment_method_name: item.payment_methods?.name ?? "",
+  })) ?? [];
+};
+
 function numberToWords(num: number): string {
   const units = [
     "",
@@ -138,7 +174,9 @@ export default function InvoicePrintPage() {
     if (id) generatePdf(Number(id));
   }, [id]);
 
-  const loadImage = async (url: string): Promise<{ dataUrl: string; width: number; height: number }> => {
+  const loadImage = async (
+    url: string,
+  ): Promise<{ dataUrl: string; width: number; height: number }> => {
     const response = await fetch(url);
     const blob = await response.blob();
     const objectUrl = URL.createObjectURL(blob);
@@ -153,7 +191,11 @@ export default function InvoicePrintPage() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(objectUrl);
-        resolve({ dataUrl: canvas.toDataURL("image/png"), width: img.width, height: img.height });
+        resolve({
+          dataUrl: canvas.toDataURL("image/png"),
+          width: img.width,
+          height: img.height,
+        });
       };
       img.onerror = () => {
         URL.revokeObjectURL(objectUrl);
@@ -166,43 +208,59 @@ export default function InvoicePrintPage() {
   const generatePdf = async (invoiceId: number) => {
     try {
       // Fetch invoice, items, and company params in parallel
-      const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes, companyParams] =
-        await Promise.all([
-          supabase
-            .from("invoices")
-            .select(
-              "id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by, qr_data",
-            )
-            .eq("id", invoiceId)
-            .single(),
-          supabase
-            .from("invoice_items")
-            .select(
-              "description, quantity, unit_price, discount, igv, total, measurement_unit",
-            )
-            .eq("invoice_id", invoiceId),
-          supabase.from("paremeters").select("name, value, code"),
-          supabase
-            .from("parameters")
-            .select("name, value")
-            .eq("name", "InvoiceLogoUrl")
-            .maybeSingle(),
-          supabase
-            .from("order_invoices")
-            .select("orders(*, branches(*))")
-            .eq("invoice_id", invoiceId)
-            .single(),
-          getParameters(["CompanyName", "CompanyPhoneNumber", "CompanyDocumentNumber", "CompanyEmail", "InvoiceFooterMessage"]),
-        ]);
+      const [
+        invoiceRes,
+        itemsRes,
+        paramsRes,
+        parametersRes,
+        branchRes,
+        companyParams,
+      ] = await Promise.all([
+        supabase
+          .from("invoices")
+          .select(
+            "id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by, qr_data",
+          )
+          .eq("id", invoiceId)
+          .single(),
+        supabase
+          .from("invoice_items")
+          .select(
+            "description, quantity, unit_price, discount, igv, total, measurement_unit",
+          )
+          .eq("invoice_id", invoiceId),
+        supabase.from("parameters").select("name, value"),
+        supabase
+          .from("parameters")
+          .select("name, value")
+          .eq("name", "InvoiceLogoUrl")
+          .maybeSingle(),
+        supabase
+          .from("order_invoices")
+          .select("orders(*, branches(*))")
+          .eq("invoice_id", invoiceId)
+          .single(),
+        getParameters([
+          "CompanyName",
+          "CompanyPhoneNumber",
+          "CompanyDocumentNumber",
+          "CompanyEmail",
+          "InvoiceFooterMessage",
+        ]),
+      ]);
 
       const shippingMethodCode = branchRes.data?.orders?.shipping_method_code;
       const shippingMethod = shippingMethodCode
         ? await supabase
-            .from("shipping_methods")
+            .from("shipping_costs")
             .select("name")
-            .eq("code", shippingMethodCode)
+            .eq("id", Number(shippingMethodCode))
             .single()
         : null;
+      //console.log("code:", shippingMethodCode);
+      //console.log("shippingMethod:", shippingMethod);
+
+      const orderPayments = await getOrderPaymentsWithMethod(branchRes.data.orders.id);
 
       const discountOrders = await supabase
         .from("order_discounts")
@@ -292,7 +350,8 @@ export default function InvoicePrintPage() {
       const invoiceLogoUrl = parametersRes.data?.value;
       const logoUrl = invoiceLogoUrl || "/images/logo-ticket.png";
 
-      let logoImg: { dataUrl: string; width: number; height: number } | null = null;
+      let logoImg: { dataUrl: string; width: number; height: number } | null =
+        null;
       try {
         logoImg = await loadImage(logoUrl);
       } catch {}
@@ -323,7 +382,14 @@ export default function InvoicePrintPage() {
           const logoX = (pageWidth - maxW) / 2;
           const offsetX = (maxW - w) / 2;
           const offsetY = (maxH - h) / 2;
-          doc.addImage(logoImg.dataUrl, "PNG", logoX + offsetX, y + offsetY, w, h);
+          doc.addImage(
+            logoImg.dataUrl,
+            "PNG",
+            logoX + offsetX,
+            y + offsetY,
+            w,
+            h,
+          );
           y += offsetY + h + 5;
         } else {
           y += 2;
@@ -561,6 +627,36 @@ export default function InvoicePrintPage() {
           doc.text(value, pageWidth - margin, y, { align: "right" });
           if (isTotal) doc.setFontSize(fontSize.normal);
           y += 3;
+        }
+
+        // ============ PAYMENT METHODS ============
+        doc.setFontSize(fontSize.normal);
+        doc.setFont("helvetica", "bold");
+        doc.text("SE PAGO CON:", margin, y);
+        y += 3;
+
+        const positivePayments = orderPayments.filter((p) => p.amount >= 0);
+        const negativePayments = orderPayments.filter((p) => p.amount < 0);
+
+        doc.setFontSize(fontSize.normal);
+        for (const payment of positivePayments) {
+          doc.setFont("helvetica", "normal");
+          doc.text(payment.payment_method_name, margin, y);
+          doc.text(`S/ ${payment.amount.toFixed(2)}`, pageWidth - margin, y, { align: "right" });
+          y += 3;
+        }
+
+        if (negativePayments.length > 0) {
+          y += 0.5;
+          doc.setFont("helvetica", "bold");
+          doc.text("VUELTO:", margin, y);
+          y += 3;
+          for (const payment of negativePayments) {
+            doc.setFont("helvetica", "normal");
+            doc.text(payment.payment_method_name, margin, y);
+            doc.text(`S/ ${Math.abs(payment.amount).toFixed(2)}`, pageWidth - margin, y, { align: "right" });
+            y += 3;
+          }
         }
 
         // Amount in words
