@@ -154,6 +154,7 @@ export interface CreateMovementPayload {
   payment_method_id: number;
   movement_type_id: number;
   movement_class_id: number;
+  files_url?: string[];
 }
 
 export interface CreateMovementResponse {

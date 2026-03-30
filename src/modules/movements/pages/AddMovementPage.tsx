@@ -26,9 +26,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
+import { ArrowLeft, Check, ChevronsUpDown, Loader2, Paperclip, Plus, X } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import { useCreateMovement, MovementType } from "../hooks/useCreateMovement";
+import { useRef, useState } from "react";
+import { MovementFilePreviewModal } from "../components/movements/MovementFilePreviewModal";
 
 interface AddMovementPageProps {
   movementType: MovementType;
@@ -64,6 +66,15 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
     handleCreateCategory,
   } = useCreateMovement({ movementType });
 
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const handleAddFiles = (files: File[]) => setAttachments((prev) => [...prev, ...files]);
+  const handleRemoveFile = (index: number) => setAttachments((prev) => prev.filter((_, i) => i !== index));
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [stagedFile, setStagedFile] = useState<File | null>(null);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -88,7 +99,7 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
           <CardTitle>Información del {messages.label}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit((data) => onSubmit(data, attachments))} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Monto */}
               <div className="space-y-2">
@@ -281,6 +292,69 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
               />
             </div>
 
+            {/* Archivos adjuntos */}
+            <div className="space-y-2">
+              <Label>Archivos adjuntos</Label>
+              <div className="flex items-center gap-2 flex-wrap">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*,.pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setStagedFile(file);
+                    e.target.value = "";
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Paperclip className="h-4 w-4 mr-1.5" />
+                  {stagedFile ? stagedFile.name.slice(0, 20) + (stagedFile.name.length > 20 ? "..." : "") : "Adjuntar archivo"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={!stagedFile}
+                  onClick={() => {
+                    if (stagedFile) {
+                      handleAddFiles([stagedFile]);
+                      setStagedFile(null);
+                    }
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Agregar
+                </Button>
+                {attachments.map((file, index) => {
+                  return (
+                    <div key={index} className="relative group">
+                      <button
+                        type="button"
+                        title={file.name}
+                        onClick={() => { setPreviewFile(file); setPreviewOpen(true); }}
+                        className="h-10 w-10 rounded border bg-muted/50 overflow-hidden flex items-center justify-center hover:ring-2 hover:ring-primary transition"
+                      >
+                        <Paperclip className="h-5 w-5 text-muted-foreground" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFile(index)}
+                        className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex justify-end gap-4">
               <Button
                 type="button"
@@ -298,6 +372,13 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
           </form>
         </CardContent>
       </Card>
+
+      <MovementFilePreviewModal
+        open={previewOpen}
+        onOpenChange={(open) => { setPreviewOpen(open); if (!open) setPreviewFile(null); }}
+        file={previewFile}
+      />
+
       <Dialog open={newCategoryDialogOpen} onOpenChange={setNewCategoryDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>

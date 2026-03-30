@@ -9,7 +9,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Eye, Loader2, TrendingUp, TrendingDown } from "lucide-react";
+import { useState } from "react";
 import { Movement } from "../../types/Movements.types";
 
 interface MovementsTableProps {
@@ -31,7 +38,10 @@ const MovementsTable = ({
   onToggleMovementSelection,
   onGoToMovementDetail,
 }: MovementsTableProps) => {
+  const [previewId, setPreviewId] = useState<number | null>(null);
+
   return (
+    <>
     <Table>
       <TableHeader>
         <TableRow>
@@ -52,7 +62,7 @@ const MovementsTable = ({
           <TableHead>Sucursal</TableHead>
           <TableHead>Usuario</TableHead>
           <TableHead className="text-right">Monto</TableHead>
-          {/* <TableHead className="w-16">Acciones</TableHead> */}
+          <TableHead className="w-16">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -123,21 +133,33 @@ const MovementsTable = ({
                 {movement.formattedAmount}
               </TableCell>
 
-              {/* <TableCell>
+              <TableCell>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  onClick={() => onGoToMovementDetail(movement.id)}
+                  size="icon"
+                  onClick={() => setPreviewId(movement.id)}
                   title="Ver detalle"
                 >
                   <Eye className="w-4 h-4" />
                 </Button>
-              </TableCell> */}
+              </TableCell>
             </TableRow>
           ))
         )}
       </TableBody>
     </Table>
+
+      <Dialog open={previewId !== null} onOpenChange={(open) => { if (!open) setPreviewId(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Detalle del Movimiento</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 text-sm text-muted-foreground">
+            ID: <span className="font-semibold text-foreground">{previewId}</span>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

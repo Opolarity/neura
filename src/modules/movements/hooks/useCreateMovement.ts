@@ -11,6 +11,7 @@ import {
   createMovementApi,
   movementTypesApi,
   createMovementClassApi,
+  uploadMovementAttachment,
 } from "../services/movements.service";
 import {
   MovementFormData,
@@ -176,7 +177,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     }
   };
 
-  const onSubmit = async (data: MovementFormData) => {
+  const onSubmit = async (data: MovementFormData, files: File[] = []) => {
     if (!user || !movementTypeId) {
       toast({
         title: "Error",
@@ -200,6 +201,27 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
 
       if (needsManualBusinessAccount && selectedManualBusinessAccountId) {
         payload.business_account_id = Number(selectedManualBusinessAccountId);
+      }
+
+      if (files.length > 0) {
+        const timestamp = Date.now();
+        const results = await Promise.allSettled(
+          files.map((file, i) => uploadMovementAttachment(file, `${timestamp}-${i}`))
+        );
+        const uploaded = results
+          .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
+          .map((r) => r.value);
+        const failed = results.filter((r) => r.status === "rejected").length;
+        if (failed > 0) {
+          toast({
+            title: "Advertencia",
+            description: `${failed} archivo(s) no se pudieron subir. El movimiento se creará sin ellos.`,
+            variant: "destructive",
+          });
+        }
+        if (uploaded.length > 0) {
+          payload.files_url = uploaded;
+        }
       }
 
       await createMovementApi(payload);
