@@ -10,6 +10,8 @@ import {
   currentUserProfileApi,
   createMovementApi,
   movementTypesApi,
+  createMovementClassApi,
+  uploadMovementAttachment,
 } from "../services/movements.service";
 import {
   MovementFormData,
@@ -52,6 +54,12 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
   const [businessAccounts, setBusinessAccounts] = useState<{ id: number; name: string }[]>([]);
   const [needsManualBusinessAccount, setNeedsManualBusinessAccount] = useState(false);
   const [selectedManualBusinessAccountId, setSelectedManualBusinessAccountId] = useState<string>("");
+  const [classSearchOpen, setClassSearchOpen] = useState(false);
+  const [classSearch, setClassSearch] = useState("");
+  const [selectedClassName, setSelectedClassName] = useState("");
+  const [newCategoryDialogOpen, setNewCategoryDialogOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [creatingCategory, setCreatingCategory] = useState(false);
 
   const isIncome = movementType === "income";
 
@@ -146,7 +154,30 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     }
   };
 
-  const onSubmit = async (data: MovementFormData) => {
+  const refreshClasses = async () => {
+    const classesData = await movementClassesApi();
+    setClasses(classesData);
+  };
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    setCreatingCategory(true);
+    try {
+      const created = await createMovementClassApi(newCategoryName.trim());
+      await refreshClasses();
+      setValue("movement_class_id", created.id.toString());
+      setSelectedClassName(created.name);
+      setNewCategoryDialogOpen(false);
+      setNewCategoryName("");
+      toast({ title: "Categoría creada", description: `"${created.name}" fue agregada.` });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "No se pudo crear la categoría", variant: "destructive" });
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
+
+  const onSubmit = async (data: MovementFormData, files: File[] = []) => {
     if (!user || !movementTypeId) {
       toast({
         title: "Error",
@@ -170,6 +201,27 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
 
       if (needsManualBusinessAccount && selectedManualBusinessAccountId) {
         payload.business_account_id = Number(selectedManualBusinessAccountId);
+      }
+
+      if (files.length > 0) {
+        const timestamp = Date.now();
+        const results = await Promise.allSettled(
+          files.map((file, i) => uploadMovementAttachment(file, `${timestamp}-${i}`))
+        );
+        const uploaded = results
+          .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
+          .map((r) => r.value);
+        const failed = results.filter((r) => r.status === "rejected").length;
+        if (failed > 0) {
+          toast({
+            title: "Advertencia",
+            description: `${failed} archivo(s) no se pudieron subir. El movimiento se creará sin ellos.`,
+            variant: "destructive",
+          });
+        }
+        if (uploaded.length > 0) {
+          payload.files_url = uploaded;
+        }
       }
 
       await createMovementApi(payload);
@@ -211,5 +263,17 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     needsManualBusinessAccount,
     selectedManualBusinessAccountId,
     setSelectedManualBusinessAccountId,
+    classSearchOpen,
+    setClassSearchOpen,
+    classSearch,
+    setClassSearch,
+    selectedClassName,
+    setSelectedClassName,
+    newCategoryDialogOpen,
+    setNewCategoryDialogOpen,
+    newCategoryName,
+    setNewCategoryName,
+    creatingCategory,
+    handleCreateCategory,
   };
 };
