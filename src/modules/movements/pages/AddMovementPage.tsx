@@ -10,7 +10,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ArrowLeft, Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
+import { cn } from "@/shared/utils/utils";
 import { useCreateMovement, MovementType } from "../hooks/useCreateMovement";
 
 interface AddMovementPageProps {
@@ -33,6 +50,18 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
     needsManualBusinessAccount,
     selectedManualBusinessAccountId,
     setSelectedManualBusinessAccountId,
+    classSearchOpen,
+    setClassSearchOpen,
+    classSearch,
+    setClassSearch,
+    selectedClassName,
+    setSelectedClassName,
+    newCategoryDialogOpen,
+    setNewCategoryDialogOpen,
+    newCategoryName,
+    setNewCategoryName,
+    creatingCategory,
+    handleCreateCategory,
   } = useCreateMovement({ movementType });
 
   const {
@@ -149,21 +178,73 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
 
               {/* Categoría (Classes del módulo MOV) */}
               <div className="space-y-2">
-                <Label htmlFor="movement_class_id">Categoría *</Label>
-                <Select
-                  onValueChange={(value) => setValue("movement_class_id", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map((cls) => (
-                      <SelectItem key={cls.id} value={cls.id.toString()}>
-                        {cls.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Categoría *</Label>
+                <Popover open={classSearchOpen} onOpenChange={setClassSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between font-normal"
+                    >
+                      {selectedClassName || "Seleccionar categoría"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Buscar categoría..."
+                        value={classSearch}
+                        onValueChange={setClassSearch}
+                      />
+                      <CommandList className="max-h-[185px] overflow-y-auto">
+                        <CommandEmpty>Sin resultados</CommandEmpty>
+                        <CommandGroup>
+                          {classes
+                            .filter((cls) =>
+                              cls.name.toLowerCase().includes(classSearch.toLowerCase())
+                            )
+                            .map((cls) => (
+                              <CommandItem
+                                key={cls.id}
+                                value={cls.name}
+                                onSelect={() => {
+                                  setValue("movement_class_id", cls.id.toString());
+                                  setSelectedClassName(cls.name);
+                                  setClassSearchOpen(false);
+                                  setClassSearch("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    form.watch("movement_class_id") === cls.id.toString()
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {cls.name}
+                              </CommandItem>
+                            ))}
+                        </CommandGroup>
+                      </CommandList>
+                      <div className="border-t p-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start gap-2 text-sm"
+                          onClick={() => {
+                            setClassSearchOpen(false);
+                            setNewCategoryDialogOpen(true);
+                          }}
+                        >
+                          <Plus className="h-4 w-4" />
+                          Añadir nueva categoría
+                        </Button>
+                      </div>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 {errors.movement_class_id && (
                   <p className="text-sm text-destructive">
                     {errors.movement_class_id.message}
@@ -217,6 +298,42 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
           </form>
         </CardContent>
       </Card>
+      <Dialog open={newCategoryDialogOpen} onOpenChange={setNewCategoryDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Nueva Categoría</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="new-category-name">Nombre *</Label>
+            <Input
+              id="new-category-name"
+              placeholder="Nombre de la categoría"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleCreateCategory()}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setNewCategoryDialogOpen(false);
+                setNewCategoryName("");
+              }}
+              disabled={creatingCategory}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateCategory}
+              disabled={creatingCategory || !newCategoryName.trim()}
+            >
+              {creatingCategory && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Agregar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

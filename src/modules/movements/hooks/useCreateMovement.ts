@@ -10,6 +10,7 @@ import {
   currentUserProfileApi,
   createMovementApi,
   movementTypesApi,
+  createMovementClassApi,
 } from "../services/movements.service";
 import {
   MovementFormData,
@@ -52,6 +53,12 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
   const [businessAccounts, setBusinessAccounts] = useState<{ id: number; name: string }[]>([]);
   const [needsManualBusinessAccount, setNeedsManualBusinessAccount] = useState(false);
   const [selectedManualBusinessAccountId, setSelectedManualBusinessAccountId] = useState<string>("");
+  const [classSearchOpen, setClassSearchOpen] = useState(false);
+  const [classSearch, setClassSearch] = useState("");
+  const [selectedClassName, setSelectedClassName] = useState("");
+  const [newCategoryDialogOpen, setNewCategoryDialogOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [creatingCategory, setCreatingCategory] = useState(false);
 
   const isIncome = movementType === "income";
 
@@ -146,6 +153,29 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     }
   };
 
+  const refreshClasses = async () => {
+    const classesData = await movementClassesApi();
+    setClasses(classesData);
+  };
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    setCreatingCategory(true);
+    try {
+      const created = await createMovementClassApi(newCategoryName.trim());
+      await refreshClasses();
+      setValue("movement_class_id", created.id.toString());
+      setSelectedClassName(created.name);
+      setNewCategoryDialogOpen(false);
+      setNewCategoryName("");
+      toast({ title: "Categoría creada", description: `"${created.name}" fue agregada.` });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "No se pudo crear la categoría", variant: "destructive" });
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
+
   const onSubmit = async (data: MovementFormData) => {
     if (!user || !movementTypeId) {
       toast({
@@ -211,5 +241,17 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     needsManualBusinessAccount,
     selectedManualBusinessAccountId,
     setSelectedManualBusinessAccountId,
+    classSearchOpen,
+    setClassSearchOpen,
+    classSearch,
+    setClassSearch,
+    selectedClassName,
+    setSelectedClassName,
+    newCategoryDialogOpen,
+    setNewCategoryDialogOpen,
+    newCategoryName,
+    setNewCategoryName,
+    creatingCategory,
+    handleCreateCategory,
   };
 };

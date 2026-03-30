@@ -133,6 +133,17 @@ export const currentUserProfileApi = async (
   };
 };
 
+export const createMovementClassApi = async (name: string): Promise<MovementClass> => {
+  const { data, error } = await (supabase as any)
+    .from("classes")
+    .insert({ name, module_id: 9, code: "MOV" })
+    .select("id, name, code")
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
 export const createMovementApi = async (
   payload: CreateMovementPayload
 ): Promise<CreateMovementResponse> => {
