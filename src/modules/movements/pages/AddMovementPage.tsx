@@ -197,7 +197,7 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
                         value={classSearch}
                         onValueChange={setClassSearch}
                       />
-                      <CommandList className="max-h-[185px] overflow-y-auto">
+                      <CommandList className="h-[160px] overflow-y-auto">
                         <CommandEmpty>Sin resultados</CommandEmpty>
                         <CommandGroup>
                           {classes
