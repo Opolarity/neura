@@ -16,7 +16,7 @@ interface BirthdayNotificationTableProps {
   loading: boolean;
 }
 
-const STORE_NAME = 'OVERTAKE';
+const STORE_NAME = 'Overtake';
 
 function getBirthdayStatusBadge(daysOffset: number) {
   if (daysOffset === 0)
@@ -38,8 +38,8 @@ function formatBirthday(birthdayDay: string): string {
 }
 
 function openWhatsApp(phone: string) {
-  const message = `🎂Un detalle de ${STORE_NAME} para ti 🎈\n¡Feliz cumple 🥳! 👽🙌\nPor ser parte de nuestra comunidad tienes un 20% OFF 🎊 en tus prendas para que estes renovado por tu cumple🛍️\n🍰 Canjéalo ingresando a la web, escoge tus productos y de manera automatica se registra tu dscto 🎁\n⏳ Disponible desde hoy por 7 días`;
-  const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  const message = `🎂Un detalle de ${STORE_NAME} para ti 🎈\n\n¡Feliz cumple 🥳! 👽🙌\n\nPor ser parte de nuestra comunidad tienes un 20% OFF 🎊 en tus prendas para que estes renovado por tu cumple🛍️\n\n🍰 Canjéalo ingresando a la web, escoge tus productos y de manera automatica se registra tu dscto 🎁\n\n⏳ Disponible desde hoy por 7 días`;
+  const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
   window.open(url, '_blank');
 }
 
