@@ -133,6 +133,33 @@ export const currentUserProfileApi = async (
   };
 };
 
+export const createMovementClassApi = async (name: string): Promise<MovementClass> => {
+  const { data, error } = await (supabase as any)
+    .from("classes")
+    .insert({ name, module_id: 9, code: "MOV" })
+    .select("id, name, code")
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const uploadMovementAttachment = async (
+  file: File,
+  fileName: string,
+): Promise<string> => {
+  const fileExt = file.name.split(".").pop() || "jpg";
+  const filePath = `movements/vouchers/${fileName}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("PrivateData")
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  return filePath;
+};
+
 export const createMovementApi = async (
   payload: CreateMovementPayload
 ): Promise<CreateMovementResponse> => {
