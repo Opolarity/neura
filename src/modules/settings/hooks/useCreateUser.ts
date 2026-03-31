@@ -385,7 +385,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null
         try {
             // Validation
             const requiredFields: any = {
-                user_name: formData.user_name,
+                //user_name: formData.user_name,
                 name: formData.name,
                 email: formData.email,
                 role_ids: formData.role_ids.length > 0,
