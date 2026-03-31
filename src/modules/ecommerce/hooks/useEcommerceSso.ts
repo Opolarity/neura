@@ -2,8 +2,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { generateSSOToken } from "../services/sso.service";
 
-const ECOMMERCE_SSO_URL = "https://overtake.com.pe/editor";
-//const ECOMMERCE_SSO_URL = "http://localhost:3000/editor";
+//const ECOMMERCE_SSO_URL = "https://overtake.com.pe/editor";
+const ECOMMERCE_SSO_URL = "http://localhost:3000/editor";
 
 export const useEcommerceSso = () => {
   const [loading, setLoading] = useState(false);
