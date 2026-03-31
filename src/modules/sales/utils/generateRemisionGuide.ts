@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { getParameters } from "@/modules/settings/services/Parameters.service";
 
 const EMPRESA = {
   name: "PERCEPTION ENDLESS COMPANY E.I.R.L.",
@@ -33,7 +34,24 @@ export interface RemisionGuideData {
   }>;
 }
 
-export function generateRemisionGuide(data: RemisionGuideData): void {
+export async function generateRemisionGuide(data: RemisionGuideData): Promise<void> {
+  const params = await getParameters([
+    "CompanyName",
+    "CompanyDocumentNumber",
+    "CompanyPhoneNumber",
+    "CompanyAddress",
+    "CompanyEmail",
+    "CompanyWebsite",
+    "CompanyDireccionPartida",
+  ]);
+  const companyName = params["CompanyName"] || EMPRESA.name;
+  const companyRuc = params["CompanyDocumentNumber"] || EMPRESA.ruc;
+  const companyPhone = params["CompanyPhoneNumber"] || EMPRESA.phone;
+  const companyAddress = params["CompanyAddress"] || EMPRESA.address;
+  const companyEmail = params["CompanyEmail"] || EMPRESA.email;
+  const companyWebsite = params["CompanyWebsite"] || EMPRESA.website;
+  const companyDireccionPartida = params["CompanyDireccionPartida"] || EMPRESA.direccionPartida;
+
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = 210;
   const pageH = 297;
@@ -82,19 +100,19 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...dark);
-  doc.text(EMPRESA.name, margin + 3, y + 8);
+  doc.text(companyName, margin + 3, y + 8);
 
   doc.setFontSize(7.5);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...muted);
-  doc.text(EMPRESA.address, margin + 3, y + 14);
+  doc.text(companyAddress, margin + 3, y + 14);
   doc.text(
-    `Email: ${EMPRESA.email}   R.U.C. ${EMPRESA.ruc}`,
+    `Email: ${companyEmail}   R.U.C. ${companyRuc}`,
     margin + 3,
     y + 20,
   );
-  doc.text(`Teléfono: ${EMPRESA.phone}`, margin + 3, y + 26);
-  doc.text(`Website: ${EMPRESA.website}`, margin + 3, y + 32);
+  doc.text(`Teléfono: ${companyPhone}`, margin + 3, y + 26);
+  doc.text(`Website: ${companyWebsite}`, margin + 3, y + 32);
 
   y += hdrH + 5;
 
@@ -208,7 +226,7 @@ export function generateRemisionGuide(data: RemisionGuideData): void {
 
   labelValue(
     "Dirección de partida",
-    (data.direccionPartida || EMPRESA.direccionPartida).toUpperCase(),
+    (data.direccionPartida || companyDireccionPartida).toUpperCase(),
     margin + 3,
     y + 3,
     38,

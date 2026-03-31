@@ -1304,7 +1304,7 @@ const CreateSale = () => {
                   </button>
                   <em
                     className="italic text-sm underline cursor-pointer"
-                    onClick={() => {
+                    onClick={async () => {
                       const countryObj = salesData?.countries.find(
                         (c) => c.id.toString() === formData.countryId,
                       );
@@ -1320,7 +1320,7 @@ const CreateSale = () => {
                       const shippingObj = availableShippingCosts.find(
                         (s) => s.id.toString() === formData.shippingMethod,
                       );
-                      generateRemisionGuide({
+                      await generateRemisionGuide({
                         customerName: formData.customerName,
                         customerLastname: formData.customerLastname,
                         customerLastname2: formData.customerLastname2,
