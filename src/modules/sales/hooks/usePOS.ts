@@ -44,6 +44,7 @@ import {
 } from "../services";
 import { getPriceListIsActiveTrue, getActivePaymentMethodsBySaleTypeId, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { createPOSOrder } from "../services/POS.service";
+import { getPOSSessionOtherPaymentsTotal } from "../services/POSSession.service";
 import { filterShippingCostsByLocation } from "../utils";
 
 // Initial state values
@@ -1173,6 +1174,7 @@ export const usePOS = () => {
   const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
   const [sessionTotalCashSales, setSessionTotalCashSales] = useState(0);
   const [sessionBusinessAccountTotal, setSessionBusinessAccountTotal] = useState(0);
+  const [sessionOtherPaymentsTotal, setSessionOtherPaymentsTotal] = useState(0);
 
   // Load session cash sales and business account total
   const loadSessionCloseData = useCallback(async () => {
@@ -1206,10 +1208,20 @@ export const usePOS = () => {
         if (baError) throw baError;
         setSessionBusinessAccountTotal(baData?.total_amount ?? 0);
       }
+
+      // Load other payments total (payments to other business accounts)
+      if (POSSessionHook.session?.id && sessionData?.business_account) {
+        const otherPayments = await getPOSSessionOtherPaymentsTotal(
+          POSSessionHook.session.id,
+          sessionData.business_account
+        );
+        setSessionOtherPaymentsTotal(otherPayments);
+      }
     } catch (error) {
       console.error("Error loading session close data:", error);
       setSessionTotalCashSales(0);
       setSessionBusinessAccountTotal(0);
+      setSessionOtherPaymentsTotal(0);
     }
   }, [POSSessionHook.session?.id]);
 
@@ -1356,6 +1368,7 @@ export const usePOS = () => {
     showCloseSessionModal,
     sessionTotalCashSales,
     sessionBusinessAccountTotal,
+    sessionOtherPaymentsTotal,
     handleCloseSession,
     cancelCloseSession,
   };

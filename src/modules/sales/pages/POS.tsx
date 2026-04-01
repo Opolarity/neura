@@ -173,7 +173,7 @@ export default function POS() {
                 discountAmount={pos.discountAmount}
                 shippingCost={pos.customer.requiresShipping ? pos.shipping.shippingCost : 0}
                 total={pos.total}
-                
+
               />
             </div>
           )}
@@ -202,6 +202,7 @@ export default function POS() {
         session={pos.session}
         totalCashSales={pos.sessionTotalCashSales}
         businessAccountTotal={pos.sessionBusinessAccountTotal}
+        otherPaymentsTotal={pos.sessionOtherPaymentsTotal}
         isClosing={pos.closingSession}
         onClose={pos.handleCloseSession}
         onCancel={pos.cancelCloseSession}
