@@ -20,8 +20,11 @@ interface ProductsTableProps {
   selectedProducts: number[];
   onToggleProductSelection: (productId: number) => void;
   onToggleAllProductsSelection: () => void;
-  onViewProduct: (id: number) => void;
-  onDeleteClick: (product: Product) => void;
+  onViewProduct?: (id: number) => void;
+  onDeleteClick?: (product: Product) => void;
+  hideStock?: boolean;
+  hideStatus?: boolean;
+  hideActions?: boolean;
 }
 
 const ProductsTable = ({
@@ -33,7 +36,11 @@ const ProductsTable = ({
   onToggleProductSelection,
   onViewProduct,
   onDeleteClick,
+  hideStock = false,
+  hideStatus = false,
+  hideActions = false,
 }: ProductsTableProps) => {
+  const colSpan = 9 - (hideStock ? 1 : 0) - (hideStatus ? 1 : 0) - (hideActions ? 1 : 0);
   return (
     <div className="relative">
       {loading && products.length > 0 && (
@@ -58,15 +65,15 @@ const ProductsTable = ({
             <TableHead>Producto</TableHead>
             <TableHead>Categoría</TableHead>
             <TableHead>Precio</TableHead>
-            <TableHead>Stock</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Acciones</TableHead>
+            {!hideStock && <TableHead>Stock</TableHead>}
+            {!hideStatus && <TableHead>Estado</TableHead>}
+            {!hideActions && <TableHead>Acciones</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {loading && products.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-8">
+              <TableCell colSpan={colSpan} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Cargando productos...
@@ -76,7 +83,7 @@ const ProductsTable = ({
           ) : products.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={9}
+                colSpan={colSpan}
                 className="text-center py-8 text-muted-foreground"
               >
                 {search
@@ -106,53 +113,57 @@ const ProductsTable = ({
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.categories}</TableCell>
                 <TableCell>S/ {product.price}</TableCell>
-                <TableCell>{product.stock}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    {product.estatus === true && (
-                      <Badge className="bg-green-400 hover:bg-green-400">
-                        Activo
-                      </Badge>
-                    )}
-                    {product.estatus === false && (
-                      <Badge className="bg-red-400 hover:bg-red-400">
-                        Inactivo
-                      </Badge>
-                    )}
-                    {product.web === true && (
-                      <Badge className="bg-green-400 hover:bg-green-400">
-                        Web
-                      </Badge>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onViewProduct(product.id)}
-                      title="Ver producto"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <a
-                      href={`/products/edit/${product.id}`}
-                      title="Editar producto"
-                      className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </a>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => onDeleteClick(product)}
-                      title="Eliminar producto"
-                    >
-                      <Trash className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+                {!hideStock && <TableCell>{product.stock}</TableCell>}
+                {!hideStatus && (
+                  <TableCell>
+                    <div className="flex gap-2">
+                      {product.estatus === true && (
+                        <Badge className="bg-green-400 hover:bg-green-400">
+                          Activo
+                        </Badge>
+                      )}
+                      {product.estatus === false && (
+                        <Badge className="bg-red-400 hover:bg-red-400">
+                          Inactivo
+                        </Badge>
+                      )}
+                      {product.web === true && (
+                        <Badge className="bg-green-400 hover:bg-green-400">
+                          Web
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                )}
+                {!hideActions && (
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onViewProduct(product.id)}
+                        title="Ver producto"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <a
+                        href={`/products/edit/${product.id}`}
+                        title="Editar producto"
+                        className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </a>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => onDeleteClick(product)}
+                        title="Eliminar producto"
+                      >
+                        <Trash className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))
           )}
