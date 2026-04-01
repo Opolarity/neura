@@ -14,6 +14,7 @@ export interface DeliveryLabelData {
   cityName?: string;
   stateName?: string;
   neighborhoodName?: string;
+  senderAddress?: string;
 }
 
 const REMITENTE = {
@@ -206,7 +207,7 @@ export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
   y += 5.5;
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...BLACK);
-  const addrLines = doc.splitTextToSize(REMITENTE.address, innerW);
+  const addrLines = doc.splitTextToSize(data.senderAddress || REMITENTE.address, innerW);
   staticText(doc, addrLines, innerX, y);
   y += addrLines.length * 5.5 + 13;
 

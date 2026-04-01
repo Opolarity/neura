@@ -5,8 +5,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter } from
-"@/components/ui/dialog";
+  DialogFooter
+} from
+  "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +22,7 @@ interface POSCloseSessionModalProps {
   session: POSSession | null;
   totalCashSales: number;
   businessAccountTotal: number;
+  otherPaymentsTotal: number;
   isClosing: boolean;
   onClose: (request: ClosePOSSessionRequest) => Promise<unknown>;
   onCancel: () => void;
@@ -31,6 +33,7 @@ export default function POSCloseSessionModal({
   session,
   totalCashSales,
   businessAccountTotal,
+  otherPaymentsTotal,
   isClosing,
   onClose,
   onCancel
@@ -117,9 +120,15 @@ export default function POSCloseSessionModal({
               <span className="font-medium text-green-600">+ {formatCurrency(totalCashSales)}</span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Otros movimientos externos</span>
+              <span className="text-muted-foreground">Otros ajustes de efectivo externos</span>
               <span className={`font-medium ${otherMovements >= 0 ? "text-blue-600" : "text-destructive"}`}>
                 {otherMovements >= 0 ? "+ " : ""}{formatCurrency(otherMovements)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Otros medios de pago</span>
+              <span className="font-medium text-blue-600">
+                + {formatCurrency(otherPaymentsTotal)}
               </span>
             </div>
             <Separator />
@@ -154,7 +163,7 @@ export default function POSCloseSessionModal({
 
           {/* Difference display */}
           {difference !== 0 &&
-          <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+            <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
               <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
               <div className="text-sm text-destructive">
                 <p className="font-medium">
@@ -170,7 +179,7 @@ export default function POSCloseSessionModal({
             </div>
           }
           {difference === 0 && closingAmount !== "" &&
-          <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Monto coincide con el esperado ✓
             </p>
           }
@@ -202,12 +211,12 @@ export default function POSCloseSessionModal({
               disabled={isClosing}>
 
               {isClosing ?
-              <>
+                <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Cerrando caja...
                 </> :
 
-              "Confirmar Cierre"
+                "Confirmar Cierre"
               }
             </Button>
           </DialogFooter>
