@@ -56,6 +56,24 @@ export const deleteProductsApi = async (productIds: number[]) => {
   }
 };
 
+export const updatePromotionalTextApi = async (
+  productIds: number[],
+  promotionalText: string,
+  promotionalBgColor: string,
+  promotionalTextColor: string
+) => {
+  const { error } = await supabase
+    .from("products")
+    .update({
+      promotional_text: promotionalText,
+      promotional_bg_color: promotionalBgColor,
+      promotional_text_color: promotionalTextColor,
+    })
+    .in("id", productIds);
+
+  if (error) throw error;
+};
+
 export const categoriesApi = async (): Promise<Categories> => {
   const { data, error } = await supabase
     .from("categories")
