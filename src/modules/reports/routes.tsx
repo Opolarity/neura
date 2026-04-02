@@ -1,14 +1,12 @@
-import { lazy } from 'react';
 import { Navigate } from 'react-router-dom';
 import type { RouteObject } from 'react-router-dom';
 import ReportsLayout from './pages/ReportsLayout';
-
-const SalesPage     = lazy(() => import('./pages/SalesPage'));
-const ProductsPage  = lazy(() => import('./pages/ProductsPage'));
-const StockPage     = lazy(() => import('./pages/StockPage'));
-const ReturnsPage   = lazy(() => import('./pages/ReturnsPage'));
-const MovementsPage = lazy(() => import('./pages/MovementsPage'));
-const ClientsPage   = lazy(() => import('./pages/ClientsPage'));
+import SalesPage from './pages/SalesPage';
+import ProductsPage from './pages/ProductsPage';
+import StockPage from './pages/StockPage';
+import ReturnsPage from './pages/ReturnsPage';
+import MovementsPage from './pages/MovementsPage';
+import ClientsPage from './pages/ClientsPage';
 
 export const reportsRoutes: RouteObject[] = [
   {
