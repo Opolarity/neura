@@ -14,9 +14,16 @@ export interface ReportsFilters {
   cityId: number | null;
 }
 
+function toISODate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+const _today = new Date();
+const _firstOfMonth = new Date(_today.getFullYear(), _today.getMonth(), 1);
+
 export const DEFAULT_REPORTS_FILTERS: ReportsFilters = {
-  startDate: null,
-  endDate: null,
+  startDate: toISODate(_firstOfMonth),
+  endDate: toISODate(_today),
   branchId: null,
   countryId: null,
   stateId: null,

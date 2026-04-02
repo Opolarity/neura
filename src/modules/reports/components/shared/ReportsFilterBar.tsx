@@ -14,6 +14,17 @@ interface ReportsFilterBarProps {
 }
 
 const ALL_VALUE = '__all__';
+const MAX_RANGE_DAYS = 90;
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function diffDays(a: string, b: string): number {
+  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000);
+}
 
 export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
   const [refreshing, setRefreshing] = useState(false);
@@ -65,7 +76,15 @@ export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
         <input
           type="date"
           value={filters.startDate ?? ''}
-          onChange={(e) => onChange({ startDate: e.target.value || null })}
+          onChange={(e) => {
+            const start = e.target.value || null;
+            const updates: Partial<typeof filters> = { startDate: start };
+            // Si el endDate actual supera el rango máximo, lo recorta
+            if (start && filters.endDate && diffDays(start, filters.endDate) > MAX_RANGE_DAYS) {
+              updates.endDate = addDays(start, MAX_RANGE_DAYS);
+            }
+            onChange(updates);
+          }}
           className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
@@ -75,6 +94,7 @@ export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
           type="date"
           value={filters.endDate ?? ''}
           min={filters.startDate ?? undefined}
+          max={filters.startDate ? addDays(filters.startDate, MAX_RANGE_DAYS) : undefined}
           onChange={(e) => onChange({ endDate: e.target.value || null })}
           className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
