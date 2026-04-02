@@ -232,5 +232,72 @@ All colors MUST be HSL.
 }
 
 .ProseMirror h1 { font-size: 1.5em; font-weight: 700; margin: 0.5em 0; }
+
+/* Recharts/Tremor: mapear blue-500 → blue-600 (hsl(var(--primary))) del sistema */
+[class~="fill-blue-500"] {
+  fill: hsl(var(--primary)) !important;
+}
+[class~="stroke-blue-500"] {
+  stroke: hsl(var(--primary)) !important;
+}
+[class~="bg-blue-500"] {
+  background-color: hsl(var(--primary)) !important;
+}
+[class~="text-blue-500"] {
+  color: hsl(var(--primary)) !important;
+}
+/* Dot activo en charts */
+.recharts-active-dot circle {
+  fill: hsl(var(--primary)) !important;
+  stroke: white !important;
+}
+
+/* Tremor: fondo sólido en Cards, selects y tooltips de charts */
+.tremor-Card-root {
+  background-color: white !important;
+}
+
+.tremor-SelectButton-root,
+.tremor-SelectPopover-root,
+.tremor-SelectItem-root,
+[data-radix-popper-content-wrapper] .tremor-SelectPopover-root {
+  background-color: white !important;
+  color: #111827 !important;
+}
+
+.recharts-tooltip-wrapper .recharts-default-tooltip,
+.recharts-tooltip-wrapper {
+  background-color: white !important;
+}
+
+/* Recharts: relleno uniforme en AreaChart — color sólido sin degradado */
+.recharts-wrapper defs linearGradient stop {
+  stop-color: hsl(var(--primary)) !important;
+  stop-opacity: 0.85 !important;
+}
+
+/* Recharts: reducir tamaño de labels/ticks en charts de reportes */
+.recharts-cartesian-axis-tick-value {
+  font-size: 11px !important;
+}
+
+.recharts-legend-item-text {
+  font-size: 11px !important;
+}
+
+/* Recharts: reducir tamaño del tooltip (hover sobre barras) */
+.recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-label {
+  font-size: 11px !important;
+}
+
+.recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item {
+  font-size: 11px !important;
+}
+
+/* Tremor custom tooltip */
+.tremor-Card-root [class*="tooltip"],
+[class*="tremor-"][class*="Tooltip"] {
+  font-size: 11px !important;
+}
 .ProseMirror h2 { font-size: 1.25em; font-weight: 600; margin: 0.5em 0; }
 .ProseMirror h3 { font-size: 1.1em; font-weight: 600; margin: 0.5em 0; }

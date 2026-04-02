@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { buildEndpoint } from '@/shared/utils/utils';
 import type {
   ReportsFilters,
   SalesKpis,
@@ -42,6 +43,9 @@ function mapFilters(f: ReportsFilters) {
     p_country_id: f.countryId ?? undefined,
     p_state_id: f.stateId ?? undefined,
     p_city_id: f.cityId ?? undefined,
+    p_neighborhood_id: f.neighborhoodId ?? undefined,
+    p_sale_type_id: f.saleTypeId ?? undefined,
+    p_payment_method_id: f.paymentMethodId ?? undefined,
   };
 }
 
@@ -256,6 +260,42 @@ export const customersService = {
 };
 
 // ============================================================
+// SALES REPORT EXPORT
+// ============================================================
+export interface SalesReportRow {
+  order_id: number;
+  order_date: string;
+  shipping_method: string | null;
+  document_type: string | null;
+  document_number: string;
+  customer_name: string;
+  sale_type: string | null;
+  seller: string | null;
+  total: number;
+  invoice: string | null;
+  situation: string | null;
+  district: string | null;
+  province: string | null;
+  department: string | null;
+  products: string;
+}
+
+export const fetchSalesReport = async (
+  startDate: string,
+  endDate: string
+): Promise<SalesReportRow[]> => {
+  const endpoint = buildEndpoint('get-sales-report', {
+    start_date: startDate,
+    end_date: endDate,
+  });
+  const { data, error } = await supabase.functions.invoke(endpoint, {
+    method: 'GET',
+  });
+  if (error) throw error;
+  return data;
+};
+
+// ============================================================
 // SHARED: Refresh materialized views (called from UI)
 // ============================================================
 export const refreshReportMviews = () =>
@@ -299,6 +339,35 @@ export const filterOptionsService = {
       .from('cities')
       .select('id, name')
       .eq('state_id', stateId)
+      .order('name');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  getNeighborhoods: async (cityId: number) => {
+    const { data, error } = await supabase
+      .from('neighborhoods')
+      .select('id, name')
+      .eq('city_id', cityId)
+      .order('name');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  getSaleTypes: async () => {
+    const { data, error } = await supabase
+      .from('sale_types')
+      .select('id, name')
+      .order('name');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  getPaymentMethods: async () => {
+    const { data, error } = await supabase
+      .from('payment_methods')
+      .select('id, name')
+      .eq('is_active', true)
       .order('name');
     if (error) throw error;
     return data ?? [];

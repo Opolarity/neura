@@ -4,7 +4,7 @@ import { SalesOverTimeChart } from './SalesOverTimeChart';
 import { SalesByDimensionChart } from './SalesByDimensionChart';
 import { TopProductsTable } from './TopProductsTable';
 import { useSalesDashboard } from '../../hooks/useSalesDashboard';
-import type { ReportsFilters } from '../../types/reports.types';
+import type { ReportsFilters, SalesDimension } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
 
 interface SalesDashboardProps {
@@ -14,6 +14,13 @@ interface SalesDashboardProps {
 export function SalesDashboard({ filters }: SalesDashboardProps) {
   const dash = useSalesDashboard(filters);
   const kpis = dash.kpis.data;
+
+  const dimensions = Object.fromEntries(
+    Object.entries(dash.byDimensionQueries).map(([dim, query]) => [
+      dim,
+      { data: (query.data as any[]) ?? [], loading: query.isLoading },
+    ]),
+  ) as Record<SalesDimension, { data: any[]; loading: boolean }>;
 
   return (
     <div className="space-y-6">
@@ -58,13 +65,8 @@ export function SalesDashboard({ filters }: SalesDashboardProps) {
         onGranularityChange={dash.setGranularity}
       />
 
-      {/* Sales by dimension */}
-      <SalesByDimensionChart
-        data={dash.byDimension.data ?? []}
-        loading={dash.byDimension.isLoading}
-        dimension={dash.dimension}
-        onDimensionChange={dash.setDimension}
-      />
+      {/* Sales by dimension — un bloque por dimensión */}
+      <SalesByDimensionChart dimensions={dimensions} />
 
       {/* Top products */}
       <TopProductsTable

@@ -1,16 +1,18 @@
-import { Card, Title, BarChart, Select, SelectItem } from '@tremor/react';
+import { Card, Title, BarChart } from '@tremor/react';
 import type { SalesByDimensionItem, SalesDimension } from '../../types/reports.types';
 
-interface Props {
+interface DimensionBlock {
   data: SalesByDimensionItem[];
   loading: boolean;
-  dimension: SalesDimension;
-  onDimensionChange: (d: SalesDimension) => void;
+}
+
+interface Props {
+  dimensions: Record<SalesDimension, DimensionBlock>;
 }
 
 const DIMENSION_LABELS: Record<SalesDimension, string> = {
   branch: 'Sucursal',
-  sale_type: 'Tipo de comprobante',
+  sale_type: 'Canal de venta',
   payment_method: 'Método de pago',
   situation: 'Estado de pedido',
   state: 'Departamento',
@@ -18,40 +20,50 @@ const DIMENSION_LABELS: Record<SalesDimension, string> = {
   neighborhood: 'Distrito',
 };
 
-export function SalesByDimensionChart({ data, loading, dimension, onDimensionChange }: Props) {
-  const chartData = data.map((d) => ({
-    Dimensión: d.label,
-    'Ventas (S/)': d.total_revenue,
-    'Pedidos': d.order_count,
-  }));
+const ALL_DIMENSIONS: SalesDimension[] = [
+  'branch', 'sale_type', 'payment_method', 'situation', 'state', 'city', 'neighborhood',
+];
 
+const TOP5_DIMENSIONS: SalesDimension[] = ['state', 'city', 'neighborhood'];
+
+export function SalesByDimensionChart({ dimensions }: Props) {
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-4">
-        <Title>Ventas por {DIMENSION_LABELS[dimension]}</Title>
-        <Select
-          value={dimension}
-          onValueChange={(v) => onDimensionChange(v as SalesDimension)}
-          className="w-52"
-        >
-          {(Object.entries(DIMENSION_LABELS) as [SalesDimension, string][]).map(([key, label]) => (
-            <SelectItem key={key} value={key}>{label}</SelectItem>
-          ))}
-        </Select>
-      </div>
-      {loading ? (
-        <div className="h-52 bg-muted animate-pulse rounded" />
-      ) : (
-        <BarChart
-          data={chartData}
-          index="Dimensión"
-          categories={['Ventas (S/)']}
-          colors={['blue']}
-          valueFormatter={(v) => `S/ ${v.toLocaleString('es-PE')}`}
-          layout="vertical"
-          className="h-52"
-        />
-      )}
-    </Card>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {ALL_DIMENSIONS.map((dim) => {
+        const { data, loading } = dimensions[dim];
+        const sliced = TOP5_DIMENSIONS.includes(dim)
+          ? [...data]
+              .filter((d) => d.label !== null && !/^sin /i.test(d.label))
+              .sort((a, b) => b.total_revenue - a.total_revenue)
+              .slice(0, 5)
+          : data;
+        const chartData = sliced.map((d) => ({
+          Dimensión: d.label,
+          'Ventas (S/)': d.total_revenue,
+        }));
+
+        return (
+          <Card key={dim}>
+            <Title>Ventas por {DIMENSION_LABELS[dim]}</Title>
+            {loading ? (
+              <div className="h-40 bg-muted animate-pulse rounded mt-4" />
+            ) : (
+              <BarChart
+                data={chartData}
+                index="Dimensión"
+                categories={['Ventas (S/)']}
+                colors={['blue']}
+                valueFormatter={(v) => `S/ ${v.toLocaleString('es-PE')}`}
+                layout="vertical"
+                yAxisWidth={130}
+                showLegend={false}
+                className="mt-4"
+                style={{ height: Math.max(chartData.length * 40, 120) }}
+              />
+            )}
+          </Card>
+        );
+      })}
+    </div>
   );
 }

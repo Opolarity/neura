@@ -31,7 +31,7 @@ export function TopReturnedProductsChart({ data, loading, limit, onLimitChange }
           data={chartData}
           index="Producto"
           categories={['N° devoluciones']}
-          colors={['rose']}
+          colors={['blue']}
           layout="vertical"
           className="h-48"
         />
