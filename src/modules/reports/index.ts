@@ -1,2 +1,2 @@
 export { reportsRoutes } from './routes.tsx';
-export { default as Reports } from './pages/Reports';
+export { default as ReportsLayout } from './pages/ReportsLayout';
