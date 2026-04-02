@@ -12,6 +12,9 @@ export interface ReportsFilters {
   countryId: number | null;
   stateId: number | null;
   cityId: number | null;
+  neighborhoodId: number | null;
+  saleTypeId: number | null;
+  paymentMethodId: number | null;
 }
 
 function toISODate(date: Date): string {
@@ -28,6 +31,9 @@ export const DEFAULT_REPORTS_FILTERS: ReportsFilters = {
   countryId: null,
   stateId: null,
   cityId: null,
+  neighborhoodId: null,
+  saleTypeId: null,
+  paymentMethodId: null,
 };
 
 // -------------------------------------------------------

@@ -32,7 +32,7 @@ export function ReturnsOverTimeChart({ data, loading, granularity, onGranularity
           data={chartData}
           index="Fecha"
           categories={['Devoluciones', 'Reembolso (S/)']}
-          colors={['rose', 'orange']}
+          colors={['blue', 'sky']}
           className="h-48"
         />
       )}

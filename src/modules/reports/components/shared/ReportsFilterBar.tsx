@@ -36,26 +36,6 @@ export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
     staleTime: 1000 * 60 * 10,
   });
 
-  const countries = useQuery({
-    queryKey: ['filter_countries'],
-    queryFn: filterOptionsService.getCountries,
-    staleTime: 1000 * 60 * 60,
-  });
-
-  const states = useQuery({
-    queryKey: ['filter_states', filters.countryId],
-    queryFn: () => filterOptionsService.getStates(filters.countryId!),
-    enabled: filters.countryId !== null,
-    staleTime: 1000 * 60 * 30,
-  });
-
-  const cities = useQuery({
-    queryKey: ['filter_cities', filters.stateId],
-    queryFn: () => filterOptionsService.getCities(filters.stateId!),
-    enabled: filters.stateId !== null,
-    staleTime: 1000 * 60 * 30,
-  });
-
   async function handleRefresh() {
     setRefreshing(true);
     try {
@@ -118,73 +98,6 @@ export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
           </SelectContent>
         </Select>
       </div>
-
-      {/* Country */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium">País</span>
-        <Select
-          value={filters.countryId?.toString() ?? ALL_VALUE}
-          onValueChange={(v) => {
-            const countryId = v === ALL_VALUE ? null : Number(v);
-            onChange({ countryId, stateId: null, cityId: null });
-          }}
-        >
-          <SelectTrigger className="h-9 w-[140px]">
-            <SelectValue placeholder="Todos" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>Todos</SelectItem>
-            {countries.data?.map((c) => (
-              <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* State — only when country selected */}
-      {filters.countryId && (
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground font-medium">Departamento</span>
-          <Select
-            value={filters.stateId?.toString() ?? ALL_VALUE}
-            onValueChange={(v) => {
-              const stateId = v === ALL_VALUE ? null : Number(v);
-              onChange({ stateId, cityId: null });
-            }}
-          >
-            <SelectTrigger className="h-9 w-[160px]">
-              <SelectValue placeholder="Todos" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_VALUE}>Todos</SelectItem>
-              {states.data?.map((s) => (
-                <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* City — only when state selected */}
-      {filters.stateId && (
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground font-medium">Ciudad</span>
-          <Select
-            value={filters.cityId?.toString() ?? ALL_VALUE}
-            onValueChange={(v) => onChange({ cityId: v === ALL_VALUE ? null : Number(v) })}
-          >
-            <SelectTrigger className="h-9 w-[160px]">
-              <SelectValue placeholder="Todas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_VALUE}>Todas</SelectItem>
-              {cities.data?.map((c) => (
-                <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
 
       {/* Refresh + Export buttons */}
       <div className="ml-auto flex items-end gap-2">

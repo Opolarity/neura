@@ -3,9 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { salesService } from '../services/reports.service';
 import type { ReportsFilters, Granularity, SalesDimension, TopMetric, TopLimit } from '../types/reports.types';
 
+const ALL_DIMENSIONS: SalesDimension[] = [
+  'branch', 'sale_type', 'payment_method', 'situation', 'state', 'city', 'neighborhood',
+];
+
 export function useSalesDashboard(filters: ReportsFilters) {
   const [granularity, setGranularity] = useState<Granularity>('day');
-  const [dimension, setDimension] = useState<SalesDimension>('branch');
   const [topMetric, setTopMetric] = useState<TopMetric>('revenue');
   const [topLimit, setTopLimit] = useState<TopLimit>(10);
 
@@ -23,11 +26,18 @@ export function useSalesDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const byDimension = useQuery({
-    queryKey: ['rpt_sales_by_dimension', ...queryKey, dimension],
-    queryFn: () => salesService.getByDimension(filters, dimension),
-    staleTime: 1000 * 60 * 5,
-  });
+  // Una query por cada dimensión, todas en paralelo
+  const byDimensionQueries = Object.fromEntries(
+    ALL_DIMENSIONS.map((dim) => [
+      dim,
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      useQuery({
+        queryKey: ['rpt_sales_by_dimension', ...queryKey, dim],
+        queryFn: () => salesService.getByDimension(filters, dim),
+        staleTime: 1000 * 60 * 5,
+      }),
+    ]),
+  ) as Record<SalesDimension, ReturnType<typeof useQuery>>;
 
   const topProducts = useQuery({
     queryKey: ['rpt_top_products_sales', ...queryKey, topMetric, topLimit],
@@ -38,12 +48,10 @@ export function useSalesDashboard(filters: ReportsFilters) {
   return {
     kpis,
     overTime,
-    byDimension,
+    byDimensionQueries,
     topProducts,
     granularity,
     setGranularity,
-    dimension,
-    setDimension,
     topMetric,
     setTopMetric,
     topLimit,

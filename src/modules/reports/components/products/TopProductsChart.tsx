@@ -51,7 +51,7 @@ export function TopProductsChart({ data, loading, limit, onLimitChange, category
           data={chartData}
           index="Producto"
           categories={['Ingresos (S/)']}
-          colors={['emerald']}
+          colors={['blue']}
           valueFormatter={(v) => `S/ ${v.toLocaleString('es-PE')}`}
           layout="vertical"
           className="h-52"
