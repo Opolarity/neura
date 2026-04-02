@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { usePOSSessions } from "../hooks/usePOSSessions";
 import POSSessionsFilterModal from "../components/POSSessionsFilterModal";
+import POSSessionDetailDialog from "../components/POSSessionDetailDialog";
 import {
   Card,
   CardContent,
@@ -31,6 +33,7 @@ import { formatCurrency } from "@/modules/sales/adapters/POS.adapter";
 
 const POSSessions = () => {
   const navigate = useNavigate();
+  const [detailSessionId, setDetailSessionId] = useState<number | null>(null);
   const {
     sessions,
     loading,
@@ -201,7 +204,7 @@ const POSSessions = () => {
                     </TableCell>
                     <TableCell>{session.userName}</TableCell>
                     <TableCell className="text-center">
-                      <Button variant="outline" size="sm" onClick={() => {}}>
+                      <Button variant="outline" size="sm" onClick={() => setDetailSessionId(session.id)}>
                         <Eye className="w-4 h-4" />
                       </Button>
                     </TableCell>
@@ -220,6 +223,11 @@ const POSSessions = () => {
 
         </CardFooter>
       </Card>
+      <POSSessionDetailDialog
+        sessionId={detailSessionId}
+        open={detailSessionId !== null}
+        onOpenChange={(open) => { if (!open) setDetailSessionId(null); }}
+      />
     </div>);
 
 };

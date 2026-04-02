@@ -114,26 +114,3 @@ export const getActivePOSSession = async (): Promise<POSSessionApiResponse | nul
   if (data?.error) throw new Error(data.error);
   return data?.session || null;
 };
-
-
-export const getPOSSessionOtherPaymentsTotal = async (sessionId: number, businessAccountId: number): Promise<number> => {
-  const { data, error } = await supabase
-    .from("pos_session_orders")
-    .select("order_id")
-    .eq("pos_session_id", sessionId);
-
-  if (error) throw error;
-  if (!data || data.length === 0) return 0;
-
-  const orderIds = data.map(d => d.order_id);
-
-  const { data: paymentsData, error: paymentsError } = await (supabase as any)
-    .from("order_payment")
-    .select("amount")
-    .in("order_id", orderIds)
-    .neq("business_acount_id", businessAccountId);
-
-  if (paymentsError) throw paymentsError;
-
-  return paymentsData?.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) || 0;
-};
