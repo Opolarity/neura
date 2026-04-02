@@ -13,16 +13,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, AlertTriangle, Calculator } from "lucide-react";
+import { Loader2, AlertTriangle, Calculator, Eye } from "lucide-react";
 import type { POSSession, ClosePOSSessionRequest } from "../../types/POS.types";
 import { formatCurrency } from "@/shared/utils/currency";
+import POSSessionDetailDialog from "@/modules/pos/components/POSSessionDetailDialog";
 
 interface POSCloseSessionModalProps {
   isOpen: boolean;
   session: POSSession | null;
   totalCashSales: number;
   businessAccountTotal: number;
-  otherPaymentsTotal: number;
+
   isClosing: boolean;
   onClose: (request: ClosePOSSessionRequest) => Promise<unknown>;
   onCancel: () => void;
@@ -33,7 +34,7 @@ export default function POSCloseSessionModal({
   session,
   totalCashSales,
   businessAccountTotal,
-  otherPaymentsTotal,
+
   isClosing,
   onClose,
   onCancel
@@ -53,6 +54,7 @@ export default function POSCloseSessionModal({
   // Editable closing amount (initialized with expected)
   const [closingAmount, setClosingAmount] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
 
   // Initialize closing amount when modal opens or expected changes
   useEffect(() => {
@@ -108,7 +110,7 @@ export default function POSCloseSessionModal({
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-2">
           {/* Summary section */}
           <div className="bg-muted/50 rounded-lg p-3 space-y-1.5">
             <div className="flex items-center justify-between text-xs">
@@ -125,18 +127,23 @@ export default function POSCloseSessionModal({
                 {otherMovements >= 0 ? "+ " : ""}{formatCurrency(otherMovements)}
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Otros medios de pago</span>
-              <span className="font-medium text-blue-600">
-                + {formatCurrency(otherPaymentsTotal)}
-              </span>
-            </div>
+
             <Separator />
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Monto esperado</span>
               <span className="font-bold">{formatCurrency(expectedAmount)}</span>
             </div>
           </div>
+
+          {/* Detail link */}
+          <button
+            type="button"
+            onClick={() => setShowDetailDialog(true)}
+            className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Ver historial completo de ventas e ingresos
+          </button>
 
           {/* Editable closing amount */}
           <div className="space-y-2">
@@ -222,6 +229,12 @@ export default function POSCloseSessionModal({
           </DialogFooter>
         </form>
       </DialogContent>
+
+      <POSSessionDetailDialog
+        sessionId={session.id}
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+      />
     </Dialog>);
 
 }
