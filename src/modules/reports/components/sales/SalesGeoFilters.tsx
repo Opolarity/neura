@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Download } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { filterOptionsService } from '../../services/reports.service';
+import { SalesExportModal } from '../shared/SalesExportModal';
 import type { ReportsFilters } from '../../types/reports.types';
+
 
 interface Props {
   filters: ReportsFilters;
@@ -15,6 +17,7 @@ const ALL_VALUE = '__all__';
 
 export function SalesGeoFilters({ filters, onChange }: Props) {
   const [open, setOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const countries = useQuery({
     queryKey: ['filter_countries'],
@@ -43,6 +46,12 @@ export function SalesGeoFilters({ filters, onChange }: Props) {
     staleTime: 1000 * 60 * 30,
   });
 
+  const branches = useQuery({
+    queryKey: ['filter_branches'],
+    queryFn: filterOptionsService.getBranches,
+    staleTime: 1000 * 60 * 10,
+  });
+
   const saleTypes = useQuery({
     queryKey: ['filter_sale_types'],
     queryFn: filterOptionsService.getSaleTypes,
@@ -56,6 +65,7 @@ export function SalesGeoFilters({ filters, onChange }: Props) {
   });
 
   const activeCount = [
+    filters.branchId,
     filters.countryId,
     filters.stateId,
     filters.cityId,
@@ -68,6 +78,7 @@ export function SalesGeoFilters({ filters, onChange }: Props) {
 
   function clearAll() {
     onChange({
+      branchId: null,
       countryId: null,
       stateId: null,
       cityId: null,
@@ -85,7 +96,7 @@ export function SalesGeoFilters({ filters, onChange }: Props) {
         className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium hover:bg-muted/50 transition-colors"
       >
         <span className="flex items-center gap-2">
-          Más filtros
+          Más opciones
           {hasActiveFilter && (
             <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
               {activeCount}
@@ -98,6 +109,27 @@ export function SalesGeoFilters({ filters, onChange }: Props) {
 
       {open && (
         <div className="flex flex-wrap items-end gap-3 px-4 pb-4 border-t pt-3">
+
+          {/* Sucursal */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground font-medium">Sucursal</span>
+            <Select
+              value={filters.branchId?.toString() ?? ALL_VALUE}
+              onValueChange={(v) =>
+                onChange({ branchId: v === ALL_VALUE ? null : Number(v) })
+              }
+            >
+              <SelectTrigger className="h-9 w-[160px]">
+                <SelectValue placeholder="Todas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_VALUE}>Todas</SelectItem>
+                {branches.data?.map((b) => (
+                  <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Canal de venta */}
           <div className="flex flex-col gap-1">
@@ -231,20 +263,36 @@ export function SalesGeoFilters({ filters, onChange }: Props) {
             </Select>
           </div>
 
-          {/* Limpiar */}
-          {hasActiveFilter && (
+          {/* Separador visual */}
+          <div className="ml-auto flex items-end gap-2">
+            {/* Limpiar */}
+            {hasActiveFilter && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAll}
+                className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-3.5 h-3.5" />
+                Limpiar
+              </Button>
+            )}
+
+            {/* Descargar */}
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              onClick={clearAll}
-              className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
+              onClick={() => setExportOpen(true)}
+              className="h-9 gap-1.5"
             >
-              <X className="w-3.5 h-3.5" />
-              Limpiar
+              <Download className="w-3.5 h-3.5" />
+              Descargar
             </Button>
-          )}
+          </div>
         </div>
       )}
+
+      <SalesExportModal open={exportOpen} onOpenChange={setExportOpen} />
     </div>
   );
 }

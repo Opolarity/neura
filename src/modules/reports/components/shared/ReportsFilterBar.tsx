@@ -1,12 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { Download, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { filterOptionsService, refreshReportMviews } from '../../services/reports.service';
+import { refreshReportMviews } from '../../services/reports.service';
 import type { ReportsFilters } from '../../types/reports.types';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { SalesExportModal } from './SalesExportModal';
 
 interface ReportsFilterBarProps {
   filters: ReportsFilters;
@@ -28,13 +25,6 @@ function diffDays(a: string, b: string): number {
 
 export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
   const [refreshing, setRefreshing] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
-
-  const branches = useQuery({
-    queryKey: ['filter_branches'],
-    queryFn: filterOptionsService.getBranches,
-    staleTime: 1000 * 60 * 10,
-  });
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -80,34 +70,8 @@ export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
         />
       </div>
 
-      {/* Branch */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium">Sucursal</span>
-        <Select
-          value={filters.branchId?.toString() ?? ALL_VALUE}
-          onValueChange={(v) => onChange({ branchId: v === ALL_VALUE ? null : Number(v) })}
-        >
-          <SelectTrigger className="h-9 w-[160px]">
-            <SelectValue placeholder="Todas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>Todas</SelectItem>
-            {branches.data?.map((b) => (
-              <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Refresh + Export buttons */}
+      {/* Refresh button */}
       <div className="ml-auto flex items-end gap-2">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground font-medium opacity-0">.</span>
-          <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
-            <Download className="h-4 w-4 mr-2" />
-            Descargar
-          </Button>
-        </div>
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground font-medium opacity-0">.</span>
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
@@ -116,8 +80,6 @@ export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
           </Button>
         </div>
       </div>
-
-      <SalesExportModal open={exportOpen} onOpenChange={setExportOpen} />
     </div>
   );
 }
