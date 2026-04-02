@@ -1,12 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { Download, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { filterOptionsService, refreshReportMviews } from '../../services/reports.service';
+import { refreshReportMviews } from '../../services/reports.service';
 import type { ReportsFilters } from '../../types/reports.types';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { SalesExportModal } from './SalesExportModal';
 
 interface ReportsFilterBarProps {
   filters: ReportsFilters;
@@ -14,36 +11,20 @@ interface ReportsFilterBarProps {
 }
 
 const ALL_VALUE = '__all__';
+const MAX_RANGE_DAYS = 90;
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function diffDays(a: string, b: string): number {
+  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000);
+}
 
 export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
   const [refreshing, setRefreshing] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
-
-  const branches = useQuery({
-    queryKey: ['filter_branches'],
-    queryFn: filterOptionsService.getBranches,
-    staleTime: 1000 * 60 * 10,
-  });
-
-  const countries = useQuery({
-    queryKey: ['filter_countries'],
-    queryFn: filterOptionsService.getCountries,
-    staleTime: 1000 * 60 * 60,
-  });
-
-  const states = useQuery({
-    queryKey: ['filter_states', filters.countryId],
-    queryFn: () => filterOptionsService.getStates(filters.countryId!),
-    enabled: filters.countryId !== null,
-    staleTime: 1000 * 60 * 30,
-  });
-
-  const cities = useQuery({
-    queryKey: ['filter_cities', filters.stateId],
-    queryFn: () => filterOptionsService.getCities(filters.stateId!),
-    enabled: filters.stateId !== null,
-    staleTime: 1000 * 60 * 30,
-  });
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -65,7 +46,15 @@ export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
         <input
           type="date"
           value={filters.startDate ?? ''}
-          onChange={(e) => onChange({ startDate: e.target.value || null })}
+          onChange={(e) => {
+            const start = e.target.value || null;
+            const updates: Partial<typeof filters> = { startDate: start };
+            // Si el endDate actual supera el rango máximo, lo recorta
+            if (start && filters.endDate && diffDays(start, filters.endDate) > MAX_RANGE_DAYS) {
+              updates.endDate = addDays(start, MAX_RANGE_DAYS);
+            }
+            onChange(updates);
+          }}
           className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
@@ -75,106 +64,14 @@ export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
           type="date"
           value={filters.endDate ?? ''}
           min={filters.startDate ?? undefined}
+          max={filters.startDate ? addDays(filters.startDate, MAX_RANGE_DAYS) : undefined}
           onChange={(e) => onChange({ endDate: e.target.value || null })}
           className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
 
-      {/* Branch */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium">Sucursal</span>
-        <Select
-          value={filters.branchId?.toString() ?? ALL_VALUE}
-          onValueChange={(v) => onChange({ branchId: v === ALL_VALUE ? null : Number(v) })}
-        >
-          <SelectTrigger className="h-9 w-[160px]">
-            <SelectValue placeholder="Todas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>Todas</SelectItem>
-            {branches.data?.map((b) => (
-              <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Country */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium">País</span>
-        <Select
-          value={filters.countryId?.toString() ?? ALL_VALUE}
-          onValueChange={(v) => {
-            const countryId = v === ALL_VALUE ? null : Number(v);
-            onChange({ countryId, stateId: null, cityId: null });
-          }}
-        >
-          <SelectTrigger className="h-9 w-[140px]">
-            <SelectValue placeholder="Todos" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>Todos</SelectItem>
-            {countries.data?.map((c) => (
-              <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* State — only when country selected */}
-      {filters.countryId && (
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground font-medium">Departamento</span>
-          <Select
-            value={filters.stateId?.toString() ?? ALL_VALUE}
-            onValueChange={(v) => {
-              const stateId = v === ALL_VALUE ? null : Number(v);
-              onChange({ stateId, cityId: null });
-            }}
-          >
-            <SelectTrigger className="h-9 w-[160px]">
-              <SelectValue placeholder="Todos" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_VALUE}>Todos</SelectItem>
-              {states.data?.map((s) => (
-                <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* City — only when state selected */}
-      {filters.stateId && (
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground font-medium">Ciudad</span>
-          <Select
-            value={filters.cityId?.toString() ?? ALL_VALUE}
-            onValueChange={(v) => onChange({ cityId: v === ALL_VALUE ? null : Number(v) })}
-          >
-            <SelectTrigger className="h-9 w-[160px]">
-              <SelectValue placeholder="Todas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_VALUE}>Todas</SelectItem>
-              {cities.data?.map((c) => (
-                <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Refresh + Export buttons */}
+      {/* Refresh button */}
       <div className="ml-auto flex items-end gap-2">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground font-medium opacity-0">.</span>
-          <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
-            <Download className="h-4 w-4 mr-2" />
-            Descargar
-          </Button>
-        </div>
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground font-medium opacity-0">.</span>
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
@@ -183,8 +80,6 @@ export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
           </Button>
         </div>
       </div>
-
-      <SalesExportModal open={exportOpen} onOpenChange={setExportOpen} />
     </div>
   );
 }

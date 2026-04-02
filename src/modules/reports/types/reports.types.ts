@@ -12,15 +12,28 @@ export interface ReportsFilters {
   countryId: number | null;
   stateId: number | null;
   cityId: number | null;
+  neighborhoodId: number | null;
+  saleTypeId: number | null;
+  paymentMethodId: number | null;
 }
 
+function toISODate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+const _today = new Date();
+const _firstOfMonth = new Date(_today.getFullYear(), _today.getMonth(), 1);
+
 export const DEFAULT_REPORTS_FILTERS: ReportsFilters = {
-  startDate: null,
-  endDate: null,
+  startDate: toISODate(_firstOfMonth),
+  endDate: toISODate(_today),
   branchId: null,
   countryId: null,
   stateId: null,
   cityId: null,
+  neighborhoodId: null,
+  saleTypeId: null,
+  paymentMethodId: null,
 };
 
 // -------------------------------------------------------

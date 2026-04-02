@@ -23,7 +23,7 @@ export function StockMovementTypesChart({ data, loading }: Props) {
           data={chartData}
           index="Tipo"
           categories={['Movimientos', 'Unidades totales']}
-          colors={['blue', 'cyan']}
+          colors={['blue', 'sky']}
           className="h-48 mt-4"
         />
       )}

@@ -42,10 +42,11 @@ export function SalesOverTimeChart({ data, loading, granularity, onGranularityCh
           data={chartData}
           index="Fecha"
           categories={['Ventas (S/)']}
-          colors={['indigo']}
+          colors={['blue']}
           valueFormatter={(v) => `S/ ${v.toLocaleString('es-PE')}`}
           showLegend
           showGridLines
+          yAxisWidth={90}
           className="h-48"
         />
       )}

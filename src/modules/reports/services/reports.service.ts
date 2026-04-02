@@ -43,6 +43,9 @@ function mapFilters(f: ReportsFilters) {
     p_country_id: f.countryId ?? undefined,
     p_state_id: f.stateId ?? undefined,
     p_city_id: f.cityId ?? undefined,
+    p_neighborhood_id: f.neighborhoodId ?? undefined,
+    p_sale_type_id: f.saleTypeId ?? undefined,
+    p_payment_method_id: f.paymentMethodId ?? undefined,
   };
 }
 
@@ -336,6 +339,35 @@ export const filterOptionsService = {
       .from('cities')
       .select('id, name')
       .eq('state_id', stateId)
+      .order('name');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  getNeighborhoods: async (cityId: number) => {
+    const { data, error } = await supabase
+      .from('neighborhoods')
+      .select('id, name')
+      .eq('city_id', cityId)
+      .order('name');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  getSaleTypes: async () => {
+    const { data, error } = await supabase
+      .from('sale_types')
+      .select('id, name')
+      .order('name');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  getPaymentMethods: async () => {
+    const { data, error } = await supabase
+      .from('payment_methods')
+      .select('id, name')
+      .eq('is_active', true)
       .order('name');
     if (error) throw error;
     return data ?? [];

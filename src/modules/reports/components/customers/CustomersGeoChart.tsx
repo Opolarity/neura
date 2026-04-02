@@ -32,7 +32,7 @@ export function CustomersGeoChart({ data, loading }: Props) {
               data={stateData}
               index="Departamento"
               categories={['Compradores']}
-              colors={['indigo']}
+              colors={['blue']}
               layout="vertical"
               className="h-48"
             />
@@ -43,7 +43,7 @@ export function CustomersGeoChart({ data, loading }: Props) {
               data={cityData}
               index="Ciudad"
               categories={['Compradores']}
-              colors={['cyan']}
+              colors={['blue']}
               layout="vertical"
               className="h-48"
             />

@@ -40,7 +40,7 @@ export function LoyaltyDistributionChart({ data, loading, byLoyalty }: Props) {
             data={chartData}
             index="Nivel"
             categories={['Clientes']}
-            colors={['indigo']}
+            colors={['blue']}
             className="h-40 mt-4"
           />
           <div className="flex flex-wrap gap-2 mt-3">
