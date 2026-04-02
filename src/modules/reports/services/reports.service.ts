@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { buildEndpoint } from '@/shared/utils/utils';
 import type {
   ReportsFilters,
   SalesKpis,
@@ -253,6 +254,42 @@ export const customersService = {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
     }),
+};
+
+// ============================================================
+// SALES REPORT EXPORT
+// ============================================================
+export interface SalesReportRow {
+  order_id: number;
+  order_date: string;
+  shipping_method: string | null;
+  document_type: string | null;
+  document_number: string;
+  customer_name: string;
+  sale_type: string | null;
+  seller: string | null;
+  total: number;
+  invoice: string | null;
+  situation: string | null;
+  district: string | null;
+  province: string | null;
+  department: string | null;
+  products: string;
+}
+
+export const fetchSalesReport = async (
+  startDate: string,
+  endDate: string
+): Promise<SalesReportRow[]> => {
+  const endpoint = buildEndpoint('get-sales-report', {
+    start_date: startDate,
+    end_date: endDate,
+  });
+  const { data, error } = await supabase.functions.invoke(endpoint, {
+    method: 'GET',
+  });
+  if (error) throw error;
+  return data;
 };
 
 // ============================================================

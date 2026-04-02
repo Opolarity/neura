@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { RefreshCw } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { filterOptionsService, refreshReportMviews } from '../../services/reports.service';
 import type { ReportsFilters } from '../../types/reports.types';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { SalesExportModal } from './SalesExportModal';
 
 interface ReportsFilterBarProps {
   filters: ReportsFilters;
@@ -16,6 +17,7 @@ const ALL_VALUE = '__all__';
 
 export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
   const [refreshing, setRefreshing] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const branches = useQuery({
     queryKey: ['filter_branches'],
@@ -164,14 +166,25 @@ export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
         </div>
       )}
 
-      {/* Refresh button */}
-      <div className="ml-auto flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium opacity-0">.</span>
-        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Actualizar datos
-        </Button>
+      {/* Refresh + Export buttons */}
+      <div className="ml-auto flex items-end gap-2">
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground font-medium opacity-0">.</span>
+          <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
+            <Download className="h-4 w-4 mr-2" />
+            Descargar
+          </Button>
+        </div>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground font-medium opacity-0">.</span>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Actualizar datos
+          </Button>
+        </div>
       </div>
+
+      <SalesExportModal open={exportOpen} onOpenChange={setExportOpen} />
     </div>
   );
 }
