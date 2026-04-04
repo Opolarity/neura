@@ -2559,6 +2559,7 @@ export type Database = {
           promotional_text: string | null
           short_description: string | null
           sizes_image_url: string | null
+          sizes_ref_image_url: string | null
           title: string
           web: boolean | null
           woo_id: string | null
@@ -2575,6 +2576,7 @@ export type Database = {
           promotional_text?: string | null
           short_description?: string | null
           sizes_image_url?: string | null
+          sizes_ref_image_url?: string | null
           title: string
           web?: boolean | null
           woo_id?: string | null
@@ -2591,6 +2593,7 @@ export type Database = {
           promotional_text?: string | null
           short_description?: string | null
           sizes_image_url?: string | null
+          sizes_ref_image_url?: string | null
           title?: string
           web?: boolean | null
           woo_id?: string | null
@@ -2681,6 +2684,7 @@ export type Database = {
           promotional_text_color: string | null
           short_description: string
           sizes_image_url: string | null
+          sizes_ref_image_url: string | null
           title: string
           web: boolean
         }
@@ -2698,6 +2702,7 @@ export type Database = {
           promotional_text_color?: string | null
           short_description?: string
           sizes_image_url?: string | null
+          sizes_ref_image_url?: string | null
           title: string
           web?: boolean
         }
@@ -2715,6 +2720,7 @@ export type Database = {
           promotional_text_color?: string | null
           short_description?: string
           sizes_image_url?: string | null
+          sizes_ref_image_url?: string | null
           title?: string
           web?: boolean
         }

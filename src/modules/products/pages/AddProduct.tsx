@@ -36,6 +36,9 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     sizesImageUrl,
     sizesImageFile,
     setSizesImageFile,
+    sizesRefImageUrl,
+    sizesRefImageFile,
+    setSizesRefImageFile,
     description,
     setDescription,
     selectedCategories,
@@ -390,48 +393,100 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
             <CardHeader>
               <CardTitle>Imagen de tallas</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <input
-                id="sizesImage"
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) setSizesImageFile(file);
-                }}
-                className="hidden"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById('sizesImage')?.click()}
-                className="w-full"
-                disabled={loading || viewOnly}
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Seleccionar imagen
-              </Button>
-              {(sizesImageFile || sizesImageUrl) && (
-                <div className="relative">
-                  <img
-                    src={sizesImageFile ? URL.createObjectURL(sizesImageFile) : sizesImageUrl!}
-                    alt="Imagen de tallas"
-                    className="w-full rounded-lg border object-contain max-h-[200px]"
-                  />
-                  {!viewOnly && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="absolute top-1 right-1 h-6 w-6 p-0"
-                      onClick={() => {
-                        setSizesImageFile(null);
-                      }}
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  )}
-                </div>
-              )}
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+              {/* Imagen de tallas */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Imagen de tallas</p>
+                <input
+                  id="sizesImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setSizesImageFile(file);
+                  }}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('sizesImage')?.click()}
+                  className="w-full"
+                  disabled={loading || viewOnly}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Tabla de tallas
+                </Button>
+                {(sizesImageFile || sizesImageUrl) && (
+                  <div className="relative">
+                    <img
+                      src={sizesImageFile ? URL.createObjectURL(sizesImageFile) : sizesImageUrl!}
+                      alt="Imagen de tallas"
+                      className="w-full rounded-lg border object-contain max-h-[200px]"
+                    />
+                    {!viewOnly && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="absolute top-1 right-1 h-6 w-6 p-0"
+                        onClick={() => {
+                          setSizesImageFile(null);
+                        }}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Imagen de referencia de tallas */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Imagen de referencia</p>
+                <input
+                  id="sizesRefImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setSizesRefImageFile(file);
+                  }}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('sizesRefImage')?.click()}
+                  className="w-full"
+                  disabled={loading || viewOnly}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Refrencia
+                </Button>
+                {(sizesRefImageFile || sizesRefImageUrl) && (
+                  <div className="relative">
+                    <img
+                      src={sizesRefImageFile ? URL.createObjectURL(sizesRefImageFile) : sizesRefImageUrl!}
+                      alt="Imagen de referencia de tallas"
+                      className="w-full rounded-lg border object-contain max-h-[200px]"
+                    />
+                    {!viewOnly && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="absolute top-1 right-1 h-6 w-6 p-0"
+                        onClick={() => {
+                          setSizesRefImageFile(null);
+                        }}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+              </div>
             </CardContent>
           </Card>
         </div>
