@@ -117,3 +117,16 @@ const usePaymentMethods = () => {
 }
 
 export default usePaymentMethods;
+
+export const useActivePaymentMethods = () => {
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['payment-methods', 'active'],
+        queryFn: getActivePaymentMethods,
+    });
+
+    return {
+        paymentMethods: data ?? [],
+        loading: isLoading,
+        error,
+    };
+};
