@@ -1,7 +1,22 @@
-import { Trash2 } from "lucide-react";
+import { Check, ChevronsUpDown, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -10,8 +25,89 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useActivePaymentMethods } from "@/modules/settings/hooks/usePaymentMethods";
 import type { Condition, ConditionType } from "../../types/priceRule.types";
 import { CONDITION_TYPE_LABELS } from "../../types/priceRule.types";
+
+const PaymentMethodSelect = ({
+  condition,
+  updateField,
+}: {
+  condition: Condition;
+  updateField: (key: string, value: unknown) => void;
+}) => {
+  const { paymentMethods, loading } = useActivePaymentMethods();
+  const selectedCodes: string[] = (condition as any).payment_method_codes ?? [];
+
+  const toggleCode = (code: string) => {
+    const next = selectedCodes.includes(code)
+      ? selectedCodes.filter((c) => c !== code)
+      : [...selectedCodes, code];
+    updateField("payment_method_codes", next);
+  };
+
+  return (
+    <div className="space-y-1 flex-1">
+      <Label className="text-xs">Métodos de pago</Label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-full justify-between font-normal"
+            disabled={loading}
+          >
+            {selectedCodes.length > 0 ? (
+              <div className="flex gap-1 flex-wrap">
+                {selectedCodes.map((code) => {
+                  const pm = paymentMethods.find((p) => p.code === code);
+                  return (
+                    <Badge key={code} variant="secondary" className="text-xs">
+                      {pm?.name ?? code}
+                    </Badge>
+                  );
+                })}
+              </div>
+            ) : (
+              <span className="text-muted-foreground">
+                {loading ? "Cargando..." : "Seleccionar métodos de pago"}
+              </span>
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[300px] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Buscar método de pago..." />
+            <CommandList>
+              <CommandEmpty>No se encontraron métodos de pago</CommandEmpty>
+              <CommandGroup>
+                {paymentMethods
+                  .filter((pm) => pm.code)
+                  .map((pm) => (
+                    <CommandItem
+                      key={pm.id}
+                      onSelect={() => toggleCode(pm.code!)}
+                    >
+                      <Checkbox
+                        checked={selectedCodes.includes(pm.code!)}
+                        className="mr-2"
+                      />
+                      <span>{pm.name}</span>
+                      {pm.code && (
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          {pm.code}
+                        </span>
+                      )}
+                    </CommandItem>
+                  ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
 
 interface ConditionRowProps {
   condition: Condition;
@@ -258,21 +354,7 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
         );
 
       case "payment_method":
-        return (
-          <div className="space-y-1 flex-1">
-            <Label className="text-xs">Códigos de método de pago (separados por coma)</Label>
-            <Input
-              placeholder="MERCP, PWRPY"
-              value={((condition as any).payment_method_codes ?? []).join(", ")}
-              onChange={(e) =>
-                updateField(
-                  "payment_method_codes",
-                  e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
-                )
-              }
-            />
-          </div>
-        );
+        return <PaymentMethodSelect condition={condition} updateField={updateField} />;
 
       case "new_customer":
         return (
