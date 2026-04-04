@@ -26,7 +26,7 @@ export const customerPointsAdapter = (
       documentNumber: acc.document_number ?? "—",
       documentType: acc.document_types?.name ?? "—",
       customerSince: acc.created_at ?? "",
-      email: acc.email ?? null,
+      email: null,
     };
   });
 

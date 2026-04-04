@@ -9,7 +9,6 @@ export interface CustomerPointApiRow {
     last_name2: string | null;
     document_number: string | null;
     created_at: string | null;
-    email: string | null;
     document_types: { name: string } | null;
   };
 }
