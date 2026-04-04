@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { PaymentMethod, PaymentMethodPayload, PaymentMethodsFilters } from '../types/PaymentMethods.types';
-import { CreatePaymentMethod, PaymentMethodsApi, UpdatePaymentMethod } from '../services/PaymentMethods.services';
+import { CreatePaymentMethod, getActivePaymentMethods, PaymentMethodsApi, UpdatePaymentMethod } from '../services/PaymentMethods.services';
 import { PaymentMethodsAdapter } from '../adapters/PaymentMethods.adapter';
 import { useToast } from '@/hooks/use-toast';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
