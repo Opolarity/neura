@@ -1,16 +1,24 @@
-export interface CustomerPointApiRow {
+export interface CustomerPointsApiRow {
   id: number;
   points: number | null;
   orders_quantity: number;
-  accounts: {
-    name: string | null;
-    middle_name: string | null;
-    last_name: string | null;
-    last_name2: string | null;
-    document_number: string | null;
-    created_at: string | null;
-    document_types: { name: string } | null;
+  name: string | null;
+  middle_name: string | null;
+  last_name: string | null;
+  last_name2: string | null;
+  document_number: string | null;
+  document_type_name: string | null;
+  created_at: string | null;
+  email: string | null;
+}
+
+export interface CustomerPointsApiResponse {
+  page: {
+    page: number;
+    size: number;
+    total: number;
   };
+  data: CustomerPointsApiRow[];
 }
 
 export interface CustomerPoint {

@@ -20,14 +20,11 @@ export const useCustomerPoints = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const from = (pagination.p_page - 1) * pagination.p_size;
-      const to = from + pagination.p_size - 1;
-
-      const { data: rows, count } = await getCustomerPointsApi(search, from, to);
-      const mapped = customerPointsAdapter(rows);
+      const response = await getCustomerPointsApi(search, pagination.p_page, pagination.p_size);
+      const { data: mapped, pagination: pag } = customerPointsAdapter(response);
 
       setData(mapped);
-      setPagination((prev) => ({ ...prev, total: count }));
+      setPagination(pag);
     } catch (error) {
       console.error(error);
       toast.error("Error al cargar puntos de clientes");
