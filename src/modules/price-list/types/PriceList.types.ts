@@ -5,4 +5,5 @@ export interface PriceListItem {
   location: string;
   web: boolean;
   created_at: string | null;
+  is_active: boolean;
 }

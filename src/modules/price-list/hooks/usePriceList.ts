@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getPriceLists } from "../services/PriceList.service";
+import { getActivePriceLists, getPriceLists } from "../services/PriceList.service";
 
 export const usePriceList = () => {
   const { data, isLoading, error, refetch } = useQuery({
@@ -12,5 +12,18 @@ export const usePriceList = () => {
     loading: isLoading,
     error,
     refetch,
+  };
+};
+
+export const useActivePriceLists = () => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["price-list", "active"],
+    queryFn: getActivePriceLists,
+  });
+
+  return {
+    priceLists: data ?? [],
+    loading: isLoading,
+    error,
   };
 };

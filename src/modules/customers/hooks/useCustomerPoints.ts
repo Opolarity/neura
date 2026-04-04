@@ -1,18 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { toast } from "sonner";
+import { CustomerPoint } from "../types/customerPoints.types";
+import { getCustomerPointsApi } from "../services/customerPoints.service";
+import { customerPointsAdapter } from "../adapters/customerPoints.adapter";
 
-export interface CustomerPoint {
-  id: number;
-  points: number | null;
-  ordersQuantity: number;
-  fullName: string;
-  documentNumber: string;
-  documentType: string;
-  customerSince: string;
-  email: string | null;
-}
+export type { CustomerPoint };
 
 export const useCustomerPoints = () => {
   const [data, setData] = useState<CustomerPoint[]>([]);
@@ -30,59 +23,11 @@ export const useCustomerPoints = () => {
       const from = (pagination.p_page - 1) * pagination.p_size;
       const to = from + pagination.p_size - 1;
 
-      let query = supabase
-        .from("customer_profile")
-        .select(
-          `
-          id,
-          points,
-          orders_quantity,
-          accounts!inner(
-            name,
-            middle_name,
-            last_name,
-            last_name2,
-            document_number,
-            created_at,
-            email,
-            document_types(name)
-          )
-        `,
-          { count: "exact" }
-        )
-        .order("points", { ascending: false })
-        .range(from, to);
-
-      if (search.trim()) {
-        query = query.or(
-          `name.ilike.%${search}%,last_name.ilike.%${search}%,document_number.ilike.%${search}%`,
-          { foreignTable: "accounts" }
-        );
-      }
-
-      const { data: rows, error, count } = await query;
-
-      if (error) throw error;
-
-      const mapped: CustomerPoint[] = (rows ?? []).map((row: any) => {
-        const acc = row.accounts ?? {};
-        const parts = [acc.name, acc.middle_name, acc.last_name, acc.last_name2]
-          .filter(Boolean)
-          .join(" ");
-        return {
-          id: row.id,
-          points: row.points,
-          ordersQuantity: row.orders_quantity ?? 0,
-          fullName: parts || "—",
-          documentNumber: acc.document_number ?? "—",
-          documentType: acc.document_types?.name ?? "—",
-          customerSince: acc.created_at ?? "",
-          email: acc.email ?? null,
-        };
-      });
+      const { data: rows, count } = await getCustomerPointsApi(search, from, to);
+      const mapped = customerPointsAdapter(rows);
 
       setData(mapped);
-      setPagination((prev) => ({ ...prev, total: count ?? 0 }));
+      setPagination((prev) => ({ ...prev, total: count }));
     } catch (error) {
       console.error(error);
       toast.error("Error al cargar puntos de clientes");
