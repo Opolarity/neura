@@ -25,6 +25,8 @@ export const useAddProduct = () => {
   const [promotionalTextColor, setPromotionalTextColor] = useState('#000000');
   const [sizesImageUrl, setSizesImageUrl] = useState<string | null>(null);
   const [sizesImageFile, setSizesImageFile] = useState<File | null>(null);
+  const [sizesRefImageUrl, setSizesRefImageUrl] = useState<string | null>(null);
+  const [sizesRefImageFile, setSizesRefImageFile] = useState<File | null>(null);
   const [description, setDescription] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [isVariable, setIsVariable] = useState(false);
@@ -153,6 +155,7 @@ export const useAddProduct = () => {
       setPromotionalBgColor(adapted.product.promotionalBgColor);
       setPromotionalTextColor(adapted.product.promotionalTextColor);
       setSizesImageUrl(adapted.product.sizesImageUrl);
+      setSizesRefImageUrl(adapted.product.sizesRefImageUrl);
       setDescription(adapted.product.description);
       setIsVariable(adapted.product.isVariable);
       setIsActive(adapted.product.isActive);
@@ -574,6 +577,18 @@ export const useAddProduct = () => {
           finalSizesImageUrl = urlData.publicUrl;
         }
 
+        let finalSizesRefImageUrl = sizesRefImageUrl;
+        if (sizesRefImageFile) {
+          const fileExt = sizesRefImageFile.name.split('.').pop();
+          const filePath = `products-images/sizes-ref/size-ref-img-${productId}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from('products')
+            .upload(filePath, sizesRefImageFile, { upsert: true });
+          if (uploadError) throw new Error('Error al subir imagen de referencia de tallas: ' + uploadError.message);
+          const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
+          finalSizesRefImageUrl = urlData.publicUrl;
+        }
+
         const request = AddProductAdapter.prepareUpdateRequest(
           Number(productId),
           productName,
@@ -582,6 +597,7 @@ export const useAddProduct = () => {
           promotionalBgColor,
           promotionalTextColor,
           finalSizesImageUrl,
+          finalSizesRefImageUrl,
           description,
           isVariable,
           isActive,
@@ -601,10 +617,10 @@ export const useAddProduct = () => {
           throw new Error(result.error || 'Error al actualizar el producto');
         }
 
-        // Save sizes_image_url directly to the products table
+        // Save sizes image URLs directly to the products table
         await supabase
           .from('products')
-          .update({ sizes_image_url: finalSizesImageUrl })
+          .update({ sizes_image_url: finalSizesImageUrl, sizes_ref_image_url: finalSizesRefImageUrl })
           .eq('id', Number(productId));
 
         toast({
@@ -620,6 +636,7 @@ export const useAddProduct = () => {
           promotionalBgColor,
           promotionalTextColor,
           sizesImageFile ? null : sizesImageUrl,
+          sizesRefImageFile ? null : sizesRefImageUrl,
           description,
           isVariable,
           isActive,
@@ -637,20 +654,39 @@ export const useAddProduct = () => {
           throw new Error(result.error || 'Error al crear el producto');
         }
 
-        // Upload sizes image with the new product ID and save URL to products table
-        if (sizesImageFile && result.product?.id) {
+        // Upload sizes images with the new product ID and save URLs to products table
+        if (result.product?.id && (sizesImageFile || sizesRefImageFile)) {
           const newProductId = result.product.id;
-          const fileExt = sizesImageFile.name.split('.').pop();
-          const filePath = `products-images/sizes/size-img-${newProductId}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage
-            .from('products')
-            .upload(filePath, sizesImageFile, { upsert: true });
-          if (uploadError) throw new Error('Error al subir imagen de tallas: ' + uploadError.message);
-          const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
-          await supabase
-            .from('products')
-            .update({ sizes_image_url: urlData.publicUrl })
-            .eq('id', newProductId);
+          const updateData: Record<string, string> = {};
+
+          if (sizesImageFile) {
+            const fileExt = sizesImageFile.name.split('.').pop();
+            const filePath = `products-images/sizes/size-img-${newProductId}.${fileExt}`;
+            const { error: uploadError } = await supabase.storage
+              .from('products')
+              .upload(filePath, sizesImageFile, { upsert: true });
+            if (uploadError) throw new Error('Error al subir imagen de tallas: ' + uploadError.message);
+            const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
+            updateData.sizes_image_url = urlData.publicUrl;
+          }
+
+          if (sizesRefImageFile) {
+            const fileExt = sizesRefImageFile.name.split('.').pop();
+            const filePath = `products-images/sizes-ref/size-ref-img-${newProductId}.${fileExt}`;
+            const { error: uploadError } = await supabase.storage
+              .from('products')
+              .upload(filePath, sizesRefImageFile, { upsert: true });
+            if (uploadError) throw new Error('Error al subir imagen de referencia de tallas: ' + uploadError.message);
+            const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
+            updateData.sizes_ref_image_url = urlData.publicUrl;
+          }
+
+          if (Object.keys(updateData).length > 0) {
+            await supabase
+              .from('products')
+              .update(updateData)
+              .eq('id', newProductId);
+          }
         }
 
         toast({
@@ -692,6 +728,9 @@ export const useAddProduct = () => {
     sizesImageUrl,
     sizesImageFile,
     setSizesImageFile,
+    sizesRefImageUrl,
+    sizesRefImageFile,
+    setSizesRefImageFile,
     description,
     setDescription,
     selectedCategories,

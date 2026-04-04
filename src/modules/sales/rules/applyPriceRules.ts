@@ -1,6 +1,6 @@
 // =============================================
 // Price Rules Engine
-// Calls the apply-price-rules edge function
+// Calls the process-price-rules edge function
 // to get cart items with prices adjusted by rules.
 // =============================================
 
@@ -15,9 +15,10 @@ interface CartItemForRules {
 }
 
 export interface AppliedRule {
-  type: "pack" | "level" | "gift";
-  label: string;
-  detail?: string;
+  message: string;
+  rule_name: string;
+  rule_code: string | null;
+  url: string | null;
 }
 
 export interface GiftItem {
@@ -29,15 +30,18 @@ export interface GiftItem {
 
 export interface DiscountResult {
   name: string;
-  amount: number; // mapped from edge function's `discount` field
+  amount: number;
   code: string;
+  note?: string;
 }
 
 export async function applyPriceRules<T extends CartItemForRules>(
   items: T[],
   priceListId: number | string,
   userId?: string | null,
-  accountId?: number | null
+  accountId?: number | null,
+  paymentMethodCode?: string | null,
+  couponCode?: string | null
 ): Promise<{ items: T[]; gifts: GiftItem[]; appliedRules: AppliedRule[]; discounts: DiscountResult[] }> {
   try {
     if (items.length === 0) return { items, gifts: [], appliedRules: [], discounts: [] };
@@ -51,22 +55,28 @@ export async function applyPriceRules<T extends CartItemForRules>(
       sale_price: null,
     }));
 
-    const { data, error } = await supabase.functions.invoke("apply-price-rules", {
+    const { data, error } = await supabase.functions.invoke("process-price-rules", {
       body: {
         items: payloadItems,
         priceListId: Number(priceListId),
         userId: userId ?? null,
-        accountId: accountId ?? null,
+        paymentMethodCode: paymentMethodCode ?? null,
+        couponCode: couponCode ?? null,
       },
     });
 
     if (error) {
-      console.error("Error calling apply-price-rules:", error);
+      console.error("Error calling process-price-rules:", error);
       return { items, gifts: [], appliedRules: [], discounts: [] };
     }
 
     const returnedItems = (data?.items || []) as any[];
-    const appliedRules = (data?.appliedRules || []) as AppliedRule[];
+    const appliedRules: AppliedRule[] = (data?.appliedRules || []).map((r: any) => ({
+      message: r.message,
+      rule_name: r.rule_name,
+      rule_code: r.rule_code,
+      url: r.url,
+    }));
     const gifts: GiftItem[] = (data?.gifts || []).map((g: any) => ({
       variationId: g.variation_id,
       productName: g.product_name,
@@ -77,6 +87,7 @@ export async function applyPriceRules<T extends CartItemForRules>(
       name: d.name,
       amount: d.discount,
       code: d.code,
+      note: d.note,
     }));
 
     // Mapa variationId → product_price calculado por la EF

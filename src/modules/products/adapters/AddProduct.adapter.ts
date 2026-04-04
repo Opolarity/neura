@@ -67,6 +67,7 @@ export const AddProductAdapter = {
       promotionalBgColor: string;
       promotionalTextColor: string;
       sizesImageUrl: string | null;
+      sizesRefImageUrl: string | null;
       description: string;
       isVariable: boolean;
       isActive: boolean;
@@ -86,6 +87,7 @@ export const AddProductAdapter = {
       promotionalBgColor: data.product.promotional_bg_color || '#ffffff',
       promotionalTextColor: data.product.promotional_text_color || '#000000',
       sizesImageUrl: data.product.sizes_image_url || null,
+      sizesRefImageUrl: data.product.sizes_ref_image_url || null,
       description: data.product.description || '',
       isVariable: data.product.is_variable,
       isActive: data.product.active,
@@ -183,6 +185,7 @@ export const AddProductAdapter = {
     promotionalBgColor: string,
     promotionalTextColor: string,
     sizesImageUrl: string | null,
+    sizesRefImageUrl: string | null,
     description: string,
     isVariable: boolean,
     isActive: boolean,
@@ -194,7 +197,7 @@ export const AddProductAdapter = {
     createdAt?: string
   ): CreateProductRequest {
     const sortedImages = [...productImages].sort((a, b) => a.order - b.order);
-    
+
     const imageRefs = sortedImages.map(image => ({
       id: image.id,
       path: image.id,
@@ -210,6 +213,7 @@ export const AddProductAdapter = {
       promotionalBgColor,
       promotionalTextColor,
       sizesImageUrl,
+      sizesRefImageUrl,
       description,
       isVariable,
       isActive,
@@ -233,6 +237,7 @@ export const AddProductAdapter = {
     promotionalBgColor: string,
     promotionalTextColor: string,
     sizesImageUrl: string | null,
+    sizesRefImageUrl: string | null,
     description: string,
     isVariable: boolean,
     isActive: boolean,
@@ -261,6 +266,7 @@ export const AddProductAdapter = {
       promotionalBgColor,
       promotionalTextColor,
       sizesImageUrl,
+      sizesRefImageUrl,
       description,
       isVariable,
       isActive,
