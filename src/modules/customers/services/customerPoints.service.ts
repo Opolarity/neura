@@ -19,7 +19,6 @@ export const getCustomerPointsApi = async (
         last_name2,
         document_number,
         created_at,
-        email,
         document_types(name)
       )
     `,
