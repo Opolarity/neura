@@ -12,6 +12,8 @@ export interface PaymentMethod {
     business_account_id: number;
     name: string;
     active: boolean;
+    is_active: boolean;
+    code: string | null;
 }
 
 export interface PaymentMethodsFilters {
