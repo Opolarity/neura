@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentMethodsApiResponse, PaymentMethodsFilters, PaymentMethod } from "../types/PaymentMethods.types";
+import type { PaymentMethodsApiResponse, PaymentMethodsFilters, PaymentMethod } from "../types/PaymentMethods.types";
 
 export const PaymentMethodsApi = async (
     filters: PaymentMethodsFilters
@@ -60,6 +60,17 @@ export const UpdatePaymentMethod = async (paymentMethod: PaymentMethod): Promise
     });
     if (error) throw error;
     return data;
+};
+
+export const getActivePaymentMethods = async (): Promise<PaymentMethod[]> => {
+    const { data, error } = await supabase
+        .from("payment_methods")
+        .select("*")
+        .eq("is_active", true)
+        .order("name", { ascending: true });
+
+    if (error) throw error;
+    return data as PaymentMethod[];
 };
 
 export const BusinessAccountsApi = async (): Promise<{ id: number; name: string }[]> => {
