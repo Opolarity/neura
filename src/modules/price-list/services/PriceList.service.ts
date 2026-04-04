@@ -10,3 +10,14 @@ export const getPriceLists = async (): Promise<PriceListItem[]> => {
   if (error) throw error;
   return data as PriceListItem[];
 };
+
+export const getActivePriceLists = async (): Promise<PriceListItem[]> => {
+  const { data, error } = await supabase
+    .from("price_list")
+    .select("*")
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return data as PriceListItem[];
+};

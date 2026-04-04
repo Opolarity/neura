@@ -1,7 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useActivePriceLists } from "@/modules/price-list/hooks/usePriceList";
 import type { PriceRuleFormData } from "../../types/priceRule.types";
 
 interface RuleValiditySectionProps {
@@ -16,6 +24,8 @@ export const RuleValiditySection = ({
   formData,
   updateField,
 }: RuleValiditySectionProps) => {
+  const { priceLists, loading } = useActivePriceLists();
+
   return (
     <Card>
       <CardHeader>
@@ -57,19 +67,29 @@ export const RuleValiditySection = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="price_list_id">Lista de precios (opcional)</Label>
-          <Input
-            id="price_list_id"
-            type="number"
-            placeholder="Dejar vacío para aplicar a todas"
-            value={formData.price_list_id ?? ""}
-            onChange={(e) =>
+          <Label>Lista de precios (opcional)</Label>
+          <Select
+            value={formData.price_list_id?.toString() ?? "all"}
+            onValueChange={(value) =>
               updateField(
                 "price_list_id",
-                e.target.value ? parseInt(e.target.value) : null
+                value === "all" ? null : parseInt(value)
               )
             }
-          />
+            disabled={loading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar lista de precios" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las listas</SelectItem>
+              {priceLists.map((pl) => (
+                <SelectItem key={pl.id} value={pl.id.toString()}>
+                  {pl.name}{pl.code ? ` (${pl.code})` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <p className="text-xs text-muted-foreground">
             Si se especifica, la regla solo aplica a esta lista de precios
           </p>
