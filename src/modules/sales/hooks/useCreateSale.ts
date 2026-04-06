@@ -148,6 +148,7 @@ export const useCreateSale = () => {
   const [customerUserId, setCustomerUserId] = useState<string | null>(null);
   const [customerAccountId, setCustomerAccountId] = useState<number | null>(null);
   const [cartGifts, setCartGifts] = useState<GiftItem[]>([]);
+  const [appliedRules, setAppliedRules] = useState<{ message: string; rule_name: string }[]>([]);
   const [selectedVariation, setSelectedVariation] =
     useState<ProductVariation | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -372,14 +373,27 @@ export const useCreateSale = () => {
       let gifts: any[] = [];
 
       if (newItems.length > 0) {
+        console.log('[useCreateSale] Calling applyPriceRules with:', {
+          itemCount: newItems.length,
+          priceListId: formData.priceListId,
+          customerUserId,
+          customerAccountId,
+        });
         const result = await applyPriceRules(
           newItems,
           formData.priceListId,
           customerUserId,
           customerAccountId
         );
+        console.log('[useCreateSale] applyPriceRules result:', {
+          appliedRules: result.appliedRules,
+          discounts: result.discounts,
+          firstItemPrice: result.items[0]?.price,
+          firstItemOriginalPrice: result.items[0]?.originalPrice,
+        });
         updatedNewItems = result.items;
         gifts = result.gifts;
+        setAppliedRules(result.appliedRules.map(r => ({ message: r.message, rule_name: r.rule_name })));
 
         // Merge discounts returned by price rules — update existing by name, add new ones
         if (result.discounts.length > 0) {
@@ -742,6 +756,14 @@ export const useCreateSale = () => {
 
       setFormData((prev) => ({ ...prev, [field]: value }));
 
+      // When document type or number changes, reset customer context
+      // so stale level discounts don't persist from a previous client
+      if (field === "documentType" || field === "documentNumber") {
+        setCustomerUserId(null);
+        setCustomerAccountId(null);
+        setAppliedRules([]);
+      }
+
       // When shipping method changes, update the cost
       if (field === "shippingMethod" && value) {
         const selectedCost = allShippingCosts.find(
@@ -804,6 +826,8 @@ export const useCreateSale = () => {
       }));
       setClientFound(false);
       setCustomerUserId(null);
+      setCustomerAccountId(null);
+      setAppliedRules([]);
       setCartGifts([]);
     }
   }, []);
@@ -1753,6 +1777,9 @@ export const useCreateSale = () => {
     orderDiscounts,
     addOrderDiscount,
     removeOrderDiscount,
+
+    // Applied price rules
+    appliedRules,
 
     // Is dirty
     isDirty,
