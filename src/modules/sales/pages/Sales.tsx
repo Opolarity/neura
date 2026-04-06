@@ -166,13 +166,13 @@ const Sales = () => {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex gap-2 justify-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => goToSaleDetail(sale.id)}
+                        <a
+                          href={`/sales/edit/${sale.id}`}
+                          title="Editar producto"
+                          className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
                         >
                           <SquarePen className="w-4 h-4" />
-                        </Button>
+                        </a>
                         {/*<Button
                           variant="outline"
                           size="sm"

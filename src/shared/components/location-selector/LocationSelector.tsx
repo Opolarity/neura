@@ -58,6 +58,14 @@ export default function LocationSelector({
   const currentValue = isControlled ? (value ?? initialValue) : internalValue;
 
   const updateValue = (newValue: LocationValue) => {
+    const isSame =
+      newValue.countryId === currentValue.countryId &&
+      newValue.stateId === currentValue.stateId &&
+      newValue.cityId === currentValue.cityId &&
+      newValue.neighborhoodId === currentValue.neighborhoodId;
+
+    if (isSame) return;
+
     if (!isControlled) {
       setInternalValue(newValue);
     }
