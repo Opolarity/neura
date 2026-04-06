@@ -141,6 +141,7 @@ const Dashboard = () => {
         <p className="text-gray-600">Bienvenido al ERP de PERCEPTION</p>
       </div>
 
+      <LocationSelector />
       <LocationSelector value={location} onChange={setLocation}></LocationSelector>
       <LocationSelector value={location} onChange={setLocation}>
         {({ Country }) => (

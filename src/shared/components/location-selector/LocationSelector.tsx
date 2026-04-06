@@ -1,8 +1,32 @@
+import { useState } from "react";
 import { LocationValue } from "./types";
 import { CountryField } from "./components/CountryField";
 import { StateField } from "./components/StateField";
 import { CityField } from "./components/CityField";
 import { NeighborhoodField } from "./components/NeighborhoodField";
+
+type ControlledProps = {
+  value: LocationValue;
+  onChange: (v: LocationValue) => void;
+  defaultValue?: never;
+};
+
+type UncontrolledProps = {
+  defaultValue?: LocationValue;
+  value?: never;
+  onChange?: (v: LocationValue) => void;
+};
+
+type BaseProps = {
+  children?: (fields: {
+    Country: FieldRenderer;
+    State: FieldRenderer;
+    City: FieldRenderer;
+    Neighborhood: FieldRenderer;
+  }) => React.ReactNode;
+};
+
+type Props = BaseProps & (ControlledProps | UncontrolledProps);
 
 type BaseFieldProps = {
   label?: string;
@@ -13,29 +37,35 @@ type BaseFieldProps = {
 
 type FieldRenderer = (props?: BaseFieldProps) => React.ReactNode;
 
-type Props = {
-  value?: LocationValue;
-  onChange: (v: LocationValue) => void;
-  children?: (fields: {
-    Country: FieldRenderer;
-    State: FieldRenderer;
-    City: FieldRenderer;
-    Neighborhood: FieldRenderer;
-  }) => React.ReactNode;
+const initialValue: LocationValue = {
+  countryId: null,
+  stateId: null,
+  cityId: null,
+  neighborhoodId: null,
 };
 
 export default function LocationSelector({
-  value = {
-    countryId: null,
-    stateId: null,
-    cityId: null,
-    neighborhoodId: null,
-  },
+  value,
+  defaultValue,
   onChange,
   children,
 }: Props) {
+  // Internal State
+  const isControlled = value !== undefined;
+  const [internalValue, setInternalValue] = useState<LocationValue>(
+    defaultValue ?? initialValue,
+  );
+  const currentValue = isControlled ? (value ?? initialValue) : internalValue;
+
+  const updateValue = (newValue: LocationValue) => {
+    if (!isControlled) {
+      setInternalValue(newValue);
+    }
+    onChange?.(newValue);
+  };
+
   const handleCountryChange = (countryId: string | null) => {
-    onChange({
+    updateValue({
       countryId,
       stateId: null,
       cityId: null,
@@ -44,8 +74,8 @@ export default function LocationSelector({
   };
 
   const handleStateChange = (stateId: string | null) => {
-    onChange({
-      ...value,
+    updateValue({
+      ...currentValue,
       stateId,
       cityId: null,
       neighborhoodId: null,
@@ -53,16 +83,16 @@ export default function LocationSelector({
   };
 
   const handleCityChange = (cityId: string | null) => {
-    onChange({
-      ...value,
+    updateValue({
+      ...currentValue,
       cityId,
       neighborhoodId: null,
     });
   };
 
   const handleNeighborhoodChange = (neighborhoodId: string | null) => {
-    onChange({
-      ...value,
+    updateValue({
+      ...currentValue,
       neighborhoodId,
     });
   };
@@ -70,31 +100,31 @@ export default function LocationSelector({
   const fields = {
     Country: (props = {}) => (
       <CountryField
-        value={value.countryId}
+        value={currentValue.countryId}
         onChange={handleCountryChange}
         {...props}
       />
     ),
     State: (props = {}) => (
       <StateField
-        countryId={value.countryId}
-        value={value.stateId}
+        countryId={currentValue.countryId}
+        value={currentValue.stateId}
         onChange={handleStateChange}
         {...props}
       />
     ),
     City: (props = {}) => (
       <CityField
-        stateId={value.stateId}
-        value={value.cityId}
+        stateId={currentValue.stateId}
+        value={currentValue.cityId}
         onChange={handleCityChange}
         {...props}
       />
     ),
     Neighborhood: (props = {}) => (
       <NeighborhoodField
-        cityId={value.cityId}
-        value={value.neighborhoodId}
+        cityId={currentValue.cityId}
+        value={currentValue.neighborhoodId}
         onChange={handleNeighborhoodChange}
         {...props}
       />
@@ -118,97 +148,3 @@ export default function LocationSelector({
     </>
   );
 }
-/*
-import React, { useState, useCallback } from "react";
-import { LocationContext } from "./LocationContext";
-
-import { CountrySelect } from "./CountrySelect";
-import { StateSelect } from "./StateSelect";
-import { CitySelect } from "./CitySelect";
-import { NeighborhoodSelect } from "./NeighborhoodSelect";
-
-type Props = {
-  children: React.ReactNode;
-  country_id?: string;
-  state_id?: string;
-  city_id?: string;
-  neighborhood_id?: string;
-  onCountryChange?: (v: string) => void;
-  onStateChange?: (v: string) => void;
-  onCityChange?: (v: string) => void;
-  onNeighborhoodChange?: (v: string) => void;
-};
-
-function LocationSelector({
-  children,
-  country_id,
-  state_id,
-  city_id,
-  neighborhood_id,
-  onCountryChange,
-  onStateChange,
-  onCityChange,
-  onNeighborhoodChange,
-}: Props) {
-  const [country, setCountry] = useState(country_id ?? "")
-  const [state, setState] = useState(state_id ?? "")
-  const [city, setCity] = useState(city_id ?? "")
-  const [neighborhood, setNeighborhood] = useState(neighborhood_id ?? "")
-
-  const handleSetCountry = useCallback((v: string) => {
-    setCountry(v)
-    setState("")
-    setCity("")
-    setNeighborhood("")
-    onCountryChange?.(v)
-    onStateChange?.("")
-    onCityChange?.("")
-    onNeighborhoodChange?.("")
-  }, [onCountryChange, onStateChange, onCityChange, onNeighborhoodChange])
-
-  const handleSetState = useCallback((v: string) => {
-    setState(v)
-    setCity("")
-    setNeighborhood("")
-    onStateChange?.(v)
-    onCityChange?.("")
-    onNeighborhoodChange?.("")
-  }, [onStateChange, onCityChange, onNeighborhoodChange])
-
-  const handleSetCity = useCallback((v: string) => {
-    setCity(v)
-    setNeighborhood("")
-    onCityChange?.(v)
-    onNeighborhoodChange?.("")
-  }, [onCityChange, onNeighborhoodChange])
-
-  const handleSetNeighborhood = useCallback((v: string) => {
-    setNeighborhood(v)
-    onNeighborhoodChange?.(v)
-  }, [onNeighborhoodChange])
-
-  return (
-    <LocationContext.Provider
-      value={{
-        country,
-        state,
-        city,
-        neighborhood,
-        setCountry: handleSetCountry,
-        setState: handleSetState,
-        setCity: handleSetCity,
-        setNeighborhood: handleSetNeighborhood,
-      }}
-    >
-      <div className="flex flex-col gap-2">{children}</div>
-    </LocationContext.Provider>
-  );
-}
-
-LocationSelector.Country = CountrySelect;
-LocationSelector.State = StateSelect;
-LocationSelector.City = CitySelect;
-LocationSelector.Neighborhood = NeighborhoodSelect;
-
-export default LocationSelector;
-*/
