@@ -1,7 +1,8 @@
 import React from "react";
-import { Bell, User, LogOut, ExternalLink, Loader2 } from "lucide-react";
+import { Bell, User, LogOut, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import LoadingDropdownMenu from "@/shared/components/LoadingDropdownMenu";
 import { getHeaderUserData } from "@/shared/services/service";
 import { supabase } from "@/integrations/supabase/client";
 import { useEcommerceSso } from "@/modules/ecommerce/hooks/useEcommerceSso";
@@ -18,7 +19,12 @@ const Header = ({ onSignOut }: HeaderProps) => {
     account: "Cargando...",
     role: "Sin Rol",
   });
-  const { redirectToEcommerce, loading: ssoLoading } = useEcommerceSso();
+  const {
+    redirectToEcommerceMIN,
+    redirectToEcommerceMAY,
+    loadingMIN,
+    loadingMAY,
+  } = useEcommerceSso();
 
   useEffect(() => {
     const initHeader = async () => {
@@ -49,20 +55,17 @@ const Header = ({ onSignOut }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-4">
-          <Button
+          <LoadingDropdownMenu
+            loading={loadingMIN || loadingMAY}
+            label="Editar Ecommerce"
+            icon={<ExternalLink className="w-4 h-4" />}
             variant="outline"
             size="sm"
-            onClick={redirectToEcommerce}
-            disabled={ssoLoading}
-            className="gap-2"
-          >
-            {ssoLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <ExternalLink className="w-4 h-4" />
-            )}
-            Editar Ecommerce
-          </Button>
+            options={[
+              { label: "Minorista", onClick: redirectToEcommerceMIN },
+              { label: "Mayorista", onClick: redirectToEcommerceMAY },
+            ]}
+          />
 
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
             <Bell className="w-5 h-5" />

@@ -8,8 +8,17 @@ import ProductsFilterBar from "@/modules/products/components/products/ProductsFi
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { updatePromotionalTextApi } from "@/modules/products/services/products.service";
 import { useToast } from "@/hooks/use-toast";
+import LoadingDropdownMenu from "@/shared/components/LoadingDropdownMenu";
+import { useEcommerceSso } from "../hooks/useEcommerceSso";
+import { ExternalLink } from "lucide-react";
 
 const PromotionalTextPage = () => {
+  const {
+      redirectToEcommerceMIN,
+      redirectToEcommerceMAY,
+      loadingMIN,
+      loadingMAY,
+    } = useEcommerceSso();
   // Texto y colores del banner se reflejan en el preview y se guardan en Supabase
   const [promoText, setPromoText] = useState("Texto promocional");
   const [bgColor, setBgColor] = useState("#000000");
@@ -72,9 +81,24 @@ const PromotionalTextPage = () => {
 
   return ( //Todo lo q vemos en la pantalla
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">
+      <div className="flex justify-between items-center">
+<h1 className="text-2xl font-bold text-foreground">
         Edicion Texto Promocional
       </h1>
+
+      <div>
+        <LoadingDropdownMenu
+            loading={loadingMIN || loadingMAY}
+            label="Editar Ecommerce"
+            icon={<ExternalLink className="w-4 h-4" />}
+            options={[
+              { label: "Minorista", onClick: redirectToEcommerceMIN },
+              { label: "Mayorista", onClick: redirectToEcommerceMAY },
+            ]}
+          />
+      </div>
+      </div>
+      
 
       {/* Editor: input de texto + selectores de color + preview en vivo + botón guardar */}
       <Card>
