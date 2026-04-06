@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import LocationSelector from "@/shared/components/location-selector/LocationSelector";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import {
   TrendingUp,
@@ -13,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LocationValue } from "@/shared/components/location-selector/types";
 
 interface DashboardData {
   ventas_del_mes: number;
@@ -36,6 +39,12 @@ const Dashboard = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const [location, setLocation] = useState<LocationValue>({
+    countryId: null,
+    stateId: null,
+    cityId: null,
+    neighborhoodId: null,
+  });
 
   useEffect(() => {
     fetchDashboardData();
@@ -131,6 +140,20 @@ const Dashboard = () => {
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600">Bienvenido al ERP de PERCEPTION</p>
       </div>
+
+      <LocationSelector value={location} onChange={setLocation}></LocationSelector>
+      <LocationSelector value={location} onChange={setLocation}>
+        {({ Country }) => (
+          <Country label="País" placeholder="Selecciona un país" invalid />
+        )}
+      </LocationSelector>
+      <button
+        onClick={() => {
+          console.log(location);
+        }}
+      >
+        Ver
+      </button>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

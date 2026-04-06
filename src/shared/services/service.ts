@@ -1,7 +1,7 @@
 import { Branch, BusinessAccount, Class, PaymentMethod, Situation, Status, Type } from "@/types/index.ts";
 import { City, Country, Neighborhood, State } from "../../types/locations.ts";
 import { supabase } from "../api/supabase";
-import { TypesApiResponse } from "../types/type.ts";
+import { CityResponse, CountryResponse, NeighborhoodResponse, StateResponse, TypesApiResponse } from "../types/type.ts";
 import { PriceList } from "@/types/price.ts";
 import { Warehouse } from "@/types/warehouse.ts";
 
@@ -364,3 +364,64 @@ export const getPosSaleTypesByBranch = async (branchId: number) => {
     businessAccountId: item.sale_types.business_acount_id,
   }));
 };
+//LOCATION
+export async function getCountries(): Promise<CountryResponse[]> {
+  const { data, error } = await supabase
+    .from("countries")
+    .select("id, name, phone_code, created_at")
+    .neq("name", " ");
+
+  if (error) {
+    console.error("Error fetching countries:", error);
+    return [];
+  }
+
+  return data;
+}
+
+export async function getStates(countryId: number): Promise<StateResponse[]> {
+  const { data, error } = await supabase
+    .from("states")
+    .select("id, name, country_id, created_at")
+    .eq("country_id", countryId)
+    .neq("name", " ");
+
+  if (error) {
+    console.error("Error fetching states:", error);
+    return [];
+  }
+
+  return data;
+}
+
+export async function getCities(stateId: number): Promise<CityResponse[]> {
+  const { data, error } = await supabase
+    .from("cities")
+    .select("id, name, country_id, state_id, created_at")
+    .eq("state_id", stateId)
+    .neq("name", " ");
+
+  if (error) {
+    console.error("Error fetching cities:", error);
+    return [];
+  }
+
+  return data;
+}
+
+export async function getNeighborhoods(
+  cityId: number,
+): Promise<NeighborhoodResponse[]> {
+  const { data, error } = await supabase
+    .from("neighborhoods")
+    .select("id, name, country_id, state_id, city_id, created_at")
+    .eq("city_id", cityId)
+    .neq("name", " ");
+
+  if (error) {
+    console.error("Error fetching neighborhoods:", error);
+    return [];
+  }
+
+  return data;
+}
