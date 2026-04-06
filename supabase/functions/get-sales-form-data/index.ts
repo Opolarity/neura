@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       supabase.from("payment_methods").select("id, name, business_account_id").eq("active", true).order("name"),
       supabase.from("payment_method_sale_type").select("payment_method_id, sale_type_id"),
       supabase.from("situations").select("id, name, code, order").eq("module_id", 1).order("order"), // Module 1 = Sales
-      supabase.from("types").select("id, name, code").eq("module_id", stkModuleId).order("name"), // Stock types
+      supabase.from("types").select("id, name, code, is_active").eq("module_id", stkModuleId).order("name"), // Stock types
       // Fetch only active products with active variations
       supabase
         .from("products")
