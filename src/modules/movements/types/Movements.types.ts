@@ -63,6 +63,7 @@ export interface MovementFilters {
   end_date?: string | null;
   branches?: number | null;
   order?: string | null;
+  sale_type?: number[] | null;
 }
 
 // =============================================================================

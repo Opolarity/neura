@@ -14,13 +14,17 @@ import {
   movementsApi,
   movementTypesApi,
   movementCategoriesApi,
+  movementSalesChannels,
 } from "../services/movements.service";
 import {
   movementAdapter,
   calculateMovementSummary,
 } from "../adapters/Movement.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
-import { getBusinessAccountIsActiveTrue, getPaymentMethodsIsActiveTrue } from "@/shared/services/service";
+import {
+  getBusinessAccountIsActiveTrue,
+  getPaymentMethodsIsActiveTrue,
+} from "@/shared/services/service";
 
 const DEFAULT_FILTERS: MovementFilters = {
   search: null,
@@ -34,6 +38,7 @@ const DEFAULT_FILTERS: MovementFilters = {
   end_date: null,
   branches: null,
   order: null,
+  sale_type: null,
 };
 
 export const useMovements = () => {
@@ -53,11 +58,14 @@ export const useMovements = () => {
 
   const [selectedMovements, setSelectedMovements] = useState<number[]>([]);
 
+  const [salesChannels, setSalesChannels] = useState<
+    { label: string; value: string }[]
+  >([]);
   const [movementTypes, setMovementTypes] = useState<MovementType[]>([]);
   const [categories, setCategories] = useState<MovementCategory[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [businessAccounts, setBusinessAccounts] = useState<BusinessAccount[]>(
-    []
+    [],
   );
 
   const [summary, setSummary] = useState<MovementSummary>({
@@ -94,17 +102,19 @@ export const useMovements = () => {
   useEffect(() => {
     const loadReferenceData = async () => {
       try {
-        const [types, cats, payments, accounts] = await Promise.all([
+        const [types, cats, payments, accounts, sch] = await Promise.all([
           movementTypesApi(),
           movementCategoriesApi(),
           getPaymentMethodsIsActiveTrue(),
           getBusinessAccountIsActiveTrue(),
+          movementSalesChannels(),
         ]);
 
         setMovementTypes(types);
         setCategories(cats);
         setPaymentMethods(payments);
         setBusinessAccounts(accounts);
+        setSalesChannels(sch.map((s) => ({ label: s.name, value: s.id.toString() })));
       } catch (err) {
         console.error("Error loading reference data:", err);
       }
@@ -178,7 +188,7 @@ export const useMovements = () => {
     setSelectedMovements((prev) =>
       prev.includes(movementId)
         ? prev.filter((id) => id !== movementId)
-        : [...prev, movementId]
+        : [...prev, movementId],
     );
   };
 
@@ -205,7 +215,8 @@ export const useMovements = () => {
     filters.payment_method ||
     filters.start_date ||
     filters.end_date ||
-    filters.branches
+    filters.branches ||
+    filters.sale_type?.length
   );
 
   return {
@@ -223,6 +234,7 @@ export const useMovements = () => {
     categories,
     paymentMethods,
     businessAccounts,
+    salesChannels,
 
     selectedMovements,
 

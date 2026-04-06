@@ -180,3 +180,13 @@ export const createMovementApi = async (
 
   return data;
 };
+
+export const movementSalesChannels = async (): Promise<{ id: number; name: string }[]> => {
+  const { data, error } = await supabase
+    .from("sale_types")
+    .select("id,name")
+    .eq("is_active", true);
+
+  if (error) throw error;
+  return data ?? [];
+};

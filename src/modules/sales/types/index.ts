@@ -112,6 +112,7 @@ export interface StockType {
   id: number;
   name: string;
   code: string | null;
+  is_active: boolean;
 }
 
 export interface Country {
@@ -192,7 +193,6 @@ export interface SalesFormDataResponse {
   paymentMethodSaleTypes: { paymentMethodId: number; saleTypeId: number }[];
   situations: Situation[];
   stockTypes: StockType[];
-  
 }
 
 // Create Order Request

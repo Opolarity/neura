@@ -77,6 +77,7 @@ export const adaptStockTypes = (data: any[]): StockType[] => {
   return data.map((item) => ({
     id: item.id,
     name: item.name,
+    is_active: item.is_active === true || item.is_active === 1,
     code: item.code || null,
   }));
 };
