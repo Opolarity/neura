@@ -27,6 +27,7 @@ const MovementsPage = () => {
     categories,
     paymentMethods,
     businessAccounts,
+    salesChannels,
 
     selectedMovements,
 
@@ -98,6 +99,7 @@ const MovementsPage = () => {
         categories={categories}
         paymentMethods={paymentMethods}
         businessAccounts={businessAccounts}
+        salesChannels={salesChannels}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}
       />

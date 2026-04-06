@@ -23,10 +23,12 @@ import {
   PaymentMethod,
   BusinessAccount,
 } from "../../types/Movements.types";
+import { MultiSelect } from "./MultiSelect";
 
 interface MovementsFilterModalProps {
   isOpen: boolean;
   filters: MovementFilters;
+  salesChannels: {label: string, value: string}[],
   movementTypes: MovementType[];
   categories: MovementCategory[];
   paymentMethods: PaymentMethod[];
@@ -38,6 +40,7 @@ interface MovementsFilterModalProps {
 const MovementsFilterModal = ({
   isOpen,
   filters,
+  salesChannels,
   movementTypes,
   categories,
   paymentMethods,
@@ -63,7 +66,7 @@ const MovementsFilterModal = ({
 
   const handleDateChange = (
     field: "start_date" | "end_date",
-    value: string
+    value: string,
   ) => {
     setInternalFilters((prev) => ({
       ...prev,
@@ -84,6 +87,7 @@ const MovementsFilterModal = ({
       end_date: null,
       branches: null,
       order: null,
+      sale_type: null,
     });
   };
 
@@ -95,6 +99,16 @@ const MovementsFilterModal = ({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Canales de Venta</Label>
+            <MultiSelect
+              options={salesChannels ?? []}
+              value={internalFilters.sale_type?.map(String) ?? []}
+              onChange={(vals) => setInternalFilters((prev) => ({ ...prev, sale_type: vals.map(Number) }))}
+            />
+          </div>
+
           <div className="space-y-2">
             <Label className="text-sm font-medium">Tipo de Movimiento</Label>
             <Select
