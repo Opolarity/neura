@@ -100,7 +100,7 @@ export function MultiSelect({
                 );
               })
             ) : (
-              <span className="text-sm font-normal opacity-60">
+              <span className="text-sm font-normal">
                 {placeholder}
               </span>
             )}
