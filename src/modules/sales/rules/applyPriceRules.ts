@@ -60,6 +60,7 @@ export async function applyPriceRules<T extends CartItemForRules>(
         items: payloadItems,
         priceListId: Number(priceListId),
         userId: userId ?? null,
+        accountId: accountId ?? null,
         paymentMethodCode: paymentMethodCode ?? null,
         couponCode: couponCode ?? null,
       },

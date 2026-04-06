@@ -178,6 +178,8 @@ const CreateSale = () => {
     orderDiscounts,
     addOrderDiscount,
     removeOrderDiscount,
+    // Applied price rules
+    appliedRules,
     isDirty,
   } = useCreateSale();
 
@@ -1486,6 +1488,17 @@ const CreateSale = () => {
                       Añadir descuento
                     </button>
                   ))}
+
+                {/* Applied price rules messages */}
+                {appliedRules.length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    {appliedRules.map((rule, i) => (
+                      <div key={i} className="text-xs text-green-600">
+                        {rule.message}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Total discount summary */}
                 <div className="flex justify-between text-sm">
