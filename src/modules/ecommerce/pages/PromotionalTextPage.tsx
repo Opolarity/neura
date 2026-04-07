@@ -8,6 +8,7 @@ import ProductsFilterBar from "@/modules/products/components/products/ProductsFi
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { updatePromotionalTextApi } from "@/modules/products/services/products.service";
 import { useToast } from "@/hooks/use-toast";
+import EcommerceEditorButton from "@/shared/components/EcommerceEditorButton";
 
 const PromotionalTextPage = () => {
   // Texto y colores del banner se reflejan en el preview y se guardan en Supabase
@@ -72,9 +73,16 @@ const PromotionalTextPage = () => {
 
   return ( //Todo lo q vemos en la pantalla
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">
+      <div className="flex justify-between items-center">
+<h1 className="text-2xl font-bold text-foreground">
         Edicion Texto Promocional
       </h1>
+
+      <div>
+        <EcommerceEditorButton />
+      </div>
+      </div>
+      
 
       {/* Editor: input de texto + selectores de color + preview en vivo + botón guardar */}
       <Card>

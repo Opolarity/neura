@@ -22,6 +22,9 @@ export function generateSalesReportExcel(
     "Distrito",
     "Provincia",
     "Departamento",
+    "Sucursal",
+    "Almacén",
+    "Lista de Precios",
     "Productos",
   ];
 
@@ -40,6 +43,9 @@ export function generateSalesReportExcel(
     r.district ?? "-",
     r.province ?? "-",
     r.department ?? "-",
+    r.branch ?? "-",
+    r.warehouse ?? "-",
+    r.price_list ?? "-",
     r.products ?? "-",
   ]);
 
@@ -60,6 +66,9 @@ export function generateSalesReportExcel(
     { wch: 18 }, // Distrito
     { wch: 18 }, // Provincia
     { wch: 18 }, // Departamento
+    { wch: 20 }, // Sucursal
+    { wch: 20 }, // Almacén
+    { wch: 22 }, // Lista de Precios
     { wch: 65 }, // Productos
   ];
 

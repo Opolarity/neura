@@ -6,6 +6,8 @@ import {
   MovementTypeValue,
   PaginationState,
   MovementSummary,
+  MovementDetailRaw,
+  MovementDetail,
 } from "../types/Movements.types";
 
 const formatCurrency = (amount: number): string => {
@@ -20,6 +22,14 @@ const formatCurrency = (amount: number): string => {
 const formatDate = (dateString: string): string => {
   try {
     return format(new Date(dateString.replace(/-/g, '/')), "dd/MM/yyyy");
+  } catch {
+    return dateString;
+  }
+};
+
+const formatDateTime = (dateString: string): string => {
+  try {
+    return format(new Date(dateString), "dd/MM/yy");
   } catch {
     return dateString;
   }
@@ -99,6 +109,21 @@ export const movementAdapter = (response: MovementApiResponse) => {
 
   return { movements: formattedMovements, pagination };
 };
+
+export const movementDetailAdapter = (raw: MovementDetailRaw): MovementDetail => ({
+  id: raw.id,
+  date: formatDateTime(raw.movement_date),
+  type: raw.types.name as MovementTypeValue,
+  category: raw.classes.name,
+  description: raw.description || "-",
+  paymentMethod: raw.payment_methods.name,
+  businessAccount: raw.business_accounts.name,
+  branch: raw.branches.name,
+  user: raw.profiles.user_name,
+  amount: raw.amount,
+  formattedAmount: formatCurrency(raw.amount),
+  filesUrl: raw.files_url ?? [],
+});
 
 export const calculateMovementSummary = (
   movements: Movement[]
