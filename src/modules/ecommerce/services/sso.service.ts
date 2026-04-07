@@ -1,13 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { SSOTokenResponse } from "../types/sso.types";
 
-export const generateSSOToken = async (channel: "MIN" | "MAY"): Promise<SSOTokenResponse> => {
+export const generateSSOToken = async (
+  channel_id: number,
+): Promise<SSOTokenResponse> => {
   const { data, error } = await supabase.functions.invoke<SSOTokenResponse>(
     "generate-sso-token",
-    { 
+    {
       method: "POST",
-      body: { channel }
-    }
+      body: { channel_id },
+    },
   );
 
   if (error) {
@@ -19,4 +21,14 @@ export const generateSSOToken = async (channel: "MIN" | "MAY"): Promise<SSOToken
   }
 
   return data;
+};
+
+export const getChannels = async (): Promise<
+  { id: number; name: string }[]
+> => {
+  const {data, error} = await supabase.from("channels").select("id, name")
+
+  if (error) throw error;
+
+  return data ?? [];
 };

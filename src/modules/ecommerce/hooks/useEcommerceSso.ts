@@ -2,17 +2,17 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { generateSSOToken } from "../services/sso.service";
 
-const ECOMMERCE_SSO_URL = "https://overtake.com.pe/editor";
-//const ECOMMERCE_SSO_URL = "http://localhost:3000/editor";
+//const ECOMMERCE_SSO_URL = "https://overtake.com.pe/editor";
+const ECOMMERCE_SSO_URL = "http://localhost:3000/editor";
 
 export const useEcommerceSso = () => {
-  const [loadingMIN, setLoadingMIN] = useState(false);
-  const [loadingMAY, setLoadingMAY] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const redirectToEcommerceMIN = async () => {
-    setLoadingMIN(true);
+  const redirectToEcommerce = async (channelId: number) => {
+    setLoading(true);
     try {
-      const { token } = await generateSSOToken("MIN");
+      const { token } = await generateSSOToken(channelId);
+
       window.open(`${ECOMMERCE_SSO_URL}?token=${token}`, "_blank");
     } catch (error) {
       const message =
@@ -21,24 +21,9 @@ export const useEcommerceSso = () => {
           : "Error al redirigir al ecommerce";
       toast.error(message);
     } finally {
-      setLoadingMIN(false);
-    }
-  };
-  const redirectToEcommerceMAY = async () => {
-    setLoadingMIN(true);
-    try {
-      const { token } = await generateSSOToken("MAY");
-      window.open(`${ECOMMERCE_SSO_URL}?token=${token}`, "_blank");
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Error al redirigir al ecommerce";
-      toast.error(message);
-    } finally {
-      setLoadingMIN(false);
+      setLoading(false);
     }
   };
 
-  return { redirectToEcommerceMIN, redirectToEcommerceMAY, loadingMIN, loadingMAY };
+  return { redirectToEcommerce, loading };
 };
