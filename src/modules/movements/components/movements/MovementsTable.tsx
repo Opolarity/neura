@@ -9,13 +9,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Eye, Loader2, TrendingUp, TrendingDown } from "lucide-react";
+import MovementDetailDialog from "./MovementDetailDialog";
 import { useState } from "react";
 import { Movement } from "../../types/Movements.types";
 
@@ -149,16 +144,10 @@ const MovementsTable = ({
       </TableBody>
     </Table>
 
-      <Dialog open={previewId !== null} onOpenChange={(open) => { if (!open) setPreviewId(null); }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Detalle del Movimiento</DialogTitle>
-          </DialogHeader>
-          <div className="py-2 text-sm text-muted-foreground">
-            ID: <span className="font-semibold text-foreground">{previewId}</span>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <MovementDetailDialog
+        movementId={previewId}
+        onClose={() => setPreviewId(null)}
+      />
     </>
   );
 };

@@ -157,7 +157,11 @@ export const uploadMovementAttachment = async (
 
   if (uploadError) throw uploadError;
 
-  return filePath;
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("sales").getPublicUrl(filePath);
+
+  return publicUrl;
 };
 
 export const createMovementApi = async (
@@ -186,6 +190,15 @@ export const movementSalesChannels = async (): Promise<{ id: number; name: strin
     .from("sale_types")
     .select("id,name")
     .eq("is_active", true);
+
+  if (error) throw error;
+  return data ?? [];
+};
+
+export const getMovementDetails = async (id: number) => {
+  const { data, error } = await supabase.functions.invoke("get-movements-details", {
+    body: {id}
+  })
 
   if (error) throw error;
   return data ?? [];
