@@ -24,9 +24,9 @@ export const generateSSOToken = async (
 };
 
 export const getChannels = async (): Promise<
-  { id: number; name: string }[]
+  { id: number; name: string, url: string }[]
 > => {
-  const {data, error} = await supabase.from("channels").select("id, name")
+  const {data, error} = await supabase.from("channels").select("id, name, url")
 
   if (error) throw error;
 

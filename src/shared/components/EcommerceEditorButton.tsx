@@ -16,7 +16,7 @@ interface EcommerceEditorButtonProps
 
 const EcommerceEditorButton = ({ ...buttonProps }: EcommerceEditorButtonProps) => {
   const { redirectToEcommerce, loading } = useEcommerceSso();
-  const [channels, setChannels] = useState<{ id: number; name: string }[]>([]);
+  const [channels, setChannels] = useState<{ id: number; name: string, url: string }[]>([]);
   const [loadingChannels, setLoadingChannels] = useState(true);
 
   useEffect(() => {
@@ -53,7 +53,7 @@ const EcommerceEditorButton = ({ ...buttonProps }: EcommerceEditorButtonProps) =
           channels.map((channel) => (
             <DropdownMenuItem
               key={channel.id}
-              onClick={() => redirectToEcommerce(channel.id)}
+              onClick={() => redirectToEcommerce(channel.id, channel.url)}
               className="gap-2"
             >
               {channel.name}
