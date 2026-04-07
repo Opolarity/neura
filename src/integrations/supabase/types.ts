@@ -454,6 +454,7 @@ export type Database = {
           sale_type_id: number
           stock_type_id: number
           warehouse_id: number
+          url: string
         }
         Insert: {
           branch_id: number
