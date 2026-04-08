@@ -1,26 +1,50 @@
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
 import ProductsTable from "@/modules/products/components/products/ProductsTable";
 import ProductsFilterModal from "@/modules/products/components/products/ProductsFilterModal";
 import { useProducts } from "@/modules/products/hooks/useProducts";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 import ProductsFilterBar from "@/modules/products/components/products/ProductsFilterBar";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
-import { updatePromotionalTextApi } from "@/modules/products/services/products.service";
+import {
+  updatePromotionalTextApi,
+  updateSizeImagesApi,
+  updateShortDescriptionApi,
+  updateSalesChannelsApi,
+  updateLargeDescriptionApi,
+  updatePromotionalImageApi,
+
+} from "@/modules/products/services/products.service";
+import PromotionalTextModal from "@/modules/ecommerce/components/PromotionalTextModal";
+import SizeImagesModal from "@/modules/ecommerce/components/SizeImagesModal";
+import ShortDescriptionModal from "@/modules/ecommerce/components/DescriptionModal";
+import SalesChannelsModal from "@/modules/ecommerce/components/SalesChannelsModal";
 import { useToast } from "@/hooks/use-toast";
-import EcommerceEditorButton from "@/shared/components/EcommerceEditorButton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, Plus, TrendingDown } from "lucide-react";
+import ShortDescriptionMayModal from "../components/DescriptionMaYModal";
+import PromotionalImageModal from "../components/PromotionalImage";
 
 const PromotionalTextPage = () => {
-  // Texto y colores del banner se reflejan en el preview y se guardan en Supabase
-  const [promoText, setPromoText] = useState("Texto promocional");
-  const [bgColor, setBgColor] = useState("#000000");
-  const [textColor, setTextColor] = useState("#ffffff");
-  // Bloquea el botón mientras se espera respuesta de Supabase
-  const [isSaving, setIsSaving] = useState(false);
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSizeImagesModalOpen, setIsSizeImagesModalOpen] = useState(false);
+  const [isShortDescModalOpen, setIsShortDescModalOpen] = useState(false); 
+  const [isShortDesMayModalOpen, setIsShortDesMayModalOpen] = useState(false);
+  const [isPromotionalImageModal, setIsPromotionalImageModal] = useState (false);
+  const [isSalesChannelsModalOpen, setIsSalesChannelsModalOpen] =
+    useState(false);
   const { toast } = useToast();
 
-  // Hook con toda la lógica de la tabla: carga, búsqueda, selección y paginación
   const {
     products,
     categories,
@@ -42,115 +66,182 @@ const PromotionalTextPage = () => {
     onOrderChange,
   } = useProducts();
 
-  // Guarda el texto promocional en todos los productos tildados de la tabla
-  const handleSave = async () => {
-    if (selectedProducts.length === 0) { //validacion
-      toast({
-        title: "Sin productos seleccionados",
-        description: "Selecciona al menos un producto en la tabla para aplicar el texto promocional.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSaving(true); //bloque el boton
-    try {
-      await updatePromotionalTextApi(selectedProducts, promoText, bgColor, textColor); // Llammada a supabase
-      toast({
-        title: "Guardado exitoso",
-        description: `Texto promocional aplicado a ${selectedProducts.length} producto${selectedProducts.length > 1 ? "s" : ""}.`,
-      });
-    } catch (error) { //Resultado
-      toast({
-        title: "Error al guardar",
-        description: "Ocurrió un error al aplicar el texto promocional. Intenta de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
+  const noSelectionToast = (label: string) => {
+    toast({
+      title: "Sin productos seleccionados",
+      description: `Selecciona al menos un producto para ${label}.`,
+      variant: "destructive",
+    });
   };
 
-  return ( //Todo lo q vemos en la pantalla
+  const plural = (n: number) => `${n} producto${n > 1 ? "s" : ""}`;
+
+  const handleSavePromo = async (
+    promoText: string,
+    bgColor: string,
+    textColor: string,
+  ) => {
+    if (selectedProducts.length === 0) {
+      noSelectionToast("aplicar el texto promocional");
+      return;
+    }
+    await updatePromotionalTextApi(
+      selectedProducts,
+      promoText,
+      bgColor,
+      textColor,
+    );
+    toast({
+      title: "Guardado exitoso",
+      description: `Texto promocional aplicado a ${plural(selectedProducts.length)}.`,
+    });
+  };
+
+  const handleSaveSizeImages = async (
+    sizesImageUrl: string | null,
+    sizesRefImageUrl: string | null,
+  ) => {
+    if (selectedProducts.length === 0) {
+      noSelectionToast("actualizar las imágenes de tallas");
+      return;
+    }
+    await updateSizeImagesApi(
+      selectedProducts,
+      sizesImageUrl,
+      sizesRefImageUrl,
+    );
+    toast({
+      title: "Guardado exitoso",
+      description: `Imágenes de tallas actualizadas en ${plural(selectedProducts.length)}.`,
+    });
+  };
+
+  const handleSavePromotionalImage = async (promotionalImgUrl: string | null) => {
+  if (selectedProducts.length === 0) {
+    noSelectionToast("actualizar la imagen promocional");
+    return;
+  }
+  await updatePromotionalImageApi(selectedProducts, promotionalImgUrl);
+  toast({
+    title: "Guardado exitoso",
+    description: `Imagen promocional actualizada en ${plural(selectedProducts.length)}.`,
+  });
+};
+
+
+  const handleSaveShortDescription = async (shortDescription: string) => {
+    if (selectedProducts.length === 0) {
+      noSelectionToast("No hay productos seleccionados");
+      return;
+    }
+    await updateShortDescriptionApi(selectedProducts, shortDescription);
+    toast({
+      title: "Guardado exitoso", //7
+      description: `Descripción corta actualizada en ${plural(selectedProducts.length)}.`,
+    });
+  };
+    const handleSaveShortDescriptionMay = async (shortDescription: string) => {
+    //5
+    if (selectedProducts.length === 0) {
+      noSelectionToast("No hay productos seleccionados");
+      return;
+    }
+    await updateLargeDescriptionApi (selectedProducts, shortDescription);
+    toast({
+      title: "Guardado exitoso", //7
+      description: `Descripción corta actualizada en ${plural(selectedProducts.length)}.`,
+    });
+  };
+
+  const handleSaveSalesChannels = async (channelIds: number[]) => {
+    //la funcion que se ejecuta al guardar
+    if (selectedProducts.length === 0) {
+      noSelectionToast("actualizar los canales de venta");
+      return;
+    }
+    await updateSalesChannelsApi(selectedProducts, channelIds);
+    toast({
+      title: "Guardado exitoso",
+      description: `Canales de venta actualizados en ${plural(selectedProducts.length)}.`,
+    });
+  };
+
+  return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-<h1 className="text-2xl font-bold text-foreground">
-        Edicion Texto Promocional
-      </h1>
-
-      <div>
-        <EcommerceEditorButton />
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Edicion Masiva
+          </h1>
+        </div>
+        <div className="flex gap-2 flex-wrap justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                className="gap-2"
+                disabled={selectedProducts.length === 0}
+              >
+                <Plus className="w-4 h-4" />
+                Edicion masiva
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setIsModalOpen(true)}
+              >
+                Actualizar Editar Texto.P
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setIsSizeImagesModalOpen(true)}
+              >
+                Actualizar Imágenes de Tallas
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setIsPromotionalImageModal(true)}
+              >
+                Actualizar Imágenes Promocionales
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setIsShortDesMayModalOpen(true)} 
+              >
+                Actualizar Descripción Mayorista
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setIsShortDescModalOpen(true)} 
+              >
+                Actualizar Descripción Minorista
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setIsSalesChannelsModalOpen(true)}
+              >
+                Actualizar Canales de Venta
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-      </div>
-      
 
-      {/* Editor: input de texto + selectores de color + preview en vivo + botón guardar */}
       <Card>
-        <CardContent className="pt-4 space-y-3">
-          <p className="text-sm font-medium">Texto promocional</p>
-
-          <div className="flex items-center gap-3">
-            {/* Cada tecla actualiza promoText y el preview cambia al instante */}
-            <Input
-              value={promoText}
-              onChange={(e) => setPromoText(e.target.value)}
-              placeholder="TEXTO PROMOCIONAL"
+        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ProductsFilterBar
+              search={search}
+              onSearchChange={onSearchChange}
+              onOpen={onOpenFilterModal}
+              order={filters.order}
+              onOrderChange={onOrderChange}
+              hasActiveFilters={hasActiveFilters}
             />
-            <label className="flex items-center gap-1 text-sm">
-              Fondo
-              <input
-                type="color"
-                value={bgColor}
-                onChange={(e) => setBgColor(e.target.value)}
-                className="w-8 h-8 cursor-pointer rounded border"
-              />
-            </label>
-            <label className="flex items-center gap-1 text-sm">
-              Texto
-              <input
-                type="color"
-                value={textColor}
-                onChange={(e) => setTextColor(e.target.value)}
-                className="w-8 h-8 cursor-pointer rounded border"
-              />
-            </label>
           </div>
+        </CardHeader>
 
-          {/* Preview en vivo — bgColor y textColor se aplican como estilos inline */}
-          <div
-            className="w-full py-3 text-center rounded text-sm font-medium"
-            style={{ backgroundColor: bgColor, color: textColor }}
-          >
-            {promoText}
-          </div>
-
-          {/* Botón muestra cuántos productos están tildados: "Guardar (3)" */}
-          <div className="flex justify-center mt-4">
-            <button
-              onClick={handleSave}//ejecuta y llama a supabase y muestra el msj
-              disabled={isSaving}//bloquea el boton
-              className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-60"
-            >
-              {isSaving ?  "Guardando..." : `Guardar${selectedProducts.length > 0 ? ` (${selectedProducts.length})` : ""}`}
-            </button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tabla con búsqueda, filtros y paginación — sin columnas Stock, Estado ni Acciones */}
-      <Card>
-        {/* Barra superior: buscador + botón de filtros + selector de orden */}
-        <CardHeader>
-          <ProductsFilterBar
-            search={search}
-            onSearchChange={onSearchChange}
-            onOpen={onOpenFilterModal}
-            order={filters.order}
-            onOrderChange={onOrderChange}
-            hasActiveFilters={hasActiveFilters}
-          />
-        </CardHeader>  
-        {/* Filas de productos con checkboxes para seleccionar */}
         <CardContent className="p-0">
           <ProductsTable
             search={search}
@@ -159,13 +250,12 @@ const PromotionalTextPage = () => {
             selectedProducts={selectedProducts}
             onToggleAllProductsSelection={toggleSelectAll}
             onToggleProductSelection={toggleProductSelection}
-            hideStock 
+            hideStock
             hideStatus
             hideActions
           />
         </CardContent>
 
-        {/* Navegación entre páginas y selector de filas por página */}
         <CardFooter>
           <PaginationBar
             pagination={pagination}
@@ -175,13 +265,48 @@ const PromotionalTextPage = () => {
         </CardFooter>
       </Card>
 
-      {/* Modal de filtros — visible solo cuando isOpenFilterModal es true */}
       <ProductsFilterModal
         isOpen={isOpenFilterModal}
         categories={categories}
         filters={filters}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}
+      />
+      <PromotionalTextModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        selectedCount={selectedProducts.length}
+        onSave={handleSavePromo}
+      />
+      <SizeImagesModal
+        isOpen={isSizeImagesModalOpen}
+        onClose={() => setIsSizeImagesModalOpen(false)}
+        selectedCount={selectedProducts.length}
+        onSave={handleSaveSizeImages}
+      />
+      <PromotionalImageModal
+        isOpen={isPromotionalImageModal}
+        onClose={() => setIsPromotionalImageModal(false)}
+        selectedCount={selectedProducts.length}
+        onSave={handleSavePromotionalImage}
+      />
+       <ShortDescriptionMayModal
+        isOpen={isShortDesMayModalOpen}
+        onClose={() => setIsShortDesMayModalOpen(false)}
+        selectedCount={selectedProducts.length}
+        onSave={handleSaveShortDescriptionMay}
+      />
+      <ShortDescriptionModal
+        isOpen={isShortDescModalOpen}
+        onClose={() => setIsShortDescModalOpen(false)}
+        selectedCount={selectedProducts.length}
+        onSave={handleSaveShortDescription}
+      />
+      <SalesChannelsModal
+        isOpen={isSalesChannelsModalOpen}
+        onClose={() => setIsSalesChannelsModalOpen(false)}
+        selectedCount={selectedProducts.length}
+        onSave={handleSaveSalesChannels}
       />
     </div>
   );
