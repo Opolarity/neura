@@ -201,7 +201,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
             </ToolbarButton>
             <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} tooltip="Rehacer">
               <Redo className="h-4 w-4" />
-            </ToolbarButton>
+             </ToolbarButton>
 
             <ToolbarSeparator />
 
