@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -163,6 +164,31 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
       .filter((n) => !isNaN(n));
   };
 
+  const IdsInput = ({
+    value,
+    onChangeIds,
+    placeholder,
+  }: {
+    value: number[];
+    onChangeIds: (ids: number[]) => void;
+    placeholder?: string;
+  }) => {
+    const [text, setText] = useState(value.join(", "));
+
+    useEffect(() => {
+      setText(value.join(", "));
+    }, [JSON.stringify(value)]);
+
+    return (
+      <Input
+        placeholder={placeholder}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => onChangeIds(parseNumberArray(text))}
+      />
+    );
+  };
+
   const renderFields = () => {
     switch (condition.type) {
       case "cart_subtotal":
@@ -212,10 +238,10 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
           <div className="flex gap-2 items-end">
             <div className="space-y-1 flex-1">
               <Label className="text-xs">IDs de productos (separados por coma)</Label>
-              <Input
+              <IdsInput
                 placeholder="1, 2, 3"
-                value={((condition as any).product_ids ?? []).join(", ")}
-                onChange={(e) => updateField("product_ids", parseNumberArray(e.target.value))}
+                value={(condition as any).product_ids ?? []}
+                onChangeIds={(ids) => updateField("product_ids", ids)}
               />
             </div>
             <div className="space-y-1">
@@ -235,10 +261,10 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
           <div className="flex gap-2 items-end">
             <div className="space-y-1 flex-1">
               <Label className="text-xs">IDs de variaciones (separados por coma)</Label>
-              <Input
+              <IdsInput
                 placeholder="10, 20, 30"
-                value={((condition as any).variation_ids ?? []).join(", ")}
-                onChange={(e) => updateField("variation_ids", parseNumberArray(e.target.value))}
+                value={(condition as any).variation_ids ?? []}
+                onChangeIds={(ids) => updateField("variation_ids", ids)}
               />
             </div>
             <div className="space-y-1">
@@ -258,10 +284,10 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
           <div className="flex gap-2 items-end flex-wrap">
             <div className="space-y-1 flex-1 min-w-[200px]">
               <Label className="text-xs">IDs de categorías (separados por coma)</Label>
-              <Input
+              <IdsInput
                 placeholder="147, 118"
-                value={((condition as any).category_ids ?? []).join(", ")}
-                onChange={(e) => updateField("category_ids", parseNumberArray(e.target.value))}
+                value={(condition as any).category_ids ?? []}
+                onChangeIds={(ids) => updateField("category_ids", ids)}
               />
             </div>
             <div className="space-y-1">
@@ -301,10 +327,10 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
           <div className="flex gap-2 items-end flex-wrap">
             <div className="space-y-1 flex-1 min-w-[200px]">
               <Label className="text-xs">IDs de categorías</Label>
-              <Input
+              <IdsInput
                 placeholder="147, 118"
-                value={((condition as any).category_ids ?? []).join(", ")}
-                onChange={(e) => updateField("category_ids", parseNumberArray(e.target.value))}
+                value={(condition as any).category_ids ?? []}
+                onChangeIds={(ids) => updateField("category_ids", ids)}
               />
             </div>
             <div className="space-y-1">

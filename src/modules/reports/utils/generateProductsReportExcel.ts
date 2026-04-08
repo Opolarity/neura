@@ -25,11 +25,10 @@ export function generateProductsReportExcel(
   const wb = XLSX.utils.book_new();
 
   // ── Hoja 1: Por producto ──────────────────────────────────
-  const productHeader = ['Producto', 'SKU', 'Categoría', 'Cantidad', 'Ingresos (S/)'];
+  const productHeader = ['Producto', 'SKU', 'Cantidad', 'Ingresos (S/)'];
   const productRows = byProduct.map((r) => [
     r.product_title,
     r.sku,
-    r.category_name,
     r.total_quantity,
     r.total_revenue,
   ]);
@@ -37,7 +36,6 @@ export function generateProductsReportExcel(
   wsProducts['!cols'] = [
     { wch: 40 }, // Producto
     { wch: 18 }, // SKU
-    { wch: 24 }, // Categoría
     { wch: 12 }, // Cantidad
     { wch: 16 }, // Ingresos
   ];

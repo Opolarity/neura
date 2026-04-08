@@ -277,6 +277,9 @@ export interface SalesReportRow {
   district: string | null;
   province: string | null;
   department: string | null;
+  branch: string | null;
+  warehouse: string | null;
+  price_list: string | null;
   products: string;
 }
 

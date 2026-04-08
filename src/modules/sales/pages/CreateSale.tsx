@@ -447,11 +447,13 @@ const CreateSale = () => {
                     <SelectValue placeholder="Tipo inventario" />
                   </SelectTrigger>
                   <SelectContent>
-                    {salesData?.stockTypes?.map((st) => (
-                      <SelectItem key={st.id} value={st.id.toString()}>
-                        {st.name}
-                      </SelectItem>
-                    ))}
+                    {salesData?.stockTypes
+                      ?.filter((st) => st.is_active === true)
+                      .map((st) => (
+                        <SelectItem key={st.id} value={st.id.toString()}>
+                          {st.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
 
@@ -1046,7 +1048,9 @@ const CreateSale = () => {
                       </Select>
                     ) : formData.shippingMethod ? (
                       <div className="text-sm p-2 border rounded-md bg-muted/50">
-                        {allShippingCosts.find(sc => sc.id.toString() === formData.shippingMethod)?.name ?? formData.shippingMethod}
+                        {allShippingCosts.find(
+                          (sc) => sc.id.toString() === formData.shippingMethod,
+                        )?.name ?? formData.shippingMethod}
                       </div>
                     ) : (
                       <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">

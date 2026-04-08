@@ -63,6 +63,7 @@ export interface MovementFilters {
   end_date?: string | null;
   branches?: number | null;
   order?: string | null;
+  sale_type?: number[] | null;
 }
 
 // =============================================================================
@@ -160,4 +161,52 @@ export interface CreateMovementPayload {
 export interface CreateMovementResponse {
   success: boolean;
   movement: any;
+}
+
+// =============================================================================
+// TIPOS PARA DETALLE DE MOVIMIENTO
+// =============================================================================
+
+export interface MovementDetailRaw {
+  id: number;
+  movement_class_id: number;
+  movement_type_id: number;
+  description: string | null;
+  amount: number;
+  movement_date: string;
+  business_account_id: number;
+  user_id: string;
+  created_at: string;
+  payment_method_id: number;
+  branch_id: number;
+  migracode: string | null;
+  files_url: string[] | null;
+  branches: {
+    name: string;
+    warehouses: { name: string };
+  };
+  classes: { name: string };
+  types: { name: string };
+  payment_methods: { name: string };
+  profiles: { user_name: string };
+  business_accounts: { name: string };
+}
+
+export interface MovementDetailApiResponse {
+  movement: MovementDetailRaw;
+}
+
+export interface MovementDetail {
+  id: number;
+  date: string;
+  type: MovementTypeValue;
+  category: string;
+  description: string;
+  paymentMethod: string;
+  businessAccount: string;
+  branch: string;
+  user: string;
+  amount: number;
+  formattedAmount: string;
+  filesUrl: string[];
 }

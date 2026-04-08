@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,31 @@ const parseNumberArray = (value: string): number[] => {
     .split(",")
     .map((s) => parseInt(s.trim()))
     .filter((n) => !isNaN(n));
+};
+
+const IdsInput = ({
+  value,
+  onChangeIds,
+  placeholder,
+}: {
+  value: number[];
+  onChangeIds: (ids: number[]) => void;
+  placeholder?: string;
+}) => {
+  const [text, setText] = useState(value.join(", "));
+
+  useEffect(() => {
+    setText(value.join(", "));
+  }, [JSON.stringify(value)]);
+
+  return (
+    <Input
+      placeholder={placeholder}
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={() => onChangeIds(parseNumberArray(text))}
+    />
+  );
 };
 
 const TargetFilterEditor = ({
@@ -62,12 +88,10 @@ const TargetFilterEditor = ({
       {target.apply_to === "specific_products" && (
         <div className="space-y-1">
           <Label className="text-xs">IDs de productos (separados por coma)</Label>
-          <Input
+          <IdsInput
             placeholder="1, 2, 3"
-            value={(target.product_ids ?? []).join(", ")}
-            onChange={(e) =>
-              onChange({ ...target, product_ids: parseNumberArray(e.target.value) })
-            }
+            value={target.product_ids ?? []}
+            onChangeIds={(ids) => onChange({ ...target, product_ids: ids })}
           />
         </div>
       )}
@@ -76,12 +100,10 @@ const TargetFilterEditor = ({
         <>
           <div className="space-y-1">
             <Label className="text-xs">IDs de categorías (separados por coma)</Label>
-            <Input
+            <IdsInput
               placeholder="147, 118"
-              value={(target.category_ids ?? []).join(", ")}
-              onChange={(e) =>
-                onChange({ ...target, category_ids: parseNumberArray(e.target.value) })
-              }
+              value={target.category_ids ?? []}
+              onChangeIds={(ids) => onChange({ ...target, category_ids: ids })}
             />
           </div>
           <div className="flex items-center gap-2">
@@ -99,12 +121,10 @@ const TargetFilterEditor = ({
       {target.apply_to === "specific_variations" && (
         <div className="space-y-1">
           <Label className="text-xs">IDs de variaciones (separados por coma)</Label>
-          <Input
+          <IdsInput
             placeholder="10, 20, 30"
-            value={(target.variation_ids ?? []).join(", ")}
-            onChange={(e) =>
-              onChange({ ...target, variation_ids: parseNumberArray(e.target.value) })
-            }
+            value={target.variation_ids ?? []}
+            onChangeIds={(ids) => onChange({ ...target, variation_ids: ids })}
           />
         </div>
       )}
