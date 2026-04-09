@@ -42,6 +42,8 @@ import {
 } from "lucide-react";
 import ShortDescriptionMayModal from "../components/DescriptionMaYModal";
 import PromotionalImageModal from "../components/PromotionalImage";
+import EcommerceEditorButton from "@/shared/components/EcommerceEditorButton";
+
 
 const PromotionalTextPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -184,6 +186,7 @@ const PromotionalTextPage = () => {
           <p className="text-gray-600">Gestiona y actualiza los productos del ecommerce</p>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
+          <EcommerceEditorButton variant="outline" />
 <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
