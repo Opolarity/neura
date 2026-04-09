@@ -59,6 +59,7 @@ const CreateInvoice = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     handleSave,
     handleEmit,
     navigate,
+    invoiceId,
   } = useCreateInvoice();
 
   const [searchParams] = useSearchParams();
@@ -472,6 +473,7 @@ const CreateInvoice = ({ viewOnly = false }: { viewOnly?: boolean }) => {
         mode="link"
         isOpen={isOrderModalOpen}
         onClose={() => setIsOrderModalOpen(false)}
+        currentInvoiceId={invoiceId ? parseInt(invoiceId) : undefined}
         onSelect={(orderId) => {
           handleFormChange("orderId", orderId.toString());
           toast({ title: "Pedido vinculado correctamente" });
@@ -480,6 +482,7 @@ const CreateInvoice = ({ viewOnly = false }: { viewOnly?: boolean }) => {
       <MovementSelectionModal 
         isOpen={isMovementModalOpen}
         onClose={() => setIsMovementModalOpen(false)}
+        currentInvoiceId={invoiceId ? parseInt(invoiceId) : undefined}
         onSelect={(movementId) => {
           handleFormChange("movementId", movementId.toString());
           toast({ title: "Movimiento vinculado correctamente" });

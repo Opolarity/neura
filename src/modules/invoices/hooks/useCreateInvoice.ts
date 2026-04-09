@@ -151,6 +151,8 @@ export const useCreateInvoice = () => {
             clientName: invoice.client_name || "",
             clientEmail: invoice.client_email || "",
             clientAddress: invoice.client_address || "",
+            orderId: data.order?.id?.toString() || "",
+            movementId: data.movement?.id?.toString() || "",
           }));
 
           // Try to determine provider from tax_serie if possible
@@ -589,5 +591,6 @@ export const useCreateInvoice = () => {
     handleSave,
     handleEmit,
     navigate,
+    invoiceId,
   };
 };

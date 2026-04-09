@@ -16,8 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Search, AlertCircle } from "lucide-react";
-import { getListMovementsApi, getMovementInvoices } from "@/modules/invoices/services/Invoices.services";
+import { Loader2, Search, AlertCircle, ShoppingCart } from "lucide-react";
+import { getListMovementsApi, getMovementInvoices, getMovementOrderLink } from "@/modules/invoices/services/Invoices.services";
 import Pagination, { PaginationState } from "@/shared/components/pagination/Pagination";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -25,9 +25,10 @@ interface MovementSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (movementId: number) => void;
+  currentInvoiceId?: number;
 }
 
-const MovementSelectionModal = ({ isOpen, onClose, onSelect }: MovementSelectionModalProps) => {
+const MovementSelectionModal = ({ isOpen, onClose, onSelect, currentInvoiceId }: MovementSelectionModalProps) => {
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -36,6 +37,8 @@ const MovementSelectionModal = ({ isOpen, onClose, onSelect }: MovementSelection
   const [checkingInvoices, setCheckingInvoices] = useState(false);
   const [existingInvoices, setExistingInvoices] = useState<any[]>([]);
   const [showWarning, setShowWarning] = useState(false);
+  const [showOrderWarning, setShowOrderWarning] = useState(false);
+  const [linkedOrderId, setLinkedOrderId] = useState<number | null>(null);
 
   const fetchMovements = useCallback(async (page: number, searchTerm: string) => {
     setLoading(true);
@@ -71,10 +74,25 @@ const MovementSelectionModal = ({ isOpen, onClose, onSelect }: MovementSelection
     setSelectedMovement(movement);
     setCheckingInvoices(true);
     try {
-      const invoices = await getMovementInvoices(movement.id);
-      setExistingInvoices(invoices);
+      // 1. Check if linked to an order
+      const orderLink = await getMovementOrderLink(movement.id);
+      if (orderLink?.order_id) {
+        setLinkedOrderId(orderLink.order_id);
+        setShowOrderWarning(true);
+        return;
+      }
 
-      if (invoices.length > 0) {
+      // 2. Check if linked to an invoice
+      const invoices = await getMovementInvoices(movement.id);
+      
+      // Filter out the current invoice if we're editing it
+      const otherInvoices = currentInvoiceId 
+        ? invoices.filter((i: any) => i.invoice_id !== currentInvoiceId)
+        : invoices;
+
+      setExistingInvoices(otherInvoices);
+
+      if (otherInvoices.length > 0) {
         setShowWarning(true);
       } else {
         onSelect(movement.id);
@@ -102,6 +120,8 @@ const MovementSelectionModal = ({ isOpen, onClose, onSelect }: MovementSelection
       setItems([]);
       setSelectedMovement(null);
       setShowWarning(false);
+      setShowOrderWarning(false);
+      setLinkedOrderId(null);
       setExistingInvoices([]);
       setPagination({ p_page: 1, p_size: 20, total: 0 });
     }
@@ -121,7 +141,28 @@ const MovementSelectionModal = ({ isOpen, onClose, onSelect }: MovementSelection
           <DialogTitle>Seleccionar Movimiento para Facturar</DialogTitle>
         </DialogHeader>
 
-        {!showWarning ? (
+        {showOrderWarning ? (
+          <div className="space-y-4 py-4">
+            <Alert variant="destructive">
+              <ShoppingCart className="h-4 w-4" />
+              <AlertTitle>Movimiento vinculado a pedido</AlertTitle>
+              <AlertDescription>
+                Este movimiento (#{selectedMovement?.id}) pertenece al **Pedido #{linkedOrderId}**.
+                <p className="mt-2">
+                  No se puede vincular manualmente un movimiento que pertenece a un pedido. 
+                  Para facturar este movimiento, debes vincular directamente el Pedido #{linkedOrderId} 
+                  al comprobante.
+                </p>
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex justify-end gap-3 mt-4">
+              <Button variant="outline" onClick={() => setShowOrderWarning(false)}>
+                Volver
+              </Button>
+            </div>
+          </div>
+        ) : !showWarning ? (
           <div className="space-y-4">
             <div className="flex gap-2">
               <Input
@@ -233,7 +274,7 @@ const MovementSelectionModal = ({ isOpen, onClose, onSelect }: MovementSelection
         )}
 
         <DialogFooter>
-          {!showWarning && (
+          {!showWarning && !showOrderWarning && (
             <Button variant="outline" onClick={onClose}>
               Cerrar
             </Button>
