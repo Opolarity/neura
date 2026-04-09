@@ -161,6 +161,7 @@ const PromotionalTextPage = () => {
       description: `Descripción corta actualizada en ${plural(selectedProducts.length)}.`,
     });
   };
+  //develop
 
   const handleSaveSalesChannels = async (channelIds: number[]) => {
     //la funcion que se ejecuta al guardar
