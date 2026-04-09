@@ -34,6 +34,7 @@ import {
 import { ChevronDown, Plus, TrendingDown } from "lucide-react";
 import ShortDescriptionMayModal from "../components/DescriptionMaYModal";
 import PromotionalImageModal from "../components/PromotionalImage";
+import EcommerceEditorButton from "@/shared/components/EcommerceEditorButton";
 
 const PromotionalTextPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -168,13 +169,15 @@ const PromotionalTextPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap gap-4 justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
             Edicion Masiva
           </h1>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
+          <EcommerceEditorButton variant="outline" />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
