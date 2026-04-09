@@ -2,7 +2,6 @@ import React from "react";
 import { Bell, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import EcommerceEditorButton from "@/shared/components/EcommerceEditorButton";
 import { getHeaderUserData } from "@/shared/services/service";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -47,8 +46,6 @@ const Header = ({ onSignOut }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-4">
-          <EcommerceEditorButton variant="outline" size="sm" />
-
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
             <Bell className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>

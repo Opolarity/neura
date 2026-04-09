@@ -1,4 +1,5 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +25,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Trash2, ArrowLeft, Search, FileText, Send, FileDown, Eye, Copy } from "lucide-react";
+import { Loader2, Plus, Trash2, ArrowLeft, Search, FileText, Send, FileDown, Eye, Copy, Link as LinkIcon, ExternalLink } from "lucide-react";
+import OrderSelectionModal from "../components/invoices/OrderSelectionModal";
+import MovementSelectionModal from "../components/invoices/MovementSelectionModal";
 import { useCreateInvoice } from "../hooks/useCreateInvoice";
 import { useToast } from "@/hooks/use-toast";
 
@@ -52,10 +55,17 @@ const CreateInvoice = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     removeItem,
     updateItem,
     searchClient,
+    loadOrderData,
     handleSave,
     handleEmit,
     navigate,
+    invoiceId,
   } = useCreateInvoice();
+
+  const [searchParams] = useSearchParams();
+  const orderIdParam = searchParams.get("orderId");
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
 
   if (loading) {
     return (
@@ -106,6 +116,69 @@ const CreateInvoice = ({ viewOnly = false }: { viewOnly?: boolean }) => {
             <FileText className="h-5 w-5" />
             Datos del Comprobante
           </CardTitle>
+          {!viewOnly && (
+            <div className="flex items-center gap-2">
+              {formData.orderId ? (
+                <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium border border-blue-200">
+                  <LinkIcon className="h-3 w-3" />
+                  Pedido #{formData.orderId}
+                  <button 
+                    onClick={() => setIsOrderModalOpen(true)}
+                    className="ml-1 hover:text-blue-900"
+                    title="Cambiar pedido vinculado"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </button>
+                  <button 
+                    onClick={() => handleFormChange("orderId", "")}
+                    className="ml-1 hover:text-red-600"
+                    title="Desvincular pedido"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setIsOrderModalOpen(true)}
+                  className="text-xs h-8"
+                >
+                  <LinkIcon className="h-3 w-3 mr-1" /> Vincular a Pedido
+                </Button>
+              )}
+
+              {formData.movementId ? (
+                <div className="flex items-center gap-2 bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-sm font-medium border border-purple-200">
+                  <LinkIcon className="h-3 w-3" />
+                  Movimiento #{formData.movementId}
+                  <button 
+                    onClick={() => setIsMovementModalOpen(true)}
+                    className="ml-1 hover:text-purple-900"
+                    title="Cambiar movimiento vinculado"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </button>
+                  <button 
+                    onClick={() => handleFormChange("movementId", "")}
+                    className="ml-1 hover:text-red-600"
+                    title="Desvincular movimiento"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setIsMovementModalOpen(true)}
+                  className="text-xs h-8"
+                >
+               <LinkIcon className="h-3 w-3 mr-1" /> Vincular a Movimiento
+                </Button>
+              )}
+            </div>
+          )}
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Invoice Type */}
@@ -395,6 +468,26 @@ const CreateInvoice = ({ viewOnly = false }: { viewOnly?: boolean }) => {
           </Button>
         )}
       </div>
+
+      <OrderSelectionModal 
+        mode="link"
+        isOpen={isOrderModalOpen}
+        onClose={() => setIsOrderModalOpen(false)}
+        currentInvoiceId={invoiceId ? parseInt(invoiceId) : undefined}
+        onSelect={(orderId) => {
+          handleFormChange("orderId", orderId.toString());
+          toast({ title: "Pedido vinculado correctamente" });
+        }}
+      />
+      <MovementSelectionModal 
+        isOpen={isMovementModalOpen}
+        onClose={() => setIsMovementModalOpen(false)}
+        currentInvoiceId={invoiceId ? parseInt(invoiceId) : undefined}
+        onSelect={(movementId) => {
+          handleFormChange("movementId", movementId.toString());
+          toast({ title: "Movimiento vinculado correctamente" });
+        }}
+      />
     </div>
   );
 };

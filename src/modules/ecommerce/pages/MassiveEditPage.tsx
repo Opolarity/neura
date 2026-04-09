@@ -18,7 +18,6 @@ import {
   updateSalesChannelsApi,
   updateLargeDescriptionApi,
   updatePromotionalImageApi,
-
 } from "@/modules/products/services/products.service";
 import PromotionalTextModal from "@/modules/ecommerce/components/PromotionalTextModal";
 import SizeImagesModal from "@/modules/ecommerce/components/SizeImagesModal";
@@ -31,16 +30,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Plus, TrendingDown } from "lucide-react";
+import {
+  ChevronDown,
+  Plus,
+  Tag,
+  Ruler,
+  Image,
+  AlignLeft,
+  AlignRight,
+  Radio,
+} from "lucide-react";
 import ShortDescriptionMayModal from "../components/DescriptionMaYModal";
 import PromotionalImageModal from "../components/PromotionalImage";
 
 const PromotionalTextPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSizeImagesModalOpen, setIsSizeImagesModalOpen] = useState(false);
-  const [isShortDescModalOpen, setIsShortDescModalOpen] = useState(false); 
+  const [isShortDescModalOpen, setIsShortDescModalOpen] = useState(false);
   const [isShortDesMayModalOpen, setIsShortDesMayModalOpen] = useState(false);
-  const [isPromotionalImageModal, setIsPromotionalImageModal] = useState (false);
+  const [isPromotionalImageModal, setIsPromotionalImageModal] = useState(false);
   const [isSalesChannelsModalOpen, setIsSalesChannelsModalOpen] =
     useState(false);
   const { toast } = useToast();
@@ -116,18 +124,19 @@ const PromotionalTextPage = () => {
     });
   };
 
-  const handleSavePromotionalImage = async (promotionalImgUrl: string | null) => {
-  if (selectedProducts.length === 0) {
-    noSelectionToast("actualizar la imagen promocional");
-    return;
-  }
-  await updatePromotionalImageApi(selectedProducts, promotionalImgUrl);
-  toast({
-    title: "Guardado exitoso",
-    description: `Imagen promocional actualizada en ${plural(selectedProducts.length)}.`,
-  });
-};
-
+  const handleSavePromotionalImage = async (
+    promotionalImgUrl: string | null,
+  ) => {
+    if (selectedProducts.length === 0) {
+      noSelectionToast("actualizar la imagen promocional");
+      return;
+    }
+    await updatePromotionalImageApi(selectedProducts, promotionalImgUrl);
+    toast({
+      title: "Guardado exitoso",
+      description: `Imagen promocional actualizada en ${plural(selectedProducts.length)}.`,
+    });
+  };
 
   const handleSaveShortDescription = async (shortDescription: string) => {
     if (selectedProducts.length === 0) {
@@ -140,13 +149,13 @@ const PromotionalTextPage = () => {
       description: `Descripción corta actualizada en ${plural(selectedProducts.length)}.`,
     });
   };
-    const handleSaveShortDescriptionMay = async (shortDescription: string) => {
+  const handleSaveShortDescriptionMay = async (shortDescription: string) => {
     //5
     if (selectedProducts.length === 0) {
       noSelectionToast("No hay productos seleccionados");
       return;
     }
-    await updateLargeDescriptionApi (selectedProducts, shortDescription);
+    await updateLargeDescriptionApi(selectedProducts, shortDescription);
     toast({
       title: "Guardado exitoso", //7
       description: `Descripción corta actualizada en ${plural(selectedProducts.length)}.`,
@@ -168,14 +177,13 @@ const PromotionalTextPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap gap-4 justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Edicion Masiva
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Edición Masiva</h1>
+          <p className="text-gray-600">Gestiona y actualiza los productos del ecommerce en masa</p>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
-          <DropdownMenu>
+<DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 className="gap-2"
@@ -191,37 +199,43 @@ const PromotionalTextPage = () => {
                 className="gap-2"
                 onClick={() => setIsModalOpen(true)}
               >
-                Actualizar Editar Texto.P
+                <Tag className="w-4 h-4 text-blue-500" />
+                Texto Promocional
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={() => setIsSizeImagesModalOpen(true)}
               >
-                Actualizar Imágenes de Tallas
+                <Ruler className="w-4 h-4 text-purple-500" />
+                Imágenes de Tallas
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={() => setIsPromotionalImageModal(true)}
               >
-                Actualizar Imágenes Promocionales
+                <Image className="w-4 h-4 text-orange-500" />
+                Imágenes Promocionales
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
-                onClick={() => setIsShortDesMayModalOpen(true)} 
+                onClick={() => setIsShortDesMayModalOpen(true)}
               >
-                Actualizar Descripción Mayorista
+                <AlignLeft className="w-4 h-4 text-green-600" />
+                Descripción Mayorista
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
-                onClick={() => setIsShortDescModalOpen(true)} 
+                onClick={() => setIsShortDescModalOpen(true)}
               >
-                Actualizar Descripción Minorista
+                <AlignRight className="w-4 h-4 text-green-500" />
+                Descripción Minorista
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={() => setIsSalesChannelsModalOpen(true)}
               >
-                Actualizar Canales de Venta
+                <Radio className="w-4 h-4 text-red-500" />
+                Canales de Venta
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -290,7 +304,7 @@ const PromotionalTextPage = () => {
         selectedCount={selectedProducts.length}
         onSave={handleSavePromotionalImage}
       />
-       <ShortDescriptionMayModal
+      <ShortDescriptionMayModal
         isOpen={isShortDesMayModalOpen}
         onClose={() => setIsShortDesMayModalOpen(false)}
         selectedCount={selectedProducts.length}
