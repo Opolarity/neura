@@ -190,7 +190,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
               </div>
 
               <WysiwygEditor
-                label="Descripción corta"
+                label="Descripción Minorista"
                 value={shortDescription}
                 onChange={setShortDescription}
                 placeholder="Descripción breve del producto"
@@ -210,7 +210,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
               />
 
               <WysiwygEditor
-                label="Descripción"
+                label="Descripción Mayoritsa"
                 value={description}
                 onChange={setDescription}
                 placeholder="Descripción detallada del producto"
