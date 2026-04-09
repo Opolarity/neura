@@ -117,6 +117,35 @@ serve(async (req) => {
       if (linkError) {
         console.error("Error linking invoice to order:", linkError);
       }
+
+      // AUTOMATED MOVEMENT LINKAGE: Find movements from order_payment
+      const { data: orderPayments, error: opError } = await supabase
+        .from("order_payment")
+        .select("movement_id")
+        .eq("order_id", input.order_id);
+
+      if (opError) {
+        console.error("Error fetching order payments for automated linkage:", opError);
+      } else if (orderPayments && orderPayments.length > 0) {
+        const movementIds = orderPayments
+          .map((op: any) => op.movement_id)
+          .filter(Boolean);
+
+        if (movementIds.length > 0) {
+          const movementInvoices = movementIds.map((mId: number) => ({
+            movement_id: mId,
+            invoice_id: invoice.id,
+          }));
+
+          const { error: mLinkError } = await supabase
+            .from("movement_invoices")
+            .upsert(movementInvoices, { onConflict: "invoice_id,movement_id" });
+
+          if (mLinkError) {
+            console.error("Error linking movements from order_payment:", mLinkError);
+          }
+        }
+      }
     }
 
     // Link invoice to movement if movement_id is provided

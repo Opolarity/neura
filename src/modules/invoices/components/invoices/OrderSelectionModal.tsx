@@ -26,9 +26,10 @@ interface OrderSelectionModalProps {
   onClose: () => void;
   onSelect: (orderId: number) => void;
   mode?: "create" | "link";
+  currentInvoiceId?: number;
 }
 
-const OrderSelectionModal = ({ isOpen, onClose, onSelect, mode = "create" }: OrderSelectionModalProps) => {
+const OrderSelectionModal = ({ isOpen, onClose, onSelect, mode = "create", currentInvoiceId }: OrderSelectionModalProps) => {
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -83,9 +84,15 @@ const OrderSelectionModal = ({ isOpen, onClose, onSelect, mode = "create" }: Ord
     setCheckingInvoices(true);
     try {
       const invoices = await getOrderInvoices(order.id);
-      setExistingInvoices(invoices);
+      
+      // Filter out the current invoice if we're editing it
+      const otherInvoices = currentInvoiceId 
+        ? invoices.filter((i: any) => i.invoice_id !== currentInvoiceId)
+        : invoices;
 
-      if (invoices.length > 0) {
+      setExistingInvoices(otherInvoices);
+
+      if (otherInvoices.length > 0) {
         setShowWarning(true);
       } else {
         onSelect(order.id);

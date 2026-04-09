@@ -65,6 +65,17 @@ export const getMovementInvoices = async (movementId: number) => {
   return data || [];
 };
 
+export const getMovementOrderLink = async (movementId: number) => {
+  const { data, error } = await supabase
+    .from("order_payment")
+    .select("order_id")
+    .eq("movement_id", movementId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+};
+
 export const getListOrdersApi = async (params: { page: number; size: number; search?: string }) => {
   const urlParams = new URLSearchParams();
   urlParams.append("page", params.page.toString());
