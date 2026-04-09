@@ -2,11 +2,12 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { createInvoiceApi } from "../services/Invoices.services";
+import { createInvoiceApi, updateInvoiceApi, getInvoiceFormDataApi } from "../services/Invoices.services";
 import { getTypes } from "@/shared/services/service";
 import { getTypesAdapter } from "@/shared/adapters/adapter";
 import type { Types } from "@/shared/types/type";
 import type { InvoiceItemForm, InvoiceFormData, DocumentType, InvoiceProvider, InvoiceSerie } from "../types/Invoices.types";
+
 
 const createEmptyItem = (): InvoiceItemForm => ({
   id: crypto.randomUUID(),
@@ -37,6 +38,8 @@ const INITIAL_FORM: InvoiceFormData = {
   clientName: "",
   clientEmail: "",
   clientAddress: "",
+  orderId: "",
+  movementId: "",
 };
 
 export const useCreateInvoice = () => {
@@ -60,122 +63,116 @@ export const useCreateInvoice = () => {
   const [invoiceProviders, setInvoiceProviders] = useState<InvoiceProvider[]>([]);
   const [invoiceSeries, setInvoiceSeries] = useState<InvoiceSerie[]>([]);
 
-  // Load invoice types, document types, and providers on mount
+  // 1. Load generic data (dropdowns) on mount
   useEffect(() => {
-    const loadData = async () => {
-      const typesResponse = await getTypes("INV");
-      setInvoiceTypes(getTypesAdapter(typesResponse));
+    const loadGenericData = async () => {
+      try {
+        const typesResponse = await getTypes("INV");
+        setInvoiceTypes(getTypesAdapter(typesResponse));
 
-      const { data } = await supabase
-        .from("document_types")
-        .select("id, name, code, person_type")
-        .order("id");
-      if (data) {
-        setDocumentTypes(
-          data.map((d) => ({
+        const { data: docs } = await supabase
+          .from("document_types")
+          .select("id, name, code, person_type")
+          .order("id");
+        if (docs) {
+          setDocumentTypes(docs.map((d: any) => ({
             id: d.id,
             name: d.name,
             code: d.code || "",
             personType: d.person_type,
-          }))
-        );
-      }
+          })));
+        }
 
-      const { data: providers } = await supabase
-        .from("invoice_providers")
-        .select("id, description")
-        .order("id");
-      if (providers) {
-        setInvoiceProviders(providers);
+        const { data: providers } = await supabase
+          .from("invoice_providers")
+          .select("id, description")
+          .order("id");
+        if (providers) {
+          setInvoiceProviders(providers);
+        }
+      } catch (error) {
+        console.error("Error loading generic data:", error);
       }
     };
-    loadData();
+    loadGenericData();
   }, []);
 
-  // Load series when provider changes (skip if loading edit data)
+  // 2. Load series dynamically when provider changes
   useEffect(() => {
     const loadSeries = async () => {
       if (!formData.invoiceProviderId) {
         setInvoiceSeries([]);
         return;
       }
-      const { data } = await supabase
+      const { data: series } = await supabase
         .from("invoice_series")
         .select("id, invoice_type_id, serie, next_number, invoice_provider_id")
         .eq("invoice_provider_id", parseInt(formData.invoiceProviderId))
         .eq("is_active", true)
         .order("id");
-      if (data) {
-        setInvoiceSeries(data as any);
+      if (series) {
+        setInvoiceSeries(series as any);
       }
     };
     loadSeries();
   }, [formData.invoiceProviderId]);
 
-  // Load existing invoice for editing
+  // 3. Load specific record data (Edit or from Order)
   useEffect(() => {
-    if (!invoiceId) return;
-    const loadInvoice = async () => {
+    const orderIdFromUrl = new URLSearchParams(window.location.search).get("orderId");
+    if (!invoiceId && !orderIdFromUrl) return;
+
+    const loadSpecificData = async () => {
       setLoading(true);
       try {
-        const { data: invoice } = await supabase
-          .from("invoices")
-          .select("*")
-          .eq("id", parseInt(invoiceId))
-          .single();
-
-        if (!invoice) {
-          toast({ title: "Comprobante no encontrado", variant: "destructive" });
-          navigate("/invoices");
-          return;
-        }
-
-        // Find the provider for this invoice's tax_serie
-        let providerId = "";
-        let serieId = "";
-        if (invoice.tax_serie) {
-          // Extract just the serie prefix (e.g. "F003" from "F003-233")
-          const serieParts = invoice.tax_serie.split("-");
-          const seriePrefix = serieParts.length > 0 ? serieParts[0] : invoice.tax_serie;
-          
-          const { data: serieRows } = await supabase
-            .from("invoice_series")
-            .select("id, invoice_provider_id, invoice_type_id, serie, next_number")
-            .eq("serie", seriePrefix)
-            .limit(1);
-
-          if (serieRows && serieRows.length > 0) {
-            providerId = serieRows[0].invoice_provider_id.toString();
-            serieId = serieRows[0].id.toString();
-          }
-        }
-
-        setDeclared(invoice.declared || false);
-        setPdfUrl(invoice.pdf_url || null);
-        setXmlUrl(invoice.xml_url || null);
-        setCdrUrl(invoice.cdr_url || null);
-        setFormData({
-          invoiceTypeId: invoice.invoice_type_id.toString(),
-          invoiceProviderId: providerId,
-          invoiceSerieId: serieId,
-          taxSerie: invoice.tax_serie || "",
-          documentTypeId: invoice.customer_document_type_id.toString(),
-          clientDocument: invoice.customer_document_number,
-          clientName: invoice.client_name || "",
-          clientEmail: invoice.client_email || "",
-          clientAddress: invoice.client_address || "",
+        const data = await getInvoiceFormDataApi({
+          invoiceId: invoiceId ? parseInt(invoiceId) : undefined,
+          orderId: orderIdFromUrl ? parseInt(orderIdFromUrl) : undefined,
+          movementId: new URLSearchParams(window.location.search).get("movementId") ? parseInt(new URLSearchParams(window.location.search).get("movementId")!) : undefined
         });
 
-        // Load items
-        const { data: itemsData } = await supabase
-          .from("invoice_items")
-          .select("*")
-          .eq("invoice_id", parseInt(invoiceId))
-          .order("id");
+        // 3.1. Set Invoice Data (Edit Mode)
+        if (data.invoice) {
+          const invoice = data.invoice;
+          setDeclared(invoice.declared || false);
+          setPdfUrl(invoice.pdf_url || null);
+          setXmlUrl(invoice.xml_url || null);
+          setCdrUrl(invoice.cdr_url || null);
 
-        if (itemsData && itemsData.length > 0) {
-          setItems(
-            itemsData.map((item) => ({
+          // We'll need to find the provider/serie after the dropdowns are loaded (handled by effect)
+          // But we can set the IDs directly if we have them or let the dropdown data trigger the match
+          // Wait, if we set them here, we ensure they are selected once series load
+          setFormData(prev => ({
+            ...prev,
+            invoiceTypeId: invoice.invoice_type_id.toString(),
+            taxSerie: invoice.tax_serie || "",
+            documentTypeId: invoice.customer_document_type_id?.toString() || "",
+            clientDocument: invoice.customer_document_number || "",
+            clientName: invoice.client_name || "",
+            clientEmail: invoice.client_email || "",
+            clientAddress: invoice.client_address || "",
+          }));
+
+          // Try to determine provider from tax_serie if possible
+          if (invoice.tax_serie) {
+            const seriePrefix = invoice.tax_serie.split("-")[0];
+            const { data: sData } = await supabase
+              .from("invoice_series")
+              .select("id, invoice_provider_id")
+              .eq("serie", seriePrefix)
+              .maybeSingle();
+
+            if (sData) {
+              setFormData(prev => ({
+                ...prev,
+                invoiceProviderId: sData.invoice_provider_id.toString(),
+                invoiceSerieId: sData.id.toString()
+              }));
+            }
+          }
+
+          if (data.items && data.items.length > 0) {
+            setItems(data.items.map((item: any) => ({
               id: item.id.toString(),
               description: item.description,
               quantity: item.quantity,
@@ -184,18 +181,100 @@ export const useCreateInvoice = () => {
               discount: item.discount || 0,
               igv: item.igv,
               total: item.total,
-            }))
+            })));
+          }
+        }
+
+        // 3.2. Set Order Data (Creation from Order)
+        if (data.order && !data.invoice) {
+          const order = data.order;
+          const orderProducts = data.orderProducts || [];
+
+          const existingInvoices = data.existingOrderInvoices || [];
+          const hasFinalizedInvoice = existingInvoices.some((ei: any) =>
+            ei.invoices?.invoices_types?.code === "1" || ei.invoices?.invoices_types?.code === "2"
           );
+
+          if (hasFinalizedInvoice) {
+            toast({
+              title: "Bloqueo: Pedido ya facturado legalmente",
+              description: "Este pedido ya cuenta con una Boleta o Factura. No se permite crear otro comprobante legal por esta vía.",
+              variant: "destructive"
+            });
+            setLoading(false);
+            return;
+          }
+
+          setFormData(prev => ({
+            ...prev,
+            clientName: [order.customer_name, order.customer_lastname].filter(Boolean).join(" "),
+            clientEmail: order.email || "",
+            clientAddress: order.address || "",
+            clientDocument: order.document_number || "",
+            orderId: order.id.toString(),
+            // Match document type ID locally once loaded
+          }));
+
+          if (orderProducts.length > 0) {
+            setItems(orderProducts.map((p: any) => {
+              const unitPrice = parseFloat(p.product_price) || 0;
+              const quantity = p.quantity || 1;
+              const discount = parseFloat(p.product_discount) || 0;
+              const base = quantity * unitPrice;
+              const baseWithDiscount = base - discount;
+              const igv = +(baseWithDiscount * 0.18).toFixed(2);
+              const total = +(baseWithDiscount + igv).toFixed(2);
+
+              return {
+                id: crypto.randomUUID(),
+                description: p.product_title || p.product_name || "Producto",
+                quantity,
+                measurementUnit: "NIU",
+                unitPrice,
+                discount,
+                igv,
+                total,
+              };
+            }));
+          }
+          toast({ title: "Datos del pedido cargados correctamente" });
+        }
+
+        // 3.3. Set Movement Data (Creation from Movement)
+        if (data.movement && !data.invoice) {
+          const movement = data.movement;
+          setFormData(prev => ({
+            ...prev,
+            clientName: "", // Movements don't always have a client name attached in the same way
+            clientEmail: "",
+            clientAddress: "",
+            clientDocument: "",
+            movementId: movement.id.toString(),
+          }));
+          
+          setItems([{
+            id: crypto.randomUUID(),
+            description: movement.description || "Movimiento",
+            quantity: 1,
+            measurementUnit: "ZZ",
+            unitPrice: movement.amount || 0,
+            discount: 0,
+            igv: +((movement.amount || 0) * 0.18).toFixed(2),
+            total: +((movement.amount || 0) * 1.18).toFixed(2),
+          }]);
+          
+          toast({ title: "Datos del movimiento cargados correctamente" });
         }
       } catch (error) {
-        console.error("Error loading invoice:", error);
-        toast({ title: "Error al cargar comprobante", variant: "destructive" });
+        console.error("Error loading record data:", error);
+        toast({ title: "Error al cargar datos", variant: "destructive" });
       } finally {
         setLoading(false);
       }
     };
-    loadInvoice();
-  }, [invoiceId]);
+
+    loadSpecificData();
+  }, [invoiceId, toast]);
   const totalAmount = useMemo(
     () => +items.reduce((sum, i) => sum + i.total, 0).toFixed(2),
     [items]
@@ -240,6 +319,77 @@ export const useCreateInvoice = () => {
     []
   );
 
+  const loadOrderData = useCallback(async (orderId: number) => {
+    setLoading(true);
+    try {
+      const data = await getInvoiceFormDataApi({ orderId });
+
+      if (!data.order) {
+        toast({ title: "Pedido no encontrado", variant: "destructive" });
+        return;
+      }
+
+      const order = data.order;
+      const orderProducts = data.orderProducts || [];
+      const existingInvoices = data.existingOrderInvoices || [];
+
+      // Check if order already has invoices
+      const hasFinalizedInvoice = existingInvoices.some((ei: any) =>
+        ei.invoices?.invoices_types?.code === "1" || ei.invoices?.invoices_types?.code === "2"
+      );
+
+      if (hasFinalizedInvoice) {
+        toast({
+          title: "Atención: Pedido ya facturado",
+          description: "Este pedido ya tiene una Boleta o Factura asociada, pero puedes vincularlo si es necesario.",
+          variant: "destructive"
+        });
+      }
+
+      // Populate form data
+      setFormData(prev => ({
+        ...prev,
+        clientName: [order.customer_name, order.customer_lastname].filter(Boolean).join(" "),
+        clientEmail: order.email || "",
+        clientAddress: order.address || "",
+        clientDocument: order.document_number || "",
+        orderId: orderId.toString(),
+        documentTypeId: data.order?.document_type_id?.toString() || "",
+      }));
+
+      // Populate items
+      if (orderProducts.length > 0) {
+        setItems(orderProducts.map((p: any) => {
+          const unitPrice = p.price || 0;
+          const quantity = p.quantity || 1;
+          const discount = p.discount_amount || 0;
+          const base = quantity * unitPrice;
+          const baseWithDiscount = base - discount;
+          const igv = +(baseWithDiscount * 0.18).toFixed(2);
+          const total = +(baseWithDiscount + igv).toFixed(2);
+
+          return {
+            id: crypto.randomUUID(),
+            description: p.product_title || p.product_name || "Producto",
+            quantity,
+            measurementUnit: "NIU",
+            unitPrice,
+            discount,
+            igv,
+            total,
+          };
+        }));
+      }
+
+      toast({ title: "Datos del pedido cargados correctamente" });
+    } catch (error: any) {
+      console.error("Error loading order data:", error);
+      toast({ title: "Error al cargar datos del pedido", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
   // Search client by document type + number
   const searchClient = useCallback(async () => {
     const doc = formData.clientDocument;
@@ -277,7 +427,7 @@ export const useCreateInvoice = () => {
         );
 
         if (!lookupError && lookupData) {
-          const name = lookupData.razon_social || 
+          const name = lookupData.razon_social ||
             [lookupData.nombres, lookupData.apellidoPaterno, lookupData.apellidoMaterno].filter(Boolean).join(" ");
           setFormData((prev) => ({
             ...prev,
@@ -300,8 +450,16 @@ export const useCreateInvoice = () => {
   }, [formData.clientDocument, formData.documentTypeId, documentTypes, toast]);
 
   const handleSave = useCallback(async () => {
-    if (!formData.invoiceTypeId || !formData.documentTypeId || !formData.clientDocument) {
-      toast({ title: "Completa tipo de comprobante, tipo de documento y número de documento", variant: "destructive" });
+    const selectedType = invoiceTypes.find((t) => t.id.toString() === formData.invoiceTypeId);
+    const isBoleta = selectedType?.code === "2";
+    const isLowAmountBoleta = isBoleta && totalAmount < 700;
+
+    if (!formData.invoiceTypeId || (!isLowAmountBoleta && (!formData.documentTypeId || !formData.clientDocument))) {
+      const title = isBoleta && totalAmount >= 700
+        ? "Para boletas de 700 a más es obligatorio el tipo y número de documento"
+        : "Completa tipo de comprobante, tipo de documento y número de documento";
+
+      toast({ title, variant: "destructive" });
       return;
     }
     if (items.some((i) => !i.description || i.quantity <= 0 || i.unitPrice <= 0)) {
@@ -314,49 +472,13 @@ export const useCreateInvoice = () => {
       const totalTaxes = +items.reduce((s, i) => s + i.igv, 0).toFixed(2);
 
       if (isEditing && invoiceId) {
-        // Update invoice
-        const { error: invoiceError } = await supabase
-          .from("invoices")
-          .update({
-            invoice_type_id: parseInt(formData.invoiceTypeId),
-            tax_serie: formData.taxSerie || null,
-            customer_document_type_id: parseInt(formData.documentTypeId),
-            customer_document_number: formData.clientDocument,
-            client_name: formData.clientName || null,
-            client_email: formData.clientEmail || null,
-            client_address: formData.clientAddress || null,
-            total_amount: totalAmount,
-            total_taxes: totalTaxes,
-          })
-          .eq("id", parseInt(invoiceId));
-
-        if (invoiceError) throw invoiceError;
-
-        // Delete old items and insert new ones
-        await supabase.from("invoice_items").delete().eq("invoice_id", parseInt(invoiceId));
-
-        const { error: itemsError } = await supabase.from("invoice_items").insert(
-          items.map((i) => ({
-            invoice_id: parseInt(invoiceId),
-            description: i.description,
-            quantity: i.quantity,
-            measurement_unit: i.measurementUnit,
-            unit_price: i.unitPrice,
-            discount: i.discount,
-            igv: i.igv,
-            total: i.total,
-          }))
-        );
-
-        if (itemsError) throw itemsError;
-
-        toast({ title: "Comprobante actualizado exitosamente" });
-      } else {
-        await createInvoiceApi({
+        // Update invoice via edge function
+        await updateInvoiceApi({
+          id: parseInt(invoiceId),
           invoice_type_id: parseInt(formData.invoiceTypeId),
           tax_serie: formData.taxSerie || undefined,
-          customer_document_type_id: parseInt(formData.documentTypeId),
-          customer_document_number: formData.clientDocument,
+          customer_document_type_id: formData.documentTypeId ? parseInt(formData.documentTypeId) : null,
+          customer_document_number: formData.clientDocument || "",
           client_name: formData.clientName || undefined,
           client_email: formData.clientEmail || undefined,
           client_address: formData.clientAddress || undefined,
@@ -371,6 +493,33 @@ export const useCreateInvoice = () => {
             igv: i.igv,
             total: i.total,
           })),
+          order_id: formData.orderId ? parseInt(formData.orderId) : undefined,
+          movement_id: formData.movementId ? parseInt(formData.movementId) : undefined,
+        });
+
+        toast({ title: "Comprobante actualizado exitosamente" });
+      } else {
+        await createInvoiceApi({
+          invoice_type_id: parseInt(formData.invoiceTypeId),
+          tax_serie: formData.taxSerie || undefined,
+          customer_document_type_id: formData.documentTypeId ? parseInt(formData.documentTypeId) : null as any,
+          customer_document_number: formData.clientDocument || "",
+          client_name: formData.clientName || undefined,
+          client_email: formData.clientEmail || undefined,
+          client_address: formData.clientAddress || undefined,
+          total_amount: totalAmount,
+          total_taxes: totalTaxes,
+          items: items.map((i) => ({
+            description: i.description,
+            quantity: i.quantity,
+            measurement_unit: i.measurementUnit,
+            unit_price: i.unitPrice,
+            discount: i.discount,
+            igv: i.igv,
+            total: i.total,
+          })),
+          order_id: formData.orderId ? parseInt(formData.orderId) : undefined,
+          movement_id: formData.movementId ? parseInt(formData.movementId) : undefined,
         });
         toast({ title: "Comprobante creado exitosamente" });
       }
@@ -381,7 +530,7 @@ export const useCreateInvoice = () => {
     } finally {
       setSaving(false);
     }
-  }, [formData, items, totalAmount, navigate, toast, isEditing, invoiceId]);
+  }, [formData, items, totalAmount, navigate, toast, isEditing, invoiceId, invoiceTypes]);
 
   const handleEmit = useCallback(async () => {
     if (!invoiceId) return;
@@ -436,6 +585,7 @@ export const useCreateInvoice = () => {
     removeItem,
     updateItem,
     searchClient,
+    loadOrderData,
     handleSave,
     handleEmit,
     navigate,

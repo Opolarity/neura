@@ -1,5 +1,5 @@
-export interface InvoiceApiResponse {}
-export interface InvoiceFilters {}
+export interface InvoiceApiResponse { }
+export interface InvoiceFilters { }
 
 export interface InvoiceItemForm {
   id: string;
@@ -24,6 +24,8 @@ export interface CreateInvoicePayload {
   total_taxes?: number;
   total_free?: number;
   total_others?: number;
+  order_id?: number;
+  movement_id?: number;
   items: {
     description: string;
     quantity: number;
@@ -33,6 +35,33 @@ export interface CreateInvoicePayload {
     igv: number;
     total: number;
   }[];
+}
+
+
+export interface UpdateInvoicePayload {
+  id: number;
+  invoice_type_id: number;
+  tax_serie?: string;
+  customer_document_type_id: number;
+  customer_document_number: string;
+  client_name?: string;
+  client_email?: string;
+  client_address?: string;
+  total_amount: number;
+  total_taxes?: number;
+  total_free?: number;
+  total_others?: number;
+  items: {
+    description: string;
+    quantity: number;
+    measurement_unit: string;
+    unit_price: number;
+    discount: number;
+    igv: number;
+    total: number;
+  }[];
+  order_id?: number;
+  movement_id?: number;
 }
 
 export interface InvoiceFormData {
@@ -45,6 +74,8 @@ export interface InvoiceFormData {
   clientName: string;
   clientEmail: string;
   clientAddress: string;
+  orderId?: string;
+  movementId?: string;
 }
 
 export interface InvoiceProvider {

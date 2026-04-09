@@ -119,6 +119,20 @@ serve(async (req) => {
       }
     }
 
+    // Link invoice to movement if movement_id is provided
+    if (input.movement_id) {
+      const { error: movementLinkError } = await supabase
+        .from("movement_invoices")
+        .insert({
+          movement_id: input.movement_id,
+          invoice_id: invoice.id,
+        });
+
+      if (movementLinkError) {
+        console.error("Error linking invoice to movement:", movementLinkError);
+      }
+    }
+
     return new Response(JSON.stringify({ success: true, invoice: { id: invoice.id } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
