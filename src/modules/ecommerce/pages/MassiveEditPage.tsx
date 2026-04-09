@@ -161,6 +161,7 @@ const PromotionalTextPage = () => {
       description: `Descripción corta actualizada en ${plural(selectedProducts.length)}.`,
     });
   };
+  
 
   const handleSaveSalesChannels = async (channelIds: number[]) => {
     //la funcion que se ejecuta al guardar
@@ -180,7 +181,7 @@ const PromotionalTextPage = () => {
       <div className="flex flex-wrap gap-4 justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Edición Masiva</h1>
-          <p className="text-gray-600">Gestiona y actualiza los productos del ecommerce en masa</p>
+          <p className="text-gray-600">Gestiona y actualiza los productos del ecommerce</p>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
 <DropdownMenu>
