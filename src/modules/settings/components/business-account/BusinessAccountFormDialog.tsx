@@ -75,7 +75,7 @@ export const BusinessAccountFormDialog = ({
             name: "",
             bank: "",
             account_number: undefined,
-            total_amount: undefined,
+            total_amount: 0,
             business_account_type_id: undefined,
             account_id: undefined,
           },
@@ -145,7 +145,7 @@ export const BusinessAccountFormDialog = ({
       name: "",
       bank: "",
       account_number: undefined,
-      total_amount: undefined,
+      total_amount: 0,
       business_account_type_id: undefined,
       account_id: undefined,
     });
@@ -205,6 +205,7 @@ export const BusinessAccountFormDialog = ({
               type="number"
               step="0.01"
               placeholder="Ej: 10000.00"
+              disabled={!isEditing}
               {...register("total_amount", { valueAsNumber: true })}
             />
           </div>

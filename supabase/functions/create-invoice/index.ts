@@ -117,6 +117,72 @@ serve(async (req) => {
       if (linkError) {
         console.error("Error linking invoice to order:", linkError);
       }
+
+      console.log(`[Linkage] Processing automated movement linkage for order_id: ${input.order_id}`);
+      
+      // AUTOMATED MOVEMENT LINKAGE: Find movements from order_payment
+      const { data: orderPayments, error: opError } = await supabase
+        .from("order_payment")
+        .select("movement_id")
+        .eq("order_id", input.order_id);
+
+      if (opError) {
+        console.error("[Linkage] Error fetching order payments:", opError);
+      } else if (orderPayments && orderPayments.length > 0) {
+        const movementIds = orderPayments
+          .map((op: any) => op.movement_id)
+          .filter(Boolean);
+
+        console.log(`[Linkage] Found movement IDs for order:`, movementIds);
+
+        if (movementIds.length > 0) {
+          // Check for existing linkages to avoid duplicates without relying on onConflict constraints
+          const { data: existingLinks } = await supabase
+            .from("movement_invoices")
+            .select("movement_id")
+            .eq("invoice_id", invoice.id)
+            .in("movement_id", movementIds);
+          
+          const existingIds = new Set(existingLinks?.map((l: any) => l.movement_id) || []);
+          const newMovements = movementIds
+            .filter((id: number) => !existingIds.has(id))
+            .map((mId: number) => ({
+              movement_id: mId,
+              invoice_id: invoice.id,
+            }));
+
+          if (newMovements.length > 0) {
+            console.log(`[Linkage] Inserting ${newMovements.length} new movement links`);
+            const { error: mLinkError } = await supabase
+              .from("movement_invoices")
+              .insert(newMovements);
+
+            if (mLinkError) {
+              console.error("[Linkage] Error linking movements from order_payment:", mLinkError);
+            } else {
+              console.log("[Linkage] Successfully linked movements from order");
+            }
+          } else {
+            console.log("[Linkage] All movements already linked");
+          }
+        }
+      } else {
+        console.log("[Linkage] No movements found in order_payment for this order");
+      }
+    }
+
+    // Link invoice to movement if movement_id is provided
+    if (input.movement_id) {
+      const { error: movementLinkError } = await supabase
+        .from("movement_invoices")
+        .insert({
+          movement_id: input.movement_id,
+          invoice_id: invoice.id,
+        });
+
+      if (movementLinkError) {
+        console.error("Error linking invoice to movement:", movementLinkError);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, invoice: { id: invoice.id } }), {

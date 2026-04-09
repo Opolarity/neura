@@ -3,7 +3,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
-Deno.serve(async (req)=>{
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
       headers: corsHeaders
@@ -22,6 +22,7 @@ Deno.serve(async (req)=>{
     const end_date = url.searchParams.get("end_date") || null;
     const branches = url.searchParams.get("branches") || null;
     const order = url.searchParams.get("order") || null;
+    const sale_types = url.searchParams.get("sale_type") || null;
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const authHeader = req.headers.get("Authorization");
@@ -65,6 +66,7 @@ Deno.serve(async (req)=>{
       p_payment_method: payment_method,
       p_branches: branches,
       p_order: order,
+      p_sale_type: sale_types
     });
     if (movementsError) throw movementsError;
     return new Response(JSON.stringify({
