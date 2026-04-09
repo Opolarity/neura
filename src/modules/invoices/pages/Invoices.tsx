@@ -10,10 +10,20 @@ import { useInvoices } from "../hooks/useInvoices";
 import { Button } from "@/components/ui/button";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar.tsx";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, Plus } from "lucide-react";
+import OrderSelectionModal from "../components/invoices/OrderSelectionModal";
 
 const Invoices = () => {
   const { invoices, loading, pagination, onPageChange, onPageSizeChange } = useInvoices();
   const navigate = useNavigate();
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
 
   return (
     <div>
@@ -25,13 +35,36 @@ const Invoices = () => {
           </p>
         </div>
 
-        <Button
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={() => navigate("/invoices/add")}
-        >
-          Nueva Factura
-        </Button>
+
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="flex gap-2">
+                <Plus className="h-4 w-4" />
+                Nueva Factura
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate("/invoices/add")}>
+                Factura Vacía
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsOrderModalOpen(true)}>
+                A partir de un pedido
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
+
+      <OrderSelectionModal 
+        mode="create"
+        isOpen={isOrderModalOpen}
+        onClose={() => setIsOrderModalOpen(false)}
+        onSelect={(orderId) => {
+          navigate(`/invoices/add?orderId=${orderId}`);
+        }}
+      />
       <Card>
         <CardHeader>
           <InvoicesFilterBar />
