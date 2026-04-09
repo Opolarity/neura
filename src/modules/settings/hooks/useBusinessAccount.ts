@@ -91,10 +91,11 @@ export const useBusinessAccount = () => {
     setSaving(true);
     try {
       const isUpdate = payload.id != null;
+      const safePayload = isUpdate ? payload : { ...payload, total_amount: 0 };
       if (isUpdate) {
-        await updateBusinessAccountApi(payload);
+        await updateBusinessAccountApi(safePayload);
       } else {
-        await createBusinessAccountApi(payload);
+        await createBusinessAccountApi(safePayload);
       }
       if (accountId) await load(accountId);
       toast.success(
