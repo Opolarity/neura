@@ -16,7 +16,7 @@ import {
   ChevronRight,
   LucideIcon,
 } from "lucide-react";
-import { useFunctions } from "@/hooks/useFunctions";
+import { useFunctions } from "@/contexts/FunctionsContext";
 import { getParameter } from "@/modules/settings/services/Parameters.service";
 
 interface SidebarProps {

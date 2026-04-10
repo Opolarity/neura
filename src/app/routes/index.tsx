@@ -43,6 +43,7 @@ const AppRouter = () => {
       ],
     },
     { path: "*", element: <NotFound /> },
+    { path: "not-found", element: <NotFound /> },
   ]);
 };
 
