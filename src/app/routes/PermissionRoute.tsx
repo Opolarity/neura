@@ -3,7 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useFunctions } from "@/contexts/FunctionsContext";
 
 // Sufijos de ruta que permiten sub-rutas con un segmento adicional (ej: /edit/123)
-const SUBPATH_SUFFIXES = ["/edit", "/view", "/detail", "/create"];
+const SUBPATH_SUFFIXES = ["/edit", "/view", "/detail", "/create", "/ticket", "/print"];
 
 interface PermissionRouteProps extends PropsWithChildren {}
 
