@@ -1,4 +1,5 @@
-import { Card, Title, TextInput, LineChart, Grid, Col, Text, Metric } from '@tremor/react';
+import { Title, TextInput, LineChart, Grid, Col, Text, Metric } from '@tremor/react';
+import { Card } from '@/components/ui/card';
 import { Search } from 'lucide-react';
 import type { ProductSearchResult, ProductDetailData } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
@@ -29,7 +30,7 @@ export function ProductDetailSearch({
   })) ?? [];
 
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <Title className="mb-4">Análisis de producto individual</Title>
       <div className="relative mb-4">
         <TextInput

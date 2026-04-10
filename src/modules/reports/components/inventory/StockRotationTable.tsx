@@ -1,7 +1,8 @@
 import {
-  Card, Title, Table, TableHead, TableHeaderCell, TableBody,
+  Title, Table, TableHead, TableHeaderCell, TableBody,
   TableRow, TableCell, Badge,
 } from '@tremor/react';
+import { Card } from '@/components/ui/card';
 import type { StockRotationItem } from '../../types/reports.types';
 
 interface Props {
@@ -10,15 +11,15 @@ interface Props {
 }
 
 function RotationBadge({ rate }: { rate: number | null }) {
-  if (rate === null) return <Badge color="slate" size="xs">Sin stock</Badge>;
-  if (rate >= 3) return <Badge color="emerald" size="xs">Alta ({rate}x)</Badge>;
-  if (rate >= 1) return <Badge color="amber" size="xs">Media ({rate}x)</Badge>;
-  return <Badge color="rose" size="xs">Baja ({rate}x)</Badge>;
+  if (rate === null) return <Badge className='ring-0 rounded-lg' color="slate" size="xs">Sin stock</Badge>;
+  if (rate >= 3) return <Badge className='ring-0 rounded-lg' color="emerald" size="xs">Alta ({rate}x)</Badge>;
+  if (rate >= 1) return <Badge className='ring-0 rounded-lg' color="amber" size="xs">Media ({rate}x)</Badge>;
+  return <Badge className='ring-0 rounded-lg' color="rose" size="xs">Baja ({rate}x)</Badge>;
 }
 
 export function StockRotationTable({ data, loading }: Props) {
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <Title className="mb-4">Análisis de rotación de inventario</Title>
       {loading ? (
         <div className="h-40 bg-muted animate-pulse rounded" />

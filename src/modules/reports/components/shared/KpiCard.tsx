@@ -1,4 +1,5 @@
-import { Card, Metric, Text, Flex, BadgeDelta } from '@tremor/react';
+import { Metric, Text, Flex, BadgeDelta } from '@tremor/react';
+import { Card } from '@/components/ui/card';
 import type { DeltaType } from '@tremor/react';
 
 interface KpiCardProps {
@@ -29,7 +30,7 @@ export function KpiCard({
   suffix = '',
 }: KpiCardProps) {
   return (
-    <Card className="max-w-xs">
+    <Card className="max-w-xs h-full p-4">
       <Text>{title}</Text>
       {loading ? (
         <Skeleton />

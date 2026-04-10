@@ -1,4 +1,5 @@
-import { Card, Title, DonutChart, Legend } from '@tremor/react';
+import { Title, DonutChart, Legend } from '@tremor/react';
+import { Card } from '@/components/ui/card';
 import type { FinancialByPaymentItem } from '../../types/reports.types';
 
 interface Props {
@@ -13,7 +14,7 @@ export function FinancialByPaymentChart({ data, loading }: Props) {
   }));
 
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <Title>Ingresos por método de pago</Title>
       {loading ? (
         <div className="h-48 bg-muted animate-pulse rounded mt-4" />

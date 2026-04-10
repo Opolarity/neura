@@ -1,4 +1,5 @@
-import { Card, Title, AreaChart, Select, SelectItem } from '@tremor/react';
+import { Title, AreaChart, Select, SelectItem } from '@tremor/react';
+import { Card } from '@/components/ui/card';
 import type { CashflowItem, Granularity } from '../../types/reports.types';
 
 interface Props {
@@ -17,7 +18,7 @@ export function CashflowChart({ data, loading, granularity, onGranularityChange 
   }));
 
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <div className="flex items-center justify-between mb-4">
         <Title>Flujo de caja en el tiempo</Title>
         <Select value={granularity} onValueChange={(v) => onGranularityChange(v as Granularity)} className="w-32">

@@ -1,4 +1,5 @@
-import { Card, Title, BarChart, Badge } from '@tremor/react';
+import { Title, BarChart, Badge } from '@tremor/react';
+import { Card } from '@/components/ui/card';
 import type { LoyaltyDistributionItem, CustomersByLoyaltyItem, LoyaltyLevel } from '../../types/reports.types';
 
 interface Props {
@@ -30,7 +31,7 @@ export function LoyaltyDistributionChart({ data, loading, byLoyalty }: Props) {
   }));
 
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <Title>Distribución por nivel de fidelización</Title>
       {loading ? (
         <div className="h-48 bg-muted animate-pulse rounded mt-4" />
@@ -45,7 +46,7 @@ export function LoyaltyDistributionChart({ data, loading, byLoyalty }: Props) {
           />
           <div className="flex flex-wrap gap-2 mt-3">
             {data.map((d) => (
-              <Badge key={d.level} color={LOYALTY_COLORS[d.level] as never} size="sm">
+              <Badge className='ring-0' key={d.level} color={LOYALTY_COLORS[d.level] as never} size="sm">
                 {LOYALTY_LABELS[d.level]}: {d.count}
               </Badge>
             ))}

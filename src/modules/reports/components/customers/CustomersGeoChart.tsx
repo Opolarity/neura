@@ -1,4 +1,5 @@
-import { Card, Title, BarChart, Grid, Col } from '@tremor/react';
+import { Title, BarChart, Grid, Col } from '@tremor/react';
+import { Card } from '@/components/ui/card';
 import type { GeoDistributionData } from '../../types/reports.types';
 
 interface Props {
@@ -20,7 +21,7 @@ export function CustomersGeoChart({ data, loading }: Props) {
   }));
 
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <Title className="mb-4">Distribución geográfica de clientes</Title>
       {loading ? (
         <div className="h-48 bg-muted animate-pulse rounded" />

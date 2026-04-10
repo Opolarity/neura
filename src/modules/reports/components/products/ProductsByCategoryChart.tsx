@@ -1,5 +1,6 @@
-import { Card, Title, DonutChart, Legend } from '@tremor/react';
+import { Title, DonutChart, Legend } from '@tremor/react';
 import type { ProductsByCategoryItem } from '../../types/reports.types';
+import { Card } from '@/components/ui/card';
 
 interface Props {
   data: ProductsByCategoryItem[];
@@ -13,7 +14,7 @@ export function ProductsByCategoryChart({ data, loading }: Props) {
   }));
 
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <Title>Ventas por categoría</Title>
       {loading ? (
         <div className="h-48 bg-muted animate-pulse rounded mt-4" />

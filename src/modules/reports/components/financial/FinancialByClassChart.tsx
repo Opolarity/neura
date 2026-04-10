@@ -1,4 +1,5 @@
-import { Card, Title, BarChart } from '@tremor/react';
+import { Title, BarChart } from '@tremor/react';
+import { Card } from '@/components/ui/card';
 import type { FinancialByClassItem } from '../../types/reports.types';
 
 interface Props {
@@ -14,7 +15,7 @@ export function FinancialByClassChart({ data, loading }: Props) {
   }));
 
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <Title>Por clase de movimiento</Title>
       {loading ? (
         <div className="h-48 bg-muted animate-pulse rounded mt-4" />

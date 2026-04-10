@@ -1,5 +1,6 @@
-import { Card, Title, BarChart } from '@tremor/react';
+import { Title, BarChart } from '@tremor/react';
 import type { SalesByDimensionItem, SalesDimension } from '../../types/reports.types';
+import { Card } from '@/components/ui/card';
 
 interface DimensionBlock {
   data: SalesByDimensionItem[];
@@ -43,7 +44,7 @@ export function SalesByDimensionChart({ dimensions }: Props) {
         }));
 
         return (
-          <Card key={dim}>
+          <Card className='h-full p-4' key={dim}>
             <Title>Ventas por {DIMENSION_LABELS[dim]}</Title>
             {loading ? (
               <div className="h-40 bg-muted animate-pulse rounded mt-4" />

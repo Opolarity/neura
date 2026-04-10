@@ -1,5 +1,6 @@
-import { Card, Title, BarChart, Select, SelectItem } from '@tremor/react';
+import { Title, BarChart, Select, SelectItem } from '@tremor/react';
 import type { TopProductItem, TopLimit, ProductsByCategoryItem } from '../../types/reports.types';
+import { Card } from '@/components/ui/card';
 
 interface Props {
   data: TopProductItem[];
@@ -21,7 +22,7 @@ export function TopProductsChart({ data, loading, limit, onLimitChange, category
   }));
 
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <div className="flex items-center justify-between mb-4">
         <Title>Productos más vendidos</Title>
         <div className="flex gap-2">

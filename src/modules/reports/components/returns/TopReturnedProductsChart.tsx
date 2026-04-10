@@ -1,4 +1,5 @@
-import { Card, Title, BarChart, Select, SelectItem } from '@tremor/react';
+import { Title, BarChart, Select, SelectItem } from '@tremor/react';
+import { Card } from '@/components/ui/card';
 import type { TopReturnedProduct } from '../../types/reports.types';
 
 interface Props {
@@ -16,7 +17,7 @@ export function TopReturnedProductsChart({ data, loading, limit, onLimitChange }
   }));
 
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <div className="flex items-center justify-between mb-4">
         <Title>Productos más devueltos</Title>
         <Select value={limit.toString()} onValueChange={(v) => onLimitChange(Number(v))} className="w-20">

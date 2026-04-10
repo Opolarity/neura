@@ -1,5 +1,6 @@
-import { Card, Title, AreaChart, Select, SelectItem } from '@tremor/react';
+import { Title, AreaChart, Select, SelectItem } from '@tremor/react';
 import type { SalesOverTimeItem, Granularity } from '../../types/reports.types';
+import { Card } from '@/components/ui/card';
 
 interface Props {
   data: SalesOverTimeItem[];
@@ -22,7 +23,7 @@ export function SalesOverTimeChart({ data, loading, granularity, onGranularityCh
   }));
 
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <div className="flex items-center justify-between mb-4">
         <Title>Ventas en el tiempo</Title>
         <Select

@@ -1,7 +1,8 @@
-import {
-  Card, Title, Table, TableHead, TableHeaderCell, TableBody,
+import { 
+  Title, Table, TableHead, TableHeaderCell, TableBody,
   TableRow, TableCell, Badge,
 } from '@tremor/react';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { LowStockProduct } from '../../types/reports.types';
@@ -19,10 +20,10 @@ export function LowStockTable({ data, loading, total, page, pageSize, onPageChan
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <div className="flex items-center justify-between mb-4">
         <Title>Productos con stock bajo</Title>
-        <Badge color="amber">{total} productos</Badge>
+        <Badge className='ring-0' color="amber">{total} productos</Badge>
       </div>
       {loading ? (
         <div className="h-40 bg-muted animate-pulse rounded" />
@@ -44,7 +45,7 @@ export function LowStockTable({ data, loading, total, page, pageSize, onPageChan
                   <TableCell className="text-xs text-muted-foreground">{item.sku}</TableCell>
                   <TableCell className="text-sm">{item.warehouse_name}</TableCell>
                   <TableCell className="text-right">
-                    <Badge color={item.stock === 0 ? 'red' : 'amber'} size="xs">
+                    <Badge className='ring-0 rounded-full' color={item.stock === 0 ? 'red' : 'amber'} size="xs">
                       {item.stock}
                     </Badge>
                   </TableCell>

@@ -1,9 +1,10 @@
 import {
-  Card, Title, Table, TableHead, TableHeaderCell, TableBody,
+  Title, Table, TableHead, TableHeaderCell, TableBody,
   TableRow, TableCell, Select, SelectItem, Badge,
 } from '@tremor/react';
 import type { TopProductItem, TopMetric, TopLimit } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
+import { Card } from '@/components/ui/card';
 
 interface Props {
   data: TopProductItem[];
@@ -16,7 +17,7 @@ interface Props {
 
 export function TopProductsTable({ data, loading, metric, limit, onMetricChange, onLimitChange }: Props) {
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <div className="flex items-center justify-between mb-4">
         <Title>Top productos</Title>
         <div className="flex gap-2">
@@ -48,7 +49,7 @@ export function TopProductsTable({ data, loading, metric, limit, onMetricChange,
             {data.map((item, i) => (
               <TableRow key={item.product_id}>
                 <TableCell>
-                  <Badge color={i < 3 ? 'amber' : 'slate'} size="xs">{i + 1}</Badge>
+                  <Badge className='rounded-full w-[24px] h-[24px] flex justify-center items-center ring-0' color={i < 3 ? 'amber' : 'slate'} size="xs">{i + 1}</Badge>
                 </TableCell>
                 <TableCell className="font-medium">{item.product_title}</TableCell>
                 <TableCell className="text-muted-foreground text-xs">{item.sku}</TableCell>

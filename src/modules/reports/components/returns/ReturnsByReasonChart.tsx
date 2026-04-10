@@ -1,4 +1,5 @@
-import { Card, Title, DonutChart } from '@tremor/react';
+import { Title, DonutChart } from '@tremor/react';
+import { Card } from '@/components/ui/card';
 import type { ReturnsByReasonItem } from '../../types/reports.types';
 
 interface Props {
@@ -13,7 +14,7 @@ export function ReturnsByReasonChart({ data, loading }: Props) {
   }));
 
   return (
-    <Card>
+    <Card className='h-full p-4'>
       <Title>Devoluciones por motivo</Title>
       {loading ? (
         <div className="h-48 bg-muted animate-pulse rounded mt-4" />
