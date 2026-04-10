@@ -685,6 +685,7 @@ export type Database = {
           name: string
           order: number | null
           parent_function: number | null
+          menu: boolean
         }
         Insert: {
           active?: boolean

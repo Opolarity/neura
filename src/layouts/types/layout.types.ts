@@ -7,6 +7,7 @@ export interface UserFunction {
     parent_function: number | null;
     active: boolean;
     order: number | null;
+    menu: boolean
 }
 
 export interface UserSession {

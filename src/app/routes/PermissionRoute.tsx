@@ -2,30 +2,26 @@ import { PropsWithChildren } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useFunctions } from "@/contexts/FunctionsContext";
 
+// Sufijos de ruta que permiten sub-rutas con un segmento adicional (ej: /edit/123)
+const SUBPATH_SUFFIXES = ["/edit", "/view", "/detail", "/create"];
+
 interface PermissionRouteProps extends PropsWithChildren {}
 
 export default function PermissionRoute({ children }: PermissionRouteProps) {
-  const { functions, loading } = useFunctions();
+  const { paths, loading } = useFunctions();
   const location = useLocation();
 
   const normalizePath = (path: string) =>
     path.startsWith("/") ? path : `/${path}`;
 
-  const flattenFunctions = (functions: any[]): any[] => {
-    return functions.flatMap((fn) => [
-      fn,
-      ...(fn.subItems?.flatMap((sub: any) => sub.items) || []),
-    ]);
-  };
-
-  const hasAccessToPath = (functions: any[], path: string) => {
-    const flat = flattenFunctions(functions);
-
-    return flat.some(
-      (item) =>
-        item.location && item.active && normalizePath(item.location) === path,
-    );
-  };
+  const hasAccessToPath = (path: string) =>
+    paths.some((item) => {
+      if (!item.location || !item.active) return false;
+      const itemPath = normalizePath(item.location);
+      if (itemPath === path) return true;
+      if (SUBPATH_SUFFIXES.some((suffix) => itemPath.endsWith(suffix) && path.startsWith(itemPath + "/"))) return true;
+      return false;
+    });
 
   if (loading) {
     return (
@@ -40,7 +36,7 @@ export default function PermissionRoute({ children }: PermissionRouteProps) {
     );
   }
 
-  const hasAccess = hasAccessToPath(functions, location.pathname);
+  const hasAccess = hasAccessToPath(location.pathname);
 
   if (!hasAccess) {
     return <Navigate to="/" replace />;
