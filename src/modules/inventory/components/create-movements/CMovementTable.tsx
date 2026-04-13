@@ -63,7 +63,7 @@ const CMovementTable = ({
                 <span className="font-medium">
                   {product.productTitle}
                   {product.terms.length > 0 &&
-                    ` - ${product.terms.map((t) => t.name).join(" / ")}`}
+                    ` (${product.terms.map((t) => t.name).join(" - ")}) `}
                 </span>
 
                 <span className="text-xs text-muted-foreground">
