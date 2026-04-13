@@ -94,7 +94,7 @@ const CreateMovement = () => {
           />
 
           <Button type="button" onClick={addProduct} disabled={!selectedProduct}>
-            <Plus className="w-4 h-4 mr-2" /> Agregar
+            <Plus className="w-4 h-4 mr-2" /> Agregar 
           </Button>
         </div>
 
