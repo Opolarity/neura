@@ -16,6 +16,7 @@ import {
 import {
   DEFAULT_FORM_DATA,
   adaptPriceRuleToForm,
+  adaptFormToPayload,
 } from "../adapters/priceRule.adapter";
 
 export function usePriceRuleForm() {
@@ -199,11 +200,12 @@ export function usePriceRuleForm() {
 
     setSaving(true);
     try {
+      const payload = adaptFormToPayload(formData);
       if (isEditMode) {
-        await updatePriceRule(parseInt(id!), formData);
+        await updatePriceRule(parseInt(id!), payload);
         toast.success("Regla de precios actualizada");
       } else {
-        await createPriceRule(formData);
+        await createPriceRule(payload);
         toast.success("Regla de precios creada");
       }
       navigate("/discounts/price-rules");

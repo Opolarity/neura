@@ -21,12 +21,16 @@ interface CMovementTableProps {
   movementType: Types;
   productStatusTypes: Types[];
   products: SelectedProduct[];
-  onQuantityChange: (productId: number,
+  onQuantityChange: (
+    productId: number,
     originTypeId: number,
-    value: string,) => void;
-  onSelectedProductStock: (productId: number,
+    value: string,
+  ) => void;
+  onSelectedProductStock: (
+    productId: number,
     originTypeId: number,
-    typeId: string | null) => void;
+    typeId: string | null,
+  ) => void;
 }
 
 const CMovementTable = ({
@@ -34,11 +38,8 @@ const CMovementTable = ({
   productStatusTypes,
   products,
   onQuantityChange,
-  onSelectedProductStock
+  onSelectedProductStock,
 }: CMovementTableProps) => {
-
-
-
   return (
     <Table>
       <TableHeader>
@@ -59,7 +60,12 @@ const CMovementTable = ({
           <TableRow key={`${product.variationId}-${product.originType.id}`}>
             <TableCell>
               <div className="flex flex-col gap-2">
-                <span className="font-medium">{product.productTitle}</span>
+                <span className="font-medium">
+                  {product.productTitle}
+                  {product.terms.length > 0 &&
+                    ` (${product.terms.map((t) => t.name).join(" - ")}) `}
+                </span>
+
                 <span className="text-xs text-muted-foreground">
                   {product.originType.name}
                 </span>
@@ -67,18 +73,26 @@ const CMovementTable = ({
             </TableCell>
             <TableCell>
               <div className="flex flex-col">
-                <Input placeholder={product.stock.toString()} className="bg-muted" disabled />
+                <Input
+                  placeholder={product.stock.toString()}
+                  className="bg-muted"
+                  disabled
+                />
               </div>
             </TableCell>
             <TableCell>
               <div className="flex flex-col">
                 <Input
                   value={
-                    product.quantity === null
-                      ? ""
-                      : String(product.quantity)
+                    product.quantity === null ? "" : String(product.quantity)
                   }
-                  onChange={(e) => onQuantityChange(product.variationId, product.originType.id, e.target.value)}
+                  onChange={(e) =>
+                    onQuantityChange(
+                      product.variationId,
+                      product.originType.id,
+                      e.target.value,
+                    )
+                  }
                   placeholder="0"
                 />
               </div>
@@ -89,9 +103,7 @@ const CMovementTable = ({
                 <TableCell>
                   <div className="flex flex-col">
                     <Select
-                      value={
-                        product.destinationType?.id.toString() || "none"
-                      }
+                      value={product.destinationType?.id.toString() || "none"}
                       onValueChange={(v) =>
                         onSelectedProductStock(
                           product.variationId,
@@ -100,13 +112,14 @@ const CMovementTable = ({
                         )
                       }
                     >
-                      <SelectTrigger id="stock-type" aria-labelledby="stock-type">
+                      <SelectTrigger
+                        id="stock-type"
+                        aria-labelledby="stock-type"
+                      >
                         <SelectValue placeholder="Seleccione un tipo"></SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">
-                          Seleccione un tipo
-                        </SelectItem>
+                        <SelectItem value="none">Seleccione un tipo</SelectItem>
                         {productStatusTypes
                           .filter(
                             (typeMS) => typeMS.id !== product.originType.id,
@@ -119,7 +132,6 @@ const CMovementTable = ({
                               {typeMS.name}
                             </SelectItem>
                           ))}
-
                       </SelectContent>
                     </Select>
                   </div>
@@ -128,7 +140,6 @@ const CMovementTable = ({
                 <TableCell>{product.destinationTypeStock || "0"}</TableCell>
               </>
             )}
-
           </TableRow>
         ))}
       </TableBody>
