@@ -33,6 +33,10 @@ export const DEFAULT_FORM_DATA: PriceRuleFormData = {
   max_uses: null,
   max_uses_per_customer: null,
 };
+function slicetime(dateStr: string | null | undefined): string {
+  if (!dateStr) return "";
+  return dateStr.slice(0, 16);
+}
 
 export function adaptPriceRuleToForm(rule: PriceRule): PriceRuleFormData {
   const coupon = rule.discounts?.[0];
@@ -46,8 +50,8 @@ export function adaptPriceRuleToForm(rule: PriceRule): PriceRuleFormData {
     is_stackable: rule.is_stackable,
     stop_processing: rule.stop_processing,
     is_active: rule.is_active,
-    valid_from: rule.valid_from || "",
-    valid_to: rule.valid_to || "",
+    valid_from: slicetime(rule.valid_from),
+    valid_to: slicetime(rule.valid_to),
     price_list_id: rule.price_list_id,
     conditions: rule.conditions || DEFAULT_CONDITIONS,
     actions: rule.actions || [],
