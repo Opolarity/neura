@@ -15,7 +15,7 @@ const ALL = '__all__';
 
 export function TopProductsChart({ data, loading, limit, onLimitChange, categoryId, categories, onCategoryChange }: Props) {
   const chartData = data.map((d) => ({
-    Producto: d.product_title.length > 20 ? d.product_title.slice(0, 20) + '…' : d.product_title,
+    Producto: d.product_title.length > 32 ? d.product_title.slice(0, 32) + '…' : d.product_title,
     'Ingresos (S/)': d.total_revenue,
     Unidades: d.total_quantity,
   }));
@@ -45,7 +45,7 @@ export function TopProductsChart({ data, loading, limit, onLimitChange, category
         </div>
       </div>
       {loading ? (
-        <div className="h-52 bg-muted animate-pulse rounded" />
+        <div className="h-96 bg-muted animate-pulse rounded" />
       ) : (
         <BarChart
           data={chartData}
@@ -54,7 +54,8 @@ export function TopProductsChart({ data, loading, limit, onLimitChange, category
           colors={['blue']}
           valueFormatter={(v) => `S/ ${v.toLocaleString('es-PE')}`}
           layout="vertical"
-          className="h-52"
+          className="h-96"
+          yAxisWidth={180}
         />
       )}
     </Card>

@@ -1,4 +1,4 @@
-import { Card, Title, DonutChart, Legend } from '@tremor/react';
+import { Card, Title, BarChart } from '@tremor/react';
 import type { ProductsByCategoryItem } from '../../types/reports.types';
 
 interface Props {
@@ -8,31 +8,25 @@ interface Props {
 
 export function ProductsByCategoryChart({ data, loading }: Props) {
   const chartData = data.map((d) => ({
-    name: d.category_name,
-    value: d.total_quantity,
+    Categoría: d.category_name,
+    Unidades: d.total_quantity,
   }));
 
   return (
     <Card>
       <Title>Ventas por categoría</Title>
       {loading ? (
-        <div className="h-48 bg-muted animate-pulse rounded mt-4" />
+        <div className="h-72 bg-muted animate-pulse rounded mt-4" />
       ) : (
-        <>
-          <DonutChart
-            data={chartData}
-            category="value"
-            index="name"
-            valueFormatter={(v) => `${v.toLocaleString('es-PE')} uds`}
-            colors={['indigo', 'cyan', 'amber', 'rose', 'emerald', 'violet', 'orange', 'sky']}
-            className="h-48 mt-4"
-          />
-          <Legend
-            categories={chartData.map((d) => d.name)}
-            colors={['indigo', 'cyan', 'amber', 'rose', 'emerald', 'violet', 'orange', 'sky']}
-            className="mt-3"
-          />
-        </>
+        <BarChart
+          data={chartData}
+          index="Categoría"
+          categories={['Unidades']}
+          colors={['indigo']}
+          valueFormatter={(v) => `${v.toLocaleString('es-PE')} uds`}
+          className="h-72 mt-4"
+          showLegend={false}
+        />
       )}
     </Card>
   );

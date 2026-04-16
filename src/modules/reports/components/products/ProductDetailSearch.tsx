@@ -1,24 +1,18 @@
-import { Card, Title, TextInput, LineChart, Grid, Col, Text, Metric } from '@tremor/react';
-import { Search } from 'lucide-react';
-import type { ProductSearchResult, ProductDetailData } from '../../types/reports.types';
+import { Card, Title, LineChart, Grid, Col, Text, Metric } from '@tremor/react';
+import { PackageSearch } from 'lucide-react';
+import type { ProductDetailData } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
 
 interface Props {
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
-  searchResults: ProductSearchResult[];
   selectedProductId: number | null;
-  onSelectProduct: (id: number | null) => void;
+  selectedProductTitle: string;
   detail: ProductDetailData | null;
   detailLoading: boolean;
 }
 
 export function ProductDetailSearch({
-  searchQuery,
-  onSearchChange,
-  searchResults,
   selectedProductId,
-  onSelectProduct,
+  selectedProductTitle,
   detail,
   detailLoading,
 }: Props) {
@@ -31,51 +25,28 @@ export function ProductDetailSearch({
   return (
     <Card>
       <Title className="mb-4">Análisis de producto individual</Title>
-      <div className="relative mb-4">
-        <TextInput
-          icon={Search}
-          placeholder="Buscar producto por nombre o SKU..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-        {searchResults.length > 0 && !selectedProductId && (
-          <div className="absolute z-10 mt-1 w-full bg-background border border-input rounded-md shadow-md max-h-48 overflow-y-auto">
-            {searchResults.map((r) => (
-              <button
-                key={r.id}
-                className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
-                onClick={() => {
-                  onSelectProduct(r.id);
-                  onSearchChange(r.title);
-                }}
-              >
-                <span className="font-medium">{r.title}</span>
-                <span className="ml-2 text-xs text-muted-foreground">{r.sku}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
 
-      {selectedProductId && (
-        <button
-          className="text-xs text-muted-foreground underline mb-4"
-          onClick={() => { onSelectProduct(null); onSearchChange(''); }}
-        >
-          ✕ Limpiar selección
-        </button>
+      {selectedProductId === null && (
+        <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+          <PackageSearch className="w-10 h-10 text-muted-foreground/60" />
+          <Text className="text-muted-foreground text-sm">
+            Selecciona un producto en el filtro <span className="font-medium">"Más opciones +"</span> para ver su análisis individual.
+          </Text>
+        </div>
       )}
 
-      {detailLoading && (
+      {selectedProductId !== null && detailLoading && (
         <div className="h-48 bg-muted animate-pulse rounded" />
       )}
 
-      {detail && !detailLoading && (
+      {selectedProductId !== null && detail && !detailLoading && (
         <div className="space-y-6">
           <div>
-            <Text className="font-semibold text-base">{detail.product_info.title}</Text>
+            <Text className="font-semibold text-base">
+              {detail.product_info?.title ?? selectedProductTitle}
+            </Text>
             <Text className="text-xs text-muted-foreground">
-              {detail.product_info.variations.map((v) => v.sku).join(', ')}
+              {detail.product_info?.variations?.map((v) => v.sku).join(', ')}
             </Text>
           </div>
 

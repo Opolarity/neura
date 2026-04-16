@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import { productsService } from '../services/reports.service';
-import type { ReportsFilters, TopLimit } from '../types/reports.types';
+import type { ProductSearchResult, ReportsFilters, TopLimit } from '../types/reports.types';
 
 export function useProductsDashboard(filters: ReportsFilters) {
   const [topLimit, setTopLimit] = useState<TopLimit>(10);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [productSearch, setProductSearch] = useState('');
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [selectedProductTitle, setSelectedProductTitle] = useState<string>('');
 
   const debouncedSearch = useDebounce(productSearch, 400);
 
@@ -40,6 +41,17 @@ export function useProductsDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 5,
   });
 
+  const selectProduct = (product: ProductSearchResult | null) => {
+    if (!product) {
+      setSelectedProductId(null);
+      setSelectedProductTitle('');
+      setProductSearch('');
+    } else {
+      setSelectedProductId(product.id);
+      setSelectedProductTitle(product.title);
+    }
+  };
+
   return {
     byCategory,
     topByCategory,
@@ -52,6 +64,9 @@ export function useProductsDashboard(filters: ReportsFilters) {
     productSearch,
     setProductSearch,
     selectedProductId,
-    setSelectedProductId,
+    selectedProductTitle,
+    selectProduct,
   };
 }
+
+export type ProductsDashboardState = ReturnType<typeof useProductsDashboard>;
