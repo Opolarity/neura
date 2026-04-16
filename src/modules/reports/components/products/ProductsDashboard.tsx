@@ -2,16 +2,13 @@ import { Grid, Col } from '@tremor/react';
 import { ProductsByCategoryChart } from './ProductsByCategoryChart';
 import { TopProductsChart } from './TopProductsChart';
 import { ProductDetailSearch } from './ProductDetailSearch';
-import { useProductsDashboard } from '../../hooks/useProductsDashboard';
-import type { ReportsFilters } from '../../types/reports.types';
+import type { ProductsDashboardState } from '../../hooks/useProductsDashboard';
 
 interface ProductsDashboardProps {
-  filters: ReportsFilters;
+  dash: ProductsDashboardState;
 }
 
-export function ProductsDashboard({ filters }: ProductsDashboardProps) {
-  const dash = useProductsDashboard(filters);
-
+export function ProductsDashboard({ dash }: ProductsDashboardProps) {
   return (
     <div className="space-y-6">
       <Grid numItemsSm={1} numItemsLg={2} className="gap-6">
@@ -35,11 +32,8 @@ export function ProductsDashboard({ filters }: ProductsDashboardProps) {
       </Grid>
 
       <ProductDetailSearch
-        searchQuery={dash.productSearch}
-        onSearchChange={dash.setProductSearch}
-        searchResults={dash.searchResults.data ?? []}
         selectedProductId={dash.selectedProductId}
-        onSelectProduct={dash.setSelectedProductId}
+        selectedProductTitle={dash.selectedProductTitle}
         detail={dash.productDetail.data ?? null}
         detailLoading={dash.productDetail.isLoading}
       />
