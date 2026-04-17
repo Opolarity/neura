@@ -127,6 +127,26 @@ export const updateShortDescriptionApi = async (
     .in("id", productIds);
   if (error) throw error;
 };
+export const updateOtherDescriptionMinApi = async (
+  productIds: number[],
+  description: string,
+) => {
+  const { error } = await supabase
+    .from("products")
+    .update({ other_description_min: description })
+    .in("id", productIds);
+  if (error) throw error;
+};
+export const updateOtherDescriptionMayApi = async (
+  productIds: number[],
+  description: string,
+) => {
+  const { error } = await supabase
+    .from("products")
+    .update({ other_description_may: description })
+    .in("id", productIds);
+  if (error) throw error;
+};
 export const getChannelsApi = async (): Promise<
   { id: number; name: string; code: string }[]
 > => {

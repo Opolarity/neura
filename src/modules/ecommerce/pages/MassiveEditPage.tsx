@@ -18,11 +18,15 @@ import {
   updateSalesChannelsApi,
   updateLargeDescriptionApi,
   updatePromotionalImageApi,
+  updateOtherDescriptionMinApi,
+  updateOtherDescriptionMayApi,
 } from "@/modules/products/services/products.service";
 import PromotionalTextModal from "@/modules/ecommerce/components/PromotionalTextModal";
 import SizeImagesModal from "@/modules/ecommerce/components/SizeImagesModal";
 import ShortDescriptionModal from "@/modules/ecommerce/components/DescriptionModal";
 import SalesChannelsModal from "@/modules/ecommerce/components/SalesChannelsModal";
+import OtherDescriptionMinModal from "@/modules/ecommerce/components/OtherDescriptionMinModal";
+import OtherDescriptionMayModal from "@/modules/ecommerce/components/OtherDescriptionMayModal";
 import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -51,6 +55,8 @@ const PromotionalTextPage = () => {
   const [isShortDescModalOpen, setIsShortDescModalOpen] = useState(false);
   const [isShortDesMayModalOpen, setIsShortDesMayModalOpen] = useState(false);
   const [isPromotionalImageModal, setIsPromotionalImageModal] = useState(false);
+  const [isOtherDescMinModalOpen, setIsOtherDescMinModalOpen] = useState(false);
+  const [isOtherDescMayModalOpen, setIsOtherDescMayModalOpen] = useState(false);
   const [isSalesChannelsModalOpen, setIsSalesChannelsModalOpen] =
     useState(false);
   const { toast } = useToast();
@@ -163,7 +169,31 @@ const PromotionalTextPage = () => {
       description: `Descripción corta actualizada en ${plural(selectedProducts.length)}.`,
     });
   };
-  
+
+  const handleSaveOtherDescriptionMin = async (description: string) => {
+    if (selectedProducts.length === 0) {
+      noSelectionToast("No hay productos seleccionados");
+      return;
+    }
+    await updateOtherDescriptionMinApi(selectedProducts, description);
+    toast({
+      title: "Guardado exitoso",
+      description: `Otra descripción min. actualizada en ${plural(selectedProducts.length)}.`,
+    });
+  };
+
+  const handleSaveOtherDescriptionMay = async (description: string) => {
+    if (selectedProducts.length === 0) {
+      noSelectionToast("No hay productos seleccionados");
+      return;
+    }
+    await updateOtherDescriptionMayApi(selectedProducts, description);
+    toast({
+      title: "Guardado exitoso",
+      description: `Otra descripción may. actualizada en ${plural(selectedProducts.length)}.`,
+    });
+  };
+
 
   const handleSaveSalesChannels = async (channelIds: number[]) => {
     //la funcion que se ejecuta al guardar
@@ -233,6 +263,20 @@ const PromotionalTextPage = () => {
               >
                 <AlignRight className="w-4 h-4 text-green-500" />
                 Descripción Minorista
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setIsOtherDescMinModalOpen(true)}
+              >
+                <AlignRight className="w-4 h-4 text-teal-500" />
+                Otra descripción min.
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setIsOtherDescMayModalOpen(true)}
+              >
+                <AlignLeft className="w-4 h-4 text-teal-600" />
+                Otra descripción may.
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
@@ -319,6 +363,18 @@ const PromotionalTextPage = () => {
         onClose={() => setIsShortDescModalOpen(false)}
         selectedCount={selectedProducts.length}
         onSave={handleSaveShortDescription}
+      />
+      <OtherDescriptionMinModal
+        isOpen={isOtherDescMinModalOpen}
+        onClose={() => setIsOtherDescMinModalOpen(false)}
+        selectedCount={selectedProducts.length}
+        onSave={handleSaveOtherDescriptionMin}
+      />
+      <OtherDescriptionMayModal
+        isOpen={isOtherDescMayModalOpen}
+        onClose={() => setIsOtherDescMayModalOpen(false)}
+        selectedCount={selectedProducts.length}
+        onSave={handleSaveOtherDescriptionMay}
       />
       <SalesChannelsModal
         isOpen={isSalesChannelsModalOpen}
