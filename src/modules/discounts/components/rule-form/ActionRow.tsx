@@ -152,7 +152,7 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
         Object.assign(base, { tiers: [{ qty: 3, unit_price: 0 }], target: DEFAULT_TARGET });
         break;
       case "buy_x_get_y":
-        Object.assign(base, { buy_qty: 2, get_qty: 1, discount_percent: 100, apply_to_cheapest: true, target: DEFAULT_TARGET });
+        Object.assign(base, { buy_qty: 2, get_qty: 1, discount_type: "percent", discount_percent: 100, discount_amount: 0, apply_to_cheapest: true, target: DEFAULT_TARGET });
         break;
       case "free_gift":
         Object.assign(base, { variation_id: 0, quantity: 1 });
@@ -284,7 +284,8 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
         );
       }
 
-      case "buy_x_get_y":
+      case "buy_x_get_y": {
+        const discountType = action.discount_type ?? "percent";
         return (
           <div className="space-y-3">
             <div className="flex gap-2 items-end flex-wrap">
@@ -307,18 +308,46 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">% descuento</Label>
-                <Input
-                  type="number"
-                  className="w-[100px]"
-                  placeholder="100 = gratis"
-                  value={action.discount_percent ?? 100}
-                  onChange={(e) => updateField("discount_percent", parseFloat(e.target.value) || 0)}
-                />
+                <Label className="text-xs">Tipo de descuento</Label>
+                <Select
+                  value={discountType}
+                  onValueChange={(val) => updateField("discount_type", val as "percent" | "fixed")}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="percent">Porcentaje (%)</SelectItem>
+                    <SelectItem value="fixed">Monto fijo (S/)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+              {discountType === "percent" ? (
+                <div className="space-y-1">
+                  <Label className="text-xs">% descuento</Label>
+                  <Input
+                    type="number"
+                    className="w-[100px]"
+                    placeholder="100 = gratis"
+                    value={action.discount_percent ?? 100}
+                    onChange={(e) => updateField("discount_percent", parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <Label className="text-xs">Monto dto. por unidad (S/)</Label>
+                  <Input
+                    type="number"
+                    className="w-[140px]"
+                    placeholder="Ej: 10.00"
+                    value={action.discount_amount ?? 0}
+                    onChange={(e) => updateField("discount_amount", parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+              )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Ej: 2x1 = Comprar 2, llevar 1 al 100% dto. | 2da al 50% = Comprar 2, llevar 1 al 50% dto.
+              Ej: 2x1 = Comprar 2, llevar 1 al 100% dto. | 2da al 50% = Comprar 2, llevar 1 al 50% dto. | Monto fijo: resta S/ X a cada unidad con descuento.
             </p>
             <div className="flex items-center gap-2">
               <Switch
@@ -333,6 +362,7 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
             />
           </div>
         );
+      }
 
       case "free_gift":
         return (
