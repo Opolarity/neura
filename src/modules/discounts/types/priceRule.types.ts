@@ -60,7 +60,9 @@ export interface ActionConfig {
   // buy_x_get_y fields
   buy_qty?: number;
   get_qty?: number;
+  discount_type?: "percent" | "fixed";
   discount_percent?: number;
+  discount_amount?: number;
   apply_to_cheapest?: boolean;
 }
 
