@@ -4,6 +4,7 @@ import { getUserFunctionsApi } from "@/layouts/services/layout.service";
 import { UserFunction } from "@/layouts/types/layout.types";
 import { MenuFunction } from "../types";
 import FunctionsContext from "./FunctionsContext";
+import { useAuth } from "@/modules/auth";
 
 const transformToMenuStructure = (functions: UserFunction[]): MenuFunction[] => {
   const parentFunctions = functions
@@ -55,12 +56,20 @@ const transformToMenuStructure = (functions: UserFunction[]): MenuFunction[] => 
 };
 
 export const FunctionsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading: authLoading } = useAuth();
   const [functions, setFunctions] = useState<MenuFunction[]>([]);
   const [allowedRoutes, setAllowedRoutes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     const fetchFunctions = async () => {
       try {
         const response = await getUserFunctionsApi();
@@ -91,7 +100,7 @@ export const FunctionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
 
     fetchFunctions();
-  }, []);
+  }, [user, authLoading]);
 
   return (
     <FunctionsContext.Provider value={{ functions, allowedRoutes, loading, error }}>
