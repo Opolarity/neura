@@ -12,6 +12,7 @@ interface MenuFunction extends UserFunction {
 
 export const useFunctions = () => {
   const [functions, setFunctions] = useState<MenuFunction[]>([]);
+  const [allowedRoutes, setAllowedRoutes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,6 +24,7 @@ export const useFunctions = () => {
 
         if (response.success && response.session?.functions) {
           const allowedIds = response.session.functions.map((f: any) => f.id);
+          setAllowedRoutes(response.session.views ?? []);
 
           // 2. Get full metadata for all active functions from the table
           const { data: allFunctions, error: tableError } = await supabase
@@ -53,7 +55,7 @@ export const useFunctions = () => {
     fetchFunctions();
   }, []);
 
-  return { functions, loading, error };
+  return { functions, allowedRoutes, loading, error };
 };
 
 const transformToMenuStructure = (functions: UserFunction[]): MenuFunction[] => {

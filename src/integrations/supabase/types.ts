@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.12 (cd3cf9e)"
+    PostgrestVersion: "14.4"
   }
   public: {
     Tables: {
@@ -42,6 +42,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "account_types_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_customers"
+            referencedColumns: ["account_id"]
+          },
+          {
             foreignKeyName: "account_types_account_type_id_fkey"
             columns: ["account_type_id"]
             isOneToOne: false
@@ -55,6 +62,7 @@ export type Database = {
           created_at: string
           document_number: string
           document_type_id: number
+          email: string | null
           id: number
           is_active: boolean
           last_name: string | null
@@ -68,6 +76,7 @@ export type Database = {
           created_at?: string
           document_number: string
           document_type_id: number
+          email?: string | null
           id?: number
           is_active?: boolean
           last_name?: string | null
@@ -81,6 +90,7 @@ export type Database = {
           created_at?: string
           document_number?: string
           document_type_id?: number
+          email?: string | null
           id?: number
           is_active?: boolean
           last_name?: string | null
@@ -283,6 +293,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "business_accounts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_customers"
+            referencedColumns: ["account_id"]
+          },
+          {
             foreignKeyName: "business_accounts_business_account_type_id_fkey"
             columns: ["business_account_type_id"]
             isOneToOne: false
@@ -295,22 +312,39 @@ export type Database = {
         Row: {
           code: string | null
           created_at: string
+          function_id: number | null
+          group: string | null
           id: number
           name: string
+          views: string[] | null
         }
         Insert: {
           code?: string | null
           created_at?: string
+          function_id?: number | null
+          group?: string | null
           id?: number
           name: string
+          views?: string[] | null
         }
         Update: {
           code?: string | null
           created_at?: string
+          function_id?: number | null
+          group?: string | null
           id?: number
           name?: string
+          views?: string[] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "capabilities_function_id_fkey"
+            columns: ["function_id"]
+            isOneToOne: false
+            referencedRelation: "functions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cart_products: {
         Row: {
@@ -401,6 +435,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "carts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "carts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -453,8 +494,8 @@ export type Database = {
           price_list_id: number
           sale_type_id: number
           stock_type_id: number
+          url: string | null
           warehouse_id: number
-          url: string
         }
         Insert: {
           branch_id: number
@@ -464,6 +505,7 @@ export type Database = {
           price_list_id: number
           sale_type_id: number
           stock_type_id: number
+          url?: string | null
           warehouse_id: number
         }
         Update: {
@@ -474,6 +516,7 @@ export type Database = {
           price_list_id?: number
           sale_type_id?: number
           stock_type_id?: number
+          url?: string | null
           warehouse_id?: number
         }
         Relationships: [
@@ -588,6 +631,175 @@ export type Database = {
           },
         ]
       }
+      complaints_book: {
+        Row: {
+          address: string
+          age: boolean
+          amount_claim: number
+          apoderado_document_number: string | null
+          apoderado_document_type_id: number | null
+          apoderado_email: string | null
+          apoderado_phone: string | null
+          city_id: number
+          claim_description: string
+          claim_type: string
+          complaining_request: string
+          country_id: number
+          detail: string
+          document_number: string
+          document_type_id: number
+          email: string
+          good: string
+          id: number
+          incident_date: string
+          last_name: string
+          last_name2: string | null
+          name: string
+          name_apoderado: string | null
+          neighborhood_id: number
+          orden_id: string | null
+          phone: string
+          state_id: number
+          terms: boolean
+        }
+        Insert: {
+          address: string
+          age: boolean
+          amount_claim: number
+          apoderado_document_number?: string | null
+          apoderado_document_type_id?: number | null
+          apoderado_email?: string | null
+          apoderado_phone?: string | null
+          city_id: number
+          claim_description: string
+          claim_type: string
+          complaining_request: string
+          country_id: number
+          detail: string
+          document_number: string
+          document_type_id: number
+          email: string
+          good: string
+          id?: number
+          incident_date: string
+          last_name: string
+          last_name2?: string | null
+          name: string
+          name_apoderado?: string | null
+          neighborhood_id: number
+          orden_id?: string | null
+          phone: string
+          state_id: number
+          terms?: boolean
+        }
+        Update: {
+          address?: string
+          age?: boolean
+          amount_claim?: number
+          apoderado_document_number?: string | null
+          apoderado_document_type_id?: number | null
+          apoderado_email?: string | null
+          apoderado_phone?: string | null
+          city_id?: number
+          claim_description?: string
+          claim_type?: string
+          complaining_request?: string
+          country_id?: number
+          detail?: string
+          document_number?: string
+          document_type_id?: number
+          email?: string
+          good?: string
+          id?: number
+          incident_date?: string
+          last_name?: string
+          last_name2?: string | null
+          name?: string
+          name_apoderado?: string | null
+          neighborhood_id?: number
+          orden_id?: string | null
+          phone?: string
+          state_id?: number
+          terms?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaints_book_apoderado_document_type_id_fkey"
+            columns: ["apoderado_document_type_id"]
+            isOneToOne: false
+            referencedRelation: "document_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "complaints_book_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "complaints_book_country_id_state_id_city_id_fkey"
+            columns: ["country_id", "state_id", "city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["country_id", "state_id", "id"]
+          },
+          {
+            foreignKeyName: "complaints_book_country_id_state_id_city_id_neighborhood_i_fkey"
+            columns: ["country_id", "state_id", "city_id", "neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["country_id", "state_id", "city_id", "id"]
+          },
+          {
+            foreignKeyName: "complaints_book_country_id_state_id_fkey"
+            columns: ["country_id", "state_id"]
+            isOneToOne: false
+            referencedRelation: "states"
+            referencedColumns: ["country_id", "id"]
+          },
+          {
+            foreignKeyName: "complaints_book_document_type_id_fkey"
+            columns: ["document_type_id"]
+            isOneToOne: false
+            referencedRelation: "document_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      complaints_book_note: {
+        Row: {
+          complaints_book_id: number
+          id: number
+          notes_id: number
+        }
+        Insert: {
+          complaints_book_id: number
+          id?: number
+          notes_id: number
+        }
+        Update: {
+          complaints_book_id?: number
+          id?: number
+          notes_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaints_book_note_complaints_book_id_fkey"
+            columns: ["complaints_book_id"]
+            isOneToOne: false
+            referencedRelation: "complaints_book"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "complaints_book_note_notes_id_fkey"
+            columns: ["notes_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           created_at: string
@@ -609,6 +821,101 @@ export type Database = {
         }
         Relationships: []
       }
+      coupon_usage: {
+        Row: {
+          discount_id: number
+          id: number
+          order_id: number | null
+          used_at: string
+          user_id: string | null
+        }
+        Insert: {
+          discount_id: number
+          id?: number
+          order_id?: number | null
+          used_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          discount_id?: number
+          id?: number
+          order_id?: number | null
+          used_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_usage_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usage_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usage_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+        ]
+      }
+      customer_points_movements: {
+        Row: {
+          account_id: number
+          created_at: string
+          id: number
+          is_active: boolean
+          note: string | null
+          quantity: number
+        }
+        Insert: {
+          account_id: number
+          created_at?: string
+          id?: number
+          is_active?: boolean
+          note?: string | null
+          quantity: number
+        }
+        Update: {
+          account_id?: number
+          created_at?: string
+          id?: number
+          is_active?: boolean
+          note?: string | null
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_points_movements_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_points_movements_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_customers"
+            referencedColumns: ["account_id"]
+          },
+        ]
+      }
       customer_profile: {
         Row: {
           activity: string | null
@@ -616,6 +923,7 @@ export type Database = {
           id: number
           orders_quantity: number
           points: number | null
+          preferences: string[] | null
         }
         Insert: {
           activity?: string | null
@@ -623,6 +931,7 @@ export type Database = {
           id?: number
           orders_quantity: number
           points?: number | null
+          preferences?: string[] | null
         }
         Update: {
           activity?: string | null
@@ -630,6 +939,7 @@ export type Database = {
           id?: number
           orders_quantity?: number
           points?: number | null
+          preferences?: string[] | null
         }
         Relationships: [
           {
@@ -637,6 +947,60 @@ export type Database = {
             columns: ["id"]
             isOneToOne: true
             referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_profile_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "vw_rpt_customers"
+            referencedColumns: ["account_id"]
+          },
+        ]
+      }
+      discounts: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number
+          id: number
+          is_active: boolean
+          max_uses: number | null
+          max_uses_per_customer: number | null
+          price_rule_id: number
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number
+          id?: number
+          is_active?: boolean
+          max_uses?: number | null
+          max_uses_per_customer?: number | null
+          price_rule_id: number
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number
+          id?: number
+          is_active?: boolean
+          max_uses?: number | null
+          max_uses_per_customer?: number | null
+          price_rule_id?: number
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discounts_price_rule_id_fkey"
+            columns: ["price_rule_id"]
+            isOneToOne: false
+            referencedRelation: "price_rules"
             referencedColumns: ["id"]
           },
         ]
@@ -682,6 +1046,7 @@ export type Database = {
           icon: string | null
           id: number
           location: string | null
+          menu: boolean | null
           name: string
           order: number | null
           parent_function: number | null
@@ -693,6 +1058,7 @@ export type Database = {
           icon?: string | null
           id?: number
           location?: string | null
+          menu?: boolean | null
           name: string
           order?: number | null
           parent_function?: number | null
@@ -704,6 +1070,7 @@ export type Database = {
           icon?: string | null
           id?: number
           location?: string | null
+          menu?: boolean | null
           name?: string
           order?: number | null
           parent_function?: number | null
@@ -876,6 +1243,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_series_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_customers"
+            referencedColumns: ["account_id"]
           },
           {
             foreignKeyName: "invoice_series_invoice_provider_id_fkey"
@@ -1066,6 +1440,42 @@ export type Database = {
         }
         Relationships: []
       }
+      movement_invoices: {
+        Row: {
+          created_at: string
+          id: number
+          invoice_id: number
+          movement_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          invoice_id: number
+          movement_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          invoice_id?: number
+          movement_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movement_invoices_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movement_invoices_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "movements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movements: {
         Row: {
           amount: number
@@ -1073,6 +1483,7 @@ export type Database = {
           business_account_id: number
           created_at: string
           description: string | null
+          files_url: string[] | null
           id: number
           migracode: string | null
           movement_class_id: number
@@ -1087,6 +1498,7 @@ export type Database = {
           business_account_id: number
           created_at?: string
           description?: string | null
+          files_url?: string[] | null
           id?: number
           migracode?: string | null
           movement_class_id: number
@@ -1101,6 +1513,7 @@ export type Database = {
           business_account_id?: number
           created_at?: string
           description?: string | null
+          files_url?: string[] | null
           id?: number
           migracode?: string | null
           movement_class_id?: number
@@ -1423,6 +1836,7 @@ export type Database = {
           discount_amount: number | null
           id: number
           name: string | null
+          note: string | null
           order_id: number
         }
         Insert: {
@@ -1431,6 +1845,7 @@ export type Database = {
           discount_amount?: number | null
           id?: number
           name?: string | null
+          note?: string | null
           order_id: number
         }
         Update: {
@@ -1439,6 +1854,7 @@ export type Database = {
           discount_amount?: number | null
           id?: number
           name?: string | null
+          note?: string | null
           order_id?: number
         }
         Relationships: [
@@ -1447,6 +1863,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_discounts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -1485,6 +1908,13 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "order_invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
+            referencedColumns: ["id"]
+          },
         ]
       }
       order_notes: {
@@ -1516,6 +1946,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oder_notes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -1560,6 +1997,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_order_payment_order_id_orders_id"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
             referencedColumns: ["id"]
           },
           {
@@ -1631,6 +2075,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_order_products_order_id_orders_id"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_order_products_product_variation_id_product_variations_id"
             columns: ["product_variation_id"]
             isOneToOne: false
@@ -1690,6 +2141,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "order_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "order_situations_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -1732,13 +2190,14 @@ export type Database = {
           id: number
           migracode: string | null
           neighborhood_id: number | null
-          phone: number | null
+          phone: string | null
           price_list_code: string
           reception_person: string | null
-          reception_phone: number | null
+          reception_phone: string | null
           sale_type_id: number
           shipping_cost: number | null
           shipping_method_code: string | null
+          shipping_method_id: number | null
           state_id: number | null
           subtotal: number
           success_viewed: boolean | null
@@ -1764,13 +2223,14 @@ export type Database = {
           id?: number
           migracode?: string | null
           neighborhood_id?: number | null
-          phone?: number | null
+          phone?: string | null
           price_list_code?: string
           reception_person?: string | null
-          reception_phone?: number | null
+          reception_phone?: string | null
           sale_type_id: number
           shipping_cost?: number | null
           shipping_method_code?: string | null
+          shipping_method_id?: number | null
           state_id?: number | null
           subtotal: number
           success_viewed?: boolean | null
@@ -1796,13 +2256,14 @@ export type Database = {
           id?: number
           migracode?: string | null
           neighborhood_id?: number | null
-          phone?: number | null
+          phone?: string | null
           price_list_code?: string
           reception_person?: string | null
-          reception_phone?: number | null
+          reception_phone?: string | null
           sale_type_id?: number
           shipping_cost?: number | null
           shipping_method_code?: string | null
+          shipping_method_id?: number | null
           state_id?: number | null
           subtotal?: number
           success_viewed?: boolean | null
@@ -1843,6 +2304,13 @@ export type Database = {
             columns: ["sale_type_id"]
             isOneToOne: false
             referencedRelation: "sale_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_shipping_method_id_fkey"
+            columns: ["shipping_method_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_methods"
             referencedColumns: ["id"]
           },
           {
@@ -2061,6 +2529,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "pos_session_orders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "pos_session_orders_pos_session_id_fkey"
             columns: ["pos_session_id"]
             isOneToOne: false
@@ -2204,6 +2679,81 @@ export type Database = {
           web?: boolean
         }
         Relationships: []
+      }
+      price_rules: {
+        Row: {
+          actions: Json
+          code: string | null
+          conditions: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: number
+          is_active: boolean
+          is_stackable: boolean
+          name: string
+          price_list_id: number | null
+          priority: number
+          rule_type: string
+          stop_processing: boolean
+          updated_at: string | null
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          actions?: Json
+          code?: string | null
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: number
+          is_active?: boolean
+          is_stackable?: boolean
+          name: string
+          price_list_id?: number | null
+          priority: number
+          rule_type: string
+          stop_processing?: boolean
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          actions?: Json
+          code?: string | null
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: number
+          is_active?: boolean
+          is_stackable?: boolean
+          name?: string
+          price_list_id?: number | null
+          priority?: number
+          rule_type?: string
+          stop_processing?: boolean
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "price_rules_price_list_id_fkey"
+            columns: ["price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_categories: {
         Row: {
@@ -2560,7 +3110,6 @@ export type Database = {
           promotional_text: string | null
           short_description: string | null
           sizes_image_url: string | null
-          sizes_ref_image_url: string | null
           title: string
           web: boolean | null
           woo_id: string | null
@@ -2577,7 +3126,6 @@ export type Database = {
           promotional_text?: string | null
           short_description?: string | null
           sizes_image_url?: string | null
-          sizes_ref_image_url?: string | null
           title: string
           web?: boolean | null
           woo_id?: string | null
@@ -2594,7 +3142,6 @@ export type Database = {
           promotional_text?: string | null
           short_description?: string | null
           sizes_image_url?: string | null
-          sizes_ref_image_url?: string | null
           title?: string
           web?: boolean | null
           woo_id?: string | null
@@ -2680,7 +3227,10 @@ export type Database = {
           is_active: boolean | null
           is_variable: boolean
           migracodde: string | null
+          other_description_may: string | null
+          other_description_min: string | null
           promotional_bg_color: string | null
+          promotional_img_url: string | null
           promotional_text: string | null
           promotional_text_color: string | null
           short_description: string
@@ -2698,7 +3248,10 @@ export type Database = {
           is_active?: boolean | null
           is_variable: boolean
           migracodde?: string | null
+          other_description_may?: string | null
+          other_description_min?: string | null
           promotional_bg_color?: string | null
+          promotional_img_url?: string | null
           promotional_text?: string | null
           promotional_text_color?: string | null
           short_description?: string
@@ -2716,7 +3269,10 @@ export type Database = {
           is_active?: boolean | null
           is_variable?: boolean
           migracodde?: string | null
+          other_description_may?: string | null
+          other_description_min?: string | null
           promotional_bg_color?: string | null
+          promotional_img_url?: string | null
           promotional_text?: string | null
           promotional_text_color?: string | null
           short_description?: string
@@ -2828,6 +3384,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_customers"
+            referencedColumns: ["account_id"]
           },
           {
             foreignKeyName: "profiles_branch_id_fkey"
@@ -3227,6 +3790,13 @@ export type Database = {
             referencedRelation: "returns"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "return_payments_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_returns"
+            referencedColumns: ["id"]
+          },
         ]
       }
       return_situations: {
@@ -3280,6 +3850,13 @@ export type Database = {
             columns: ["return_id"]
             isOneToOne: false
             referencedRelation: "returns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_situations_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_returns"
             referencedColumns: ["id"]
           },
           {
@@ -3380,10 +3957,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "returns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "returns_return_id_fkey"
             columns: ["return_id"]
             isOneToOne: false
             referencedRelation: "returns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_returns"
             referencedColumns: ["id"]
           },
           {
@@ -3456,6 +4047,13 @@ export type Database = {
             columns: ["return_id"]
             isOneToOne: false
             referencedRelation: "returns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_products_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_returns"
             referencedColumns: ["id"]
           },
           {
@@ -4552,6 +5150,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "suppliers_profile_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "vw_rpt_customers"
+            referencedColumns: ["account_id"]
+          },
+          {
             foreignKeyName: "suppliers_profile_supplier_type_id_fkey"
             columns: ["supplier_type_id"]
             isOneToOne: false
@@ -4696,6 +5301,39 @@ export type Database = {
           },
         ]
       }
+      user_capabilities: {
+        Row: {
+          capability_id: number
+          id: number
+          user_id: string
+        }
+        Insert: {
+          capability_id: number
+          id?: number
+          user_id: string
+        }
+        Update: {
+          capability_id?: number
+          id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_capabilities_capability_id_fkey"
+            columns: ["capability_id"]
+            isOneToOne: false
+            referencedRelation: "capabilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_capabilities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+        ]
+      }
       user_functions: {
         Row: {
           function_id: number
@@ -4730,6 +5368,66 @@ export type Database = {
         ]
       }
       user_migrate: {
+        Row: {
+          account_id: number | null
+          auth_user_id: string | null
+          created_at: string | null
+          dni: string | null
+          first_name: string | null
+          last_name: string | null
+          manual_spent: number | null
+          notes: string | null
+          order_spent: number | null
+          processed_at: string | null
+          reward_points: number | null
+          status: string | null
+          total_pedidos: number | null
+          ultima_compra: string | null
+          user_email: string | null
+          wp_hash: string | null
+          wp_id: number | null
+        }
+        Insert: {
+          account_id?: number | null
+          auth_user_id?: string | null
+          created_at?: string | null
+          dni?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          manual_spent?: number | null
+          notes?: string | null
+          order_spent?: number | null
+          processed_at?: string | null
+          reward_points?: number | null
+          status?: string | null
+          total_pedidos?: number | null
+          ultima_compra?: string | null
+          user_email?: string | null
+          wp_hash?: string | null
+          wp_id?: number | null
+        }
+        Update: {
+          account_id?: number | null
+          auth_user_id?: string | null
+          created_at?: string | null
+          dni?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          manual_spent?: number | null
+          notes?: string | null
+          order_spent?: number | null
+          processed_at?: string | null
+          reward_points?: number | null
+          status?: string | null
+          total_pedidos?: number | null
+          ultima_compra?: string | null
+          user_email?: string | null
+          wp_hash?: string | null
+          wp_id?: number | null
+        }
+        Relationships: []
+      }
+      user_migrate2: {
         Row: {
           account_id: number | null
           auth_user_id: string | null
@@ -4931,6 +5629,7 @@ export type Database = {
       }
       visual_edits: {
         Row: {
+          channel_id: number
           content_json: Json | null
           created_at: string
           created_by: string
@@ -4942,6 +5641,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          channel_id: number
           content_json?: Json | null
           created_at?: string
           created_by?: string
@@ -4953,6 +5653,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          channel_id?: number
           content_json?: Json | null
           created_at?: string
           created_by?: string
@@ -4964,6 +5665,13 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_visual_edits_channel"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "visual_edits_created_by_fkey"
             columns: ["created_by"]
@@ -5137,6 +5845,132 @@ export type Database = {
       }
     }
     Views: {
+      mvw_rpt_customer_aggregates: {
+        Row: {
+          avg_ticket: number | null
+          customer_lastname: string | null
+          customer_name: string | null
+          has_account: boolean | null
+          last_order_date: string | null
+          order_count: number | null
+          total_spent: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+        ]
+      }
+      mvw_rpt_daily_sales: {
+        Row: {
+          avg_ticket: number | null
+          branch_id: number | null
+          branch_name: string | null
+          city_id: number | null
+          country_id: number | null
+          order_count: number | null
+          sale_date: string | null
+          sale_type_id: number | null
+          sale_type_name: string | null
+          state_id: number | null
+          total_discount: number | null
+          total_revenue: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_sale_type_id_fkey"
+            columns: ["sale_type_id"]
+            isOneToOne: false
+            referencedRelation: "sale_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mvw_rpt_product_sales: {
+        Row: {
+          category_id: number | null
+          category_name: string | null
+          order_count: number | null
+          product_id: number | null
+          product_title: string | null
+          product_variation_id: number | null
+          sku: string | null
+          total_quantity: number | null
+          total_revenue: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_order_products_product_variation_id_product_variations_id"
+            columns: ["product_variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_product_categories_category_id_categories_id"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_product_variations_product_id_products_id"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mvw_rpt_return_products: {
+        Row: {
+          product_id: number | null
+          product_title: string | null
+          product_variation_id: number | null
+          reason: string | null
+          return_count: number | null
+          return_type_id: number | null
+          return_type_name: string | null
+          sku: string | null
+          total_quantity_returned: number | null
+          total_refund_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_product_variations_product_id_products_id"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_products_product_variation_id_fkey"
+            columns: ["product_variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_return_type_id_fkey"
+            columns: ["return_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vw_product_stock_virtual: {
         Row: {
           id: number | null
@@ -5186,8 +6020,325 @@ export type Database = {
           },
         ]
       }
+      vw_rpt_customers: {
+        Row: {
+          account_id: number | null
+          amount_spent: number | null
+          created_at: string | null
+          document_number: string | null
+          last_name: string | null
+          loyalty_level: string | null
+          name: string | null
+          orders_quantity: number | null
+          points: number | null
+        }
+        Relationships: []
+      }
+      vw_rpt_order_items: {
+        Row: {
+          id: number | null
+          order_id: number | null
+          product_discount: number | null
+          product_id: number | null
+          product_name: string | null
+          product_price: number | null
+          product_title: string | null
+          product_variation_id: number | null
+          quantity: number | null
+          sku: string | null
+          warehouse_id: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_order_products_order_id_orders_id"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_order_products_order_id_orders_id"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_order_products_product_variation_id_product_variations_id"
+            columns: ["product_variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_product_variations_product_id_products_id"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_products_warehouses_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_rpt_order_payments: {
+        Row: {
+          amount: number | null
+          date: string | null
+          id: number | null
+          order_id: number | null
+          payment_method_code: string | null
+          payment_method_id: number | null
+          payment_method_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_order_payment_order_id_orders_id"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_order_payment_order_id_orders_id"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_order_payment_payment_method_id_payment_methods_id"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_rpt_orders: {
+        Row: {
+          branch_id: number | null
+          branch_name: string | null
+          city_id: number | null
+          city_name: string | null
+          country_id: number | null
+          country_name: string | null
+          created_at: string | null
+          customer_lastname: string | null
+          customer_name: string | null
+          date: string | null
+          discount: number | null
+          document_number: string | null
+          document_type: number | null
+          id: number | null
+          neighborhood_id: number | null
+          neighborhood_name: string | null
+          sale_type_code: string | null
+          sale_type_id: number | null
+          sale_type_name: string | null
+          shipping_cost: number | null
+          situation_code: string | null
+          situation_id: number | null
+          situation_name: string | null
+          state_id: number | null
+          state_name: string | null
+          status_code: string | null
+          status_id: number | null
+          status_name: string | null
+          subtotal: number | null
+          total: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_situations_situation_id_fkey"
+            columns: ["situation_id"]
+            isOneToOne: false
+            referencedRelation: "situations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_situations_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_document_type_fkey"
+            columns: ["document_type"]
+            isOneToOne: false
+            referencedRelation: "document_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_neighborhood_id_city_id_state_id_country_id_fkey"
+            columns: ["neighborhood_id", "city_id", "state_id", "country_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id", "city_id", "state_id", "country_id"]
+          },
+          {
+            foreignKeyName: "orders_sale_type_id_fkey"
+            columns: ["sale_type_id"]
+            isOneToOne: false
+            referencedRelation: "sale_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+        ]
+      }
+      vw_rpt_returns: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: number | null
+          order_id: number | null
+          reason: string | null
+          return_type_id: number | null
+          return_type_name: string | null
+          situation_id: number | null
+          status_id: number | null
+          total_refund_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "returns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "returns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vw_rpt_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_return_type_id_fkey"
+            columns: ["return_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_situation_id_fkey"
+            columns: ["situation_id"]
+            isOneToOne: false
+            referencedRelation: "situations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_rpt_stock: {
+        Row: {
+          id: number | null
+          product_active: boolean | null
+          product_id: number | null
+          product_title: string | null
+          product_variation_id: number | null
+          sku: string | null
+          stock: number | null
+          stock_type_id: number | null
+          warehouse_id: number | null
+          warehouse_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_product_stock_product_variation_id_product_variations_id"
+            columns: ["product_variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_product_stock_warehouse_id_warehouses_id"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_product_variations_product_id_products_id"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_stock_stock_type_id_fkey"
+            columns: ["stock_type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      approve_stock_movement_items: {
+        Args: {
+          p_created_by?: string
+          p_items?: Json
+          p_message?: string
+          p_situation_code: string
+          p_stock_movement_request_id: number
+        }
+        Returns: {
+          created_at: string
+          created_by: string
+          id: number
+          last_row: boolean
+          message: string | null
+          module_id: number
+          notes: string | null
+          situation_id: number
+          status_id: number
+          stock_movement_request_id: number
+          warehouse_id: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "stock_movement_request_situations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      cancel_expired_orders: { Args: never; Returns: undefined }
       comprueba_variacion: {
         Args: { p_term_ids: number[]; p_variation_id: number }
         Returns: boolean
@@ -5218,6 +6369,35 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      create_stock_movements_request: {
+        Args: {
+          p_created_by?: string
+          p_message?: string
+          p_situation_code: string
+          p_stock_movement_request_id: number
+        }
+        Returns: {
+          created_at: string
+          created_by: string
+          id: number
+          last_row: boolean
+          message: string | null
+          module_id: number
+          notes: string | null
+          situation_id: number
+          status_id: number
+          stock_movement_request_id: number
+          warehouse_id: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "stock_movement_request_situations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      fn_category_path: { Args: { p_category_id: number }; Returns: string }
+      fn_refresh_report_mviews: { Args: never; Returns: undefined }
       get_clients_list: {
         Args: {
           p_date_from?: string
@@ -5279,6 +6459,7 @@ export type Database = {
         }
         Returns: Json
       }
+      get_sales_form_data: { Args: never; Returns: Json }
       get_user_functions: { Args: { p_user_id: string }; Returns: Json }
       get_variation_by_terms: {
         Args: { p_product_id: number; terms_id: number[] }
@@ -5314,6 +6495,14 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_chbot_get_catalog:
+        | { Args: { p_busqueda?: string }; Returns: Json }
+        | { Args: { p_busqueda?: string; p_talla?: string }; Returns: Json }
+      sp_chbot_get_order_status: { Args: { p_order_id: number }; Returns: Json }
+      sp_chbot_get_user: {
+        Args: { p_correo?: string; p_dni?: string; p_opcion?: string }
+        Returns: Json
+      }
       sp_cleanup_anonymous_cart: { Args: { p_cart_id: number }; Returns: Json }
       sp_close_pos_session: {
         Args: {
@@ -5337,11 +6526,53 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_create_complaints_book: {
+        Args: {
+          p_address: string
+          p_age: boolean
+          p_amount_claim: number
+          p_apoderado_document_number?: string
+          p_apoderado_document_type_id?: number
+          p_apoderado_email?: string
+          p_apoderado_phone?: string
+          p_city_id: number
+          p_claim_description: string
+          p_claim_type: string
+          p_complaining_request: string
+          p_country_id: number
+          p_detail: string
+          p_document_number: string
+          p_document_type_id: number
+          p_email: string
+          p_good: string
+          p_incident_date: string
+          p_last_name: string
+          p_last_name2: string
+          p_name: string
+          p_name_apoderado?: string
+          p_neighborhood_id: number
+          p_phone: string
+          p_state_id: number
+          p_terms?: boolean
+        }
+        Returns: Json
+      }
+      sp_create_complaints_book_note: {
+        Args: {
+          p_complaints_book_id: number
+          p_image_url?: string
+          p_message: string
+          p_user_id?: string
+        }
+        Returns: Json
+      }
       sp_create_movement: {
         Args: {
           p_amount: number
           p_branch_id: number
+          p_business_account_id?: number
           p_description: string
+          p_files_url?: string[]
           p_movement_class_id: number
           p_movement_date: string
           p_movement_type_id: number
@@ -5356,16 +6587,17 @@ export type Database = {
       }
       sp_create_order: {
         Args: {
-          p_branch_id: number
+          p_branch_id?: number
           p_change_entries: Json
+          p_customer_user_id?: string
           p_discounts: Json
-          p_initial_situation_id: number
-          p_is_existing_client: boolean
+          p_initial_situation_id?: number
+          p_is_existing_client?: boolean
           p_order_data: Json
           p_payments: Json
           p_products: Json
           p_user_id: string
-          p_warehouse_id: number
+          p_warehouse_id?: number
         }
         Returns: Json
       }
@@ -5431,54 +6663,30 @@ export type Database = {
         Args: { p_code: string; p_name: string }
         Returns: Json
       }
-      sp_create_user_profile:
-        | {
-            Args: {
-              p_address?: string
-              p_address_reference?: string
-              p_branch_id?: number
-              p_city_id?: number
-              p_country_id?: number
-              p_document_number?: string
-              p_document_type_id?: number
-              p_last_name?: string
-              p_last_name2?: string
-              p_middle_name?: string
-              p_name: string
-              p_neighborhood_id?: number
-              p_role_ids?: number[]
-              p_show?: boolean
-              p_state_id?: number
-              p_type_ids?: number[]
-              p_uid: string
-              p_warehouse_id?: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_address?: string
-              p_address_reference?: string
-              p_branch_id?: number
-              p_city_id?: number
-              p_country_id?: number
-              p_document_number?: string
-              p_document_type_id?: number
-              p_last_name?: string
-              p_last_name2?: string
-              p_middle_name?: string
-              p_name: string
-              p_neighborhood_id?: number
-              p_role_ids?: number[]
-              p_show?: boolean
-              p_state_id?: number
-              p_type_ids?: number[]
-              p_uid: string
-              p_user_name?: string
-              p_warehouse_id?: number
-            }
-            Returns: Json
-          }
+      sp_create_user_profile: {
+        Args: {
+          p_address?: string
+          p_address_reference?: string
+          p_branch_id?: number
+          p_city_id?: number
+          p_country_id?: number
+          p_document_number?: string
+          p_document_type_id?: number
+          p_last_name?: string
+          p_last_name2?: string
+          p_middle_name?: string
+          p_name: string
+          p_neighborhood_id?: number
+          p_role_ids?: number[]
+          p_show?: boolean
+          p_state_id?: number
+          p_type_ids?: number[]
+          p_uid: string
+          p_user_name?: string
+          p_warehouse_id?: number
+        }
+        Returns: Json
+      }
       sp_delete_business_account: { Args: { p_id: number }; Returns: Json }
       sp_delete_payment_method: { Args: { p_id: number }; Returns: Json }
       sp_delete_price_list: { Args: { p_id: number }; Returns: Json }
@@ -5486,11 +6694,12 @@ export type Database = {
       sp_ec_create_account_profile: {
         Args: {
           p_auth_uid: string
-          p_document_number?: string
-          p_document_type_id?: number
-          p_last_name?: string
-          p_last_name2?: string
-          p_middle_name?: string
+          p_document_number: string
+          p_document_type_id: number
+          p_email: string
+          p_last_name: string
+          p_last_name2: string
+          p_middle_name: string
           p_name: string
         }
         Returns: Json
@@ -5533,7 +6742,10 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_ec_get_customer_orders: { Args: { p_user_id: string }; Returns: Json }
+      sp_ec_get_customer_orders: {
+        Args: { p_price_list_id: number; p_user_id: string }
+        Returns: Json
+      }
       sp_ec_get_order_details: {
         Args: {
           p_branch_id?: number
@@ -5588,6 +6800,7 @@ export type Database = {
           p_search: string
           p_size: number
           p_stock_type_id: number
+          p_term_id: number
           p_warehouse_id: number
         }
         Returns: Json
@@ -5603,9 +6816,13 @@ export type Database = {
       }
       sp_ec_get_similar_products: {
         Args: {
+          p_branch_id: number
           p_category_id: number
           p_channel_id: number
           p_exclude_product_id: number[]
+          p_price_list_id: number
+          p_sale_type_id: number
+          p_stock_type_id: number
           p_warehouse_id: number
         }
         Returns: Json
@@ -5688,6 +6905,11 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_customer_points: {
+        Args: { p_page?: number; p_search?: string; p_size?: number }
+        Returns: Json
+      }
+      sp_get_dashboard: { Args: never; Returns: Json }
       sp_get_document_products: {
         Args: { p_order_id?: number; p_return_id?: number }
         Returns: Json
@@ -5746,6 +6968,7 @@ export type Database = {
           p_order?: string
           p_page?: number
           p_payment_method?: number
+          p_sale_type?: string
           p_search?: string
           p_size?: number
           p_start_date?: string
@@ -5757,6 +6980,7 @@ export type Database = {
         Args: { p_page: number; p_size: number }
         Returns: Json
       }
+      sp_get_order_notes: { Args: { p_order_id: number }; Returns: Json }
       sp_get_payment_method_details: { Args: { p_id: number }; Returns: Json }
       sp_get_payments_methods: {
         Args: { p_page?: number; p_search?: string; p_size?: number }
@@ -5778,6 +7002,11 @@ export type Database = {
           p_size?: number
           p_variation?: number
         }
+        Returns: Json
+      }
+      sp_get_reclamacion_by_id: { Args: { p_id: number }; Returns: Json }
+      sp_get_reclamaciones: {
+        Args: { p_page?: number; p_search?: string; p_size?: number }
         Returns: Json
       }
       sp_get_return_details: { Args: { p_return_id: number }; Returns: Json }
@@ -5824,36 +7053,22 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_get_sales_list:
-        | {
-            Args: {
-              p_end_date?: string
-              p_order?: string
-              p_page?: number
-              p_sale_type?: number
-              p_search?: string
-              p_size?: number
-              p_start_date?: string
-              p_status?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_branch_id?: number
-              p_end_date?: string
-              p_order?: string
-              p_page?: number
-              p_sale_type?: number
-              p_search?: string
-              p_situation_id?: number
-              p_size?: number
-              p_start_date?: string
-              p_status?: string
-              p_warehouse_id?: number
-            }
-            Returns: Json
-          }
+      sp_get_sales_list: {
+        Args: {
+          p_branch_id?: number
+          p_end_date?: string
+          p_order?: string
+          p_page?: number
+          p_sale_type?: number
+          p_search?: string
+          p_situation_id?: number
+          p_size?: number
+          p_start_date?: string
+          p_status?: string
+          p_warehouse_id?: number
+        }
+        Returns: Json
+      }
       sp_get_shipping_methods: {
         Args: {
           p_cities?: number
@@ -5908,7 +7123,12 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_terms_by_category: {
+        Args: { p_category_id?: number }
+        Returns: Json
+      }
       sp_get_user_details_by_uid: { Args: { p_uid: string }; Returns: Json }
+      sp_get_user_views: { Args: never; Returns: Json }
       sp_get_users: {
         Args: {
           p_branches?: number
@@ -5960,6 +7180,224 @@ export type Database = {
             }
             Returns: Json
           }
+      sp_rpt_cashflow_over_time: {
+        Args: {
+          p_branch_id?: number
+          p_business_account?: number
+          p_end_date?: string
+          p_granularity?: string
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_customers_by_loyalty: { Args: never; Returns: Json }
+      sp_rpt_customers_geo_distribution: {
+        Args: {
+          p_country_id?: number
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_customers_kpis: {
+        Args: {
+          p_branch_id?: number
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_customers_purchase_frequency: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: Json
+      }
+      sp_rpt_export_products_by_category: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: Json
+      }
+      sp_rpt_export_products_by_product: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: Json
+      }
+      sp_rpt_financial_accounts_balances: { Args: never; Returns: Json }
+      sp_rpt_financial_by_class: {
+        Args: {
+          p_branch_id?: number
+          p_business_account?: number
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_financial_by_payment_method: {
+        Args: {
+          p_branch_id?: number
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_financial_kpis: {
+        Args: {
+          p_branch_id?: number
+          p_business_account?: number
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_inventory_summary: {
+        Args: { p_low_stock_threshold?: number; p_warehouse_id?: number }
+        Returns: Json
+      }
+      sp_rpt_low_stock_products: {
+        Args: {
+          p_page?: number
+          p_size?: number
+          p_threshold?: number
+          p_warehouse_id?: number
+        }
+        Returns: Json
+      }
+      sp_rpt_product_detail: {
+        Args: {
+          p_end_date?: string
+          p_product_id: number
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_product_search: {
+        Args: { p_limit?: number; p_query?: string }
+        Returns: Json
+      }
+      sp_rpt_products_by_category: {
+        Args: {
+          p_branch_id?: number
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_returns_by_reason: {
+        Args: {
+          p_branch_id?: number
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_returns_kpis: {
+        Args: {
+          p_branch_id?: number
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_returns_over_time: {
+        Args: {
+          p_branch_id?: number
+          p_end_date?: string
+          p_granularity?: string
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_sales_by_dimension: {
+        Args: {
+          p_branch_id?: number
+          p_city_id?: number
+          p_country_id?: number
+          p_dimension?: string
+          p_end_date?: string
+          p_neighborhood_id?: number
+          p_payment_method_id?: number
+          p_sale_type_id?: number
+          p_start_date?: string
+          p_state_id?: number
+        }
+        Returns: Json
+      }
+      sp_rpt_sales_kpis: {
+        Args: {
+          p_branch_id?: number
+          p_city_id?: number
+          p_country_id?: number
+          p_end_date?: string
+          p_neighborhood_id?: number
+          p_payment_method_id?: number
+          p_sale_type_id?: number
+          p_start_date?: string
+          p_state_id?: number
+        }
+        Returns: Json
+      }
+      sp_rpt_sales_over_time: {
+        Args: {
+          p_branch_id?: number
+          p_city_id?: number
+          p_country_id?: number
+          p_end_date?: string
+          p_granularity?: string
+          p_neighborhood_id?: number
+          p_payment_method_id?: number
+          p_sale_type_id?: number
+          p_start_date?: string
+          p_state_id?: number
+        }
+        Returns: Json
+      }
+      sp_rpt_stock_movement_types: {
+        Args: {
+          p_end_date?: string
+          p_start_date?: string
+          p_warehouse_id?: number
+        }
+        Returns: Json
+      }
+      sp_rpt_stock_rotation: {
+        Args: {
+          p_end_date?: string
+          p_limit?: number
+          p_start_date?: string
+          p_warehouse_id?: number
+        }
+        Returns: Json
+      }
+      sp_rpt_top_customers: {
+        Args: {
+          p_branch_id?: number
+          p_end_date?: string
+          p_limit?: number
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_top_products_by_category: {
+        Args: {
+          p_branch_id?: number
+          p_category_id?: number
+          p_end_date?: string
+          p_limit?: number
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_top_products_sales: {
+        Args: {
+          p_branch_id?: number
+          p_end_date?: string
+          p_limit?: number
+          p_metric?: string
+          p_start_date?: string
+        }
+        Returns: Json
+      }
+      sp_rpt_top_returned_products: {
+        Args: { p_end_date?: string; p_limit?: number; p_start_date?: string }
+        Returns: Json
+      }
       sp_search_barcode_movements: {
         Args: { p_page?: number; p_search?: string; p_size?: number }
         Returns: Json

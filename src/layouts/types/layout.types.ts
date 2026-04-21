@@ -16,10 +16,33 @@ export interface UserSession {
     };
     role: string;
     functions: UserFunction[];
+    views: string[];
 }
 
 export interface GetUserFunctionsResponse {
     success: boolean;
     session: UserSession;
     error?: string;
+}
+
+// Types for sp_get_user_views response
+export interface SpUserRole {
+    role_id: number[];
+    role_name: string[];
+    admin: boolean;
+    capability_id: number[] | null;
+    capability_name: string[] | null;
+}
+
+export interface SpUserFunction {
+    id: number;
+    name: string;
+    menu: boolean;
+}
+
+export interface SpGetUserViewsResponse {
+    user_id: string;
+    role: SpUserRole;
+    functions: SpUserFunction[];
+    views: (string | null)[];
 }

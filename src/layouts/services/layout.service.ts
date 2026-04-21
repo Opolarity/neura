@@ -1,25 +1,23 @@
 import { supabase } from "@/integrations/supabase/client";
-import { GetUserFunctionsResponse } from "../types/layout.types";
+import { GetUserFunctionsResponse, SpGetUserViewsResponse, UserFunction } from "../types/layout.types";
 
-/**
- * Fetches the current user's role and allowed functions from the Supabase Edge Function.
- * This function integrates with the 'get-user-functions' edge function which
- * internally calls the 'get_user_role_and_functions' RPC.
- */
 export const getUserFunctionsApi = async (): Promise<GetUserFunctionsResponse> => {
-    const { data, error } = await supabase.functions.invoke("get-user-functions", {
-        method: "GET",
-    });
+    const { data, error } = await supabase.rpc("sp_get_user_views");
 
     if (error) {
-        console.error("Error invoking get-user-functions:", error);
+        console.error("Error invoking sp_get_user_views:", error);
         throw error;
     }
 
-    if (data?.error) {
-        console.error("Edge function error:", data.error);
-        throw new Error(data.error);
-    }
+    const sp = data as unknown as SpGetUserViewsResponse;
 
-    return data as GetUserFunctionsResponse;
+    return {
+        success: true,
+        session: {
+            user: { id: sp.user_id, email: "" },
+            role: sp.role?.role_name?.[0] ?? "",
+            functions: sp.functions as unknown as UserFunction[],
+            views: (sp.views ?? []).filter((v): v is string => v !== null),
+        },
+    };
 };
