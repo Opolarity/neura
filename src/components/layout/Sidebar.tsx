@@ -16,8 +16,7 @@ import {
   ChevronRight,
   LucideIcon,
 } from "lucide-react";
-// import { useFunctions } from "@/hooks/useFunctions";
-import { useFunctionsContext } from "@/modules/auth/context/FunctionsContext";
+import { useFunctions } from "@/hooks/useFunctions";
 import { getParameter } from "@/modules/settings/services/Parameters.service";
 
 interface SidebarProps {
@@ -43,8 +42,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
   const location = useLocation();
-  // const { functions: menuItems, loading, error } = useFunctions();
-  const { functions: menuItems, loading, error } = useFunctionsContext();
+  const { functions: menuItems, loading, error } = useFunctions();
   const [expandedSections, setExpandedSections] = useState<
     Record<number, boolean>
   >({});
