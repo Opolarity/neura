@@ -145,6 +145,8 @@ export const useCreateSale = () => {
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [isExistingClient, setIsExistingClient] = useState<boolean>(false); // true only if found in accounts table
   const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
+  const [isConsignment, setIsConsignment] = useState(false);
+  const [clientHasTenantReference, setClientHasTenantReference] = useState(false);
   const [customerUserId, setCustomerUserId] = useState<string | null>(null);
   const [customerAccountId, setCustomerAccountId] = useState<number | null>(null);
   const [cartGifts, setCartGifts] = useState<GiftItem[]>([]);
@@ -829,7 +831,14 @@ export const useCreateSale = () => {
       setCustomerAccountId(null);
       setAppliedRules([]);
       setCartGifts([]);
+      setClientHasTenantReference(false);
+      setIsConsignment(false);
     }
+  }, []);
+
+  // Handle consignment toggle
+  const handleConsignmentToggle = useCallback((checked: boolean) => {
+    setIsConsignment(checked);
   }, []);
 
   // Handle stock type change - clears selected variation to ensure consistency
@@ -1079,8 +1088,12 @@ export const useCreateSale = () => {
             .maybeSingle();
           setCustomerUserId(profileData?.UID ?? null);
           setCustomerAccountId(client.id);
+          setClientHasTenantReference(data?.tenant_reference != null);
+          if (data?.tenant_reference == null) setIsConsignment(false);
         } else {
           setIsExistingClient(false); // Not in accounts table
+          setClientHasTenantReference(false);
+          setIsConsignment(false);
           // Client not found - check document type code
           const selectedDocType = salesData?.documentTypes.find(
             (dt) => dt.id.toString() === docType,
@@ -1723,6 +1736,8 @@ export const useCreateSale = () => {
     filteredPaymentMethods,
     allPaymentMethods: salesData?.paymentMethods ?? [],
     isAnonymousPurchase,
+    isConsignment,
+    clientHasTenantReference,
     needsBusinessAccountSelect,
     needsChangeBusinessAccountSelect,
     businessAccounts,
@@ -1745,6 +1760,7 @@ export const useCreateSale = () => {
     handleSelectPriceList,
     handleProductPageChange,
     handleAnonymousToggle,
+    handleConsignmentToggle,
     addProduct,
     removeProduct,
     updateProduct,

@@ -123,6 +123,8 @@ const CreateSale = () => {
     filteredPaymentMethods,
     allPaymentMethods,
     isAnonymousPurchase,
+    isConsignment,
+    clientHasTenantReference,
     needsBusinessAccountSelect,
     needsChangeBusinessAccountSelect,
     businessAccounts,
@@ -150,6 +152,7 @@ const CreateSale = () => {
     handleSelectPriceList,
     handleProductPageChange,
     handleAnonymousToggle,
+    handleConsignmentToggle,
     addProduct,
     removeProduct,
     updateProduct,
@@ -401,6 +404,11 @@ const CreateSale = () => {
           <Button variant="outline" onClick={() => navigate("/sales")}>
             Cancelar
           </Button>
+          {isConsignment && (
+            <Button variant="secondary" type="button">
+              Enviar a franquiciado
+            </Button>
+          )}
           <Button
             type="submit"
             form="sale-form"
@@ -1006,6 +1014,23 @@ const CreateSale = () => {
                     Compra anónima
                   </Label>
                 </div>
+                {!isAnonymousPurchase && clientFound === true && clientHasTenantReference && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="consignmentPurchase"
+                      checked={isConsignment}
+                      onCheckedChange={(checked) =>
+                        handleConsignmentToggle(checked as boolean)
+                      }
+                    />
+                    <Label
+                      htmlFor="consignmentPurchase"
+                      className="cursor-pointer font-medium"
+                    >
+                      Compra en consignación
+                    </Label>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
