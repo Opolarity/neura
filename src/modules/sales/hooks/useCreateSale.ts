@@ -724,17 +724,32 @@ export const useCreateSale = () => {
       }
 
       // Fetch tenant_reference from accounts for consignment feature (non-anonymous orders only)
-      if (
-        !isAnonymous &&
-        adapted.formData.documentType &&
-        adapted.formData.documentNumber
-      ) {
-        const { data: accountData } = await supabase
-          .from("accounts")
-          .select("id, tenant_reference")
-          .eq("document_type_id", parseInt(adapted.formData.documentType))
-          .eq("document_number", adapted.formData.documentNumber)
-          .maybeSingle();
+      if (!isAnonymous && adapted.formData.documentNumber) {
+        const docNumber = String(adapted.formData.documentNumber).trim();
+        const docTypeId = parseInt(adapted.formData.documentType || "");
+
+        let accountData: { id: number; tenant_reference: string | null } | null = null;
+
+        // Try with both document_type_id + document_number (more precise)
+        if (!isNaN(docTypeId)) {
+          const { data } = await supabase
+            .from("accounts")
+            .select("id, tenant_reference")
+            .eq("document_type_id", docTypeId)
+            .eq("document_number", docNumber)
+            .maybeSingle();
+          accountData = data;
+        }
+
+        // Fallback: query only by document_number (handles type mismatch or missing doc type)
+        if (!accountData) {
+          const { data } = await supabase
+            .from("accounts")
+            .select("id, tenant_reference")
+            .eq("document_number", docNumber)
+            .maybeSingle();
+          accountData = data;
+        }
 
         if (accountData) {
           setCustomerAccountId(accountData.id);
