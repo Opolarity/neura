@@ -682,6 +682,16 @@ export const useCreateSale = () => {
       const data = await fetchSaleById(id);
       const adapted = adaptSaleById(data);
 
+      // Read fields not included in the edge function response directly from DB
+      const { data: orderMeta } = await supabase
+        .from("orders")
+        .select("consignment")
+        .eq("id", id)
+        .maybeSingle();
+      if (orderMeta?.consignment) {
+        setIsConsignment(true);
+      }
+
       // Set all state at once
       setFormData(adapted.formData);
       setProducts(adapted.products);
