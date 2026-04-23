@@ -115,6 +115,7 @@ export const useCreateSale = () => {
   // User warehouse / branch state
   const [userWarehouseId, setUserWarehouseId] = useState<number | null>(null);
   const [userWarehouseName, setUserWarehouseName] = useState<string>("");
+  const [userWarehouseCode, setUserWarehouseCode] = useState<string>("");
   const [userBranchAddress, setUserBranchAddress] = useState<string>("");
 
   // Form data
@@ -147,6 +148,7 @@ export const useCreateSale = () => {
   const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
   const [isConsignment, setIsConsignment] = useState(false);
   const [clientHasTenantReference, setClientHasTenantReference] = useState(false);
+  const [clientTenantReference, setClientTenantReference] = useState<string | null>(null);
   const [customerUserId, setCustomerUserId] = useState<string | null>(null);
   const [customerAccountId, setCustomerAccountId] = useState<number | null>(null);
   const [cartGifts, setCartGifts] = useState<GiftItem[]>([]);
@@ -633,7 +635,7 @@ export const useCreateSale = () => {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("warehouse_id, branch_id, warehouses(id, name), branches(id, address)")
+        .select("warehouse_id, branch_id, warehouses(id, name, code), branches(id, address)")
         .eq("UID", user.id)
         .single();
 
@@ -648,7 +650,8 @@ export const useCreateSale = () => {
         const warehouse = Array.isArray(profile.warehouses)
           ? profile.warehouses[0]
           : profile.warehouses;
-        setUserWarehouseName(warehouse?.name || "");
+        setUserWarehouseName((warehouse as any)?.name || "");
+        setUserWarehouseCode((warehouse as any)?.code || "");
       }
 
       if (profile?.branch_id) {
@@ -701,11 +704,44 @@ export const useCreateSale = () => {
       // Override warehouse with order's warehouse when editing
       if (adapted.orderWarehouseId) {
         setUserWarehouseId(adapted.orderWarehouseId);
+        // Fetch warehouse code for the consignment API
+        const { data: warehouseData } = await supabase
+          .from("warehouses")
+          .select("code")
+          .eq("id", adapted.orderWarehouseId)
+          .maybeSingle();
+        if (warehouseData) {
+          setUserWarehouseCode((warehouseData as any).code || "");
+        }
       }
 
       // Detect anonymous purchase: document_type = "0" and document_number = " "
-      if (adapted.formData.documentType === "0" && adapted.formData.documentNumber === " ") {
+      const isAnonymous =
+        adapted.formData.documentType === "0" &&
+        adapted.formData.documentNumber === " ";
+      if (isAnonymous) {
         setIsAnonymousPurchase(true);
+      }
+
+      // Fetch tenant_reference from accounts for consignment feature (non-anonymous orders only)
+      if (
+        !isAnonymous &&
+        adapted.formData.documentType &&
+        adapted.formData.documentNumber
+      ) {
+        const { data: accountData } = await supabase
+          .from("accounts")
+          .select("id, tenant_reference")
+          .eq("document_type_id", parseInt(adapted.formData.documentType))
+          .eq("document_number", adapted.formData.documentNumber)
+          .maybeSingle();
+
+        if (accountData) {
+          setCustomerAccountId(accountData.id);
+          setIsExistingClient(true);
+          setClientHasTenantReference(accountData.tenant_reference != null);
+          setClientTenantReference(accountData.tenant_reference ?? null);
+        }
       }
 
       // Snapshot for dirty checking
@@ -832,6 +868,7 @@ export const useCreateSale = () => {
       setAppliedRules([]);
       setCartGifts([]);
       setClientHasTenantReference(false);
+      setClientTenantReference(null);
       setIsConsignment(false);
     }
   }, []);
@@ -840,6 +877,72 @@ export const useCreateSale = () => {
   const handleConsignmentToggle = useCallback((checked: boolean) => {
     setIsConsignment(checked);
   }, []);
+
+  // Send consignment to franchisee via external API
+  const handleSendToFranchisee = useCallback(async () => {
+    if (!clientTenantReference) {
+      toast({
+        title: "Error",
+        description: "No se encontró la referencia del franquiciado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const now = new Date();
+    const monthYear = now.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
+
+    const body = {
+      warehouse_code: userWarehouseCode || `WH-${userWarehouseId}`,
+      description: `Envío consignación ${monthYear}`,
+      reference: `NEURA-VENTA-${orderId ?? "NUEVA"}`,
+      sale_code: orderId ? `VENTA-${orderId}` : `VENTA-${Date.now()}`,
+      products: products.map((p) => ({
+        sku: p.sku,
+        quantity: p.quantity,
+        unit_price: p.price,
+        description: `${p.productName} ${p.variationName}`.trim(),
+      })),
+    };
+
+    try {
+      const response = await fetch(
+        "https://demo.supabase.neura.pe/functions/v1/create-consignment-intake",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": clientTenantReference,
+          },
+          body: JSON.stringify(body),
+        },
+      );
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Error response from franchisee API:", errText);
+        throw new Error(`Error ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: "Consignación enviada",
+          description: "El envío al franquiciado se realizó correctamente",
+        });
+      } else {
+        throw new Error("La respuesta no fue exitosa");
+      }
+    } catch (error) {
+      console.error("Error enviando a franquiciado:", error);
+      toast({
+        title: "Error al enviar",
+        description: "No se pudo enviar la consignación al franquiciado. Intente nuevamente.",
+        variant: "destructive",
+      });
+    }
+  }, [clientTenantReference, userWarehouseCode, userWarehouseId, orderId, products, toast]);
 
   // Handle stock type change - clears selected variation to ensure consistency
   const handleStockTypeChange = useCallback((value: string) => {
@@ -1089,10 +1192,12 @@ export const useCreateSale = () => {
           setCustomerUserId(profileData?.UID ?? null);
           setCustomerAccountId(client.id);
           setClientHasTenantReference(data?.tenant_reference != null);
+          setClientTenantReference(data?.tenant_reference ?? null);
           if (data?.tenant_reference == null) setIsConsignment(false);
         } else {
           setIsExistingClient(false); // Not in accounts table
           setClientHasTenantReference(false);
+          setClientTenantReference(null);
           setIsConsignment(false);
           // Client not found - check document type code
           const selectedDocType = salesData?.documentTypes.find(
@@ -1713,6 +1818,7 @@ export const useCreateSale = () => {
     // User warehouse / branch
     userWarehouseId,
     userWarehouseName,
+    userWarehouseCode,
     userBranchAddress,
     loadingWarehouse,
 
@@ -1738,6 +1844,11 @@ export const useCreateSale = () => {
     isAnonymousPurchase,
     isConsignment,
     clientHasTenantReference,
+    clientTenantReference,
+    // Computed: true when current situation name includes "enviado"
+    isEnviado: !!(salesData?.situations?.find(
+      (s) => s.id.toString() === orderSituation,
+    )?.name?.toLowerCase().includes("enviado")),
     needsBusinessAccountSelect,
     needsChangeBusinessAccountSelect,
     businessAccounts,
@@ -1761,6 +1872,7 @@ export const useCreateSale = () => {
     handleProductPageChange,
     handleAnonymousToggle,
     handleConsignmentToggle,
+    handleSendToFranchisee,
     addProduct,
     removeProduct,
     updateProduct,
