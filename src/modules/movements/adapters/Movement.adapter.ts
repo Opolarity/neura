@@ -110,7 +110,7 @@ export const movementAdapter = (response: MovementApiResponse) => {
   return { movements: formattedMovements, pagination };
 };
 
-export const movementDetailAdapter = (raw: MovementDetailRaw): MovementDetail => ({
+export const movementDetailAdapter = (raw: MovementDetailRaw, isFranchiseMovement: boolean): MovementDetail => ({
   id: raw.id,
   date: formatDateTime(raw.movement_date),
   type: raw.types.name as MovementTypeValue,
@@ -123,6 +123,8 @@ export const movementDetailAdapter = (raw: MovementDetailRaw): MovementDetail =>
   amount: raw.amount,
   formattedAmount: formatCurrency(raw.amount),
   filesUrl: raw.files_url ?? [],
+  franchisee_sended: raw.franchisee_sended ?? null,
+  isFranchiseMovement,
 });
 
 export const calculateMovementSummary = (

@@ -181,6 +181,7 @@ export interface MovementDetailRaw {
   branch_id: number;
   migracode: string | null;
   files_url: string[] | null;
+  franchisee_sended: string | null;
   branches: {
     name: string;
     warehouses: { name: string };
@@ -194,6 +195,7 @@ export interface MovementDetailRaw {
 
 export interface MovementDetailApiResponse {
   movement: MovementDetailRaw;
+  is_franchise_movement: boolean;
 }
 
 export interface MovementDetail {
@@ -209,4 +211,6 @@ export interface MovementDetail {
   amount: number;
   formattedAmount: string;
   filesUrl: string[];
+  franchisee_sended: string | null;
+  isFranchiseMovement: boolean;
 }

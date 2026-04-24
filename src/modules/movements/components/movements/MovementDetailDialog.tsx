@@ -32,7 +32,7 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
     setError(null);
 
     getMovementDetails(movementId)
-      .then((data: MovementDetailApiResponse) => setDetail(movementDetailAdapter(data.movement)))
+      .then((data: MovementDetailApiResponse) => setDetail(movementDetailAdapter(data.movement, data.is_franchise_movement ?? false)))
       .catch((err: Error) => setError(err?.message ?? "Error al cargar el movimiento"))
       .finally(() => setLoading(false));
   }, [movementId]);
@@ -107,6 +107,18 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
                 {detail.formattedAmount}
               </span>
             </div>
+            {detail.isFranchiseMovement && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Enviado a franquiciado</span>
+                {detail.franchisee_sended ? (
+                  <span>{detail.franchisee_sended.split("T")[0].split("-").reverse().join("/")}</span>
+                ) : (
+                  <button className="text-xs px-2 py-1 rounded border border-input hover:bg-accent cursor-pointer">
+                    Enviar
+                  </button>
+                )}
+              </div>
+            )}
             {detail.filesUrl.length > 0 && (
               <div className="pt-2 border-t space-y-2">
                 <span className="text-muted-foreground">Adjuntos</span>
