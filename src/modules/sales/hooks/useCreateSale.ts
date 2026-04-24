@@ -56,6 +56,7 @@ import {
   filterShippingCostsByLocation,
   getTodayDate,
 } from "../utils";
+import { getParameter } from "@/modules/settings/services/Parameters.service";
 
 const INITIAL_FORM_DATA: SaleFormData = {
   documentType: "",
@@ -927,12 +928,6 @@ export const useCreateSale = () => {
     // Generate HMAC token: base64url(payload) + "." + hex(HMAC-SHA256(payload_base64url, secret))
     let apiKey: string;
     try {
-      // Get supplier (client) document type code
-      const supplierDocType = salesData?.documentTypes.find(
-        (dt) => dt.id.toString() === formData.documentType,
-      );
-      if (!supplierDocType?.code) throw new Error("Tipo de documento del cliente no encontrado");
-
       // Get current logged-in user's document info
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
@@ -954,11 +949,14 @@ export const useCreateSale = () => {
         throw new Error("No se encontró el documento del usuario actual");
       }
 
+      const companyDocumentNumber = await getParameter("CompanyDocumentNumber");
+      if (!companyDocumentNumber) throw new Error("No se encontró el parámetro CompanyDocumentNumber");
+
       // Build payload
       const payload = {
         tenant_code: clientTenantReference.trim(),
-        supplier_document_type: supplierDocType.code,
-        supplier_document_number: String(formData.documentNumber).trim(),
+        supplier_document_type: "RUC",
+        supplier_document_number: companyDocumentNumber.trim(),
         user_document_type: userDocTypeCode,
         user_document_number: String((userAccount as any).document_number).trim(),
       };
@@ -1052,7 +1050,7 @@ export const useCreateSale = () => {
         variant: "destructive",
       });
     }
-  }, [clientTenantReference, formData.documentType, formData.documentNumber, salesData, userWarehouseCode, userWarehouseId, orderId, products, toast]);
+  }, [clientTenantReference, userWarehouseCode, userWarehouseId, orderId, products, toast]);
 
   // Handle stock type change - clears selected variation to ensure consistency
   const handleStockTypeChange = useCallback((value: string) => {
