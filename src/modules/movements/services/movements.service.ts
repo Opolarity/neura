@@ -204,6 +204,93 @@ export const getMovementDetails = async (id: number) => {
   return data ?? [];
 };
 
+async function sha256Hex(str: string): Promise<string> {
+  const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+export const sendFranchiseePayment = async (params: {
+  movementId: number;
+  amount: number;
+  description: string;
+  filesUrl: string[];
+  movementDate: string;
+  franchiseAccount: { tenant_reference: string; document_number: string; document_type_code: string };
+  orderIds: number[];
+}): Promise<void> => {
+  const { movementId, amount, description, filesUrl, movementDate, franchiseAccount, orderIds } = params;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("No hay sesión activa");
+
+  const { data: profileData, error: profileError } = await (supabase as any)
+    .from("profiles")
+    .select("accounts:account_id(document_number, document_types:document_type_id(code))")
+    .eq("UID", user.id)
+    .single();
+
+  if (profileError) throw profileError;
+
+  const userAccount = profileData?.accounts;
+  const userDocType = userAccount?.document_types?.code ?? "";
+  const userDocNumber = userAccount?.document_number ?? "";
+
+  const hashPayload = {
+    tenant_code: franchiseAccount.tenant_reference,
+    supplier_document_type: franchiseAccount.document_type_code,
+    supplier_document_number: franchiseAccount.document_number,
+    user_document_type: userDocType,
+    user_document_number: userDocNumber,
+  };
+
+  const secret = import.meta.env.VITE_CONSIGNMENT_API_SECRET ?? "";
+  const signature = await sha256Hex(JSON.stringify(hashPayload) + secret);
+
+  const dateStr = movementDate.split("T")[0];
+  const quotationCode = orderIds.map(String).join(",");
+
+  const body = {
+    quotation_code: quotationCode,
+    branch_code: "BR-01",
+    payments: [
+      {
+        amount,
+        description,
+        payment_method_code: "YAPE",
+        files_url: filesUrl,
+        voucher_url: filesUrl[0] ?? null,
+        date: dateStr,
+      },
+    ],
+  };
+
+  const response = await fetch(
+    "https://demo.supabase.neura.pe/functions/v1/supplier_quotations_payments",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${signature}`,
+      },
+      body: JSON.stringify(body),
+    }
+  );
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Error al enviar: ${response.status} ${errText}`);
+  }
+
+  const { error: updateError } = await (supabase as any)
+    .from("movements")
+    .update({ franchisee_sended: new Date().toISOString() })
+    .eq("id", movementId);
+
+  if (updateError) throw updateError;
+};
+
 export const createOrderPaymentsForMovement = async (
   movementId: number,
   orderIds: number[],

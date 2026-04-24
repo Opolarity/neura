@@ -193,9 +193,17 @@ export interface MovementDetailRaw {
   business_accounts: { name: string };
 }
 
+export interface FranchiseAccountData {
+  tenant_reference: string;
+  document_number: string;
+  document_type_code: string;
+}
+
 export interface MovementDetailApiResponse {
   movement: MovementDetailRaw;
   is_franchise_movement: boolean;
+  franchise_account: FranchiseAccountData | null;
+  order_ids: number[];
 }
 
 export interface MovementDetail {
@@ -213,4 +221,6 @@ export interface MovementDetail {
   filesUrl: string[];
   franchisee_sended: string | null;
   isFranchiseMovement: boolean;
+  franchiseAccount: FranchiseAccountData | null;
+  orderIds: number[];
 }
