@@ -685,10 +685,10 @@ export const useCreateSale = () => {
       // Read fields not included in the edge function response directly from DB
       const { data: orderMeta } = await supabase
         .from("orders")
-        .select("consignment")
+        .select("consignament")
         .eq("id", id)
         .maybeSingle();
-      if (orderMeta?.consignment) {
+      if (orderMeta?.consignament) {
         setIsConsignment(true);
       }
 
