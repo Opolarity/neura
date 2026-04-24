@@ -1870,10 +1870,8 @@ export const useCreateSale = () => {
     isConsignment,
     clientHasTenantReference,
     clientTenantReference,
-    // Computed: true when current situation name includes "enviado"
-    isEnviado: !!(salesData?.situations?.find(
-      (s) => s.id.toString() === orderSituation,
-    )?.name?.toLowerCase().includes("enviado")),
+    // Computed: true when the saved order situation's status code (last_row) is "COM"
+    isEnviado: currentStatusCode === "COM",
     needsBusinessAccountSelect,
     needsChangeBusinessAccountSelect,
     businessAccounts,
