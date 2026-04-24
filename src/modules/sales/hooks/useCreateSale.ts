@@ -927,9 +927,51 @@ export const useCreateSale = () => {
     // Generate HMAC token: base64url(payload) + "." + hex(HMAC-SHA256(payload_base64url, secret))
     let apiKey: string;
     try {
-      // tenant_reference already contains the payload_base64url — just sign it
-      const payloadBase64 = clientTenantReference.trim();
+      // Get supplier (client) document type code
+      const supplierDocType = salesData?.documentTypes.find(
+        (dt) => dt.id.toString() === formData.documentType,
+      );
+      if (!supplierDocType?.code) throw new Error("Tipo de documento del cliente no encontrado");
 
+      // Get current logged-in user's document info
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("accounts(document_number, document_types(code))")
+        .eq("UID", user.id)
+        .maybeSingle();
+
+      const userAccount = Array.isArray(userProfile?.accounts)
+        ? userProfile.accounts[0]
+        : userProfile?.accounts;
+      const userDocTypeCode = Array.isArray((userAccount as any)?.document_types)
+        ? (userAccount as any).document_types[0]?.code
+        : (userAccount as any)?.document_types?.code;
+
+      if (!userDocTypeCode || !(userAccount as any)?.document_number) {
+        throw new Error("No se encontró el documento del usuario actual");
+      }
+
+      // Build payload
+      const payload = {
+        tenant_code: clientTenantReference.trim(),
+        supplier_document_type: supplierDocType.code,
+        supplier_document_number: String(formData.documentNumber).trim(),
+        user_document_type: userDocTypeCode,
+        user_document_number: String((userAccount as any).document_number).trim(),
+      };
+
+      // base64url encode the canonical JSON
+      const payloadStr = JSON.stringify(payload);
+      const payloadBytes = new TextEncoder().encode(payloadStr);
+      const payloadBase64 = btoa(String.fromCharCode(...payloadBytes))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+
+      // Sign with HMAC-SHA256
       const cryptoKey = await crypto.subtle.importKey(
         "raw",
         new TextEncoder().encode(secret),
@@ -951,7 +993,7 @@ export const useCreateSale = () => {
       console.error("Error generando token de consignación:", e);
       toast({
         title: "Error",
-        description: "No se pudo generar el token de autenticación",
+        description: e instanceof Error ? e.message : "No se pudo generar el token de autenticación",
         variant: "destructive",
       });
       return;
@@ -1010,7 +1052,7 @@ export const useCreateSale = () => {
         variant: "destructive",
       });
     }
-  }, [clientTenantReference, userWarehouseCode, userWarehouseId, orderId, products, toast]);
+  }, [clientTenantReference, formData.documentType, formData.documentNumber, salesData, userWarehouseCode, userWarehouseId, orderId, products, toast]);
 
   // Handle stock type change - clears selected variation to ensure consistency
   const handleStockTypeChange = useCallback((value: string) => {
