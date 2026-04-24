@@ -1004,7 +1004,7 @@ export const useCreateSale = () => {
       warehouse_code: userWarehouseCode || `WH-${userWarehouseId}`,
       description: `Envío consignación ${monthYear}`,
       reference: `NEURA-VENTA-${orderId ?? "NUEVA"}`,
-      sale_code: orderId ? `VENTA-${orderId}` : `VENTA-${Date.now()}`,
+      sale_code: orderId ? `${orderId}` : `${Date.now()}`,
       products: products.map((p) => ({
         sku: p.sku,
         quantity: p.quantity,
