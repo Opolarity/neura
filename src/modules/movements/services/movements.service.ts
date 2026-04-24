@@ -203,3 +203,23 @@ export const getMovementDetails = async (id: number) => {
   if (error) throw error;
   return data ?? [];
 };
+
+export const createOrderPaymentsForMovement = async (
+  movementId: number,
+  orderIds: number[],
+  paymentMethodId: number,
+  amount: number,
+  date: string,
+  businessAccountId: number | null,
+) => {
+  const rows = orderIds.map((orderId) => ({
+    order_id: orderId,
+    movement_id: movementId,
+    payment_method_id: paymentMethodId,
+    amount,
+    date,
+    business_acount_id: businessAccountId ?? null,
+  }));
+  const { error } = await supabase.from("order_payment").insert(rows);
+  if (error) throw error;
+};
