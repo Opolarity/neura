@@ -905,10 +905,11 @@ export const useCreateSale = () => {
 
   // Send consignment to franchisee via external API
   const handleSendToFranchisee = useCallback(async () => {
-    if (!clientTenantReference) {
+    const apiKey = import.meta.env.VITE_CONSIGNMENT_API_SECRET as string;
+    if (!apiKey) {
       toast({
         title: "Error",
-        description: "No se encontró la referencia del franquiciado",
+        description: "No se encontró la clave de API para consignación",
         variant: "destructive",
       });
       return;
@@ -937,7 +938,7 @@ export const useCreateSale = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": clientTenantReference,
+            "x-api-key": apiKey,
           },
           body: JSON.stringify(body),
         },
@@ -967,7 +968,7 @@ export const useCreateSale = () => {
         variant: "destructive",
       });
     }
-  }, [clientTenantReference, userWarehouseCode, userWarehouseId, orderId, products, toast]);
+  }, [userWarehouseCode, userWarehouseId, orderId, products, toast]);
 
   // Handle stock type change - clears selected variation to ensure consistency
   const handleStockTypeChange = useCallback((value: string) => {
