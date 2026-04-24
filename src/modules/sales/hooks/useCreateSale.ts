@@ -905,11 +905,61 @@ export const useCreateSale = () => {
 
   // Send consignment to franchisee via external API
   const handleSendToFranchisee = useCallback(async () => {
-    const apiKey = import.meta.env.VITE_CONSIGNMENT_API_SECRET as string;
-    if (!apiKey) {
+    const secret = import.meta.env.VITE_CONSIGNMENT_API_SECRET as string;
+    if (!secret) {
       toast({
         title: "Error",
-        description: "No se encontró la clave de API para consignación",
+        description: "No se encontró el secret de consignación (VITE_CONSIGNMENT_API_SECRET)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!clientTenantReference) {
+      toast({
+        title: "Error",
+        description: "No se encontró el payload del franquiciado (tenant_reference)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Generate HMAC token: base64url(payload) + "." + hex(HMAC-SHA256(payload_base64url, secret))
+    let apiKey: string;
+    try {
+      // Parse and re-stringify to ensure compact canonical JSON (no extra spaces/newlines)
+      const parsedPayload = JSON.parse(clientTenantReference.trim());
+      const payloadStr = JSON.stringify(parsedPayload);
+
+      // base64url encode using TextEncoder to handle all characters safely
+      const payloadBytes = new TextEncoder().encode(payloadStr);
+      const payloadBase64 = btoa(String.fromCharCode(...payloadBytes))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+
+      const cryptoKey = await crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(secret),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"],
+      );
+      const signatureBuffer = await crypto.subtle.sign(
+        "HMAC",
+        cryptoKey,
+        new TextEncoder().encode(payloadBase64),
+      );
+      const signatureHex = Array.from(new Uint8Array(signatureBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      apiKey = `${payloadBase64}.${signatureHex}`;
+    } catch (e) {
+      console.error("Error generando token de consignación:", e);
+      toast({
+        title: "Error",
+        description: "No se pudo generar el token de autenticación",
         variant: "destructive",
       });
       return;
@@ -968,7 +1018,7 @@ export const useCreateSale = () => {
         variant: "destructive",
       });
     }
-  }, [userWarehouseCode, userWarehouseId, orderId, products, toast]);
+  }, [clientTenantReference, userWarehouseCode, userWarehouseId, orderId, products, toast]);
 
   // Handle stock type change - clears selected variation to ensure consistency
   const handleStockTypeChange = useCallback((value: string) => {
