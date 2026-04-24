@@ -927,16 +927,8 @@ export const useCreateSale = () => {
     // Generate HMAC token: base64url(payload) + "." + hex(HMAC-SHA256(payload_base64url, secret))
     let apiKey: string;
     try {
-      // Parse and re-stringify to ensure compact canonical JSON (no extra spaces/newlines)
-      const parsedPayload = JSON.parse(clientTenantReference.trim());
-      const payloadStr = JSON.stringify(parsedPayload);
-
-      // base64url encode using TextEncoder to handle all characters safely
-      const payloadBytes = new TextEncoder().encode(payloadStr);
-      const payloadBase64 = btoa(String.fromCharCode(...payloadBytes))
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
+      // tenant_reference already contains the payload_base64url — just sign it
+      const payloadBase64 = clientTenantReference.trim();
 
       const cryptoKey = await crypto.subtle.importKey(
         "raw",
