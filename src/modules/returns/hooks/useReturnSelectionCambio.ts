@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { getSaleProducts } from "@/modules/inventory/services/Movements.service";
+import { getSaleProducts, getUserWarehouse } from "@/modules/inventory/services/Movements.service";
+import { getUserWarehouseAdapter } from "@/modules/inventory/adapters/Movements.adapter";
 import { getTypes } from "@/shared/services/service";
 import { getTypesAdapter } from "@/shared/adapters/adapter";
 import { Types } from "@/shared/types/type";
@@ -9,6 +10,7 @@ import { useDebounce } from "@/shared/hooks";
 export const useReturnSelectionCambio = () => {
     const initialized = useRef(false);
 
+    const [warehouseId, setWarehouseId] = useState<number | null>(null);
     const [productStatusTypes, setProductStatusTypes] = useState<Types[]>([]);
     const [productStatusType, setProductStatusType] = useState<Types | null>(null);
     const [products, setProducts] = useState<any[]>([]);
@@ -35,14 +37,17 @@ export const useReturnSelectionCambio = () => {
 
     const loadInitialData = async () => {
         try {
-            const typesRes = await getTypes("STK");
+            const [typesRes, userRes] = await Promise.all([getTypes("STK"), getUserWarehouse()]);
             const types = getTypesAdapter(typesRes);
             setProductStatusTypes(types);
+
+            const userAdp = getUserWarehouseAdapter(userRes);
+            setWarehouseId(userAdp.warehouse_id);
 
             const defaultType = types.find((t) => t.code === "PRD") || types[0] || null;
             setProductStatusType(defaultType);
 
-            await loadProducts(1, 10, "", defaultType?.id || null);
+            await loadProducts(1, 10, "", defaultType?.id || null, userAdp.warehouse_id);
             initialized.current = true;
         } catch (error) {
             console.error("Error loading product types:", error);
@@ -54,6 +59,7 @@ export const useReturnSelectionCambio = () => {
         size: number,
         searchTerm: string,
         typeId: number | null,
+        wId?: number | null,
     ) => {
         setLoadingProducts(true);
         try {
@@ -62,6 +68,7 @@ export const useReturnSelectionCambio = () => {
                 p_size: size || 5,
                 p_search: searchTerm || null,
                 p_stock_type_id: typeId,
+                p_warehouse_id: wId ?? warehouseId,
             });
             setProducts(response.data || []);
             setPagination({

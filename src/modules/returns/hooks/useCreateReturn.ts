@@ -373,6 +373,15 @@ export const useCreateReturn = () => {
         return calculateReturnTotal() - calculateExchangeTotal();
     };
 
+    // Positive = customer must pay; negative = we must refund customer
+    const calculateNetDifference = () => {
+        if (returnTypeCode === "CAM") {
+            return calculateExchangeTotal() - (calculateReturnTotal() + (shippingReturn ? shippingCost : 0));
+        }
+        // DVT and others: always a refund
+        return -(calculateReturnTotal() + (shippingReturn ? shippingCost : 0));
+    };
+
     const getSelectedSituation = () => {
         return situations.find((s) => s.id === parseInt(situationId));
     };
@@ -440,6 +449,9 @@ export const useCreateReturn = () => {
                 })
             );
 
+            const netDiff = calculateNetDifference();
+            const paymentSign = netDiff < 0 ? -1 : 1;
+
             const firstPayment = paymentsWithUrls[0] ?? null;
 
             const payload = {
@@ -461,9 +473,9 @@ export const useCreateReturn = () => {
                 return_products: allProducts,
                 payment_method_id: firstPayment ? parseInt(firstPayment.paymentMethodId) : null,
                 business_account_id: firstPayment ? getBusinessAccountId(firstPayment.paymentMethodId) : null,
-                payments: paymentsWithUrls.map((p) => ({
+                payment_methods: paymentsWithUrls.map((p) => ({
                     payment_method_id: parseInt(p.paymentMethodId),
-                    amount: parseFloat(p.amount),
+                    amount: parseFloat(p.amount) * paymentSign,
                     business_account_id: getBusinessAccountId(p.paymentMethodId),
                     voucher_url: p.voucherUrl || null,
                 })),
@@ -547,6 +559,7 @@ export const useCreateReturn = () => {
         calculateReturnTotal,
         calculateExchangeTotal,
         calculateDifference,
+        calculateNetDifference,
         handleSubmit,
     };
 };
