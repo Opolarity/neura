@@ -58,7 +58,11 @@ export const ReturnProductsTable = ({
                                     min="0"
                                     max={product.quantity}
                                     value={returnProduct?.quantity || 0}
-                                    onChange={(e) => onQuantityChange(product, parseInt(e.target.value) || 0)}
+                                    onChange={(e) => {
+                                        const val = parseInt(e.target.value) || 0;
+                                        onQuantityChange(product, Math.min(val, product.quantity));
+                                    }}
+                                    onFocus={(e) => e.target.select()}
                                     className="w-24"
                                     disabled={isDVT}
                                 />
