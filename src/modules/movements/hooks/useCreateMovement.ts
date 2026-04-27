@@ -12,6 +12,7 @@ import {
   movementTypesApi,
   createMovementClassApi,
   uploadMovementAttachment,
+  createOrderPaymentsForMovement,
 } from "../services/movements.service";
 import {
   MovementFormData,
@@ -177,7 +178,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     }
   };
 
-  const onSubmit = async (data: MovementFormData, files: File[] = []) => {
+  const onSubmit = async (data: MovementFormData, files: File[] = [], linkedOrderIds: number[] = []) => {
     if (!user || !movementTypeId) {
       toast({
         title: "Error",
@@ -224,7 +225,30 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
         }
       }
 
-      await createMovementApi(payload);
+      const response = await createMovementApi(payload);
+
+      if (linkedOrderIds.length > 0 && response?.movement?.id) {
+        const businessAccountId = needsManualBusinessAccount && selectedManualBusinessAccountId
+          ? Number(selectedManualBusinessAccountId)
+          : null;
+        try {
+          await createOrderPaymentsForMovement(
+            response.movement.id,
+            linkedOrderIds,
+            Number(data.payment_method_id),
+            Number(data.amount),
+            data.movement_date,
+            businessAccountId,
+          );
+        } catch (linkError: any) {
+          console.error("Error linking orders:", linkError);
+          toast({
+            title: "Advertencia",
+            description: "El ingreso fue creado pero no se pudieron vincular las ventas.",
+            variant: "destructive",
+          });
+        }
+      }
 
       toast({
         title: "Éxito",

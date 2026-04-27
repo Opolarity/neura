@@ -88,6 +88,7 @@ const CreateReturn = () => {
     orderTotal,
     calculateReturnTotal,
     calculateExchangeTotal,
+    calculateNetDifference,
     handleSubmit
   } = useCreateReturn();
 
@@ -101,6 +102,9 @@ const CreateReturn = () => {
 
   const isDVT = returnTypeCode === "DVT";
   const isCAM = returnTypeCode === "CAM";
+  const netDiff = calculateNetDifference();
+  const showPaymentSection = Math.abs(netDiff) > 0;
+  const maxPaymentAmount = Math.abs(netDiff);
 
   const currencyFormatter = (amount: number) => formatCurrency(amount);
 
@@ -241,7 +245,7 @@ const CreateReturn = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            {showPaymentSection && <Card>
               <div className="col-span-2">
                 {/* Pagos registrados */}
                 {payments.filter((p) => p.paymentMethodId).length > 0 && (
@@ -305,8 +309,16 @@ const CreateReturn = () => {
                       type="number"
                       step="0.01"
                       value={currentPayment.amount}
-                      onChange={(e) => setCurrentPayment((prev) => ({ ...prev, amount: e.target.value }))}
+                      onChange={(e) => {
+                        const alreadyPaid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+                        const remaining = maxPaymentAmount - alreadyPaid;
+                        const val = parseFloat(e.target.value);
+                        const clamped = !isNaN(val) && val > remaining ? remaining.toFixed(2) : e.target.value;
+                        setCurrentPayment((prev) => ({ ...prev, amount: clamped }));
+                      }}
+                      max={maxPaymentAmount - payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)}
                       placeholder="Monto"
+                      onFocus={(e) => e.target.select()}
                     />
                   </div>
                   {/* Voucher preview */}
@@ -344,7 +356,7 @@ const CreateReturn = () => {
                   </div>
                 </div>
               </div>
-            </Card>
+            </Card>}
           </div>
 
           <Card>
