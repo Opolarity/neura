@@ -305,8 +305,16 @@ const CreateReturn = () => {
                       type="number"
                       step="0.01"
                       value={currentPayment.amount}
-                      onChange={(e) => setCurrentPayment((prev) => ({ ...prev, amount: e.target.value }))}
+                      onChange={(e) => {
+                        const alreadyPaid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+                        const remaining = calculateReturnTotal() - alreadyPaid;
+                        const val = parseFloat(e.target.value);
+                        const clamped = !isNaN(val) && val > remaining ? remaining.toFixed(2) : e.target.value;
+                        setCurrentPayment((prev) => ({ ...prev, amount: clamped }));
+                      }}
+                      max={calculateReturnTotal() - payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)}
                       placeholder="Monto"
+                      onFocus={(e) => e.target.select()}
                     />
                   </div>
                   {/* Voucher preview */}
