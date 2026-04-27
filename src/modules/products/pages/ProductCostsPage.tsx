@@ -25,6 +25,7 @@ const ProductCosts = () => {
     search,
     isOpenFilterModal,
     filters,
+    categories,
     pagination,
     hasActiveFilters,
     onPageChange,
@@ -185,6 +186,7 @@ const ProductCosts = () => {
       <ProdutCostsFilterModal
         isOpen={isOpenFilterModal}
         filters={filters}
+        categories={categories}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}
       />
