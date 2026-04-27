@@ -6,226 +6,246 @@ import { productCostsAdapter } from "../adapters/ProductCosts.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { categoriesListApi } from "../services/Categories.service";
+import { SimpleCategory } from "../types/Categories.types";
 
 export const useProductCosts = () => {
-    const [products, setProducts] = useState<ProductCost[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [search, setSearch] = useState("");
-    const [pagination, setPagination] = useState<PaginationState>({
-        p_page: 1,
-        p_size: 20,
-        total: 0,
-    });
-    const [isOpenFilterModal, setIsOpenFilterModal] = useState(false);
-    const [filters, setFilters] = useState<ProductCostsFilters>({
-        mincost: null,
-        maxcost: null,
-        order: null,
-        search: null,
-        page: 1,
-        size: 20,
-        cost: null,
-    });
+  const [products, setProducts] = useState<ProductCost[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [pagination, setPagination] = useState<PaginationState>({
+    p_page: 1,
+    p_size: 20,
+    total: 0,
+  });
+  const [categories, setCategories] = useState<SimpleCategory[]>([]);
+  const [isOpenFilterModal, setIsOpenFilterModal] = useState(false);
+  const [filters, setFilters] = useState<ProductCostsFilters>({
+    mincost: null,
+    maxcost: null,
+    order: null,
+    search: null,
+    page: 1,
+    size: 20,
+    cost: null,
+    category: null,
+  });
 
-    // Editing state
-    const [isEditing, setIsEditing] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-    const [hasChanges, setHasChanges] = useState(false);
-    const [editedCosts, setEditedCosts] = useState<Record<number, number | "">>({});
-    const { toast } = useToast();
+  // Editing state
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [editedCosts, setEditedCosts] = useState<Record<number, number | "">>(
+    {},
+  );
+  const { toast } = useToast();
 
-    const loadData = async (filtersObj?: ProductCostsFilters) => {
-        setLoading(true);
-        setError(null);
+  const loadData = async (filtersObj?: ProductCostsFilters) => {
+    setLoading(true);
+    setError(null);
 
-        try {
-            const activeFilters = filtersObj || filters;
-            const dataProductCosts = await productCostsApi(activeFilters);
-            const { products, pagination } = productCostsAdapter(dataProductCosts);
-            console.log(dataProductCosts);
+    try {
+      const activeFilters = filtersObj || filters;
+      const dataProductCosts = await productCostsApi(activeFilters);
+      const { products, pagination } = productCostsAdapter(dataProductCosts);
+      console.log(dataProductCosts);
 
-            setProducts(products);
-            setPagination(pagination);
-        } catch (error) {
-            console.error(error);
-            setError("Ocurrió un error al cargar datos de costos de productos");
-        } finally {
-            setLoading(false);
-        }
+      setProducts(products);
+      setPagination(pagination);
+    } catch (error) {
+      console.error(error);
+      setError("Ocurrió un error al cargar datos de costos de productos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+  const debouncedSearch = useDebounce(search, 500);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await categoriesListApi();
+        setCategories(data);
+      } catch (error) {
+        console.error("Error loading categories:", error);
+      }
     };
+    loadCategories();
+  }, []);
 
-    useEffect(() => {
-        loadData();
-    }, []);
+  useEffect(() => {
+    if (debouncedSearch !== filters.search) {
+      const newFilters = { ...filters, search: debouncedSearch, page: 1 };
+      setFilters(newFilters);
+      loadData(newFilters);
+    }
+  }, [debouncedSearch]);
 
-    const debouncedSearch = useDebounce(search, 500);
+  const onSearchChange = (value: string) => {
+    setSearch(value);
+  };
 
-    useEffect(() => {
-        if (debouncedSearch !== filters.search) {
-            const newFilters = { ...filters, search: debouncedSearch, page: 1 };
-            setFilters(newFilters);
-            loadData(newFilters);
-        }
-    }, [debouncedSearch]);
+  const onPageChange = (page: number) => {
+    const newFilters = { ...filters, page };
+    setFilters(newFilters);
+    loadData(newFilters);
+  };
 
-    const onSearchChange = (value: string) => {
-        setSearch(value);
-    };
+  const onOrderChange = (order: string) => {
+    const newFilters = { ...filters, order };
+    setFilters(newFilters);
+    loadData(newFilters);
+  };
 
-    const onPageChange = (page: number) => {
-        const newFilters = { ...filters, page };
-        setFilters(newFilters);
-        loadData(newFilters);
-    };
+  const handlePageSizeChange = (size: number) => {
+    const newFilters = { ...filters, size, page: 1 };
+    setFilters(newFilters);
+    loadData(newFilters);
+  };
 
-    const onOrderChange = (order: string) => {
-        const newFilters = { ...filters, order };
-        setFilters(newFilters);
-        loadData(newFilters);
-    };
+  const onOpenFilterModal = () => {
+    setIsOpenFilterModal(true);
+  };
 
-    const handlePageSizeChange = (size: number) => {
-        const newFilters = { ...filters, size, page: 1 };
-        setFilters(newFilters);
-        loadData(newFilters);
-    };
+  const onCloseFilterModal = () => {
+    setIsOpenFilterModal(false);
+  };
 
-    const onOpenFilterModal = () => {
-        setIsOpenFilterModal(true);
-    };
+  const onApplyFilter = (newFilters: ProductCostsFilters) => {
+    const updatedFilters = { ...newFilters, page: 1, size: filters.size };
+    setFilters(updatedFilters);
+    loadData(updatedFilters);
+    setIsOpenFilterModal(false);
+  };
 
-    const onCloseFilterModal = () => {
-        setIsOpenFilterModal(false);
-    };
+  // Editing logic
 
-    const onApplyFilter = (newFilters: ProductCostsFilters) => {
-        const updatedFilters = { ...newFilters, page: 1, size: filters.size };
-        setFilters(updatedFilters);
-        loadData(updatedFilters);
-        setIsOpenFilterModal(false);
+  const handleCostChange = (variationId: number, value: string) => {
+    setEditedCosts((prev) => ({
+      ...prev,
+      [variationId]: value === "" ? "" : parseFloat(value),
+    }));
+    setHasChanges(true);
+  };
 
-    };
+  const getCostValue = (
+    variationId: number,
+    originalCost: number | null,
+  ): number | "" => {
+    return editedCosts[variationId] !== undefined
+      ? editedCosts[variationId]
+      : (originalCost ?? "");
+  };
 
-    // Editing logic
+  const handleEdit = () => {
+    setIsEditing(true);
+    setEditedCosts({});
+    setHasChanges(false);
+  };
 
-    const handleCostChange = (variationId: number, value: string) => {
-        setEditedCosts((prev) => ({
-            ...prev,
-            [variationId]: value === "" ? "" : parseFloat(value),
-        }));
-        setHasChanges(true);
-    };
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditedCosts({});
+    setHasChanges(false);
+  };
 
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
 
+      const costUpdates = Object.entries(editedCosts).map(
+        ([variationId, cost]) => ({
+          variation_id: parseInt(variationId),
+          product_cost: cost === "" ? null : cost,
+        }),
+      );
 
-    const getCostValue = (
-        variationId: number,
-        originalCost: number | null
-    ): number | "" => {
-        return editedCosts[variationId] !== undefined
-            ? editedCosts[variationId]
-            : originalCost ?? "";
-    };
+      // Client-side validation for negative costs
+      if (
+        costUpdates.some(
+          (update) => update.product_cost !== null && update.product_cost < 0,
+        )
+      ) {
+        toast({
+          title: "Error",
+          description: "no se permiten costos negativos",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    const handleEdit = () => {
-        setIsEditing(true);
-        setEditedCosts({});
-        setHasChanges(false);
-    };
+      const { error } = await supabase.functions.invoke(
+        "update-product-costs",
+        {
+          body: { costUpdates },
+        },
+      );
 
-    const handleCancel = () => {
-        setIsEditing(false);
-        setEditedCosts({});
-        setHasChanges(false);
-    };
+      if (error) throw error;
 
-    const handleSave = async () => {
-        try {
-            setIsSaving(true);
+      toast({
+        title: "Éxito",
+        description: "Costos actualizados correctamente",
+      });
 
+      setIsEditing(false);
+      setEditedCosts({});
+      setHasChanges(false);
 
-            const costUpdates = Object.entries(editedCosts).map(
-                ([variationId, cost]) => ({
-                    variation_id: parseInt(variationId),
-                    product_cost: cost === "" ? null : cost,
-                })
-            );
+      await loadData();
+    } catch (error: any) {
+      console.error("Error saving costs:", error);
 
-            // Client-side validation for negative costs
-            if (costUpdates.some(update => update.product_cost !== null && update.product_cost < 0)) {
-                toast({
-                    title: "Error",
-                    description: "no se permiten costos negativos",
-                    variant: "destructive",
-                });
-                return;
-            }
+      // Check if error is due to negative cost from server
+      const description = error.message?.includes("negative")
+        ? "no se permiten costos negativos"
+        : "No se pudo actualizar los costos";
 
+      toast({
+        title: "Error",
+        description,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-            const { error } = await supabase.functions.invoke(
-                "update-product-costs",
-                {
-                    body: { costUpdates },
-                }
-            );
+  const hasActiveFilters =
+    filters.mincost !== null ||
+    filters.maxcost !== null ||
+    filters.cost !== null;
 
-            if (error) throw error;
-
-            toast({
-                title: "Éxito",
-                description: "Costos actualizados correctamente",
-            });
-
-            setIsEditing(false);
-            setEditedCosts({});
-            setHasChanges(false);
-
-            await loadData();
-        } catch (error: any) {
-            console.error("Error saving costs:", error);
-
-            // Check if error is due to negative cost from server
-            const description = error.message?.includes("negative")
-                ? "no se permiten costos negativos"
-                : "No se pudo actualizar los costos";
-
-            toast({
-                title: "Error",
-                description,
-                variant: "destructive",
-            });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const hasActiveFilters = filters.mincost !== null || filters.maxcost !== null || filters.cost !== null;
-
-    return {
-        products,
-        pagination,
-        loading,
-        error,
-        search,
-        isOpenFilterModal,
-        filters,
-        isEditing,
-        isSaving,
-        hasChanges,
-        hasActiveFilters,
-        onPageChange,
-        handlePageSizeChange,
-        onSearchChange,
-        onOpenFilterModal,
-        onCloseFilterModal,
-        onApplyFilter,
-        onOrderChange,
-        handleCostChange,
-        getCostValue,
-        handleEdit,
-        handleCancel,
-        handleSave,
-        loadData,
-    };
+  return {
+    products,
+    pagination,
+    loading,
+    error,
+    search,
+    isOpenFilterModal,
+    filters,
+    categories,
+    isEditing,
+    isSaving,
+    hasChanges,
+    hasActiveFilters,
+    onPageChange,
+    handlePageSizeChange,
+    onSearchChange,
+    onOpenFilterModal,
+    onCloseFilterModal,
+    onApplyFilter,
+    onOrderChange,
+    handleCostChange,
+    getCostValue,
+    handleEdit,
+    handleCancel,
+    handleSave,
+    loadData,
+  };
 };
