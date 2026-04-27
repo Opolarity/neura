@@ -124,7 +124,7 @@ const MovementsTable = ({
                   : "text-red-600"
                   }`}
               >
-                {movement.type === "Ingreso" ? "+" : "-"}
+                {movement.type === "Ingreso" ? "+" : ""}
                 {movement.formattedAmount}
               </TableCell>
 
