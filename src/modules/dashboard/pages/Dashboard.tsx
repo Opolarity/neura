@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { getParameter } from "@/modules/settings/services/Parameters.service";
 
 interface DashboardData {
   ventas_del_mes: number;
@@ -35,11 +36,30 @@ interface DashboardData {
 const Dashboard = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [companyName, setCompanyName] = useState("");
+  const [lowStockProducts, setLowStockProducts] = useState<DashboardData["productos_stock_bajo"]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchDashboardData();
+    getParameter("CompanyShortName").then(setCompanyName);
+    fetchLowStock();
   }, []);
+
+  const fetchLowStock = async () => {
+    const { data: result, error } = await supabase.rpc("sp_rpt_low_stock_products", {
+      p_threshold: 4,
+      p_page: 1,
+      p_size: 10,
+    });
+    if (!error && result?.data) {
+      setLowStockProducts(
+        (result.data as any[])
+          .filter((p) => p.stock > 0)
+          .map((p) => ({ name: p.product_title, stock: p.stock, min: 5 })),
+      );
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -129,7 +149,7 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Bienvenido al ERP de PERCEPTION</p>
+        <p className="text-gray-600">Bienvenido al ERP de {companyName}</p>
       </div>
 
       {/* Stats Grid */}
@@ -205,12 +225,12 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {!data?.productos_stock_bajo?.length ? (
+              {!lowStockProducts.length ? (
                 <p className="text-sm text-gray-500 italic">
                   Todos los productos tienen buen stock
                 </p>
               ) : (
-                data.productos_stock_bajo.map((product, index) => (
+                lowStockProducts.map((product, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between py-2"
