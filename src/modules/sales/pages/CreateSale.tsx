@@ -79,6 +79,7 @@ import { useToast } from "@/hooks/use-toast";
 import { VoucherPreviewModal } from "../components/sales/VoucherPreviewModal";
 import { SalesHistoryModal } from "../components/SalesHistoryModal";
 import { SalesInvoicesModal } from "../components/SalesInvoicesModal";
+import { SalesReturnsModal } from "../components/SalesReturnsModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 
@@ -186,9 +187,12 @@ const CreateSale = () => {
     // Applied price rules
     appliedRules,
     isDirty,
+    // Returns
+    orderReturns,
   } = useCreateSale();
 
   const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
+  const [returnsModalOpen, setReturnsModalOpen] = useState(false);
   const [showAddDiscount, setShowAddDiscount] = useState(false);
   const [newDiscountName, setNewDiscountName] = useState("");
   const [newDiscountAmount, setNewDiscountAmount] = useState("");
@@ -403,6 +407,11 @@ const CreateSale = () => {
           </h1>
         </div>
         <div className="flex gap-3">
+          {orderReturns.length > 0 && (
+            <Button variant="outline" onClick={() => setReturnsModalOpen(true)}>
+              Retornos
+            </Button>
+          )}
           <Button variant="outline" onClick={() => navigate("/sales")}>
             Cancelar
           </Button>
@@ -2170,6 +2179,13 @@ const CreateSale = () => {
         orders={orderSituationTable}
         open={historyModalOpen}
         onOpenChange={setHistoryModalOpen}
+      />
+
+      <SalesReturnsModal
+        open={returnsModalOpen}
+        onOpenChange={setReturnsModalOpen}
+        orderId={createdOrderId}
+        returns={orderReturns}
       />
 
       {createdOrderId && (

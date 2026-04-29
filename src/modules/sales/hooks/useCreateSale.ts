@@ -180,6 +180,7 @@ export const useCreateSale = () => {
 
   // Order discounts state
   const [orderDiscounts, setOrderDiscounts] = useState<OrderDiscount[]>([]);
+  const [orderReturns, setOrderReturns] = useState<import("../types/Sales.types").SaleReturn[]>([]);
 
   // History modal state
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -709,6 +710,7 @@ export const useCreateSale = () => {
       setClientFound(true);
       setCreatedOrderId(id);
       setOrderDiscounts(adapted.orderDiscounts || []);
+      setOrderReturns(adapted.returns || []);
 
       // Load notes from DB
       await loadNotesFromDB(id);
@@ -2011,6 +2013,9 @@ export const useCreateSale = () => {
     orderDiscounts,
     addOrderDiscount,
     removeOrderDiscount,
+
+    // Returns
+    orderReturns,
 
     // Applied price rules
     appliedRules,
