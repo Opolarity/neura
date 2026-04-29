@@ -48,7 +48,7 @@ export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, sea
                                 <TableHead>Tipo</TableHead>
                                 <TableHead>Estado</TableHead>
                                 <TableHead>Reembolso</TableHead>
-                                <TableHead>Diferencia</TableHead>
+                                <TableHead>Total de orden</TableHead>
                                 <TableHead>Fecha</TableHead>
                                 <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
