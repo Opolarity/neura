@@ -84,7 +84,7 @@ export const useCreateReturn = () => {
         const source = selectedReturnTypeCode === "CAM" ? orderSourceType : "orders";
         setEdgeSearch("");
         setEdgePagination({ p_page: 1, p_size: 5, total: 0 });
-        fetchEdgeData(source, 1, 5, "");
+        fetchEdgeData(source, selectedReturnTypeCode, 1, 5, "");
     }, [selectedReturnType, showOrderModal]);
 
     const loadInitialData = async () => {
@@ -130,6 +130,7 @@ export const useCreateReturn = () => {
 
     const fetchEdgeData = async (
         source: "orders" | "returns",
+        code: string,
         page: number,
         size: number,
         search: string
@@ -140,6 +141,7 @@ export const useCreateReturn = () => {
                 body: {
                     order: source === "orders",
                     returns: source === "returns",
+                    return_type_code: code,
                     size,
                     page,
                     search: search || null,
@@ -165,23 +167,23 @@ export const useCreateReturn = () => {
         setOrderSourceType(source);
         setSelectedEdgeItem(null);
         setEdgePagination((prev) => ({ ...prev, p_page: 1 }));
-        fetchEdgeData(source, 1, edgePagination.p_size, edgeSearch);
+        fetchEdgeData(source, selectedReturnTypeCode, 1, edgePagination.p_size, edgeSearch);
     };
 
     const handleEdgeSearchChange = (search: string) => {
         setEdgeSearch(search);
         setEdgePagination((prev) => ({ ...prev, p_page: 1 }));
-        fetchEdgeData(effectiveSource, 1, edgePagination.p_size, search);
+        fetchEdgeData(effectiveSource, selectedReturnTypeCode, 1, edgePagination.p_size, search);
     };
 
     const handleEdgePageChange = (page: number) => {
         setEdgePagination((prev) => ({ ...prev, p_page: page }));
-        fetchEdgeData(effectiveSource, page, edgePagination.p_size, edgeSearch);
+        fetchEdgeData(effectiveSource, selectedReturnTypeCode, page, edgePagination.p_size, edgeSearch);
     };
 
     const handleEdgePageSizeChange = (size: number) => {
         setEdgePagination((prev) => ({ ...prev, p_size: size, p_page: 1 }));
-        fetchEdgeData(effectiveSource, 1, size, edgeSearch);
+        fetchEdgeData(effectiveSource, selectedReturnTypeCode, 1, size, edgeSearch);
     };
 
     const handleEdgeItemSelect = (item: any) => {
