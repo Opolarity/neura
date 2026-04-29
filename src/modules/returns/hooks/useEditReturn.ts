@@ -65,12 +65,17 @@ export const useEditReturn = () => {
             const rawOrderProducts = response?.products ?? [];
             const header = response?.header ?? {};
 
+            const returnProductsMap = new Map(
+                (details.return_products || []).map((rp: any) => [rp.product_variation_id, rp.order_quantity])
+            );
             const orderProductsData: OrderProduct[] = rawOrderProducts.map((p: any) => ({
                 id: p.id,
                 product_variation_id: p.product_variation_id,
                 product_name: p.product_name,
                 sku: p.sku ?? '',
-                quantity: p.quantity,
+                quantity: returnProductsMap.has(p.product_variation_id)
+                    ? returnProductsMap.get(p.product_variation_id)
+                    : p.quantity,
                 product_price: p.product_price,
                 product_discount: p.product_discount ?? 0,
                 terms: p.terms ?? [],
@@ -130,7 +135,7 @@ export const useEditReturn = () => {
                         const orderProd = orderProductsData.find(op => op.product_variation_id === rp.product_variation_id);
                         return {
                             product_variation_id: rp.product_variation_id,
-                            quantity: rp.quantity,
+                            quantity: rp.return_quantity,
                             product_name: rp.product_name || '',
                             sku: orderProd?.sku ?? '',
                             variation_name: orderProd?.terms?.map(t => t.term_name).join(' / ') ?? '',
@@ -149,7 +154,7 @@ export const useEditReturn = () => {
                         product_name: rp.product_name || '',
                         variation_name: '',
                         sku: '',
-                        quantity: rp.quantity,
+                        quantity: rp.order_quantity,
                         price: rp.product_amount || 0,
                         discount: 0,
                         linked_return_index: null,
