@@ -6,12 +6,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeftRight, CreditCard, Package } from "lucide-react";
+import { ArrowLeftRight, CreditCard, Eye, Package } from "lucide-react";
 import { SaleReturn } from "../types/Sales.types";
 import { formatCurrency } from "../utils";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 interface SalesCambiosModalProps {
   open: boolean;
@@ -26,6 +28,8 @@ export const SalesCambiosModal = ({
   orderId,
   returns,
 }: SalesCambiosModalProps) => {
+  const navigate = useNavigate();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[640px]">
@@ -61,9 +65,21 @@ export const SalesCambiosModal = ({
                       {ret.situation_name}
                     </Badge>
                   </div>
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {format(new Date(ret.created_at), "dd/MM/yyyy HH:mm")}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(ret.created_at), "dd/MM/yyyy HH:mm")}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      title="Ver retorno"
+                      onClick={() => navigate(`/returns/edit/${ret.id}`)}
+                    >
+                      <Eye className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                  </div>
                 </div>
 
                 {ret.reason && (
