@@ -14,19 +14,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const fetchPermissions = useCallback(async (currentUser: User | null) => {
     if (!currentUser) {
-      setPermissions({ ...defaultPermissions, permissionsLoading: false });
+      setPermissions({ views: [], functionIds: [], functionData: [], role: null, permissionsLoading: false });
       return;
     }
     setPermissions(prev => ({ ...prev, permissionsLoading: true }));
     const { data, error } = await supabase.rpc('sp_get_user_views');
+    console.log('[AuthProvider] sp_get_user_views →', { data, error });
     if (error || !data) {
-      setPermissions({ views: [], functionIds: [], role: null, permissionsLoading: false });
+      console.error('[AuthProvider] SP falló:', error);
+      setPermissions({ views: [], functionIds: [], functionData: [], role: null, permissionsLoading: false });
       return;
     }
     const parsed = data as any;
+    const funcs = parsed.functions ?? [];
+    console.log('[AuthProvider] functions recibidas:', funcs.length, funcs.slice(0, 2));
+    console.log('[AuthProvider] views recibidas:', parsed.views);
     setPermissions({
       views: parsed.views ?? [],
-      functionIds: (parsed.functions ?? []).map((f: any) => f.id),
+      functionIds: funcs.map((f: any) => f.id),
+      functionData: funcs,
       role: {
         roleIds: parsed.role?.role_id ?? [],
         roleNames: parsed.role?.role_name ?? [],
@@ -67,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const signOut = async () => {
-    setPermissions({ ...defaultPermissions, permissionsLoading: false });
+    setPermissions({ views: [], functionIds: [], functionData: [], role: null, permissionsLoading: false });
     await supabase.auth.signOut();
   };
 

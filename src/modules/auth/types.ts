@@ -1,8 +1,10 @@
 import { User, Session } from "@supabase/supabase-js";
+import { UserFunction } from "@/layouts/types/layout.types";
 
 export interface UserPermissions {
   views: string[];
   functionIds: number[];
+  functionData: UserFunction[];
   role: {
     roleIds: number[];
     roleNames: string[];
@@ -16,6 +18,7 @@ export interface UserPermissions {
 export const defaultPermissions: UserPermissions = {
   views: [],
   functionIds: [],
+  functionData: [],
   role: null,
   permissionsLoading: true,
 };
