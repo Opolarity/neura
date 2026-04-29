@@ -80,6 +80,7 @@ import { VoucherPreviewModal } from "../components/sales/VoucherPreviewModal";
 import { SalesHistoryModal } from "../components/SalesHistoryModal";
 import { SalesInvoicesModal } from "../components/SalesInvoicesModal";
 import { SalesReturnsModal } from "../components/SalesReturnsModal";
+import { SalesCambiosModal } from "../components/SalesCambiosModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 
@@ -193,6 +194,10 @@ const CreateSale = () => {
 
   const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
   const [returnsModalOpen, setReturnsModalOpen] = useState(false);
+  const [cambiosModalOpen, setCambiosModalOpen] = useState(false);
+
+  const phyReturns = orderReturns.filter((r) => r.situation_code === "PHY");
+  const cambiosReturns = orderReturns.filter((r) => r.situation_code !== "PHY");
   const [showAddDiscount, setShowAddDiscount] = useState(false);
   const [newDiscountName, setNewDiscountName] = useState("");
   const [newDiscountAmount, setNewDiscountAmount] = useState("");
@@ -407,7 +412,12 @@ const CreateSale = () => {
           </h1>
         </div>
         <div className="flex gap-3">
-          {orderReturns.length > 0 && (
+          {cambiosReturns.length > 0 && (
+            <Button variant="outline" onClick={() => setCambiosModalOpen(true)}>
+              Cambios
+            </Button>
+          )}
+          {phyReturns.length > 0 && (
             <Button variant="outline" onClick={() => setReturnsModalOpen(true)}>
               Retornos
             </Button>
@@ -2231,7 +2241,14 @@ const CreateSale = () => {
         open={returnsModalOpen}
         onOpenChange={setReturnsModalOpen}
         orderId={createdOrderId}
-        returns={orderReturns}
+        returns={phyReturns}
+      />
+
+      <SalesCambiosModal
+        open={cambiosModalOpen}
+        onOpenChange={setCambiosModalOpen}
+        orderId={createdOrderId}
+        returns={cambiosReturns}
       />
 
       {createdOrderId && (
