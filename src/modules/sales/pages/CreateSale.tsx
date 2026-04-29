@@ -1999,6 +1999,52 @@ const CreateSale = () => {
                   </div>
                 </>
               )}
+              {/* Return payments - read only */}
+              {(() => {
+                const returnPayments = orderReturns.flatMap((r) =>
+                  r.payments.map((p) => ({ ...p, returnId: r.id })),
+                );
+                if (returnPayments.length === 0) return null;
+                return (
+                  <>
+                    <Separator />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                        Pagos de Retorno
+                      </Label>
+                      {returnPayments.map((p) => (
+                        <div
+                          key={`return-payment-${p.id}`}
+                          className="flex items-center justify-between p-2 bg-orange-50 dark:bg-orange-900/20 rounded-md"
+                        >
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                            <span className="text-sm">{p.payment_method_name}</span>
+                            <span className="text-sm font-medium">
+                              {formatCurrency(p.amount)}
+                            </span>
+                          </div>
+                          {p.voucher_url && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                setSelectedVoucherPreview(p.voucher_url);
+                                setVoucherModalOpen(true);
+                              }}
+                              title="Ver comprobante"
+                            >
+                              <Paperclip className="w-3 h-3 text-orange-500" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
 
