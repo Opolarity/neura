@@ -232,8 +232,8 @@ export const useCreateReturn = () => {
             }));
 
             setOrderProducts(orderProductsData);
-            setDocumentType(selectedOrder.document_type.toString());
-            setDocumentNumber(selectedOrder.document_number);
+            setDocumentType((header.document_type || selectedOrder.document_type).toString());
+            setDocumentNumber(header.document_number || selectedOrder.document_number);
             setShippingCost(header.shipping_cost || 0);
             setOrderTotal(header.total || orderTotal);
 
