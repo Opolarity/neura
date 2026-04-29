@@ -681,7 +681,7 @@ export type Database = {
           created_at: string
           icon: string | null
           id: number
-          location: string | null
+          location: string[] | null
           name: string
           order: number | null
           parent_function: number | null
@@ -692,7 +692,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: number
-          location?: string | null
+          location?: string[] | null
           name: string
           order?: number | null
           parent_function?: number | null
@@ -703,7 +703,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: number
-          location?: string | null
+          location?: string[] | null
           name?: string
           order?: number | null
           parent_function?: number | null
