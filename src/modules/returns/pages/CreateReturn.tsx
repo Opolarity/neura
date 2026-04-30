@@ -89,6 +89,7 @@ const CreateReturn = () => {
     removeExchangeProduct,
     updateExchangeProduct,
     orderTotal,
+    orderSituationCode,
     calculateReturnTotal,
     calculateExchangeTotal,
     calculateNetDifference,
@@ -107,7 +108,9 @@ const CreateReturn = () => {
   const isDVP = returnTypeCode === "DVP";
   const isCAM = returnTypeCode === "CAM";
   const netDiff = calculateNetDifference();
-  const showPaymentSection = Math.abs(netDiff) > 0;
+  const showPaymentSection = isDVP
+    ? orderSituationCode.includes("PHY") && Math.abs(netDiff) > 0
+    : Math.abs(netDiff) > 0;
   const maxPaymentAmount = Math.abs(netDiff);
 
   const currencyFormatter = (amount: number) => formatCurrency(amount);
