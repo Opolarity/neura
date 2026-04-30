@@ -51,6 +51,13 @@ export const ExchangeProductsTable = ({
                 </TableRow>
             </TableHeader>
             <TableBody>
+                {exchangeProducts.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={isReadOnly ? 7 : 8} className="text-center text-muted-foreground py-6">
+                            Sin productos agregados
+                        </TableCell>
+                    </TableRow>
+                )}
                 {exchangeProducts.map((product, index) => (
                     <TableRow key={index}>
                         <TableCell>{product.product_name}</TableCell>

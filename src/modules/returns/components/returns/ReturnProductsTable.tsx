@@ -57,6 +57,13 @@ export const ReturnProductsTable = ({
                 </TableRow>
             </TableHeader>
             <TableBody>
+                {rows.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={isDVP ? 8 : 7} className="text-center text-muted-foreground py-6">
+                            Sin productos agregados
+                        </TableCell>
+                    </TableRow>
+                )}
                 {rows.map(({ returnProduct, orderProduct }) => {
                     if (!orderProduct) return null;
                     const unitPrice = orderProduct.product_price * (1 - orderProduct.product_discount / 100);
