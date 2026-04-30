@@ -28,6 +28,7 @@ export const useEditReturn = () => {
     const [selectedReturnType, setSelectedReturnType] = useState<string>('');
     const [returnTypeCode, setReturnTypeCode] = useState<string>('');
     const [orderSituationCode, setOrderSituationCode] = useState<string>('');
+    const [orderSituationName, setOrderSituationName] = useState<string>('');
     const [orderProducts, setOrderProducts] = useState<OrderProduct[]>([]);
     const [displayOrderId, setDisplayOrderId] = useState<number>(0);
     const [moduleId, setModuleId] = useState<number>(0);
@@ -117,6 +118,7 @@ export const useEditReturn = () => {
             setSelectedReturnType(details.return_type_id.toString());
             setReturnTypeCode(details.return_type_code || '');
             setOrderSituationCode(orderSituationCodeValue);
+            setOrderSituationName(details.order_situation?.name || '');
             setOrderProducts(orderProductsData || []);
             setDocumentTypes(docTypesData || []);
             setSituations(filteredSituations);
@@ -227,7 +229,7 @@ export const useEditReturn = () => {
         }));
     }, []);
 
-    const addReturnProduct = (orderProduct: OrderProduct) => {
+    const addReturnProduct = (orderProduct: OrderProduct, quantity: number = 1) => {
         const existingProduct = returnProducts.find(
             rp => rp.product_variation_id === orderProduct.product_variation_id
         );
@@ -239,7 +241,7 @@ export const useEditReturn = () => {
 
         const newReturnProduct: ReturnProduct = {
             product_variation_id: orderProduct.product_variation_id,
-            quantity: 1,
+            quantity,
             product_name: orderProduct.product_name ?? orderProduct.variations?.products?.title ?? '',
             sku: orderProduct.sku ?? orderProduct.variations?.sku ?? '',
             variation_name: orderProduct.terms?.map(t => t.term_name).join(' / ') ?? '',
@@ -459,6 +461,7 @@ export const useEditReturn = () => {
         selectedReturnType,
         returnTypeCode,
         orderSituationCode,
+        orderSituationName,
         orderProducts,
         reason,
         setReason,

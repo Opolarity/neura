@@ -34,6 +34,8 @@ import { useEditReturn } from "../hooks/useEditReturn";
 import { formatCurrency } from "@/shared/utils/currency";
 import { ReturnSelectionCambio } from "../components/returns/ReturnSelectionCambio";
 import { ReturnSummary } from "../components/returns/ReturnSummary";
+import { DVPProductsTable } from "../components/returns/DVPProductsTable";
+import { OrderProductsInfoTable } from "../components/returns/OrderProductsInfoTable";
 import { VoucherPreviewModal } from "@/modules/sales/components/sales/VoucherPreviewModal";
 
 const EditReturn = () => {
@@ -47,6 +49,7 @@ const EditReturn = () => {
     selectedReturnType,
     returnTypeCode,
     orderSituationCode,
+    orderSituationName,
     orderProducts,
     reason,
     setReason,
@@ -126,11 +129,17 @@ const EditReturn = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {displayOrderId > 0 && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>ID Orden:</span>
-                  <span className="font-medium text-foreground">
-                    #{displayOrderId}
-                  </span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-muted-foreground">ID Orden</Label>
+                    <span className="text-sm font-medium">#{displayOrderId}</span>
+                  </div>
+                  {orderSituationName && (
+                    <div className="flex flex-col gap-1">
+                      <Label className="text-muted-foreground">Estado de orden al momento de retorno</Label>
+                      <span className="text-sm font-medium">{orderSituationName}</span>
+                    </div>
+                  )}
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4">
@@ -412,101 +421,28 @@ const EditReturn = () => {
           returnTypeCode === "DVP" ||
           returnTypeCode === "CAM") && (
           <Card>
-            <CardHeader>
-              <CardTitle>Productos a Devolver</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6 space-y-6">
               <div className="space-y-4">
-                {/* DVT: read-only, all products included */}
-                {returnTypeCode === "DVT" && (
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Producto</TableHead>
-                          <TableHead>Variación</TableHead>
-                          <TableHead>SKU</TableHead>
-                          <TableHead>Cantidad</TableHead>
-                          <TableHead>Precio Unitario</TableHead>
-                          <TableHead>Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {returnProducts.map((product, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{product.product_name}</TableCell>
-                            <TableCell className="text-muted-foreground text-sm">
-                              {product.variation_name ?? ""}
-                            </TableCell>
-                            <TableCell>{product.sku}</TableCell>
-                            <TableCell>{product.quantity}</TableCell>
-                            <TableCell>
-                              {formatCurrency(product.price)}
-                            </TableCell>
-                            <TableCell>
-                              {formatCurrency(product.price * product.quantity)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-
-                {/* DVP / CAM: interactive picker */}
                 {(returnTypeCode === "DVT" ||
                   returnTypeCode === "DVP" ||
                   returnTypeCode === "CAM") && (
                   <>
                     <div>
                       <Label>Productos de la Orden</Label>
-                      <div className="border rounded-lg mt-2">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Producto</TableHead>
-                              <TableHead>Variación</TableHead>
-                              <TableHead>SKU</TableHead>
-                              <TableHead>Cantidad</TableHead>
-                              <TableHead>Precio</TableHead>
-                              <TableHead className="text-right">
-                                Acción
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {orderProducts.map((product) => (
-                              <TableRow key={product.id}>
-                                <TableCell>
-                                  {product.product_name ??
-                                    product.variations?.products?.title ??
-                                    ""}
-                                </TableCell>
-                                <TableCell className="text-muted-foreground text-sm">
-                                  {product.terms
-                                    ?.map((t) => t.term_name)
-                                    .join(" / ") ?? ""}
-                                </TableCell>
-                                <TableCell>
-                                  {product.sku ?? product.variations?.sku ?? ""}
-                                </TableCell>
-                                <TableCell>{product.quantity}</TableCell>
-                                <TableCell>
-                                  {formatCurrency(product.product_price)}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => addReturnProduct(product)}
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                      <div className="mt-2">
+                        {returnTypeCode === "DVT" ? (
+                          <OrderProductsInfoTable
+                            orderProducts={orderProducts}
+                            formatCurrency={formatCurrency}
+                          />
+                        ) : (
+                          <DVPProductsTable
+                            orderProducts={orderProducts}
+                            returnProducts={returnProducts}
+                            onAddProduct={addReturnProduct}
+                            formatCurrency={formatCurrency}
+                          />
+                        )}
                       </div>
                     </div>
 

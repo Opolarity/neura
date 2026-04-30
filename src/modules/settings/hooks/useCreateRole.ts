@@ -8,6 +8,7 @@ const useCreateRole = () => {
     name: "",
     admin: false,
     functions: [],
+    capabilities: [],
   });
   const [createLoading, setCreateLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);

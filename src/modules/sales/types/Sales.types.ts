@@ -109,6 +109,7 @@ export interface SaleReturn {
   return_type_code: string;
   return_type_name: string;
   order_situation_id: number | null;
+  order_situation_code: string | null;
   total_refund_amount: number;
   customer_document_number: string;
   customer_document_type_id: number;

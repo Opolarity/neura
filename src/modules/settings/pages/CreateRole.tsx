@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Save, ChevronRight, ChevronDown } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,17 +12,26 @@ import { useToast } from "@/hooks/use-toast";
 import useCreateRole from "../hooks/useCreateRole";
 import { RolePayload } from '../types/Roles.types';
 
-interface Function {
+interface SystemFunction {
   id: number;
   name: string;
   code: string | null;
   icon: string | null;
-  location?: string | null;
+  location?: string[] | null;
   parent_function: number | null;
   order?: number | null;
   active?: boolean;
   created_at?: string;
-  children?: Function[];
+  children?: SystemFunction[];
+  capabilities?: Capability[];
+}
+
+interface Capability {
+  id: number;
+  name: string;
+  code: string | null;
+  function_id: number | null;
+  created_at: string;
 }
 
 const CreateRole = () => {
@@ -36,10 +46,12 @@ const CreateRole = () => {
     id: null,
     name: '',
     admin: false,
-    functions: []
+    functions: [],
+    capabilities: [],
   });
 
-  const [functions, setFunctions] = useState<Function[]>([]);
+  const [functions, setFunctions] = useState<SystemFunction[]>([]);
+  const [topLevelCapabilities, setTopLevelCapabilities] = useState<Capability[]>([]);
   const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
 
@@ -54,21 +66,33 @@ const CreateRole = () => {
 
   const fetchFunctions = async () => {
     try {
-      const { data, error } = await supabase
-        .from("functions")
-        .select("*")
-        .order("parent_function", { ascending: true });
+      const [{ data: funcData, error: funcError }, { data: capData, error: capError }] =
+        await Promise.all([
+          supabase.from("functions").select("*").order("parent_function", { ascending: true }),
+          supabase.from("capabilities").select("*").order("name", { ascending: true }),
+        ]);
 
-      if (error) throw error;
+      if (funcError) throw funcError;
+      if (capError) throw capError;
 
-      // Build function tree
-      console.log("fetchFunctions", data);
+      const allCapabilities: Capability[] = capData || [];
+      const capsByFunctionId = new Map<number, Capability[]>();
+      const topLevel: Capability[] = [];
 
-      const functionTree = buildFunctionTree(data || []);
-      console.log("functionTree", functionTree);
-      setFunctions(functionTree);
+      allCapabilities.forEach((cap) => {
+        if (cap.function_id === null) {
+          topLevel.push(cap);
+        } else {
+          const existing = capsByFunctionId.get(cap.function_id) || [];
+          existing.push(cap);
+          capsByFunctionId.set(cap.function_id, existing);
+        }
+      });
+
+      setFunctions(buildFunctionTree(funcData || [], capsByFunctionId));
+      setTopLevelCapabilities(topLevel);
     } catch (error) {
-      console.error("Error fetching functions:", error);
+      console.error("Error fetching functions/capabilities:", error);
       toast({
         title: "Error",
         description: "No se pudieron cargar las funciones",
@@ -79,25 +103,25 @@ const CreateRole = () => {
 
   const fetchRole = async (id: number) => {
     try {
-      const { data: roleData, error: roleError } = await supabase
-        .from("roles")
-        .select("*")
-        .eq("id", id)
-        .single();
+      const [
+        { data: roleData, error: roleError },
+        { data: roleFunctions, error: functionsError },
+        { data: roleCapabilities, error: capabilitiesError },
+      ] = await Promise.all([
+        supabase.from("roles").select("*").eq("id", id).single(),
+        supabase.from("role_functions").select("function_id").eq("role_id", id),
+        supabase.from("role_capabilities").select("capability_id").eq("role_id", id),
+      ]);
 
       if (roleError) throw roleError;
-
-      const { data: roleFunctions, error: functionsError } = await supabase
-        .from("role_functions")
-        .select("function_id")
-        .eq("role_id", id);
-
       if (functionsError) throw functionsError;
+      if (capabilitiesError) throw capabilitiesError;
 
       setFormData({
         name: roleData.name,
         admin: roleData.admin,
-        functions: roleFunctions.map(rf => rf.function_id)
+        functions: roleFunctions.map((rf) => rf.function_id),
+        capabilities: roleCapabilities.map((rc) => rc.capability_id),
       });
     } catch (error) {
       console.error("Error fetching role:", error);
@@ -111,21 +135,23 @@ const CreateRole = () => {
     }
   };
 
-  const buildFunctionTree = (functions: Function[]): Function[] => {
-    const functionMap = new Map<number, Function>();
-    const roots: Function[] = [];
+  const buildFunctionTree = (
+    funcs: SystemFunction[],
+    capsByFunctionId: Map<number, Capability[]>
+  ): SystemFunction[] => {
+    const functionMap = new Map<number, SystemFunction>();
+    const roots: SystemFunction[] = [];
 
-    // First pass: create map of all functions
-    functions.forEach((func) => {
+    funcs.forEach((func) => {
       functionMap.set(func.id, {
         ...func,
         location: func.location || null,
         children: [],
+        capabilities: capsByFunctionId.get(func.id) || [],
       });
     });
 
-    // Second pass: build tree structure
-    functions.forEach((func) => {
+    funcs.forEach((func) => {
       const funcWithChildren = functionMap.get(func.id);
       if (!funcWithChildren) return;
 
@@ -152,8 +178,17 @@ const CreateRole = () => {
     setExpandedNodes(newExpanded);
   };
 
-  const getAllFunctionIds = (funcs: Function[]): number[] => {
+  const getAllFunctionIds = (funcs: SystemFunction[]): number[] => {
     return funcs.flatMap((f) => [f.id, ...getAllFunctionIds(f.children || [])]);
+  };
+
+  const getAllCapabilityIds = (topLevel: Capability[], funcs: SystemFunction[]): number[] => {
+    const fromTopLevel = topLevel.map((c) => c.id);
+    const fromFunctions = funcs.flatMap((f) => [
+      ...(f.capabilities || []).map((c) => c.id),
+      ...getAllCapabilityIds([], f.children || []),
+    ]);
+    return [...fromTopLevel, ...fromFunctions];
   };
 
   const toggleFunction = (functionId: number) => {
@@ -165,15 +200,50 @@ const CreateRole = () => {
     }
     setFormData({
       ...formData,
-      functions: Array.from(newSelected)
+      functions: Array.from(newSelected),
     });
   };
 
-  const renderFunctionTree = (functions: Function[], level = 0) => {
-    return functions.map((func) => (
+  const toggleCapability = (capabilityId: number) => {
+    const newSelected = new Set(formData.capabilities);
+    if (newSelected.has(capabilityId)) {
+      newSelected.delete(capabilityId);
+    } else {
+      newSelected.add(capabilityId);
+    }
+    setFormData({
+      ...formData,
+      capabilities: Array.from(newSelected),
+    });
+  };
+
+  const renderCapabilityItem = (cap: Capability) => (
+    <div key={`cap-${cap.id}`} className="flex items-center gap-2 py-1 ml-6">
+      <div className="w-6" />
+      <Checkbox
+        id={`capability-${cap.id}`}
+        checked={formData.capabilities.includes(cap.id)}
+        onCheckedChange={() => toggleCapability(cap.id)}
+        disabled={formData.admin}
+      />
+      <Label
+        htmlFor={`capability-${cap.id}`}
+        className="text-sm cursor-pointer flex items-center gap-2"
+      >
+        {cap.name}
+        <Badge variant="secondary" className="text-xs px-1.5 py-0 h-4">
+          capability
+        </Badge>
+      </Label>
+    </div>
+  );
+
+  const renderFunctionTree = (funcs: SystemFunction[], level = 0) => {
+    return funcs.map((func) => (
       <div key={func.id} className={`ml-${level * 4}`}>
         <div className="flex items-center gap-2 py-1">
-          {func.children && func.children.length > 0 && (
+          {(func.children && func.children.length > 0) ||
+          (func.capabilities && func.capabilities.length > 0) ? (
             <Button
               type="button"
               variant="ghost"
@@ -187,8 +257,7 @@ const CreateRole = () => {
                 <ChevronRight className="w-3 h-3" />
               )}
             </Button>
-          )}
-          {(!func.children || func.children.length === 0) && (
+          ) : (
             <div className="w-6" />
           )}
           <Checkbox
@@ -204,13 +273,12 @@ const CreateRole = () => {
             {func.name}
           </Label>
         </div>
-        {func.children &&
-          func.children.length > 0 &&
-          expandedNodes.has(func.id) && (
-            <div className="ml-4">
-              {renderFunctionTree(func.children, level + 1)}
-            </div>
-          )}
+        {expandedNodes.has(func.id) && (
+          <div className="ml-4">
+            {func.capabilities && func.capabilities.map((cap) => renderCapabilityItem(cap))}
+            {func.children && renderFunctionTree(func.children, level + 1)}
+          </div>
+        )}
       </div>
     ));
   };
@@ -229,7 +297,6 @@ const CreateRole = () => {
 
     try {
       if (isEdit && roleId) {
-        // Update role
         await updateRole({ ...formData, id: parseInt(roleId) });
 
         toast({
@@ -237,11 +304,7 @@ const CreateRole = () => {
           description: "Rol actualizado correctamente",
         });
       } else {
-        // Create new role
-        // Insert role functions
-        if (formData.functions.length > 0) {
-          await createRole(formData);
-        }
+        await createRole(formData);
 
         toast({
           title: "Éxito",
@@ -316,6 +379,7 @@ const CreateRole = () => {
                         ...formData,
                         admin: isAdmin,
                         functions: isAdmin ? getAllFunctionIds(functions) : [],
+                        capabilities: isAdmin ? getAllCapabilityIds(topLevelCapabilities, functions) : [],
                       });
                     }}
                   />
@@ -329,14 +393,23 @@ const CreateRole = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Funciones Asignadas</CardTitle>
+                <CardTitle>Funciones y Capabilities Asignadas</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {topLevelCapabilities.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1">
+                        Capabilities generales
+                      </p>
+                      {topLevelCapabilities.map((cap) => renderCapabilityItem(cap))}
+                      <div className="border-b my-2" />
+                    </div>
+                  )}
                   {renderFunctionTree(functions)}
                 </div>
                 <p className="text-sm text-muted-foreground mt-4">
-                  Selecciona las funciones que tendrá este rol
+                  Selecciona las funciones y capabilities que tendrá este rol
                 </p>
               </CardContent>
             </Card>
@@ -352,6 +425,10 @@ const CreateRole = () => {
                 <div>
                   <p className="text-sm font-medium">Funciones seleccionadas:</p>
                   <p className="text-2xl font-bold text-primary">{formData.functions.length}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Capabilities seleccionados:</p>
+                  <p className="text-2xl font-bold text-primary">{formData.capabilities.length}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Tipo de rol:</p>

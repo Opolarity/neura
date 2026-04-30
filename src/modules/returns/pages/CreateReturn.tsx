@@ -437,8 +437,10 @@ const CreateReturn = () => {
               <CardContent className="pt-6 space-y-6">
                 <div>
                   <p className="text-base font-semibold mb-3">Productos de la Orden</p>
-                  <OrderProductsInfoTable
+                  <DVPProductsTable
                     orderProducts={orderProducts}
+                    returnProducts={returnProducts}
+                    onAddProduct={toggleReturnProduct}
                     formatCurrency={currencyFormatter}
                   />
                 </div>
@@ -450,6 +452,8 @@ const CreateReturn = () => {
                     returnProducts={returnProducts}
                     onQuantityChange={toggleReturnProduct}
                     isDVT={false}
+                    isDVP
+                    onRemoveProduct={removeReturnProduct}
                     formatCurrency={currencyFormatter}
                   />
                   {returnProducts.length > 0 && (

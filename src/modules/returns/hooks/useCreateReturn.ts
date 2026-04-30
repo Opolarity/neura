@@ -152,7 +152,7 @@ export const useCreateReturn = () => {
             if (error) throw error;
 
             const items = Array.isArray(data) ? data : (data?.data || []);
-            const total = data?.total_rows ?? data?.total ?? items.length;
+            const total = data?.page?.total ?? data?.total_rows ?? data?.total ?? items.length;
 
             setEdgeItems(items);
             setEdgePagination({ p_page: page, p_size: size, total });
