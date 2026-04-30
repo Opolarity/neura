@@ -51,7 +51,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      fetchPermissions(session?.user ?? null);
+      // TOKEN_REFRESHED se dispara al volver a la pestaña — no requiere recargar permisos
+      if (event !== 'TOKEN_REFRESHED') {
+        fetchPermissions(session?.user ?? null);
+      }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
