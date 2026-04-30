@@ -29,6 +29,9 @@ interface MovementClassesTableProps {
   onDeactivate: (id: number) => void;
 }
 
+const isEditable = (item: MovementClass) =>
+  !item.code || item.code.trim() === "";
+
 const MovementClassesTable = ({
   loading,
   classes,
@@ -67,25 +70,29 @@ const MovementClassesTable = ({
             <TableRow key={item.id}>
               <TableCell className="font-mono text-muted-foreground">{item.id}</TableCell>
               <TableCell className="font-medium">{item.name}</TableCell>
-              <TableCell className="font-mono text-muted-foreground">{item.code ?? "—"}</TableCell>
+              <TableCell className="font-mono text-muted-foreground">{item.code || "—"}</TableCell>
               <TableCell className="text-center">
-                <div className="flex items-center justify-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => {
-                      onEditItem(item);
-                      onOpenChange(true);
-                    }}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                {isEditable(item) ? (
+                  <div className="flex items-center justify-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        onEditItem(item);
+                        onOpenChange(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
 
-                  {!item.code && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
@@ -107,8 +114,10 @@ const MovementClassesTable = ({
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground text-xs">—</span>
+                )}
               </TableCell>
             </TableRow>
           ))
