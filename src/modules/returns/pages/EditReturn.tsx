@@ -26,6 +26,7 @@ const EditReturn = () => {
     returnTypes,
     selectedReturnType,
     returnTypeCode,
+    orderSituationCode,
     orderProducts,
     reason,
     setReason,
@@ -199,7 +200,7 @@ const EditReturn = () => {
           </Card>
 
           {/* ── Métodos de Pago ───────────────────────────────────────── */}
-          <Card>
+          {!orderSituationCode.includes('VIR') && <Card>
             <CardHeader>
               <CardTitle>Métodos de Pago</CardTitle>
             </CardHeader>
@@ -304,7 +305,7 @@ const EditReturn = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card>}
         </div>
 
         {/* ── Productos a Devolver ─────────────────────────────────────── */}

@@ -27,6 +27,7 @@ export const useEditReturn = () => {
     const [returnTypes, setReturnTypes] = useState<any[]>([]);
     const [selectedReturnType, setSelectedReturnType] = useState<string>('');
     const [returnTypeCode, setReturnTypeCode] = useState<string>('');
+    const [orderSituationCode, setOrderSituationCode] = useState<string>('');
     const [orderProducts, setOrderProducts] = useState<OrderProduct[]>([]);
     const [displayOrderId, setDisplayOrderId] = useState<number>(0);
     const [moduleId, setModuleId] = useState<number>(0);
@@ -109,6 +110,7 @@ export const useEditReturn = () => {
             setSituationId(details.situation_id.toString());
             setSelectedReturnType(details.return_type_id.toString());
             setReturnTypeCode(details.return_type_code || '');
+            setOrderSituationCode(details.order_situation?.code || '');
             setOrderProducts(orderProductsData || []);
             setDocumentTypes(docTypesData || []);
             setSituations(situationsData || []);
@@ -446,6 +448,7 @@ export const useEditReturn = () => {
         returnTypes,
         selectedReturnType,
         returnTypeCode,
+        orderSituationCode,
         orderProducts,
         reason,
         setReason,
