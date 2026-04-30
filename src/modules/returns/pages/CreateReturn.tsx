@@ -212,11 +212,12 @@ const CreateReturn = () => {
                 </div>
 
                 <div>
-                  <Label>Razón de la Devolución/Cambio</Label>
+                  <Label>Razón de la Devolución/Cambio *</Label>
                   <Textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     rows={3}
+                    required
                   />
                 </div>
 

@@ -397,6 +397,11 @@ export const useCreateReturn = () => {
             return;
         }
 
+        if (!reason.trim()) {
+            toast.error("El motivo de la devolución/cambio es obligatorio");
+            return;
+        }
+
         const validPayments = payments.filter((p) => p.paymentMethodId && p.amount);
         //if (validPayments.length === 0) {
         //    toast.error("Agregue al menos un método de pago");
