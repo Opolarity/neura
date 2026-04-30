@@ -196,8 +196,8 @@ const CreateSale = () => {
   const [returnsModalOpen, setReturnsModalOpen] = useState(false);
   const [cambiosModalOpen, setCambiosModalOpen] = useState(false);
 
-  const phyReturns = orderReturns.filter((r) => r.situation_code === "PHY");
-  const cambiosReturns = orderReturns.filter((r) => r.situation_code !== "PHY");
+  const phyReturns = orderReturns.filter((r) => r.order_situation_code?.includes("PHY"));
+  const cambiosReturns = orderReturns.filter((r) => r.order_situation_code?.includes("VIR"));
   const [showAddDiscount, setShowAddDiscount] = useState(false);
   const [newDiscountName, setNewDiscountName] = useState("");
   const [newDiscountAmount, setNewDiscountAmount] = useState("");
