@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { MovementClass, MovementClassFilters, MovementClassPayload } from "../types/MovementClasses.types";
 import {
   createMovementClassApi,
+  deactivateMovementClassApi,
   getMovementClassesApi,
   updateMovementClassApi,
 } from "../services/MovementClasses.services";
@@ -65,6 +66,17 @@ export const useMovementClasses = () => {
     }
   };
 
+  const deactivateMovementClass = async (id: number) => {
+    try {
+      await deactivateMovementClassApi(id);
+      await load();
+      toast.success("Clase eliminada correctamente");
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al eliminar la clase");
+    }
+  };
+
   const handlePageChange = async (page: number) => {
     const newFilters = { ...filters, page };
     await load(newFilters);
@@ -93,6 +105,7 @@ export const useMovementClasses = () => {
     handleEditItemChange: setEditingItem,
     handleOpenChange: setOpenFormModal,
     saveMovementClass,
+    deactivateMovementClass,
     handlePageChange,
     handlePageSizeChange,
   };

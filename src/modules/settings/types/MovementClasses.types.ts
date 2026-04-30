@@ -1,7 +1,7 @@
 export interface MovementClassApiItem {
   id: number;
   name: string;
-  code: string;
+  code: string | null;
 }
 
 export interface MovementClassApiResponse {
@@ -16,7 +16,7 @@ export interface MovementClassApiResponse {
 export interface MovementClass {
   id: number;
   name: string;
-  code: string;
+  code: string | null;
 }
 
 export interface MovementClassFilters {

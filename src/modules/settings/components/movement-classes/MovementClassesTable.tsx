@@ -7,7 +7,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Edit, Loader2, Trash2 } from "lucide-react";
 import { MovementClass } from "../../types/MovementClasses.types";
 
 interface MovementClassesTableProps {
@@ -15,6 +26,7 @@ interface MovementClassesTableProps {
   classes: MovementClass[];
   onEditItem: (item: MovementClass) => void;
   onOpenChange: (open: boolean) => void;
+  onDeactivate: (id: number) => void;
 }
 
 const MovementClassesTable = ({
@@ -22,6 +34,7 @@ const MovementClassesTable = ({
   classes,
   onEditItem,
   onOpenChange,
+  onDeactivate,
 }: MovementClassesTableProps) => {
   return (
     <Table>
@@ -54,19 +67,48 @@ const MovementClassesTable = ({
             <TableRow key={item.id}>
               <TableCell className="font-mono text-muted-foreground">{item.id}</TableCell>
               <TableCell className="font-medium">{item.name}</TableCell>
-              <TableCell className="font-mono text-muted-foreground">{item.code}</TableCell>
+              <TableCell className="font-mono text-muted-foreground">{item.code ?? "—"}</TableCell>
               <TableCell className="text-center">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => {
-                    onEditItem(item);
-                    onOpenChange(true);
-                  }}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center justify-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => {
+                      onEditItem(item);
+                      onOpenChange(true);
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+
+                  {item.code === null && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Eliminar clase?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta acción desactivará la clase <strong>{item.name}</strong>. No se eliminará permanentemente.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => onDeactivate(item.id)}
+                          >
+                            Eliminar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           ))

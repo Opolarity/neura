@@ -17,6 +17,7 @@ const MovementClassesPage = () => {
     handleEditItemChange,
     handleOpenChange,
     saveMovementClass,
+    deactivateMovementClass,
     handlePageChange,
     handlePageSizeChange,
   } = useMovementClasses();
@@ -49,6 +50,7 @@ const MovementClassesPage = () => {
             classes={classes}
             onEditItem={handleEditItemChange}
             onOpenChange={handleOpenChange}
+            onDeactivate={deactivateMovementClass}
           />
         </CardContent>
         <CardFooter>

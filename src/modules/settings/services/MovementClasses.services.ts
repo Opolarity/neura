@@ -62,3 +62,12 @@ export const updateMovementClassApi = async (
 
   if (error) throw error;
 };
+
+export const deactivateMovementClassApi = async (id: number): Promise<void> => {
+  const { error } = await (supabase as any)
+    .from("classes")
+    .update({ is_active: false })
+    .eq("id", id);
+
+  if (error) throw error;
+};
