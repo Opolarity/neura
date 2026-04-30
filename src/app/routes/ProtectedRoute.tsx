@@ -25,8 +25,14 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading, permissions } = useAuth();
   const location = useLocation();
   const toastedPath = useRef<string | null>(null);
+  // Una vez que los permisos cargan por primera vez, no volvemos a mostrar
+  // el spinner aunque permissionsLoading se active de nuevo (ej: tab switch)
+  const permissionsLoadedOnce = useRef(false);
+  if (!permissions.permissionsLoading) {
+    permissionsLoadedOnce.current = true;
+  }
 
-  const isLoading = loading || permissions.permissionsLoading;
+  const isLoading = loading || (permissions.permissionsLoading && !permissionsLoadedOnce.current);
 
   const allowed =
     !user ||

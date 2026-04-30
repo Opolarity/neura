@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import AuthContext from "./AuthContext";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState<UserPermissions>(defaultPermissions);
+  // Evita recargar permisos cuando cambia el token (tab switch) sin cambio de usuario
+  const lastFetchedUserId = useRef<string | null>('__unset__');
 
   const fetchPermissions = useCallback(async (currentUser: User | null) => {
     if (!currentUser) {
@@ -44,25 +46,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   }, []);
 
+  const maybeRefetchPermissions = useCallback((currentUser: User | null) => {
+    const userId = currentUser?.id ?? null;
+    if (userId === lastFetchedUserId.current) return;
+    lastFetchedUserId.current = userId;
+    fetchPermissions(currentUser);
+  }, [fetchPermissions]);
+
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      // Evita re-renders si el user ID no cambió (ej: TOKEN_REFRESHED en tab switch)
+      setUser(prev => {
+        const next = session?.user ?? null;
+        return prev?.id === next?.id ? prev : next;
+      });
       setLoading(false);
-      fetchPermissions(session?.user ?? null);
+      maybeRefetchPermissions(session?.user ?? null);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      fetchPermissions(session?.user ?? null);
+      maybeRefetchPermissions(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchPermissions]);
+  }, [maybeRefetchPermissions]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({

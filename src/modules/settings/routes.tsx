@@ -15,6 +15,7 @@ import CreateOrderChannelType from "./pages/CreateOrderChannelType";
 import PriceListPage from "./pages/PriceListPage";
 import StockTypePage from "./pages/StockTypePage";
 import BusinessAccountPage from "./pages/BusinessAccountPage";
+import MovementClassesPage from "./pages/MovementClassesPage";
 
 
 export const settingsRoutes: RouteObject[] = [
@@ -47,7 +48,7 @@ export const settingsRoutes: RouteObject[] = [
       { path: "price-list", element: <PriceListPage /> },
       { path: "stock-types", element: <StockTypePage /> },
       { path: "business-accounts", element: <BusinessAccountPage /> },
-      
+      { path: "movement-classes", element: <MovementClassesPage /> },
     ],
   },
 ];
