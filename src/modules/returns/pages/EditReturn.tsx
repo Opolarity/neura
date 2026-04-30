@@ -421,10 +421,7 @@ const EditReturn = () => {
           returnTypeCode === "DVP" ||
           returnTypeCode === "CAM") && (
           <Card>
-            <CardHeader>
-              <CardTitle>Productos a Devolver</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6 space-y-6">
               <div className="space-y-4">
                 {(returnTypeCode === "DVT" ||
                   returnTypeCode === "DVP" ||
