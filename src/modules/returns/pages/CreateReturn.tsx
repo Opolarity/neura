@@ -157,7 +157,7 @@ const CreateReturn = () => {
         </div>
 
         <form id="return-form" onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-[700px_1fr] gap-6 items-start">
+          <div className={`grid gap-6 items-start ${showPaymentSection ? 'grid-cols-[700px_1fr]' : 'grid-cols-1'}`}>
             <Card>
               <CardHeader>
                 <CardTitle>Información Básica</CardTitle>

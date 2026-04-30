@@ -93,7 +93,7 @@ const EditReturn = () => {
       <div className="grid gap-6">
 
         {/* Top row: payment (left, narrow) + info básica (right) */}
-        <div className="grid grid-cols-[700px_1fr] gap-6 items-start">
+        <div className={`grid gap-6 items-start ${!orderSituationCode.includes('VIR') ? 'grid-cols-[700px_1fr]' : 'grid-cols-1'}`}>
 
           {/* ── Información Básica ────────────────────────────────────── */}
           <Card>
