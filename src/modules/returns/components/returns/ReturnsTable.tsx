@@ -44,12 +44,12 @@ export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, sea
                                 <TableHead>ID</TableHead>
                                 <TableHead>Pedido</TableHead>
                                 <TableHead>Cliente</TableHead>
-                                <TableHead>Documento</TableHead>
                                 <TableHead>Tipo</TableHead>
                                 <TableHead>Estado</TableHead>
                                 <TableHead>Reembolso</TableHead>
                                 <TableHead>Total de orden</TableHead>
                                 <TableHead>Fecha</TableHead>
+                                <TableHead>Usuario</TableHead>
                                 <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -73,10 +73,7 @@ export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, sea
                                 <TableRow key={returnItem.id}>
                                     <TableCell className="font-medium">#{returnItem.id}</TableCell>
                                     <TableCell>#{returnItem.order_id}</TableCell>
-                                    <TableCell>
-                                        {returnItem.customer_name} {returnItem.customer_lastname}
-                                    </TableCell>
-                                    <TableCell>{returnItem.customer_document_number}</TableCell>
+                                    <TableCell>{returnItem.customer_document_number?.trim() || '-'}</TableCell>
                                     <TableCell>
                                         <Badge variant="outline">
                                             {returnItem.types?.name || 'N/A'}
@@ -96,6 +93,9 @@ export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, sea
                                         </span>
                                     </TableCell>
                                     <TableCell>{formatDate(returnItem.created_at)}</TableCell>
+                                    <TableCell>
+                                        {returnItem.customer_name} {returnItem.customer_lastname}
+                                    </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             <Button
