@@ -103,6 +103,12 @@ export const useEditReturn = () => {
                 returnsService.getPaymentMethods(),
             ]);
 
+            const orderSituationCodeValue = details.order_situation?.code || '';
+            const isVirtual = orderSituationCodeValue.includes('VIR');
+            const filteredSituations = isVirtual
+                ? (situationsData || []).filter((s: any) => s.code === 'PHY' || s.code === 'HDN')
+                : (situationsData || []);
+
             setReason(details.reason || '');
             setDocumentType(details.customer_document_type_id?.toString() || '');
             setDocumentNumber(details.customer_document_number);
@@ -110,10 +116,10 @@ export const useEditReturn = () => {
             setSituationId(details.situation_id.toString());
             setSelectedReturnType(details.return_type_id.toString());
             setReturnTypeCode(details.return_type_code || '');
-            setOrderSituationCode(details.order_situation?.code || '');
+            setOrderSituationCode(orderSituationCodeValue);
             setOrderProducts(orderProductsData || []);
             setDocumentTypes(docTypesData || []);
-            setSituations(situationsData || []);
+            setSituations(filteredSituations);
             setReturnTypes(typesData || []);
             setPaymentMethods(paymentMethodsData || []);
 
