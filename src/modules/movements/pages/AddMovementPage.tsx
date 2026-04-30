@@ -26,11 +26,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Check, ChevronsUpDown, Loader2, Paperclip, Plus, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronsUpDown, Link2, Loader2, Paperclip, Plus, X } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import { useCreateMovement, MovementType } from "../hooks/useCreateMovement";
 import { useRef, useState } from "react";
 import { MovementFilePreviewModal } from "../components/movements/MovementFilePreviewModal";
+import { LinkOrdersModal, OrderSummary } from "../components/movements/LinkOrdersModal";
+import { Badge } from "@/components/ui/badge";
 
 interface AddMovementPageProps {
   movementType: MovementType;
@@ -75,6 +77,9 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  const [linkedOrders, setLinkedOrders] = useState<OrderSummary[]>([]);
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -99,7 +104,7 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
           <CardTitle>Información del {messages.label}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit((data) => onSubmit(data, attachments))} className="space-y-6">
+          <form onSubmit={handleSubmit((data) => onSubmit(data, attachments, linkedOrders.map((o) => o.id)))} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Monto */}
               <div className="space-y-2">
@@ -355,6 +360,35 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
               </div>
             </div>
 
+            {isIncome && (
+              <div className="space-y-2">
+                <Label>Ventas vinculadas</Label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLinkModalOpen(true)}
+                  >
+                    <Link2 className="h-4 w-4 mr-1.5" />
+                    Vincular venta
+                  </Button>
+                  {linkedOrders.map((order) => (
+                    <Badge key={order.id} variant="secondary" className="gap-1 pr-1">
+                      #{order.id} — {order.customer_name}
+                      <button
+                        type="button"
+                        className="ml-1 rounded-full hover:bg-muted"
+                        onClick={() => setLinkedOrders((prev) => prev.filter((o) => o.id !== order.id))}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-end gap-4">
               <Button
                 type="button"
@@ -377,6 +411,13 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
         open={previewOpen}
         onOpenChange={(open) => { setPreviewOpen(open); if (!open) setPreviewFile(null); }}
         file={previewFile}
+      />
+
+      <LinkOrdersModal
+        open={linkModalOpen}
+        onOpenChange={setLinkModalOpen}
+        selectedOrders={linkedOrders}
+        onConfirm={setLinkedOrders}
       />
 
       <Dialog open={newCategoryDialogOpen} onOpenChange={setNewCategoryDialogOpen}>

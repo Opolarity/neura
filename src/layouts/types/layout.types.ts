@@ -3,7 +3,7 @@ export interface UserFunction {
     name: string;
     code: string | null;
     icon: string | null;
-    location: string | null;
+    location: string[] | null;
     parent_function: number | null;
     active: boolean;
     order: number | null;

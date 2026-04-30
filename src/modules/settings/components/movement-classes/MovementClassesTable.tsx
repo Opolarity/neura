@@ -1,0 +1,130 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Edit, Loader2, Trash2 } from "lucide-react";
+import { MovementClass } from "../../types/MovementClasses.types";
+
+interface MovementClassesTableProps {
+  loading: boolean;
+  classes: MovementClass[];
+  onEditItem: (item: MovementClass) => void;
+  onOpenChange: (open: boolean) => void;
+  onDeactivate: (id: number) => void;
+}
+
+const isEditable = (item: MovementClass) =>
+  !item.code || item.code.trim() === "";
+
+const MovementClassesTable = ({
+  loading,
+  classes,
+  onEditItem,
+  onOpenChange,
+  onDeactivate,
+}: MovementClassesTableProps) => {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-16">ID</TableHead>
+          <TableHead>Nombre</TableHead>
+          <TableHead>Código</TableHead>
+          <TableHead className="text-center w-28">Acciones</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {loading ? (
+          <TableRow>
+            <TableCell colSpan={4} className="text-center py-8">
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Cargando clases...
+              </div>
+            </TableCell>
+          </TableRow>
+        ) : classes.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
+              No se encontraron clases de movimiento
+            </TableCell>
+          </TableRow>
+        ) : (
+          classes.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell className="font-mono text-muted-foreground">{item.id}</TableCell>
+              <TableCell className="font-medium">{item.name}</TableCell>
+              <TableCell className="font-mono text-muted-foreground">{item.code || "—"}</TableCell>
+              <TableCell className="text-center">
+                {isEditable(item) ? (
+                  <div className="flex items-center justify-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        onEditItem(item);
+                        onOpenChange(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Eliminar clase?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta acción desactivará la clase <strong>{item.name}</strong>. No se eliminará permanentemente.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => onDeactivate(item.id)}
+                          >
+                            Eliminar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground text-xs">—</span>
+                )}
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
+  );
+};
+
+export default MovementClassesTable;

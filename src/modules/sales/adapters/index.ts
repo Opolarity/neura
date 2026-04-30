@@ -321,5 +321,6 @@ export const adaptSaleById = (data: any) => {
   orderSaleType: data.order.sale_type_id
     ? { id: data.order.sale_type_id, name: data.order.sale_type_name || "" }
     : null,
+  returns: (data.returns || []) as import("../types/Sales.types").SaleReturn[],
 });
 };

@@ -25,6 +25,7 @@ interface ExchangeProductsTableProps {
     onUpdateProduct: (index: number, field: string, value: any) => void;
     onRemoveProduct: (index: number) => void;
     formatCurrency: (amount: number) => string;
+    isReadOnly?: boolean;
 }
 
 export const ExchangeProductsTable = ({
@@ -32,7 +33,8 @@ export const ExchangeProductsTable = ({
     returnProducts,
     onUpdateProduct,
     onRemoveProduct,
-    formatCurrency
+    formatCurrency,
+    isReadOnly = false,
 }: ExchangeProductsTableProps) => {
     return (
         <Table>
@@ -44,50 +46,64 @@ export const ExchangeProductsTable = ({
                     <TableHead>Cantidad</TableHead>
                     <TableHead>Descuento %</TableHead>
                     <TableHead>Subtotal</TableHead>
-                    <TableHead>Vinculado a</TableHead>
-                    <TableHead></TableHead>
+                    {/* <TableHead>Vinculado a</TableHead> */}
+                    {!isReadOnly && <TableHead></TableHead>}
                 </TableRow>
             </TableHeader>
             <TableBody>
+                {exchangeProducts.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={isReadOnly ? 6 : 7} className="text-center text-muted-foreground py-6">
+                            Sin productos agregados
+                        </TableCell>
+                    </TableRow>
+                )}
                 {exchangeProducts.map((product, index) => (
                     <TableRow key={index}>
                         <TableCell>{product.product_name}</TableCell>
                         <TableCell>{product.variation_name}</TableCell>
                         <TableCell>
-                            <Input
-                                type="number"
-                                step="0.01"
-                                value={product.price}
-                                onChange={(e) => onUpdateProduct(index, "price", parseFloat(e.target.value) || 0)}
-                                className="w-24"
-                            />
+                            {isReadOnly ? formatCurrency(product.price) : (
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={product.price}
+                                    onChange={(e) => onUpdateProduct(index, "price", parseFloat(e.target.value) || 0)}
+                                    className="w-24"
+                                />
+                            )}
                         </TableCell>
                         <TableCell>
-                            <Input
-                                type="number"
-                                min="1"
-                                value={product.quantity}
-                                onChange={(e) => onUpdateProduct(index, "quantity", parseInt(e.target.value) || 1)}
-                                className="w-20"
-                            />
+                            {isReadOnly ? product.quantity : (
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    value={product.quantity}
+                                    onChange={(e) => onUpdateProduct(index, "quantity", parseInt(e.target.value) || 1)}
+                                    className="w-20"
+                                />
+                            )}
                         </TableCell>
                         <TableCell>
-                            <Input
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={product.discount}
-                                onChange={(e) => onUpdateProduct(index, "discount", parseFloat(e.target.value) || 0)}
-                                className="w-20"
-                            />
+                            {isReadOnly ? `${product.discount}%` : (
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={product.discount}
+                                    onChange={(e) => onUpdateProduct(index, "discount", parseFloat(e.target.value) || 0)}
+                                    className="w-20"
+                                />
+                            )}
                         </TableCell>
                         <TableCell>
                             {formatCurrency(product.price * (1 - product.discount / 100) * product.quantity)}
                         </TableCell>
-                        <TableCell>
+                        {/* <TableCell>
                             <Select
                                 value={product.linked_return_index?.toString() || ""}
                                 onValueChange={(v) => onUpdateProduct(index, "linked_return_index", v ? parseInt(v) : null)}
+                                disabled={isReadOnly}
                             >
                                 <SelectTrigger className="w-40">
                                     <SelectValue placeholder="Sin vincular" />
@@ -101,17 +117,19 @@ export const ExchangeProductsTable = ({
                                     ))}
                                 </SelectContent>
                             </Select>
-                        </TableCell>
-                        <TableCell>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => onRemoveProduct(index)}
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </Button>
-                        </TableCell>
+                        </TableCell> */}
+                        {!isReadOnly && (
+                            <TableCell>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => onRemoveProduct(index)}
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </Button>
+                            </TableCell>
+                        )}
                     </TableRow>
                 ))}
             </TableBody>

@@ -7,7 +7,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getMovementDetails } from "../../services/movements.service";
+import { getMovementDetails, sendFranchiseePayment } from "../../services/movements.service";
 import { movementDetailAdapter } from "../../adapters/Movement.adapter";
 import { MovementDetail, MovementDetailApiResponse } from "../../types/Movements.types";
 
@@ -20,11 +20,37 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
   const [detail, setDetail] = useState<MovementDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+
+  const handleSend = async () => {
+    if (!detail || !movementId || !detail.franchiseAccount) return;
+    setSending(true);
+    setSendError(null);
+    try {
+      await sendFranchiseePayment({
+        movementId,
+        amount: detail.amount,
+        description: detail.description,
+        filesUrl: detail.filesUrl,
+        movementDate: detail.date,
+        franchiseAccount: detail.franchiseAccount,
+        orderIds: detail.orderIds,
+      });
+      const data: MovementDetailApiResponse = await getMovementDetails(movementId);
+      setDetail(movementDetailAdapter(data.movement, data.is_franchise_movement ?? false, data.franchise_account ?? null, data.order_ids ?? []));
+    } catch (err: unknown) {
+      setSendError(err instanceof Error ? err.message : "Error al enviar");
+    } finally {
+      setSending(false);
+    }
+  };
 
   useEffect(() => {
     if (movementId === null) {
       setDetail(null);
       setError(null);
+      setSendError(null);
       return;
     }
 
@@ -32,7 +58,9 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
     setError(null);
 
     getMovementDetails(movementId)
-      .then((data: MovementDetailApiResponse) => setDetail(movementDetailAdapter(data.movement)))
+      .then((data: MovementDetailApiResponse) =>
+        setDetail(movementDetailAdapter(data.movement, data.is_franchise_movement ?? false, data.franchise_account ?? null, data.order_ids ?? []))
+      )
       .catch((err: Error) => setError(err?.message ?? "Error al cargar el movimiento"))
       .finally(() => setLoading(false));
   }, [movementId]);
@@ -107,6 +135,26 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
                 {detail.formattedAmount}
               </span>
             </div>
+            {detail.isFranchiseMovement && (
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Enviado a franquiciado</span>
+                  {detail.franchisee_sended ? (
+                    <span>{detail.franchisee_sended.split("T")[0].split("-").reverse().join("/")}</span>
+                  ) : (
+                    <button
+                      onClick={handleSend}
+                      disabled={sending}
+                      className="text-xs px-2 py-1 rounded border border-input hover:bg-accent cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    >
+                      {sending && <Loader2 className="w-3 h-3 animate-spin" />}
+                      Enviar
+                    </button>
+                  )}
+                </div>
+                {sendError && <p className="text-xs text-red-500 text-right">{sendError}</p>}
+              </div>
+            )}
             {detail.filesUrl.length > 0 && (
               <div className="pt-2 border-t space-y-2">
                 <span className="text-muted-foreground">Adjuntos</span>

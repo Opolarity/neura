@@ -681,7 +681,7 @@ export type Database = {
           created_at: string
           icon: string | null
           id: number
-          location: string | null
+          location: string[] | null
           name: string
           order: number | null
           parent_function: number | null
@@ -692,7 +692,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: number
-          location?: string | null
+          location?: string[] | null
           name: string
           order?: number | null
           parent_function?: number | null
@@ -703,7 +703,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: number
-          location?: string | null
+          location?: string[] | null
           name?: string
           order?: number | null
           parent_function?: number | null
@@ -5280,6 +5280,7 @@ export type Database = {
         Returns: Json
       }
       get_user_functions: { Args: { p_user_id: string }; Returns: Json }
+      sp_get_user_views: { Args: Record<string, never>; Returns: Json }
       get_variation_by_terms: {
         Args: { p_product_id: number; terms_id: number[] }
         Returns: Json

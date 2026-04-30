@@ -188,20 +188,14 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
     );
   }
 
-  const isPathActive = (path: string | null) => {
-    if (!path || path === "#") return false;
+  const isPathActive = (paths: string[] | null) => {
+    if (!paths || paths.length === 0) return false;
     const currentPath = location.pathname;
 
-    // Exact match is always active
-    if (currentPath === path) return true;
-    if (path === "/") return currentPath === "/";
-
-    // Recursive helper to get all nested locations
     const getAllPaths = (items: any[]): string[] => {
       return items.reduce((acc: string[], item: any) => {
-        if (item.location) acc.push(item.location);
+        if (item.location) acc.push(...item.location);
         if (item.subItems) {
-          // Handle both item.subItems (MenuFunction) and item.items (Inner items)
           const children = Array.isArray(item.subItems)
             ? item.subItems.flatMap((g: any) => g.items || [])
             : [];
@@ -213,17 +207,21 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
 
     const allPaths = getAllPaths(menuItems);
 
-    // A match is only "active" if it's the most specific match for the current URL
-    const betterMatch = allPaths.find(
-      (p) =>
-        p !== path &&
-        p.length > path.length &&
-        (currentPath === p || currentPath.startsWith(`${p}/`)),
-    );
+    return paths.some((path) => {
+      if (!path || path === "#") return false;
+      if (currentPath === path) return true;
+      if (path === "/") return currentPath === "/";
 
-    if (betterMatch) return false;
+      const betterMatch = allPaths.find(
+        (p) =>
+          p !== path &&
+          p.length > path.length &&
+          (currentPath === p || currentPath.startsWith(`${p}/`)),
+      );
 
-    return currentPath.startsWith(`${path}/`);
+      if (betterMatch) return false;
+      return currentPath.startsWith(`${path}/`);
+    });
   };
 
   return (
@@ -314,8 +312,8 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
                             const isSubActive = isPathActive(subItem.location);
                             return (
                               <Link
-                                key={subItem.location || subItem.id}
-                                to={subItem.location || "#"}
+                                key={subItem.location?.[0] || subItem.id}
+                                to={subItem.location?.[0] || "#"}
                                 className={`flex items-center px-4 py-2 text-xs rounded-md transition-all relative ${
                                   isSubActive
                                     ? "text-blue-400 font-semibold bg-blue-400/5"
@@ -339,8 +337,8 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
 
             return (
               <Link
-                key={item.location || item.id}
-                to={item.location || "#"}
+                key={item.location?.[0] || item.id}
+                to={item.location?.[0] || "#"}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={() => setHoveredItem(null)}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg group relative overflow-hidden transition-all duration-200 ${
@@ -405,8 +403,8 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
                     const isSubActive = isPathActive(subItem.location);
                     return (
                       <Link
-                        key={subItem.location || subItem.id}
-                        to={subItem.location || "#"}
+                        key={subItem.location?.[0] || subItem.id}
+                        to={subItem.location?.[0] || "#"}
                         onClick={() => setActiveSubMenu(null)}
                         className={`flex items-center px-4 py-2 text-xs rounded-md transition-all relative ${
                           isSubActive

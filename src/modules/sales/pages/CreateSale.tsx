@@ -79,6 +79,8 @@ import { useToast } from "@/hooks/use-toast";
 import { VoucherPreviewModal } from "../components/sales/VoucherPreviewModal";
 import { SalesHistoryModal } from "../components/SalesHistoryModal";
 import { SalesInvoicesModal } from "../components/SalesInvoicesModal";
+import { SalesReturnsModal } from "../components/SalesReturnsModal";
+import { SalesCambiosModal } from "../components/SalesCambiosModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 
@@ -123,6 +125,9 @@ const CreateSale = () => {
     filteredPaymentMethods,
     allPaymentMethods,
     isAnonymousPurchase,
+    isConsignment,
+    isEnviado,
+    clientHasTenantReference,
     needsBusinessAccountSelect,
     needsChangeBusinessAccountSelect,
     businessAccounts,
@@ -150,6 +155,8 @@ const CreateSale = () => {
     handleSelectPriceList,
     handleProductPageChange,
     handleAnonymousToggle,
+    handleConsignmentToggle,
+    handleSendToFranchisee,
     addProduct,
     removeProduct,
     updateProduct,
@@ -181,9 +188,16 @@ const CreateSale = () => {
     // Applied price rules
     appliedRules,
     isDirty,
+    // Returns
+    orderReturns,
   } = useCreateSale();
 
   const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
+  const [returnsModalOpen, setReturnsModalOpen] = useState(false);
+  const [cambiosModalOpen, setCambiosModalOpen] = useState(false);
+
+  const phyReturns = orderReturns.filter((r) => r.situation_code === "PHY");
+  const cambiosReturns = orderReturns.filter((r) => r.situation_code !== "PHY");
   const [showAddDiscount, setShowAddDiscount] = useState(false);
   const [newDiscountName, setNewDiscountName] = useState("");
   const [newDiscountAmount, setNewDiscountAmount] = useState("");
@@ -398,9 +412,24 @@ const CreateSale = () => {
           </h1>
         </div>
         <div className="flex gap-3">
+          {cambiosReturns.length > 0 && (
+            <Button variant="outline" onClick={() => setCambiosModalOpen(true)}>
+              Cambios
+            </Button>
+          )}
+          {phyReturns.length > 0 && (
+            <Button variant="outline" onClick={() => setReturnsModalOpen(true)}>
+              Retornos
+            </Button>
+          )}
           <Button variant="outline" onClick={() => navigate("/sales")}>
             Cancelar
           </Button>
+          {isConsignment && isEnviado && (
+            <Button variant="secondary" type="button" onClick={handleSendToFranchisee}>
+              Enviar a franquiciado
+            </Button>
+          )}
           <Button
             type="submit"
             form="sale-form"
@@ -1006,6 +1035,23 @@ const CreateSale = () => {
                     Compra anónima
                   </Label>
                 </div>
+                {!isAnonymousPurchase && clientFound === true && clientHasTenantReference && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="consignmentPurchase"
+                      checked={isConsignment}
+                      onCheckedChange={(checked) =>
+                        handleConsignmentToggle(checked as boolean)
+                      }
+                    />
+                    <Label
+                      htmlFor="consignmentPurchase"
+                      className="cursor-pointer font-medium"
+                    >
+                      Compra en consignación
+                    </Label>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -1963,6 +2009,52 @@ const CreateSale = () => {
                   </div>
                 </>
               )}
+              {/* Return payments - read only */}
+              {(() => {
+                const returnPayments = orderReturns.flatMap((r) =>
+                  r.payments.map((p) => ({ ...p, returnId: r.id })),
+                );
+                if (returnPayments.length === 0) return null;
+                return (
+                  <>
+                    <Separator />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                        Pagos de Retorno
+                      </Label>
+                      {returnPayments.map((p) => (
+                        <div
+                          key={`return-payment-${p.id}`}
+                          className="flex items-center justify-between p-2 bg-orange-50 dark:bg-orange-900/20 rounded-md"
+                        >
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                            <span className="text-sm">{p.payment_method_name}</span>
+                            <span className="text-sm font-medium">
+                              {formatCurrency(p.amount)}
+                            </span>
+                          </div>
+                          {p.voucher_url && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                setSelectedVoucherPreview(p.voucher_url);
+                                setVoucherModalOpen(true);
+                              }}
+                              title="Ver comprobante"
+                            >
+                              <Paperclip className="w-3 h-3 text-orange-500" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
 
@@ -2143,6 +2235,20 @@ const CreateSale = () => {
         orders={orderSituationTable}
         open={historyModalOpen}
         onOpenChange={setHistoryModalOpen}
+      />
+
+      <SalesReturnsModal
+        open={returnsModalOpen}
+        onOpenChange={setReturnsModalOpen}
+        orderId={createdOrderId}
+        returns={phyReturns}
+      />
+
+      <SalesCambiosModal
+        open={cambiosModalOpen}
+        onOpenChange={setCambiosModalOpen}
+        orderId={createdOrderId}
+        returns={cambiosReturns}
       />
 
       {createdOrderId && (

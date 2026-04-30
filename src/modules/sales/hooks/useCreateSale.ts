@@ -56,6 +56,7 @@ import {
   filterShippingCostsByLocation,
   getTodayDate,
 } from "../utils";
+import { getParameter } from "@/modules/settings/services/Parameters.service";
 
 const INITIAL_FORM_DATA: SaleFormData = {
   documentType: "",
@@ -115,6 +116,7 @@ export const useCreateSale = () => {
   // User warehouse / branch state
   const [userWarehouseId, setUserWarehouseId] = useState<number | null>(null);
   const [userWarehouseName, setUserWarehouseName] = useState<string>("");
+  const [userWarehouseCode, setUserWarehouseCode] = useState<string>("");
   const [userBranchAddress, setUserBranchAddress] = useState<string>("");
 
   // Form data
@@ -145,6 +147,9 @@ export const useCreateSale = () => {
   const [clientFound, setClientFound] = useState<boolean | null>(null);
   const [isExistingClient, setIsExistingClient] = useState<boolean>(false); // true only if found in accounts table
   const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
+  const [isConsignment, setIsConsignment] = useState(false);
+  const [clientHasTenantReference, setClientHasTenantReference] = useState(false);
+  const [clientTenantReference, setClientTenantReference] = useState<string | null>(null);
   const [customerUserId, setCustomerUserId] = useState<string | null>(null);
   const [customerAccountId, setCustomerAccountId] = useState<number | null>(null);
   const [cartGifts, setCartGifts] = useState<GiftItem[]>([]);
@@ -175,6 +180,7 @@ export const useCreateSale = () => {
 
   // Order discounts state
   const [orderDiscounts, setOrderDiscounts] = useState<OrderDiscount[]>([]);
+  const [orderReturns, setOrderReturns] = useState<import("../types/Sales.types").SaleReturn[]>([]);
 
   // History modal state
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -631,7 +637,7 @@ export const useCreateSale = () => {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("warehouse_id, branch_id, warehouses(id, name), branches(id, address)")
+        .select("warehouse_id, branch_id, warehouses(id, name, code), branches(id, address)")
         .eq("UID", user.id)
         .single();
 
@@ -646,7 +652,8 @@ export const useCreateSale = () => {
         const warehouse = Array.isArray(profile.warehouses)
           ? profile.warehouses[0]
           : profile.warehouses;
-        setUserWarehouseName(warehouse?.name || "");
+        setUserWarehouseName((warehouse as any)?.name || "");
+        setUserWarehouseCode((warehouse as any)?.code || "");
       }
 
       if (profile?.branch_id) {
@@ -677,6 +684,16 @@ export const useCreateSale = () => {
       const data = await fetchSaleById(id);
       const adapted = adaptSaleById(data);
 
+      // Read fields not included in the edge function response directly from DB
+      const { data: orderMeta } = await supabase
+        .from("orders")
+        .select("consignament")
+        .eq("id", id)
+        .maybeSingle();
+      if (orderMeta?.consignament) {
+        setIsConsignment(true);
+      }
+
       // Set all state at once
       setFormData(adapted.formData);
       setProducts(adapted.products);
@@ -693,17 +710,66 @@ export const useCreateSale = () => {
       setClientFound(true);
       setCreatedOrderId(id);
       setOrderDiscounts(adapted.orderDiscounts || []);
+      setOrderReturns(adapted.returns || []);
 
       // Load notes from DB
       await loadNotesFromDB(id);
       // Override warehouse with order's warehouse when editing
       if (adapted.orderWarehouseId) {
         setUserWarehouseId(adapted.orderWarehouseId);
+        // Fetch warehouse code for the consignment API
+        const { data: warehouseData } = await supabase
+          .from("warehouses")
+          .select("code")
+          .eq("id", adapted.orderWarehouseId)
+          .maybeSingle();
+        if (warehouseData) {
+          setUserWarehouseCode((warehouseData as any).code || "");
+        }
       }
 
       // Detect anonymous purchase: document_type = "0" and document_number = " "
-      if (adapted.formData.documentType === "0" && adapted.formData.documentNumber === " ") {
+      const isAnonymous =
+        adapted.formData.documentType === "0" &&
+        adapted.formData.documentNumber === " ";
+      if (isAnonymous) {
         setIsAnonymousPurchase(true);
+      }
+
+      // Fetch tenant_reference from accounts for consignment feature (non-anonymous orders only)
+      if (!isAnonymous && adapted.formData.documentNumber) {
+        const docNumber = String(adapted.formData.documentNumber).trim();
+        const docTypeId = parseInt(adapted.formData.documentType || "");
+
+        let accountData: { id: number; tenant_reference: string | null } | null = null;
+
+        // Try with both document_type_id + document_number (more precise)
+        if (!isNaN(docTypeId)) {
+          const { data } = await supabase
+            .from("accounts")
+            .select("id, tenant_reference")
+            .eq("document_type_id", docTypeId)
+            .eq("document_number", docNumber)
+            .maybeSingle();
+          accountData = data;
+        }
+
+        // Fallback: query only by document_number (handles type mismatch or missing doc type)
+        if (!accountData) {
+          const { data } = await supabase
+            .from("accounts")
+            .select("id, tenant_reference")
+            .eq("document_number", docNumber)
+            .maybeSingle();
+          accountData = data;
+        }
+
+        if (accountData) {
+          setCustomerAccountId(accountData.id);
+          setIsExistingClient(true);
+          setClientHasTenantReference(accountData.tenant_reference != null);
+          setClientTenantReference(accountData.tenant_reference ?? null);
+        }
       }
 
       // Snapshot for dirty checking
@@ -829,8 +895,164 @@ export const useCreateSale = () => {
       setCustomerAccountId(null);
       setAppliedRules([]);
       setCartGifts([]);
+      setClientHasTenantReference(false);
+      setClientTenantReference(null);
+      setIsConsignment(false);
     }
   }, []);
+
+  // Handle consignment toggle
+  const handleConsignmentToggle = useCallback((checked: boolean) => {
+    setIsConsignment(checked);
+  }, []);
+
+  // Send consignment to franchisee via external API
+  const handleSendToFranchisee = useCallback(async () => {
+    const secret = import.meta.env.VITE_CONSIGNMENT_API_SECRET as string;
+    if (!secret) {
+      toast({
+        title: "Error",
+        description: "No se encontró el secret de consignación (VITE_CONSIGNMENT_API_SECRET)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!clientTenantReference) {
+      toast({
+        title: "Error",
+        description: "No se encontró el payload del franquiciado (tenant_reference)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Generate HMAC token: base64url(payload) + "." + hex(HMAC-SHA256(payload_base64url, secret))
+    let apiKey: string;
+    try {
+      // Get current logged-in user's document info
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("accounts(document_number, document_types(code))")
+        .eq("UID", user.id)
+        .maybeSingle();
+
+      const userAccount = Array.isArray(userProfile?.accounts)
+        ? userProfile.accounts[0]
+        : userProfile?.accounts;
+      const userDocTypeCode = Array.isArray((userAccount as any)?.document_types)
+        ? (userAccount as any).document_types[0]?.code
+        : (userAccount as any)?.document_types?.code;
+
+      if (!userDocTypeCode || !(userAccount as any)?.document_number) {
+        throw new Error("No se encontró el documento del usuario actual");
+      }
+
+      const companyDocumentNumber = await getParameter("CompanyDocumentNumber");
+      if (!companyDocumentNumber) throw new Error("No se encontró el parámetro CompanyDocumentNumber");
+
+      // Build payload
+      const payload = {
+        tenant_code: clientTenantReference.trim(),
+        supplier_document_type: "RUC",
+        supplier_document_number: companyDocumentNumber.trim(),
+        user_document_type: userDocTypeCode,
+        user_document_number: String((userAccount as any).document_number).trim(),
+      };
+
+      // base64url encode the canonical JSON
+      const payloadStr = JSON.stringify(payload);
+      const payloadBytes = new TextEncoder().encode(payloadStr);
+      const payloadBase64 = btoa(String.fromCharCode(...payloadBytes))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+
+      // Sign with HMAC-SHA256
+      const cryptoKey = await crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(secret),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"],
+      );
+      const signatureBuffer = await crypto.subtle.sign(
+        "HMAC",
+        cryptoKey,
+        new TextEncoder().encode(payloadBase64),
+      );
+      const signatureHex = Array.from(new Uint8Array(signatureBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      apiKey = `${payloadBase64}.${signatureHex}`;
+    } catch (e) {
+      console.error("Error generando token de consignación:", e);
+      toast({
+        title: "Error",
+        description: e instanceof Error ? e.message : "No se pudo generar el token de autenticación",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const now = new Date();
+    const monthYear = now.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
+
+    const body = {
+      warehouse_code: userWarehouseCode || `WH-${userWarehouseId}`,
+      description: `Envío consignación ${monthYear}`,
+      reference: `NEURA-VENTA-${orderId ?? "NUEVA"}`,
+      sale_code: orderId ? `${orderId}` : `${Date.now()}`,
+      products: products.map((p) => ({
+        sku: p.sku,
+        quantity: p.quantity,
+        unit_price: p.price,
+        description: `${p.productName} ${p.variationName}`.trim(),
+      })),
+    };
+
+    try {
+      const response = await fetch(
+        "https://demo.supabase.neura.pe/functions/v1/create-consignment-intake",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+          },
+          body: JSON.stringify(body),
+        },
+      );
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Error response from franchisee API:", errText);
+        throw new Error(`Error ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: "Consignación enviada",
+          description: "El envío al franquiciado se realizó correctamente",
+        });
+      } else {
+        throw new Error("La respuesta no fue exitosa");
+      }
+    } catch (error) {
+      console.error("Error enviando a franquiciado:", error);
+      toast({
+        title: "Error al enviar",
+        description: "No se pudo enviar la consignación al franquiciado. Intente nuevamente.",
+        variant: "destructive",
+      });
+    }
+  }, [clientTenantReference, userWarehouseCode, userWarehouseId, orderId, products, toast]);
 
   // Handle stock type change - clears selected variation to ensure consistency
   const handleStockTypeChange = useCallback((value: string) => {
@@ -1079,8 +1301,14 @@ export const useCreateSale = () => {
             .maybeSingle();
           setCustomerUserId(profileData?.UID ?? null);
           setCustomerAccountId(client.id);
+          setClientHasTenantReference(data?.tenant_reference != null);
+          setClientTenantReference(data?.tenant_reference ?? null);
+          if (data?.tenant_reference == null) setIsConsignment(false);
         } else {
           setIsExistingClient(false); // Not in accounts table
+          setClientHasTenantReference(false);
+          setClientTenantReference(null);
+          setIsConsignment(false);
           // Client not found - check document type code
           const selectedDocType = salesData?.documentTypes.find(
             (dt) => dt.id.toString() === docType,
@@ -1700,6 +1928,7 @@ export const useCreateSale = () => {
     // User warehouse / branch
     userWarehouseId,
     userWarehouseName,
+    userWarehouseCode,
     userBranchAddress,
     loadingWarehouse,
 
@@ -1723,6 +1952,11 @@ export const useCreateSale = () => {
     filteredPaymentMethods,
     allPaymentMethods: salesData?.paymentMethods ?? [],
     isAnonymousPurchase,
+    isConsignment,
+    clientHasTenantReference,
+    clientTenantReference,
+    // Computed: true when the saved order situation's status code (last_row) is "COM"
+    isEnviado: currentStatusCode === "COM",
     needsBusinessAccountSelect,
     needsChangeBusinessAccountSelect,
     businessAccounts,
@@ -1745,6 +1979,8 @@ export const useCreateSale = () => {
     handleSelectPriceList,
     handleProductPageChange,
     handleAnonymousToggle,
+    handleConsignmentToggle,
+    handleSendToFranchisee,
     addProduct,
     removeProduct,
     updateProduct,
@@ -1777,6 +2013,9 @@ export const useCreateSale = () => {
     orderDiscounts,
     addOrderDiscount,
     removeOrderDiscount,
+
+    // Returns
+    orderReturns,
 
     // Applied price rules
     appliedRules,

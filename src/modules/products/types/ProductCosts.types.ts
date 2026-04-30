@@ -32,6 +32,7 @@ export interface ProductCostsFilters {
   page?: number;
   size?: number;
   cost?: boolean | null;
+  category?: number | null;
 }
 
 //PaginationState, se usa el de products

@@ -4,7 +4,8 @@ import {
     ReturnType,
     Situation,
     ReturnItem,
-    ReturnProduct
+    ReturnProduct,
+    DocumentProducts
 } from "../types/Returns.types";
 
 export const returnsService = {
@@ -128,7 +129,7 @@ export const returnsService = {
         });
 
         if (error) throw error;
-        return data as { header: any; products: any[] };
+        return data as DocumentProducts;
     },
 
     async createReturn(payload: any) {
@@ -169,8 +170,8 @@ export const returnsService = {
             reason: item.reason,
             total_refund_amount: item.total_refund_amount,
             created_at: item.created_at,
-            types: { name: 'Devolución' },
-            situations: { name: 'Pendiente' },
+            types: { name: item.return_name },
+            situations: { name: item.situation_name },
             total_exchange_difference: item.otal_exchange_difference ?? item.total_exchange_difference ?? 0
         })) as ReturnItem[];
 
