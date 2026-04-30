@@ -34,6 +34,8 @@ import { useEditReturn } from "../hooks/useEditReturn";
 import { formatCurrency } from "@/shared/utils/currency";
 import { ReturnSelectionCambio } from "../components/returns/ReturnSelectionCambio";
 import { ReturnSummary } from "../components/returns/ReturnSummary";
+import { DVPProductsTable } from "../components/returns/DVPProductsTable";
+import { OrderProductsInfoTable } from "../components/returns/OrderProductsInfoTable";
 import { VoucherPreviewModal } from "@/modules/sales/components/sales/VoucherPreviewModal";
 
 const EditReturn = () => {
@@ -424,96 +426,26 @@ const EditReturn = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {/* DVT: read-only, all products included */}
-                {returnTypeCode === "DVT" && (
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Producto</TableHead>
-                          <TableHead>Variación</TableHead>
-                          <TableHead>SKU</TableHead>
-                          <TableHead>Cantidad</TableHead>
-                          <TableHead>Precio Unitario</TableHead>
-                          <TableHead>Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {returnProducts.map((product, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{product.product_name}</TableCell>
-                            <TableCell className="text-muted-foreground text-sm">
-                              {product.variation_name ?? ""}
-                            </TableCell>
-                            <TableCell>{product.sku}</TableCell>
-                            <TableCell>{product.quantity}</TableCell>
-                            <TableCell>
-                              {formatCurrency(product.price)}
-                            </TableCell>
-                            <TableCell>
-                              {formatCurrency(product.price * product.quantity)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-
-                {/* DVP / CAM: interactive picker */}
                 {(returnTypeCode === "DVT" ||
                   returnTypeCode === "DVP" ||
                   returnTypeCode === "CAM") && (
                   <>
                     <div>
                       <Label>Productos de la Orden</Label>
-                      <div className="border rounded-lg mt-2">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Producto</TableHead>
-                              <TableHead>Variación</TableHead>
-                              <TableHead>SKU</TableHead>
-                              <TableHead>Cantidad</TableHead>
-                              <TableHead>Precio</TableHead>
-                              <TableHead className="text-right">
-                                Acción
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {orderProducts.map((product) => (
-                              <TableRow key={product.id}>
-                                <TableCell>
-                                  {product.product_name ??
-                                    product.variations?.products?.title ??
-                                    ""}
-                                </TableCell>
-                                <TableCell className="text-muted-foreground text-sm">
-                                  {product.terms
-                                    ?.map((t) => t.term_name)
-                                    .join(" / ") ?? ""}
-                                </TableCell>
-                                <TableCell>
-                                  {product.sku ?? product.variations?.sku ?? ""}
-                                </TableCell>
-                                <TableCell>{product.quantity}</TableCell>
-                                <TableCell>
-                                  {formatCurrency(product.product_price)}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => addReturnProduct(product)}
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                      <div className="mt-2">
+                        {returnTypeCode === "DVT" ? (
+                          <OrderProductsInfoTable
+                            orderProducts={orderProducts}
+                            formatCurrency={formatCurrency}
+                          />
+                        ) : (
+                          <DVPProductsTable
+                            orderProducts={orderProducts}
+                            returnProducts={returnProducts}
+                            onAddProduct={addReturnProduct}
+                            formatCurrency={formatCurrency}
+                          />
+                        )}
                       </div>
                     </div>
 

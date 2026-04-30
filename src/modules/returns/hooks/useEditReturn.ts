@@ -229,7 +229,7 @@ export const useEditReturn = () => {
         }));
     }, []);
 
-    const addReturnProduct = (orderProduct: OrderProduct) => {
+    const addReturnProduct = (orderProduct: OrderProduct, quantity: number = 1) => {
         const existingProduct = returnProducts.find(
             rp => rp.product_variation_id === orderProduct.product_variation_id
         );
@@ -241,7 +241,7 @@ export const useEditReturn = () => {
 
         const newReturnProduct: ReturnProduct = {
             product_variation_id: orderProduct.product_variation_id,
-            quantity: 1,
+            quantity,
             product_name: orderProduct.product_name ?? orderProduct.variations?.products?.title ?? '',
             sku: orderProduct.sku ?? orderProduct.variations?.sku ?? '',
             variation_name: orderProduct.terms?.map(t => t.term_name).join(' / ') ?? '',
