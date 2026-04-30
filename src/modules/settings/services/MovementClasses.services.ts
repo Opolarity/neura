@@ -29,6 +29,7 @@ export const getMovementClassesApi = async (
     .from("classes")
     .select("id, name, code", { count: "exact" })
     .eq("module_id", moduleId)
+    .eq("is_active", true)
     .order("name")
     .range(from, to);
 
