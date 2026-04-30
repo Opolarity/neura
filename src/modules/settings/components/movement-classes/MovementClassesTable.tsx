@@ -82,7 +82,7 @@ const MovementClassesTable = ({
                     <Edit className="h-4 w-4" />
                   </Button>
 
-                  {item.code === null && (
+                  {!item.code && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
