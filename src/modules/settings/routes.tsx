@@ -48,7 +48,7 @@ export const settingsRoutes: RouteObject[] = [
       { path: "price-list", element: <PriceListPage /> },
       { path: "stock-types", element: <StockTypePage /> },
       { path: "business-accounts", element: <BusinessAccountPage /> },
-      { path: "movement/classes", element: <MovementClassesPage /> },
+      { path: "movement-classes", element: <MovementClassesPage /> },
     ],
   },
 ];
