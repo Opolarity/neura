@@ -279,12 +279,12 @@ const CreateReturn = () => {
                           </div>
                           <Button
                             type="button"
-                            variant="ghost"
+                            variant="destructive"
                             size="icon"
                             className="h-6 w-6"
                             onClick={() => removePayment(p.id)}
                           >
-                            <Trash2 className="w-3 h-3 text-destructive" />
+                            <Trash2 className="w-3 h-3 text-white" />
                           </Button>
                         </div>
                       );
@@ -432,6 +432,14 @@ const CreateReturn = () => {
           ) : isCAM ? (
             <Card>
               <CardContent className="pt-6 space-y-6">
+                <div>
+                  <p className="text-base font-semibold mb-3">Productos de la Orden</p>
+                  <OrderProductsInfoTable
+                    orderProducts={orderProducts}
+                    formatCurrency={currencyFormatter}
+                  />
+                </div>
+
                 <div>
                   <p className="text-base font-semibold mb-3">Productos a Devolver</p>
                   <ReturnProductsTable

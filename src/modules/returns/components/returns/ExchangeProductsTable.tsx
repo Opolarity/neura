@@ -46,14 +46,14 @@ export const ExchangeProductsTable = ({
                     <TableHead>Cantidad</TableHead>
                     <TableHead>Descuento %</TableHead>
                     <TableHead>Subtotal</TableHead>
-                    <TableHead>Vinculado a</TableHead>
+                    {/* <TableHead>Vinculado a</TableHead> */}
                     {!isReadOnly && <TableHead></TableHead>}
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {exchangeProducts.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={isReadOnly ? 7 : 8} className="text-center text-muted-foreground py-6">
+                        <TableCell colSpan={isReadOnly ? 6 : 7} className="text-center text-muted-foreground py-6">
                             Sin productos agregados
                         </TableCell>
                     </TableRow>
@@ -99,7 +99,7 @@ export const ExchangeProductsTable = ({
                         <TableCell>
                             {formatCurrency(product.price * (1 - product.discount / 100) * product.quantity)}
                         </TableCell>
-                        <TableCell>
+                        {/* <TableCell>
                             <Select
                                 value={product.linked_return_index?.toString() || ""}
                                 onValueChange={(v) => onUpdateProduct(index, "linked_return_index", v ? parseInt(v) : null)}
@@ -117,7 +117,7 @@ export const ExchangeProductsTable = ({
                                     ))}
                                 </SelectContent>
                             </Select>
-                        </TableCell>
+                        </TableCell> */}
                         {!isReadOnly && (
                             <TableCell>
                                 <Button

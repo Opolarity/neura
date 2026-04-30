@@ -83,7 +83,6 @@ export const DVPProductsTable = ({
                                     <Button
                                         type="button"
                                         size="icon"
-                                        variant="outline"
                                         onClick={() => handleAdd(product)}
                                         disabled={added}
                                     >

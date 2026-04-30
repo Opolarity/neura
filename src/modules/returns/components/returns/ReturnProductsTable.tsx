@@ -102,10 +102,10 @@ export const ReturnProductsTable = ({
                                     <Button
                                         type="button"
                                         size="icon"
-                                        variant="ghost"
+                                        variant="destructive"
                                         onClick={() => onRemoveProduct?.(orderProduct.product_variation_id)}
                                     >
-                                        <Trash2 className="w-4 h-4 text-destructive" />
+                                        <Trash2 className="w-4 h-4 text-white" />
                                     </Button>
                                 </TableCell>
                             )}
