@@ -58,7 +58,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      // Evita re-renders si el user ID no cambió (ej: TOKEN_REFRESHED en tab switch)
+      setUser(prev => {
+        const next = session?.user ?? null;
+        return prev?.id === next?.id ? prev : next;
+      });
       setLoading(false);
       maybeRefetchPermissions(session?.user ?? null);
     });
