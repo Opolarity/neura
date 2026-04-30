@@ -352,7 +352,7 @@ const EditReturn = () => {
                 )}
 
                 {/* DVP / CAM: interactive picker */}
-                {(returnTypeCode === 'DVP' || returnTypeCode === 'CAM') && (
+                {(returnTypeCode === 'DVT' || returnTypeCode === 'DVP' || returnTypeCode === 'CAM') && (
                   <>
                     {!isReadOnly && (
                       <div>
