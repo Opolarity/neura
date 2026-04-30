@@ -20,6 +20,7 @@ interface ReturnSelectionCambioProps {
     onUpdateProduct: (index: number, field: string, value: any) => void;
     onRemoveProduct: (index: number) => void;
     formatCurrency: (amount: number) => string;
+    isReadOnly?: boolean;
 }
 
 export const ReturnSelectionCambio = ({
@@ -29,6 +30,7 @@ export const ReturnSelectionCambio = ({
     onUpdateProduct,
     onRemoveProduct,
     formatCurrency,
+    isReadOnly = false,
 }: ReturnSelectionCambioProps) => {
     const {
         productStatusTypes,
@@ -69,7 +71,7 @@ export const ReturnSelectionCambio = ({
                 <CardTitle>Productos de Cambio (Salida)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="flex gap-2">
+                {!isReadOnly && <div className="flex gap-2">
                     <CMovementSelectProductTypes
                         productStatusTypes={productStatusTypes}
                         productStatusType={productStatusType?.id}
@@ -97,7 +99,7 @@ export const ReturnSelectionCambio = ({
                         <Plus className="w-4 h-4 mr-2" />
                         Agregar
                     </Button>
-                </div>
+                </div>}
 
                 <ExchangeProductsTable
                     exchangeProducts={exchangeProducts}
@@ -105,6 +107,7 @@ export const ReturnSelectionCambio = ({
                     onUpdateProduct={onUpdateProduct}
                     onRemoveProduct={onRemoveProduct}
                     formatCurrency={formatCurrency}
+                    isReadOnly={isReadOnly}
                 />
             </CardContent>
         </Card>

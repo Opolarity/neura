@@ -445,9 +445,13 @@ export const useEditReturn = () => {
         }
     };
 
+    const currentSituation = situations.find(s => s.id === Number(situationId));
+    const isReadOnly = currentSituation?.code === 'PHY' || currentSituation?.code === 'HDN';
+
     return {
         loading,
         saving,
+        isReadOnly,
         displayOrderId,
         situations,
         documentTypes,

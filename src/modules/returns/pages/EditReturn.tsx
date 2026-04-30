@@ -61,6 +61,7 @@ const EditReturn = () => {
     addExchangeProduct,
     removeExchangeProduct,
     updateExchangeProduct,
+    isReadOnly,
     displayOrderId,
     orderTotal,
     calculateReturnTotal,
@@ -109,7 +110,7 @@ const EditReturn = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="documentType">Tipo de Documento</Label>
-                  <Select value={documentType} onValueChange={setDocumentType}>
+                  <Select value={documentType} onValueChange={setDocumentType} disabled={isReadOnly}>
                     <SelectTrigger id="documentType">
                       <SelectValue placeholder="Seleccionar tipo" />
                     </SelectTrigger>
@@ -128,13 +129,14 @@ const EditReturn = () => {
                     id="documentNumber"
                     value={documentNumber}
                     onChange={(e) => setDocumentNumber(e.target.value)}
+                    disabled={isReadOnly}
                   />
                 </div>
               </div>
 
               <div>
                 <Label htmlFor="returnType">Tipo de Devolución/Cambio</Label>
-                <Select value={selectedReturnType} disabled>
+                <Select value={selectedReturnType} disabled={true}>
                   <SelectTrigger id="returnType" className="bg-muted">
                     <SelectValue placeholder="Seleccionar tipo" />
                   </SelectTrigger>
@@ -155,12 +157,13 @@ const EditReturn = () => {
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Describa el motivo de la devolución/cambio"
+                  disabled={isReadOnly}
                 />
               </div>
 
               <div>
                 <Label htmlFor="situation">Situación *</Label>
-                <Select value={situationId} onValueChange={setSituationId}>
+                <Select value={situationId} onValueChange={setSituationId} disabled={isReadOnly}>
                   <SelectTrigger id="situation">
                     <SelectValue placeholder="Seleccionar situación" />
                   </SelectTrigger>
@@ -180,6 +183,7 @@ const EditReturn = () => {
                     id="shippingReturn"
                     checked={shippingReturn}
                     onCheckedChange={setShippingReturn}
+                    disabled={isReadOnly}
                   />
                   <Label htmlFor="shippingReturn">Envío a devolver</Label>
                 </div>
@@ -350,39 +354,41 @@ const EditReturn = () => {
                 {/* DVP / CAM: interactive picker */}
                 {(returnTypeCode === 'DVP' || returnTypeCode === 'CAM') && (
                   <>
-                    <div>
-                      <Label>Productos de la Orden</Label>
-                      <div className="border rounded-lg mt-2">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Producto</TableHead>
-                              <TableHead>Variación</TableHead>
-                              <TableHead>SKU</TableHead>
-                              <TableHead>Cantidad</TableHead>
-                              <TableHead>Precio</TableHead>
-                              <TableHead className="text-right">Acción</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {orderProducts.map((product) => (
-                              <TableRow key={product.id}>
-                                <TableCell>{product.product_name ?? product.variations?.products?.title ?? ''}</TableCell>
-                                <TableCell className="text-muted-foreground text-sm">{product.terms?.map(t => t.term_name).join(' / ') ?? ''}</TableCell>
-                                <TableCell>{product.sku ?? product.variations?.sku ?? ''}</TableCell>
-                                <TableCell>{product.quantity}</TableCell>
-                                <TableCell>{formatCurrency(product.product_price)}</TableCell>
-                                <TableCell className="text-right">
-                                  <Button variant="outline" size="sm" onClick={() => addReturnProduct(product)}>
-                                    <Plus className="w-4 h-4" />
-                                  </Button>
-                                </TableCell>
+                    {!isReadOnly && (
+                      <div>
+                        <Label>Productos de la Orden</Label>
+                        <div className="border rounded-lg mt-2">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Producto</TableHead>
+                                <TableHead>Variación</TableHead>
+                                <TableHead>SKU</TableHead>
+                                <TableHead>Cantidad</TableHead>
+                                <TableHead>Precio</TableHead>
+                                <TableHead className="text-right">Acción</TableHead>
                               </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                            </TableHeader>
+                            <TableBody>
+                              {orderProducts.map((product) => (
+                                <TableRow key={product.id}>
+                                  <TableCell>{product.product_name ?? product.variations?.products?.title ?? ''}</TableCell>
+                                  <TableCell className="text-muted-foreground text-sm">{product.terms?.map(t => t.term_name).join(' / ') ?? ''}</TableCell>
+                                  <TableCell>{product.sku ?? product.variations?.sku ?? ''}</TableCell>
+                                  <TableCell>{product.quantity}</TableCell>
+                                  <TableCell>{formatCurrency(product.product_price)}</TableCell>
+                                  <TableCell className="text-right">
+                                    <Button variant="outline" size="sm" onClick={() => addReturnProduct(product)}>
+                                      <Plus className="w-4 h-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {returnProducts.length > 0 && (
                       <div>
@@ -397,7 +403,7 @@ const EditReturn = () => {
                                 <TableHead>Cantidad</TableHead>
                                 <TableHead>Precio Unitario</TableHead>
                                 <TableHead>Total</TableHead>
-                                <TableHead className="text-right">Acción</TableHead>
+                                {!isReadOnly && <TableHead className="text-right">Acción</TableHead>}
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -407,21 +413,25 @@ const EditReturn = () => {
                                   <TableCell className="text-muted-foreground text-sm">{product.variation_name ?? ''}</TableCell>
                                   <TableCell>{product.sku}</TableCell>
                                   <TableCell>
-                                    <Input
-                                      type="number"
-                                      min="1"
-                                      value={product.quantity}
-                                      onChange={(e) => updateReturnProductQuantity(index, Number(e.target.value))}
-                                      className="w-20"
-                                    />
+                                    {isReadOnly ? product.quantity : (
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        value={product.quantity}
+                                        onChange={(e) => updateReturnProductQuantity(index, Number(e.target.value))}
+                                        className="w-20"
+                                      />
+                                    )}
                                   </TableCell>
                                   <TableCell>{formatCurrency(product.price)}</TableCell>
                                   <TableCell>{formatCurrency(product.price * product.quantity)}</TableCell>
-                                  <TableCell className="text-right">
-                                    <Button variant="ghost" size="sm" onClick={() => removeReturnProduct(index)}>
-                                      <Trash2 className="w-4 h-4 text-destructive" />
-                                    </Button>
-                                  </TableCell>
+                                  {!isReadOnly && (
+                                    <TableCell className="text-right">
+                                      <Button variant="ghost" size="sm" onClick={() => removeReturnProduct(index)}>
+                                        <Trash2 className="w-4 h-4 text-destructive" />
+                                      </Button>
+                                    </TableCell>
+                                  )}
                                 </TableRow>
                               ))}
                             </TableBody>
@@ -446,6 +456,7 @@ const EditReturn = () => {
             onUpdateProduct={updateExchangeProduct}
             onRemoveProduct={removeExchangeProduct}
             formatCurrency={formatCurrency}
+            isReadOnly={isReadOnly}
           />
         )}
 
