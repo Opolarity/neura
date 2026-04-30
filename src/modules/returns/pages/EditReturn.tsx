@@ -47,6 +47,7 @@ const EditReturn = () => {
     selectedReturnType,
     returnTypeCode,
     orderSituationCode,
+    orderSituationName,
     orderProducts,
     reason,
     setReason,
@@ -126,11 +127,17 @@ const EditReturn = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {displayOrderId > 0 && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>ID Orden:</span>
-                  <span className="font-medium text-foreground">
-                    #{displayOrderId}
-                  </span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-muted-foreground">ID Orden</Label>
+                    <span className="text-sm font-medium">#{displayOrderId}</span>
+                  </div>
+                  {orderSituationName && (
+                    <div className="flex flex-col gap-1">
+                      <Label className="text-muted-foreground">Estado de orden al momento de retorno</Label>
+                      <span className="text-sm font-medium">{orderSituationName}</span>
+                    </div>
+                  )}
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4">
