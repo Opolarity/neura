@@ -37,6 +37,7 @@ export const useCreateReturn = () => {
     const [moduleId, setModuleId] = useState<number>(0);
     const [userProfile, setUserProfile] = useState<any>(null);
     const [orderTotal, setOrderTotal] = useState<number>(0);
+    const [orderSituationCode, setOrderSituationCode] = useState<string>("");
 
     // Form fields
     const [reason, setReason] = useState("");
@@ -236,6 +237,12 @@ export const useCreateReturn = () => {
             setDocumentNumber(header.document_number || selectedOrder.document_number);
             setShippingCost(header.shipping_cost || 0);
             setOrderTotal(header.total || orderTotal);
+
+            const situationCode = (header as any).order_situation?.code || '';
+            setOrderSituationCode(situationCode);
+            if (situationCode.includes('VIR')) {
+                setSituations((prev) => prev.filter((s) => s.code === 'PHY' || s.code === 'HDN'));
+            }
 
             if (selectedType?.code === "DVT") {
                 const allProducts: ReturnProduct[] = orderProductsData.map((p) => ({
@@ -563,6 +570,7 @@ export const useCreateReturn = () => {
         removeExchangeProduct,
         updateExchangeProduct,
         orderTotal,
+        orderSituationCode,
         calculateReturnTotal,
         calculateExchangeTotal,
         calculateDifference,
