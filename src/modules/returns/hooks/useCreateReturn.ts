@@ -338,6 +338,10 @@ export const useCreateReturn = () => {
         }
     };
 
+    const removeReturnProduct = (variationId: number) => {
+        setReturnProducts((prev) => prev.filter((p) => p.product_variation_id !== variationId));
+    };
+
     // ── Exchange products ──────────────────────────────────────────────────────
     const addExchangeProduct = (product: any) => {
         const termsNames = product.terms?.map((t: any) => t.name).join(" - ") || "";
@@ -566,6 +570,7 @@ export const useCreateReturn = () => {
         handleEdgeItemSelect,
         handleOrderSelect,
         toggleReturnProduct,
+        removeReturnProduct,
         addExchangeProduct,
         removeExchangeProduct,
         updateExchangeProduct,

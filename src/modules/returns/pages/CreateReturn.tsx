@@ -24,6 +24,7 @@ import { formatCurrency } from "@/shared/utils/currency";
 import { useCreateReturn } from "../hooks/useCreateReturn";
 import { OrderSelectionDialog } from "../components/returns/OrderSelectionDialog";
 import { ReturnProductsTable } from "../components/returns/ReturnProductsTable";
+import { DVPProductsTable } from "../components/returns/DVPProductsTable";
 import { ReturnSummary } from "../components/returns/ReturnSummary";
 import { ReturnSelectionCambio } from "../components/returns/ReturnSelectionCambio";
 import { VoucherPreviewModal } from "@/modules/sales/components/sales/VoucherPreviewModal";
@@ -82,6 +83,7 @@ const CreateReturn = () => {
     handleEdgeItemSelect,
     handleOrderSelect,
     toggleReturnProduct,
+    removeReturnProduct,
     addExchangeProduct,
     removeExchangeProduct,
     updateExchangeProduct,
@@ -101,6 +103,7 @@ const CreateReturn = () => {
   }
 
   const isDVT = returnTypeCode === "DVT";
+  const isDVP = returnTypeCode === "DVP";
   const isCAM = returnTypeCode === "CAM";
   const netDiff = calculateNetDifference();
   const showPaymentSection = Math.abs(netDiff) > 0;
@@ -360,28 +363,70 @@ const CreateReturn = () => {
             </Card>}
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                Productos a Devolver
-                {isDVT && <span className="text-sm font-normal text-muted-foreground ml-2">(Devolución Total - Todos los productos)</span>}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ReturnProductsTable
-                orderProducts={orderProducts}
-                returnProducts={returnProducts}
-                onQuantityChange={toggleReturnProduct}
-                isDVT={isDVT}
-                formatCurrency={currencyFormatter}
-              />
-              <div className="mt-4 text-right">
-                <p className="text-lg font-bold">
-                  Total a Devolver: {formatCurrency(calculateReturnTotal())}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {isDVP ? (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Productos de la Orden</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <DVPProductsTable
+                    orderProducts={orderProducts}
+                    returnProducts={returnProducts}
+                    onAddProduct={toggleReturnProduct}
+                    formatCurrency={currencyFormatter}
+                  />
+                </CardContent>
+              </Card>
+
+              {returnProducts.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Productos a Devolver</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ReturnProductsTable
+                      orderProducts={orderProducts}
+                      returnProducts={returnProducts}
+                      onQuantityChange={toggleReturnProduct}
+                      isDVT={false}
+                      isDVP
+                      onRemoveProduct={removeReturnProduct}
+                      formatCurrency={currencyFormatter}
+                    />
+                    <div className="mt-4 text-right">
+                      <p className="text-lg font-bold">
+                        Total a Devolver: {formatCurrency(calculateReturnTotal())}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  Productos a Devolver
+                  {isDVT && <span className="text-sm font-normal text-muted-foreground ml-2">(Devolución Total - Todos los productos)</span>}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ReturnProductsTable
+                  orderProducts={orderProducts}
+                  returnProducts={returnProducts}
+                  onQuantityChange={toggleReturnProduct}
+                  isDVT={isDVT}
+                  formatCurrency={currencyFormatter}
+                />
+                <div className="mt-4 text-right">
+                  <p className="text-lg font-bold">
+                    Total a Devolver: {formatCurrency(calculateReturnTotal())}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {isCAM && (
             <ReturnSelectionCambio
