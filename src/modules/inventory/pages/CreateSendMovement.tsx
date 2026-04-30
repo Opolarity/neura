@@ -51,7 +51,7 @@ const CreateSendMovement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-foreground">
-          Crear Envío de Inventario
+          Enviar Inventario
         </h1>
         <div className="flex gap-3">
           <Link to="/inventory/movement-requests">

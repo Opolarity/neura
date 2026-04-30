@@ -61,7 +61,7 @@ const CRequestSummary = ({
           />
         </div>
         <div className="flex-1 flex flex-col gap-2">
-          <Label>Mi Almacén (Destino)</Label>
+          <Label>Almacén de ingreso</Label>
           <Input
             className="bg-muted"
             disabled
@@ -73,7 +73,7 @@ const CRequestSummary = ({
 
       <div className="flex flex-row gap-2">
         <div className="flex-1 flex flex-col gap-2">
-          <Label>Almacén Origen (Solicitar de)</Label>
+          <Label>Almacén de Salida</Label>
           {isEditMode ? (
             <Input
               className="bg-muted"

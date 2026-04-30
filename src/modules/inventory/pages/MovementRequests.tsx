@@ -25,7 +25,7 @@ const MovementRequests = () => {
           </Button>
           <Button onClick={() => navigate("/inventory/movement-requests/create")}>
             <Plus className="mr-2 h-4 w-4" />
-            Nueva Solicitud
+            Solicitar Inventario
           </Button>
         </div>
       </div>
