@@ -34,6 +34,8 @@ interface CRequestSummaryProps {
   onWarehouseChange: (value: string) => void;
   onReasonChange: (value: string) => void;
   isEditMode?: boolean;
+  editInWarehouseName?: string;
+  editOutWarehouseName?: string;
 }
 
 const CRequestSummary = ({
@@ -47,6 +49,8 @@ const CRequestSummary = ({
   onWarehouseChange,
   onReasonChange,
   isEditMode = false,
+  editInWarehouseName,
+  editOutWarehouseName,
 }: CRequestSummaryProps) => {
   return (
     <>
@@ -61,25 +65,25 @@ const CRequestSummary = ({
           />
         </div>
         <div className="flex-1 flex flex-col gap-2">
-          <Label>Mi Almacén (Destino)</Label>
+          <Label>Almacén de ingreso</Label>
           <Input
             className="bg-muted"
             disabled
             type="text"
-            value={userWarehouseName || ""}
+            value={(isEditMode ? editInWarehouseName : userWarehouseName) || ""}
           />
         </div>
       </div>
 
       <div className="flex flex-row gap-2">
         <div className="flex-1 flex flex-col gap-2">
-          <Label>Almacén Origen (Solicitar de)</Label>
+          <Label>Almacén de Salida</Label>
           {isEditMode ? (
             <Input
               className="bg-muted"
               disabled
               type="text"
-              value={warehouses.find((w) => w.id.toString() === selectedWarehouseId)?.name || ""}
+              value={editOutWarehouseName || ""}
             />
           ) : (
             <Select value={selectedWarehouseId} onValueChange={onWarehouseChange}>

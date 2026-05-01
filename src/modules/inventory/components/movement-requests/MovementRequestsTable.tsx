@@ -6,9 +6,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Pencil, Loader2 } from "lucide-react";
+import { Pencil, Loader2, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { MovementRequestListItem } from "../../types/MovementRequestList.types";
@@ -18,7 +17,6 @@ import { es } from "date-fns/locale";
 interface Props {
   requests: MovementRequestListItem[];
   loading: boolean;
-  userWarehouseId: number | null;
 }
 
 const getSituationBadgeColor = (name?: string) => {
@@ -28,7 +26,7 @@ const getSituationBadgeColor = (name?: string) => {
   return 'bg-secondary text-secondary-foreground hover:bg-secondary';
 };
 
-export default function MovementRequestsTable({ requests, loading, userWarehouseId }: Props) {
+export default function MovementRequestsTable({ requests, loading }: Props) {
   const navigate = useNavigate();
 
   return (
@@ -80,13 +78,7 @@ export default function MovementRequestsTable({ requests, loading, userWarehouse
                 {req.situationName}
               </Badge>
             </TableCell>
-            <TableCell
-              className={`max-w-[300px] ${
-                req.lastMessageWarehouseId && req.lastMessageWarehouseId !== userWarehouseId
-                  ? "bg-yellow-100 dark:bg-yellow-900/30"
-                  : ""
-              }`}
-            >
+            <TableCell className="max-w-[300px]">
               {req.message ? (
                 <div className="space-y-0.5">
                   <span className="text-xs font-medium text-muted-foreground">
@@ -107,7 +99,7 @@ export default function MovementRequestsTable({ requests, loading, userWarehouse
                 size="icon"
                 onClick={() => navigate(`/inventory/movement-requests/edit/${req.id}`)}
               >
-                <Pencil className="h-4 w-4" />
+                <Edit className="h-4 w-4" />
               </Button>
             </TableCell>
           </TableRow>

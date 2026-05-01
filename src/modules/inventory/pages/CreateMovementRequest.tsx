@@ -6,6 +6,7 @@ import { useCreateMovementRequest } from "../hooks/useCreateMovementRequest";
 import CRequestSummary from "../components/create-movement-request/CRequestSummary";
 import CRequestProductSearch from "../components/create-movement-request/CRequestProductSearch";
 import CRequestProductTable from "../components/create-movement-request/CRequestProductTable";
+import { PageLoader } from "@/shared/components/page-loader";
 
 const CreateMovementRequest = () => {
   const {
@@ -39,8 +40,8 @@ const CreateMovementRequest = () => {
 
   if (loadingInitial) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <span className="text-muted-foreground">Cargando...</span>
+      <div className="relative w-full h-[80vh]">
+        <PageLoader message="Cargando datos de la solicitud..." />
       </div>
     );
   }
@@ -49,10 +50,10 @@ const CreateMovementRequest = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-foreground">
-          Crear Solicitud de Movimiento
+          Solicitar Inventario
         </h1>
         <div className="flex gap-3">
-          <Link to="/inventory/movements">
+          <Link to="/inventory/movement-requests">
             <Button variant="outline">Cancelar</Button>
           </Link>
           <Button onClick={sendRequest} disabled={submitting}>

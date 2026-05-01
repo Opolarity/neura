@@ -27,6 +27,7 @@ export const useEditMovementRequest = () => {
   const [selectedWarehouse, setSelectedWarehouse] = useState<SimpleWarehouse | null>(null);
   const [outWarehouseId, setOutWarehouseId] = useState<number | null>(null);
   const [inWarehouseId, setInWarehouseId] = useState<number | null>(null);
+  const [inWarehouseName, setInWarehouseName] = useState<string>("");
   const [reason, setReason] = useState("");
   const [situationName, setSituationName] = useState("");
   const [statusName, setStatusName] = useState("");
@@ -78,7 +79,7 @@ export const useEditMovementRequest = () => {
       const [userRes, warehousesRes, edgeRes] = await Promise.all([
         getUserWarehouse(),
         getWarehousesIsActiveTrue(),
-        supabase.functions.invoke(`get-stock-movement-request?id=${requestId}`, {
+        supabase.functions.invoke(`get-stock-movement-request-detail?id=${requestId}`, {
           method: "GET",
         }),
       ]);
@@ -106,6 +107,7 @@ export const useEditMovementRequest = () => {
       if (outWh) setSelectedWarehouse(outWh);
       setOutWarehouseId(outWarehouseIdNum ?? null);
       setInWarehouseId(inWarehouseIdNum ?? null);
+      setInWarehouseName(reqData.in_warehouse?.name ?? "");
 
       // Set situation data
       const currentSit = reqData.current_situation;
@@ -524,5 +526,6 @@ export const useEditMovementRequest = () => {
     toggleDisapprove,
     isSourceWarehouseUser,
     isReadOnly,
+    inWarehouseName,
   };
 };

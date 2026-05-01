@@ -56,14 +56,14 @@ const SendSummary = ({
           <Input className="bg-muted" disabled type="text" value={userName || ""} />
         </div>
         <div className="flex-1 flex flex-col gap-2">
-          <Label>Mi Almacén (Origen)</Label>
+          <Label>Almacén de salida</Label>
           <Input className="bg-muted" disabled type="text" value={userWarehouseName || ""} />
         </div>
       </div>
 
       <div className="flex flex-row gap-2">
         <div className="flex-1 flex flex-col gap-2">
-          <Label>Almacén Destino (Enviar a)</Label>
+          <Label>Almacén de Ingreso</Label>
           <Select value={selectedWarehouseId} onValueChange={onWarehouseChange}>
             <SelectTrigger>
               <SelectValue placeholder="Selecciona un almacén" />

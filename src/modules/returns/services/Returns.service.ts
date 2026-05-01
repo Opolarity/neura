@@ -4,7 +4,8 @@ import {
     ReturnType,
     Situation,
     ReturnItem,
-    ReturnProduct
+    ReturnProduct,
+    DocumentProducts
 } from "../types/Returns.types";
 
 export const returnsService = {
@@ -128,7 +129,7 @@ export const returnsService = {
         });
 
         if (error) throw error;
-        return data as { header: any; products: any[] };
+        return data as DocumentProducts;
     },
 
     async createReturn(payload: any) {

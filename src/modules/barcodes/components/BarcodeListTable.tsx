@@ -7,9 +7,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
+import { Printer, Loader2 } from "lucide-react";
 import { BarcodeListItem } from "../types/Barcodes.types";
-import { PageLoader } from "@/shared/components/page-loader";
 
 interface BarcodeListTableProps {
   items: BarcodeListItem[];
@@ -20,7 +19,11 @@ interface BarcodeListTableProps {
 const BarcodeListTable = ({ items, loading, onReprint }: BarcodeListTableProps) => {
   return (
     <div className="relative border rounded-md">
-      {loading && <PageLoader message="Cargando registros..." />}
+      {loading && items.length > 0 && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
@@ -37,14 +40,23 @@ const BarcodeListTable = ({ items, loading, onReprint }: BarcodeListTableProps) 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {!loading && items.length === 0 && (
+          {loading && items.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={10} className="text-center py-8">
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Cargando códigos de barra...
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : items.length === 0 ? (
             <TableRow>
               <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                 No hay códigos de barras generados
               </TableCell>
             </TableRow>
-          )}
-          {items.map((item) => (
+          ) : null}
+          {!loading && items.map((item) => (
             <TableRow key={item.id}>
               <TableCell>{item.id}</TableCell>
               <TableCell className="font-medium">{item.productTitle}</TableCell>

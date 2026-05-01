@@ -44,10 +44,15 @@ const EditMovementRequest = () => {
     toggleDisapprove,
     isSourceWarehouseUser,
     isReadOnly,
+    inWarehouseName,
   } = useEditMovementRequest();
 
   if (loadingInitial) {
-    return <PageLoader message="Cargando solicitud..." />;
+    return (
+      <div className="relative w-full h-[80vh]">
+        <PageLoader message="Cargando solicitud..." />
+      </div>
+    );
   }
 
   return (
@@ -75,6 +80,8 @@ const EditMovementRequest = () => {
           onWarehouseChange={handleWarehouseChange}
           onReasonChange={setReason}
           isEditMode
+          editInWarehouseName={inWarehouseName}
+          editOutWarehouseName={selectedWarehouse?.name || ""}
         />
 
         {selectedWarehouse && (

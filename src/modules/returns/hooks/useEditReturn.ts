@@ -27,6 +27,8 @@ export const useEditReturn = () => {
     const [returnTypes, setReturnTypes] = useState<any[]>([]);
     const [selectedReturnType, setSelectedReturnType] = useState<string>('');
     const [returnTypeCode, setReturnTypeCode] = useState<string>('');
+    const [orderSituationCode, setOrderSituationCode] = useState<string>('');
+    const [orderSituationName, setOrderSituationName] = useState<string>('');
     const [orderProducts, setOrderProducts] = useState<OrderProduct[]>([]);
     const [displayOrderId, setDisplayOrderId] = useState<number>(0);
     const [moduleId, setModuleId] = useState<number>(0);
@@ -65,12 +67,17 @@ export const useEditReturn = () => {
             const rawOrderProducts = response?.products ?? [];
             const header = response?.header ?? {};
 
+            const returnProductsMap = new Map(
+                (details.return_products || []).map((rp: any) => [rp.product_variation_id, rp.order_quantity])
+            );
             const orderProductsData: OrderProduct[] = rawOrderProducts.map((p: any) => ({
                 id: p.id,
                 product_variation_id: p.product_variation_id,
                 product_name: p.product_name,
                 sku: p.sku ?? '',
-                quantity: p.quantity,
+                quantity: returnProductsMap.has(p.product_variation_id)
+                    ? returnProductsMap.get(p.product_variation_id)
+                    : p.quantity,
                 product_price: p.product_price,
                 product_discount: p.product_discount ?? 0,
                 terms: p.terms ?? [],
@@ -97,6 +104,12 @@ export const useEditReturn = () => {
                 returnsService.getPaymentMethods(),
             ]);
 
+            const orderSituationCodeValue = details.order_situation?.code || '';
+            const isVirtual = orderSituationCodeValue.includes('VIR');
+            const filteredSituations = isVirtual
+                ? (situationsData || []).filter((s: any) => s.code === 'PHY' || s.code === 'HDN')
+                : (situationsData || []);
+
             setReason(details.reason || '');
             setDocumentType(details.customer_document_type_id?.toString() || '');
             setDocumentNumber(details.customer_document_number);
@@ -104,9 +117,11 @@ export const useEditReturn = () => {
             setSituationId(details.situation_id.toString());
             setSelectedReturnType(details.return_type_id.toString());
             setReturnTypeCode(details.return_type_code || '');
+            setOrderSituationCode(orderSituationCodeValue);
+            setOrderSituationName(details.order_situation?.name || '');
             setOrderProducts(orderProductsData || []);
             setDocumentTypes(docTypesData || []);
-            setSituations(situationsData || []);
+            setSituations(filteredSituations);
             setReturnTypes(typesData || []);
             setPaymentMethods(paymentMethodsData || []);
 
@@ -130,7 +145,7 @@ export const useEditReturn = () => {
                         const orderProd = orderProductsData.find(op => op.product_variation_id === rp.product_variation_id);
                         return {
                             product_variation_id: rp.product_variation_id,
-                            quantity: rp.quantity,
+                            quantity: rp.return_quantity,
                             product_name: rp.product_name || '',
                             sku: orderProd?.sku ?? '',
                             variation_name: orderProd?.terms?.map(t => t.term_name).join(' / ') ?? '',
@@ -149,7 +164,7 @@ export const useEditReturn = () => {
                         product_name: rp.product_name || '',
                         variation_name: '',
                         sku: '',
-                        quantity: rp.quantity,
+                        quantity: rp.order_quantity,
                         price: rp.product_amount || 0,
                         discount: 0,
                         linked_return_index: null,
@@ -214,7 +229,7 @@ export const useEditReturn = () => {
         }));
     }, []);
 
-    const addReturnProduct = (orderProduct: OrderProduct) => {
+    const addReturnProduct = (orderProduct: OrderProduct, quantity: number = 1) => {
         const existingProduct = returnProducts.find(
             rp => rp.product_variation_id === orderProduct.product_variation_id
         );
@@ -226,7 +241,7 @@ export const useEditReturn = () => {
 
         const newReturnProduct: ReturnProduct = {
             product_variation_id: orderProduct.product_variation_id,
-            quantity: 1,
+            quantity,
             product_name: orderProduct.product_name ?? orderProduct.variations?.products?.title ?? '',
             sku: orderProduct.sku ?? orderProduct.variations?.sku ?? '',
             variation_name: orderProduct.terms?.map(t => t.term_name).join(' / ') ?? '',
@@ -432,15 +447,21 @@ export const useEditReturn = () => {
         }
     };
 
+    const currentSituation = situations.find(s => s.id === Number(situationId));
+    const isReadOnly = currentSituation?.code === 'PHY' || currentSituation?.code === 'HDN';
+
     return {
         loading,
         saving,
+        isReadOnly,
         displayOrderId,
         situations,
         documentTypes,
         returnTypes,
         selectedReturnType,
         returnTypeCode,
+        orderSituationCode,
+        orderSituationName,
         orderProducts,
         reason,
         setReason,

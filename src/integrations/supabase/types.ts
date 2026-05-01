@@ -295,22 +295,39 @@ export type Database = {
         Row: {
           code: string | null
           created_at: string
+          function_id: number | null
+          group: string | null
           id: number
           name: string
+          views: string[] | null
         }
         Insert: {
           code?: string | null
           created_at?: string
+          function_id?: number | null
+          group?: string | null
           id?: number
           name: string
+          views?: string[] | null
         }
         Update: {
           code?: string | null
           created_at?: string
+          function_id?: number | null
+          group?: string | null
           id?: number
           name?: string
+          views?: string[] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "capabilities_function_id_fkey"
+            columns: ["function_id"]
+            isOneToOne: false
+            referencedRelation: "functions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cart_products: {
         Row: {
@@ -681,7 +698,7 @@ export type Database = {
           created_at: string
           icon: string | null
           id: number
-          location: string | null
+          location: string[] | null
           name: string
           order: number | null
           parent_function: number | null
@@ -692,7 +709,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: number
-          location?: string | null
+          location?: string[] | null
           name: string
           order?: number | null
           parent_function?: number | null
@@ -703,7 +720,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: number
-          location?: string | null
+          location?: string[] | null
           name?: string
           order?: number | null
           parent_function?: number | null
@@ -5280,6 +5297,7 @@ export type Database = {
         Returns: Json
       }
       get_user_functions: { Args: { p_user_id: string }; Returns: Json }
+      sp_get_user_views: { Args: Record<string, never>; Returns: Json }
       get_variation_by_terms: {
         Args: { p_product_id: number; terms_id: number[] }
         Returns: Json

@@ -11,7 +11,6 @@ import { posRoutes } from "@/modules/pos";
 import { movementsRoutes } from "@/modules/movements";
 import { reportsRoutes } from "@/modules/reports";
 import { settingsRoutes } from "@/modules/settings";
-import { priceListRoutes } from "@/modules/price-list";
 import { ecommerceRoutes } from "@/modules/ecommerce";
 import { barcodesRoutes } from "@/modules/barcodes";
 import { discountsRoutes } from "@/modules/discounts";
@@ -36,7 +35,6 @@ const AppRouter = () => {
         ...movementsRoutes,
         ...reportsRoutes,
         ...settingsRoutes,
-        ...priceListRoutes,
         ...ecommerceRoutes,
         ...barcodesRoutes,
         ...discountsRoutes,

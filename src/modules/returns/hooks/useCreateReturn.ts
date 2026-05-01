@@ -37,6 +37,7 @@ export const useCreateReturn = () => {
     const [moduleId, setModuleId] = useState<number>(0);
     const [userProfile, setUserProfile] = useState<any>(null);
     const [orderTotal, setOrderTotal] = useState<number>(0);
+    const [orderSituationCode, setOrderSituationCode] = useState<string>("");
 
     // Form fields
     const [reason, setReason] = useState("");
@@ -84,7 +85,7 @@ export const useCreateReturn = () => {
         const source = selectedReturnTypeCode === "CAM" ? orderSourceType : "orders";
         setEdgeSearch("");
         setEdgePagination({ p_page: 1, p_size: 5, total: 0 });
-        fetchEdgeData(source, 1, 5, "");
+        fetchEdgeData(source, selectedReturnTypeCode, 1, 5, "");
     }, [selectedReturnType, showOrderModal]);
 
     const loadInitialData = async () => {
@@ -130,6 +131,7 @@ export const useCreateReturn = () => {
 
     const fetchEdgeData = async (
         source: "orders" | "returns",
+        code: string,
         page: number,
         size: number,
         search: string
@@ -140,6 +142,7 @@ export const useCreateReturn = () => {
                 body: {
                     order: source === "orders",
                     returns: source === "returns",
+                    return_type_code: code,
                     size,
                     page,
                     search: search || null,
@@ -149,7 +152,7 @@ export const useCreateReturn = () => {
             if (error) throw error;
 
             const items = Array.isArray(data) ? data : (data?.data || []);
-            const total = data?.total_rows ?? data?.total ?? items.length;
+            const total = data?.page?.total ?? data?.total_rows ?? data?.total ?? items.length;
 
             setEdgeItems(items);
             setEdgePagination({ p_page: page, p_size: size, total });
@@ -165,23 +168,23 @@ export const useCreateReturn = () => {
         setOrderSourceType(source);
         setSelectedEdgeItem(null);
         setEdgePagination((prev) => ({ ...prev, p_page: 1 }));
-        fetchEdgeData(source, 1, edgePagination.p_size, edgeSearch);
+        fetchEdgeData(source, selectedReturnTypeCode, 1, edgePagination.p_size, edgeSearch);
     };
 
     const handleEdgeSearchChange = (search: string) => {
         setEdgeSearch(search);
         setEdgePagination((prev) => ({ ...prev, p_page: 1 }));
-        fetchEdgeData(effectiveSource, 1, edgePagination.p_size, search);
+        fetchEdgeData(effectiveSource, selectedReturnTypeCode, 1, edgePagination.p_size, search);
     };
 
     const handleEdgePageChange = (page: number) => {
         setEdgePagination((prev) => ({ ...prev, p_page: page }));
-        fetchEdgeData(effectiveSource, page, edgePagination.p_size, edgeSearch);
+        fetchEdgeData(effectiveSource, selectedReturnTypeCode, page, edgePagination.p_size, edgeSearch);
     };
 
     const handleEdgePageSizeChange = (size: number) => {
         setEdgePagination((prev) => ({ ...prev, p_size: size, p_page: 1 }));
-        fetchEdgeData(effectiveSource, 1, size, edgeSearch);
+        fetchEdgeData(effectiveSource, selectedReturnTypeCode, 1, size, edgeSearch);
     };
 
     const handleEdgeItemSelect = (item: any) => {
@@ -230,10 +233,16 @@ export const useCreateReturn = () => {
             }));
 
             setOrderProducts(orderProductsData);
-            setDocumentType(selectedOrder.document_type.toString());
-            setDocumentNumber(selectedOrder.document_number);
+            setDocumentType((header.document_type || selectedOrder.document_type).toString());
+            setDocumentNumber(header.document_number || selectedOrder.document_number);
             setShippingCost(header.shipping_cost || 0);
             setOrderTotal(header.total || orderTotal);
+
+            const situationCode = (header as any).order_situation?.code || '';
+            setOrderSituationCode(situationCode);
+            if (situationCode.includes('VIR')) {
+                setSituations((prev) => prev.filter((s) => s.code === 'PHY' || s.code === 'HDN'));
+            }
 
             if (selectedType?.code === "DVT") {
                 const allProducts: ReturnProduct[] = orderProductsData.map((p) => ({
@@ -329,6 +338,10 @@ export const useCreateReturn = () => {
         }
     };
 
+    const removeReturnProduct = (variationId: number) => {
+        setReturnProducts((prev) => prev.filter((p) => p.product_variation_id !== variationId));
+    };
+
     // ── Exchange products ──────────────────────────────────────────────────────
     const addExchangeProduct = (product: any) => {
         const termsNames = product.terms?.map((t: any) => t.name).join(" - ") || "";
@@ -392,6 +405,11 @@ export const useCreateReturn = () => {
 
         if (!selectedOrder || !selectedReturnType || !situationId) {
             toast.error("Complete todos los campos requeridos");
+            return;
+        }
+
+        if (!reason.trim()) {
+            toast.error("El motivo de la devolución/cambio es obligatorio");
             return;
         }
 
@@ -552,10 +570,12 @@ export const useCreateReturn = () => {
         handleEdgeItemSelect,
         handleOrderSelect,
         toggleReturnProduct,
+        removeReturnProduct,
         addExchangeProduct,
         removeExchangeProduct,
         updateExchangeProduct,
         orderTotal,
+        orderSituationCode,
         calculateReturnTotal,
         calculateExchangeTotal,
         calculateDifference,

@@ -111,6 +111,53 @@ export interface ProductSearchPagination {
     total: number;
 }
 
+export interface DocumentProductTerm {
+    term_id: number;
+    term_name: string;
+    term_group: string;
+    term_group_id: number;
+}
+
+export interface DocumentProductItem {
+    id: number;
+    sku: string;
+    terms: DocumentProductTerm[];
+    total: number;
+    quantity: number;
+    unit_price: number;
+    product_name: string;
+    product_price: number;
+    product_discount: number;
+    product_variation_id: number;
+}
+
+export interface DocumentOrderSituation {
+    id: number;
+    code: string;
+    name: string;
+    module_id: number;
+    status_code: string;
+    status_name: string;
+}
+
+export interface DocumentHeader {
+    total: number;
+    discount: number;
+    order_id: number;
+    subtotal: number;
+    customer_name: string;
+    document_type: number;
+    shipping_cost: number;
+    order_situation: DocumentOrderSituation;
+    order_situation_id: number;
+    customer_document_number: string;
+}
+
+export interface DocumentProducts {
+    header: DocumentHeader;
+    products: DocumentProductItem[];
+}
+
 export interface ReturnPayment {
     id: string;
     paymentMethodId: string;

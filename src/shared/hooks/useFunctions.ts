@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/modules/auth';
 
 interface Function {
   id: number;
   name: string;
   code: string | null;
   icon: string | null;
-  location: string | null;
+  location: string[] | null;
   parent_function: number | null;
   active: boolean;
   order: number | null;
@@ -20,6 +21,8 @@ interface MenuFunction extends Function {
 }
 
 export const useFunctions = () => {
+  const { permissions } = useAuth();
+  const [allFunctions, setAllFunctions] = useState<Function[]>([]);
   const [functions, setFunctions] = useState<MenuFunction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,18 +37,26 @@ export const useFunctions = () => {
           .order('order', { ascending: true, nullsFirst: false });
 
         if (error) throw error;
-
-        const transformedFunctions = transformToMenuStructure(data || []);
-        setFunctions(transformedFunctions);
+        setAllFunctions(data || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
         setLoading(false);
       }
     };
 
     fetchFunctions();
   }, []);
+
+  useEffect(() => {
+    if (permissions.permissionsLoading) return;
+
+    const filtered = permissions.role?.isAdmin
+      ? allFunctions
+      : allFunctions.filter(f => permissions.functionIds.includes(f.id));
+
+    setFunctions(transformToMenuStructure(filtered));
+    setLoading(false);
+  }, [allFunctions, permissions.permissionsLoading, permissions.role?.isAdmin, permissions.functionIds]);
 
   return { functions, loading, error };
 };
@@ -54,12 +65,12 @@ const transformToMenuStructure = (functions: Function[]): MenuFunction[] => {
   const parentFunctions = functions
     .filter(f => f.parent_function === null)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
-  
+
   return parentFunctions.map(parent => {
     const children = functions
       .filter(f => f.parent_function === parent.id)
       .sort((a, b) => (a.order || 0) - (b.order || 0));
-    
+
     if (children.length === 0) {
       return parent;
     }
