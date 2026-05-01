@@ -44,4 +44,5 @@ export interface RolePayload {
   name: string;
   admin: boolean;
   functions: number[];
+  capabilities: number[];
 }

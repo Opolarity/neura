@@ -295,22 +295,39 @@ export type Database = {
         Row: {
           code: string | null
           created_at: string
+          function_id: number | null
+          group: string | null
           id: number
           name: string
+          views: string[] | null
         }
         Insert: {
           code?: string | null
           created_at?: string
+          function_id?: number | null
+          group?: string | null
           id?: number
           name: string
+          views?: string[] | null
         }
         Update: {
           code?: string | null
           created_at?: string
+          function_id?: number | null
+          group?: string | null
           id?: number
           name?: string
+          views?: string[] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "capabilities_function_id_fkey"
+            columns: ["function_id"]
+            isOneToOne: false
+            referencedRelation: "functions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cart_products: {
         Row: {
