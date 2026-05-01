@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Loader2 } from "lucide-react";
+import { Pencil, Loader2, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { MovementRequestListItem } from "../../types/MovementRequestList.types";
@@ -99,7 +99,7 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
                 size="icon"
                 onClick={() => navigate(`/inventory/movement-requests/edit/${req.id}`)}
               >
-                <Pencil className="h-4 w-4" />
+                <Edit className="h-4 w-4" />
               </Button>
             </TableCell>
           </TableRow>
