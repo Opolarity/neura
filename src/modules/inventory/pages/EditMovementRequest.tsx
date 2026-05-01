@@ -48,7 +48,11 @@ const EditMovementRequest = () => {
   } = useEditMovementRequest();
 
   if (loadingInitial) {
-    return <PageLoader message="Cargando solicitud..." />;
+    return (
+      <div className="relative w-full h-[80vh]">
+        <PageLoader message="Cargando solicitud..." />
+      </div>
+    );
   }
 
   return (
