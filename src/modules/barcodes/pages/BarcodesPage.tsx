@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import { useBarcodes } from "../hooks/useBarcodes";
 import BarcodeConfigModal from "../components/BarcodeConfigModal";
@@ -32,7 +33,7 @@ const BarcodesPage = () => {
   } = useBarcodes();
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Código de Barras</h1>
@@ -46,11 +47,15 @@ const BarcodesPage = () => {
         </Button>
       </div>
 
-      <BarcodeListTable
-        items={barcodeList}
-        loading={listLoading}
-        onReprint={handleReprint}
-      />
+      <Card>
+        <CardContent className="p-0">
+          <BarcodeListTable
+            items={barcodeList}
+            loading={listLoading}
+            onReprint={handleReprint}
+          />
+        </CardContent>
+      </Card>
 
       <BarcodeConfigModal
         open={modalOpen}
