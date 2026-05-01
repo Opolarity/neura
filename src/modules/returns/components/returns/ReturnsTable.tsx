@@ -85,12 +85,12 @@ export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, sea
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        {formatCurrency(returnItem.total_refund_amount)}
+                                        <span className={returnItem.total_refund_amount < 0 ? 'text-red-500 font-medium' : returnItem.total_refund_amount > 0 ? 'text-emerald-500 font-medium' : ''}>
+                                            {formatCurrency(returnItem.total_refund_amount)}
+                                        </span>
                                     </TableCell>
                                     <TableCell>
-                                        <span className={returnItem.total_exchange_difference < 0 ? 'text-red-500 font-medium' : returnItem.total_exchange_difference > 0 ? 'text-emerald-500 font-medium' : ''}>
-                                            {formatCurrency(returnItem.total_exchange_difference)}
-                                        </span>
+                                        {formatCurrency(returnItem.total_exchange_difference)}
                                     </TableCell>
                                     <TableCell>{formatDate(returnItem.created_at)}</TableCell>
                                     <TableCell>
