@@ -79,7 +79,7 @@ export const useEditMovementRequest = () => {
       const [userRes, warehousesRes, edgeRes] = await Promise.all([
         getUserWarehouse(),
         getWarehousesIsActiveTrue(),
-        supabase.functions.invoke(`get-stock-movement-request?id=${requestId}`, {
+        supabase.functions.invoke(`get-stock-movement-request-detail?id=${requestId}`, {
           method: "GET",
         }),
       ]);
