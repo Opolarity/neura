@@ -44,6 +44,7 @@ const EditMovementRequest = () => {
     toggleDisapprove,
     isSourceWarehouseUser,
     isReadOnly,
+    inWarehouseName,
   } = useEditMovementRequest();
 
   if (loadingInitial) {
@@ -75,6 +76,8 @@ const EditMovementRequest = () => {
           onWarehouseChange={handleWarehouseChange}
           onReasonChange={setReason}
           isEditMode
+          editInWarehouseName={inWarehouseName}
+          editOutWarehouseName={selectedWarehouse?.name || ""}
         />
 
         {selectedWarehouse && (
