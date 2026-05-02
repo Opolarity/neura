@@ -12,7 +12,7 @@ function isViewAllowed(currentPath: string, allowedViews: string[]): boolean {
 
   return allowedViews.some(view => {
     if (currentPath === view) return true;
-    if (/\/(edit|view|open)$/.test(view)) {
+    if (/\/(edit|view|open|ticket|print)$/.test(view)) {
       return new RegExp(`^${escapeRegExp(view)}/[^/]+$`).test(currentPath);
     }
     return false;
