@@ -8,7 +8,7 @@ function escapeRegExp(str: string) {
 }
 
 function isViewAllowed(currentPath: string, allowedViews: string[]): boolean {
-  if (currentPath === "/" || currentPath === "/dashboard") return true;
+  if (currentPath === "/" || currentPath === "/") return true;
 
   return allowedViews.some(view => {
     if (currentPath === view) return true;
@@ -63,7 +63,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!allowed) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
