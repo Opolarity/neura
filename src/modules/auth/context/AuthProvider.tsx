@@ -87,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signOut = async () => {
     setPermissions({ views: [], functionIds: [], functionData: [], role: null, permissionsLoading: false });
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({scope: 'local'});
   };
 
   const refreshPermissions = useCallback(async () => {
