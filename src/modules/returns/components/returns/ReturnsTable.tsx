@@ -28,8 +28,8 @@ interface ReturnsTableProps {
     onPageSizeChange: (size: number) => void;
 }
 
-const getSituationClassName = (code?: string): string => {
-    switch (code?.toLowerCase()) {
+const getSituationClassName = (code: string): string => {
+    switch (code.toLowerCase()) {
         case "cfm": return "bg-teal-400 hover:bg-teal-500 text-white";
         case "com": return "bg-green-500 hover:bg-green-600 text-white";
         case "pen": return "bg-yellow-400 hover:bg-yellow-500 text-white";
@@ -93,7 +93,7 @@ export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, sea
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge className={getSituationClassName(returnItem.situations?.code)}>
+                                        <Badge className={returnItem.status?.code ? getSituationClassName(returnItem.status.code) : "bg-muted text-muted-foreground"}>
                                             {returnItem.situations?.name || 'N/A'}
                                         </Badge>
                                     </TableCell>
