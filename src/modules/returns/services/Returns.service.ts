@@ -171,7 +171,7 @@ export const returnsService = {
             total_refund_amount: item.total_refund_amount,
             created_at: item.created_at,
             types: { name: item.return_name },
-            situations: { name: item.situation_name },
+            situations: { name: item.situation_name, code: item.situation_code },
             total_exchange_difference: item.otal_exchange_difference ?? item.total_exchange_difference ?? 0
         })) as ReturnItem[];
 

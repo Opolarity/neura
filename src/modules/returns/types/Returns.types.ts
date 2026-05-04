@@ -84,6 +84,7 @@ export interface ReturnItem {
     };
     situations?: {
         name: string;
+        code?: string;
     };
     types?: {
         name: string;
