@@ -134,6 +134,7 @@ export const useCreateSale = () => {
   const [orderSituation, setOrderSituation] = useState<string>("");
   const [savedOrderSituation, setSavedOrderSituation] = useState<string>("");
   const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
+  const [currentSituationCode, setCurrentSituationCode] = useState<string>("");
   const [orderSaleType, setOrderSaleType] = useState<{ id: number; name: string } | null>(null);
 
   // Dropdown data
@@ -189,6 +190,7 @@ export const useCreateSale = () => {
     OrdersSituationsById[]
   >([]);
   const [originalState, setOriginalState] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<number>(0);
 
   // Load initial form data, user warehouse, and business accounts
   useEffect(() => {
@@ -349,6 +351,12 @@ export const useCreateSale = () => {
     );
     return selectedDocType?.personType === 2;
   }, [formData.documentType, salesData?.documentTypes]);
+
+  // Computed: Check if current situation code contains "VIR" (virtual - products locked by default)
+  const isVirSituation = useMemo(() => {
+    if (!orderId) return false;
+    return currentSituationCode.includes("VIR");
+  }, [currentSituationCode, orderId]);
 
   // Computed: Check if current situation has PHY code (physical - no edits allowed)
   const isPhySituation = useMemo(() => {
@@ -705,6 +713,7 @@ export const useCreateSale = () => {
       setChangeEntries(adapted.changeEntries || []);
       setOrderSituation(adapted.currentSituation);
       setSavedOrderSituation(adapted.currentSituation);
+      setCurrentSituationCode(adapted.currentSituationCode || "");
       setCurrentStatusCode(adapted.currentStatusCode || "");
       setOrderSaleType(adapted.orderSaleType || null);
       setClientFound(true);
@@ -1860,7 +1869,21 @@ export const useCreateSale = () => {
             : "Venta creada correctamente",
         });
 
-        navigate("/sales");
+        if (orderId) {
+          // Reset dirty state so the save button becomes disabled again
+          const snap = {
+            formData,
+            products: products.map(p => ({ ...p })),
+            payments: payments.map(p => ({ ...p, voucherFile: undefined, voucherPreview: undefined })),
+            changeEntries: changeEntries.map(c => ({ ...c, voucherFile: undefined, voucherPreview: undefined })),
+            orderSituation,
+            orderDiscounts,
+          };
+          setOriginalState(JSON.stringify(snap));
+          setLastSavedAt(Date.now());
+        } else {
+          navigate("/sales");
+        }
       } catch (error) {
         console.error("Error saving sale:", error);
         toast({
@@ -1945,8 +1968,9 @@ export const useCreateSale = () => {
     total,
     orderId,
     isPersonaJuridica,
-    isPhySituation: !orderId ? false : isPhySituation, // Short-circuit if not editing an order
-    isComSituation: !orderId ? false : isComSituation, // Short-circuit if not editing an order
+    isPhySituation: !orderId ? false : isPhySituation,
+    isComSituation: !orderId ? false : isComSituation,
+    isVirSituation: !orderId ? false : isVirSituation,
     filteredSituations,
     availableSaleTypes,
     filteredPaymentMethods,
@@ -2022,5 +2046,8 @@ export const useCreateSale = () => {
 
     // Is dirty
     isDirty,
+
+    // Signals
+    lastSavedAt,
   };
 };
