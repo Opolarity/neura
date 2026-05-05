@@ -190,7 +190,13 @@ export const useCreateSale = () => {
     OrdersSituationsById[]
   >([]);
   const [originalState, setOriginalState] = useState<string | null>(null);
+  const [originalProducts, setOriginalProducts] = useState<SaleProduct[]>([]);
   const [lastSavedAt, setLastSavedAt] = useState<number>(0);
+  const [productsUnlocked, setProductsUnlocked] = useState(false);
+
+  useEffect(() => {
+    if (lastSavedAt > 0) setProductsUnlocked(false);
+  }, [lastSavedAt]);
 
   // Load initial form data, user warehouse, and business accounts
   useEffect(() => {
@@ -705,6 +711,7 @@ export const useCreateSale = () => {
       // Set all state at once
       setFormData(adapted.formData);
       setProducts(adapted.products);
+      setOriginalProducts(adapted.products);
       setPayments(
         adapted.payments.length > 0
           ? adapted.payments
@@ -1707,6 +1714,60 @@ export const useCreateSale = () => {
     return JSON.stringify(currentSnap) !== originalState;
   }, [formData, products, payments, changeEntries, orderSituation, orderDiscounts, orderId, originalState]);
 
+  // Build and send a DVP return for products whose quantity was reduced vs. original order
+  const createDVPReturn = async (orderIdNum: number) => {
+    const reducedProducts = originalProducts
+      .filter((orig) => {
+        const current = products.find(
+          (p) => p.variationId === orig.variationId && p.stockTypeId === orig.stockTypeId,
+        );
+        return (current ? current.quantity : 0) < orig.quantity;
+      })
+      .map((orig) => {
+        const current = products.find(
+          (p) => p.variationId === orig.variationId && p.stockTypeId === orig.stockTypeId,
+        );
+        return {
+          product_variation_id: orig.variationId,
+          quantity: orig.quantity - (current ? current.quantity : 0),
+          product_amount: orig.price,
+          output: false,
+        };
+      });
+
+    if (reducedProducts.length === 0) return;
+
+    const [dvpTypeRes, phySituationRes, warehouseRes] = await Promise.all([
+      supabase.from("types").select("id").eq("code", "DVP").single(),
+      supabase.from("situations").select("id, status_id, module_id").eq("code", "PHY").single(),
+      supabase.from("warehouses").select("branch_id").eq("id", userWarehouseId!).single(),
+    ]);
+
+    if (!dvpTypeRes.data) throw new Error("Tipo DVP no encontrado");
+    if (!phySituationRes.data) throw new Error("Situación PHY no encontrada");
+
+    const payload = {
+      module_code: "RTU",
+      order_id: orderIdNum,
+      return_type_id: dvpTypeRes.data.id,
+      return_type_code: "DVP",
+      customer_document_number: formData.documentNumber || "",
+      customer_document_type_id: formData.documentType ? parseInt(formData.documentType) : 0,
+      reason: "Modificación de prendas en orden.",
+      shipping_return: false,
+      shipping_cost: null,
+      situation_id: phySituationRes.data.id,
+      status_id: phySituationRes.data.status_id,
+      module_id: phySituationRes.data.module_id,
+      return_products: reducedProducts,
+      branch_id: warehouseRes.data?.branch_id ?? 1,
+      warehouse_id: userWarehouseId,
+    };
+
+    const { error } = await supabase.functions.invoke("create-returns", { body: payload });
+    if (error) throw error;
+  };
+
   // Handle form submission
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -1812,6 +1873,9 @@ export const useCreateSale = () => {
         let createdOrderId = orderId ? parseInt(orderId) : null;
 
         if (orderId) {
+          if (isVirSituation && productsUnlocked) {
+            await createDVPReturn(parseInt(orderId));
+          }
           await updateOrder(parseInt(orderId), orderData);
         } else {
           const response = await createOrder(orderData);
@@ -2046,6 +2110,10 @@ export const useCreateSale = () => {
 
     // Is dirty
     isDirty,
+
+    // Products unlock (VIR situation)
+    productsUnlocked,
+    setProductsUnlocked,
 
     // Signals
     lastSavedAt,
