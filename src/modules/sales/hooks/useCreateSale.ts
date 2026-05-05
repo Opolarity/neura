@@ -190,6 +190,7 @@ export const useCreateSale = () => {
     OrdersSituationsById[]
   >([]);
   const [originalState, setOriginalState] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<number>(0);
 
   // Load initial form data, user warehouse, and business accounts
   useEffect(() => {
@@ -1868,7 +1869,21 @@ export const useCreateSale = () => {
             : "Venta creada correctamente",
         });
 
-        navigate("/sales");
+        if (orderId) {
+          // Reset dirty state so the save button becomes disabled again
+          const snap = {
+            formData,
+            products: products.map(p => ({ ...p })),
+            payments: payments.map(p => ({ ...p, voucherFile: undefined, voucherPreview: undefined })),
+            changeEntries: changeEntries.map(c => ({ ...c, voucherFile: undefined, voucherPreview: undefined })),
+            orderSituation,
+            orderDiscounts,
+          };
+          setOriginalState(JSON.stringify(snap));
+          setLastSavedAt(Date.now());
+        } else {
+          navigate("/sales");
+        }
       } catch (error) {
         console.error("Error saving sale:", error);
         toast({
@@ -2031,5 +2046,8 @@ export const useCreateSale = () => {
 
     // Is dirty
     isDirty,
+
+    // Signals
+    lastSavedAt,
   };
 };

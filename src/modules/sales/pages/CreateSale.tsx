@@ -191,10 +191,16 @@ const CreateSale = () => {
     isDirty,
     // Returns
     orderReturns,
+    // Signals
+    lastSavedAt,
   } = useCreateSale();
 
   const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
   const [productsUnlocked, setProductsUnlocked] = useState(false);
+
+  useEffect(() => {
+    if (lastSavedAt > 0) setProductsUnlocked(false);
+  }, [lastSavedAt]);
   const [returnsModalOpen, setReturnsModalOpen] = useState(false);
   const [cambiosModalOpen, setCambiosModalOpen] = useState(false);
 
