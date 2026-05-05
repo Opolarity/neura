@@ -25,7 +25,7 @@ import type {
   OrdersSituationsByIdApiResponse,
   OrdersSituationsById,
 } from "../types";
-import type { SaleReturn } from "../types/Sales.types";
+import type { SaleReturn, CurrentSituation } from "../types/Sales.types";
 
 // Adapt document types from API
 export const adaptDocumentTypes = (data: any[]): DocumentType[] => {
@@ -319,8 +319,9 @@ export const adaptSaleById = (data: any) => {
       voucherUrl: "",
       businessAccountId: e.business_account_id?.toString() || "",
     })),
-    currentSituation: data.current_situation?.situation_id?.toString() || "",
-    currentStatusCode: data.current_situation?.statuses?.code || "",
+    currentSituation: (data.current_situation as CurrentSituation | null)?.situation_id?.toString() || "",
+    currentSituationCode: (data.current_situation as CurrentSituation | null)?.situation_code || "",
+    currentStatusCode: (data.current_situation as CurrentSituation | null)?.status_code || "",
     orderWarehouseId: data.order?.warehouse_id || null,
     orderDiscounts,
     orderSaleType: data.order.sale_type_id

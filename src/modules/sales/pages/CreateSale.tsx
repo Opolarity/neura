@@ -120,6 +120,7 @@ const CreateSale = () => {
     isPersonaJuridica,
     isPhySituation,
     isComSituation,
+    isVirSituation,
     filteredSituations,
     availableSaleTypes,
     filteredPaymentMethods,
@@ -193,6 +194,7 @@ const CreateSale = () => {
   } = useCreateSale();
 
   const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
+  const [productsUnlocked, setProductsUnlocked] = useState(false);
   const [returnsModalOpen, setReturnsModalOpen] = useState(false);
   const [cambiosModalOpen, setCambiosModalOpen] = useState(false);
 
@@ -452,9 +454,21 @@ const CreateSale = () => {
           {/* Products Section - First */}
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Package className="w-5 h-5 text-primary" />
-                <CardTitle className="text-lg">Productos</CardTitle>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Package className="w-5 h-5 text-primary" />
+                  <CardTitle className="text-lg">Productos</CardTitle>
+                </div>
+                {isVirSituation && !isPhySituation && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setProductsUnlocked((prev) => !prev)}
+                  >
+                    {productsUnlocked ? "Bloquear" : "Editar"}
+                  </Button>
+                )}
               </div>
               <p className="text-sm text-muted-foreground">
                 Agregue los artículos a la orden
@@ -464,7 +478,7 @@ const CreateSale = () => {
               <div
                 className={cn(
                   "flex gap-3",
-                  isPhySituation && "opacity-50 pointer-events-none",
+                  (isPhySituation || (isVirSituation && !productsUnlocked)) && "opacity-50 pointer-events-none",
                 )}
               >
                 {/* Stock Type Selector */}
@@ -715,7 +729,7 @@ const CreateSale = () => {
                               min="1"
                               max={product.maxStock}
                               className="w-16 text-center"
-                              disabled={isPhySituation}
+                              disabled={isPhySituation || (isVirSituation && !productsUnlocked)}
                             />
 
                             <span className="text-xs text-muted-foreground mt-1">
@@ -742,7 +756,7 @@ const CreateSale = () => {
                                 product.fromOrder &&
                                   "bg-muted text-muted-foreground cursor-not-allowed pr-7",
                               )}
-                              disabled={isPhySituation || !!product.fromOrder}
+                              disabled={isPhySituation || !!product.fromOrder || (isVirSituation && !productsUnlocked)}
                             />
                             {product.fromOrder && (
                               <Lock className="absolute right-2 w-3 h-3 text-muted-foreground pointer-events-none" />
@@ -754,7 +768,7 @@ const CreateSale = () => {
                             <Input
                               type="number"
                               value={product.discountAmount}
-                              readOnly={isComSituation || isPhySituation}
+                              readOnly={isComSituation || isPhySituation || (isVirSituation && !productsUnlocked)}
                               onChange={(e) =>
                                 updateProduct(
                                   index,
@@ -766,12 +780,12 @@ const CreateSale = () => {
                               step="0.01"
                               className={cn(
                                 "w-20 text-center",
-                                (isComSituation || isPhySituation) &&
+                                (isComSituation || isPhySituation || (isVirSituation && !productsUnlocked)) &&
                                   "bg-muted text-muted-foreground cursor-not-allowed pr-7",
                               )}
-                              disabled={isComSituation || isPhySituation}
+                              disabled={isComSituation || isPhySituation || (isVirSituation && !productsUnlocked)}
                             />
-                            {(isComSituation || isPhySituation) && (
+                            {(isComSituation || isPhySituation || (isVirSituation && !productsUnlocked)) && (
                               <Lock className="absolute right-2 w-3 h-3 text-muted-foreground pointer-events-none" />
                             )}
                           </div>
@@ -786,7 +800,7 @@ const CreateSale = () => {
                             size="icon"
                             onClick={() => removeProduct(index)}
                             className="text-destructive hover:text-destructive"
-                            disabled={isPhySituation}
+                            disabled={isPhySituation || (isVirSituation && !productsUnlocked)}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
