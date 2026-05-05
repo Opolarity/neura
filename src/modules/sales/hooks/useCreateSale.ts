@@ -1714,9 +1714,10 @@ export const useCreateSale = () => {
     return JSON.stringify(currentSnap) !== originalState;
   }, [formData, products, payments, changeEntries, orderSituation, orderDiscounts, orderId, originalState]);
 
-  // Build and send a DVP return for products whose quantity was reduced vs. original order
-  const createDVPReturn = async (orderIdNum: number) => {
-    const reducedProducts = originalProducts
+  // Build and send a CAM return for products whose quantity changed (reduced, increased, or newly added)
+  const createCAMReturn = async (orderIdNum: number) => {
+    // Products that were reduced or fully removed (output: false = entering stock back)
+    const returnedProducts = originalProducts
       .filter((orig) => {
         const current = products.find(
           (p) => p.variationId === orig.variationId && p.stockTypeId === orig.stockTypeId,
@@ -1735,31 +1736,53 @@ export const useCreateSale = () => {
         };
       });
 
-    if (reducedProducts.length === 0) return;
+    // Products that were increased or newly added (output: true = going out)
+    const exchangedProducts = products
+      .filter((p) => !p.isGift)
+      .filter((p) => {
+        const orig = originalProducts.find(
+          (o) => o.variationId === p.variationId && o.stockTypeId === p.stockTypeId,
+        );
+        return !orig || p.quantity > orig.quantity;
+      })
+      .map((p) => {
+        const orig = originalProducts.find(
+          (o) => o.variationId === p.variationId && o.stockTypeId === p.stockTypeId,
+        );
+        return {
+          product_variation_id: p.variationId,
+          quantity: orig ? p.quantity - orig.quantity : p.quantity,
+          product_amount: p.price,
+          output: true,
+        };
+      });
 
-    const [dvpTypeRes, phySituationRes, warehouseRes] = await Promise.all([
-      supabase.from("types").select("id").eq("code", "DVP").single(),
+    const allChangedProducts = [...returnedProducts, ...exchangedProducts];
+    if (allChangedProducts.length === 0) return;
+
+    const [camTypeRes, phySituationRes, warehouseRes] = await Promise.all([
+      supabase.from("types").select("id").eq("code", "CAM").single(),
       supabase.from("situations").select("id, status_id, module_id").eq("code", "PHY").single(),
       supabase.from("warehouses").select("branch_id").eq("id", userWarehouseId!).single(),
     ]);
 
-    if (!dvpTypeRes.data) throw new Error("Tipo DVP no encontrado");
+    if (!camTypeRes.data) throw new Error("Tipo CAM no encontrado");
     if (!phySituationRes.data) throw new Error("Situación PHY no encontrada");
 
     const payload = {
       module_code: "RTU",
       order_id: orderIdNum,
-      return_type_id: dvpTypeRes.data.id,
-      return_type_code: "DVP",
+      return_type_id: camTypeRes.data.id,
+      return_type_code: "CAM",
       customer_document_number: formData.documentNumber || "",
       customer_document_type_id: formData.documentType ? parseInt(formData.documentType) : 0,
-      reason: "Modificación de prendas en orden.",
+      reason: "Cambio de prendas en orden.",
       shipping_return: false,
       shipping_cost: null,
       situation_id: phySituationRes.data.id,
       status_id: phySituationRes.data.status_id,
       module_id: phySituationRes.data.module_id,
-      return_products: reducedProducts,
+      return_products: allChangedProducts,
       branch_id: warehouseRes.data?.branch_id ?? 1,
       warehouse_id: userWarehouseId,
     };
@@ -1874,7 +1897,7 @@ export const useCreateSale = () => {
 
         if (orderId) {
           if (isVirSituation && productsUnlocked) {
-            await createDVPReturn(parseInt(orderId));
+            await createCAMReturn(parseInt(orderId));
           }
           await updateOrder(parseInt(orderId), orderData);
         } else {
