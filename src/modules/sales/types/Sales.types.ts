@@ -60,6 +60,7 @@ export interface SaleSituation {
   name: string;
 }
 
+// Sale returns
 export interface SaleReturnPayment {
   id: number;
   amount: number;
