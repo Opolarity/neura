@@ -441,6 +441,7 @@ const EditReturn = () => {
                             returnProducts={returnProducts}
                             onAddProduct={addReturnProduct}
                             formatCurrency={formatCurrency}
+                            isReadOnly={isReadOnly}
                           />
                         )}
                       </div>
