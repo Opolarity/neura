@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { returnsService } from "../services/Returns.service";
@@ -21,7 +22,8 @@ const createEmptyPayment = (): ReturnPayment => ({
 });
 
 export const useCreateReturn = () => {
-const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showOrderModal, setShowOrderModal] = useState(true);
     const [returnTypes, setReturnTypes] = useState<ReturnType[]>([]);
@@ -504,7 +506,7 @@ const [loading, setLoading] = useState(true);
             if (!data?.success) throw new Error(data?.error || "Error al crear la devolución");
 
             toast.success("Devolución/Cambio creado exitosamente");
-            window.location.reload();
+            navigate("/returns");
         } catch (error: any) {
             console.error("Error creating return:", error);
             toast.error(error.message || "Error al crear la devolución/cambio");

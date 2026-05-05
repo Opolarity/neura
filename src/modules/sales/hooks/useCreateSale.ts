@@ -1763,7 +1763,7 @@ export const useCreateSale = () => {
     const [camTypeRes, phySituationRes, warehouseRes] = await Promise.all([
       supabase.from("types").select("id").eq("code", "CAM").single(),
       supabase.from("situations").select("id, status_id, module_id").eq("code", "PHY").single(),
-      supabase.from("warehouses").select("branch_id").eq("id", userWarehouseId!).single(),
+      supabase.from("branches").select("id").eq("warehouse_id", userWarehouseId!).single(),
     ]);
 
     if (!camTypeRes.data) throw new Error("Tipo CAM no encontrado");
@@ -1783,7 +1783,7 @@ export const useCreateSale = () => {
       status_id: phySituationRes.data.status_id,
       module_id: phySituationRes.data.module_id,
       return_products: allChangedProducts,
-      branch_id: warehouseRes.data?.branch_id ?? 1,
+      branch_id: warehouseRes.data?.id ?? 1,
       warehouse_id: userWarehouseId,
     };
 
@@ -1969,7 +1969,7 @@ export const useCreateSale = () => {
           setOriginalState(JSON.stringify(snap));
           setLastSavedAt(Date.now());
         } else {
-          navigate("/sales");
+          window.location.reload();
         }
       } catch (error) {
         console.error("Error saving sale:", error);
