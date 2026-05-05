@@ -1763,7 +1763,7 @@ export const useCreateSale = () => {
     const [camTypeRes, phySituationRes, warehouseRes] = await Promise.all([
       supabase.from("types").select("id").eq("code", "CAM").single(),
       supabase.from("situations").select("id, status_id, module_id").eq("code", "PHY").single(),
-      supabase.from("branches").select("id").eq("warehouse_id", userWarehouseId!).single(),
+      supabase.from("branches").select("id").eq("warehouse_id", userWarehouseId!).neq("name", "").single(),
     ]);
 
     if (!camTypeRes.data) throw new Error("Tipo CAM no encontrado");
@@ -1957,19 +1957,9 @@ export const useCreateSale = () => {
         });
 
         if (orderId) {
-          // Reset dirty state so the save button becomes disabled again
-          const snap = {
-            formData,
-            products: products.map(p => ({ ...p })),
-            payments: payments.map(p => ({ ...p, voucherFile: undefined, voucherPreview: undefined })),
-            changeEntries: changeEntries.map(c => ({ ...c, voucherFile: undefined, voucherPreview: undefined })),
-            orderSituation,
-            orderDiscounts,
-          };
-          setOriginalState(JSON.stringify(snap));
-          setLastSavedAt(Date.now());
-        } else {
           window.location.reload();
+        } else {
+          navigate("/sales");
         }
       } catch (error) {
         console.error("Error saving sale:", error);
