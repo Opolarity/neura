@@ -28,6 +28,19 @@ interface ReturnsTableProps {
     onPageSizeChange: (size: number) => void;
 }
 
+const getSituationClassName = (code: string): string => {
+    switch (code.toLowerCase()) {
+        case "cfm": return "bg-teal-400 hover:bg-teal-500 text-white";
+        case "com": return "bg-green-500 hover:bg-green-600 text-white";
+        case "pen": return "bg-yellow-400 hover:bg-yellow-500 text-white";
+        case "drf": return "bg-cyan-200 hover:bg-cyan-300 text-cyan-900";
+        case "can": return "bg-red-500 hover:bg-red-600 text-white";
+        case "phy": return "bg-blue-400 hover:bg-blue-500 text-white";
+        case "hdn": return "bg-gray-400 hover:bg-gray-500 text-white";
+        default:    return "bg-muted text-muted-foreground";
+    }
+};
+
 export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, search, onSearchChange, pagination, onPageChange, onPageSizeChange }: ReturnsTableProps) => {
     const navigate = useNavigate();
 
@@ -80,7 +93,7 @@ export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, sea
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge>
+                                        <Badge className={returnItem.status?.code ? getSituationClassName(returnItem.status.code) : "bg-muted text-muted-foreground"}>
                                             {returnItem.situations?.name || 'N/A'}
                                         </Badge>
                                     </TableCell>

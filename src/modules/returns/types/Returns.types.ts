@@ -84,6 +84,7 @@ export interface ReturnItem {
     };
     situations?: {
         name: string;
+        code?: string;
     };
     types?: {
         name: string;
@@ -92,6 +93,9 @@ export interface ReturnItem {
     return_type_id?: number;
     customer_document_type_id?: number | null;
     situation_id?: number;
+    status?: {
+        code: string;
+    };
 }
 
 export interface SearchProduct {
