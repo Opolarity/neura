@@ -8,10 +8,22 @@ function escapeRegExp(str: string) {
 }
 
 function isViewAllowed(currentPath: string, allowedViews: string[]): boolean {
-  if (currentPath === "/" || currentPath === "/") return true;
+  if (currentPath === "/") return true;
 
   return allowedViews.some(view => {
     if (currentPath === view) return true;
+    // Patrón con segmentos :param (ej: /sales/edit/:id)
+    if (view.includes("/:")) {
+      const pattern =
+        "^" +
+        view
+          .split("/")
+          .map(seg => (seg.startsWith(":") ? "[^/]+" : escapeRegExp(seg)))
+          .join("/") +
+        "$";
+      return new RegExp(pattern).test(currentPath);
+    }
+    // Legacy: view termina en /edit, /view, etc. sin :param
     if (/\/(edit|view|open|ticket|print)$/.test(view)) {
       return new RegExp(`^${escapeRegExp(view)}/[^/]+$`).test(currentPath);
     }
