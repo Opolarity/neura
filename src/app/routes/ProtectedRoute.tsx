@@ -8,11 +8,23 @@ function escapeRegExp(str: string) {
 }
 
 function isViewAllowed(currentPath: string, allowedViews: string[]): boolean {
-  if (currentPath === "/" || currentPath === "/dashboard") return true;
+  if (currentPath === "/") return true;
 
   return allowedViews.some(view => {
     if (currentPath === view) return true;
-    if (/\/(edit|view|open)$/.test(view)) {
+    // Patrón con segmentos :param (ej: /sales/edit/:id)
+    if (view.includes("/:")) {
+      const pattern =
+        "^" +
+        view
+          .split("/")
+          .map(seg => (seg.startsWith(":") ? "[^/]+" : escapeRegExp(seg)))
+          .join("/") +
+        "$";
+      return new RegExp(pattern).test(currentPath);
+    }
+    // Legacy: view termina en /edit, /view, etc. sin :param
+    if (/\/(edit|view|open|ticket|print)$/.test(view)) {
       return new RegExp(`^${escapeRegExp(view)}/[^/]+$`).test(currentPath);
     }
     return false;
@@ -63,7 +75,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!allowed) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;

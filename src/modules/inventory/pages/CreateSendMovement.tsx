@@ -6,6 +6,7 @@ import { useCreateSendMovement } from "../hooks/useCreateSendMovement";
 import SendSummary from "../components/send-movement/SendSummary";
 import CRequestProductSearch from "../components/create-movement-request/CRequestProductSearch";
 import SendProductTable from "../components/send-movement/SendProductTable";
+import { PageLoader } from "@/shared/components/page-loader";
 
 const CreateSendMovement = () => {
   const {
@@ -41,8 +42,8 @@ const CreateSendMovement = () => {
 
   if (loadingInitial) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <span className="text-muted-foreground">Cargando...</span>
+      <div className="relative w-full h-[80vh]">
+        <PageLoader message="Cargando datos de envío del inventario...." />
       </div>
     );
   }
