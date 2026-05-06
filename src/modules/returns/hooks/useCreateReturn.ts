@@ -38,6 +38,7 @@ export const useCreateReturn = () => {
     const [userProfile, setUserProfile] = useState<any>(null);
     const [orderTotal, setOrderTotal] = useState<number>(0);
     const [orderSituationCode, setOrderSituationCode] = useState<string>("");
+    const [orderSituationName, setOrderSituationName] = useState<string>("");
 
     // Form fields
     const [reason, setReason] = useState("");
@@ -239,7 +240,9 @@ export const useCreateReturn = () => {
             setOrderTotal(header.total || orderTotal);
 
             const situationCode = (header as any).order_situation?.code || '';
+            const situationName = (header as any).order_situation_name || '';
             setOrderSituationCode(situationCode);
+            setOrderSituationName(situationName);
             if (situationCode.includes('VIR')) {
                 setSituations((prev) => prev.filter((s) => s.code === 'PHY' || s.code === 'HDN'));
             }
@@ -576,6 +579,7 @@ export const useCreateReturn = () => {
         updateExchangeProduct,
         orderTotal,
         orderSituationCode,
+        orderSituationName,
         calculateReturnTotal,
         calculateExchangeTotal,
         calculateDifference,

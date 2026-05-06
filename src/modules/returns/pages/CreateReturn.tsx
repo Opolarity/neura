@@ -1,24 +1,27 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Plus, Trash2, CreditCard, Paperclip, Upload, X } from "lucide-react";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+  Loader2,
+  ArrowLeft,
+  Plus,
+  Trash2,
+  CreditCard,
+  Paperclip,
+  Upload,
+  X,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/shared/utils/currency";
 
 import { useCreateReturn } from "../hooks/useCreateReturn";
@@ -90,10 +93,11 @@ const CreateReturn = () => {
     updateExchangeProduct,
     orderTotal,
     orderSituationCode,
+    orderSituationName,
     calculateReturnTotal,
     calculateExchangeTotal,
     calculateNetDifference,
-    handleSubmit
+    handleSubmit,
   } = useCreateReturn();
 
   if (loading) {
@@ -119,7 +123,10 @@ const CreateReturn = () => {
     <>
       <OrderSelectionDialog
         open={showOrderModal}
-        onOpenChange={(open) => { setShowOrderModal(open); if (!open) navigate("/returns"); }}
+        onOpenChange={(open) => {
+          setShowOrderModal(open);
+          if (!open) navigate("/returns");
+        }}
         returnTypes={returnTypes}
         selectedReturnType={selectedReturnType}
         onReturnTypeChange={setSelectedReturnType}
@@ -140,20 +147,26 @@ const CreateReturn = () => {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/returns")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/returns")}
+            >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
               <h1 className="text-3xl font-bold">Nueva Devolución/Cambio</h1>
-              {returnTypeCode && (
-                <Badge variant="outline" className="mt-1">
-                  {returnTypes.find(t => t.code === returnTypeCode)?.name}
-                </Badge>
-              )}
+              <p className="text-muted-foreground mt-1">
+                Completa la información de la devolución o cambio
+              </p>
             </div>
           </div>
           <div className="flex gap-4">
-            <Button type="button" variant="outline" onClick={() => navigate("/returns")}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate("/returns")}
+            >
               Cancelar
             </Button>
             <Button type="submit" form="return-form" disabled={saving}>
@@ -164,7 +177,9 @@ const CreateReturn = () => {
         </div>
 
         <form id="return-form" onSubmit={handleSubmit} className="space-y-6">
-          <div className={`grid gap-6 items-start ${showPaymentSection ? 'grid-cols-[700px_1fr]' : 'grid-cols-1'}`}>
+          <div
+            className={`grid gap-6 items-start ${showPaymentSection ? "grid-cols-[700px_1fr]" : "grid-cols-1"}`}
+          >
             <Card>
               <CardHeader>
                 <CardTitle>Información Básica</CardTitle>
@@ -175,27 +190,23 @@ const CreateReturn = () => {
                     <Label>ID de Orden</Label>
                     <Input value={selectedOrder?.id || ""} disabled />
                   </div>
-                  <div>
-                    <Label>Situación *</Label>
-                    <Select value={situationId} onValueChange={setSituationId} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione la situación" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {situations.map((situation) => (
-                          <SelectItem key={situation.id} value={situation.id.toString()}>
-                            {situation.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+
+                  <div className="flex flex-col gap-1">
+                    <Label>
+                      Estado de orden al momento de retorno
+                    </Label>
+                    <Input value={orderSituationName} disabled />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Tipo de Documento</Label>
-                    <Select value={documentType} onValueChange={setDocumentType} required>
+                    <Select
+                      value={documentType}
+                      onValueChange={setDocumentType}
+                      required
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -219,6 +230,22 @@ const CreateReturn = () => {
                 </div>
 
                 <div>
+                  <Label htmlFor="returnType">Tipo de Devolución/Cambio</Label>
+                  <Select value={selectedReturnType} disabled={true}>
+                    <SelectTrigger id="returnType" className="bg-muted">
+                      <SelectValue placeholder="Seleccionar tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {returnTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id.toString()}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
                   <Label>Razón de la Devolución/Cambio *</Label>
                   <Textarea
                     value={reason}
@@ -226,6 +253,29 @@ const CreateReturn = () => {
                     rows={3}
                     required
                   />
+                </div>
+
+                <div>
+                  <Label>Situación *</Label>
+                  <Select
+                    value={situationId}
+                    onValueChange={setSituationId}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione la situación" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {situations.map((situation) => (
+                        <SelectItem
+                          key={situation.id}
+                          value={situation.id.toString()}
+                        >
+                          {situation.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex items-center justify-between p-4 border rounded-lg">
@@ -244,7 +294,9 @@ const CreateReturn = () => {
                         type="number"
                         step="0.01"
                         value={shippingCost}
-                        onChange={(e) => setShippingCost(parseFloat(e.target.value) || 0)}
+                        onChange={(e) =>
+                          setShippingCost(parseFloat(e.target.value) || 0)
+                        }
                         className="w-32"
                       />
                     </div>
@@ -253,125 +305,195 @@ const CreateReturn = () => {
               </CardContent>
             </Card>
 
-            {showPaymentSection && <Card>
-              <div className="col-span-2">
-                {/* Pagos registrados */}
-                {payments.filter((p) => p.paymentMethodId).length > 0 && (
-                  <div className="space-y-2 mb-3">
-                    <Label className="text-sm font-medium">Pagos Registrados</Label>
-                    {payments.filter((p) => p.paymentMethodId).map((p) => {
-                      const method = paymentMethods.find((pm) => pm.id.toString() === p.paymentMethodId);
-                      return (
-                        <div key={p.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm">{method?.name || "Método"}</span>
-                            <span className="text-sm font-medium">{formatCurrency(parseFloat(p.amount) || 0)}</span>
-                            {p.voucherPreview && (
+            {showPaymentSection && (
+              <Card>
+                <div className="col-span-2">
+                  {/* Pagos registrados */}
+                  {payments.filter((p) => p.paymentMethodId).length > 0 && (
+                    <div className="space-y-2 mb-3">
+                      <Label className="text-sm font-medium">
+                        Pagos Registrados
+                      </Label>
+                      {payments
+                        .filter((p) => p.paymentMethodId)
+                        .map((p) => {
+                          const method = paymentMethods.find(
+                            (pm) => pm.id.toString() === p.paymentMethodId,
+                          );
+                          return (
+                            <div
+                              key={p.id}
+                              className="flex items-center justify-between p-2 bg-muted/50 rounded-md"
+                            >
+                              <div className="flex items-center gap-2">
+                                <CreditCard className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-sm">
+                                  {method?.name || "Método"}
+                                </span>
+                                <span className="text-sm font-medium">
+                                  {formatCurrency(parseFloat(p.amount) || 0)}
+                                </span>
+                                {p.voucherPreview && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => {
+                                      setSelectedVoucherPreview(
+                                        p.voucherPreview!,
+                                      );
+                                      setVoucherModalOpen(true);
+                                    }}
+                                    title="Ver comprobante"
+                                  >
+                                    <Paperclip className="w-3 h-3 text-primary" />
+                                  </Button>
+                                )}
+                              </div>
                               <Button
                                 type="button"
-                                variant="ghost"
+                                variant="destructive"
                                 size="icon"
                                 className="h-6 w-6"
-                                onClick={() => { setSelectedVoucherPreview(p.voucherPreview!); setVoucherModalOpen(true); }}
-                                title="Ver comprobante"
+                                onClick={() => removePayment(p.id)}
                               >
-                                <Paperclip className="w-3 h-3 text-primary" />
+                                <Trash2 className="w-3 h-3 text-white" />
                               </Button>
-                            )}
-                          </div>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => removePayment(p.id)}
-                          >
-                            <Trash2 className="w-3 h-3 text-white" />
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                {/* Agregar nuevo pago */}
-                <div className="space-y-2 p-3 border rounded-md bg-muted/30">
-                  <Label className="text-sm font-medium">Método de Pago *</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Select
-                      value={currentPayment.paymentMethodId}
-                      onValueChange={(v) => setCurrentPayment((prev) => ({ ...prev, paymentMethodId: v }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione método" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {paymentMethods.map((pm) => (
-                          <SelectItem key={pm.id} value={pm.id.toString()}>
-                            {pm.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={currentPayment.amount}
-                      onChange={(e) => {
-                        const alreadyPaid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-                        const remaining = maxPaymentAmount - alreadyPaid;
-                        const val = parseFloat(e.target.value);
-                        const clamped = !isNaN(val) && val > remaining ? remaining.toFixed(2) : e.target.value;
-                        setCurrentPayment((prev) => ({ ...prev, amount: clamped }));
-                      }}
-                      max={maxPaymentAmount - payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)}
-                      placeholder="Monto"
-                      onFocus={(e) => e.target.select()}
-                    />
-                  </div>
-                  {/* Voucher preview */}
-                  {currentPayment.voucherPreview && (
-                    <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-                      <img src={currentPayment.voucherPreview} alt="Comprobante" className="h-10 w-10 object-cover rounded" />
-                      <span className="text-xs text-muted-foreground flex-1 truncate">{currentPayment.voucherFile?.name}</span>
-                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={removeVoucher}>
-                        <X className="w-3 h-3 text-destructive" />
-                      </Button>
+                            </div>
+                          );
+                        })}
                     </div>
                   )}
-                  <input
-                    type="file"
-                    ref={voucherFileInputRef}
-                    className="hidden"
-                    accept="image/*,.pdf"
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleVoucherSelect(f); e.target.value = ""; }}
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      type="button"
-                      variant={currentPayment.voucherPreview ? "default" : "outline"}
-                      size="sm"
-                      className="w-full"
-                      onClick={() => voucherFileInputRef.current?.click()}
-                    >
-                      <Upload className="w-4 h-4 mr-1" />
-                      {currentPayment.voucherPreview ? "Cambiar" : "Comprobante"}
-                    </Button>
-                    <Button type="button" variant="secondary" size="sm" className="w-full" onClick={addPayment}>
-                      <Plus className="w-4 h-4 mr-1" />
-                      Agregar
-                    </Button>
+                  {/* Agregar nuevo pago */}
+                  <div className="space-y-2 p-3 border rounded-md bg-muted/30">
+                    <Label className="text-sm font-medium">
+                      Método de Pago *
+                    </Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Select
+                        value={currentPayment.paymentMethodId}
+                        onValueChange={(v) =>
+                          setCurrentPayment((prev) => ({
+                            ...prev,
+                            paymentMethodId: v,
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione método" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {paymentMethods.map((pm) => (
+                            <SelectItem key={pm.id} value={pm.id.toString()}>
+                              {pm.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={currentPayment.amount}
+                        onChange={(e) => {
+                          const alreadyPaid = payments.reduce(
+                            (sum, p) => sum + (parseFloat(p.amount) || 0),
+                            0,
+                          );
+                          const remaining = maxPaymentAmount - alreadyPaid;
+                          const val = parseFloat(e.target.value);
+                          const clamped =
+                            !isNaN(val) && val > remaining
+                              ? remaining.toFixed(2)
+                              : e.target.value;
+                          setCurrentPayment((prev) => ({
+                            ...prev,
+                            amount: clamped,
+                          }));
+                        }}
+                        max={
+                          maxPaymentAmount -
+                          payments.reduce(
+                            (sum, p) => sum + (parseFloat(p.amount) || 0),
+                            0,
+                          )
+                        }
+                        placeholder="Monto"
+                        onFocus={(e) => e.target.select()}
+                      />
+                    </div>
+                    {/* Voucher preview */}
+                    {currentPayment.voucherPreview && (
+                      <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+                        <img
+                          src={currentPayment.voucherPreview}
+                          alt="Comprobante"
+                          className="h-10 w-10 object-cover rounded"
+                        />
+                        <span className="text-xs text-muted-foreground flex-1 truncate">
+                          {currentPayment.voucherFile?.name}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={removeVoucher}
+                        >
+                          <X className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      ref={voucherFileInputRef}
+                      className="hidden"
+                      accept="image/*,.pdf"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleVoucherSelect(f);
+                        e.target.value = "";
+                      }}
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        type="button"
+                        variant={
+                          currentPayment.voucherPreview ? "default" : "outline"
+                        }
+                        size="sm"
+                        className="w-full"
+                        onClick={() => voucherFileInputRef.current?.click()}
+                      >
+                        <Upload className="w-4 h-4 mr-1" />
+                        {currentPayment.voucherPreview
+                          ? "Cambiar"
+                          : "Comprobante"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="w-full"
+                        onClick={addPayment}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Agregar
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>}
+              </Card>
+            )}
           </div>
 
           {isDVP ? (
             <Card>
               <CardContent className="pt-6 space-y-6">
                 <div>
-                  <p className="text-base font-semibold mb-3">Productos de la Orden</p>
+                  <p className="text-base font-semibold mb-3">
+                    Productos de la Orden
+                  </p>
                   <DVPProductsTable
                     orderProducts={orderProducts}
                     returnProducts={returnProducts}
@@ -381,7 +503,9 @@ const CreateReturn = () => {
                 </div>
 
                 <div>
-                  <p className="text-base font-semibold mb-3">Productos a Devolver</p>
+                  <p className="text-base font-semibold mb-3">
+                    Productos a Devolver
+                  </p>
                   <ReturnProductsTable
                     orderProducts={orderProducts}
                     returnProducts={returnProducts}
@@ -394,7 +518,8 @@ const CreateReturn = () => {
                   {returnProducts.length > 0 && (
                     <div className="mt-4 text-right">
                       <p className="text-lg font-bold">
-                        Total a Devolver: {formatCurrency(calculateReturnTotal())}
+                        Total a Devolver:{" "}
+                        {formatCurrency(calculateReturnTotal())}
                       </p>
                     </div>
                   )}
@@ -405,7 +530,9 @@ const CreateReturn = () => {
             <Card>
               <CardContent className="pt-6 space-y-6">
                 <div>
-                  <p className="text-base font-semibold mb-3">Productos de la Orden</p>
+                  <p className="text-base font-semibold mb-3">
+                    Productos de la Orden
+                  </p>
                   <OrderProductsInfoTable
                     orderProducts={orderProducts}
                     formatCurrency={currencyFormatter}
@@ -415,7 +542,9 @@ const CreateReturn = () => {
                 <div>
                   <p className="text-base font-semibold mb-3">
                     Productos a Devolver
-                    <span className="text-sm font-normal text-muted-foreground ml-2">(Devolución Total - Todos los productos)</span>
+                    <span className="text-sm font-normal text-muted-foreground ml-2">
+                      (Devolución Total - Todos los productos)
+                    </span>
                   </p>
                   <ReturnProductsTable
                     orderProducts={orderProducts}
@@ -436,7 +565,9 @@ const CreateReturn = () => {
             <Card>
               <CardContent className="pt-6 space-y-6">
                 <div>
-                  <p className="text-base font-semibold mb-3">Productos de la Orden</p>
+                  <p className="text-base font-semibold mb-3">
+                    Productos de la Orden
+                  </p>
                   <DVPProductsTable
                     orderProducts={orderProducts}
                     returnProducts={returnProducts}
@@ -446,7 +577,9 @@ const CreateReturn = () => {
                 </div>
 
                 <div>
-                  <p className="text-base font-semibold mb-3">Productos a Devolver</p>
+                  <p className="text-base font-semibold mb-3">
+                    Productos a Devolver
+                  </p>
                   <ReturnProductsTable
                     orderProducts={orderProducts}
                     returnProducts={returnProducts}
@@ -459,14 +592,17 @@ const CreateReturn = () => {
                   {returnProducts.length > 0 && (
                     <div className="mt-4 text-right">
                       <p className="text-lg font-bold">
-                        Total a Devolver: {formatCurrency(calculateReturnTotal())}
+                        Total a Devolver:{" "}
+                        {formatCurrency(calculateReturnTotal())}
                       </p>
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <p className="text-base font-semibold mb-3">Productos de Cambio (Salida)</p>
+                  <p className="text-base font-semibold mb-3">
+                    Productos de Cambio (Salida)
+                  </p>
                   <ReturnSelectionCambio
                     exchangeProducts={exchangeProducts}
                     returnProducts={returnProducts}
@@ -511,7 +647,7 @@ const CreateReturn = () => {
             formatCurrency={currencyFormatter}
           />
         </form>
-      </div >
+      </div>
       <VoucherPreviewModal
         open={voucherModalOpen}
         onOpenChange={setVoucherModalOpen}

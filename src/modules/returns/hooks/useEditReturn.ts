@@ -164,7 +164,7 @@ export const useEditReturn = () => {
                         product_name: rp.product_name || '',
                         variation_name: '',
                         sku: '',
-                        quantity: rp.order_quantity,
+                        quantity: rp.return_quantity,
                         price: rp.product_amount || 0,
                         discount: 0,
                         linked_return_index: null,
