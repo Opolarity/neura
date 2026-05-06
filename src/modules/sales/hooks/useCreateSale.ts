@@ -48,6 +48,7 @@ import {
   getIdInventoryTypeApi,
   getOrdersSituationsById,
   fetchSaleById,
+  changeOrderProducts,
 } from "../services";
 import {
   calculateSubtotal,
@@ -574,6 +575,7 @@ export const useCreateSale = () => {
         ...p,
         imageUrl: p.imageUrl ?? null,
         stock: p.stock ?? 0,
+        stockTypeId: p.stockTypeId ?? 0,
       }));
       setPaginatedProducts(mappedProducts);
       setProductPagination(result.page);
@@ -1714,9 +1716,9 @@ export const useCreateSale = () => {
     return JSON.stringify(currentSnap) !== originalState;
   }, [formData, products, payments, changeEntries, orderSituation, orderDiscounts, orderId, originalState]);
 
-  // Build and send a CAM return for products whose quantity changed (reduced, increased, or newly added)
+  // Build and send changed products via change-order-products edge function
   const createCAMReturn = async (orderIdNum: number) => {
-    // Products that were reduced or fully removed (output: false = entering stock back)
+    // Products that were reduced or fully removed
     const returnedProducts = originalProducts
       .filter((orig) => {
         const current = products.find(
@@ -1732,11 +1734,11 @@ export const useCreateSale = () => {
           product_variation_id: orig.variationId,
           quantity: orig.quantity - (current ? current.quantity : 0),
           product_amount: orig.price,
-          output: false,
+          stock_type_id: orig.stockTypeId,
         };
       });
 
-    // Products that were increased or newly added (output: true = going out)
+    // Products that were increased or newly added
     const exchangedProducts = products
       .filter((p) => !p.isGift)
       .filter((p) => {
@@ -1753,42 +1755,29 @@ export const useCreateSale = () => {
           product_variation_id: p.variationId,
           quantity: orig ? p.quantity - orig.quantity : p.quantity,
           product_amount: p.price,
-          output: true,
+          stock_type_id: p.stockTypeId,
         };
       });
 
     const allChangedProducts = [...returnedProducts, ...exchangedProducts];
     if (allChangedProducts.length === 0) return;
 
-    const [camTypeRes, phySituationRes, warehouseRes] = await Promise.all([
-      supabase.from("types").select("id").eq("code", "CAM").single(),
-      supabase.from("situations").select("id, status_id, module_id").eq("code", "PHY").single(),
-      supabase.from("branches").select("id").eq("warehouse_id", userWarehouseId!).neq("name", "").single(),
-    ]);
+    const { data: branchData } = await supabase
+      .from("branches")
+      .select("id")
+      .eq("warehouse_id", userWarehouseId!)
+      .neq("name", "")
+      .single();
 
-    if (!camTypeRes.data) throw new Error("Tipo CAM no encontrado");
-    if (!phySituationRes.data) throw new Error("Situación PHY no encontrada");
-
-    const payload = {
-      module_code: "RTU",
+    await changeOrderProducts({
       order_id: orderIdNum,
-      return_type_id: camTypeRes.data.id,
-      return_type_code: "CAM",
       customer_document_number: formData.documentNumber || "",
       customer_document_type_id: formData.documentType ? parseInt(formData.documentType) : 0,
-      reason: "Cambio de prendas en orden.",
-      shipping_return: false,
-      shipping_cost: null,
-      situation_id: phySituationRes.data.id,
-      status_id: phySituationRes.data.status_id,
-      module_id: phySituationRes.data.module_id,
+      order_situation_id: parseInt(orderSituation),
+      branch_id: branchData?.id ?? 1,
+      warehouse_id: userWarehouseId!,
       return_products: allChangedProducts,
-      branch_id: warehouseRes.data?.id ?? 1,
-      warehouse_id: userWarehouseId,
-    };
-
-    const { error } = await supabase.functions.invoke("create-returns", { body: payload });
-    if (error) throw error;
+    });
   };
 
   // Handle form submission
