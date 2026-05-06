@@ -60,6 +60,17 @@ export interface SaleSituation {
   name: string;
 }
 
+// Current situation (from get-sale-by-id response)
+export interface CurrentSituation {
+  status_id: number;
+  status_code: string;
+  status_name: string;
+  situation_id: number;
+  situation_code: string;
+  situation_name: string;
+}
+
+// Sale returns
 export interface SaleReturnPayment {
   id: number;
   amount: number;

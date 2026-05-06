@@ -48,6 +48,7 @@ import {
   getIdInventoryTypeApi,
   getOrdersSituationsById,
   fetchSaleById,
+  changeOrderProducts,
 } from "../services";
 import {
   calculateSubtotal,
@@ -134,6 +135,7 @@ export const useCreateSale = () => {
   const [orderSituation, setOrderSituation] = useState<string>("");
   const [savedOrderSituation, setSavedOrderSituation] = useState<string>("");
   const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
+  const [currentSituationCode, setCurrentSituationCode] = useState<string>("");
   const [orderSaleType, setOrderSaleType] = useState<{ id: number; name: string } | null>(null);
 
   // Dropdown data
@@ -189,6 +191,13 @@ export const useCreateSale = () => {
     OrdersSituationsById[]
   >([]);
   const [originalState, setOriginalState] = useState<string | null>(null);
+  const [originalProducts, setOriginalProducts] = useState<SaleProduct[]>([]);
+  const [lastSavedAt, setLastSavedAt] = useState<number>(0);
+  const [productsUnlocked, setProductsUnlocked] = useState(false);
+
+  useEffect(() => {
+    if (lastSavedAt > 0) setProductsUnlocked(false);
+  }, [lastSavedAt]);
 
   // Load initial form data, user warehouse, and business accounts
   useEffect(() => {
@@ -349,6 +358,12 @@ export const useCreateSale = () => {
     );
     return selectedDocType?.personType === 2;
   }, [formData.documentType, salesData?.documentTypes]);
+
+  // Computed: Check if current situation code contains "VIR" (virtual - products locked by default)
+  const isVirSituation = useMemo(() => {
+    if (!orderId) return false;
+    return currentSituationCode.includes("VIR");
+  }, [currentSituationCode, orderId]);
 
   // Computed: Check if current situation has PHY code (physical - no edits allowed)
   const isPhySituation = useMemo(() => {
@@ -560,6 +575,7 @@ export const useCreateSale = () => {
         ...p,
         imageUrl: p.imageUrl ?? null,
         stock: p.stock ?? 0,
+        stockTypeId: p.stockTypeId ?? 0,
       }));
       setPaginatedProducts(mappedProducts);
       setProductPagination(result.page);
@@ -697,6 +713,7 @@ export const useCreateSale = () => {
       // Set all state at once
       setFormData(adapted.formData);
       setProducts(adapted.products);
+      setOriginalProducts(adapted.products);
       setPayments(
         adapted.payments.length > 0
           ? adapted.payments
@@ -705,6 +722,7 @@ export const useCreateSale = () => {
       setChangeEntries(adapted.changeEntries || []);
       setOrderSituation(adapted.currentSituation);
       setSavedOrderSituation(adapted.currentSituation);
+      setCurrentSituationCode(adapted.currentSituationCode || "");
       setCurrentStatusCode(adapted.currentStatusCode || "");
       setOrderSaleType(adapted.orderSaleType || null);
       setClientFound(true);
@@ -1698,6 +1716,70 @@ export const useCreateSale = () => {
     return JSON.stringify(currentSnap) !== originalState;
   }, [formData, products, payments, changeEntries, orderSituation, orderDiscounts, orderId, originalState]);
 
+  // Build and send changed products via change-order-products edge function
+  const createCAMReturn = async (orderIdNum: number) => {
+    // Products that were reduced or fully removed
+    const returnedProducts = originalProducts
+      .filter((orig) => {
+        const current = products.find(
+          (p) => p.variationId === orig.variationId && p.stockTypeId === orig.stockTypeId,
+        );
+        return (current ? current.quantity : 0) < orig.quantity;
+      })
+      .map((orig) => {
+        const current = products.find(
+          (p) => p.variationId === orig.variationId && p.stockTypeId === orig.stockTypeId,
+        );
+        return {
+          product_variation_id: orig.variationId,
+          quantity: orig.quantity - (current ? current.quantity : 0),
+          product_amount: orig.price,
+          stock_type_id: orig.stockTypeId,
+        };
+      });
+
+    // Products that were increased or newly added
+    const exchangedProducts = products
+      .filter((p) => !p.isGift)
+      .filter((p) => {
+        const orig = originalProducts.find(
+          (o) => o.variationId === p.variationId && o.stockTypeId === p.stockTypeId,
+        );
+        return !orig || p.quantity > orig.quantity;
+      })
+      .map((p) => {
+        const orig = originalProducts.find(
+          (o) => o.variationId === p.variationId && o.stockTypeId === p.stockTypeId,
+        );
+        return {
+          product_variation_id: p.variationId,
+          quantity: orig ? p.quantity - orig.quantity : p.quantity,
+          product_amount: p.price,
+          stock_type_id: p.stockTypeId,
+        };
+      });
+
+    const allChangedProducts = [...returnedProducts, ...exchangedProducts];
+    if (allChangedProducts.length === 0) return;
+
+    const { data: branchData } = await supabase
+      .from("branches")
+      .select("id")
+      .eq("warehouse_id", userWarehouseId!)
+      .neq("name", "")
+      .single();
+
+    await changeOrderProducts({
+      order_id: orderIdNum,
+      customer_document_number: formData.documentNumber || "",
+      customer_document_type_id: formData.documentType ? parseInt(formData.documentType) : 0,
+      order_situation_id: parseInt(orderSituation),
+      branch_id: branchData?.id ?? 1,
+      warehouse_id: userWarehouseId!,
+      return_products: allChangedProducts,
+    });
+  };
+
   // Handle form submission
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -1803,6 +1885,9 @@ export const useCreateSale = () => {
         let createdOrderId = orderId ? parseInt(orderId) : null;
 
         if (orderId) {
+          if (isVirSituation && productsUnlocked) {
+            await createCAMReturn(parseInt(orderId));
+          }
           await updateOrder(parseInt(orderId), orderData);
         } else {
           const response = await createOrder(orderData);
@@ -1860,7 +1945,11 @@ export const useCreateSale = () => {
             : "Venta creada correctamente",
         });
 
-        navigate("/sales");
+        if (orderId) {
+          window.location.reload();
+        } else {
+          navigate("/sales");
+        }
       } catch (error) {
         console.error("Error saving sale:", error);
         toast({
@@ -1945,8 +2034,9 @@ export const useCreateSale = () => {
     total,
     orderId,
     isPersonaJuridica,
-    isPhySituation: !orderId ? false : isPhySituation, // Short-circuit if not editing an order
-    isComSituation: !orderId ? false : isComSituation, // Short-circuit if not editing an order
+    isPhySituation: !orderId ? false : isPhySituation,
+    isComSituation: !orderId ? false : isComSituation,
+    isVirSituation: !orderId ? false : isVirSituation,
     filteredSituations,
     availableSaleTypes,
     filteredPaymentMethods,
@@ -2022,5 +2112,12 @@ export const useCreateSale = () => {
 
     // Is dirty
     isDirty,
+
+    // Products unlock (VIR situation)
+    productsUnlocked,
+    setProductsUnlocked,
+
+    // Signals
+    lastSavedAt,
   };
 };

@@ -312,7 +312,7 @@ export const useCreateSendMovement = () => {
         module_code: "STR",
         status_code: "CFM",
         situation_code: selectedSituationCode,
-        movement_type_code: "EDI",
+        movement_type_code: "TRW",
       };
 
       const response = await createMovementRequestApi(payload);

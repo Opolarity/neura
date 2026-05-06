@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { usePOS } from "../hooks/usePOS";
 import POSHeader from "../components/pos/POSHeader";
@@ -16,6 +17,12 @@ import type { POSStep } from "../types/POS.types";
 
 export default function POS() {
   const pos = usePOS();
+  const [quickEmissionTypeCode, setQuickEmissionTypeCode] = useState<string | null>(null);
+
+  const handleQuickEmission = async (typeCode: string) => {
+    setQuickEmissionTypeCode(typeCode);
+    await pos.submitOrder();
+  };
 
   // Loading state
   if (pos.loading || pos.sessionLoading) {
@@ -159,6 +166,8 @@ export default function POS() {
                 orderTotal={pos.total}
                 saleTypeId={pos.createdOrderSaleTypeId}
                 onNewSale={pos.resetForNewSale}
+                autoEmitTypeCode={quickEmissionTypeCode}
+                onAutoEmitComplete={() => setQuickEmissionTypeCode(null)}
               />
             )}
           </div>
@@ -193,6 +202,7 @@ export default function POS() {
           onReset={pos.resetAll}
           onAnonymousPurchase={pos.currentStep === 2 ? pos.handleAnonymousPurchase : undefined}
           onNewSale={pos.resetForNewSale}
+          onQuickEmission={pos.currentStep === 5 ? handleQuickEmission : undefined}
         />
       )}
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +55,8 @@ interface InvoicingStepProps {
   orderTotal: number;
   saleTypeId: number;
   onNewSale: () => void;
+  autoEmitTypeCode?: string | null;
+  onAutoEmitComplete?: () => void;
 }
 
 export default function InvoicingStep({
@@ -62,6 +64,8 @@ export default function InvoicingStep({
   orderTotal,
   saleTypeId,
   onNewSale,
+  autoEmitTypeCode,
+  onAutoEmitComplete,
 }: InvoicingStepProps) {
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -76,6 +80,7 @@ export default function InvoicingStep({
     vinculatedInvoiceId?: number;
     vinculatedTypeCode?: string;
   } | null>(null);
+  const autoEmitTriggeredRef = useRef(false);
 
   useEffect(() => {
     if (orderId) {
@@ -84,6 +89,12 @@ export default function InvoicingStep({
       fetchInvoiceTypes();
     }
   }, [orderId]);
+
+  useEffect(() => {
+    if (!autoEmitTypeCode || invoiceTypes.length === 0 || !orderId || autoEmitTriggeredRef.current) return;
+    autoEmitTriggeredRef.current = true;
+    handleAutoCreateAndEmit(autoEmitTypeCode);
+  }, [autoEmitTypeCode, invoiceTypes, orderId]);
 
   const fetchInvoices = async () => {
     setLoading(true);
@@ -430,6 +441,155 @@ export default function InvoicingStep({
   const getInvoiceTypeCode = (inv: Invoice): string | null => {
     const type = invoiceTypes.find((t) => t.id === inv.invoice_type_id);
     return type?.code || null;
+  };
+
+  const handleAutoCreateAndEmit = async (typeCode: string) => {
+    const invoiceType = invoiceTypes.find((t) => t.code === typeCode);
+    if (!invoiceType) {
+      toast({ title: "Error", description: "Tipo de comprobante no encontrado", variant: "destructive" });
+      onAutoEmitComplete?.();
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const taxSerie = await getSerieForType(typeCode);
+
+      const { data: order, error: orderError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("id", orderId)
+        .single();
+
+      if (orderError || !order) {
+        toast({ title: "Error", description: "No se pudo obtener la orden", variant: "destructive" });
+        return;
+      }
+
+      const { data: orderProducts, error: productsError } = await supabase
+        .from("order_products")
+        .select("*, variations:product_variation_id(id, sku, product_id, products:product_id(title))")
+        .eq("order_id", orderId);
+
+      if (productsError || !orderProducts) {
+        toast({ title: "Error", description: "No se pudieron obtener los productos", variant: "destructive" });
+        return;
+      }
+
+      let customerDocumentEstateCode: string | null = null;
+      if (typeCode !== "INV") {
+        const { data: docType } = await supabase
+          .from("document_types")
+          .select("state_code")
+          .eq("id", order.document_type)
+          .single();
+        customerDocumentEstateCode = docType?.state_code || null;
+      }
+
+      const totalAmount = Number(order.total);
+      const totalTaxes = totalAmount - (totalAmount / 1.18);
+
+      const items = orderProducts.map((op: any) => {
+        const lineTotal = (Number(op.product_price) * Number(op.quantity)) - Number(op.product_discount || 0);
+        const igv = lineTotal - (lineTotal / 1.18);
+        const productTitle = op.variations?.products?.title || op.product_name || `Producto ${op.product_variation_id}`;
+        return {
+          description: productTitle,
+          quantity: Number(op.quantity),
+          measurement_unit: "NIU",
+          unit_price: Number(op.product_price),
+          discount: Number(op.product_discount || 0),
+          igv: Math.round(igv * 100) / 100,
+          total: Math.round(lineTotal * 100) / 100,
+        };
+      });
+
+      if (order.shipping_cost && Number(order.shipping_cost) > 0) {
+        const shippingTotal = Number(order.shipping_cost);
+        const shippingIgv = shippingTotal - (shippingTotal / 1.18);
+        items.push({
+          description: "Costo de envío",
+          quantity: 1,
+          measurement_unit: "ZZ",
+          unit_price: shippingTotal,
+          discount: 0,
+          igv: Math.round(shippingIgv * 100) / 100,
+          total: Math.round(shippingTotal * 100) / 100,
+        });
+      }
+
+      const clientName = [order.customer_name, order.customer_lastname].filter(Boolean).join(" ") || null;
+
+      const body: Record<string, any> = {
+        invoice_type_id: invoiceType.id,
+        tax_serie: taxSerie,
+        invoice_number: null,
+        declared: false,
+        customer_document_type_id: order.document_type,
+        customer_document_number: order.document_number,
+        client_name: clientName,
+        total_amount: totalAmount,
+        total_taxes: Math.round(totalTaxes * 100) / 100,
+        items,
+        order_id: orderId,
+      };
+
+      if (typeCode !== "INV") {
+        body.customer_document_estate_code = customerDocumentEstateCode;
+      }
+
+      const { error: fnError } = await supabase.functions.invoke("create-invoice", { body });
+
+      if (fnError) {
+        toast({ title: "Error", description: "Error al crear el comprobante", variant: "destructive" });
+        return;
+      }
+
+      // Obtener el invoice recién creado para esta orden
+      const { data: orderInvoicesData } = await supabase
+        .from("order_invoices")
+        .select("invoice_id")
+        .eq("order_id", orderId);
+
+      let newInvoice: Invoice | null = null;
+      if (orderInvoicesData && orderInvoicesData.length > 0) {
+        const invoiceIds = orderInvoicesData.map((oi) => oi.invoice_id);
+        const { data: latestInvoices } = await supabase
+          .from("invoices")
+          .select("id, tax_serie, total_amount, client_name, customer_document_number, created_at, invoice_type_id, declared, invoice_number, pdf_url, xml_url")
+          .in("id", invoiceIds)
+          .eq("invoice_type_id", invoiceType.id)
+          .order("id", { ascending: false })
+          .limit(1);
+        newInvoice = latestInvoices?.[0] || null;
+      }
+
+      if (newInvoice && (typeCode === "1" || typeCode === "2")) {
+        setEmitting(true);
+        const { data: emitData, error: emitError } = await supabase.functions.invoke("emit-invoice", {
+          body: { invoice_id: newInvoice.id },
+        });
+        setEmitting(false);
+
+        if (emitError || emitData?.error) {
+          toast({ title: "Error de emisión", description: emitData?.error || "Error al emitir a SUNAT", variant: "destructive" });
+        } else {
+          toast({ title: "Éxito", description: `${invoiceType.name} emitido a SUNAT correctamente` });
+          window.open(`/invoices/print/${newInvoice.id}`, "_blank");
+        }
+      } else if (newInvoice) {
+        toast({ title: "Éxito", description: `${invoiceType.name} creado correctamente` });
+        window.open(`/invoices/print/${newInvoice.id}`, "_blank");
+      }
+
+      fetchInvoices();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
+    } finally {
+      setCreating(false);
+      setEmitting(false);
+      onAutoEmitComplete?.();
+    }
   };
 
   return (

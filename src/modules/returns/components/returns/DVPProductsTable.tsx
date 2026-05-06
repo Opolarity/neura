@@ -17,6 +17,7 @@ interface DVPProductsTableProps {
     returnProducts: ReturnProduct[];
     onAddProduct: (product: OrderProduct, quantity: number) => void;
     formatCurrency: (amount: number) => string;
+    isReadOnly?: boolean;
 }
 
 export const DVPProductsTable = ({
@@ -24,6 +25,7 @@ export const DVPProductsTable = ({
     returnProducts,
     onAddProduct,
     formatCurrency,
+    isReadOnly = false,
 }: DVPProductsTableProps) => {
     const [quantities, setQuantities] = useState<Record<number, number>>({});
 
@@ -78,13 +80,13 @@ export const DVPProductsTable = ({
                                         onChange={(e) => handleQtyChange(product, e.target.value)}
                                         onFocus={(e) => e.target.select()}
                                         className="w-20"
-                                        disabled={added}
+                                        disabled={added || isReadOnly}
                                     />
                                     <Button
                                         type="button"
                                         size="icon"
                                         onClick={() => handleAdd(product)}
-                                        disabled={added}
+                                        disabled={added || isReadOnly}
                                     >
                                         <Plus className="w-4 h-4" />
                                     </Button>

@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Pause, XCircle, RefreshCw, UserX, ShoppingCart } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, ArrowRight, CheckCircle, ChevronDown, Loader2, Pause, XCircle, RefreshCw, UserX, ShoppingCart, Zap } from "lucide-react";
 import type { POSStep } from "../../types/POS.types";
 
 interface POSWizardNavigationProps {
@@ -15,6 +21,7 @@ interface POSWizardNavigationProps {
   onCancel?: () => void;
   onAnonymousPurchase?: () => void;
   onNewSale?: () => void;
+  onQuickEmission?: (typeCode: string) => void;
 }
 
 export default function POSWizardNavigation({
@@ -30,6 +37,7 @@ export default function POSWizardNavigation({
   onCancel,
   onAnonymousPurchase,
   onNewSale,
+  onQuickEmission,
 }: POSWizardNavigationProps) {
   const isFirstStep = currentStep === 1;
   const isPaymentStep = currentStep === 5;
@@ -61,6 +69,32 @@ export default function POSWizardNavigation({
               <RefreshCw className="w-4 h-4" />
               Restablecer
             </Button>
+          )}
+          {isPaymentStep && onQuickEmission && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  disabled={!canFinalize || saving}
+                  className="gap-2"
+                >
+                  <Zap className="w-4 h-4" />
+                  Emisión Rápida
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => onQuickEmission("INV")}>
+                  Comprobante
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onQuickEmission("2")}>
+                  Boleta
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onQuickEmission("1")}>
+                  Factura
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
