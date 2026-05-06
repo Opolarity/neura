@@ -102,19 +102,31 @@ const EditReturn = () => {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/returns")}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Volver
-        </Button>
-        <h1 className="text-3xl font-bold">Editar Devolución/Cambio</h1>
-        <p className="text-muted-foreground mt-1">
-          Modifica la información de la devolución o cambio
-        </p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/returns")}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Editar Devolución/Cambio</h1>
+            <p className="text-muted-foreground mt-1">
+              Modifica la información de la devolución o cambio
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-4">
+          <Button variant="outline" onClick={() => navigate("/returns")}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Guardar Devolución/Cambio
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6">
@@ -128,20 +140,19 @@ const EditReturn = () => {
               <CardTitle>Información del Cliente</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {displayOrderId > 0 && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1">
-                    <Label className="text-muted-foreground">ID Orden</Label>
-                    <span className="text-sm font-medium">#{displayOrderId}</span>
-                  </div>
-                  {orderSituationName && (
-                    <div className="flex flex-col gap-1">
-                      <Label className="text-muted-foreground">Estado de orden al momento de retorno</Label>
-                      <span className="text-sm font-medium">{orderSituationName}</span>
-                    </div>
-                  )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>ID de Orden</Label>
+                  <Input value={`#${displayOrderId}` || ""} disabled />
                 </div>
-              )}
+
+                <div className="flex flex-col gap-1">
+                  <Label>
+                    Estado de orden al momento de retorno
+                  </Label>
+                  <Input value={orderSituationName} disabled />
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="documentType">Tipo de Documento</Label>
@@ -190,7 +201,7 @@ const EditReturn = () => {
               </div>
 
               <div>
-                <Label htmlFor="reason">Motivo</Label>
+                <Label htmlFor="reason">Razón de la Devolución/Cambio *</Label>
                 <Textarea
                   id="reason"
                   value={reason}
@@ -550,16 +561,6 @@ const EditReturn = () => {
           shippingCost={shippingCost}
           formatCurrency={formatCurrency}
         />
-
-        <div className="flex justify-end gap-3 mt-4">
-          <Button variant="outline" onClick={() => navigate("/returns")}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Guardar Cambios
-          </Button>
-        </div>
       </div>
       <VoucherPreviewModal
         open={voucherModalOpen}

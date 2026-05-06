@@ -154,6 +154,7 @@ export interface DocumentHeader {
     shipping_cost: number;
     order_situation: DocumentOrderSituation;
     order_situation_id: number;
+    order_situation_name: string | null,
     customer_document_number: string;
 }
 
