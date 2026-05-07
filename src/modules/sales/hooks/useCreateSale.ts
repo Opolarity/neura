@@ -2048,7 +2048,7 @@ export const useCreateSale = () => {
     clientHasTenantReference,
     clientTenantReference,
     // Computed: true when the saved order situation's status code (last_row) is "COM"
-    isEnviado: currentStatusCode === "COM",
+    isCompleted: currentStatusCode === "COM",
     needsBusinessAccountSelect,
     needsChangeBusinessAccountSelect,
     businessAccounts,

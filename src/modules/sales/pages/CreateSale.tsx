@@ -127,7 +127,7 @@ const CreateSale = () => {
     allPaymentMethods,
     isAnonymousPurchase,
     isConsignment,
-    isEnviado,
+    isCompleted,
     clientHasTenantReference,
     needsBusinessAccountSelect,
     needsChangeBusinessAccountSelect,
@@ -431,7 +431,7 @@ const CreateSale = () => {
           <Button variant="outline" onClick={() => navigate("/sales")}>
             Cancelar
           </Button>
-          {isConsignment && isEnviado && (
+          {isConsignment && isCompleted && (
             <Button variant="secondary" type="button" onClick={handleSendToFranchisee}>
               Enviar a franquiciado
             </Button>
