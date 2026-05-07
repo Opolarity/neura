@@ -150,7 +150,11 @@ export default function InvoicePrintPage() {
       pdfUrlRef.current = url;
       setPdfUrl(url);
       setLoading(false);
-      return;
+      return () => {
+        URL.revokeObjectURL(url);
+        invoicePdfUrls.delete(viewerId);
+        pdfUrlRef.current = null;
+      };
     }
 
     if (id) generatePdf(Number(id));
