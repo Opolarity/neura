@@ -95,6 +95,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
         business_account_id: e.businessAccountId || null,
       })),
       initial_situation_id: orderData.initialSituationId,
+      consignament: orderData.isConsignment ?? false,
       discounts: orderData.discounts || [],
     },
   });
@@ -161,6 +162,7 @@ export const updateOrder = async (
         amount: e.amount,
         business_account_id: e.businessAccountId || null,
       })),
+      consignament: orderData.isConsignment ?? false,
       discounts: orderData.discounts || [],
     },
   });
@@ -332,6 +334,7 @@ export interface SaleProductsResponse {
     sku: string;
     imageUrl: string | null;
     stock: number;
+    stockTypeId: number;
     terms: Array<{ id: number; name: string }>;
     prices: Array<{
       price_list_id: number;
@@ -438,6 +441,28 @@ export const getOrdersSituationsById = async (id: number) => {
   if (error) throw error;
   if (!data) throw new Error("No data returned from getOrdersSituationsById");
 
+  return data;
+};
+
+// Change order products via dedicated edge function
+export const changeOrderProducts = async (payload: {
+  order_id: number;
+  customer_document_number: string;
+  customer_document_type_id: number;
+  order_situation_id: number;
+  branch_id: number;
+  warehouse_id: number;
+  return_products: {
+    product_variation_id: number;
+    quantity: number;
+    product_amount: number;
+    stock_type_id: number;
+  }[];
+}) => {
+  const { data, error } = await supabase.functions.invoke("change-order-products", {
+    body: payload,
+  });
+  if (error) throw error;
   return data;
 };
 

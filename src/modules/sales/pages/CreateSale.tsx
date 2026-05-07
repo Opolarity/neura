@@ -127,7 +127,9 @@ const CreateSale = () => {
     allPaymentMethods,
     isAnonymousPurchase,
     isConsignment,
-    isEnviado,
+    sendingToFranchisee,
+    sendedToFranchiseBy,
+    isCompleted,
     clientHasTenantReference,
     needsBusinessAccountSelect,
     needsChangeBusinessAccountSelect,
@@ -431,8 +433,14 @@ const CreateSale = () => {
           <Button variant="outline" onClick={() => navigate("/sales")}>
             Cancelar
           </Button>
-          {isConsignment && isEnviado && (
-            <Button variant="secondary" type="button" onClick={handleSendToFranchisee}>
+          {isConsignment && isCompleted && (
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={handleSendToFranchisee}
+              disabled={sendingToFranchisee || sendedToFranchiseBy !== null}
+            >
+              {sendingToFranchisee && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Enviar a franquiciado
             </Button>
           )}

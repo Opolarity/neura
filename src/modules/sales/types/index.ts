@@ -245,6 +245,7 @@ export interface CreateOrderRequest {
     businessAccountId?: number | null;
   }>;
   initialSituationId: number;
+  isConsignment?: boolean;
   discounts?: Array<{
     name: string;
     discount_amount: number;

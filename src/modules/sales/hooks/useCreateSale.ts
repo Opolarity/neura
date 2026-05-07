@@ -48,6 +48,7 @@ import {
   getIdInventoryTypeApi,
   getOrdersSituationsById,
   fetchSaleById,
+  changeOrderProducts,
 } from "../services";
 import {
   calculateSubtotal,
@@ -96,6 +97,25 @@ const createEmptyPayment = (): SalePayment => ({
   voucherPreview: undefined,
   businessAccountId: "",
 });
+
+const hmacSha256Hex = async (message: string, secret: string): Promise<string> => {
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signatureBuffer = await crypto.subtle.sign(
+    "HMAC",
+    cryptoKey,
+    new TextEncoder().encode(message),
+  );
+
+  return Array.from(new Uint8Array(signatureBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+};
 
 export const useCreateSale = () => {
   const navigate = useNavigate();
@@ -149,6 +169,9 @@ export const useCreateSale = () => {
   const [isExistingClient, setIsExistingClient] = useState<boolean>(false); // true only if found in accounts table
   const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
   const [isConsignment, setIsConsignment] = useState(false);
+  const [sendingToFranchisee, setSendingToFranchisee] = useState(false);
+  const [sendedToFranchiseAt, setSendedToFranchiseAt] = useState<string | null>(null);
+  const [sendedToFranchiseBy, setSendedToFranchiseBy] = useState<string | null>(null);
   const [clientHasTenantReference, setClientHasTenantReference] = useState(false);
   const [clientTenantReference, setClientTenantReference] = useState<string | null>(null);
   const [customerUserId, setCustomerUserId] = useState<string | null>(null);
@@ -574,6 +597,7 @@ export const useCreateSale = () => {
         ...p,
         imageUrl: p.imageUrl ?? null,
         stock: p.stock ?? 0,
+        stockTypeId: p.stockTypeId ?? 0,
       }));
       setPaginatedProducts(mappedProducts);
       setProductPagination(result.page);
@@ -698,16 +722,6 @@ export const useCreateSale = () => {
       const data = await fetchSaleById(id);
       const adapted = adaptSaleById(data);
 
-      // Read fields not included in the edge function response directly from DB
-      const { data: orderMeta } = await supabase
-        .from("orders")
-        .select("consignament")
-        .eq("id", id)
-        .maybeSingle();
-      if (orderMeta?.consignament) {
-        setIsConsignment(true);
-      }
-
       // Set all state at once
       setFormData(adapted.formData);
       setProducts(adapted.products);
@@ -727,6 +741,9 @@ export const useCreateSale = () => {
       setCreatedOrderId(id);
       setOrderDiscounts(adapted.orderDiscounts || []);
       setOrderReturns(adapted.returns || []);
+      setIsConsignment(adapted.isConsignment);
+      setSendedToFranchiseAt(adapted.sendedToFranchiseAt);
+      setSendedToFranchiseBy(adapted.sendedToFranchiseBy);
 
       // Load notes from DB
       await loadNotesFromDB(id);
@@ -924,6 +941,12 @@ export const useCreateSale = () => {
 
   // Send consignment to franchisee via external API
   const handleSendToFranchisee = useCallback(async () => {
+    if (!orderId || sendingToFranchisee || sendedToFranchiseBy) {
+      return;
+    }
+
+    setSendingToFranchisee(true);
+
     const secret = import.meta.env.VITE_CONSIGNMENT_API_SECRET as string;
     if (!secret) {
       toast({
@@ -931,6 +954,7 @@ export const useCreateSale = () => {
         description: "No se encontró el secret de consignación (VITE_CONSIGNMENT_API_SECRET)",
         variant: "destructive",
       });
+      setSendingToFranchisee(false);
       return;
     }
 
@@ -940,15 +964,18 @@ export const useCreateSale = () => {
         description: "No se encontró el payload del franquiciado (tenant_reference)",
         variant: "destructive",
       });
+      setSendingToFranchisee(false);
       return;
     }
 
     // Generate HMAC token: base64url(payload) + "." + hex(HMAC-SHA256(payload_base64url, secret))
     let apiKey: string;
+    let currentUserId: string;
     try {
       // Get current logged-in user's document info
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
+      currentUserId = user.id;
 
       const { data: userProfile } = await supabase
         .from("profiles")
@@ -1012,11 +1039,59 @@ export const useCreateSale = () => {
         description: e instanceof Error ? e.message : "No se pudo generar el token de autenticación",
         variant: "destructive",
       });
+      setSendingToFranchisee(false);
       return;
     }
 
     const now = new Date();
     const monthYear = now.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
+    const uniqueSkus = Array.from(
+      new Set(products.map((p) => p.sku?.trim()).filter(Boolean)),
+    );
+
+    let ovtkProducts: Record<string, unknown> = {};
+    try {
+      const ovtkApiKey = await hmacSha256Hex("ovtk_product_lookup", secret);
+      const ovtkProductsEntries = await Promise.all(
+        uniqueSkus.map(async (sku) => {
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fch-get-ovtk-products-by-sku`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-api-key": ovtkApiKey,
+              },
+              body: JSON.stringify({ sku }),
+            },
+          );
+
+          if (!response.ok) {
+            const errText = await response.text();
+            console.error(`Error fetching OVTK product detail for SKU ${sku}:`, errText);
+            throw new Error(`No se pudo obtener el detalle OVTK del SKU ${sku}`);
+          }
+
+          const result = await response.json();
+          if (!result?.success || !result?.data) {
+            throw new Error(`No se encontró el detalle OVTK del SKU ${sku}`);
+          }
+
+          return [sku, result.data] as const;
+        }),
+      );
+
+      ovtkProducts = Object.fromEntries(ovtkProductsEntries);
+    } catch (e) {
+      console.error("Error obteniendo detalle de productos OVTK:", e);
+      toast({
+        title: "Error",
+        description: e instanceof Error ? e.message : "No se pudo obtener el detalle de productos OVTK",
+        variant: "destructive",
+      });
+      setSendingToFranchisee(false);
+      return;
+    }
 
     const body = {
       warehouse_code: userWarehouseCode || `WH-${userWarehouseId}`,
@@ -1029,6 +1104,7 @@ export const useCreateSale = () => {
         unit_price: p.price,
         description: `${p.productName} ${p.variationName}`.trim(),
       })),
+      ovtk_products: ovtkProducts,
     };
 
     try {
@@ -1053,6 +1129,28 @@ export const useCreateSale = () => {
       const result = await response.json();
 
       if (result.success) {
+        const sentAt = new Date().toISOString();
+        const { error: updateError } = await supabase
+          .from("orders")
+          .update({
+            sended_to_franchise_at: sentAt,
+            sended_to_franchise_by: currentUserId,
+          })
+          .eq("id", Number(orderId))
+          .is("sended_to_franchise_by", null);
+
+        if (updateError) {
+          console.error("Error marking order as sent to franchisee:", updateError);
+          toast({
+            title: "Consignación enviada",
+            description: "Se envió al franquiciado, pero no se pudo marcar la venta como enviada.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setSendedToFranchiseAt(sentAt);
+        setSendedToFranchiseBy(currentUserId);
         toast({
           title: "Consignación enviada",
           description: "El envío al franquiciado se realizó correctamente",
@@ -1067,8 +1165,10 @@ export const useCreateSale = () => {
         description: "No se pudo enviar la consignación al franquiciado. Intente nuevamente.",
         variant: "destructive",
       });
+    } finally {
+      setSendingToFranchisee(false);
     }
-  }, [clientTenantReference, userWarehouseCode, userWarehouseId, orderId, products, toast]);
+  }, [clientTenantReference, orderId, products, sendingToFranchisee, sendedToFranchiseBy, toast, userWarehouseCode, userWarehouseId]);
 
   // Handle stock type change - clears selected variation to ensure consistency
   const handleStockTypeChange = useCallback((value: string) => {
@@ -1714,9 +1814,9 @@ export const useCreateSale = () => {
     return JSON.stringify(currentSnap) !== originalState;
   }, [formData, products, payments, changeEntries, orderSituation, orderDiscounts, orderId, originalState]);
 
-  // Build and send a CAM return for products whose quantity changed (reduced, increased, or newly added)
+  // Build and send changed products via change-order-products edge function
   const createCAMReturn = async (orderIdNum: number) => {
-    // Products that were reduced or fully removed (output: false = entering stock back)
+    // Products that were reduced or fully removed
     const returnedProducts = originalProducts
       .filter((orig) => {
         const current = products.find(
@@ -1732,11 +1832,11 @@ export const useCreateSale = () => {
           product_variation_id: orig.variationId,
           quantity: orig.quantity - (current ? current.quantity : 0),
           product_amount: orig.price,
-          output: false,
+          stock_type_id: orig.stockTypeId,
         };
       });
 
-    // Products that were increased or newly added (output: true = going out)
+    // Products that were increased or newly added
     const exchangedProducts = products
       .filter((p) => !p.isGift)
       .filter((p) => {
@@ -1753,42 +1853,29 @@ export const useCreateSale = () => {
           product_variation_id: p.variationId,
           quantity: orig ? p.quantity - orig.quantity : p.quantity,
           product_amount: p.price,
-          output: true,
+          stock_type_id: p.stockTypeId,
         };
       });
 
     const allChangedProducts = [...returnedProducts, ...exchangedProducts];
     if (allChangedProducts.length === 0) return;
 
-    const [camTypeRes, phySituationRes, warehouseRes] = await Promise.all([
-      supabase.from("types").select("id").eq("code", "CAM").single(),
-      supabase.from("situations").select("id, status_id, module_id").eq("code", "PHY").single(),
-      supabase.from("branches").select("id").eq("warehouse_id", userWarehouseId!).neq("name", "").single(),
-    ]);
+    const { data: branchData } = await supabase
+      .from("branches")
+      .select("id")
+      .eq("warehouse_id", userWarehouseId!)
+      .neq("name", "")
+      .single();
 
-    if (!camTypeRes.data) throw new Error("Tipo CAM no encontrado");
-    if (!phySituationRes.data) throw new Error("Situación PHY no encontrada");
-
-    const payload = {
-      module_code: "RTU",
+    await changeOrderProducts({
       order_id: orderIdNum,
-      return_type_id: camTypeRes.data.id,
-      return_type_code: "CAM",
       customer_document_number: formData.documentNumber || "",
       customer_document_type_id: formData.documentType ? parseInt(formData.documentType) : 0,
-      reason: "Cambio de prendas en orden.",
-      shipping_return: false,
-      shipping_cost: null,
-      situation_id: phySituationRes.data.id,
-      status_id: phySituationRes.data.status_id,
-      module_id: phySituationRes.data.module_id,
+      order_situation_id: parseInt(orderSituation),
+      branch_id: branchData?.id ?? 1,
+      warehouse_id: userWarehouseId!,
       return_products: allChangedProducts,
-      branch_id: warehouseRes.data?.id ?? 1,
-      warehouse_id: userWarehouseId,
-    };
-
-    const { error } = await supabase.functions.invoke("create-returns", { body: payload });
-    if (error) throw error;
+    });
   };
 
   // Handle form submission
@@ -1887,6 +1974,7 @@ export const useCreateSale = () => {
               businessAccountId: e.businessAccountId ? parseInt(e.businessAccountId) : null,
             })),
           initialSituationId: parseInt(orderSituation),
+          isConsignment,
           discounts: [
             // Custom discounts only (product discounts are saved per-unit in order_products)
             ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
@@ -1988,6 +2076,7 @@ export const useCreateSale = () => {
       total,
       isExistingClient,
       isAnonymousPurchase,
+      isConsignment,
       toast,
       navigate,
     ],
@@ -2054,10 +2143,13 @@ export const useCreateSale = () => {
     allPaymentMethods: salesData?.paymentMethods ?? [],
     isAnonymousPurchase,
     isConsignment,
+    sendingToFranchisee,
+    sendedToFranchiseAt,
+    sendedToFranchiseBy,
     clientHasTenantReference,
     clientTenantReference,
     // Computed: true when the saved order situation's status code (last_row) is "COM"
-    isEnviado: currentStatusCode === "COM",
+    isCompleted: currentStatusCode === "COM",
     needsBusinessAccountSelect,
     needsChangeBusinessAccountSelect,
     businessAccounts,

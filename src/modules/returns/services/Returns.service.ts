@@ -137,7 +137,19 @@ export const returnsService = {
             body: payload,
         });
 
-        if (error) throw error;
+        // When the edge function returns a non-2xx status, Supabase throws but also
+        // populates `data` with the response body — prefer data.error over the generic message.
+        if (error) {
+            if (error.context instanceof Response) {
+                try {
+                    const body = await error.context.json();
+                    throw new Error(body?.error || body?.message || error.message);
+                } catch (parseErr: any) {
+                    if (parseErr.message !== error.message) throw parseErr;
+                }
+            }
+            throw error;
+        }
         return data;
     },
 

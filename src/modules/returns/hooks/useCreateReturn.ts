@@ -506,13 +506,45 @@ export const useCreateReturn = () => {
 
             const data = await returnsService.createReturn(payload);
 
-            if (!data?.success) throw new Error(data?.error || "Error al crear la devolución");
+            if (!data?.success) {
+                const errMsg = data?.error || data?.message || "Error al crear la devolución";
+                const errDetail = data?.detail || data?.hint || data?.details || "";
+                const errCode = data?.code ? ` [${data.code}]` : "";
+                const fullMsg = [errMsg, errDetail].filter(Boolean).join(" — ") + errCode;
+                throw new Error(fullMsg);
+            }
 
             toast.success("Devolución/Cambio creado exitosamente");
             navigate("/returns");
         } catch (error: any) {
-            console.error("Error creating return:", error);
-            toast.error(error.message || "Error al crear la devolución/cambio");
+            // Extract all available info from the error
+            const message = error.message || "Error al crear la devolución/cambio";
+            const hint = error.hint || error.details || error.detail || "";
+            const code = error.code ? ` [código: ${error.code}]` : "";
+
+            // Edge function errors may carry a context body
+            let contextInfo = "";
+            if (error.context) {
+                try {
+                    const ctx = typeof error.context === "string" ? JSON.parse(error.context) : error.context;
+                    contextInfo = ctx?.error || ctx?.message || JSON.stringify(ctx);
+                } catch {
+                    contextInfo = String(error.context);
+                }
+            }
+
+            const displayMsg = [message, hint, contextInfo].filter(Boolean).join(" | ") + code;
+
+            // Log full details including stack for file/line info
+            console.group("❌ Error al crear devolución/cambio");
+            console.error("Mensaje:", message);
+            if (hint) console.error("Hint:", hint);
+            if (contextInfo) console.error("Contexto edge fn:", contextInfo);
+            if (error.stack) console.error("Stack:\n" + error.stack);
+            console.error("Error completo:", error);
+            console.groupEnd();
+
+            toast.error(displayMsg, { duration: 8000 });
         } finally {
             setSaving(false);
         }
