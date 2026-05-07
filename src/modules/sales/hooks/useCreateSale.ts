@@ -150,6 +150,9 @@ export const useCreateSale = () => {
   const [isExistingClient, setIsExistingClient] = useState<boolean>(false); // true only if found in accounts table
   const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
   const [isConsignment, setIsConsignment] = useState(false);
+  const [sendingToFranchisee, setSendingToFranchisee] = useState(false);
+  const [sendedToFranchiseAt, setSendedToFranchiseAt] = useState<string | null>(null);
+  const [sendedToFranchiseBy, setSendedToFranchiseBy] = useState<string | null>(null);
   const [clientHasTenantReference, setClientHasTenantReference] = useState(false);
   const [clientTenantReference, setClientTenantReference] = useState<string | null>(null);
   const [customerUserId, setCustomerUserId] = useState<string | null>(null);
@@ -700,16 +703,6 @@ export const useCreateSale = () => {
       const data = await fetchSaleById(id);
       const adapted = adaptSaleById(data);
 
-      // Read fields not included in the edge function response directly from DB
-      const { data: orderMeta } = await supabase
-        .from("orders")
-        .select("consignament")
-        .eq("id", id)
-        .maybeSingle();
-      if (orderMeta?.consignament) {
-        setIsConsignment(true);
-      }
-
       // Set all state at once
       setFormData(adapted.formData);
       setProducts(adapted.products);
@@ -729,6 +722,9 @@ export const useCreateSale = () => {
       setCreatedOrderId(id);
       setOrderDiscounts(adapted.orderDiscounts || []);
       setOrderReturns(adapted.returns || []);
+      setIsConsignment(adapted.isConsignment);
+      setSendedToFranchiseAt(adapted.sendedToFranchiseAt);
+      setSendedToFranchiseBy(adapted.sendedToFranchiseBy);
 
       // Load notes from DB
       await loadNotesFromDB(id);
@@ -926,6 +922,12 @@ export const useCreateSale = () => {
 
   // Send consignment to franchisee via external API
   const handleSendToFranchisee = useCallback(async () => {
+    if (!orderId || sendingToFranchisee || sendedToFranchiseBy) {
+      return;
+    }
+
+    setSendingToFranchisee(true);
+
     const secret = import.meta.env.VITE_CONSIGNMENT_API_SECRET as string;
     if (!secret) {
       toast({
@@ -933,6 +935,7 @@ export const useCreateSale = () => {
         description: "No se encontró el secret de consignación (VITE_CONSIGNMENT_API_SECRET)",
         variant: "destructive",
       });
+      setSendingToFranchisee(false);
       return;
     }
 
@@ -942,15 +945,18 @@ export const useCreateSale = () => {
         description: "No se encontró el payload del franquiciado (tenant_reference)",
         variant: "destructive",
       });
+      setSendingToFranchisee(false);
       return;
     }
 
     // Generate HMAC token: base64url(payload) + "." + hex(HMAC-SHA256(payload_base64url, secret))
     let apiKey: string;
+    let currentUserId: string;
     try {
       // Get current logged-in user's document info
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
+      currentUserId = user.id;
 
       const { data: userProfile } = await supabase
         .from("profiles")
@@ -1014,6 +1020,7 @@ export const useCreateSale = () => {
         description: e instanceof Error ? e.message : "No se pudo generar el token de autenticación",
         variant: "destructive",
       });
+      setSendingToFranchisee(false);
       return;
     }
 
@@ -1055,6 +1062,28 @@ export const useCreateSale = () => {
       const result = await response.json();
 
       if (result.success) {
+        const sentAt = new Date().toISOString();
+        const { error: updateError } = await supabase
+          .from("orders")
+          .update({
+            sended_to_franchise_at: sentAt,
+            sended_to_franchise_by: currentUserId,
+          })
+          .eq("id", Number(orderId))
+          .is("sended_to_franchise_by", null);
+
+        if (updateError) {
+          console.error("Error marking order as sent to franchisee:", updateError);
+          toast({
+            title: "Consignación enviada",
+            description: "Se envió al franquiciado, pero no se pudo marcar la venta como enviada.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setSendedToFranchiseAt(sentAt);
+        setSendedToFranchiseBy(currentUserId);
         toast({
           title: "Consignación enviada",
           description: "El envío al franquiciado se realizó correctamente",
@@ -1069,8 +1098,10 @@ export const useCreateSale = () => {
         description: "No se pudo enviar la consignación al franquiciado. Intente nuevamente.",
         variant: "destructive",
       });
+    } finally {
+      setSendingToFranchisee(false);
     }
-  }, [clientTenantReference, userWarehouseCode, userWarehouseId, orderId, products, toast]);
+  }, [clientTenantReference, orderId, products, sendingToFranchisee, sendedToFranchiseBy, toast, userWarehouseCode, userWarehouseId]);
 
   // Handle stock type change - clears selected variation to ensure consistency
   const handleStockTypeChange = useCallback((value: string) => {
@@ -2045,6 +2076,9 @@ export const useCreateSale = () => {
     allPaymentMethods: salesData?.paymentMethods ?? [],
     isAnonymousPurchase,
     isConsignment,
+    sendingToFranchisee,
+    sendedToFranchiseAt,
+    sendedToFranchiseBy,
     clientHasTenantReference,
     clientTenantReference,
     // Computed: true when the saved order situation's status code (last_row) is "COM"

@@ -1754,6 +1754,8 @@ export type Database = {
           reception_person: string | null
           reception_phone: number | null
           sale_type_id: number
+          sended_to_franchise_at: string | null
+          sended_to_franchise_by: string | null
           shipping_cost: number | null
           shipping_method_code: string | null
           state_id: number | null
@@ -1786,6 +1788,8 @@ export type Database = {
           reception_person?: string | null
           reception_phone?: number | null
           sale_type_id: number
+          sended_to_franchise_at?: string | null
+          sended_to_franchise_by?: string | null
           shipping_cost?: number | null
           shipping_method_code?: string | null
           state_id?: number | null
@@ -1818,6 +1822,8 @@ export type Database = {
           reception_person?: string | null
           reception_phone?: number | null
           sale_type_id?: number
+          sended_to_franchise_at?: string | null
+          sended_to_franchise_by?: string | null
           shipping_cost?: number | null
           shipping_method_code?: string | null
           state_id?: number | null
