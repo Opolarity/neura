@@ -1876,6 +1876,7 @@ export const useCreateSale = () => {
               businessAccountId: e.businessAccountId ? parseInt(e.businessAccountId) : null,
             })),
           initialSituationId: parseInt(orderSituation),
+          isConsignment,
           discounts: [
             // Custom discounts only (product discounts are saved per-unit in order_products)
             ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
@@ -1977,6 +1978,7 @@ export const useCreateSale = () => {
       total,
       isExistingClient,
       isAnonymousPurchase,
+      isConsignment,
       toast,
       navigate,
     ],

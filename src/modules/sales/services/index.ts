@@ -95,6 +95,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
         business_account_id: e.businessAccountId || null,
       })),
       initial_situation_id: orderData.initialSituationId,
+      consignament: orderData.isConsignment ?? false,
       discounts: orderData.discounts || [],
     },
   });
@@ -161,6 +162,7 @@ export const updateOrder = async (
         amount: e.amount,
         business_account_id: e.businessAccountId || null,
       })),
+      consignament: orderData.isConsignment ?? false,
       discounts: orderData.discounts || [],
     },
   });
