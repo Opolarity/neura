@@ -1,9 +1,11 @@
 import React from "react";
-import { Bell, User, LogOut } from "lucide-react";
+import { Bell, User, LogOut, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { getHeaderUserData } from "@/shared/services/service";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   onSignOut: () => void;
@@ -13,6 +15,7 @@ interface HeaderProps {
 }
 
 const Header = ({ onSignOut }: HeaderProps) => {
+  const navigate = useNavigate();
   const [userData, setUserData] = useState({
     account: "Cargando...",
     role: "Sin Rol",
@@ -46,6 +49,11 @@ const Header = ({ onSignOut }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-4">
+          <Button variant="outline" className="border-green-500" onClick={() => navigate("/pos/open")}>
+            <Store className="w-5 h-5 text-green-500" />
+            <span className="text-base text-green-500">Abierto</span>
+          </Button>
+
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
             <Bell className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
