@@ -1027,17 +1027,55 @@ export const useCreateSale = () => {
     const now = new Date();
     const monthYear = now.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
 
+    let franchiseProductsPayload: {
+      products: Array<{
+        sku: string;
+        quantity: number;
+        unit_price: number;
+        description: string;
+      }>;
+      ovtk_products: Record<string, unknown>;
+    };
+
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "get-products-for-send-to-franchise",
+        {
+          body: { order_id: Number(orderId) },
+        },
+      );
+
+      if (error) throw error;
+      if (!data?.success || !data?.data) {
+        throw new Error(data?.error ?? "No se pudo obtener el detalle de productos para franquiciado");
+      }
+
+      franchiseProductsPayload = {
+        products: data.data.products ?? [],
+        ovtk_products: data.data.ovtk_products ?? {},
+      };
+
+      if (franchiseProductsPayload.products.length === 0) {
+        throw new Error("No se encontraron productos para enviar al franquiciado");
+      }
+    } catch (e) {
+      console.error("Error obteniendo productos para franquiciado:", e);
+      toast({
+        title: "Error",
+        description: e instanceof Error ? e.message : "No se pudo obtener la información de productos para el franquiciado",
+        variant: "destructive",
+      });
+      setSendingToFranchisee(false);
+      return;
+    }
+
     const body = {
       warehouse_code: userWarehouseCode || `WH-${userWarehouseId}`,
       description: `Envío consignación ${monthYear}`,
       reference: `NEURA-VENTA-${orderId ?? "NUEVA"}`,
       sale_code: orderId ? `${orderId}` : `${Date.now()}`,
-      products: products.map((p) => ({
-        sku: p.sku,
-        quantity: p.quantity,
-        unit_price: p.price,
-        description: `${p.productName} ${p.variationName}`.trim(),
-      })),
+      products: franchiseProductsPayload.products,
+      ovtk_products: franchiseProductsPayload.ovtk_products,
     };
 
     try {
