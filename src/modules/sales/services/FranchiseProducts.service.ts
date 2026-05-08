@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 type RawOrderProduct = {
   id: number;
   order_id: number;
+  product_variation_id: number | null;
   product_name: string | null;
   product_price: number | string | null;
   quantity: number | string | null;
@@ -14,6 +15,16 @@ type RawOrderProduct = {
         id: number;
         document_type: number | null;
         document_number: string | null;
+      }
+    | null;
+  variations:
+    | {
+        products: { title: string | null } | null;
+        variation_terms:
+          | Array<{
+              terms: { name: string | null } | null;
+            }>
+          | null;
       }
     | null;
 };
@@ -65,6 +76,20 @@ const getAccountKey = (
   return `${documentType}:${normalizedDocument}`;
 };
 
+const buildProductName = (item: RawOrderProduct): string => {
+  const productTitle = item.variations?.products?.title?.trim();
+  if (!productTitle) return item.product_name?.trim() || "-";
+
+  const terms =
+    item.variations?.variation_terms
+      ?.map((variationTerm) => variationTerm.terms?.name?.trim())
+      .filter((term): term is string => Boolean(term)) ?? [];
+
+  if (!terms.length) return productTitle;
+
+  return `${productTitle} (${terms.join(" - ")})`;
+};
+
 const fetchAllReceivedOrderProducts = async (): Promise<RawOrderProduct[]> => {
   const rows: RawOrderProduct[] = [];
   let from = 0;
@@ -76,6 +101,7 @@ const fetchAllReceivedOrderProducts = async (): Promise<RawOrderProduct[]> => {
         `
           id,
           order_id,
+          product_variation_id,
           product_name,
           product_price,
           quantity,
@@ -86,6 +112,16 @@ const fetchAllReceivedOrderProducts = async (): Promise<RawOrderProduct[]> => {
             id,
             document_type,
             document_number
+          ),
+          variations!fk_order_products_product_variation_id_product_variations_id (
+            products (
+              title
+            ),
+            variation_terms (
+              terms (
+                name
+              )
+            )
           )
         `,
       )
@@ -172,7 +208,7 @@ export const fetchFranchiseProducts = async (): Promise<
 
     return {
       id: item.id,
-      productName: item.product_name?.trim() || "-",
+      productName: buildProductName(item),
       orderId: item.order_id,
       quantity,
       soldByFranchise: toNullableNumber(item.sold_by_franchise),
