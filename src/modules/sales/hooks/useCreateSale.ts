@@ -98,25 +98,6 @@ const createEmptyPayment = (): SalePayment => ({
   businessAccountId: "",
 });
 
-const hmacSha256Hex = async (message: string, secret: string): Promise<string> => {
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    cryptoKey,
-    new TextEncoder().encode(message),
-  );
-
-  return Array.from(new Uint8Array(signatureBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-};
-
 export const useCreateSale = () => {
   const navigate = useNavigate();
   const { id: orderId } = useParams();
@@ -1045,53 +1026,6 @@ export const useCreateSale = () => {
 
     const now = new Date();
     const monthYear = now.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
-    const uniqueSkus = Array.from(
-      new Set(products.map((p) => p.sku?.trim()).filter(Boolean)),
-    );
-
-    let ovtkProducts: Record<string, unknown> = {};
-    try {
-      const ovtkApiKey = await hmacSha256Hex("ovtk_product_lookup", secret);
-      const ovtkProductsEntries = await Promise.all(
-        uniqueSkus.map(async (sku) => {
-          const response = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fch-get-ovtk-products-by-sku`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-api-key": ovtkApiKey,
-              },
-              body: JSON.stringify({ sku }),
-            },
-          );
-
-          if (!response.ok) {
-            const errText = await response.text();
-            console.error(`Error fetching OVTK product detail for SKU ${sku}:`, errText);
-            throw new Error(`No se pudo obtener el detalle OVTK del SKU ${sku}`);
-          }
-
-          const result = await response.json();
-          if (!result?.success || !result?.data) {
-            throw new Error(`No se encontró el detalle OVTK del SKU ${sku}`);
-          }
-
-          return [sku, result.data] as const;
-        }),
-      );
-
-      ovtkProducts = Object.fromEntries(ovtkProductsEntries);
-    } catch (e) {
-      console.error("Error obteniendo detalle de productos OVTK:", e);
-      toast({
-        title: "Error",
-        description: e instanceof Error ? e.message : "No se pudo obtener el detalle de productos OVTK",
-        variant: "destructive",
-      });
-      setSendingToFranchisee(false);
-      return;
-    }
 
     const body = {
       warehouse_code: userWarehouseCode || `WH-${userWarehouseId}`,
@@ -1104,7 +1038,6 @@ export const useCreateSale = () => {
         unit_price: p.price,
         description: `${p.productName} ${p.variationName}`.trim(),
       })),
-      ovtk_products: ovtkProducts,
     };
 
     try {
