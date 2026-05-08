@@ -128,6 +128,7 @@ const CreateSale = () => {
     isAnonymousPurchase,
     isConsignment,
     sendingToFranchisee,
+    sendedToFranchiseAt,
     sendedToFranchiseBy,
     isCompleted,
     clientHasTenantReference,
@@ -203,6 +204,8 @@ const CreateSale = () => {
   const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
   const [returnsModalOpen, setReturnsModalOpen] = useState(false);
   const [cambiosModalOpen, setCambiosModalOpen] = useState(false);
+  const [franchiseProductsModalOpen, setFranchiseProductsModalOpen] =
+    useState(false);
 
   const phyReturns = orderReturns.filter((r) => r.order_situation_code?.includes("PHY"));
   const cambiosReturns = orderReturns.filter((r) => r.order_situation_code?.includes("VIR"));
@@ -433,15 +436,24 @@ const CreateSale = () => {
           <Button variant="outline" onClick={() => navigate("/sales")}>
             Cancelar
           </Button>
-          {isConsignment && isCompleted && (
+          {isConsignment && isCompleted && !sendedToFranchiseAt && (
             <Button
               variant="secondary"
               type="button"
               onClick={handleSendToFranchisee}
-              disabled={sendingToFranchisee || sendedToFranchiseBy !== null}
+              disabled={sendingToFranchisee}
             >
               {sendingToFranchisee && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Enviar a franquiciado
+            </Button>
+          )}
+          {isConsignment && isCompleted && sendedToFranchiseAt && (
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setFranchiseProductsModalOpen(true)}
+            >
+              Enviado a franquiciado
             </Button>
           )}
           <Button
@@ -2276,6 +2288,56 @@ const CreateSale = () => {
         orderId={createdOrderId}
         returns={cambiosReturns}
       />
+
+      <Dialog
+        open={franchiseProductsModalOpen}
+        onOpenChange={setFranchiseProductsModalOpen}
+      >
+        <DialogContent className="sm:max-w-[720px]">
+          <DialogHeader>
+            <DialogTitle>Enviado a franquiciado</DialogTitle>
+            <DialogDescription>
+              Productos enviados y cantidades recibidas por franquicia.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Producto</TableHead>
+                  <TableHead className="w-24 text-center">Cantidad</TableHead>
+                  <TableHead className="w-40 text-center">
+                    Recibido por franquicia
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.map((product, index) => (
+                  <TableRow key={`${product.variationId}-${index}`}>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {product.productName} (
+                          {product.variationName.replace(/ \/ /g, " - ")})
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          SKU: {product.sku || "-"}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {product.quantity}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {product.receivedByFranchise ?? 0}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {createdOrderId && (
         <SalesInvoicesModal

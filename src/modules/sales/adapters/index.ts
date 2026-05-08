@@ -294,6 +294,7 @@ export const adaptSaleById = (data: any) => {
       variationName: p.variation_name,
       sku: p.sku,
       quantity: p.quantity,
+      receivedByFranchise: p.received_by_franchise ?? null,
       price: p.price,
       originalPrice: p.price,
       discountAmount: p.discount_amount,
