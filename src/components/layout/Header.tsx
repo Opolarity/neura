@@ -17,7 +17,7 @@ interface HeaderProps {
 
 const Header = ({ onSignOut }: HeaderProps) => {
   const navigate = useNavigate();
-  const { isOpen } = usePOSSessionStatus();
+  const { isOpen, loading } = usePOSSessionStatus();
   const [userData, setUserData] = useState({
     account: "Cargando...",
     role: "Sin Rol",
@@ -51,7 +51,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-4">
-          {isOpen ? (
+          {!loading && (isOpen ? (
             <Button variant="outline" className="border-green-500" onClick={() => navigate("/pos/open")}>
               <Store className="w-5 h-5 text-green-500" />
               <span className="text-base text-green-500">Abierto</span>
@@ -61,7 +61,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
               <Store className="w-5 h-5 text-red-500" />
               <span className="text-base text-red-500">Cerrado</span>
             </Button>
-          )}
+          ))}
 
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
             <Bell className="w-5 h-5" />
