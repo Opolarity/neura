@@ -15,6 +15,7 @@ import {
   formatCurrency,
   formatTime,
 } from "@/modules/sales/adapters/POS.adapter";
+
 import POSSessionDetailDialog from "./POSSessionDetailDialog";
 
 interface POSListTableProps {
@@ -50,19 +51,18 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
           <TableRow>
             <TableHead>ID</TableHead>
             <TableHead>Usuario</TableHead>
-            <TableHead>Fecha Apertura</TableHead>
+            <TableHead>Fecha de Apertura</TableHead>
+            <TableHead>Monto de Apertura</TableHead>
+            <TableHead>Monto de Cierre</TableHead>
             <TableHead>Fecha de Cierre</TableHead>
             <TableHead>Sucursal</TableHead>
-            <TableHead>Diferencia de Apertura</TableHead>
-            <TableHead>Ventas Totales</TableHead>
-            <TableHead>Diferencia de Cierre</TableHead>
             <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8">
+              <TableCell colSpan={7} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Cargando sesiones...
@@ -72,7 +72,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
           ) : sessions.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={8}
+                colSpan={7}
                 className="text-center py-8 text-muted-foreground"
               >
                 {search
@@ -96,6 +96,14 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                   </div>
                 </TableCell>
                 <TableCell>
+                  S/ {formatCurrency(session.openingAmount)}
+                </TableCell>
+                <TableCell>
+                  {session.closingAmount !== null
+                    ? `S/ ${formatCurrency(session.closingAmount)}`
+                    : "-"}
+                </TableCell>
+                <TableCell>
                   {session.closedAt ? (
                     <div className="text-sm">
                       <div>{formatDate(session.closedAt)}</div>
@@ -110,45 +118,6 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                   )}
                 </TableCell>
                 <TableCell>{session.branchName}</TableCell>
-                <TableCell>
-                  {session.openingDifference !== null ? (
-                    <span
-                      className={
-                        session.openingDifference < 0
-                          ? "text-destructive"
-                          : session.openingDifference > 0
-                            ? "text-green-500"
-                            : ""
-                      }
-                    >
-                      S/ {formatCurrency(session.openingDifference)}
-                    </span>
-                  ) : (
-                    "-"
-                  )}
-                </TableCell>
-                <TableCell>
-                  {session.totalSales !== null
-                    ? `S/ ${formatCurrency(session.totalSales)}`
-                    : "-"}
-                </TableCell>
-                <TableCell>
-                  {session.difference !== null ? (
-                    <span
-                      className={
-                        session.difference < 0
-                          ? "text-destructive"
-                          : session.difference > 0
-                            ? "text-green-500"
-                            : ""
-                      }
-                    >
-                      S/ {formatCurrency(session.difference)}
-                    </span>
-                  ) : (
-                    "-"
-                  )}
-                </TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"
