@@ -6,6 +6,7 @@ export interface POSSessionListItem {
   id: number;
   userId: string;
   userName: string;
+  userLastName: string | null;
   branchId: number;
   branchName: string;
   warehouseId: number;
@@ -28,6 +29,7 @@ export interface POSSessionListApiItem {
   id: number;
   user_id: string;
   user_name: string;
+  user_last_name: string | null;
   branch_id: number;
   branch_name: string;
   warehouse_id: number;

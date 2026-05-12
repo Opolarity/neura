@@ -16,10 +16,28 @@ import { barcodesRoutes } from "@/modules/barcodes";
 import { discountsRoutes } from "@/modules/discounts";
 import NotFound from "@/shared/components/NotFound";
 import { ProtectedLayout } from "./ProtectedLayout";
+import ProtectedRoute from "./ProtectedRoute";
+import InvoicePrintPage from "@/modules/invoices/pages/InvoicePrintPage";
 
 const AppRouter = () => {
   return useRoutes([
     ...authRoutes,
+    {
+      path: "/invoices/print/v/:viewerId",
+      element: (
+        <ProtectedRoute>
+          <InvoicePrintPage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/invoices/print/:id",
+      element: (
+        <ProtectedRoute>
+          <InvoicePrintPage />
+        </ProtectedRoute>
+      ),
+    },
     {
       path: "/",
       ...ProtectedLayout,

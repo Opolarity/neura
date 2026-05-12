@@ -294,6 +294,7 @@ export const adaptSaleById = (data: any) => {
       variationName: p.variation_name,
       sku: p.sku,
       quantity: p.quantity,
+      receivedByFranchise: p.received_by_franchise ?? null,
       price: p.price,
       originalPrice: p.price,
       discountAmount: p.discount_amount,
@@ -323,6 +324,9 @@ export const adaptSaleById = (data: any) => {
     currentSituationCode: (data.current_situation as CurrentSituation | null)?.situation_code || "",
     currentStatusCode: (data.current_situation as CurrentSituation | null)?.status_code || "",
     orderWarehouseId: data.order?.warehouse_id || null,
+    isConsignment: data.order?.consignament ?? false,
+    sendedToFranchiseAt: data.order?.sended_to_franchise_at ?? null,
+    sendedToFranchiseBy: data.order?.sended_to_franchise_by ?? null,
     orderDiscounts,
     orderSaleType: data.order.sale_type_id
       ? { id: data.order.sale_type_id, name: data.order.sale_type_name || "" }

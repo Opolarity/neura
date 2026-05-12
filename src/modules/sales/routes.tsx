@@ -5,9 +5,11 @@ import POS from './pages/POS';
 import CreateShipping from './pages/CreateShipping';
 import Shipping from './pages/Shipping';
 import POSTicketPrintPage from './pages/POSTicketPrintPage';
+import FranchiseProducts from './pages/FranchiseProducts';
 
 export const salesRoutes: RouteObject[] = [
   { path: 'sales', element: <Sales /> },
+  { path: 'sales/products/franchise', element: <FranchiseProducts /> },
   { path: 'sales/create', element: <CreateSale /> },
   { path: 'sales/edit/:id', element: <CreateSale /> },
   { path: 'pos/open', element: <POS /> },

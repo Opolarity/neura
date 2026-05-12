@@ -14,7 +14,8 @@ export const adaptPOSSessionListItem = (
 ): POSSessionListItem => ({
   id: item.id,
   userId: item.user_id,
-  userName: item.user_name,
+  userName: `${item.user_name || ""}`.trim() || "—",
+  userLastName: item.user_last_name,
   branchId: item.branch_id,
   branchName: item.branch_name,
   openingDifference: item.opening_difference ?? null,

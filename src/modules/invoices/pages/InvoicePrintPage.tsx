@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
@@ -33,6 +33,8 @@ interface InvoiceItem {
   total: number;
   measurement_unit: string;
 }
+
+const invoicePdfUrls = new Map<string, string>();
 
 function numberToWords(num: number): string {
   const units = [
@@ -130,13 +132,40 @@ function numberToWords(num: number): string {
 }
 
 export default function InvoicePrintPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id, viewerId } = useParams<{ id?: string; viewerId?: string }>();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const pdfUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (viewerId) {
+      const url = invoicePdfUrls.get(viewerId);
+      if (!url) {
+        setError("No se encontró el PDF generado");
+        setLoading(false);
+        return;
+      }
+      pdfUrlRef.current = url;
+      setPdfUrl(url);
+      setLoading(false);
+      return () => {
+        URL.revokeObjectURL(url);
+        invoicePdfUrls.delete(viewerId);
+        pdfUrlRef.current = null;
+      };
+    }
+
     if (id) generatePdf(Number(id));
-  }, [id]);
+    return () => {
+      if (pdfUrlRef.current) {
+        URL.revokeObjectURL(pdfUrlRef.current);
+        if (viewerId) invoicePdfUrls.delete(viewerId);
+        pdfUrlRef.current = null;
+      }
+    };
+  }, [id, viewerId]);
 
   const loadImage = async (url: string): Promise<{ dataUrl: string; width: number; height: number }> => {
     const response = await fetch(url);
@@ -165,6 +194,9 @@ export default function InvoicePrintPage() {
 
   const generatePdf = async (invoiceId: number) => {
     try {
+      setLoading(true);
+      setError(null);
+
       // Fetch invoice, items, and company params in parallel
       const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes, companyParams] =
         await Promise.all([
@@ -643,10 +675,11 @@ export default function InvoicePrintPage() {
       });
       drawContent(doc);
 
-      // Open PDF inline
       const pdfBlob = doc.output("blob");
       const url = URL.createObjectURL(pdfBlob);
-      window.location.replace(url);
+      const generatedViewerId = crypto.randomUUID();
+      invoicePdfUrls.set(generatedViewerId, url);
+      navigate(`/invoices/print/v/${generatedViewerId}`, { replace: true });
     } catch (err: any) {
       setError(err.message || "Error al generar el PDF");
       setLoading(false);
@@ -658,6 +691,16 @@ export default function InvoicePrintPage() {
       <div className="flex items-center justify-center h-screen">
         <p className="text-destructive">{error}</p>
       </div>
+    );
+  }
+
+  if (pdfUrl) {
+    return (
+      <embed
+        src={pdfUrl}
+        type="application/pdf"
+        className="h-screen w-screen border-0"
+      />
     );
   }
 
