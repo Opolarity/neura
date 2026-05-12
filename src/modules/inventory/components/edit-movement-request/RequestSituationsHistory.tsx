@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { formatDateTime } from "@/shared/utils/date";
-import { MessageSquare, Send } from "lucide-react";
+import { MessageSquare, Send, PencilLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -108,7 +108,8 @@ const RequestSituationsHistory = ({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col md:flex-row gap-4 items-start">
+      <div className="flex-1 min-w-0 rounded-lg border border-border bg-muted/20 p-4 space-y-3">
       <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
         <MessageSquare className="h-4 w-4" />
         Historial de la solicitud
@@ -156,10 +157,15 @@ const RequestSituationsHistory = ({
         </div>
       )}
 
+      </div>
+
       {/* New message form */}
       {!readOnly && (
-      <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
-        <h4 className="text-sm font-semibold text-foreground">Agregar actualización</h4>
+      <div className="flex-1 min-w-0 rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <PencilLine className="h-4 w-4" />
+          Agregar actualización
+        </h4>
 
         <div className="flex flex-row gap-3">
           <div className="flex-1 flex flex-col gap-1">
@@ -216,8 +222,8 @@ const RequestSituationsHistory = ({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {getSelectedSituation()?.statusCode === "CFM" 
-                ? "¿Confirmar solicitud?" 
+              {getSelectedSituation()?.statusCode === "CFM"
+                ? "¿Confirmar solicitud?"
                 : "¿Completar solicitud?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
