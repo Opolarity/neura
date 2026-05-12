@@ -7,7 +7,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryProvider } from "./providers/QueryProvider";
 import MaintenancePage from "@/components/MaintenancePage";
 
-const IS_MAINTENANCE_MODE = true;
+const IS_MAINTENANCE_MODE = false;
 
 const App = () => {
   if (IS_MAINTENANCE_MODE) {
