@@ -52,14 +52,14 @@ const Header = ({ onSignOut }: HeaderProps) => {
 
         <div className="flex items-center gap-4">
           {!loading && (isOpen ? (
-            <Button variant="outline" className="border-green-500" onClick={() => navigate("/pos/open")}>
+            <Button variant="outline" size="sm" className="border-green-500 p-2" onClick={() => navigate("/pos/open")}>
               <Store className="w-5 h-5 text-green-500" />
-              <span className="text-base text-green-500">Abierto</span>
+              <span className="text-sm text-green-500">Abierto</span>
             </Button>
           ) : (
-            <Button variant="outline" className="border-red-500" onClick={() => navigate("/pos")}>
+            <Button variant="outline" size="sm" className="border-red-500 p-2" onClick={() => navigate("/pos")}>
               <Store className="w-5 h-5 text-red-500" />
-              <span className="text-base text-red-500">Cerrado</span>
+              <span className="text-sm text-red-500">Cerrado</span>
             </Button>
           ))}
 
