@@ -57,7 +57,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
               <span className="text-sm text-green-500">Abierto</span>
             </Button>
           ) : (
-            <Button variant="outline" size="sm" className="border-red-500 p-2" onClick={() => navigate("/pos")}>
+            <Button variant="outline" size="sm" className="border-red-500 p-2" onClick={() => navigate("/pos/open")}>
               <Store className="w-5 h-5 text-red-500" />
               <span className="text-sm text-red-500">Cerrado</span>
             </Button>
