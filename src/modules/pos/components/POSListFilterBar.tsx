@@ -1,16 +1,25 @@
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import POSListFilterModal from "./POSListFilterModal";
+import POSListFilterModal, { type ModalFilters } from "./POSListFilterModal";
+import type { POSSessionUser } from "../types/POSList.types";
 
 interface POSListFilterBarProps {
   search: string;
   onSearchChange: (text: string) => void;
+  users: POSSessionUser[];
+  appliedModalFilters: ModalFilters;
+  onApplyModalFilters: (filters: ModalFilters) => void;
+  onResetModalFilters: () => void;
 }
 
 export default function POSListFilterBar({
   search,
   onSearchChange,
+  users,
+  appliedModalFilters,
+  onApplyModalFilters,
+  onResetModalFilters,
 }: POSListFilterBarProps) {
   const [open, setOpen] = useState(false);
 
@@ -33,7 +42,14 @@ export default function POSListFilterBar({
         </Button>
       </div>
 
-      <POSListFilterModal open={open} onOpenChange={setOpen} />
+      <POSListFilterModal
+        open={open}
+        onOpenChange={setOpen}
+        users={users}
+        appliedFilters={appliedModalFilters}
+        onApply={onApplyModalFilters}
+        onReset={onResetModalFilters}
+      />
     </>
   );
 }

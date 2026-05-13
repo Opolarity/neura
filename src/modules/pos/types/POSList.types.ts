@@ -56,12 +56,23 @@ export interface POSSessionsListApiResponse {
       p_size: number;
       total: number;
     };
+    users: {
+      user_id: string;
+      user_name: string;
+      user_last_name: string | null;
+    }[];
   };
+}
+
+export interface POSSessionUser {
+  userId: string;
+  userName: string;
+  userLastName: string | null;
 }
 
 export interface POSSessionsListFilters {
   search: string | null;
-  user_id: number | null;
+  user_id: string | null;
   opened_date: string | null;
   closed_date: string | null;
   page: number;
