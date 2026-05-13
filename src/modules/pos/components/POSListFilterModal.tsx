@@ -63,7 +63,6 @@ export default function POSListFilterModal({
 
   const handleReset = () => {
     setDraft(EMPTY_FILTERS);
-    onReset();
   };
 
   return (
