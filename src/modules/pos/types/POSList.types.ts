@@ -61,7 +61,9 @@ export interface POSSessionsListApiResponse {
 
 export interface POSSessionsListFilters {
   search: string | null;
-  status_id: number | null;
+  user_id: number | null;
+  opened_date: string | null;
+  closed_date: string | null;
   page: number;
   size: number;
 }

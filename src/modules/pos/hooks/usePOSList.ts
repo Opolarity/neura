@@ -22,7 +22,9 @@ export const usePOSList = () => {
   });
   const [filters, setFilters] = useState<POSSessionsListFilters>({
     search: null,
-    status_id: null,
+    user_id: null,
+    opened_date: null,
+    closed_date: null,
     page: 1,
     size: 20,
   });

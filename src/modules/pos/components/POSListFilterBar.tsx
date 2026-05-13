@@ -1,4 +1,7 @@
-import { Search } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import POSListFilterModal from "./POSListFilterModal";
 
 interface POSListFilterBarProps {
   search: string;
@@ -9,18 +12,28 @@ export default function POSListFilterBar({
   search,
   onSearchChange,
 }: POSListFilterBarProps) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className="flex items-center gap-2">
-      <div className="relative">
-        <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-        <input
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          type="text"
-          placeholder="Buscar sesiones..."
-          className="pl-10 pr-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent w-[300px]"
-        />
+    <>
+      <div className="flex items-center gap-2">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            type="text"
+            placeholder="Buscar sesiones..."
+            className="pl-10 pr-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent w-[300px]"
+          />
+        </div>
+        <Button variant="outline" onClick={() => setOpen(true)}>
+          <SlidersHorizontal className="w-4 h-4 mr-2" />
+          Filtrar
+        </Button>
       </div>
-    </div>
+
+      <POSListFilterModal open={open} onOpenChange={setOpen} />
+    </>
   );
 }
