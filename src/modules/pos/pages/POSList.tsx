@@ -13,12 +13,16 @@ import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 const POSList = () => {
   const {
     sessions,
+    users,
     loading,
     search,
     pagination,
+    appliedModalFilters,
     onSearchChange,
     onPageChange,
     handlePageSizeChange,
+    applyModalFilters,
+    resetModalFilters,
     goToPOS,
   } = usePOSList();
 
@@ -31,6 +35,10 @@ const POSList = () => {
           <POSListFilterBar
             search={search}
             onSearchChange={onSearchChange}
+            users={users}
+            appliedModalFilters={appliedModalFilters}
+            onApplyModalFilters={applyModalFilters}
+            onResetModalFilters={resetModalFilters}
           />
         </CardHeader>
         <CardContent className="p-0">
