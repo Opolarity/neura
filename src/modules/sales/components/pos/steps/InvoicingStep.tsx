@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import GuiaRemisionModal, { type GuiaRemisionData } from "../../GuiaRemisionModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,6 +82,9 @@ export default function InvoicingStep({
     vinculatedTypeCode?: string;
   } | null>(null);
   const autoEmitTriggeredRef = useRef(false);
+
+  const [guiaModalOpen, setGuiaModalOpen] = useState(false);
+  const [pendingGuiaInvoiceType, setPendingGuiaInvoiceType] = useState<InvoiceType | null>(null);
 
   useEffect(() => {
     if (orderId) {
@@ -257,6 +261,8 @@ export default function InvoicingStep({
         serieId = saleType.factura_serie_id;
       } else if (typeCode === "2") {
         serieId = saleType.boleta_serie_id;
+      } else if (typeCode === "7") {
+        serieId = (saleType as any).guia_remitente_serie_id || null;
       } else if (typeCode === "3" || typeCode === "4") {
         if (vinculatedTypeCode === "1") {
           serieId = saleType.factura_serie_id;
@@ -282,6 +288,12 @@ export default function InvoicingStep({
   };
 
   const handleSelectInvoiceType = async (invoiceType: InvoiceType) => {
+    if (invoiceType.code === "7") {
+      setPendingGuiaInvoiceType(invoiceType);
+      setGuiaModalOpen(true);
+      return;
+    }
+
     if (invoiceType.code === "INV") {
       setPendingInvoiceType(invoiceType);
       return;
@@ -296,6 +308,80 @@ export default function InvoicingStep({
 
     setPendingInvoiceType(invoiceType);
     setPendingValidation(result);
+  };
+
+  const handleCreateGuia = async (greData: GuiaRemisionData) => {
+    if (!pendingGuiaInvoiceType) return;
+    setCreating(true);
+    try {
+      const taxSerie = await getSerieForType("7");
+
+      const { data: order, error: orderError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("id", orderId)
+        .single();
+
+      if (orderError || !order) {
+        toast({ title: "Error", description: "No se pudo obtener la orden", variant: "destructive" });
+        return;
+      }
+
+      const { data: orderProducts, error: productsError } = await supabase
+        .from("order_products")
+        .select("*, variations:product_variation_id(id, sku, product_id, products:product_id(title))")
+        .eq("order_id", orderId);
+
+      if (productsError || !orderProducts) {
+        toast({ title: "Error", description: "No se pudieron obtener los productos", variant: "destructive" });
+        return;
+      }
+
+      const items = orderProducts.map((op: any) => ({
+        description: op.variations?.products?.title || op.product_name || `Producto ${op.product_variation_id}`,
+        quantity: Number(op.quantity),
+        measurement_unit: "NIU",
+        unit_price: 0,
+        discount: 0,
+        igv: 0,
+        total: 0,
+      }));
+
+      const clientName = [order.customer_name, order.customer_lastname].filter(Boolean).join(" ") || null;
+
+      const body = {
+        invoice_type_id: pendingGuiaInvoiceType.id,
+        tax_serie: taxSerie,
+        invoice_number: null,
+        declared: false,
+        customer_document_type_id: order.document_type,
+        customer_document_number: order.document_number,
+        client_name: clientName,
+        client_email: order.email || null,
+        client_address: order.address || null,
+        total_amount: 0,
+        total_taxes: 0,
+        items,
+        order_id: orderId,
+        gre: greData,
+      };
+
+      const { error: fnError } = await supabase.functions.invoke("create-invoice", { body });
+
+      if (fnError) {
+        toast({ title: "Error", description: "Error al crear la guía de remisión", variant: "destructive" });
+        return;
+      }
+
+      toast({ title: "Éxito", description: "Guía de remisión creada correctamente" });
+      setGuiaModalOpen(false);
+      setPendingGuiaInvoiceType(null);
+      fetchInvoices();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleCreateInvoice = async (invoiceType: InvoiceType) => {
@@ -414,7 +500,9 @@ export default function InvoicingStep({
   const handleEmitInvoice = async (invoice: Invoice) => {
     setEmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("emit-invoice", {
+      const typeCode = getInvoiceTypeCode(invoice);
+      const fnName = typeCode === "7" ? "emit-guia" : "emit-invoice";
+      const { data, error } = await supabase.functions.invoke(fnName, {
         body: { invoice_id: invoice.id },
       });
 
@@ -868,6 +956,17 @@ export default function InvoicingStep({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de datos para Guía de Remisión */}
+      <GuiaRemisionModal
+        open={guiaModalOpen}
+        onOpenChange={(v) => {
+          setGuiaModalOpen(v);
+          if (!v) setPendingGuiaInvoiceType(null);
+        }}
+        orderId={orderId}
+        onConfirm={handleCreateGuia}
+      />
     </div>
   );
 }
