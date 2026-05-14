@@ -920,7 +920,7 @@ export const usePOS = () => {
     const existingChangeTotal = changeEntries.reduce(
       (acc, entry) => acc + entry.amount, 0
     );
-    if (existingChangeTotal + currentChangeEntry.amount > changeAmount) {
+    if (Math.round((existingChangeTotal + currentChangeEntry.amount) * 100) > Math.round(changeAmount * 100)) {
       toast({
         title: "Monto excedido",
         description: "El vuelto total no puede superar el vuelto calculado",
