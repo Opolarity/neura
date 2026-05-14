@@ -38,6 +38,7 @@ export interface SaleProduct {
   variationName: string;
   sku: string;
   quantity: number;
+  receivedByFranchise?: number | null;
   price: number;
   originalPrice: number; // precio original antes de reglas
   discountAmount: number; // descuento en monto (S/)

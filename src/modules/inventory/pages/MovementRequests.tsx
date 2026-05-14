@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMovementRequests } from "../hooks/useMovementRequests";
 import MovementRequestsTable from "../components/movement-requests/MovementRequestsTable";
 import MovementRequestsFilterModal from "../components/movement-requests/MovementRequestsFilterModal";
+import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { MovementRequestView } from "../types/MovementRequestList.types";
 
 const MovementRequests = () => {
@@ -14,12 +15,14 @@ const MovementRequests = () => {
   const {
     requests,
     loading,
-    view,
-    setView,
-    situationId,
-    setSituationId,
+    filters,
+    pagination,
     situations,
     hasActiveFilters,
+    handleViewChange,
+    handleSituationChange,
+    handlePageChange,
+    handleSizeChange,
   } = useMovementRequests();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -47,7 +50,10 @@ const MovementRequests = () => {
 
       <Card>
         <CardHeader className="flex flex-row items-center gap-2 space-y-0">
-          <Tabs value={view} onValueChange={(v) => setView(v as MovementRequestView)}>
+          <Tabs
+            value={filters.view}
+            onValueChange={(v) => handleViewChange(v as MovementRequestView)}
+          >
             <TabsList>
               <TabsTrigger value="received">Recibidas</TabsTrigger>
               <TabsTrigger value="sent">Enviadas</TabsTrigger>
@@ -65,16 +71,21 @@ const MovementRequests = () => {
         </CardHeader>
         <CardContent className="p-0">
           <MovementRequestsTable requests={requests} loading={loading} />
+          <PaginationBar
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handleSizeChange}
+          />
         </CardContent>
       </Card>
 
       <MovementRequestsFilterModal
         situations={situations}
-        filters={{ view, situation_id: situationId }}
+        filters={filters}
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         onApply={(f) => {
-          setSituationId(f.situation_id);
+          handleSituationChange(f.situation_id);
           setIsFilterOpen(false);
         }}
       />

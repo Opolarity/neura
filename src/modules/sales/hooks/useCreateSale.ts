@@ -98,25 +98,6 @@ const createEmptyPayment = (): SalePayment => ({
   businessAccountId: "",
 });
 
-const hmacSha256Hex = async (message: string, secret: string): Promise<string> => {
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    cryptoKey,
-    new TextEncoder().encode(message),
-  );
-
-  return Array.from(new Uint8Array(signatureBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-};
-
 export const useCreateSale = () => {
   const navigate = useNavigate();
   const { id: orderId } = useParams();
@@ -1045,48 +1026,43 @@ export const useCreateSale = () => {
 
     const now = new Date();
     const monthYear = now.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
-    const uniqueSkus = Array.from(
-      new Set(products.map((p) => p.sku?.trim()).filter(Boolean)),
-    );
 
-    let ovtkProducts: Record<string, unknown> = {};
+    let franchiseProductsPayload: {
+      products: Array<{
+        sku: string;
+        quantity: number;
+        unit_price: number;
+        description: string;
+      }>;
+      ovtk_products: Record<string, unknown>;
+    };
+
     try {
-      const ovtkApiKey = await hmacSha256Hex("ovtk_product_lookup", secret);
-      const ovtkProductsEntries = await Promise.all(
-        uniqueSkus.map(async (sku) => {
-          const response = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fch-get-ovtk-products-by-sku`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-api-key": ovtkApiKey,
-              },
-              body: JSON.stringify({ sku }),
-            },
-          );
-
-          if (!response.ok) {
-            const errText = await response.text();
-            console.error(`Error fetching OVTK product detail for SKU ${sku}:`, errText);
-            throw new Error(`No se pudo obtener el detalle OVTK del SKU ${sku}`);
-          }
-
-          const result = await response.json();
-          if (!result?.success || !result?.data) {
-            throw new Error(`No se encontró el detalle OVTK del SKU ${sku}`);
-          }
-
-          return [sku, result.data] as const;
-        }),
+      const { data, error } = await supabase.functions.invoke(
+        "get-products-for-send-to-franchise",
+        {
+          body: { order_id: Number(orderId) },
+        },
       );
 
-      ovtkProducts = Object.fromEntries(ovtkProductsEntries);
+      if (error) throw error;
+      if (!data?.success || !data?.data) {
+        throw new Error(data?.error ?? "No se pudo obtener el detalle de productos para franquiciado");
+      }
+
+      franchiseProductsPayload = {
+        products: data.data.products ?? [],
+        ovtk_products: data.data.ovtk_products ?? {},
+      };
+
+      if (franchiseProductsPayload.products.length === 0) {
+        throw new Error("No se encontraron productos para enviar al franquiciado");
+      }
     } catch (e) {
-      console.error("Error obteniendo detalle de productos OVTK:", e);
+      console.error("Error obteniendo productos para franquiciado:", e);
       toast({
         title: "Error",
-        description: e instanceof Error ? e.message : "No se pudo obtener el detalle de productos OVTK",
+        description: e instanceof Error ? e.message : "No se pudo obtener la información de productos para el franquiciado",
         variant: "destructive",
       });
       setSendingToFranchisee(false);
@@ -1098,13 +1074,8 @@ export const useCreateSale = () => {
       description: `Envío consignación ${monthYear}`,
       reference: `NEURA-VENTA-${orderId ?? "NUEVA"}`,
       sale_code: orderId ? `${orderId}` : `${Date.now()}`,
-      products: products.map((p) => ({
-        sku: p.sku,
-        quantity: p.quantity,
-        unit_price: p.price,
-        description: `${p.productName} ${p.variationName}`.trim(),
-      })),
-      ovtk_products: ovtkProducts,
+      products: franchiseProductsPayload.products,
+      ovtk_products: franchiseProductsPayload.ovtk_products,
     };
 
     try {

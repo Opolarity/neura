@@ -6,6 +6,7 @@ export interface POSSessionListItem {
   id: number;
   userId: string;
   userName: string;
+  userLastName: string | null;
   branchId: number;
   branchName: string;
   warehouseId: number;
@@ -28,6 +29,7 @@ export interface POSSessionListApiItem {
   id: number;
   user_id: string;
   user_name: string;
+  user_last_name: string | null;
   branch_id: number;
   branch_name: string;
   warehouse_id: number;
@@ -54,12 +56,25 @@ export interface POSSessionsListApiResponse {
       p_size: number;
       total: number;
     };
+    users: {
+      user_id: string;
+      user_name: string;
+      user_last_name: string | null;
+    }[];
   };
+}
+
+export interface POSSessionUser {
+  userId: string;
+  userName: string;
+  userLastName: string | null;
 }
 
 export interface POSSessionsListFilters {
   search: string | null;
-  status_id: number | null;
+  user_id: string | null;
+  opened_date: string | null;
+  closed_date: string | null;
   page: number;
   size: number;
 }
