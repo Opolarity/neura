@@ -249,7 +249,7 @@ export default function InvoicingStep({
     try {
       const { data: saleType, error: stError } = await supabase
         .from("sale_types")
-        .select("factura_serie_id, boleta_serie_id")
+        .select("factura_serie_id, boleta_serie_id, guia_remitente_serie_id")
         .eq("id", saleTypeId)
         .single();
 
