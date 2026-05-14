@@ -6,6 +6,7 @@ import type {
   POSSessionListItem,
   POSSessionListApiItem,
   POSSessionsListApiResponse,
+  POSSessionUser,
 } from "../types/POSList.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 
@@ -36,10 +37,15 @@ export const adaptPOSSessionListItem = (
 
 export const adaptPOSSessionsList = (
   response: POSSessionsListApiResponse
-): { sessions: POSSessionListItem[]; pagination: PaginationState } => {
-  const { data, page } = response.sessions_data;
+): { sessions: POSSessionListItem[]; users: POSSessionUser[]; pagination: PaginationState } => {
+  const { data, page, users } = response.sessions_data;
   return {
     sessions: (data || []).map(adaptPOSSessionListItem),
+    users: (users || []).map((u) => ({
+      userId: u.user_id,
+      userName: u.user_name,
+      userLastName: u.user_last_name,
+    })),
     pagination: {
       p_page: page.p_page,
       p_size: page.p_size,

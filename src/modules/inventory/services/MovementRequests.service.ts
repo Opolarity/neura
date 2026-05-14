@@ -29,6 +29,12 @@ export const getStockMovementRequestsApi = async (
   if (filters.situation_id !== null && filters.situation_id !== undefined) {
     params.set("situation_id", String(filters.situation_id));
   }
+  if (filters.page !== undefined) {
+    params.set("page", String(filters.page));
+  }
+  if (filters.page_size !== undefined) {
+    params.set("page_size", String(filters.page_size));
+  }
 
   const endpoint = `get-stock-movement-request?${params.toString()}`;
 
@@ -43,7 +49,8 @@ export const getStockMovementRequestsApi = async (
 
   return (
     data ?? {
-      requests: [],
+      data: [],
+      page: { total: 0, p_page: 1, p_size: 20 },
       userWarehouseId: null,
       situations: [],
     }
