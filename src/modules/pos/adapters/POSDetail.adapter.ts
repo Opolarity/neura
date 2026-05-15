@@ -7,7 +7,7 @@ import type {
 
 export const adaptPOSSessionDetail = (
   response: POSSessionDetailApiResponse
-): { session: POSSessionDetail; orders: POSSessionOrder[]; incomePayments: POSSessionPaymentItem[]; changePayments: POSSessionPaymentItem[] } => {
+): { session: POSSessionDetail; orders: POSSessionOrder[]; incomePayments: POSSessionPaymentItem[]; changePayments: POSSessionPaymentItem[]; totalIngresos: number; totalVueltos: number } => {
   const s = response.session;
   return {
     session: {
@@ -42,5 +42,7 @@ export const adaptPOSSessionDetail = (
     })),
     incomePayments: response.income_payments || [],
     changePayments: response.change_payments || [],
+    totalIngresos: response.total_ingresos,
+    totalVueltos: response.total_vueltos,
   };
 };

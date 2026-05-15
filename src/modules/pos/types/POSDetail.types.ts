@@ -75,4 +75,6 @@ export interface POSSessionDetailApiResponse {
   }[];
   income_payments: POSSessionPaymentItem[];
   change_payments: POSSessionPaymentItem[];
+  total_ingresos: number;
+  total_vueltos: number;
 }

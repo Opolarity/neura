@@ -40,12 +40,10 @@ const POSSessionDetailDialog = ({
 }: POSSessionDetailDialogProps) => {
   const [session, setSession] = useState<POSSessionDetail | null>(null);
   const [orders, setOrders] = useState<POSSessionOrder[]>([]);
-  const [incomePayments, setIncomePayments] = useState<POSSessionPaymentItem[]>(
-    [],
-  );
-  const [changePayments, setChangePayments] = useState<POSSessionPaymentItem[]>(
-    [],
-  );
+  const [incomePayments, setIncomePayments] = useState<POSSessionPaymentItem[]>([]);
+  const [changePayments, setChangePayments] = useState<POSSessionPaymentItem[]>([]);
+  const [totalIngresos, setTotalIngresos] = useState<number>(0);
+  const [totalVueltos, setTotalVueltos] = useState<number>(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -57,6 +55,8 @@ const POSSessionDetailDialog = ({
       setOrders([]);
       setIncomePayments([]);
       setChangePayments([]);
+      setTotalIngresos(0);
+      setTotalVueltos(0);
     }
   }, [open, sessionId]);
 
@@ -69,6 +69,8 @@ const POSSessionDetailDialog = ({
       setOrders(adapted.orders);
       setIncomePayments(adapted.incomePayments);
       setChangePayments(adapted.changePayments);
+      setTotalIngresos(adapted.totalIngresos);
+      setTotalVueltos(adapted.totalVueltos);
     } catch (err) {
       console.error("Error loading session detail:", err);
     } finally {
@@ -136,6 +138,9 @@ const POSSessionDetailDialog = ({
                     : "-"
                 }
               />
+              <h4 className="col-span-2 md:col-span-3 text-start text-sm font-semibold">
+                Cuadre de Caja
+              </h4>
               <InfoItem
                 label="Monto Apertura"
                 value={`S/ ${formatCurrency(session.openingAmount)}`}
@@ -145,7 +150,7 @@ const POSSessionDetailDialog = ({
                 value={`S/ ${formatCurrency(session.openingDifference)}`}
               />
               <InfoItem
-                label="Ventas Totales"
+                label="Ventas Totales Efectivo"
                 value={
                   session.totalSales !== null
                     ? `S/ ${formatCurrency(session.totalSales)}`
@@ -225,13 +230,7 @@ const POSSessionDetailDialog = ({
                       <div className="border-t border-slate-200 pt-1.5 flex items-center justify-between text-sm font-semibold">
                         <span>TOTAL INGRESOS</span>
                         <span>
-                          S/{" "}
-                          {formatCurrency(
-                            incomePayments.reduce(
-                              (sum, i) => sum + i.amount,
-                              0,
-                            ),
-                          )}
+                          S/ {formatCurrency(totalIngresos)}
                         </span>
                       </div>
                     </div>
@@ -261,13 +260,7 @@ const POSSessionDetailDialog = ({
                       <div className="border-t border-blue-200 pt-1.5 flex items-center justify-between text-sm font-semibold text-blue-700">
                         <span>TOTAL VUELTOS</span>
                         <span>
-                          S/{" "}
-                          {formatCurrency(
-                            changePayments.reduce(
-                              (sum, i) => sum + i.amount,
-                              0,
-                            ),
-                          )}
+                          S/ {formatCurrency(totalVueltos)}
                         </span>
                       </div>
                     </div>
