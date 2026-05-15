@@ -103,7 +103,7 @@ const POSSessionDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-[56rem] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             Detalle de Sesión {session ? `#${session.id}` : ""}
