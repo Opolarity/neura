@@ -95,10 +95,23 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell
+                  className={
+                    session.openingDifference !== null &&
+                    session.openingDifference !== 0
+                      ? "text-green-600"
+                      : ""
+                  }
+                >
                   S/ {formatCurrency(session.openingAmount)}
                 </TableCell>
-                <TableCell>
+                <TableCell
+                  className={
+                    session.difference !== null && session.difference !== 0
+                      ? "text-red-600"
+                      : ""
+                  }
+                >
                   {session.closingAmount !== null
                     ? `S/ ${formatCurrency(session.closingAmount)}`
                     : "-"}

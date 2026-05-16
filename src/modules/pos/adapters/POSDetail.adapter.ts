@@ -1,12 +1,13 @@
 import type {
   POSSessionDetail,
   POSSessionOrder,
+  POSSessionPaymentItem,
   POSSessionDetailApiResponse,
 } from "../types/POSDetail.types";
 
 export const adaptPOSSessionDetail = (
   response: POSSessionDetailApiResponse
-): { session: POSSessionDetail; orders: POSSessionOrder[] } => {
+): { session: POSSessionDetail; orders: POSSessionOrder[]; incomePayments: POSSessionPaymentItem[]; changePayments: POSSessionPaymentItem[]; totalIngresos: number; totalVueltos: number } => {
   const s = response.session;
   return {
     session: {
@@ -39,5 +40,9 @@ export const adaptPOSSessionDetail = (
       discount: o.discount,
       createdAt: o.created_at,
     })),
+    incomePayments: response.income_payments || [],
+    changePayments: response.change_payments || [],
+    totalIngresos: response.total_ingresos,
+    totalVueltos: response.total_vueltos,
   };
 };

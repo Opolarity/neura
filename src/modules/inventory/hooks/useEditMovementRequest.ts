@@ -426,12 +426,13 @@ export const useEditMovementRequest = () => {
       const notes = generateNotes();
       const combinedMessage = notes ? `${message}\n\n${notes}` : message;
 
-      const { data, error } = await supabase.functions.invoke('approve-stock-movement-items', {
+      const { data, error } = await supabase.functions.invoke('update-stock-movements-request', {
         body: {
-          stock_movement_request_id: requestId,
+          request_id: requestId,
           situation_code: selectedSit.code,
           message: combinedMessage,
-          items: payloadItems,
+          module_code: "STR",
+          items_approval: payloadItems,
         },
       });
 
