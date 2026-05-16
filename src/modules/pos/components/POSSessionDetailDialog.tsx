@@ -15,16 +15,17 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
-import { formatCurrency, formatTime } from "@/modules/sales/adapters/POS.adapter";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  formatCurrency,
+  formatTime,
+} from "@/modules/sales/adapters/POS.adapter";
 import { getPOSSessionDetail } from "../services/POSDetail.service";
 import { adaptPOSSessionDetail } from "../adapters/POSDetail.adapter";
-import type { POSSessionDetail, POSSessionOrder } from "../types/POSDetail.types";
-
-interface PaymentMethodSummary {
-  paymentMethodName: string;
-  total: number;
-}
+import type {
+  POSSessionDetail,
+  POSSessionOrder,
+  POSSessionPaymentItem,
+} from "../types/POSDetail.types";
 
 interface POSSessionDetailDialogProps {
   sessionId: number | null;
@@ -39,7 +40,10 @@ const POSSessionDetailDialog = ({
 }: POSSessionDetailDialogProps) => {
   const [session, setSession] = useState<POSSessionDetail | null>(null);
   const [orders, setOrders] = useState<POSSessionOrder[]>([]);
-  const [paymentSummary, setPaymentSummary] = useState<PaymentMethodSummary[]>([]);
+  const [incomePayments, setIncomePayments] = useState<POSSessionPaymentItem[]>([]);
+  const [changePayments, setChangePayments] = useState<POSSessionPaymentItem[]>([]);
+  const [totalIngresos, setTotalIngresos] = useState<number>(0);
+  const [totalVueltos, setTotalVueltos] = useState<number>(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -49,54 +53,29 @@ const POSSessionDetailDialog = ({
     if (!open) {
       setSession(null);
       setOrders([]);
-      setPaymentSummary([]);
+      setIncomePayments([]);
+      setChangePayments([]);
+      setTotalIngresos(0);
+      setTotalVueltos(0);
     }
   }, [open, sessionId]);
 
   const loadDetail = async (id: number) => {
     setLoading(true);
     try {
-      const [response, payments] = await Promise.all([
-        getPOSSessionDetail(id),
-        loadPaymentSummary(id),
-      ]);
+      const response = await getPOSSessionDetail(id);
       const adapted = adaptPOSSessionDetail(response);
       setSession(adapted.session);
       setOrders(adapted.orders);
-      setPaymentSummary(payments);
+      setIncomePayments(adapted.incomePayments);
+      setChangePayments(adapted.changePayments);
+      setTotalIngresos(adapted.totalIngresos);
+      setTotalVueltos(adapted.totalVueltos);
     } catch (err) {
       console.error("Error loading session detail:", err);
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadPaymentSummary = async (sessionId: number): Promise<PaymentMethodSummary[]> => {
-    const { data: sessionOrders, error: soError } = await supabase
-      .from("pos_session_orders")
-      .select("order_id")
-      .eq("pos_session_id", sessionId);
-
-    if (soError || !sessionOrders?.length) return [];
-
-    const orderIds = sessionOrders.map((o) => o.order_id);
-
-    const { data: payments, error: pError } = await (supabase as any)
-      .from("order_payment")
-      .select("amount, payment_methods(name)")
-      .in("order_id", orderIds);
-
-    if (pError || !payments?.length) return [];
-
-    const map = new Map<string, number>();
-    for (const p of payments) {
-      const name = p.payment_methods?.name ?? "Sin método";
-      map.set(name, (map.get(name) ?? 0) + (Number(p.amount) || 0));
-    }
-
-    return Array.from(map.entries())
-      .map(([paymentMethodName, total]) => ({ paymentMethodName, total }))
-      .sort((a, b) => b.total - a.total);
   };
 
   const formatDate = (dateString: string) => {
@@ -110,17 +89,21 @@ const POSSessionDetailDialog = ({
 
   const getStatusBadge = (statusCode: string, statusName: string) => {
     if (statusCode === "OPE") {
-      return <Badge className="bg-green-500 hover:bg-green-500">{statusName}</Badge>;
+      return (
+        <Badge className="bg-green-500 hover:bg-green-500">{statusName}</Badge>
+      );
     }
     if (statusCode === "CLO") {
-      return <Badge className="bg-gray-500 hover:bg-gray-500">{statusName}</Badge>;
+      return (
+        <Badge className="bg-gray-500 hover:bg-gray-500">{statusName}</Badge>
+      );
     }
     return <Badge variant="outline">{statusName}</Badge>;
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-[56rem] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             Detalle de Sesión {session ? `#${session.id}` : ""}
@@ -155,6 +138,9 @@ const POSSessionDetailDialog = ({
                     : "-"
                 }
               />
+              <h4 className="col-span-2 md:col-span-3 text-start text-sm font-semibold">
+                Cuadre de Caja
+              </h4>
               <InfoItem
                 label="Monto Apertura"
                 value={`S/ ${formatCurrency(session.openingAmount)}`}
@@ -164,7 +150,7 @@ const POSSessionDetailDialog = ({
                 value={`S/ ${formatCurrency(session.openingDifference)}`}
               />
               <InfoItem
-                label="Ventas Totales"
+                label="Ventas Totales Efectivo"
                 value={
                   session.totalSales !== null
                     ? `S/ ${formatCurrency(session.totalSales)}`
@@ -196,8 +182,8 @@ const POSSessionDetailDialog = ({
                         session.difference < 0
                           ? "text-red-500"
                           : session.difference > 0
-                          ? "text-green-500"
-                          : ""
+                            ? "text-green-500"
+                            : ""
                       }
                     >
                       S/ {formatCurrency(session.difference)}
@@ -211,34 +197,75 @@ const POSSessionDetailDialog = ({
 
             {session.notes && (
               <div>
-                <span className="text-sm font-medium text-muted-foreground">Notas</span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  Notas
+                </span>
                 <p className="text-sm mt-1">{session.notes}</p>
               </div>
             )}
 
-            {/* Payment Summary */}
-            {paymentSummary.length > 0 && (
-              <div>
-                <h4 className="text-sm font-semibold mb-2">
-                  Ingresos por Método de Pago
-                </h4>
-                <div className="bg-muted/50 rounded-lg p-3 space-y-1.5">
-                  {paymentSummary.map((item) => (
-                    <div
-                      key={item.paymentMethodName}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <span className="text-muted-foreground">{item.paymentMethodName}</span>
-                      <span className="font-medium">S/ {formatCurrency(item.total)}</span>
+            {/* Income & Change Section */}
+            {(incomePayments.length > 0 || changePayments.length > 0) && (
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Income Payments */}
+                {incomePayments.length > 0 && (
+                  <div className="flex-1">
+                    <div className="bg-slate-50 rounded-lg p-3 space-y-1.5">
+                      <h4 className="text-sm font-semibold text-slate-600 mb-2">
+                        INGRESOS POR MÉTODO DE PAGO
+                      </h4>
+                      {incomePayments.map((item) => (
+                        <div
+                          key={item.payment_id}
+                          className="flex items-center justify-between text-sm"
+                        >
+                          <span>
+                            {item.payment_method}
+                          </span>
+                          <span className="font-medium">
+                            S/ {formatCurrency(item.amount)}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="border-t border-slate-200 pt-1.5 flex items-center justify-between text-sm font-semibold">
+                        <span>TOTAL INGRESOS</span>
+                        <span>
+                          S/ {formatCurrency(totalIngresos)}
+                        </span>
+                      </div>
                     </div>
-                  ))}
-                  <div className="border-t pt-1.5 flex items-center justify-between text-sm font-semibold">
-                    <span>Total</span>
-                    <span>
-                      S/ {formatCurrency(paymentSummary.reduce((sum, i) => sum + i.total, 0))}
-                    </span>
                   </div>
-                </div>
+                )}
+
+                {/* Change Payments */}
+                {changePayments.length > 0 && (
+                  <div className="flex-1">
+                    <div className="bg-blue-50/50 rounded-lg p-3 space-y-1.5">
+                      <h4 className="text-sm font-semibold text-blue-600 mb-2">
+                        CONTROL DE VUELTOS
+                      </h4>
+                      {changePayments.map((item) => (
+                        <div
+                          key={item.payment_id}
+                          className="flex items-center justify-between text-sm"
+                        >
+                          <span className="text-blue-600">
+                            {item.payment_method}
+                          </span>
+                          <span className="font-medium text-blue-600">
+                            S/ {formatCurrency(item.amount)}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="border-t border-blue-200 pt-1.5 flex items-center justify-between text-sm font-semibold text-blue-700">
+                        <span>TOTAL VUELTOS</span>
+                        <span>
+                          S/ {formatCurrency(totalVueltos)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -263,11 +290,17 @@ const POSSessionDetailDialog = ({
                   <TableBody>
                     {orders.map((order) => (
                       <TableRow key={order.orderId}>
-                        <TableCell className="font-medium">{order.orderId}</TableCell>
+                        <TableCell className="font-medium">
+                          {order.orderId}
+                        </TableCell>
                         <TableCell>{order.customerName}</TableCell>
                         <TableCell>{order.documentNumber}</TableCell>
-                        <TableCell>S/ {formatCurrency(order.subtotal)}</TableCell>
-                        <TableCell>S/ {formatCurrency(order.discount)}</TableCell>
+                        <TableCell>
+                          S/ {formatCurrency(order.subtotal)}
+                        </TableCell>
+                        <TableCell>
+                          S/ {formatCurrency(order.discount)}
+                        </TableCell>
                         <TableCell className="font-medium">
                           S/ {formatCurrency(order.total)}
                         </TableCell>

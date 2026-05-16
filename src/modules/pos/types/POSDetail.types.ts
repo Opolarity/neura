@@ -34,6 +34,14 @@ export interface POSSessionOrder {
   createdAt: string;
 }
 
+export interface POSSessionPaymentItem {
+  payment_id: number;
+  order_id: number;
+  amount: number;
+  payment_method: string;
+  date: string;
+}
+
 export interface POSSessionDetailApiResponse {
   session: {
     id: number;
@@ -65,4 +73,8 @@ export interface POSSessionDetailApiResponse {
     discount: number;
     created_at: string;
   }[];
+  income_payments: POSSessionPaymentItem[];
+  change_payments: POSSessionPaymentItem[];
+  total_ingresos: number;
+  total_vueltos: number;
 }
