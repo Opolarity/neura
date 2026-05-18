@@ -16,6 +16,7 @@ export interface POSSessionDetail {
   totalSales: number | null;
   difference: number | null;
   openingDifference: number;
+  otherMovements: number;
   statusId: number;
   statusName: string;
   statusCode: string;
@@ -34,6 +35,14 @@ export interface POSSessionOrder {
   createdAt: string;
 }
 
+export interface POSSessionPaymentItem {
+  payment_id: number;
+  order_id: number;
+  amount: number;
+  payment_method: string;
+  date: string;
+}
+
 export interface POSSessionDetailApiResponse {
   session: {
     id: number;
@@ -49,6 +58,7 @@ export interface POSSessionDetailApiResponse {
     total_sales: number | null;
     difference: number | null;
     opening_difference: number;
+    other_movements: number | null;
     status_id: number;
     status_name: string;
     status_code: string;
@@ -65,4 +75,8 @@ export interface POSSessionDetailApiResponse {
     discount: number;
     created_at: string;
   }[];
+  income_payments: POSSessionPaymentItem[];
+  change_payments: POSSessionPaymentItem[];
+  total_ingresos: number;
+  total_vueltos: number;
 }
