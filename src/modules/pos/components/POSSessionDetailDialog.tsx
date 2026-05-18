@@ -193,6 +193,10 @@ const POSSessionDetailDialog = ({
                   )
                 }
               />
+              <InfoItem
+                label="Otros ajustes de efectivo externos"
+                value={`S/ ${formatCurrency(session.otherMovements)}`}
+              />
             </div>
 
             {session.notes && (
