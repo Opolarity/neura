@@ -16,6 +16,7 @@ export interface POSSessionDetail {
   totalSales: number | null;
   difference: number | null;
   openingDifference: number;
+  otherMovements: number;
   statusId: number;
   statusName: string;
   statusCode: string;
@@ -57,6 +58,7 @@ export interface POSSessionDetailApiResponse {
     total_sales: number | null;
     difference: number | null;
     opening_difference: number;
+    other_movements: number | null;
     status_id: number;
     status_name: string;
     status_code: string;

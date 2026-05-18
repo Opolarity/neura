@@ -2004,7 +2004,7 @@ export const useCreateSale = () => {
 
         // Update order situation - only in edit mode (creation handles it in sp_create_order)
         if (orderId && orderSituation && createdOrderId) {
-          await updateOrderSituation(createdOrderId, parseInt(orderSituation));
+          //await updateOrderSituation(createdOrderId, parseInt(orderSituation));
           setSavedOrderSituation(orderSituation);
         }
 
