@@ -24,6 +24,7 @@ export const adaptPOSSessionDetail = (
       totalSales: s.total_sales,
       difference: s.difference,
       openingDifference: s.opening_difference,
+      otherMovements: s.other_movements ?? 0,
       statusId: s.status_id,
       statusName: s.status_name,
       statusCode: s.status_code,
