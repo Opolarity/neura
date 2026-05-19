@@ -48,6 +48,7 @@ const SalesFilterModal = ({
 }: SalesFilterModalProps) => {
   const [situationId, setSituationId] = useState<number | null>(filters.situationId);
   const [saleType, setSaleType] = useState<number | null>(filters.saleType);
+  const [consignament, setConsignament] = useState<boolean | null>(filters.consignament ?? null);
   const [startDate, setStartDate] = useState<Date | undefined>(
     filters.startDate ? new Date(filters.startDate) : undefined
   );
@@ -58,6 +59,7 @@ const SalesFilterModal = ({
   useEffect(() => {
     setSituationId(filters.situationId);
     setSaleType(filters.saleType);
+    setConsignament(filters.consignament ?? null);
     setStartDate(filters.startDate ? new Date(filters.startDate) : undefined);
     setEndDate(filters.endDate ? new Date(filters.endDate) : undefined);
   }, [filters, isOpen]);
@@ -66,6 +68,7 @@ const SalesFilterModal = ({
     onApply({
       situationId,
       saleType,
+      consignament,
       startDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
       endDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
     });
@@ -74,6 +77,7 @@ const SalesFilterModal = ({
   const handleClear = () => {
     setSituationId(null);
     setSaleType(null);
+    setConsignament(null);
     setStartDate(undefined);
     setEndDate(undefined);
     onClear();
@@ -127,6 +131,26 @@ const SalesFilterModal = ({
                     {type.name}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Consignment Filter */}
+          <div className="grid gap-2">
+            <Label>Consignación</Label>
+            <Select
+              value={consignament === null ? "all" : consignament ? "true" : "false"}
+              onValueChange={(val) =>
+                setConsignament(val === "all" ? null : val === "true")
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="true">A consignación</SelectItem>
+                <SelectItem value="false">No a consignación</SelectItem>
               </SelectContent>
             </Select>
           </div>

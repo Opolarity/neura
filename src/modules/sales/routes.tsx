@@ -1,11 +1,11 @@
 import { RouteObject } from 'react-router-dom';
-import Sales from './pages/Sales';
-import CreateSale from './pages/CreateSale';
-import POS from './pages/POS';
-import CreateShipping from './pages/CreateShipping';
-import Shipping from './pages/Shipping';
-import POSTicketPrintPage from './pages/POSTicketPrintPage';
-import FranchiseProducts from './pages/FranchiseProducts';
+import Sales from '@/modules/sales/pages/Sales';
+import CreateSale from '@/modules/sales/pages/CreateSale';
+import POS from '@/modules/sales/pages/POS';
+import CreateShipping from '@/modules/sales/pages/CreateShipping';
+import Shipping from '@/modules/sales/pages/Shipping';
+import POSTicketPrintPage from '@/modules/sales/pages/POSTicketPrintPage';
+import FranchiseProducts from '@/modules/sales/pages/FranchiseProducts';
 
 export const salesRoutes: RouteObject[] = [
   { path: 'sales', element: <Sales /> },

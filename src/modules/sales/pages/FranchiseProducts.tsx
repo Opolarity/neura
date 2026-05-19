@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
+import { PagosConfirmarModal } from "../components/PagosConfirmarModal";
 import {
   fetchFranchiseProducts,
   type FranchiseProductRow,
@@ -38,6 +39,7 @@ const FranchiseProducts = () => {
   const [products, setProducts] = useState<FranchiseProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pagosModalOpen, setPagosModalOpen] = useState(false);
 
   const loadProducts = async () => {
     try {
@@ -83,14 +85,22 @@ const FranchiseProducts = () => {
             Order products recibidos por franquicia.
           </p>
         </div>
-        <Button variant="outline" onClick={loadProducts} disabled={loading}>
-          {loading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 h-4 w-4" />
-          )}
-          Actualizar
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setPagosModalOpen(true)}
+          >
+            Pagos por confirmar
+          </Button>
+          <Button variant="outline" onClick={loadProducts} disabled={loading}>
+            {loading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Actualizar
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -195,6 +205,11 @@ const FranchiseProducts = () => {
           </div>
         </CardContent>
       </Card>
+
+      <PagosConfirmarModal
+        open={pagosModalOpen}
+        onOpenChange={setPagosModalOpen}
+      />
     </div>
   );
 };

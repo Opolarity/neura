@@ -15,6 +15,7 @@ export const fetchSalesList = async (
   if (filters.saleType) params.sale_type = String(filters.saleType);
   if (filters.startDate) params.start_date = filters.startDate;
   if (filters.endDate) params.end_date = filters.endDate;
+  if (filters.consignament !== null && filters.consignament !== undefined) params.consignament = String(filters.consignament);
   if (filters.order) params.order = filters.order;
 
   const endpoint = buildEndpoint("get-sales-list", params);
