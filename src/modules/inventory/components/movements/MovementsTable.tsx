@@ -1,12 +1,14 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Button } from '@/components/ui/button';
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye } from "lucide-react";
 import { Movements } from '../../types/Movements.types';
 
 
 interface MovementsTableProps {
     movements: Movements[];
     loading: boolean;
+    onViewDetail: (id: number) => void;
 }
 
 type WarehouseDirectionUI = {
@@ -15,7 +17,7 @@ type WarehouseDirectionUI = {
 };
 
 
-const MovementsTable = ({ movements, loading }: MovementsTableProps) => {
+const MovementsTable = ({ movements, loading, onViewDetail }: MovementsTableProps) => {
     function getDirectionUI(
         base: string,
         related: string | null,
@@ -42,13 +44,14 @@ const MovementsTable = ({ movements, loading }: MovementsTableProps) => {
                     <TableHead>Almacén</TableHead>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Usuario</TableHead>
+                    <TableHead>Acciones</TableHead>
 
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {loading && movements.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8">
+                        <TableCell colSpan={9} className="text-center py-8">
                             <div className="flex items-center justify-center gap-2">
                                 <Loader2 className="w-4 h-4 animate-spin" />
                                 Cargando movimientos...
@@ -58,7 +61,7 @@ const MovementsTable = ({ movements, loading }: MovementsTableProps) => {
                 ) : movements.length === 0 ? (
                     <TableRow>
                         <TableCell
-                            colSpan={8}
+                            colSpan={9}
                             className="text-center py-8 text-muted-foreground"
                         >
                             No se encontraron movimientos
@@ -166,6 +169,15 @@ const MovementsTable = ({ movements, loading }: MovementsTableProps) => {
                                     {format(new Date(movement.date.replace(/-/g, '/')), "dd/MM/yyyy")}
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">{movement.user}</TableCell>
+                                <TableCell>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => onViewDetail(movement.movements_id)}
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                    </Button>
+                                </TableCell>
                             </TableRow>
                         )
                     })
