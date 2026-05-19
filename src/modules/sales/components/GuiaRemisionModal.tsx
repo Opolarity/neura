@@ -73,15 +73,9 @@ const MOTIVOS = [
   { value: "18", label: "18 — Traslado emisor itinerante" },
 ];
 
-const todayInputValue = () => {
+const todayDDMMYYYY = () => {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
-
-const inputDateToNubefact = (val: string) => {
-  // Convierte YYYY-MM-DD → DD-MM-YYYY
-  const [y, m, dd] = val.split("-");
-  return `${dd}-${m}-${y}`;
+  return `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
 };
 
 export default function GuiaRemisionModal({
@@ -95,7 +89,6 @@ export default function GuiaRemisionModal({
   const [branches, setBranches] = useState<Branch[]>([]);
 
   const [motivoTraslado, setMotivoTraslado] = useState("01");
-  const [fechaTraslado, setFechaTraslado] = useState(todayInputValue());
   const [pesoBruto, setPesoBruto] = useState("");
   const [numeroBultos, setNumeroBultos] = useState("");
   const [tipoTransporte, setTipoTransporte] = useState("01");
@@ -156,7 +149,6 @@ export default function GuiaRemisionModal({
 
   const validate = (): string | null => {
     if (!motivoTraslado) return "Selecciona el motivo de traslado";
-    if (!fechaTraslado) return "Ingresa la fecha de inicio de traslado";
     if (!pesoBruto || Number(pesoBruto) <= 0) return "El peso bruto debe ser mayor a 0";
     if (!numeroBultos || Number(numeroBultos) < 1) return "El número de bultos debe ser al menos 1";
     if (!partidaUbigeo.trim()) return "Ingresa el ubigeo de punto de partida";
@@ -193,7 +185,7 @@ export default function GuiaRemisionModal({
         peso_unidad: "KGM",
         numero_bultos: Number(numeroBultos),
         tipo_transporte: tipoTransporte,
-        fecha_traslado: inputDateToNubefact(fechaTraslado),
+        fecha_traslado: todayDDMMYYYY(),
         partida_ubigeo: partidaUbigeo.trim(),
         partida_direccion: partidaDireccion.trim(),
         llegada_ubigeo: llegadaUbigeo.trim(),
@@ -243,15 +235,6 @@ export default function GuiaRemisionModal({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-1">
-                <Label>Fecha inicio traslado</Label>
-                <Input
-                  type="date"
-                  value={fechaTraslado}
-                  onChange={(e) => setFechaTraslado(e.target.value)}
-                />
               </div>
 
               <div className="space-y-1">
