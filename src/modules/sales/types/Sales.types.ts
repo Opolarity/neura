@@ -30,6 +30,7 @@ export interface SalesFilters {
   saleType: number | null;
   startDate: string | null;
   endDate: string | null;
+  consignament: boolean | null;
   order: string;
   page: number;
   size: number;

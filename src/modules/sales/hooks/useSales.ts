@@ -35,6 +35,7 @@ export const useSales = () => {
     saleType: null,
     startDate: null,
     endDate: null,
+    consignament: null,
     order: "date_desc",
     page: 1,
     size: 20,
@@ -171,6 +172,7 @@ export const useSales = () => {
       saleType: null,
       startDate: null,
       endDate: null,
+      consignament: null,
       order: "date_desc",
       page: 1,
       size: filtersRef.current.size,
@@ -193,7 +195,8 @@ export const useSales = () => {
     filters.situationId !== null ||
     filters.saleType !== null ||
     filters.startDate !== null ||
-    filters.endDate !== null;
+    filters.endDate !== null ||
+    filters.consignament !== null;
 
   return {
     sales,
