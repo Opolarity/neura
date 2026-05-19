@@ -136,7 +136,7 @@ export const currentUserProfileApi = async (
 export const createMovementClassApi = async (name: string): Promise<MovementClass> => {
   const { data, error } = await (supabase as any)
     .from("classes")
-    .insert({ name, module_id: 9, code: null })
+    .insert({ name, module_id: 9, code: "MOV" })
     .select("id, name, code")
     .single();
 
