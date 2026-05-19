@@ -138,3 +138,58 @@ export interface SelectedProduct extends ProductSales {
     destinationType?: Types | null | undefined;
     destinationTypeStock?: number | null
 }
+
+export interface StockMovementDetailLink_OrderProduct {
+    id: number;
+    order_id: number;
+    quantity: number;
+    product_price: number;
+    product_discount: number;
+    product_name: string | null;
+    order_customer_name: string | null;
+    order_total: number | null;
+}
+
+export interface StockMovementDetailLink_ReturnProduct {
+    id: number;
+    return_id: number;
+    return_quantity: number;
+    product_amount: number | null;
+    output: boolean;
+    return_reason: string | null;
+    return_order_id: number | null;
+}
+
+export interface StockMovementDetailLink_MovementRequest {
+    id: number;
+    stock_movement_request_id: number;
+    approved: boolean | null;
+    out_warehouse: string | null;
+    in_warehouse: string | null;
+    created_at: string | null;
+}
+
+export interface StockMovementDetailLink_SupplierService {
+    id: number;
+    supplier_service_id: number;
+    unit_cost: number | null;
+    service_name: string | null;
+}
+
+export interface StockMovementDetail {
+    id: number;
+    quantity: number;
+    created_at: string;
+    vinculated_movement_id: number | null;
+    movement_type: { id: number; name: string } | null;
+    stock_type: { id: number; name: string } | null;
+    warehouse: { id: number; name: string } | null;
+    variation: { id: number; sku: string } | null;
+    created_by_profile: { user_name: string } | null;
+    links: {
+        order_products: StockMovementDetailLink_OrderProduct[];
+        returns_products: StockMovementDetailLink_ReturnProduct[];
+        linked_stock_movement_requests: StockMovementDetailLink_MovementRequest[];
+        supplier_service_stock: StockMovementDetailLink_SupplierService[];
+    };
+}
