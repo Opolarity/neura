@@ -222,7 +222,8 @@ export const getStockMovementDetailApi = async (id: number): Promise<StockMoveme
   );
 
   if (!response.ok) throw new Error(`Error fetching movement detail: ${response.statusText}`);
-  return response.json();
+  const data = await response.json();
+  return { ...data.movement, links: data.links };
 };
 
 /*
