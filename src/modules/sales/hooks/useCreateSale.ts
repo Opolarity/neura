@@ -958,33 +958,19 @@ export const useCreateSale = () => {
       if (!user) throw new Error("Usuario no autenticado");
       currentUserId = user.id;
 
-      const { data: userProfile } = await supabase
-        .from("profiles")
-        .select("accounts(document_number, document_types(code))")
-        .eq("UID", user.id)
-        .maybeSingle();
-
-      const userAccount = Array.isArray(userProfile?.accounts)
-        ? userProfile.accounts[0]
-        : userProfile?.accounts;
-      const userDocTypeCode = Array.isArray((userAccount as any)?.document_types)
-        ? (userAccount as any).document_types[0]?.code
-        : (userAccount as any)?.document_types?.code;
-
-      if (!userDocTypeCode || !(userAccount as any)?.document_number) {
-        throw new Error("No se encontró el documento del usuario actual");
-      }
-
       const companyDocumentNumber = await getParameter("CompanyDocumentNumber");
       if (!companyDocumentNumber) throw new Error("No se encontró el parámetro CompanyDocumentNumber");
+
+      const companyDocumentType = await getParameter("CompanyDocumentType");
+      if (!companyDocumentType) throw new Error("No se encontró el parámetro CompanyDocumentType");
 
       // Build payload
       const payload = {
         tenant_code: clientTenantReference.trim(),
-        supplier_document_type: "RUC",
+        supplier_document_type: companyDocumentType.trim(),
         supplier_document_number: companyDocumentNumber.trim(),
-        user_document_type: userDocTypeCode,
-        user_document_number: String((userAccount as any).document_number).trim(),
+        user_document_type: companyDocumentType.trim(),
+        user_document_number: companyDocumentNumber.trim(),
       };
 
       // base64url encode the canonical JSON
