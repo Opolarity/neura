@@ -1080,6 +1080,7 @@ export const useCreateSale = () => {
 
     try {
       const fchUrl = import.meta.env.VITE_FCH_URL as string;
+      console.log("[Franquiciado] URL a consultar:", `${fchUrl}/functions/v1/create-consignment-intake`);
       const response = await fetch(
         `${fchUrl}/functions/v1/create-consignment-intake`,
         {
