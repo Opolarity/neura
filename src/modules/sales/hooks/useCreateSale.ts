@@ -1079,8 +1079,9 @@ export const useCreateSale = () => {
     };
 
     try {
+      const fchUrl = import.meta.env.VITE_FCH_URL as string;
       const response = await fetch(
-        "https://demo.supabase.neura.pe/functions/v1/create-consignment-intake",
+        `${fchUrl}/functions/v1/create-consignment-intake`,
         {
           method: "POST",
           headers: {
