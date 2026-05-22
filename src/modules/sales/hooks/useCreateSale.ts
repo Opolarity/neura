@@ -1556,7 +1556,6 @@ export const useCreateSale = () => {
       )?.name || "";
 
     setProducts((prev) => [
-      ...prev,
       {
         variationId: selectedVariation.id,
         productId: selectedVariation.productId,
@@ -1571,6 +1570,7 @@ export const useCreateSale = () => {
         stockTypeName,
         maxStock: availableStock,
       },
+      ...prev,
     ]);
 
     setSearchQuery("");
