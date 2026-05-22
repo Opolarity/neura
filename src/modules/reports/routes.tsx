@@ -7,6 +7,7 @@ import StockPage from './pages/StockPage';
 import ReturnsPage from './pages/ReturnsPage';
 import MovementsPage from './pages/MovementsPage';
 import ClientsPage from './pages/ClientsPage';
+import PriceRulesReportPage from './pages/PriceRulesReportPage';
 
 export const reportsRoutes: RouteObject[] = [
   {
@@ -14,12 +15,13 @@ export const reportsRoutes: RouteObject[] = [
     element: <ReportsLayout />,
     children: [
       { index: true, element: <Navigate to="sales" replace /> },
-      { path: 'sales',     element: <SalesPage /> },
-      { path: 'products',  element: <ProductsPage /> },
-      { path: 'stock',     element: <StockPage /> },
-      { path: 'returns',   element: <ReturnsPage /> },
-      { path: 'movements', element: <MovementsPage /> },
-      { path: 'clients',   element: <ClientsPage /> },
+      { path: 'sales',        element: <SalesPage /> },
+      { path: 'products',     element: <ProductsPage /> },
+      { path: 'stock',        element: <StockPage /> },
+      { path: 'returns',      element: <ReturnsPage /> },
+      { path: 'movements',    element: <MovementsPage /> },
+      { path: 'clients',      element: <ClientsPage /> },
+      { path: 'price-rules',  element: <PriceRulesReportPage /> },
     ],
   },
 ];
