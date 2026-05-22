@@ -1615,7 +1615,7 @@ const CreateSale = () => {
                   <span className="text-primary">{formatCurrency(total)}</span>
                 </div>
                 {changeAmount > 0 && (
-                  <div className="flex justify-between font-medium text-green-600 mt-2">
+                  <div className="flex justify-between font-medium mt-2">
                     <span>Vuelto</span>
                     <span>{formatCurrency(changeAmount)}</span>
                   </div>
@@ -1824,7 +1824,7 @@ const CreateSale = () => {
                 <>
                   <Separator />
                   <div className="space-y-3">
-                    <Label className="text-sm font-medium text-green-600 dark:text-green-400">
+                    <Label className="text-sm font-medium">
                       Vuelto — {formatCurrency(changeAmount)}
                     </Label>
 
@@ -1841,10 +1841,10 @@ const CreateSale = () => {
                             return (
                               <div
                                 key={e.id}
-                                className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-md"
+                                className="flex items-center justify-between p-2 bg-muted/50 rounded-md"
                               >
                                 <div className="flex items-center gap-2">
-                                  <CreditCard className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                  <CreditCard className="w-4 h-4 text-muted-foreground" />
                                   <span className="text-sm">
                                     {method?.name || "Método"}
                                   </span>
@@ -1897,7 +1897,7 @@ const CreateSale = () => {
                       return (
                         <div
                           className={cn(
-                            "space-y-3 p-3 border border-green-200 dark:border-green-800 rounded-md bg-green-50/30 dark:bg-green-900/10",
+                            "space-y-3 p-3 border rounded-md bg-muted/30",
                             isComSituation && "opacity-50 pointer-events-none",
                           )}
                         >

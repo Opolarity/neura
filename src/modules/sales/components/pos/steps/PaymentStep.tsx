@@ -287,11 +287,11 @@ export default function PaymentStep({
               {/* Change to give */}
               {changeAmount > 0 && (
                 <div className="space-y-4">
-                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-                    <div className="text-xs text-primary font-medium mb-1">
+                  <div className="bg-muted border rounded-lg p-4">
+                    <div className="text-xs text-muted-foreground font-medium mb-1">
                       VUELTO A ENTREGAR
                     </div>
-                    <div className="text-3xl font-bold text-primary flex items-center gap-2">
+                    <div className="text-3xl font-bold text-foreground flex items-center gap-2">
                       S/ {formatCurrency(changeAmount)}
                       <RefreshCw className="w-6 h-6" />
                     </div>
