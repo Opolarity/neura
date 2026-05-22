@@ -72,10 +72,10 @@ export default function POSCloseSessionModal({
     }
   }, [isOpen]);
 
-  // Calculate difference
+  // Calculate difference rounding to cents to avoid JS floating point artifacts
   const difference = useMemo(() => {
     const closing = parseFloat(closingAmount) || 0;
-    return closing - expectedAmount;
+    return Math.round((closing - expectedAmount) * 100) / 100;
   }, [closingAmount, expectedAmount]);
 
   const handleSubmit = async (e: React.FormEvent) => {
