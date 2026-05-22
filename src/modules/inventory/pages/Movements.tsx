@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 
 import { useMovements } from "../hooks/useMovements";
@@ -5,8 +6,11 @@ import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import MovementsTable from "../components/movements/MovementsTable";
 import MovementsFilterBar from "../components/movements/MovementsFilterBar";
 import MovementsFilterModal from "../components/movements/MovementsFilterModal";
+import MovementsDetailModal from "../components/movements/MovementsDetailModal";
 
 const Movements = () => {
+  const [selectedMovementId, setSelectedMovementId] = useState<number | null>(null);
+
   const {
     movements,
     movementsTypes,
@@ -51,7 +55,11 @@ const Movements = () => {
         </CardHeader>
 
         <CardContent className="p-0">
-          <MovementsTable movements={movements} loading={loading} />
+          <MovementsTable
+            movements={movements}
+            loading={loading}
+            onViewDetail={(id) => setSelectedMovementId(id)}
+          />
         </CardContent>
 
         <CardFooter>
@@ -71,6 +79,11 @@ const Movements = () => {
         isOpen={isOpenFilterModal}
         onClose={onCloseFilterModal}
         onApply={onApplyFilterModal}
+      />
+
+      <MovementsDetailModal
+        movementId={selectedMovementId}
+        onClose={() => setSelectedMovementId(null)}
       />
     </div>
   );

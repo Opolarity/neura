@@ -7,6 +7,7 @@ import {
   SimpleWarehouses,
   ProductSalesApiResponse,
   ProductSalesFilter,
+  StockMovementDetail,
 } from "../types/Movements.types";
 import { buildEndpoint } from "@/shared/utils/utils";
 
@@ -203,6 +204,27 @@ export const createMovementsTypeStockApi = async (newMovement: MovementPayload2)
   if (data?.error) throw new Error(data.error);
   return data;
 }
+
+export const getStockMovementDetailApi = async (id: number): Promise<StockMovementDetail> => {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+
+  const response = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-stock-movement-detail?id=${id}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+      },
+    }
+  );
+
+  if (!response.ok) throw new Error(`Error fetching movement detail: ${response.statusText}`);
+  const data = await response.json();
+  return { ...data.movement, links: data.links };
+};
 
 /*
 export const getUserWarehouse = async () => {
