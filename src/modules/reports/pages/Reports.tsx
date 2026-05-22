@@ -7,10 +7,10 @@ import { ReportsFilterBar } from '../components/shared/ReportsFilterBar';
 import type { ReportsFilters } from '../types/reports.types';
 import { DEFAULT_REPORTS_FILTERS } from '../types/reports.types';
 
-const SalesDashboard    = lazy(() => import('../components/sales/SalesDashboard').then((m) => ({ default: m.SalesDashboard })));
+const SalesDashboard = lazy(() => import('../components/sales/SalesDashboard').then((m) => ({ default: m.SalesDashboard })));
 const ProductsDashboard = lazy(() => import('../components/products/ProductsDashboard').then((m) => ({ default: m.ProductsDashboard })));
 const InventoryDashboard = lazy(() => import('../components/inventory/InventoryDashboard').then((m) => ({ default: m.InventoryDashboard })));
-const ReturnsDashboard  = lazy(() => import('../components/returns/ReturnsDashboard').then((m) => ({ default: m.ReturnsDashboard })));
+const ReturnsDashboard = lazy(() => import('../components/returns/ReturnsDashboard').then((m) => ({ default: m.ReturnsDashboard })));
 const FinancialDashboard = lazy(() => import('../components/financial/FinancialDashboard').then((m) => ({ default: m.FinancialDashboard })));
 const CustomersDashboard = lazy(() => import('../components/customers/CustomersDashboard').then((m) => ({ default: m.CustomersDashboard })));
 
@@ -32,12 +32,12 @@ function TabSkeleton() {
 }
 
 const TABS = [
-  { label: 'Ventas',     icon: ShoppingCart },
-  { label: 'Productos',  icon: Package },
+  { label: 'Ventas', icon: ShoppingCart },
+  { label: 'Productos', icon: Package },
   { label: 'Inventario', icon: Warehouse },
-  { label: 'Retornos',   icon: RotateCcw },
+  { label: 'Retornos', icon: RotateCcw },
   { label: 'Financiero', icon: DollarSign },
-  { label: 'Clientes',   icon: Users },
+  { label: 'Clientes', icon: Users },
 ];
 
 function Reports() {
