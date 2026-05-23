@@ -1173,22 +1173,20 @@ export const usePOS = () => {
   // State for close session modal
   const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
   const [sessionTotalCashSales, setSessionTotalCashSales] = useState(0);
-  const [sessionBusinessAccountTotal, setSessionBusinessAccountTotal] = useState(0);
+  const [sessionExternalMovements, setSessionExternalMovements] = useState(0);
 
-
-  // Load session cash sales and business account total
+  // Load session cash sales and net external movements during the session
   const loadSessionCloseData = useCallback(async () => {
     if (!POSSessionHook.session?.id) {
       setSessionTotalCashSales(0);
-      setSessionBusinessAccountTotal(0);
+      setSessionExternalMovements(0);
       return;
     }
 
     try {
-      // Load total_cash_sales, business_account and opening_difference from pos_sessions
       const { data: sessionData, error: sessionError } = await supabase
         .from("pos_sessions")
-        .select("total_cash_sales, business_account, opening_difference")
+        .select("total_cash_sales, business_account")
         .eq("id", POSSessionHook.session.id)
         .single();
 
@@ -1197,30 +1195,28 @@ export const usePOS = () => {
       const cashSales = sessionData?.total_cash_sales ?? 0;
       setSessionTotalCashSales(cashSales);
 
-      // Load total_amount from business_accounts
-      if (sessionData?.business_account) {
-        const { data: baData, error: baError } = await supabase
-          .from("business_accounts")
-          .select("total_amount")
-          .eq("id", sessionData.business_account)
-          .single();
+      // Query movements filtered by opened_at to get only movements during this session.
+      // The opening_difference movement is stored 5 seconds before opened_at, so it is excluded.
+      if (sessionData?.business_account && POSSessionHook.session.openedAt) {
+        const { data: movementsData, error: movementsError } = await (supabase as any)
+          .from("movements")
+          .select("amount, types!movement_type_id(code)")
+          .eq("business_account_id", sessionData.business_account)
+          .gte("movement_date", POSSessionHook.session.openedAt);
 
-        if (baError) throw baError;
-        // Adjust by opening_difference so otherMovements in the modal reflects only
-        // movements made during this session, not pre-session account history.
-        // otherMovements = (total_amount + opening_difference) - (opening_amount + cash_sales)
-        //                = external movements during session only
-        setSessionBusinessAccountTotal(
-          (baData?.total_amount ?? 0) + (sessionData?.opening_difference ?? 0)
-        );
+        if (movementsError) throw movementsError;
+
+        const externalMovements = (movementsData ?? []).reduce((acc: number, m: any) => {
+          return m.types?.code === "INC" ? acc + Number(m.amount) : acc - Number(m.amount);
+        }, 0);
+
+        setSessionExternalMovements(externalMovements);
       }
-
 
     } catch (error) {
       console.error("Error loading session close data:", error);
       setSessionTotalCashSales(0);
-      setSessionBusinessAccountTotal(0);
-
+      setSessionExternalMovements(0);
     }
   }, [POSSessionHook.session?.id]);
 
@@ -1230,7 +1226,7 @@ export const usePOS = () => {
     setShowCloseSessionModal(true);
   }, [loadSessionCloseData]);
 
-  const handleCloseSession = useCallback(async (request: { sessionId: number; closingAmount: number; notes?: string }) => {
+  const handleCloseSession = useCallback(async (request: { sessionId: number; closingAmount: number; expectedAmount: number; notes?: string }) => {
     try {
       await POSSessionHook.closeSession(request);
       setShowCloseSessionModal(false);
@@ -1366,7 +1362,7 @@ export const usePOS = () => {
     // Close session modal
     showCloseSessionModal,
     sessionTotalCashSales,
-    sessionBusinessAccountTotal,
+    sessionExternalMovements,
 
     handleCloseSession,
     cancelCloseSession,
