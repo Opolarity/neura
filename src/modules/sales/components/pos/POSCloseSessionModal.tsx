@@ -84,6 +84,7 @@ export default function POSCloseSessionModal({
     await onClose({
       sessionId: session.id,
       closingAmount: amount,
+      expectedAmount,
       notes: notes || undefined
     });
   };

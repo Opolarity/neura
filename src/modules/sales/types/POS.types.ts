@@ -90,6 +90,7 @@ export interface CashRegister {
 export interface ClosePOSSessionRequest {
   sessionId: number;
   closingAmount: number;
+  expectedAmount: number;
   notes?: string;
 }
 

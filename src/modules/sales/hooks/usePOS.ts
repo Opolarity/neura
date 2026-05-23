@@ -1226,7 +1226,7 @@ export const usePOS = () => {
     setShowCloseSessionModal(true);
   }, [loadSessionCloseData]);
 
-  const handleCloseSession = useCallback(async (request: { sessionId: number; closingAmount: number; notes?: string }) => {
+  const handleCloseSession = useCallback(async (request: { sessionId: number; closingAmount: number; expectedAmount: number; notes?: string }) => {
     try {
       await POSSessionHook.closeSession(request);
       setShowCloseSessionModal(false);
