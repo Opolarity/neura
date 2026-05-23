@@ -243,14 +243,14 @@ export const getOrdersSituationsByIdAdapter = (
 export const adaptSaleById = (data: any) => {
   // Parse order_discounts - separate PRO (auto) from custom
   const rawDiscounts = (data.discounts || []).map((d: any) => ({
-    id: crypto.randomUUID(),
+    id: d.id?.toString() ?? crypto.randomUUID(),
     name: d.name || "",
     amount: d.discount_amount ?? 0,
     code: d.code || "",
   }));
 
-  // Custom discounts = non-PRO codes (user-created)
-  const orderDiscounts = rawDiscounts.filter((d: any) => d.code !== "PRO");
+  // Custom discounts = non-PRO codes (user-created), with non-zero amount
+  const orderDiscounts = rawDiscounts.filter((d: any) => d.code !== "PRO" && d.amount !== 0);
 
   return {
     formData: {
@@ -332,5 +332,7 @@ export const adaptSaleById = (data: any) => {
       ? { id: data.order.sale_type_id, name: data.order.sale_type_name || "" }
       : null,
     returns: (data.returns || []) as SaleReturn[],
+    pricerules: (data.pricerules || []).map((r: any) => r.name).join(" - "),
+    customerPoints: (data.customer_points ?? null) as { lvl: string; points: number } | null,
   };
 };
