@@ -22,7 +22,7 @@ interface POSCloseSessionModalProps {
   isOpen: boolean;
   session: POSSession | null;
   totalCashSales: number;
-  businessAccountTotal: number;
+  externalMovements: number;
 
   isClosing: boolean;
   onClose: (request: ClosePOSSessionRequest) => Promise<unknown>;
@@ -33,19 +33,17 @@ export default function POSCloseSessionModal({
   isOpen,
   session,
   totalCashSales,
-  businessAccountTotal,
+  externalMovements,
 
   isClosing,
   onClose,
   onCancel
 }: POSCloseSessionModalProps) {
-  // Other external movements = business account total - (opening + cash sales)
   const otherMovements = useMemo(() => {
     if (!session) return 0;
-    return businessAccountTotal - (session.openingAmount + totalCashSales);
-  }, [session, businessAccountTotal, totalCashSales]);
+    return externalMovements;
+  }, [session, externalMovements]);
 
-  // Calculate expected amount (opening + cash sales + other external movements = businessAccountTotal)
   const expectedAmount = useMemo(() => {
     if (!session) return 0;
     return session.openingAmount + totalCashSales + otherMovements;
