@@ -399,25 +399,28 @@ export interface PriceRuleReportRow {
 
 export const priceRulesReportService = {
   getKpis: async (): Promise<PriceRuleKpis> => {
-    const { data, error } = await (supabase as any)
-      .from('price_rules')
-      .select('is_active, rule_type');
+    const { data, error } = await supabase.functions.invoke(
+      'get-price-rules?size=1000',
+      { method: 'GET' }
+    );
     if (error) throw error;
+    const rules: any[] = data?.data ?? [];
     return {
-      active:    (data || []).filter((r: any) =>  r.is_active).length,
-      inactive:  (data || []).filter((r: any) => !r.is_active).length,
-      automatic: (data || []).filter((r: any) => r.rule_type === 'automatic').length,
-      coupon:    (data || []).filter((r: any) => r.rule_type === 'coupon').length,
+      active:    rules.filter((r) =>  r.is_active).length,
+      inactive:  rules.filter((r) => !r.is_active).length,
+      automatic: rules.filter((r) => r.rule_type === 'automatic').length,
+      coupon:    rules.filter((r) => r.rule_type === 'coupon').length,
     };
   },
 
   getTable: async (startDate: string | null, endDate: string | null): Promise<PriceRuleReportRow[]> => {
-    const { data: rules, error: rulesError } = await (supabase as any)
-      .from('price_rules')
-      .select('id, name, code, rule_type, is_active')
-      .order('name');
+    const { data: rulesResponse, error: rulesError } = await supabase.functions.invoke(
+      'get-price-rules?size=1000',
+      { method: 'GET' }
+    );
     if (rulesError) throw rulesError;
-    if (!rules || rules.length === 0) return [];
+    const rules: any[] = rulesResponse?.data ?? [];
+    if (rules.length === 0) return [];
 
     let query = (supabase as any)
       .from('order_discounts')
