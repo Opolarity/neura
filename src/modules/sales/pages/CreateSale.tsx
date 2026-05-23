@@ -194,6 +194,8 @@ const CreateSale = () => {
     isDirty,
     // Returns
     orderReturns,
+    customerPoints,
+    savedPriceRules,
     // Products unlock (VIR situation)
     productsUnlocked,
     setProductsUnlocked,
@@ -1036,6 +1038,31 @@ const CreateSale = () => {
                     placeholder="Opcional"
                     value={formData.phone}
                     onChange={(e) => handleInputChange("phone", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Nivel y Promoción Aplicada */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Nivel</Label>
+                  <Input
+                    value={customerPoints?.lvl ?? "—"}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+                <div>
+                  <Label>Promoción Aplicada</Label>
+                  <Input
+                    value={
+                      savedPriceRules ||
+                      (appliedRules.length > 0
+                        ? appliedRules.map((r) => r.rule_name).join(" - ")
+                        : "—")
+                    }
+                    disabled
+                    className="bg-muted"
                   />
                 </div>
               </div>
