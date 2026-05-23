@@ -1185,10 +1185,10 @@ export const usePOS = () => {
     }
 
     try {
-      // Load total_cash_sales and business_account from pos_sessions
+      // Load total_cash_sales, business_account and opening_difference from pos_sessions
       const { data: sessionData, error: sessionError } = await supabase
         .from("pos_sessions")
-        .select("total_cash_sales, business_account")
+        .select("total_cash_sales, business_account, opening_difference")
         .eq("id", POSSessionHook.session.id)
         .single();
 
@@ -1206,7 +1206,13 @@ export const usePOS = () => {
           .single();
 
         if (baError) throw baError;
-        setSessionBusinessAccountTotal(baData?.total_amount ?? 0);
+        // Adjust by opening_difference so otherMovements in the modal reflects only
+        // movements made during this session, not pre-session account history.
+        // otherMovements = (total_amount + opening_difference) - (opening_amount + cash_sales)
+        //                = external movements during session only
+        setSessionBusinessAccountTotal(
+          (baData?.total_amount ?? 0) + (sessionData?.opening_difference ?? 0)
+        );
       }
 
 
