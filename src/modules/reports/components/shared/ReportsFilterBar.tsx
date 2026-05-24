@@ -14,9 +14,9 @@ const ALL_VALUE = '__all__';
 const MAX_RANGE_DAYS = 90;
 
 function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr);
+  const d = new Date(dateStr.replace(/-/g, "/"));
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return d.toLocaleDateString("sv-SE", { timeZone: "America/Lima" });
 }
 
 function diffDays(a: string, b: string): number {

@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { format } from "date-fns";
+import { formatDateDisplay } from "@/shared/utils/date";
 
 interface CMovementSummaryProps {
   movementType: string;
@@ -58,10 +58,7 @@ const CMovementSummary = ({
             placeholder="29-01-2026"
             disabled
             type="text"
-            value={format(
-              new Date(currentDate.replace(/-/g, "/")),
-              "dd/MM/yyyy",
-            ) || ""}
+            value={formatDateDisplay(currentDate) || ""}
           />
         </div>
       </div>

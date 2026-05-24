@@ -29,7 +29,7 @@ import {
 import { ArrowUp, CheckCircle2, ChevronDown, Code, Eye, FileText, Loader2, Printer, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { formatDateDisplay } from "@/shared/utils/date";
 
 interface Invoice {
   id: number;
@@ -770,7 +770,7 @@ export default function InvoicingStep({
                       
                       <TableCell>S/ {inv.total_amount.toFixed(2)}</TableCell>
                       <TableCell>
-                        {format(new Date(inv.created_at), "dd/MM/yyyy")}
+                        {formatDateDisplay(inv.created_at)}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">

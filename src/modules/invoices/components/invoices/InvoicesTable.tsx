@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { formatDateTime } from "@/shared/utils/date";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -63,7 +64,7 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
             <TableCell>{item.customer_document_number || "—"}</TableCell>
             <TableCell>S/ {item.total_amount.toFixed(2)}</TableCell>
             <TableCell>
-              {new Date(item.created_at).toLocaleDateString("es-PE")}
+              {formatDateTime(item.created_at)}
             </TableCell>
             <TableCell>
               <span

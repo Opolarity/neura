@@ -72,6 +72,15 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
   const handleAddFiles = (files: File[]) => setAttachments((prev) => [...prev, ...files]);
   const handleRemoveFile = (index: number) => setAttachments((prev) => prev.filter((_, i) => i !== index));
 
+  const [useCustomDate, setUseCustomDate] = useState(false);
+  const [nowDisplay] = useState(() => {
+    const now = new Date();
+    return now.toLocaleString("es-PE", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stagedFile, setStagedFile] = useState<File | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -104,7 +113,12 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
           <CardTitle>Información del {messages.label}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit((data) => onSubmit(data, attachments, linkedOrders.map((o) => o.id)))} className="space-y-6">
+          <form onSubmit={handleSubmit((data) => {
+              const submittedDate = useCustomDate
+                ? `${data.movement_date}T00:00:00`
+                : new Date().toISOString();
+              onSubmit({ ...data, movement_date: submittedDate }, attachments, linkedOrders.map((o) => o.id));
+            })} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Monto */}
               <div className="space-y-2">
@@ -125,16 +139,38 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
 
               {/* Fecha */}
               <div className="space-y-2">
-                <Label htmlFor="movement_date">Fecha *</Label>
-                <Input
-                  id="movement_date"
-                  type="date"
-                  {...register("movement_date")}
-                />
-                {errors.movement_date && (
-                  <p className="text-sm text-destructive">
-                    {errors.movement_date.message}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="movement_date">Fecha *</Label>
+                  <label className="flex items-center gap-1.5 cursor-pointer text-sm text-muted-foreground select-none">
+                    <input
+                      type="checkbox"
+                      className="h-3.5 w-3.5 cursor-pointer"
+                      checked={useCustomDate}
+                      onChange={(e) => setUseCustomDate(e.target.checked)}
+                    />
+                    Fecha personalizada
+                  </label>
+                </div>
+                {useCustomDate ? (
+                  <>
+                    <Input
+                      id="movement_date"
+                      type="date"
+                      {...register("movement_date")}
+                    />
+                    {errors.movement_date && (
+                      <p className="text-sm text-destructive">
+                        {errors.movement_date.message}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <Input
+                    id="movement_date"
+                    value={nowDisplay}
+                    disabled
+                    className="bg-muted"
+                  />
                 )}
               </div>
 

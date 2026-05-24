@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getTodayDate } from "@/shared/utils/date";
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +33,7 @@ export const useAddProduct = () => {
   const [isVariable, setIsVariable] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [isWeb, setIsWeb] = useState(false);
-  const [createdAt, setCreatedAt] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [createdAt, setCreatedAt] = useState<string>(getTodayDate());
   const [originalIsVariable, setOriginalIsVariable] = useState(false);
   
   // Images state

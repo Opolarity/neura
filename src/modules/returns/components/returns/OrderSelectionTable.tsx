@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 import Pagination, { PaginationState } from "@/shared/components/pagination/Pagination";
+import { formatDateDisplay } from "@/shared/utils/date";
 
 interface OrderSelectionTableProps {
     items: any[];
@@ -97,9 +98,7 @@ export const OrderSelectionTable = ({
                                             {formatCurrency(amount)}
                                         </TableCell>
                                         <TableCell>
-                                            {dateStr
-                                                ? new Date(dateStr).toLocaleDateString()
-                                                : "-"}
+                                            {dateStr ? formatDateDisplay(dateStr) : "-"}
                                         </TableCell>
                                     </TableRow>
                                 );

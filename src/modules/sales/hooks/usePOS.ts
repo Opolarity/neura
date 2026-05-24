@@ -1200,15 +1200,26 @@ export const usePOS = () => {
       if (sessionData?.business_account && POSSessionHook.session.openedAt) {
         const { data: movementsData, error: movementsError } = await (supabase as any)
           .from("movements")
-          .select("amount, types!movement_type_id(code)")
+          .select("id, amount, types!movement_type_id(code), order_payment(id)")
           .eq("business_account_id", sessionData.business_account)
           .gte("movement_date", POSSessionHook.session.openedAt);
 
         if (movementsError) throw movementsError;
 
-        const externalMovements = (movementsData ?? []).reduce((acc: number, m: any) => {
-          return m.types?.code === "INC" ? acc + Number(m.amount) : acc - Number(m.amount);
-        }, 0);
+        console.log("fecha", POSSessionHook.session.openedAt);
+
+        console.log("Movements during session:", movementsData);
+
+        const filteredMovementsData = (movementsData ?? []).filter(
+          (m: any) => !m.order_payment || (Array.isArray(m.order_payment) ? m.order_payment.length === 0 : false)
+        );
+
+        const externalMovements = (filteredMovementsData ?? []).reduce(
+          (acc: number, m: any) => acc + Number(m.amount),
+          0
+        );
+
+        console.log("External movements total:", externalMovements);  
 
         setSessionExternalMovements(externalMovements);
       }

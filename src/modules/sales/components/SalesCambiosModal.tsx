@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeftRight, CreditCard, Eye, Package } from "lucide-react";
 import { SaleReturn } from "../types/Sales.types";
 import { formatCurrency } from "../utils";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/date";
 import { useNavigate } from "react-router-dom";
 
 interface SalesCambiosModalProps {
@@ -67,7 +67,7 @@ export const SalesCambiosModal = ({
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-muted-foreground">
-                      {format(new Date(ret.created_at), "dd/MM/yyyy HH:mm")}
+                      {formatDateTime(ret.created_at)}
                     </span>
                     <Button
                       type="button"

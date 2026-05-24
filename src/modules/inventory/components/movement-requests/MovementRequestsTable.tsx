@@ -11,8 +11,7 @@ import { Pencil, Loader2, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { MovementRequestListItem } from "../../types/MovementRequestList.types";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { formatDateTime } from "@/shared/utils/date";
 
 interface Props {
   requests: MovementRequestListItem[];
@@ -91,7 +90,7 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
               )}
             </TableCell>
             <TableCell>
-              {format(new Date(req.createdAt), "dd/MM/yyyy HH:mm", { locale: es })}
+              {formatDateTime(req.createdAt)}
             </TableCell>
             <TableCell className="text-right">
               <Button

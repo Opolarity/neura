@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { formatDateDisplay } from "@/shared/utils/date";
 import {
   Dialog,
   DialogContent,
@@ -186,7 +187,7 @@ const OrderSelectionModal = ({ isOpen, onClose, onSelect, mode = "create", curre
                           <TableCell className="font-medium">{item.document_number || `Pedido #${item.id}`}</TableCell>
                           <TableCell>{item.customer_name || item.customer_document_number || "-"}</TableCell>
                           <TableCell className="text-right font-medium">{formatCurrency(item.total || 0)}</TableCell>
-                          <TableCell>{item.date ? new Date(item.date).toLocaleDateString() : "-"}</TableCell>
+                          <TableCell>{item.date ? formatDateDisplay(item.date) : "-"}</TableCell>
                           <TableCell className="text-right">
                             <Button
                               variant="secondary"

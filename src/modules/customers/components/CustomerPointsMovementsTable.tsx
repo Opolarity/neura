@@ -9,22 +9,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CustomerPointsMovement } from "../hooks/useCustomerPointsMovements";
+import { formatDateTime } from "@/shared/utils/date";
 
 interface CustomerPointsMovementsTableProps {
   data: CustomerPointsMovement[];
   loading: boolean;
 }
 
-const formatDate = (iso: string) => {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("es-PE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+const formatDate = (iso: string) => iso ? formatDateTime(iso) : "—";
 
 export const CustomerPointsMovementsTable = ({
   data,

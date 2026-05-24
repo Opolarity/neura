@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { PriceRule } from "../../types/priceRule.types";
+import { formatDateDisplay } from "@/shared/utils/date";
 
 interface PriceRulesTableProps {
   rules: PriceRule[];
@@ -86,11 +87,11 @@ export const PriceRulesTable = ({
               {rule.valid_from || rule.valid_to ? (
                 <span className="text-sm">
                   {rule.valid_from
-                    ? new Date(rule.valid_from).toLocaleDateString()
+                    ? formatDateDisplay(rule.valid_from)
                     : "..."}{" "}
                   -{" "}
                   {rule.valid_to
-                    ? new Date(rule.valid_to).toLocaleDateString()
+                    ? formatDateDisplay(rule.valid_to)
                     : "..."}
                 </span>
               ) : (
