@@ -101,7 +101,7 @@ export const movementDetailAdapter = (
   orderIds: number[],
 ): MovementDetail => ({
   id: raw.id,
-  date: formatDateDisplay(raw.movement_date),
+  date: formatDateTime(raw.movement_date),
   type: raw.types.name as MovementTypeValue,
   category: raw.classes.name,
   description: raw.description || "-",
