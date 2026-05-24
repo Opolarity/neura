@@ -1200,7 +1200,7 @@ export const usePOS = () => {
       if (sessionData?.business_account && POSSessionHook.session.openedAt) {
         const { data: movementsData, error: movementsError } = await (supabase as any)
           .from("movements")
-          .select("amount, types!movement_type_id(code)")
+          .select("id, amount, types!movement_type_id(code), order_payment(id)")
           .eq("business_account_id", sessionData.business_account)
           .gte("movement_date", POSSessionHook.session.openedAt);
 
@@ -1208,33 +1208,8 @@ export const usePOS = () => {
 
         console.log("Movements during session:", movementsData);
 
-        const { data: posSessionOrderData, error: posSessionOrderDataError } = await (supabase as any)
-          .from("pos_session_orders")
-          .select("orders(id)")
-          .eq("pos_session_id", POSSessionHook.session.id);
-
-        if (posSessionOrderDataError) throw posSessionOrderDataError;
-
-        const orderIds = (posSessionOrderData ?? [])
-          .map((r: any) => r.orders?.id)
-          .filter(Boolean);
-
-        let orderMovementsData: any[] = [];
-        if (orderIds.length > 0) {
-          const { data, error } = await (supabase as any)
-            .from("order_payment")
-            .select("movements(id)")
-            .in("order_id", orderIds);
-          if (error) throw error;
-          orderMovementsData = data ?? [];
-        }
-
-        const orderMovementIds = new Set(
-          orderMovementsData.map((p: any) => p.movements?.id).filter(Boolean)
-        );
-
         const filteredMovementsData = (movementsData ?? []).filter(
-          (m: any) => !orderMovementIds.has(m.id)
+          (m: any) => !m.order_payment || (Array.isArray(m.order_payment) ? m.order_payment.length === 0 : false)
         );
 
         const externalMovements = (filteredMovementsData ?? []).reduce(
