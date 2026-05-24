@@ -1206,6 +1206,8 @@ export const usePOS = () => {
 
         if (movementsError) throw movementsError;
 
+        console.log("Movements during session:", movementsData);
+
         const { data: orderMovementsData, error: orderMovementsError } = await (supabase as any)
           .from("pos_session_orders")
           .select("orders(order_payments(movements(*), types(code))))")
@@ -1213,6 +1215,8 @@ export const usePOS = () => {
           .single();
 
         if (orderMovementsError) throw orderMovementsError;
+
+        console.log("Order payments movements:", orderMovementsData);
 
         // Filtrar movementsData excluyendo los que están en órdenes
         const filteredMovementsData = movementsData.filter(
@@ -1225,6 +1229,8 @@ export const usePOS = () => {
           (acc: number, m: any) => acc + Number(m.amount),
           0
         );
+
+        console.log("External movements total:", externalMovements);  
 
         setSessionExternalMovements(externalMovements);
       }
