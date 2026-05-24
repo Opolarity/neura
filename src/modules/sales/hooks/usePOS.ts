@@ -1217,7 +1217,7 @@ export const usePOS = () => {
         if (posSessionOrderDataError) throw posSessionOrderDataError;
 
         const { data: orderMovementsData, error: orderMovementsError } = await (supabase as any)
-          .from("order_payments")
+          .from("order_payment")
           .select("movements(*)")
           .in("order_id", posSessionOrderData.orders?.id ? [posSessionOrderData.orders.id] : [])
           .single();
