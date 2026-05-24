@@ -1208,10 +1208,18 @@ export const usePOS = () => {
 
         console.log("Movements during session:", movementsData);
 
-        const { data: orderMovementsData, error: orderMovementsError } = await (supabase as any)
+        const { data: posSessionOrderData, error: posSessionOrderDataError } = await (supabase as any)
           .from("pos_session_orders")
-          .select("orders(order_payments(movements(*), types(code))))")
+          .select("orders(id)")
           .eq("pos_session_id", POSSessionHook.session.id)
+          .single();
+
+        if (posSessionOrderDataError) throw posSessionOrderDataError;
+
+        const { data: orderMovementsData, error: orderMovementsError } = await (supabase as any)
+          .from("order_payments")
+          .select("movements(*)")
+          .in("order_id", posSessionOrderData.orders?.id ? [posSessionOrderData.orders.id] : [])
           .single();
 
         if (orderMovementsError) throw orderMovementsError;
@@ -1220,7 +1228,7 @@ export const usePOS = () => {
 
         // Filtrar movementsData excluyendo los que están en órdenes
         const filteredMovementsData = movementsData.filter(
-          (movement: any) => !orderMovementsData?.orders?.order_payments?.some(
+          (movement: any) => !orderMovementsData?.some(
             (p: any) => p.movements?.id === movement.id
           )
         );
