@@ -99,7 +99,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                   className={
                     session.openingDifference !== null &&
                     session.openingDifference !== 0
-                      ? "text-green-600"
+                      ? "text-red-600"
                       : ""
                   }
                 >
