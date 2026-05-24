@@ -1202,7 +1202,7 @@ export const usePOS = () => {
           .from("movements")
           .select("id, amount, types!movement_type_id(code), order_payment(id)")
           .eq("business_account_id", sessionData.business_account)
-          .gte("movement_date", POSSessionHook.session.openedAt);
+          .gte("created_at", POSSessionHook.session.openedAt);
 
         if (movementsError) throw movementsError;
 
