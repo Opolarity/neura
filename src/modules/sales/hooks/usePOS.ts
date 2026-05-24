@@ -1221,9 +1221,10 @@ export const usePOS = () => {
           )
         );
 
-        const externalMovements = (filteredMovementsData ?? []).reduce((acc: number, m: any) => {
-          return m.types?.code === "INC" ? acc + Number(m.amount) : acc - Number(m.amount);
-        }, 0);
+        const externalMovements = (filteredMovementsData ?? []).reduce(
+          (acc: number, m: any) => acc + Number(m.amount),
+          0
+        );
 
         setSessionExternalMovements(externalMovements);
       }
