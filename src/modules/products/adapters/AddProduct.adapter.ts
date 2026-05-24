@@ -7,6 +7,7 @@ import type {
   UpdateProductRequest
 } from '../types/AddProduct.types';
 import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock, StockType } from '@/types';
+import { getTodayDate } from "@/shared/utils/date";
 
 export const AddProductAdapter = {
   /**
@@ -93,8 +94,8 @@ export const AddProductAdapter = {
       isActive: data.product.active,
       isWeb: data.product.web,
       createdAt: data.product.created_at
-        ? new Date(data.product.created_at).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0],
+        ? new Date(data.product.created_at).toLocaleDateString("sv-SE", { timeZone: "America/Lima" })
+        : getTodayDate(),
     };
 
     const categories = data.categories || [];

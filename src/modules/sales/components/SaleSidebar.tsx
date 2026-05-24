@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { formatDateTime } from "@/shared/utils/date";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -217,16 +218,6 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   return (
     <div className="w-full h-full flex flex-col space-y-4">
@@ -298,7 +289,7 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
                           : 'Usuario desconocido'}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatDate(note.created_at)}
+                        {formatDateTime(note.created_at)}
                       </p>
                     </div>
                   </div>

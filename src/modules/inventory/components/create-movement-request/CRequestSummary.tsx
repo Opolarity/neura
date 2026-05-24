@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format } from "date-fns";
+import { formatDateDisplay, getTodayDate } from "@/shared/utils/date";
 import { Badge } from "@/components/ui/badge";
 
 const getSituationBadgeColor = (name?: string) => {
@@ -106,7 +106,7 @@ const CRequestSummary = ({
             className="bg-muted"
             disabled
             type="text"
-            value={format(new Date(), "dd/MM/yyyy")}
+            value={formatDateDisplay(getTodayDate())}
           />
         </div>
       </div>

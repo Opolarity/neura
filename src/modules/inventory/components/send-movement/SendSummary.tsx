@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format } from "date-fns";
+import { formatDateDisplay, getTodayDate } from "@/shared/utils/date";
 
 interface SimpleWarehouse {
   id: number;
@@ -79,7 +79,7 @@ const SendSummary = ({
         </div>
         <div className="flex-1 flex flex-col gap-2">
           <Label>Fecha</Label>
-          <Input className="bg-muted" disabled type="text" value={format(new Date(), "dd/MM/yyyy")} />
+          <Input className="bg-muted" disabled type="text" value={formatDateDisplay(getTodayDate())} />
         </div>
       </div>
 

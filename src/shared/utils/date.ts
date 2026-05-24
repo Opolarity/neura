@@ -1,48 +1,45 @@
-/**
- * Utilidades para manejo y formateo de fechas
- */
+const LIMA_TZ = "America/Lima";
 
-/**
- * Obtiene la fecha de hoy en formato YYYY-MM-DD
- */
 export const getTodayDate = (): string => {
-  return new Date().toISOString().split("T")[0];
+  return new Date().toLocaleDateString("sv-SE", { timeZone: LIMA_TZ });
 };
 
-/**
- * Formatea una fecha para mostrar en formato DD/MM/YYYY (locale es-PE)
- */
 export const formatDateDisplay = (dateString: string): string => {
-  const date = new Date(dateString);
+  if (!dateString) return "";
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(dateString)
+    ? new Date(dateString.replace(/-/g, "/"))
+    : new Date(dateString);
   return date.toLocaleDateString("es-PE", {
+    timeZone: LIMA_TZ,
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
   });
 };
 
-/**
- * Formatea una fecha para mostrar en formato largo (ej: "28 de enero de 2026")
- */
 export const formatDateLong = (dateString: string): string => {
-  const date = new Date(dateString);
+  if (!dateString) return "";
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(dateString)
+    ? new Date(dateString.replace(/-/g, "/"))
+    : new Date(dateString);
   return date.toLocaleDateString("es-PE", {
+    timeZone: LIMA_TZ,
     day: "numeric",
     month: "long",
     year: "numeric",
   });
 };
 
-/**
- * Formatea una fecha con hora (DD/MM/YYYY HH:mm)
- */
 export const formatDateTime = (dateString: string): string => {
+  if (!dateString) return "";
   const date = new Date(dateString);
-  return date.toLocaleDateString("es-PE", {
+  return date.toLocaleString("es-PE", {
+    timeZone: LIMA_TZ,
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
 };

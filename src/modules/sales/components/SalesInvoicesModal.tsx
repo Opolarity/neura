@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { formatDateDisplay } from "@/shared/utils/date";
 import { ArrowUp, ChevronDown, Code, Eye, FileText, Loader2, Printer } from "lucide-react";
 import {
   AlertDialog,
@@ -627,7 +627,7 @@ export const SalesInvoicesModal = ({
                       <TableCell>{inv.client_name || "-"}</TableCell>
                       <TableCell>S/ {inv.total_amount.toFixed(2)}</TableCell>
                       <TableCell>
-                        {format(new Date(inv.created_at), "dd/MM/yyyy")}
+                        {formatDateDisplay(inv.created_at)}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">

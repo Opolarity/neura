@@ -14,7 +14,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { OrdersSituationsById } from "../types";
-import { format } from "date-fns";
+import { formatDateDisplay } from "@/shared/utils/date";
 
 interface SalesHistoryModalProps {
   orders: OrdersSituationsById[];
@@ -53,12 +53,7 @@ export const SalesHistoryModal = ({
                   <TableCell>{order.statuses_name}</TableCell>
                   <TableCell>{order.created_by_name}</TableCell>
                   <TableCell>
-                    {format(
-                      new Date(
-                        order.created_at.split("T")[0].replace(/-/g, "/"),
-                      ),
-                      "dd/MM/yyyy",
-                    )}
+                    {formatDateDisplay(order.created_at)}
                   </TableCell>
                 </TableRow>
               ))}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDateDisplay } from "@/shared/utils/date";
 import { returnsService } from '../services/Returns.service';
 import { ReturnItem } from '../types/Returns.types';
 import { toast } from 'sonner';
@@ -52,13 +53,7 @@ export const useReturns = () => {
         loadReturns(1, size, debouncedSearch);
     };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('es-ES', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-        });
-    };
+    const formatDate = (dateString: string) => formatDateDisplay(dateString);
 
     const formatCurrency = (amount: number | null) => {
         if (amount === null || amount === undefined) return '-';

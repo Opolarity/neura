@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/date";
 import { Loader2, ExternalLink, ArrowRight } from "lucide-react";
 import {
   Dialog,
@@ -45,14 +45,7 @@ const MovementsDetailModal = ({ movementId, onClose }: MovementsDetailModalProps
     navigate(path);
   };
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "—";
-    try {
-      return format(new Date(dateStr), "dd/MM/yyyy HH:mm");
-    } catch {
-      return dateStr;
-    }
-  };
+  const formatDate = (dateStr: string | null) => dateStr ? formatDateTime(dateStr) : "—";
 
   return (
     <Dialog open={movementId !== null} onOpenChange={(open) => { if (!open) onClose(); }}>

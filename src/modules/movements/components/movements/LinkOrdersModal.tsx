@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { formatDateDisplay } from "@/shared/utils/date";
 import {
   Dialog,
   DialogContent,
@@ -180,7 +181,7 @@ export function LinkOrdersModal({ open, onOpenChange, selectedOrders, onConfirm 
                           {formatCurrency(item.total || 0)}
                         </TableCell>
                         <TableCell>
-                          {item.date ? new Date(item.date).toLocaleDateString() : "-"}
+                          {item.date ? formatDateDisplay(item.date) : "-"}
                         </TableCell>
                       </TableRow>
                     ))

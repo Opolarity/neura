@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ExternalLink, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/date";
 import {
   Dialog,
   DialogContent,
@@ -120,7 +120,7 @@ export const PagosConfirmarModal = ({
                   {payments.map((payment) => (
                     <TableRow key={payment.id}>
                       <TableCell className="whitespace-nowrap text-sm">
-                        {format(new Date(payment.createdAt), "dd/MM/yyyy HH:mm")}
+                        {formatDateTime(payment.createdAt)}
                       </TableCell>
                       <TableCell className="font-medium">
                         {payment.franchiseName}
