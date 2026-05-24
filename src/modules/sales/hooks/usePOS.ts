@@ -1206,6 +1206,8 @@ export const usePOS = () => {
 
         if (movementsError) throw movementsError;
 
+        console.log("fecha", POSSessionHook.session.openedAt);
+
         console.log("Movements during session:", movementsData);
 
         const filteredMovementsData = (movementsData ?? []).filter(
