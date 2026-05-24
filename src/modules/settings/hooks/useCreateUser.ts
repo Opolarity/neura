@@ -46,7 +46,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null
     // Loading states
     const [loading, setLoading] = useState(false);
     const [optionsLoading, setOptionsLoading] = useState(true);
-    const [fetchingUser, setFetchingUser] = useState(false);
+    const [fetchingUser, setFetchingUser] = useState(!!isEdit);
     const [userDataLoaded, setUserDataLoaded] = useState(false);
     const [showPasswordField, setShowPasswordField] = useState(false);
     const [isSearchingDocument, setIsSearchingDocument] = useState(false);
