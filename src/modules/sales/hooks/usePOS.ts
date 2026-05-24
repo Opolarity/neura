@@ -1209,7 +1209,7 @@ export const usePOS = () => {
         const { data: orderMovementsData, error: orderMovementsError } = await (supabase as any)
           .from("pos_session_orders")
           .select("orders(order_payments(movements(*), types(code))))")
-          .eq("pos_session_id", 1)
+          .eq("pos_session_id", POSSessionHook.session.id)
           .single();
 
         if (orderMovementsError) throw orderMovementsError;
