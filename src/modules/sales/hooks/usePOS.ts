@@ -1206,7 +1206,22 @@ export const usePOS = () => {
 
         if (movementsError) throw movementsError;
 
-        const externalMovements = (movementsData ?? []).reduce((acc: number, m: any) => {
+        const { data: orderMovementsData, error: orderMovementsError } = await (supabase as any)
+          .from("pos_session_orders")
+          .select("orders(order_payments(movements(*), types(code))))")
+          .eq("pos_session_id", 1)
+          .single();
+
+        if (orderMovementsError) throw orderMovementsError;
+
+        // Filtrar movementsData excluyendo los que están en órdenes
+        const filteredMovementsData = movementsData.filter(
+          (movement: any) => !orderMovementsData?.orders?.order_payments?.some(
+            (p: any) => p.movements?.id === movement.id
+          )
+        );
+
+        const externalMovements = (filteredMovementsData ?? []).reduce((acc: number, m: any) => {
           return m.types?.code === "INC" ? acc + Number(m.amount) : acc - Number(m.amount);
         }, 0);
 
