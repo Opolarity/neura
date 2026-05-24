@@ -89,6 +89,44 @@ const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null
         profiles_id: '',
     });
 
+    // Reset form when switching from edit to create
+    useEffect(() => {
+        if (!isEdit) {
+            const useType = accountTypes.find(t => t.name?.toUpperCase().includes('USE'));
+            setFormData({
+                user_name: '',
+                name: '',
+                middle_name: '',
+                last_name: '',
+                last_name2: '',
+                document_type_id: '',
+                document_number: '',
+                email: '',
+                password: '',
+                warehouse_id: '',
+                branches_id: '',
+                phone: '',
+                country_id: '',
+                state_id: '',
+                city_id: '',
+                neighborhood_id: '',
+                address: '',
+                address_reference: '',
+                show: true,
+                type_ids: useType ? [useType.id] : [],
+                role_ids: [],
+                profiles_id: '',
+            });
+            setFetchingUser(false);
+            setUserDataLoaded(false);
+            setShowPasswordField(false);
+            setIsDocumentFound(false);
+            setStates([]);
+            setCities([]);
+            setNeighborhoods([]);
+        }
+    }, [isEdit]);
+
     // Computed values
     const isRUC = documentTypes.find(t => t.id.toString() === formData.document_type_id)?.name.includes('RUC') || false;
 
