@@ -1211,26 +1211,30 @@ export const usePOS = () => {
         const { data: posSessionOrderData, error: posSessionOrderDataError } = await (supabase as any)
           .from("pos_session_orders")
           .select("orders(id)")
-          .eq("pos_session_id", POSSessionHook.session.id)
-          .single();
+          .eq("pos_session_id", POSSessionHook.session.id);
 
         if (posSessionOrderDataError) throw posSessionOrderDataError;
 
-        const { data: orderMovementsData, error: orderMovementsError } = await (supabase as any)
-          .from("order_payment")
-          .select("movements(*)")
-          .in("order_id", posSessionOrderData.orders?.id ? [posSessionOrderData.orders.id] : [])
-          .single();
+        const orderIds = (posSessionOrderData ?? [])
+          .map((r: any) => r.orders?.id)
+          .filter(Boolean);
 
-        if (orderMovementsError) throw orderMovementsError;
+        let orderMovementsData: any[] = [];
+        if (orderIds.length > 0) {
+          const { data, error } = await (supabase as any)
+            .from("order_payment")
+            .select("movements(id)")
+            .in("order_id", orderIds);
+          if (error) throw error;
+          orderMovementsData = data ?? [];
+        }
 
-        console.log("Order payments movements:", orderMovementsData);
+        const orderMovementIds = new Set(
+          orderMovementsData.map((p: any) => p.movements?.id).filter(Boolean)
+        );
 
-        // Filtrar movementsData excluyendo los que están en órdenes
-        const filteredMovementsData = movementsData.filter(
-          (movement: any) => !orderMovementsData?.some(
-            (p: any) => p.movements?.id === movement.id
-          )
+        const filteredMovementsData = (movementsData ?? []).filter(
+          (m: any) => !orderMovementIds.has(m.id)
         );
 
         const externalMovements = (filteredMovementsData ?? []).reduce(
