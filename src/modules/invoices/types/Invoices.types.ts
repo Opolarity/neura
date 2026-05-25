@@ -2,6 +2,14 @@ export interface InvoiceApiResponse { }
 export interface InvoiceFilters {
   p_page?: number;
   p_size?: number;
+  search?: string | null;
+  order?: string | null;
+  declared?: boolean | null;
+  min_mount?: number | null;
+  max_mount?: number | null;
+  type?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
 }
 
 export interface InvoicesResponse {
