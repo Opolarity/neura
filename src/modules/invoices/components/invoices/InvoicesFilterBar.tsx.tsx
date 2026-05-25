@@ -1,10 +1,14 @@
-import { Button } from "@/components/ui/button";
-import { ListFilter, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import InvoicesFilterModal from "./InvoicesFilterModal";
+import type { ActiveInvoiceFilters } from "@/modules/invoices/hooks/useInvoices";
 
-const InvoicesFilterBar = () => {
-  const invoices = [];
+interface InvoicesFilterBarProps {
+  activeFilters?: ActiveInvoiceFilters;
+  onApply?: (filters: ActiveInvoiceFilters) => void;
+  onClear?: () => void;
+}
 
+const InvoicesFilterBar = ({ activeFilters, onApply, onClear }: InvoicesFilterBarProps) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -17,7 +21,7 @@ const InvoicesFilterBar = () => {
           />
         </div>
 
-        <InvoicesFilterModal />
+        <InvoicesFilterModal activeFilters={activeFilters} onApply={onApply} onClear={onClear} />
       </div>
     </div>
   );

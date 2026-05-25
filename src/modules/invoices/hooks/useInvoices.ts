@@ -18,10 +18,10 @@ export const useInvoices = () => {
   const [pagination, setPagination] = useState({ p_page: 1, p_size: 20, total: 0 });
   const [activeFilters, setActiveFilters] = useState<ActiveInvoiceFilters>({});
 
-  const fetchInvoices = useCallback(async (page = 1, size = 20) => {
+  const fetchInvoices = useCallback(async (page = 1, size = 20, filters: ActiveInvoiceFilters = {}) => {
     setLoading(true);
     try {
-      const apiResponse = await getInvoicesApi({ p_page: page, p_size: size });
+      const apiResponse = await getInvoicesApi({ p_page: page, p_size: size, ...filters });
       const adapted = invoicesAdapter(apiResponse);
 
       setInvoices(adapted.data);
@@ -37,15 +37,17 @@ export const useInvoices = () => {
     fetchInvoices();
   }, [fetchInvoices]);
 
-  const onPageChange = (page: number) => fetchInvoices(page, pagination.p_size);
-  const onPageSizeChange = (size: number) => fetchInvoices(1, size);
+  const onPageChange = (page: number) => fetchInvoices(page, pagination.p_size, activeFilters);
+  const onPageSizeChange = (size: number) => fetchInvoices(1, size, activeFilters);
 
   const applyFilters = (filters: ActiveInvoiceFilters) => {
     setActiveFilters(filters);
+    fetchInvoices(1, pagination.p_size, filters);
   };
 
   const clearFilters = () => {
     setActiveFilters({});
+    fetchInvoices(1, pagination.p_size, {});
   };
 
   return { invoices, loading, pagination, onPageChange, onPageSizeChange, activeFilters, applyFilters, clearFilters };
