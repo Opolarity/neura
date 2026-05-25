@@ -1,5 +1,8 @@
 export interface InvoiceApiResponse { }
-export interface InvoiceFilters { }
+export interface InvoiceFilters {
+  p_page?: number;
+  p_size?: number;
+}
 
 export interface InvoicesResponse {
   invoicesData: {
