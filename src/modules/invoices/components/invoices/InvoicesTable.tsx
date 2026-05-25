@@ -10,17 +10,17 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Edit, Eye, Loader2 } from "lucide-react";
-import type { InvoiceRow } from "../../hooks/useInvoices";
+import type { InvoiceItem } from "../../types/Invoices.types";
 
 interface TableInvoicesProps {
-  invoices: InvoiceRow[];
+  invoices: InvoiceItem[];
   loading: boolean;
 }
 
 export default function InvoicesTable({ invoices = [], loading }: TableInvoicesProps) {
   const navigate = useNavigate();
 
-  if (loading) {
+  if (loading && invoices.length === 0) {
     return (
       <div className="flex justify-center items-center py-12">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -28,7 +28,7 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
     );
   }
 
-  if (invoices.length === 0) {
+  if (!loading && invoices.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         No se encontraron comprobantes
@@ -37,7 +37,11 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
   }
 
   return (
-    <Table>
+    <div className="relative">
+      {loading && (
+        <div className="absolute top-0 left-0 right-0 h-0.5 z-10 bg-primary animate-pulse rounded-full" />
+      )}
+      <Table className={loading ? "opacity-50 pointer-events-none" : ""}>
       <TableHeader>
         <TableRow>
           <TableHead>ID</TableHead>
@@ -57,14 +61,14 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
         {invoices.map((item) => (
           <TableRow key={item.id}>
             <TableCell>{item.id}</TableCell>
-            <TableCell>{item.invoice_type_name}</TableCell>
-            <TableCell>{item.tax_serie || "—"}</TableCell>
-            <TableCell>{item.order_id || "—"}</TableCell>
-            <TableCell>{item.client_name || "—"}</TableCell>
-            <TableCell>{item.customer_document_number || "—"}</TableCell>
-            <TableCell>S/ {item.total_amount.toFixed(2)}</TableCell>
+            <TableCell>{item.invoiceTypeName}</TableCell>
+            <TableCell>{item.taxSerie || "—"}</TableCell>
+            <TableCell>{item.orderId || "—"}</TableCell>
+            <TableCell>{item.clientName || "—"}</TableCell>
+            <TableCell>{item.customerDocumentNumber || "—"}</TableCell>
+            <TableCell>S/ {item.totalAmount.toFixed(2)}</TableCell>
             <TableCell>
-              {formatDateTime(item.created_at)}
+              {formatDateTime(item.createdAt)}
             </TableCell>
             <TableCell>
               <span
@@ -99,5 +103,6 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
         ))}
       </TableBody>
     </Table>
+    </div>
   );
 }

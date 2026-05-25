@@ -1,91 +1,31 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getInvoicesApi } from "../services/Invoices.services";
+import { invoicesAdapter } from "../adapters/Invoices.adapters";
+import type { InvoiceItem } from "../types/Invoices.types";
 
-export interface InvoiceRow {
-  id: number;
-  tax_serie: string | null;
-  total_amount: number;
-  client_name: string | null;
-  customer_document_number: string;
-  created_at: string;
-  declared: boolean;
-  invoice_type_name: string;
-  order_id: number | null;
+export interface ActiveInvoiceFilters {
+  declared?: boolean | null;
+  type?: number | null;
+  min_mount?: number | null;
+  max_mount?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
 }
 
 export const useInvoices = () => {
-  const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ p_page: 1, p_size: 20, total: 0 });
+  const [activeFilters, setActiveFilters] = useState<ActiveInvoiceFilters>({});
 
-  const fetchInvoices = useCallback(async (page = 1, size = 20) => {
+  const fetchInvoices = useCallback(async (page = 1, size = 20, filters: ActiveInvoiceFilters = {}) => {
     setLoading(true);
     try {
-      // Get total count
-      const { count } = await supabase
-        .from("invoices")
-        .select("*", { count: "exact", head: true });
+      const apiResponse = await getInvoicesApi({ p_page: page, p_size: size, ...filters });
+      const adapted = invoicesAdapter(apiResponse);
 
-      const from = (page - 1) * size;
-      const to = from + size - 1;
-
-      const { data, error } = await supabase
-        .from("invoices")
-        .select(`
-          id,
-          tax_serie,
-          total_amount,
-          client_name,
-          customer_document_number,
-          created_at,
-          declared,
-          invoice_type_id
-        `)
-        .order("id", { ascending: false })
-        .range(from, to);
-
-      if (error) throw error;
-
-      // Get type names for the invoice_type_ids
-      const typeIds = [...new Set((data || []).map(d => d.invoice_type_id))];
-      let typesMap: Record<number, string> = {};
-      if (typeIds.length > 0) {
-        const { data: types } = await supabase
-          .from("types" as any)
-          .select("id, name")
-          .in("id", typeIds);
-        if (types) {
-          (types as any[]).forEach((t: any) => { typesMap[t.id] = t.name; });
-        }
-      }
-
-      // Get order_ids from order_invoices
-      const invoiceIds = (data || []).map(d => d.id);
-      let orderMap: Record<number, number> = {};
-      if (invoiceIds.length > 0) {
-        const { data: orderInvoices } = await supabase
-          .from("order_invoices")
-          .select("invoice_id, order_id")
-          .in("invoice_id", invoiceIds);
-        if (orderInvoices) {
-          orderInvoices.forEach((oi) => { orderMap[oi.invoice_id] = oi.order_id; });
-        }
-      }
-
-      const rows: InvoiceRow[] = (data || []).map(d => ({
-        id: d.id,
-        tax_serie: d.tax_serie,
-        total_amount: d.total_amount,
-        client_name: d.client_name,
-        customer_document_number: d.customer_document_number,
-        created_at: d.created_at,
-        declared: d.declared,
-        invoice_type_name: typesMap[d.invoice_type_id] || "—",
-        order_id: orderMap[d.id] || null,
-      }));
-
-      setInvoices(rows);
-      setPagination({ p_page: page, p_size: size, total: count || 0 });
+      setInvoices(adapted.data);
+      setPagination({ p_page: page, p_size: size, total: adapted.page.total });
     } catch (err) {
       console.error("Error fetching invoices:", err);
     } finally {
@@ -97,8 +37,18 @@ export const useInvoices = () => {
     fetchInvoices();
   }, [fetchInvoices]);
 
-  const onPageChange = (page: number) => fetchInvoices(page, pagination.p_size);
-  const onPageSizeChange = (size: number) => fetchInvoices(1, size);
+  const onPageChange = (page: number) => fetchInvoices(page, pagination.p_size, activeFilters);
+  const onPageSizeChange = (size: number) => fetchInvoices(1, size, activeFilters);
 
-  return { invoices, loading, pagination, onPageChange, onPageSizeChange };
+  const applyFilters = (filters: ActiveInvoiceFilters) => {
+    setActiveFilters(filters);
+    fetchInvoices(1, pagination.p_size, filters);
+  };
+
+  const clearFilters = () => {
+    setActiveFilters({});
+    fetchInvoices(1, pagination.p_size, {});
+  };
+
+  return { invoices, loading, pagination, onPageChange, onPageSizeChange, activeFilters, applyFilters, clearFilters };
 };

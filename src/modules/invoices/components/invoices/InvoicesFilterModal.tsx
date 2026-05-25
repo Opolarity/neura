@@ -15,16 +15,79 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ActiveInvoiceFilters } from "@/modules/invoices/hooks/useInvoices";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import { ListFilter } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface InvoicesFilterModalProps {
-  filters?: null;
+  activeFilters?: ActiveInvoiceFilters | null;
+  onApply?: (filters: ActiveInvoiceFilters) => void;
+  onClear?: () => void;
 }
 
-const InvoicesFilterModal = ({ filters }: InvoicesFilterModalProps) => {
+interface ModalFilters {
+  declared: string;
+  type: string;
+  min_mount: string;
+  max_mount: string;
+  start_date: string;
+  end_date: string;
+}
+
+const defaultModalFilters: ModalFilters = {
+  declared: "all",
+  type: "",
+  min_mount: "",
+  max_mount: "",
+  start_date: "",
+  end_date: "",
+};
+
+const toModalFilters = (filters: ActiveInvoiceFilters): ModalFilters => ({
+  declared:
+    filters.declared === true ? "true" : filters.declared === false ? "false" : "all",
+  type: filters.type != null ? String(filters.type) : "",
+  min_mount: filters.min_mount != null ? String(filters.min_mount) : "",
+  max_mount: filters.max_mount != null ? String(filters.max_mount) : "",
+  start_date: filters.start_date ?? "",
+  end_date: filters.end_date ?? "",
+});
+
+const toActiveFilters = (modal: ModalFilters): ActiveInvoiceFilters => ({
+  declared: modal.declared === "all" ? null : modal.declared === "true",
+  type: modal.type !== "" ? Number(modal.type) : null,
+  min_mount: modal.min_mount !== "" ? Number(modal.min_mount) : null,
+  max_mount: modal.max_mount !== "" ? Number(modal.max_mount) : null,
+  start_date: modal.start_date || null,
+  end_date: modal.end_date || null,
+});
+
+const InvoicesFilterModal = ({ activeFilters, onApply, onClear }: InvoicesFilterModalProps) => {
+  const [open, setOpen] = useState(false);
+  const [localFilters, setLocalFilters] = useState<ModalFilters>(defaultModalFilters);
+
+  useEffect(() => {
+    if (!open) return;
+    setLocalFilters(toModalFilters(activeFilters ?? {}));
+  }, [open]);
+
+  const handleChange = (field: keyof ModalFilters, value: string) => {
+    setLocalFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleApply = () => {
+    onApply?.(toActiveFilters(localFilters));
+    setOpen(false);
+  };
+
+  const handleClear = () => {
+    setLocalFilters(defaultModalFilters);
+    onClear?.();
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant={"default"} className="gap-2">
           <ListFilter className="w-4 h-4" />
@@ -33,39 +96,88 @@ const InvoicesFilterModal = ({ filters }: InvoicesFilterModalProps) => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Filtrar Roles</DialogTitle>
+          <DialogTitle>Filtrar Facturas</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="is_admin">Tipo de Rol</Label>
-            <Select>
+            <Label htmlFor="declared">Declarado</Label>
+            <Select
+              value={localFilters.declared}
+              onValueChange={(v) => handleChange("declared", v)}
+            >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar tipo" />
+                <SelectValue placeholder="Seleccionar estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Todos</SelectItem>
-                <SelectItem value="true">Administrador</SelectItem>
-                <SelectItem value="false">Regular</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="true">Declarado</SelectItem>
+                <SelectItem value="false">No declarado</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
+          <div className="grid gap-2">
+            <Label htmlFor="type">Tipo de factura</Label>
+            <Input
+              id="type"
+              type="number"
+              placeholder="ID del tipo"
+              value={localFilters.type}
+              onChange={(e) => handleChange("type", e.target.value)}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="minuser">Min. Usuarios</Label>
-              <Input id="minuser" type="number" placeholder="0" />
+              <Label htmlFor="min_mount">Monto mínimo</Label>
+              <Input
+                id="min_mount"
+                type="number"
+                placeholder="0.00"
+                value={localFilters.min_mount}
+                onChange={(e) => handleChange("min_mount", e.target.value)}
+              />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="maxuser">Max. Usuarios</Label>
-              <Input id="maxuser" type="number" placeholder="100" />
+              <Label htmlFor="max_mount">Monto máximo</Label>
+              <Input
+                id="max_mount"
+                type="number"
+                placeholder="9999.99"
+                value={localFilters.max_mount}
+                onChange={(e) => handleChange("max_mount", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="start_date">Fecha inicio</Label>
+              <Input
+                id="start_date"
+                type="date"
+                value={localFilters.start_date}
+                onChange={(e) => handleChange("start_date", e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="end_date">Fecha fin</Label>
+              <Input
+                id="end_date"
+                type="date"
+                value={localFilters.end_date}
+                onChange={(e) => handleChange("end_date", e.target.value)}
+              />
             </div>
           </div>
         </div>
 
         <DialogFooter className="flex gap-2">
-          <Button variant="outline">Limpiar</Button>
-          <Button>Aplicar</Button>
+          <Button variant="outline" onClick={handleClear}>
+            Limpiar
+          </Button>
+          <Button onClick={handleApply}>Aplicar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

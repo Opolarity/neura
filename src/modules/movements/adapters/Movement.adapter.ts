@@ -99,6 +99,7 @@ export const movementDetailAdapter = (
   isFranchiseMovement: boolean,
   franchiseAccount: import("../types/Movements.types").FranchiseAccountData | null,
   orderIds: number[],
+  links: import("../types/Movements.types").MovementLinks | null = null,
 ): MovementDetail => ({
   id: raw.id,
   date: formatDateTime(raw.movement_date),
@@ -116,6 +117,7 @@ export const movementDetailAdapter = (
   isFranchiseMovement,
   franchiseAccount: franchiseAccount ?? null,
   orderIds: orderIds ?? [],
+  links: links ?? null,
 });
 
 export const calculateMovementSummary = (

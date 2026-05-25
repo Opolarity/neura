@@ -199,11 +199,30 @@ export interface FranchiseAccountData {
   document_type_code: string;
 }
 
+export interface MovementLinkItem {
+  order_payment_id: number;
+  order_id: number;
+  amount: number;
+  date: string;
+  gateway_confirmation_code: string | null;
+  voucher_url: string | null;
+  customer_name: string;
+  customer_lastname: string;
+  document_number: string;
+  order_total: number;
+}
+
+export interface MovementLinks {
+  link_order: MovementLinkItem[] | null;
+  link_returns: MovementLinkItem[] | null;
+}
+
 export interface MovementDetailApiResponse {
   movement: MovementDetailRaw;
   is_franchise_movement: boolean;
   franchise_account: FranchiseAccountData | null;
   order_ids: number[];
+  links: MovementLinks | null;
 }
 
 export interface MovementDetail {
@@ -223,4 +242,5 @@ export interface MovementDetail {
   isFranchiseMovement: boolean;
   franchiseAccount: FranchiseAccountData | null;
   orderIds: number[];
+  links: MovementLinks | null;
 }
