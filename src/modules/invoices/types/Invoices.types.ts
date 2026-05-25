@@ -1,6 +1,29 @@
 export interface InvoiceApiResponse { }
 export interface InvoiceFilters { }
 
+export interface InvoicesResponse {
+  invoicesData: {
+    data: {
+      id: number;
+      declared: boolean;
+      order_id: number | null;
+      tax_serie: string | null;
+      created_at: string;
+      client_name: string;
+      total_amount: number;
+      invoice_number: string | null;
+      invoice_type_id: number;
+      invoice_type_name: string;
+      customer_document_number: string;
+    }[];
+    page: {
+      page: number;
+      size: number;
+      total: number;
+    };
+  };
+}
+
 export interface InvoiceItemForm {
   id: string;
   description: string;
@@ -76,6 +99,29 @@ export interface InvoiceFormData {
   clientAddress: string;
   orderId?: string;
   movementId?: string;
+}
+
+export interface InvoiceItem {
+  id: number;
+  declared: boolean;
+  orderId: number | null;
+  taxSerie: string | null;
+  createdAt: string;
+  clientName: string;
+  totalAmount: number;
+  invoiceNumber: string | null;
+  invoiceTypeId: number;
+  invoiceTypeName: string;
+  customerDocumentNumber: string;
+}
+
+export interface InvoicesAdapted {
+  data: InvoiceItem[];
+  page: {
+    page: number;
+    size: number;
+    total: number;
+  };
 }
 
 export interface InvoiceProvider {

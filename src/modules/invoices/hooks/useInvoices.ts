@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getInvoicesApi } from "../services/Invoices.services";
+import { invoicesAdapter } from "../adapters/Invoices.adapters";
 
 export interface InvoiceRow {
   id: number;
@@ -21,6 +23,10 @@ export const useInvoices = () => {
   const fetchInvoices = useCallback(async (page = 1, size = 20) => {
     setLoading(true);
     try {
+      const apiResponse = await getInvoicesApi({});
+      const adapted = invoicesAdapter(apiResponse);
+      console.log("invoices adapted:", adapted);
+
       // Get total count
       const { count } = await supabase
         .from("invoices")
