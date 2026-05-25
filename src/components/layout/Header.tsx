@@ -8,6 +8,7 @@ import { getHeaderUserData } from "@/shared/services/service";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { usePOSSessionStatus } from "@/modules/pos/hooks/usePOSSessionStatus";
+import { POSOpenWarningDialog } from "@/modules/pos/components/POSOpenWarningDialog";
 
 interface HeaderProps {
   onSignOut: () => void;
@@ -19,6 +20,7 @@ interface HeaderProps {
 const Header = ({ onSignOut }: HeaderProps) => {
   const navigate = useNavigate();
   const { isOpen, loading } = usePOSSessionStatus();
+  const [showPOSWarning, setShowPOSWarning] = useState(false);
   const [userData, setUserData] = useState({
     account: "Cargando...",
     role: "Sin Rol",
@@ -45,6 +47,12 @@ const Header = ({ onSignOut }: HeaderProps) => {
   }, []);
 
   return (
+    <>
+    <POSOpenWarningDialog
+      open={showPOSWarning}
+      onOpenChange={setShowPOSWarning}
+      onGoToPOS={() => { setShowPOSWarning(false); navigate("/pos/open"); }}
+    />
     <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -79,7 +87,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={onSignOut}
+              onClick={() => isOpen ? setShowPOSWarning(true) : onSignOut()}
               className="gap-2"
             >
               <LogOut className="w-4 h-4" />
@@ -89,6 +97,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
         </div>
       </div>
     </header>
+    </>
   );
 };
 
