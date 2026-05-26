@@ -1195,31 +1195,42 @@ export const usePOS = () => {
       const cashSales = sessionData?.total_cash_sales ?? 0;
       setSessionTotalCashSales(cashSales);
 
-      // Query movements filtered by opened_at to get only movements during this session.
-      // The opening_difference movement is stored 5 seconds before opened_at, so it is excluded.
       if (sessionData?.business_account && POSSessionHook.session.openedAt) {
-        const { data: movementsData, error: movementsError } = await (supabase as any)
-          .from("movements")
-          .select("id, amount, types!movement_type_id(code), order_payment(id)")
-          .eq("business_account_id", sessionData.business_account)
-          .gte("movement_date", POSSessionHook.session.openedAt);
+        // // Legacy: query movements directly and filter out order-linked ones
+        // const { data: movementsData, error: movementsError } = await (supabase as any)
+        //   .from("movements")
+        //   .select("id, amount, types!movement_type_id(code), order_payment(id)")
+        //   .eq("business_account_id", sessionData.business_account)
+        //   .gte("movement_date", POSSessionHook.session.openedAt);
+        // if (movementsError) throw movementsError;
+        // const filteredMovementsData = (movementsData ?? []).filter(
+        //   (m: any) => !m.order_payment || (Array.isArray(m.order_payment) ? m.order_payment.length === 0 : false)
+        // );
+        // const externalMovements = (filteredMovementsData ?? []).reduce(
+        //   (acc: number, m: any) => acc + Number(m.amount), 0
+        // );
 
-        if (movementsError) throw movementsError;
+        type SessionCloseMovement = {
+          id: number;
+          amount: number;
+          movement_type_code: string;
+          order_payment_id: number | null;
+        };
 
-        console.log("fecha", POSSessionHook.session.openedAt);
-
-        console.log("Movements during session:", movementsData);
-
-        const filteredMovementsData = (movementsData ?? []).filter(
-          (m: any) => !m.order_payment || (Array.isArray(m.order_payment) ? m.order_payment.length === 0 : false)
+        const { data: closeDetails } = await supabase.functions.invoke<SessionCloseMovement[]>(
+          "get-pos-session-close-details",
+          {
+            body: {
+              business_account_id: sessionData.business_account,
+              opened_at: POSSessionHook.session.openedAt,
+            },
+          }
         );
 
-        const externalMovements = (filteredMovementsData ?? []).reduce(
-          (acc: number, m: any) => acc + Number(m.amount),
+        const externalMovements = (closeDetails ?? []).reduce(
+          (acc, m) => acc + Number(m.amount ?? 0),
           0
         );
-
-        console.log("External movements total:", externalMovements);  
 
         setSessionExternalMovements(externalMovements);
       }
