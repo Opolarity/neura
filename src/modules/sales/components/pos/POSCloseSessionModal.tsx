@@ -22,7 +22,7 @@ interface POSCloseSessionModalProps {
   isOpen: boolean;
   session: POSSession | null;
   totalCashSales: number;
-  businessAccountTotal: number;
+  externalMovements: number;
 
   isClosing: boolean;
   onClose: (request: ClosePOSSessionRequest) => Promise<unknown>;
@@ -33,19 +33,17 @@ export default function POSCloseSessionModal({
   isOpen,
   session,
   totalCashSales,
-  businessAccountTotal,
+  externalMovements,
 
   isClosing,
   onClose,
   onCancel
 }: POSCloseSessionModalProps) {
-  // Other external movements = business account total - (opening + cash sales)
   const otherMovements = useMemo(() => {
     if (!session) return 0;
-    return businessAccountTotal - (session.openingAmount + totalCashSales);
-  }, [session, businessAccountTotal, totalCashSales]);
+    return externalMovements;
+  }, [session, externalMovements]);
 
-  // Calculate expected amount (opening + cash sales + other external movements = businessAccountTotal)
   const expectedAmount = useMemo(() => {
     if (!session) return 0;
     return session.openingAmount + totalCashSales + otherMovements;
@@ -72,10 +70,10 @@ export default function POSCloseSessionModal({
     }
   }, [isOpen]);
 
-  // Calculate difference
+  // Calculate difference rounding to cents to avoid JS floating point artifacts
   const difference = useMemo(() => {
     const closing = parseFloat(closingAmount) || 0;
-    return closing - expectedAmount;
+    return Math.round((closing - expectedAmount) * 100) / 100;
   }, [closingAmount, expectedAmount]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,6 +84,7 @@ export default function POSCloseSessionModal({
     await onClose({
       sessionId: session.id,
       closingAmount: amount,
+      expectedAmount,
       notes: notes || undefined
     });
   };

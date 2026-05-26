@@ -186,6 +186,8 @@ export const useCreateSale = () => {
   // Order discounts state
   const [orderDiscounts, setOrderDiscounts] = useState<OrderDiscount[]>([]);
   const [orderReturns, setOrderReturns] = useState<import("../types/Sales.types").SaleReturn[]>([]);
+  const [customerPoints, setCustomerPoints] = useState<{ lvl: string; points: number } | null>(null);
+  const [savedPriceRules, setSavedPriceRules] = useState<string>("");
 
   // History modal state
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -722,6 +724,8 @@ export const useCreateSale = () => {
       setCreatedOrderId(id);
       setOrderDiscounts(adapted.orderDiscounts || []);
       setOrderReturns(adapted.returns || []);
+      setCustomerPoints(adapted.customerPoints ?? null);
+      setSavedPriceRules(adapted.pricerules || "");
       setIsConsignment(adapted.isConsignment);
       setSendedToFranchiseAt(adapted.sendedToFranchiseAt);
       setSendedToFranchiseBy(adapted.sendedToFranchiseBy);
@@ -2168,6 +2172,10 @@ export const useCreateSale = () => {
 
     // Returns
     orderReturns,
+
+    // Customer points / level
+    customerPoints,
+    savedPriceRules,
 
     // Applied price rules
     appliedRules,

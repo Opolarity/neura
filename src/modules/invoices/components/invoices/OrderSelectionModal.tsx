@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { formatDateDisplay } from "@/shared/utils/date";
 import {
   Dialog,
   DialogContent,
@@ -24,12 +26,12 @@ import Pagination, { PaginationState } from "@/shared/components/pagination/Pagi
 interface OrderSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (orderId: number) => void;
   mode?: "create" | "link";
   currentInvoiceId?: number;
 }
 
-const OrderSelectionModal = ({ isOpen, onClose, onSelect, mode = "create", currentInvoiceId }: OrderSelectionModalProps) => {
+const OrderSelectionModal = ({ isOpen, onClose, mode = "create", currentInvoiceId }: OrderSelectionModalProps) => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -95,7 +97,7 @@ const OrderSelectionModal = ({ isOpen, onClose, onSelect, mode = "create", curre
       if (otherInvoices.length > 0) {
         setShowWarning(true);
       } else {
-        onSelect(order.id);
+        navigate(`/invoices/add?orderId=${order.id}`);
         onClose();
       }
     } catch (error) {
@@ -107,7 +109,7 @@ const OrderSelectionModal = ({ isOpen, onClose, onSelect, mode = "create", curre
 
   const handleConfirmSelection = () => {
     if (selectedOrder) {
-      onSelect(selectedOrder.id);
+      navigate(`/invoices/add?orderId=${selectedOrder.id}`);
       onClose();
     }
   };
@@ -186,7 +188,7 @@ const OrderSelectionModal = ({ isOpen, onClose, onSelect, mode = "create", curre
                           <TableCell className="font-medium">{item.document_number || `Pedido #${item.id}`}</TableCell>
                           <TableCell>{item.customer_name || item.customer_document_number || "-"}</TableCell>
                           <TableCell className="text-right font-medium">{formatCurrency(item.total || 0)}</TableCell>
-                          <TableCell>{item.date ? new Date(item.date).toLocaleDateString() : "-"}</TableCell>
+                          <TableCell>{item.date ? formatDateDisplay(item.date) : "-"}</TableCell>
                           <TableCell className="text-right">
                             <Button
                               variant="secondary"

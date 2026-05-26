@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { formatDateDisplay } from "@/shared/utils/date";
 import {
   Dialog,
   DialogContent,
@@ -205,7 +206,7 @@ const MovementSelectionModal = ({ isOpen, onClose, onSelect, currentInvoiceId }:
                       items.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell className="text-muted-foreground text-sm">#{item.id}</TableCell>
-                          <TableCell>{item.movement_date ? new Date(item.movement_date).toLocaleDateString() : "-"}</TableCell>
+                          <TableCell>{item.movement_date ? formatDateDisplay(item.movement_date) : "-"}</TableCell>
                           <TableCell className="max-w-[200px] truncate" title={item.description}>
                             {item.description || "-"}
                           </TableCell>

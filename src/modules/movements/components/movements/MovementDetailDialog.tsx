@@ -5,8 +5,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
+import { Loader2, TrendingUp, TrendingDown, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { getMovementDetails, sendFranchiseePayment } from "../../services/movements.service";
 import { movementDetailAdapter } from "../../adapters/Movement.adapter";
 import { MovementDetail, MovementDetailApiResponse } from "../../types/Movements.types";
@@ -17,6 +19,12 @@ interface MovementDetailDialogProps {
 }
 
 const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps) => {
+  const navigate = useNavigate();
+
+  const handleNavigate = (path: string) => {
+    onClose();
+    navigate(path);
+  };
   const [detail, setDetail] = useState<MovementDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +46,7 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
         orderIds: detail.orderIds,
       });
       const data: MovementDetailApiResponse = await getMovementDetails(movementId);
-      setDetail(movementDetailAdapter(data.movement, data.is_franchise_movement ?? false, data.franchise_account ?? null, data.order_ids ?? []));
+      setDetail(movementDetailAdapter(data.movement, data.is_franchise_movement ?? false, data.franchise_account ?? null, data.order_ids ?? [], data.links ?? null));
     } catch (err: unknown) {
       setSendError(err instanceof Error ? err.message : "Error al enviar");
     } finally {
@@ -59,7 +67,7 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
 
     getMovementDetails(movementId)
       .then((data: MovementDetailApiResponse) =>
-        setDetail(movementDetailAdapter(data.movement, data.is_franchise_movement ?? false, data.franchise_account ?? null, data.order_ids ?? []))
+        setDetail(movementDetailAdapter(data.movement, data.is_franchise_movement ?? false, data.franchise_account ?? null, data.order_ids ?? [], data.links ?? null))
       )
       .catch((err: Error) => setError(err?.message ?? "Error al cargar el movimiento"))
       .finally(() => setLoading(false));
@@ -169,6 +177,62 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
                     >
                       {url.split("/").pop()}
                     </a>
+                  ))}
+                </div>
+              </div>
+            )}
+            {detail.links?.link_order && detail.links.link_order.length > 0 && (
+              <div className="pt-2 border-t space-y-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Pedidos vinculados
+                </h3>
+                <div className="space-y-2">
+                  {detail.links.link_order.map((item) => (
+                    <Button
+                      key={item.order_payment_id}
+                      variant="outline"
+                      className="w-full h-auto py-3 px-4 flex items-start justify-between text-left"
+                      onClick={() => handleNavigate(`/sales/edit/${item.order_id}`)}
+                    >
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium">Pedido #{item.order_id}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {`${item.customer_name} ${item.customer_lastname}`.trim() || "-"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Total: {item.order_total.toLocaleString("es-PE", { style: "currency", currency: "PEN" })}
+                        </p>
+                      </div>
+                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {detail.links?.link_returns && detail.links.link_returns.length > 0 && (
+              <div className="pt-2 border-t space-y-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Devoluciones vinculadas
+                </h3>
+                <div className="space-y-2">
+                  {detail.links.link_returns.map((item) => (
+                    <Button
+                      key={item.order_payment_id}
+                      variant="outline"
+                      className="w-full h-auto py-3 px-4 flex items-start justify-between text-left"
+                      onClick={() => handleNavigate(`/sales/edit/${item.order_id}`)}
+                    >
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium">Devolución #{item.order_id}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {`${item.customer_name} ${item.customer_lastname}`.trim() || "-"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Total: {item.order_total.toLocaleString("es-PE", { style: "currency", currency: "PEN" })}
+                        </p>
+                      </div>
+                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                    </Button>
                   ))}
                 </div>
               </div>

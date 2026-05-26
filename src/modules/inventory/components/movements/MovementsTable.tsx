@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button';
-import { format } from "date-fns";
+import { formatDateDisplay } from "@/shared/utils/date";
 import { Loader2, Eye } from "lucide-react";
 import { Movements } from '../../types/Movements.types';
 
@@ -166,7 +166,7 @@ const MovementsTable = ({ movements, loading, onViewDetail }: MovementsTableProp
 
 
                                 <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                                    {format(new Date(movement.date.replace(/-/g, '/')), "dd/MM/yyyy")}
+                                    {formatDateDisplay(movement.date)}
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">{movement.user}</TableCell>
                                 <TableCell>

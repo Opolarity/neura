@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, SquarePen, Eye } from "lucide-react";
-import { format } from "date-fns";
+import { formatDateDisplay } from "@/shared/utils/date";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useNavigate } from "react-router-dom";
 
@@ -144,7 +144,7 @@ const Sales = () => {
                     <TableCell className="font-medium">#{sale.id}</TableCell>
                     <TableCell>
                       {sale.date
-                        ? format(new Date(sale.date), "dd/MM/yyyy")
+                        ? formatDateDisplay(sale.date)
                         : "-"}
                     </TableCell>
                     <TableCell>{sale.documentNumber}</TableCell>

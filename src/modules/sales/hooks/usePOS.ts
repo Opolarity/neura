@@ -1173,19 +1173,17 @@ export const usePOS = () => {
   // State for close session modal
   const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
   const [sessionTotalCashSales, setSessionTotalCashSales] = useState(0);
-  const [sessionBusinessAccountTotal, setSessionBusinessAccountTotal] = useState(0);
+  const [sessionExternalMovements, setSessionExternalMovements] = useState(0);
 
-
-  // Load session cash sales and business account total
+  // Load session cash sales and net external movements during the session
   const loadSessionCloseData = useCallback(async () => {
     if (!POSSessionHook.session?.id) {
       setSessionTotalCashSales(0);
-      setSessionBusinessAccountTotal(0);
+      setSessionExternalMovements(0);
       return;
     }
 
     try {
-      // Load total_cash_sales and business_account from pos_sessions
       const { data: sessionData, error: sessionError } = await supabase
         .from("pos_sessions")
         .select("total_cash_sales, business_account")
@@ -1197,24 +1195,50 @@ export const usePOS = () => {
       const cashSales = sessionData?.total_cash_sales ?? 0;
       setSessionTotalCashSales(cashSales);
 
-      // Load total_amount from business_accounts
-      if (sessionData?.business_account) {
-        const { data: baData, error: baError } = await supabase
-          .from("business_accounts")
-          .select("total_amount")
-          .eq("id", sessionData.business_account)
-          .single();
+      if (sessionData?.business_account && POSSessionHook.session.openedAt) {
+        // // Legacy: query movements directly and filter out order-linked ones
+        // const { data: movementsData, error: movementsError } = await (supabase as any)
+        //   .from("movements")
+        //   .select("id, amount, types!movement_type_id(code), order_payment(id)")
+        //   .eq("business_account_id", sessionData.business_account)
+        //   .gte("movement_date", POSSessionHook.session.openedAt);
+        // if (movementsError) throw movementsError;
+        // const filteredMovementsData = (movementsData ?? []).filter(
+        //   (m: any) => !m.order_payment || (Array.isArray(m.order_payment) ? m.order_payment.length === 0 : false)
+        // );
+        // const externalMovements = (filteredMovementsData ?? []).reduce(
+        //   (acc: number, m: any) => acc + Number(m.amount), 0
+        // );
 
-        if (baError) throw baError;
-        setSessionBusinessAccountTotal(baData?.total_amount ?? 0);
+        type SessionCloseMovement = {
+          id: number;
+          amount: number;
+          movement_type_code: string;
+          order_payment_id: number | null;
+        };
+
+        const { data: closeDetails } = await supabase.functions.invoke<SessionCloseMovement[]>(
+          "get-pos-session-close-details",
+          {
+            body: {
+              business_account_id: sessionData.business_account,
+              opened_at: POSSessionHook.session.openedAt,
+            },
+          }
+        );
+
+        const externalMovements = (closeDetails ?? []).reduce(
+          (acc, m) => acc + Number(m.amount ?? 0),
+          0
+        );
+
+        setSessionExternalMovements(externalMovements);
       }
-
 
     } catch (error) {
       console.error("Error loading session close data:", error);
       setSessionTotalCashSales(0);
-      setSessionBusinessAccountTotal(0);
-
+      setSessionExternalMovements(0);
     }
   }, [POSSessionHook.session?.id]);
 
@@ -1224,7 +1248,7 @@ export const usePOS = () => {
     setShowCloseSessionModal(true);
   }, [loadSessionCloseData]);
 
-  const handleCloseSession = useCallback(async (request: { sessionId: number; closingAmount: number; notes?: string }) => {
+  const handleCloseSession = useCallback(async (request: { sessionId: number; closingAmount: number; expectedAmount: number; notes?: string }) => {
     try {
       await POSSessionHook.closeSession(request);
       setShowCloseSessionModal(false);
@@ -1360,7 +1384,7 @@ export const usePOS = () => {
     // Close session modal
     showCloseSessionModal,
     sessionTotalCashSales,
-    sessionBusinessAccountTotal,
+    sessionExternalMovements,
 
     handleCloseSession,
     cancelCloseSession,

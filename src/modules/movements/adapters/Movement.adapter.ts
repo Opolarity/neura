@@ -1,5 +1,4 @@
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { formatDateDisplay, formatDateTime } from "@/shared/utils/date";
 import {
   Movement,
   MovementApiResponse,
@@ -19,21 +18,6 @@ const formatCurrency = (amount: number): string => {
   });
 };
 
-const formatDate = (dateString: string): string => {
-  try {
-    return format(new Date(dateString.replace(/-/g, '/')), "dd/MM/yyyy");
-  } catch {
-    return dateString;
-  }
-};
-
-const formatDateTime = (dateString: string): string => {
-  try {
-    return format(new Date(dateString), "dd/MM/yy");
-  } catch {
-    return dateString;
-  }
-};
 
 
 
@@ -87,7 +71,7 @@ export const movementAdapter = (response: MovementApiResponse) => {
   const formattedMovements: Movement[] = dataArray.map(
     (item) => ({
       id: item.id,
-      date: formatDate(item.movement_date),
+      date: formatDateDisplay(item.movement_date),
       rawDate: item.movement_date,
       type: item.type as MovementTypeValue,
       category: item.class || "-",
@@ -115,6 +99,7 @@ export const movementDetailAdapter = (
   isFranchiseMovement: boolean,
   franchiseAccount: import("../types/Movements.types").FranchiseAccountData | null,
   orderIds: number[],
+  links: import("../types/Movements.types").MovementLinks | null = null,
 ): MovementDetail => ({
   id: raw.id,
   date: formatDateTime(raw.movement_date),
@@ -132,6 +117,7 @@ export const movementDetailAdapter = (
   isFranchiseMovement,
   franchiseAccount: franchiseAccount ?? null,
   orderIds: orderIds ?? [],
+  links: links ?? null,
 });
 
 export const calculateMovementSummary = (

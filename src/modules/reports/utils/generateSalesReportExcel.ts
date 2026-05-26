@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/date";
 import type { SalesReportRow } from "../services/reports.service";
 
 export function generateSalesReportExcel(
@@ -30,7 +30,7 @@ export function generateSalesReportExcel(
 
   const dataRows = rows.map((r) => [
     r.order_id,
-    r.order_date ? format(new Date(r.order_date), "dd/MM/yyyy HH:mm") : "-",
+    r.order_date ? formatDateTime(r.order_date) : "-",
     r.shipping_method ?? "-",
     r.document_type ?? "-",
     r.document_number ?? "-",

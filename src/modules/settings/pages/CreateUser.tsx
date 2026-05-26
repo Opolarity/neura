@@ -60,7 +60,7 @@ const CreateUser = () => {
     handleDocumentLookup,
   } = useCreateUser(id, isEdit, uid);
 
-  if (fetchingUser) {
+  if (fetchingUser || optionsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-2">

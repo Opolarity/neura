@@ -376,3 +376,83 @@ export const filterOptionsService = {
     return data ?? [];
   },
 };
+
+// -------------------------------------------------------
+// Price Rules Report
+// -------------------------------------------------------
+export interface PriceRuleKpis {
+  active: number;
+  inactive: number;
+  automatic: number;
+  coupon: number;
+}
+
+export interface PriceRuleReportRow {
+  id: number;
+  name: string;
+  code: string | null;
+  rule_type: 'automatic' | 'coupon';
+  is_active: boolean;
+  applications: number;
+  rendimiento: number;
+}
+
+export const priceRulesReportService = {
+  getKpis: async (): Promise<PriceRuleKpis> => {
+    const { data, error } = await supabase.functions.invoke(
+      'get-price-rules?size=1000',
+      { method: 'GET' }
+    );
+    if (error) throw error;
+    const rules: any[] = data?.data ?? [];
+    return {
+      active:    rules.filter((r) =>  r.is_active).length,
+      inactive:  rules.filter((r) => !r.is_active).length,
+      automatic: rules.filter((r) => r.rule_type === 'automatic').length,
+      coupon:    rules.filter((r) => r.rule_type === 'coupon').length,
+    };
+  },
+
+  getTable: async (startDate: string | null, endDate: string | null): Promise<PriceRuleReportRow[]> => {
+    const { data: rulesResponse, error: rulesError } = await supabase.functions.invoke(
+      'get-price-rules?size=1000',
+      { method: 'GET' }
+    );
+    if (rulesError) throw rulesError;
+    const rules: any[] = rulesResponse?.data ?? [];
+    if (rules.length === 0) return [];
+
+    let query = (supabase as any)
+      .from('order_discounts')
+      .select('code')
+      .not('code', 'is', null);
+    if (startDate) query = query.gte('created_at', startDate + 'T00:00:00Z');
+    if (endDate)   query = query.lte('created_at', endDate   + 'T23:59:59Z');
+
+    const { data: discounts, error: discountsError } = await query;
+    if (discountsError) throw discountsError;
+
+    const codeCountMap = new Map<string, number>();
+    for (const d of discounts || []) {
+      if (!d.code) continue;
+      codeCountMap.set(d.code, (codeCountMap.get(d.code) ?? 0) + 1);
+    }
+
+    const total = discounts?.length ?? 0;
+
+    return (rules as any[])
+      .map((rule) => {
+        const applications = rule.code ? (codeCountMap.get(rule.code) ?? 0) : 0;
+        return {
+          id: rule.id,
+          name: rule.name,
+          code: rule.code,
+          rule_type: rule.rule_type,
+          is_active: rule.is_active,
+          applications,
+          rendimiento: total > 0 ? parseFloat(((applications / total) * 100).toFixed(1)) : 0,
+        };
+      })
+      .sort((a, b) => b.applications - a.applications);
+  },
+};

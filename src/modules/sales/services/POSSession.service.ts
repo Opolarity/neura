@@ -87,6 +87,7 @@ export const closePOSSession = async (
         action: "close",
         sessionId: request.sessionId,
         closingAmount: request.closingAmount,
+        expectedAmount: request.expectedAmount,
         notes: request.notes || null,
       },
     }

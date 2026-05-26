@@ -26,7 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Search, Eye, ListFilter } from "lucide-react";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/date";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useNavigate } from "react-router-dom";
 import { formatCurrency } from "@/modules/sales/adapters/POS.adapter";
@@ -155,11 +155,11 @@ const POSSessions = () => {
               <TableRow key={session.id}>
                     <TableCell>{session.branchName}</TableCell>
                     <TableCell>
-                      {format(new Date(session.openedAt), "dd/MM/yyyy HH:mm")}
+                      {formatDateTime(session.openedAt)}
                     </TableCell>
                     <TableCell>
                       {session.closedAt ?
-                  format(new Date(session.closedAt), "dd/MM/yyyy HH:mm") :
+                  formatDateTime(session.closedAt) :
                   session.statusCode === "OPE" ?
                   <Badge variant="default">Abierto</Badge> :
                   "—"}

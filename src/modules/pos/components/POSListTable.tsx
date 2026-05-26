@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateTime } from "@/shared/utils/date";
 import {
   Table,
   TableHeader,
@@ -30,14 +31,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
   );
   const [detailOpen, setDetailOpen] = useState(false);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("es-PE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
+  const formatDate = (dateString: string) => formatDateTime(dateString);
 
   const handleViewDetail = (sessionId: number) => {
     setSelectedSessionId(sessionId);
@@ -99,7 +93,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                   className={
                     session.openingDifference !== null &&
                     session.openingDifference !== 0
-                      ? "text-green-600"
+                      ? "text-red-600"
                       : ""
                   }
                 >

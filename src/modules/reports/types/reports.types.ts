@@ -18,7 +18,7 @@ export interface ReportsFilters {
 }
 
 function toISODate(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  return date.toLocaleDateString("sv-SE", { timeZone: "America/Lima" });
 }
 
 const _today = new Date();
