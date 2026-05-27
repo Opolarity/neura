@@ -83,6 +83,7 @@ import { SalesReturnsModal } from "../components/SalesReturnsModal";
 import { SalesCambiosModal } from "../components/SalesCambiosModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
+import placeholderImage from "@/assets/product-placeholder.png";
 
 const CreateSale = () => {
   const {
@@ -695,6 +696,7 @@ const CreateSale = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-20">Imagen</TableHead>
                       <TableHead>Producto</TableHead>
                       <TableHead className="w-20 text-center">
                         Cantidad
@@ -720,6 +722,13 @@ const CreateSale = () => {
                             "animate-highlight-row",
                         )}
                       >
+                        <TableCell>
+                          <img
+                            src={product.imageUrl ?? placeholderImage}
+                            alt={product.productName}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">
