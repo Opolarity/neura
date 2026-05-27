@@ -1574,6 +1574,7 @@ export const useCreateSale = () => {
         stockTypeId: parseInt(selectedStockTypeId),
         stockTypeName,
         maxStock: availableStock,
+        imageUrl: selectedVariation.imageUrl || null,
       },
       ...prev,
     ]);

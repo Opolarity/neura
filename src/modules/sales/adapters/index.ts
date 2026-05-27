@@ -302,6 +302,7 @@ export const adaptSaleById = (data: any) => {
       stockTypeName: p.stock_type_name,
       maxStock: p.max_stock,
       fromOrder: true,
+      imageUrl: p.product_image || null,
     })),
     payments: (data.payments || []).map((p: any) => ({
       id: crypto.randomUUID(),
