@@ -58,6 +58,7 @@ export interface SalePayment {
   voucherFile?: File;
   voucherPreview?: string;
   businessAccountId?: string; // manual selection when payment method has business_account_id = 0
+  completed?: boolean;
 }
 
 // API Response Types

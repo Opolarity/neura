@@ -96,6 +96,7 @@ const createEmptyPayment = (): SalePayment => ({
   voucherFile: undefined,
   voucherPreview: undefined,
   businessAccountId: "",
+  completed: false,
 });
 
 export const useCreateSale = () => {

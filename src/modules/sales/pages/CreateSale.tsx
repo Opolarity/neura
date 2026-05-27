@@ -1350,7 +1350,7 @@ const CreateSale = () => {
               {createdOrderId && formData.phone && (
                 <a
                   href={`https://api.whatsapp.com/send?phone=${formData.phone}&text=Hola%20${formData.customerName ?? "Crew"}%20%F0%9F%91%BD%F0%9F%91%8B%20Te%20comento%20que%20tu%20pedido%20${createdOrderId}%20est%C3%A1%20siendo%20procesado%20%F0%9F%9A%80.%20En%20un%20momento%20pasaremos%20a%20armar%20tu%20pedido%20%F0%9F%93%A6.`}
-                  className="inline-flex items-center gap-2 bg-[#25D366] text-white mt-4 px-4 py-2 rounded-md font-medium hover:bg-[#1ebe5d] transition-colors"
+                  className="w-full justify-center inline-flex items-center gap-2 bg-[#25D366] text-white mt-4 px-4 py-2 rounded-md font-medium hover:bg-[#1ebe5d] transition-colors"
                 >
                   <svg
                     viewBox="0 0 31 30"
@@ -1663,17 +1663,44 @@ const CreateSale = () => {
                       const method = allPaymentMethods.find(
                         (pm) => pm.id.toString() === p.paymentMethodId,
                       );
+                      const isCompleted = p.completed === true;
                       return (
                         <div
                           key={p.id}
-                          className="flex items-center justify-between p-2 bg-muted/50 rounded-md"
+                          className={cn(
+                            "flex items-center justify-between p-2 rounded-md ring-1",
+                            isCompleted
+                              ? "bg-green-50 dark:bg-green-900/20 ring-green-400 dark:ring-green-600"
+                              : "bg-red-50 dark:bg-red-900/20 ring-red-400 dark:ring-red-600",
+                          )}
                         >
                           <div className="flex items-center gap-2">
-                            <CreditCard className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm">
+                            <CreditCard
+                              className={cn(
+                                "w-4 h-4",
+                                isCompleted
+                                  ? "text-green-600 dark:text-green-400"
+                                  : "text-red-600 dark:text-red-400",
+                              )}
+                            />
+                            <span
+                              className={cn(
+                                "text-sm",
+                                isCompleted
+                                  ? "text-green-700 dark:text-green-300"
+                                  : "text-red-700 dark:text-red-300",
+                              )}
+                            >
                               {method?.name || "Método"}
                             </span>
-                            <span className="text-sm font-medium">
+                            <span
+                              className={cn(
+                                "text-sm font-medium",
+                                isCompleted
+                                  ? "text-green-700 dark:text-green-300"
+                                  : "text-red-700 dark:text-red-300",
+                              )}
+                            >
                               {formatCurrency(parseFloat(p.amount) || 0)}
                             </span>
                             {p.voucherPreview && (
@@ -1690,7 +1717,14 @@ const CreateSale = () => {
                                 }}
                                 title="Ver comprobante"
                               >
-                                <Paperclip className="w-3 h-3 text-primary" />
+                                <Paperclip
+                                  className={cn(
+                                    "w-3 h-3",
+                                    isCompleted
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400",
+                                  )}
+                                />
                               </Button>
                             )}
                           </div>
