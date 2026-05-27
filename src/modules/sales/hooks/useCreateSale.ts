@@ -1230,7 +1230,7 @@ export const useCreateSale = () => {
 
     setPayments((prev) => [
       ...prev,
-      { ...currentPayment, id: crypto.randomUUID() },
+      { ...currentPayment, id: crypto.randomUUID(), completed: true },
     ]);
     setCurrentPayment(createEmptyPayment());
   }, [currentPayment, toast, needsBusinessAccountSelect]);
@@ -1752,6 +1752,32 @@ export const useCreateSale = () => {
     setNoteImagePreview(null);
   }, []);
 
+  // Confirm a payment by updating completed=true in DB and in local state
+  const confirmPayment = useCallback(async (paymentId: string): Promise<void> => {
+    try {
+      const { error } = await (supabase as any)
+        .from("order_payment")
+        .update({ completed: true })
+        .eq("id", paymentId);
+      if (error) throw error;
+      setPayments((prev) =>
+        prev.map((p) => (p.dbId?.toString() === paymentId ? { ...p, completed: true } : p)),
+      );
+      toast({
+        title: "Pago confirmado",
+        description: "El pago ha sido confirmado correctamente",
+      });
+    } catch (err) {
+      console.error("Error confirming payment:", err);
+      toast({
+        title: "Error",
+        description: "No se pudo confirmar el pago",
+        variant: "destructive",
+      });
+      throw err;
+    }
+  }, [toast]);
+
   // Order discount CRUD
   const addOrderDiscount = useCallback((name: string, amount: number) => {
     setOrderDiscounts((prev) => [
@@ -1929,6 +1955,7 @@ export const useCreateSale = () => {
               confirmationCode: p.confirmationCode || null,
               voucherUrl: p.voucherUrl || null,
               businessAccountId: p.businessAccountId ? parseInt(p.businessAccountId) : null,
+              completed: p.completed ?? true,
             })),
           changeEntries: changeEntries
             .filter((e) => e.paymentMethodId && e.amount)
@@ -2170,6 +2197,7 @@ export const useCreateSale = () => {
     orderDiscounts,
     addOrderDiscount,
     removeOrderDiscount,
+    confirmPayment,
 
     // Returns
     orderReturns,
