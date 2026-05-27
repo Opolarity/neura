@@ -48,6 +48,7 @@ export interface ExchangeProduct {
     linked_return_index: number | null;
     imageUrl?: string;
     stock?: number;
+    stock_type_id?: number;
 }
 
 export interface ReturnType {

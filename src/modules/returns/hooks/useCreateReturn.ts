@@ -359,6 +359,7 @@ export const useCreateReturn = () => {
             linked_return_index: null,
             imageUrl: product.imageUrl,
             stock: product.stock,
+            stock_type_id: product.stock_type_id ?? undefined,
         };
         setExchangeProducts([...exchangeProducts, newProduct]);
     };
@@ -452,6 +453,7 @@ export const useCreateReturn = () => {
                 product_amount: p.price * (1 - p.discount / 100),
                 output: true,
                 vinculated_index: p.linked_return_index,
+                stock_type_id: p.stock_type_id ?? null,
             }));
 
             const allProducts = [...returnProductsPayload, ...exchangeProductsPayload];
