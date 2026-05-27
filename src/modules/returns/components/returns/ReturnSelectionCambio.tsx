@@ -63,7 +63,7 @@ export const ReturnSelectionCambio = ({
 
     const handleAdd = () => {
         if (!selectedProduct) return;
-        onAddExchangeProduct(selectedProduct);
+        onAddExchangeProduct({ ...selectedProduct, stock_type_id: productStatusType?.id ?? null });
         resetSelection();
     };
 
