@@ -311,6 +311,7 @@ export const adaptSaleById = (data: any) => {
       voucherUrl: p.voucher_url || "",
       voucherPreview: p.voucher_url || undefined,
       businessAccountId: p.business_account_id?.toString() || "",
+      completed: p.completed ?? false,
     })),
     changeEntries: (data.change_entries || []).map((e: any) => ({
       id: crypto.randomUUID(),
