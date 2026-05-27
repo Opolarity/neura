@@ -1230,7 +1230,7 @@ export const useCreateSale = () => {
 
     setPayments((prev) => [
       ...prev,
-      { ...currentPayment, id: crypto.randomUUID() },
+      { ...currentPayment, id: crypto.randomUUID(), completed: true },
     ]);
     setCurrentPayment(createEmptyPayment());
   }, [currentPayment, toast, needsBusinessAccountSelect]);
@@ -1929,6 +1929,7 @@ export const useCreateSale = () => {
               confirmationCode: p.confirmationCode || null,
               voucherUrl: p.voucherUrl || null,
               businessAccountId: p.businessAccountId ? parseInt(p.businessAccountId) : null,
+              completed: p.completed ?? true,
             })),
           changeEntries: changeEntries
             .filter((e) => e.paymentMethodId && e.amount)

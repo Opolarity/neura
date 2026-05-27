@@ -305,6 +305,7 @@ export const adaptSaleById = (data: any) => {
     })),
     payments: (data.payments || []).map((p: any) => ({
       id: crypto.randomUUID(),
+      dbId: p.id,
       paymentMethodId: p.payment_method_id?.toString() || "",
       amount: p.amount?.toString() || "",
       confirmationCode: p.confirmation_code || "",

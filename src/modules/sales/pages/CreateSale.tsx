@@ -222,6 +222,8 @@ const CreateSale = () => {
   const [selectedVoucherPreview, setSelectedVoucherPreview] = useState<
     string | null
   >(null);
+  const [selectedVoucherCompleted, setSelectedVoucherCompleted] = useState<boolean>(false);
+  const [selectedVoucherPaymentId, setSelectedVoucherPaymentId] = useState<string | null>(null);
   const [highlightedRowIndex, setHighlightedRowIndex] = useState<number | null>(
     null,
   );
@@ -1713,6 +1715,8 @@ const CreateSale = () => {
                                   setSelectedVoucherPreview(
                                     p.voucherPreview || null,
                                   );
+                                  setSelectedVoucherCompleted(p.completed === true);
+                                  setSelectedVoucherPaymentId(p.dbId?.toString() ?? null);
                                   setVoucherModalOpen(true);
                                 }}
                                 title="Ver comprobante"
@@ -1922,6 +1926,8 @@ const CreateSale = () => {
                                         setSelectedVoucherPreview(
                                           e.voucherPreview || null,
                                         );
+                                        setSelectedVoucherCompleted(e.completed === true);
+                                        setSelectedVoucherPaymentId(e.id);
                                         setVoucherModalOpen(true);
                                       }}
                                       title="Ver comprobante"
@@ -2328,6 +2334,8 @@ const CreateSale = () => {
         open={voucherModalOpen}
         onOpenChange={setVoucherModalOpen}
         voucherSrc={selectedVoucherPreview || ""}
+        completed={selectedVoucherCompleted}
+        paymentId={selectedVoucherPaymentId}
       />
 
       <SalesHistoryModal

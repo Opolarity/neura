@@ -51,6 +51,7 @@ export interface SaleProduct {
 
 export interface SalePayment {
   id: string; // unique identifier for the payment entry
+  dbId?: number; // real DB id from order_payment table (set when loaded from server)
   paymentMethodId: string;
   amount: string;
   confirmationCode: string;
@@ -240,6 +241,7 @@ export interface CreateOrderRequest {
     confirmationCode: string | null;
     voucherUrl: string | null;
     businessAccountId?: number | null;
+    completed?: boolean;
   }>;
   changeEntries: Array<{
     paymentMethodId: number;

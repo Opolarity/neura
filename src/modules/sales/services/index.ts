@@ -88,6 +88,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
         confirmation_code: p.confirmationCode,
         voucher_url: p.voucherUrl,
         business_account_id: p.businessAccountId || null,
+        completed: p.completed ?? true,
       })),
       change_entries: orderData.changeEntries.map((e) => ({
         payment_method_id: e.paymentMethodId,
@@ -156,6 +157,7 @@ export const updateOrder = async (
         confirmation_code: p.confirmationCode,
         voucher_url: p.voucherUrl,
         business_account_id: p.businessAccountId || null,
+        completed: p.completed ?? true,
       })),
       change_entries: orderData.changeEntries.map((e) => ({
         payment_method_id: e.paymentMethodId,

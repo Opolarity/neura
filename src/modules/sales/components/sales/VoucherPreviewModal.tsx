@@ -1,46 +1,81 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { X, Download, ExternalLink } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Download, ExternalLink, CheckCircle } from "lucide-react";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VoucherPreviewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   voucherSrc: string;
   voucherName?: string;
+  completed?: boolean;
+  paymentId?: string | null;
+  onConfirmPayment?: (paymentId: string) => void;
 }
 
 export const VoucherPreviewModal = ({
   open,
   onOpenChange,
   voucherSrc,
-  voucherName = 'comprobante',
+  voucherName = "comprobante",
+  completed = false,
+  paymentId,
+  onConfirmPayment,
 }: VoucherPreviewModalProps) => {
   if (!voucherSrc) return null;
 
   // Detect if it's a PDF
-  const isPdf = voucherSrc.includes('application/pdf') || 
-                voucherSrc.toLowerCase().endsWith('.pdf');
+  const isPdf =
+    voucherSrc.includes("application/pdf") ||
+    voucherSrc.toLowerCase().endsWith(".pdf");
 
   // Detect if it's a base64 string or URL
-  const isBase64 = voucherSrc.startsWith('data:');
+  const isBase64 = voucherSrc.startsWith("data:");
 
   const handleDownload = () => {
     if (isBase64) {
       // For base64 data, create a blob and download
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = voucherSrc;
-      link.download = `${voucherName}.${isPdf ? 'pdf' : 'jpg'}`;
+      link.download = `${voucherName}.${isPdf ? "pdf" : "jpg"}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } else {
       // For URLs, open in new tab
-      window.open(voucherSrc, '_blank');
+      window.open(voucherSrc, "_blank");
     }
   };
 
   const handleOpenExternal = () => {
-    window.open(voucherSrc, '_blank');
+    window.open(voucherSrc, "_blank");
+  };
+
+  const [confirming, setConfirming] = useState(false);
+  const [confirmed, setConfirmed] = useState(completed);
+
+  const handleConfirmPayment = async () => {
+    if (!paymentId || confirming || confirmed) return;
+    setConfirming(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("order_payment")
+        .update({ completed: true })
+        .eq("id", paymentId);
+      if (!error) {
+        setConfirmed(true);
+        onConfirmPayment?.(paymentId);
+      }
+    } finally {
+      setConfirming(false);
+    }
   };
 
   return (
@@ -50,16 +85,26 @@ export const VoucherPreviewModal = ({
           <div className="flex items-center justify-between">
             <DialogTitle>Vista previa del comprobante</DialogTitle>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={handleDownload} title="Descargar">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDownload}
+                title="Descargar"
+              >
                 <Download className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={handleOpenExternal} title="Abrir en nueva pestaña">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleOpenExternal}
+                title="Abrir en nueva pestaña"
+              >
                 <ExternalLink className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </DialogHeader>
-        
+
         <div className="flex-1 overflow-auto min-h-0 flex items-center justify-center bg-muted/30 rounded-md p-4">
           {isPdf ? (
             <embed
@@ -75,6 +120,18 @@ export const VoucherPreviewModal = ({
             />
           )}
         </div>
+        <DialogFooter>
+          {!confirmed && (
+            <Button
+              size="sm"
+              onClick={handleConfirmPayment}
+              disabled={confirming || !paymentId}
+            >
+              <CheckCircle className="h-4 w-4" />
+              {confirming ? "Guardando..." : "Comprobar pago"}
+            </Button>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
