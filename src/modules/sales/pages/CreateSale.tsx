@@ -189,6 +189,7 @@ const CreateSale = () => {
     orderDiscounts,
     addOrderDiscount,
     removeOrderDiscount,
+    confirmPayment,
     // Applied price rules
     appliedRules,
     isDirty,
@@ -2336,6 +2337,10 @@ const CreateSale = () => {
         voucherSrc={selectedVoucherPreview || ""}
         completed={selectedVoucherCompleted}
         paymentId={selectedVoucherPaymentId}
+        onConfirmPayment={async (paymentId) => {
+          await confirmPayment(paymentId);
+          setSelectedVoucherCompleted(true);
+        }}
       />
 
       <SalesHistoryModal

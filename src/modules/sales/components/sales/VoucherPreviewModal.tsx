@@ -8,7 +8,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink, CheckCircle } from "lucide-react";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface VoucherPreviewModalProps {
   open: boolean;
@@ -17,7 +16,7 @@ interface VoucherPreviewModalProps {
   voucherName?: string;
   completed?: boolean;
   paymentId?: string | null;
-  onConfirmPayment?: (paymentId: string) => void;
+  onConfirmPayment?: (paymentId: string) => Promise<void>;
 }
 
 export const VoucherPreviewModal = ({
@@ -59,20 +58,12 @@ export const VoucherPreviewModal = ({
   };
 
   const [confirming, setConfirming] = useState(false);
-  const [confirmed, setConfirmed] = useState(completed);
 
   const handleConfirmPayment = async () => {
-    if (!paymentId || confirming || confirmed) return;
+    if (!paymentId || confirming || completed) return;
     setConfirming(true);
     try {
-      const { error } = await (supabase as any)
-        .from("order_payment")
-        .update({ completed: true })
-        .eq("id", paymentId);
-      if (!error) {
-        setConfirmed(true);
-        onConfirmPayment?.(paymentId);
-      }
+      await onConfirmPayment?.(paymentId);
     } finally {
       setConfirming(false);
     }
@@ -121,7 +112,7 @@ export const VoucherPreviewModal = ({
           )}
         </div>
         <DialogFooter>
-          {!confirmed && (
+          {!completed && (
             <Button
               size="sm"
               onClick={handleConfirmPayment}
