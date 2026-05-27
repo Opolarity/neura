@@ -119,7 +119,7 @@ export const VoucherPreviewModal = ({
               disabled={confirming || !paymentId}
             >
               <CheckCircle className="h-4 w-4" />
-              {confirming ? "Guardando..." : "Comprobar pago"}
+              {confirming ? "Guardando..." : "Confirmar pago"}
             </Button>
           )}
         </DialogFooter>
