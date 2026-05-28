@@ -314,6 +314,7 @@ export const adaptSaleById = (data: any) => {
       voucherPreview: p.voucher_url || undefined,
       businessAccountId: p.business_account_id?.toString() || "",
       completed: p.completed ?? false,
+      updated_by: p.updated_by ?? null,
     })),
     changeEntries: (data.change_entries || []).map((e: any) => ({
       id: crypto.randomUUID(),
