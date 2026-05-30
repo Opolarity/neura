@@ -58,6 +58,7 @@ import {
   getTodayDate,
 } from "../utils";
 import { getParameter } from "@/modules/settings/services/Parameters.service";
+import { useAuth } from "@/modules/auth";
 
 const INITIAL_FORM_DATA: SaleFormData = {
   documentType: "",
@@ -100,6 +101,7 @@ const createEmptyPayment = (): SalePayment => ({
 });
 
 export const useCreateSale = () => {
+  const {user} = useAuth();
   const navigate = useNavigate();
   const { id: orderId } = useParams();
   const { toast } = useToast();
@@ -1230,7 +1232,7 @@ export const useCreateSale = () => {
 
     setPayments((prev) => [
       ...prev,
-      { ...currentPayment, id: crypto.randomUUID(), completed: true },
+      { ...currentPayment, id: crypto.randomUUID(), completed: true, updated_by: user?.id ?? null },
     ]);
     setCurrentPayment(createEmptyPayment());
   }, [currentPayment, toast, needsBusinessAccountSelect]);
@@ -1758,11 +1760,11 @@ export const useCreateSale = () => {
     try {
       const { error } = await (supabase as any)
         .from("order_payment")
-        .update({ completed: true })
+        .update({ completed: true, updated_by: user?.id })
         .eq("id", paymentId);
       if (error) throw error;
       setPayments((prev) =>
-        prev.map((p) => (p.dbId?.toString() === paymentId ? { ...p, completed: true } : p)),
+        prev.map((p) => (p.dbId?.toString() === paymentId ? { ...p, completed: true, updated_by: user?.id ?? null } : p)),
       );
       toast({
         title: "Pago confirmado",
@@ -1957,6 +1959,7 @@ export const useCreateSale = () => {
               voucherUrl: p.voucherUrl || null,
               businessAccountId: p.businessAccountId ? parseInt(p.businessAccountId) : null,
               completed: p.completed ?? true,
+              updated_by: p.updated_by ?? null,
             })),
           changeEntries: changeEntries
             .filter((e) => e.paymentMethodId && e.amount)

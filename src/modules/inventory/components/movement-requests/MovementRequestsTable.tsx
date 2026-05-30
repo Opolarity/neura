@@ -68,7 +68,7 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
             </TableRow>
           ) : (
         requests.map((req) => (
-          <TableRow key={req.id}>
+          <TableRow key={req.id} className={req.situationCode === 'CAN' || req.situationCode === 'REC' ? 'relative after:absolute after:inset-0 after:bg-[rgb(0,0,0,8%)] after:pointer-events-none [&>td]:relative [&>td]:z-10' : ''}>
             <TableCell className="font-medium">#{req.id}</TableCell>
             <TableCell>{req.outWarehouseName}</TableCell>
             <TableCell>{req.inWarehouseName}</TableCell>

@@ -158,6 +158,7 @@ export const updateOrder = async (
         voucher_url: p.voucherUrl,
         business_account_id: p.businessAccountId || null,
         completed: p.completed ?? true,
+        updated_by: p.updated_by ?? null,
       })),
       change_entries: orderData.changeEntries.map((e) => ({
         payment_method_id: e.paymentMethodId,
