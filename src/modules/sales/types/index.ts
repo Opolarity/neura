@@ -61,6 +61,7 @@ export interface SalePayment {
   voucherPreview?: string;
   businessAccountId?: string; // manual selection when payment method has business_account_id = 0
   completed?: boolean;
+  updated_by?: string | null;
 }
 
 // API Response Types
@@ -243,6 +244,7 @@ export interface CreateOrderRequest {
     voucherUrl: string | null;
     businessAccountId?: number | null;
     completed?: boolean;
+    updated_by?: string | null;
   }>;
   changeEntries: Array<{
     paymentMethodId: number;
