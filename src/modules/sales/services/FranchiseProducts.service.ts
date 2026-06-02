@@ -33,6 +33,7 @@ type RawAccount = {
   document_type_id: number;
   document_number: string;
   name: string;
+  tenant_reference: string | null;
 };
 
 export type FranchiseProductRow = {
@@ -45,6 +46,7 @@ export type FranchiseProductRow = {
   paidByFranchise: number | null;
   total: number;
   franchiseName: string | null;
+  isFranchisee: boolean;
 };
 
 const PAGE_SIZE = 1000;
@@ -145,9 +147,14 @@ const fetchAllReceivedOrderProducts = async (): Promise<RawOrderProduct[]> => {
   return rows;
 };
 
+type AccountMaps = {
+  names: Map<string, string>;
+  isFranchisee: Map<string, boolean>;
+};
+
 const fetchAccountsByOrders = async (
   orderProducts: RawOrderProduct[],
-): Promise<Map<string, string>> => {
+): Promise<AccountMaps> => {
   const documentTypes = new Set<number>();
   const documentNumbers = new Set<string>();
 
@@ -162,7 +169,7 @@ const fetchAccountsByOrders = async (
   });
 
   if (!documentTypes.size || !documentNumbers.size) {
-    return new Map();
+    return { names: new Map(), isFranchisee: new Map() };
   }
 
   const accountRows: RawAccount[] = [];
@@ -171,7 +178,7 @@ const fetchAccountsByOrders = async (
   for (let i = 0; i < documentNumberList.length; i += ACCOUNT_BATCH_SIZE) {
     const { data, error } = await (supabase as any)
       .from("accounts")
-      .select("document_type_id, document_number, name")
+      .select("document_type_id, document_number, name, tenant_reference")
       .in("document_type_id", Array.from(documentTypes))
       .in(
         "document_number",
@@ -182,7 +189,7 @@ const fetchAccountsByOrders = async (
     accountRows.push(...((data ?? []) as RawAccount[]));
   }
 
-  return new Map(
+  const names = new Map(
     accountRows
       .map((account) => [
         getAccountKey(account.document_type_id, account.document_number),
@@ -190,13 +197,25 @@ const fetchAccountsByOrders = async (
       ])
       .filter(([key]) => key !== null) as [string, string][],
   );
+
+  const isFranchisee = new Map(
+    accountRows
+      .map((account) => [
+        getAccountKey(account.document_type_id, account.document_number),
+        account.tenant_reference != null,
+      ])
+      .filter(([key]) => key !== null) as [string, boolean][],
+  );
+
+  return { names, isFranchisee };
 };
 
 export const fetchFranchiseProducts = async (): Promise<
   FranchiseProductRow[]
 > => {
   const orderProducts = await fetchAllReceivedOrderProducts();
-  const accountNames = await fetchAccountsByOrders(orderProducts);
+  const { names: accountNames, isFranchisee: accountIsFranchisee } =
+    await fetchAccountsByOrders(orderProducts);
 
   return orderProducts.map((item) => {
     const quantity = toNumber(item.quantity);
@@ -216,6 +235,9 @@ export const fetchFranchiseProducts = async (): Promise<
       paidByFranchise: toNullableNumber(item.paid_by_franchise),
       total: productPrice * quantity,
       franchiseName: accountKey ? accountNames.get(accountKey) ?? null : null,
+      isFranchisee: accountKey
+        ? (accountIsFranchisee.get(accountKey) ?? false)
+        : false,
     };
   });
 };
