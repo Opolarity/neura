@@ -217,7 +217,7 @@ const FranchiseProducts = () => {
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar productos..."
+                placeholder="Buscar franquiciado..."
                 value={searchInput}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-9"
