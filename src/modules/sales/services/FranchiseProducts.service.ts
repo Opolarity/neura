@@ -107,12 +107,13 @@ export const fetchFranchiseProducts = async (
   };
 
   const totalSent = toNumber(data?.summary?.total_sent);
+  const totalSold = toNumber(data?.summary?.total_sold);
   const totalPaid = toNumber(data?.summary?.total_paid);
   const summary: FranchiseSummary = {
     totalSent,
-    totalSold: toNumber(data?.summary?.total_sold),
+    totalSold,
     totalPaid,
-    totalPending: totalSent - totalPaid,
+    totalPending: totalSold - totalPaid,
   };
 
   return { data: rows, pagination, summary };
