@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, RefreshCw, Search } from "lucide-react";
 import { PagosConfirmarModal } from "../components/PagosConfirmarModal";
 import {
   fetchFranchiseProducts,
   type FranchiseProductRow,
+  type FranchiseProductsFilters,
 } from "../services/FranchiseProducts.service";
 import {
   Card,
@@ -44,66 +45,89 @@ const formatNumber = (value: number | null): string => {
   );
 };
 
+const DEFAULT_FILTERS: FranchiseProductsFilters = {
+  page: 1,
+  size: 20,
+  search: undefined,
+  franchisee_only: false,
+};
+
 const FranchiseProducts = () => {
   const [products, setProducts] = useState<FranchiseProductRow[]>([]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    p_page: 1,
+    p_size: 20,
+    total: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagosModalOpen, setPagosModalOpen] = useState(false);
 
-  const [searchText, setSearchText] = useState("");
-  const [filterFranchisee, setFilterFranchisee] = useState<
-    "all" | "franchisee"
-  >("all");
+  const [filters, setFilters] =
+    useState<FranchiseProductsFilters>(DEFAULT_FILTERS);
+  const [searchInput, setSearchInput] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async (f: FranchiseProductsFilters) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchFranchiseProducts();
-      setProducts(data);
+      const result = await fetchFranchiseProducts(f);
+      setProducts(result.data);
+      setPagination(result.pagination);
     } catch (err) {
       console.error("Error loading franchise products:", err);
       setError("No se pudo cargar el listado de productos de franquicia.");
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadProducts();
   }, []);
 
-  const filteredProducts = useMemo(() => {
-    const lowerSearch = searchText.toLowerCase();
-    return products.filter((p) => {
-      if (filterFranchisee === "franchisee" && !p.isFranchisee) return false;
-      if (
-        lowerSearch &&
-        !p.productName.toLowerCase().includes(lowerSearch) &&
-        !(p.franchiseName ?? "").toLowerCase().includes(lowerSearch)
-      )
-        return false;
-      return true;
-    });
-  }, [products, filterFranchisee, searchText]);
+  useEffect(() => {
+    loadProducts(filters);
+  }, []);
 
-  const paginatedProducts = useMemo(
-    () => filteredProducts.slice((page - 1) * pageSize, page * pageSize),
-    [filteredProducts, page, pageSize],
-  );
-
-  const pagination: PaginationState = {
-    p_page: page,
-    p_size: pageSize,
-    total: filteredProducts.length,
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const newFilters: FranchiseProductsFilters = {
+        ...filters,
+        search: value || undefined,
+        page: 1,
+      };
+      setFilters(newFilters);
+      loadProducts(newFilters);
+    }, 500);
   };
+
+  const handleFranchiseeFilterChange = (value: "all" | "franchisee") => {
+    const newFilters: FranchiseProductsFilters = {
+      ...filters,
+      franchisee_only: value === "franchisee",
+      page: 1,
+    };
+    setFilters(newFilters);
+    loadProducts(newFilters);
+  };
+
+  const handlePageChange = (page: number) => {
+    const newFilters = { ...filters, page };
+    setFilters(newFilters);
+    loadProducts(newFilters);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    const newFilters = { ...filters, size, page: 1 };
+    setFilters(newFilters);
+    loadProducts(newFilters);
+  };
+
+  const handleRefresh = () => loadProducts(filters);
 
   const totals = useMemo(
     () =>
-      filteredProducts.reduce(
+      products.reduce(
         (acc, item) => {
           acc.quantity += item.quantity;
           acc.sold += item.soldByFranchise ?? 0;
@@ -113,23 +137,8 @@ const FranchiseProducts = () => {
         },
         { quantity: 0, sold: 0, paid: 0, total: 0 },
       ),
-    [filteredProducts],
+    [products],
   );
-
-  const handleSearchChange = (value: string) => {
-    setSearchText(value);
-    setPage(1);
-  };
-
-  const handleFranchiseeFilterChange = (value: "all" | "franchisee") => {
-    setFilterFranchisee(value);
-    setPage(1);
-  };
-
-  const handlePageSizeChange = (size: number) => {
-    setPageSize(size);
-    setPage(1);
-  };
 
   return (
     <div className="space-y-6">
@@ -149,7 +158,7 @@ const FranchiseProducts = () => {
           >
             Pagos por confirmar
           </Button>
-          <Button variant="outline" onClick={loadProducts} disabled={loading}>
+          <Button variant="outline" onClick={handleRefresh} disabled={loading}>
             {loading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -168,13 +177,13 @@ const FranchiseProducts = () => {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar por producto o franquiciado..."
-                value={searchText}
+                value={searchInput}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-9"
               />
             </div>
             <Select
-              value={filterFranchisee}
+              value={filters.franchisee_only ? "franchisee" : "all"}
               onValueChange={(v) =>
                 handleFranchiseeFilterChange(v as "all" | "franchisee")
               }
@@ -223,7 +232,7 @@ const FranchiseProducts = () => {
                       {error}
                     </TableCell>
                   </TableRow>
-                ) : paginatedProducts.length === 0 ? (
+                ) : products.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={8}
@@ -233,7 +242,7 @@ const FranchiseProducts = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedProducts.map((item) => (
+                  products.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="min-w-[220px] font-medium">
                         {item.productName}
@@ -261,10 +270,12 @@ const FranchiseProducts = () => {
                   ))
                 )}
               </TableBody>
-              {filteredProducts.length > 0 && !loading && !error && (
+              {products.length > 0 && !loading && !error && (
                 <tfoot>
                   <TableRow>
-                    <TableCell className="font-semibold">Totales</TableCell>
+                    <TableCell className="font-semibold">
+                      Totales (página)
+                    </TableCell>
                     <TableCell />
                     <TableCell className="text-right font-semibold">
                       {formatNumber(totals.quantity)}
@@ -290,7 +301,7 @@ const FranchiseProducts = () => {
         <CardFooter>
           <PaginationBar
             pagination={pagination}
-            onPageChange={setPage}
+            onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
           />
         </CardFooter>
