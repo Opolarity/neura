@@ -5,6 +5,7 @@ import {
   fetchFranchiseProducts,
   type FranchiseProductRow,
   type FranchiseProductsFilters,
+  type FranchiseSummary,
 } from "../services/FranchiseProducts.service";
 import {
   Card,
@@ -62,6 +63,7 @@ const FranchiseProducts = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagosModalOpen, setPagosModalOpen] = useState(false);
+  const [summary, setSummary] = useState<FranchiseSummary | null>(null);
 
   const [filters, setFilters] =
     useState<FranchiseProductsFilters>(DEFAULT_FILTERS);
@@ -75,6 +77,7 @@ const FranchiseProducts = () => {
       const result = await fetchFranchiseProducts(f);
       setProducts(result.data);
       setPagination(result.pagination);
+      setSummary(result.summary);
     } catch (err) {
       console.error("Error loading franchise products:", err);
       setError("No se pudo cargar el listado de productos de franquicia.");
@@ -167,6 +170,30 @@ const FranchiseProducts = () => {
             Actualizar
           </Button>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: "Total enviado", value: summary?.totalSent ?? null },
+          { label: "Total vendido", value: summary?.totalSold ?? null },
+          { label: "Total pagado", value: summary?.totalPaid ?? null },
+          { label: "Total por pagar", value: summary?.totalPending ?? null },
+        ].map(({ label, value }) => (
+          <Card key={label}>
+            <CardHeader className="pb-2">
+              <p className="text-sm text-muted-foreground">{label}</p>
+            </CardHeader>
+            <CardContent>
+              {loading && summary === null ? (
+                <div className="h-7 w-32 animate-pulse rounded bg-muted" />
+              ) : (
+                <p className="text-2xl font-bold">
+                  {value !== null ? formatCurrency(value) : "-"}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Card>

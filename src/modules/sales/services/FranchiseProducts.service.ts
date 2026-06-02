@@ -22,9 +22,17 @@ export type FranchiseProductsFilters = {
   franchisee_only?: boolean;
 };
 
+export type FranchiseSummary = {
+  totalSent: number;
+  totalSold: number;
+  totalPaid: number;
+  totalPending: number;
+};
+
 export type FranchiseProductsResponse = {
   data: FranchiseProductRow[];
   pagination: PaginationState;
+  summary: FranchiseSummary;
 };
 
 type RawFranchiseProduct = {
@@ -94,5 +102,14 @@ export const fetchFranchiseProducts = async (
     total: data?.page?.total ?? 0,
   };
 
-  return { data: rows, pagination };
+  const totalSent = toNumber(data?.summary?.total_sent);
+  const totalPaid = toNumber(data?.summary?.total_paid);
+  const summary: FranchiseSummary = {
+    totalSent,
+    totalSold: toNumber(data?.summary?.total_sold),
+    totalPaid,
+    totalPending: totalSent - totalPaid,
+  };
+
+  return { data: rows, pagination, summary };
 };
