@@ -18,11 +18,13 @@ import type { POSSession, ClosePOSSessionRequest } from "../../types/POS.types";
 import { formatCurrency } from "@/shared/utils/currency";
 import POSSessionDetailDialog from "@/modules/pos/components/POSSessionDetailDialog";
 
+const roundCurrency = (amount: number) => Math.round(amount * 100) / 100;
+
 interface POSCloseSessionModalProps {
   isOpen: boolean;
   session: POSSession | null;
   totalCashSales: number;
-  externalMovements: number;
+  expectedAmount: number;
 
   isClosing: boolean;
   onClose: (request: ClosePOSSessionRequest) => Promise<unknown>;
@@ -33,7 +35,7 @@ export default function POSCloseSessionModal({
   isOpen,
   session,
   totalCashSales,
-  externalMovements,
+  expectedAmount,
 
   isClosing,
   onClose,
@@ -41,13 +43,8 @@ export default function POSCloseSessionModal({
 }: POSCloseSessionModalProps) {
   const otherMovements = useMemo(() => {
     if (!session) return 0;
-    return externalMovements;
-  }, [session, externalMovements]);
-
-  const expectedAmount = useMemo(() => {
-    if (!session) return 0;
-    return session.openingAmount + totalCashSales + otherMovements;
-  }, [session, totalCashSales, otherMovements]);
+    return roundCurrency(expectedAmount - session.openingAmount - totalCashSales);
+  }, [session, expectedAmount, totalCashSales]);
 
   // Editable closing amount (initialized with expected)
   const [closingAmount, setClosingAmount] = useState<string>("");
