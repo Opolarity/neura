@@ -20,6 +20,8 @@ export type FranchiseProductsFilters = {
   size: number;
   search?: string;
   franchisee_only?: boolean;
+  date_from?: string;
+  date_to?: string;
 };
 
 export type FranchiseSummary = {
@@ -69,6 +71,8 @@ export const fetchFranchiseProducts = async (
     size: filters.size,
     ...(filters.search ? { search: filters.search } : {}),
     ...(filters.franchisee_only ? { franchisee_only: true } : {}),
+    ...(filters.date_from ? { date_from: filters.date_from } : {}),
+    ...(filters.date_to ? { date_to: filters.date_to } : {}),
   });
 
   const { data, error } = await supabase.functions.invoke(endpoint, {

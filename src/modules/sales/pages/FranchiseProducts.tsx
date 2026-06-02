@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, RefreshCw, Search } from "lucide-react";
+import { Filter, Loader2, RefreshCw, Search } from "lucide-react";
 import { PagosConfirmarModal } from "../components/PagosConfirmarModal";
+import FranchiseFilterModal from "../components/FranchiseFilterModal";
 import {
   fetchFranchiseProducts,
   type FranchiseProductRow,
@@ -12,17 +13,9 @@ import {
   CardContent,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -51,6 +44,8 @@ const DEFAULT_FILTERS: FranchiseProductsFilters = {
   size: 20,
   search: undefined,
   franchisee_only: false,
+  date_from: undefined,
+  date_to: undefined,
 };
 
 const FranchiseProducts = () => {
@@ -63,6 +58,7 @@ const FranchiseProducts = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagosModalOpen, setPagosModalOpen] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [summary, setSummary] = useState<FranchiseSummary | null>(null);
 
   const [filters, setFilters] =
@@ -104,16 +100,6 @@ const FranchiseProducts = () => {
     }, 500);
   };
 
-  const handleFranchiseeFilterChange = (value: "all" | "franchisee") => {
-    const newFilters: FranchiseProductsFilters = {
-      ...filters,
-      franchisee_only: value === "franchisee",
-      page: 1,
-    };
-    setFilters(newFilters);
-    loadProducts(newFilters);
-  };
-
   const handlePageChange = (page: number) => {
     const newFilters = { ...filters, page };
     setFilters(newFilters);
@@ -127,6 +113,35 @@ const FranchiseProducts = () => {
   };
 
   const handleRefresh = () => loadProducts(filters);
+
+  const handleApplyFilters = (
+    dateFrom: string | undefined,
+    dateTo: string | undefined,
+  ) => {
+    const newFilters: FranchiseProductsFilters = {
+      ...filters,
+      date_from: dateFrom,
+      date_to: dateTo,
+      page: 1,
+    };
+    setFilters(newFilters);
+    loadProducts(newFilters);
+    setFilterModalOpen(false);
+  };
+
+  const handleClearFilters = () => {
+    const newFilters: FranchiseProductsFilters = {
+      ...filters,
+      date_from: undefined,
+      date_to: undefined,
+      page: 1,
+    };
+    setFilters(newFilters);
+    loadProducts(newFilters);
+    setFilterModalOpen(false);
+  };
+
+  const hasActiveFilters = !!(filters.date_from || filters.date_to);
 
   const totals = useMemo(
     () =>
@@ -198,31 +213,24 @@ const FranchiseProducts = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Listado</CardTitle>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
+          <div className="flex items-center gap-2">
+            <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por producto o franquiciado..."
+                placeholder="Buscar productos..."
                 value={searchInput}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-9"
               />
             </div>
-            <Select
-              value={filters.franchisee_only ? "franchisee" : "all"}
-              onValueChange={(v) =>
-                handleFranchiseeFilterChange(v as "all" | "franchisee")
-              }
+            <Button
+              variant="outline"
+              onClick={() => setFilterModalOpen(true)}
+              className={hasActiveFilters ? "border-primary text-primary" : ""}
             >
-              <SelectTrigger className="w-full sm:w-52">
-                <SelectValue placeholder="Franquiciado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="franchisee">Solo franquiciados</SelectItem>
-              </SelectContent>
-            </Select>
+              <Filter className="mr-2 h-4 w-4" />
+              Filtrar
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -337,6 +345,15 @@ const FranchiseProducts = () => {
       <PagosConfirmarModal
         open={pagosModalOpen}
         onOpenChange={setPagosModalOpen}
+      />
+
+      <FranchiseFilterModal
+        isOpen={filterModalOpen}
+        dateFrom={filters.date_from}
+        dateTo={filters.date_to}
+        onClose={() => setFilterModalOpen(false)}
+        onApply={handleApplyFilters}
+        onClear={handleClearFilters}
       />
     </div>
   );
