@@ -165,7 +165,7 @@ export default function POSCloseSessionModal({
           </div>
 
           {/* Difference display */}
-          {difference !== 0 &&
+          {Number.isFinite(difference) && difference !== 0 &&
             <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
               <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
               <div className="text-sm text-destructive">
@@ -181,7 +181,7 @@ export default function POSCloseSessionModal({
               </div>
             </div>
           }
-          {difference === 0 && closingAmount !== "" &&
+          {Number.isFinite(difference) && difference === 0 && closingAmount !== "" &&
             <p className="text-xs text-muted-foreground">
               Monto coincide con el esperado ✓
             </p>
