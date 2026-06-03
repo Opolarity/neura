@@ -26,10 +26,14 @@ export function SalesDashboard({ filters }: SalesDashboardProps) {
       {/* KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          title="Ventas Totales"
+          title="Ventas Netas"
           value={kpis ? formatCurrency(kpis.total_revenue) : '—'}
           loading={dash.kpis.isLoading}
-          subtitle="en el periodo seleccionado"
+          subtitle={
+            kpis
+              ? `Bruto: ${formatCurrency(kpis.gross_revenue)} · Dev: -${formatCurrency(kpis.total_refunds)}`
+              : 'en el periodo seleccionado'
+          }
         />
         <KpiCard
           title="N° de Pedidos"
