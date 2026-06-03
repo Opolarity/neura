@@ -6,6 +6,7 @@ import {
   fetchFranchiseProducts,
   type FranchiseProductRow,
   type FranchiseProductsFilters,
+  type FranchisePaymentStatus,
   type FranchiseSummary,
 } from "../services/FranchiseProducts.service";
 import {
@@ -39,6 +40,11 @@ const formatNumber = (value: number | null): string => {
   );
 };
 
+const DEFAULT_PAYMENT_STATUSES: FranchisePaymentStatus[] = [
+  "unpaid",
+  "partial",
+];
+
 const DEFAULT_FILTERS: FranchiseProductsFilters = {
   page: 1,
   size: 20,
@@ -46,6 +52,16 @@ const DEFAULT_FILTERS: FranchiseProductsFilters = {
   franchisee_only: false,
   date_from: undefined,
   date_to: undefined,
+  payment_statuses: DEFAULT_PAYMENT_STATUSES,
+};
+
+const hasDefaultPaymentStatuses = (
+  statuses: FranchisePaymentStatus[] | undefined,
+): boolean => {
+  if (!statuses || statuses.length !== DEFAULT_PAYMENT_STATUSES.length) {
+    return false;
+  }
+  return DEFAULT_PAYMENT_STATUSES.every((status) => statuses.includes(status));
 };
 
 const FranchiseProducts = () => {
@@ -117,11 +133,13 @@ const FranchiseProducts = () => {
   const handleApplyFilters = (
     dateFrom: string | undefined,
     dateTo: string | undefined,
+    paymentStatuses: FranchisePaymentStatus[],
   ) => {
     const newFilters: FranchiseProductsFilters = {
       ...filters,
       date_from: dateFrom,
       date_to: dateTo,
+      payment_statuses: paymentStatuses,
       page: 1,
     };
     setFilters(newFilters);
@@ -134,6 +152,7 @@ const FranchiseProducts = () => {
       ...filters,
       date_from: undefined,
       date_to: undefined,
+      payment_statuses: DEFAULT_PAYMENT_STATUSES,
       page: 1,
     };
     setFilters(newFilters);
@@ -141,7 +160,9 @@ const FranchiseProducts = () => {
     setFilterModalOpen(false);
   };
 
-  const hasActiveFilters = !!(filters.date_from || filters.date_to);
+  const hasActiveFilters =
+    !!(filters.date_from || filters.date_to) ||
+    !hasDefaultPaymentStatuses(filters.payment_statuses);
 
   const totals = useMemo(
     () =>
@@ -351,6 +372,7 @@ const FranchiseProducts = () => {
         isOpen={filterModalOpen}
         dateFrom={filters.date_from}
         dateTo={filters.date_to}
+        paymentStatuses={filters.payment_statuses ?? DEFAULT_PAYMENT_STATUSES}
         onClose={() => setFilterModalOpen(false)}
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
