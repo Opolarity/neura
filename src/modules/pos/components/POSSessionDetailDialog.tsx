@@ -44,6 +44,8 @@ const POSSessionDetailDialog = ({
   const [changePayments, setChangePayments] = useState<POSSessionPaymentItem[]>([]);
   const [totalIngresos, setTotalIngresos] = useState<number>(0);
   const [totalVueltos, setTotalVueltos] = useState<number>(0);
+  const [otherIngresos, setOtherIngresos] = useState<number>(0);
+  const [otherEgresos, setOtherEgresos] = useState<number>(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -57,6 +59,8 @@ const POSSessionDetailDialog = ({
       setChangePayments([]);
       setTotalIngresos(0);
       setTotalVueltos(0);
+      setOtherIngresos(0);
+      setOtherEgresos(0);
     }
   }, [open, sessionId]);
 
@@ -71,6 +75,9 @@ const POSSessionDetailDialog = ({
       setChangePayments(adapted.changePayments);
       setTotalIngresos(adapted.totalIngresos);
       setTotalVueltos(adapted.totalVueltos);
+      // get_pos_session_detail already calculates these with proper session bounds
+      setOtherIngresos(adapted.session.otherIncome);
+      setOtherEgresos(adapted.session.otherExpenses);
     } catch (err) {
       console.error("Error loading session detail:", err);
     } finally {
@@ -193,24 +200,19 @@ const POSSessionDetailDialog = ({
                   )
                 }
               />
-              {session.otherIngresos > 0 && (
-                <InfoItem
-                  label="Ajustes externos — Ingresos"
-                  value={<span className="text-blue-600">+ S/ {formatCurrency(session.otherIngresos)}</span>}
-                />
-              )}
-              {session.otherEgresos > 0 && (
-                <InfoItem
-                  label="Ajustes externos — Egresos"
-                  value={<span className="text-destructive">- S/ {formatCurrency(session.otherEgresos)}</span>}
-                />
-              )}
-              {session.otherIngresos === 0 && session.otherEgresos === 0 && (
-                <InfoItem
-                  label="Otros ajustes de efectivo externos"
-                  value="S/ 0.00"
-                />
-              )}
+              <div className="col-span-2 md:col-span-3 space-y-1">
+                <span className="text-sm text-muted-foreground">Otros ajustes de efectivo externos</span>
+                <div className="flex gap-6 pl-2">
+                  <div>
+                    <span className="text-xs text-muted-foreground">Ingresos</span>
+                    <div className="text-sm font-medium text-blue-600">+ S/ {formatCurrency(otherIngresos)}</div>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground">Egresos</span>
+                    <div className="text-sm font-medium text-destructive">- S/ {formatCurrency(otherEgresos)}</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {session.notes && (

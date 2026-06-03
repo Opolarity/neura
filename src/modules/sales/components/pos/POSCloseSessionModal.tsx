@@ -113,18 +113,17 @@ export default function POSCloseSessionModal({
               <span className="text-muted-foreground">Total de ventas en efectivo</span>
               <span className="font-medium text-green-600">+ {formatCurrency(totalCashSales)}</span>
             </div>
-            {otherIngresos > 0 && (
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Otros ajustes externos — Ingresos</span>
+            <div className="space-y-1">
+              <span className="text-xs text-muted-foreground font-medium">Otros ajustes de efectivo externos</span>
+              <div className="flex items-center justify-between text-xs pl-2">
+                <span className="text-muted-foreground">Ingresos</span>
                 <span className="font-medium text-blue-600">+ {formatCurrency(otherIngresos)}</span>
               </div>
-            )}
-            {otherEgresos > 0 && (
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Otros ajustes externos — Egresos</span>
+              <div className="flex items-center justify-between text-xs pl-2">
+                <span className="text-muted-foreground">Egresos</span>
                 <span className="font-medium text-destructive">- {formatCurrency(otherEgresos)}</span>
               </div>
-            )}
+            </div>
 
             <Separator />
             <div className="flex items-center justify-between text-sm">
