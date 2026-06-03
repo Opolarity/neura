@@ -212,7 +212,8 @@ export default function POS() {
         session={pos.session}
         totalCashSales={pos.sessionTotalCashSales}
         expectedAmount={pos.sessionExpectedAmount}
-
+        otherIngresos={pos.sessionOtherIngresos}
+        otherEgresos={pos.sessionOtherEgresos}
         isClosing={pos.closingSession}
         onClose={pos.handleCloseSession}
         onCancel={pos.cancelCloseSession}

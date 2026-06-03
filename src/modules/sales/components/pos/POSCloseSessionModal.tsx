@@ -18,14 +18,13 @@ import type { POSSession, ClosePOSSessionRequest } from "../../types/POS.types";
 import { formatCurrency } from "@/shared/utils/currency";
 import POSSessionDetailDialog from "@/modules/pos/components/POSSessionDetailDialog";
 
-const roundCurrency = (amount: number) => Math.round(amount * 100) / 100;
-
 interface POSCloseSessionModalProps {
   isOpen: boolean;
   session: POSSession | null;
   totalCashSales: number;
   expectedAmount: number;
-
+  otherIngresos: number;
+  otherEgresos: number;
   isClosing: boolean;
   onClose: (request: ClosePOSSessionRequest) => Promise<unknown>;
   onCancel: () => void;
@@ -36,15 +35,12 @@ export default function POSCloseSessionModal({
   session,
   totalCashSales,
   expectedAmount,
-
+  otherIngresos,
+  otherEgresos,
   isClosing,
   onClose,
   onCancel
 }: POSCloseSessionModalProps) {
-  const otherMovements = useMemo(() => {
-    if (!session) return 0;
-    return roundCurrency(expectedAmount - session.openingAmount - totalCashSales);
-  }, [session, expectedAmount, totalCashSales]);
 
   // Editable closing amount (initialized with expected)
   const [closingAmount, setClosingAmount] = useState<string>("");
@@ -117,12 +113,18 @@ export default function POSCloseSessionModal({
               <span className="text-muted-foreground">Total de ventas en efectivo</span>
               <span className="font-medium text-green-600">+ {formatCurrency(totalCashSales)}</span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Otros ajustes de efectivo externos</span>
-              <span className={`font-medium ${otherMovements >= 0 ? "text-blue-600" : "text-destructive"}`}>
-                {otherMovements >= 0 ? "+ " : ""}{formatCurrency(otherMovements)}
-              </span>
-            </div>
+            {otherIngresos > 0 && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Otros ajustes externos — Ingresos</span>
+                <span className="font-medium text-blue-600">+ {formatCurrency(otherIngresos)}</span>
+              </div>
+            )}
+            {otherEgresos > 0 && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Otros ajustes externos — Egresos</span>
+                <span className="font-medium text-destructive">- {formatCurrency(otherEgresos)}</span>
+              </div>
+            )}
 
             <Separator />
             <div className="flex items-center justify-between text-sm">
