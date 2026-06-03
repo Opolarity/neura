@@ -53,6 +53,8 @@ export interface LocationOption {
 // Sales Dashboard
 // -------------------------------------------------------
 export interface SalesKpis {
+  gross_revenue: number;
+  total_refunds: number;
   total_revenue: number;
   order_count: number;
   avg_ticket: number;
@@ -63,6 +65,8 @@ export interface SalesKpis {
 export interface SalesOverTimeItem {
   period: string; // ISO date
   order_count: number;
+  gross_revenue: number;
+  total_refunds: number;
   total_revenue: number;
   avg_ticket: number;
 }
