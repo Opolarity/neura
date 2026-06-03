@@ -19,6 +19,7 @@ import {
   formatCurrency,
   formatTime,
 } from "@/modules/sales/adapters/POS.adapter";
+import { supabase } from "@/integrations/supabase/client";
 import { getPOSSessionDetail } from "../services/POSDetail.service";
 import { adaptPOSSessionDetail } from "../adapters/POSDetail.adapter";
 import type {
@@ -44,6 +45,8 @@ const POSSessionDetailDialog = ({
   const [changePayments, setChangePayments] = useState<POSSessionPaymentItem[]>([]);
   const [totalIngresos, setTotalIngresos] = useState<number>(0);
   const [totalVueltos, setTotalVueltos] = useState<number>(0);
+  const [otherIngresos, setOtherIngresos] = useState<number>(0);
+  const [otherEgresos, setOtherEgresos] = useState<number>(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -57,6 +60,8 @@ const POSSessionDetailDialog = ({
       setChangePayments([]);
       setTotalIngresos(0);
       setTotalVueltos(0);
+      setOtherIngresos(0);
+      setOtherEgresos(0);
     }
   }, [open, sessionId]);
 
@@ -71,6 +76,25 @@ const POSSessionDetailDialog = ({
       setChangePayments(adapted.changePayments);
       setTotalIngresos(adapted.totalIngresos);
       setTotalVueltos(adapted.totalVueltos);
+
+      // Load ingresos/egresos breakdown from edge function (same as cierre de caja)
+      if (adapted.session.businessAccount && adapted.session.openedAt) {
+        const { data: movements, error: movErr } = await supabase.functions.invoke(
+          "get-pos-session-close-details",
+          {
+            body: {
+              business_account_id: adapted.session.businessAccount,
+              opened_at: adapted.session.openedAt,
+            },
+          }
+        );
+        if (!movErr && Array.isArray(movements)) {
+          const external = (movements as Array<{ amount: number; movement_type_code: string; order_payment_id: number | null }>)
+            .filter((m) => m.order_payment_id === null);
+          setOtherIngresos(Math.round(external.filter(m => m.movement_type_code === "INC").reduce((sum, m) => sum + m.amount, 0) * 100) / 100);
+          setOtherEgresos(Math.round(external.filter(m => m.movement_type_code !== "INC").reduce((sum, m) => sum + m.amount, 0) * 100) / 100);
+        }
+      }
     } catch (err) {
       console.error("Error loading session detail:", err);
     } finally {
@@ -193,19 +217,19 @@ const POSSessionDetailDialog = ({
                   )
                 }
               />
-              {session.otherIngresos > 0 && (
+              {otherIngresos > 0 && (
                 <InfoItem
                   label="Ajustes externos — Ingresos"
-                  value={<span className="text-blue-600">+ S/ {formatCurrency(session.otherIngresos)}</span>}
+                  value={<span className="text-blue-600">+ S/ {formatCurrency(otherIngresos)}</span>}
                 />
               )}
-              {session.otherEgresos > 0 && (
+              {otherEgresos > 0 && (
                 <InfoItem
                   label="Ajustes externos — Egresos"
-                  value={<span className="text-destructive">- S/ {formatCurrency(session.otherEgresos)}</span>}
+                  value={<span className="text-destructive">- S/ {formatCurrency(otherEgresos)}</span>}
                 />
               )}
-              {session.otherIngresos === 0 && session.otherEgresos === 0 && (
+              {otherIngresos === 0 && otherEgresos === 0 && (
                 <InfoItem
                   label="Otros ajustes de efectivo externos"
                   value="S/ 0.00"

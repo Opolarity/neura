@@ -4,6 +4,7 @@
 
 export interface POSSessionDetail {
   id: number;
+  businessAccount: number;
   userId: string;
   userName: string;
   branchId: number;
@@ -48,6 +49,7 @@ export interface POSSessionPaymentItem {
 export interface POSSessionDetailApiResponse {
   session: {
     id: number;
+    business_account: number;
     user_id: string;
     user_name: string;
     branch_id: number;

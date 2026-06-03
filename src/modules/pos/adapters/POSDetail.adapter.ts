@@ -12,6 +12,7 @@ export const adaptPOSSessionDetail = (
   return {
     session: {
       id: s.id,
+      businessAccount: s.business_account,
       userId: s.user_id,
       userName: s.user_name,
       branchId: s.branch_id,
