@@ -114,9 +114,11 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit((data) => {
-              const submittedDate = useCustomDate
-                ? `${data.movement_date}T00:00:00`
-                : new Date().toISOString();
+              // SP combines p_movement_date (date) with current Lima time internally.
+              // Always pass the Lima-local date so it doesn't shift to "tomorrow"
+              // when UTC has already crossed midnight (Lima is UTC-5).
+              const limaDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+              const submittedDate = useCustomDate ? data.movement_date : limaDate;
               onSubmit({ ...data, movement_date: submittedDate }, attachments, linkedOrders.map((o) => o.id));
             })} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

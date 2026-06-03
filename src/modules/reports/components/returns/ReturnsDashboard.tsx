@@ -1,4 +1,3 @@
-import { Grid, Col } from '@tremor/react';
 import { KpiCard } from '../shared/KpiCard';
 import { ReturnsOverTimeChart } from './ReturnsOverTimeChart';
 import { TopReturnedProductsChart } from './TopReturnedProductsChart';
@@ -18,37 +17,29 @@ export function ReturnsDashboard({ filters }: ReturnsDashboardProps) {
   return (
     <div className="space-y-6">
       {/* KPIs */}
-      <Grid numItemsSm={2} numItemsLg={4} className="gap-4">
-        <Col>
-          <KpiCard
-            title="Total devoluciones"
-            value={kpis?.total_returns ?? '—'}
-            loading={dash.kpis.isLoading}
-          />
-        </Col>
-        <Col>
-          <KpiCard
-            title="Monto reembolsado"
-            value={kpis ? formatCurrency(kpis.total_refund_amount) : '—'}
-            loading={dash.kpis.isLoading}
-          />
-        </Col>
-        <Col>
-          <KpiCard
-            title="Reembolso promedio"
-            value={kpis ? formatCurrency(kpis.avg_refund_amount) : '—'}
-            loading={dash.kpis.isLoading}
-          />
-        </Col>
-        <Col>
-          <KpiCard
-            title="Tasa de devolución"
-            value={kpis ? `${kpis.return_rate_pct}%` : '—'}
-            loading={dash.kpis.isLoading}
-            subtitle="sobre total de pedidos"
-          />
-        </Col>
-      </Grid>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          title="Total devoluciones"
+          value={kpis?.total_returns ?? '—'}
+          loading={dash.kpis.isLoading}
+        />
+        <KpiCard
+          title="Monto reembolsado"
+          value={kpis ? formatCurrency(kpis.total_refund_amount) : '—'}
+          loading={dash.kpis.isLoading}
+        />
+        <KpiCard
+          title="Reembolso promedio"
+          value={kpis ? formatCurrency(kpis.avg_refund_amount) : '—'}
+          loading={dash.kpis.isLoading}
+        />
+        <KpiCard
+          title="Tasa de devolución"
+          value={kpis ? `${kpis.return_rate_pct}%` : '—'}
+          loading={dash.kpis.isLoading}
+          subtitle="sobre total de pedidos"
+        />
+      </div>
 
       {/* Over time */}
       <ReturnsOverTimeChart
@@ -59,22 +50,18 @@ export function ReturnsDashboard({ filters }: ReturnsDashboardProps) {
       />
 
       {/* Top returned + by reason side by side */}
-      <Grid numItemsSm={1} numItemsLg={2} className="gap-6">
-        <Col>
-          <TopReturnedProductsChart
-            data={dash.topProducts.data ?? []}
-            loading={dash.topProducts.isLoading}
-            limit={dash.topLimit}
-            onLimitChange={dash.setTopLimit}
-          />
-        </Col>
-        <Col>
-          <ReturnsByReasonChart
-            data={dash.byReason.data ?? []}
-            loading={dash.byReason.isLoading}
-          />
-        </Col>
-      </Grid>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <TopReturnedProductsChart
+          data={dash.topProducts.data ?? []}
+          loading={dash.topProducts.isLoading}
+          limit={dash.topLimit}
+          onLimitChange={dash.setTopLimit}
+        />
+        <ReturnsByReasonChart
+          data={dash.byReason.data ?? []}
+          loading={dash.byReason.isLoading}
+        />
+      </div>
     </div>
   );
 }

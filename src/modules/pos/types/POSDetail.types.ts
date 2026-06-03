@@ -4,6 +4,7 @@
 
 export interface POSSessionDetail {
   id: number;
+  businessAccount: number;
   userId: string;
   userName: string;
   branchId: number;
@@ -17,6 +18,8 @@ export interface POSSessionDetail {
   difference: number | null;
   openingDifference: number;
   otherMovements: number;
+  otherIncome: number;
+  otherExpenses: number;
   statusId: number;
   statusName: string;
   statusCode: string;
@@ -46,6 +49,7 @@ export interface POSSessionPaymentItem {
 export interface POSSessionDetailApiResponse {
   session: {
     id: number;
+    business_account: number;
     user_id: string;
     user_name: string;
     branch_id: number;
@@ -59,6 +63,8 @@ export interface POSSessionDetailApiResponse {
     difference: number | null;
     opening_difference: number;
     other_movements: number | null;
+    other_income: number | null;
+    other_expenses: number | null;
     status_id: number;
     status_name: string;
     status_code: string;

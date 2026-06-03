@@ -1,4 +1,3 @@
-import { Grid, Col } from '@tremor/react';
 import { ProductsByCategoryChart } from './ProductsByCategoryChart';
 import { TopProductsChart } from './TopProductsChart';
 import { ProductDetailSearch } from './ProductDetailSearch';
@@ -11,25 +10,21 @@ interface ProductsDashboardProps {
 export function ProductsDashboard({ dash }: ProductsDashboardProps) {
   return (
     <div className="space-y-6">
-      <Grid numItemsSm={1} numItemsLg={2} className="gap-6">
-        <Col>
-          <ProductsByCategoryChart
-            data={dash.byCategory.data ?? []}
-            loading={dash.byCategory.isLoading}
-          />
-        </Col>
-        <Col>
-          <TopProductsChart
-            data={dash.topByCategory.data ?? []}
-            loading={dash.topByCategory.isLoading}
-            limit={dash.topLimit}
-            onLimitChange={dash.setTopLimit}
-            categoryId={dash.selectedCategoryId}
-            categories={dash.byCategory.data ?? []}
-            onCategoryChange={dash.setSelectedCategoryId}
-          />
-        </Col>
-      </Grid>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <ProductsByCategoryChart
+          data={dash.byCategory.data ?? []}
+          loading={dash.byCategory.isLoading}
+        />
+        <TopProductsChart
+          data={dash.topByCategory.data ?? []}
+          loading={dash.topByCategory.isLoading}
+          limit={dash.topLimit}
+          onLimitChange={dash.setTopLimit}
+          categoryId={dash.selectedCategoryId}
+          categories={dash.byCategory.data ?? []}
+          onCategoryChange={dash.setSelectedCategoryId}
+        />
+      </div>
 
       <ProductDetailSearch
         selectedProductId={dash.selectedProductId}

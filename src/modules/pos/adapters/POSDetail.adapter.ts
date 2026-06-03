@@ -12,6 +12,7 @@ export const adaptPOSSessionDetail = (
   return {
     session: {
       id: s.id,
+      businessAccount: s.business_account,
       userId: s.user_id,
       userName: s.user_name,
       branchId: s.branch_id,
@@ -25,6 +26,8 @@ export const adaptPOSSessionDetail = (
       difference: s.difference,
       openingDifference: s.opening_difference,
       otherMovements: s.other_movements ?? 0,
+      otherIncome: s.other_income ?? 0,
+      otherExpenses: s.other_expenses ?? 0,
       statusId: s.status_id,
       statusName: s.status_name,
       statusCode: s.status_code,

@@ -18,14 +18,13 @@ import type { POSSession, ClosePOSSessionRequest } from "../../types/POS.types";
 import { formatCurrency } from "@/shared/utils/currency";
 import POSSessionDetailDialog from "@/modules/pos/components/POSSessionDetailDialog";
 
-const roundCurrency = (amount: number) => Math.round(amount * 100) / 100;
-
 interface POSCloseSessionModalProps {
   isOpen: boolean;
   session: POSSession | null;
   totalCashSales: number;
   expectedAmount: number;
-
+  otherIngresos: number;
+  otherEgresos: number;
   isClosing: boolean;
   onClose: (request: ClosePOSSessionRequest) => Promise<unknown>;
   onCancel: () => void;
@@ -36,15 +35,12 @@ export default function POSCloseSessionModal({
   session,
   totalCashSales,
   expectedAmount,
-
+  otherIngresos,
+  otherEgresos,
   isClosing,
   onClose,
   onCancel
 }: POSCloseSessionModalProps) {
-  const otherMovements = useMemo(() => {
-    if (!session) return 0;
-    return roundCurrency(expectedAmount - session.openingAmount - totalCashSales);
-  }, [session, expectedAmount, totalCashSales]);
 
   // Editable closing amount (initialized with expected)
   const [closingAmount, setClosingAmount] = useState<string>("");
@@ -117,11 +113,16 @@ export default function POSCloseSessionModal({
               <span className="text-muted-foreground">Total de ventas en efectivo</span>
               <span className="font-medium text-green-600">+ {formatCurrency(totalCashSales)}</span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Otros ajustes de efectivo externos</span>
-              <span className={`font-medium ${otherMovements >= 0 ? "text-blue-600" : "text-destructive"}`}>
-                {otherMovements >= 0 ? "+ " : ""}{formatCurrency(otherMovements)}
-              </span>
+            <div className="space-y-1">
+              <span className="text-xs text-muted-foreground font-medium">Otros ajustes de efectivo externos</span>
+              <div className="flex items-center justify-between text-xs pl-2">
+                <span className="text-muted-foreground">Ingresos</span>
+                <span className="font-medium text-blue-600">+ {formatCurrency(otherIngresos)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs pl-2">
+                <span className="text-muted-foreground">Egresos</span>
+                <span className="font-medium text-destructive">- {formatCurrency(otherEgresos)}</span>
+              </div>
             </div>
 
             <Separator />
@@ -165,7 +166,7 @@ export default function POSCloseSessionModal({
           </div>
 
           {/* Difference display */}
-          {difference !== 0 &&
+          {Number.isFinite(difference) && difference !== 0 &&
             <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
               <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
               <div className="text-sm text-destructive">
@@ -181,7 +182,7 @@ export default function POSCloseSessionModal({
               </div>
             </div>
           }
-          {difference === 0 && closingAmount !== "" &&
+          {Number.isFinite(difference) && difference === 0 && closingAmount !== "" &&
             <p className="text-xs text-muted-foreground">
               Monto coincide con el esperado ✓
             </p>

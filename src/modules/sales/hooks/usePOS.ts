@@ -44,6 +44,7 @@ import {
 } from "../services";
 import { getPriceListIsActiveTrue, getActivePaymentMethodsBySaleTypeId, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { createPOSOrder } from "../services/POS.service";
+import { getPOSSessionDetail } from "@/modules/pos/services/POSDetail.service";
 
 import { filterShippingCostsByLocation } from "../utils";
 
@@ -1174,26 +1175,32 @@ export const usePOS = () => {
   const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
   const [sessionTotalCashSales, setSessionTotalCashSales] = useState(0);
   const [sessionExpectedAmount, setSessionExpectedAmount] = useState(0);
+  const [sessionOtherIngresos, setSessionOtherIngresos] = useState(0);
+  const [sessionOtherEgresos, setSessionOtherEgresos] = useState(0);
 
-  // Load session cash sales and current business account balance for closing
+  // Load session close data:
+  // - expectedAmount from business_accounts.total_amount (source of truth)
+  // - other_ingresos/other_egresos from get_pos_session_detail SP via RPC,
+  //   which uses correct session bounds (opened_at … NOW()+1s for open sessions)
   const loadSessionCloseData = useCallback(async () => {
     if (!POSSessionHook.session?.id) {
       setSessionTotalCashSales(0);
       setSessionExpectedAmount(0);
+      setSessionOtherIngresos(0);
+      setSessionOtherEgresos(0);
       return;
     }
 
     try {
       const { data: sessionData, error: sessionError } = await supabase
         .from("pos_sessions")
-        .select("total_cash_sales, business_account")
+        .select("total_cash_sales, business_account, opened_at")
         .eq("id", POSSessionHook.session.id)
         .single();
 
       if (sessionError) throw sessionError;
 
-      const cashSales = sessionData?.total_cash_sales ?? 0;
-      setSessionTotalCashSales(cashSales);
+      setSessionTotalCashSales(Number(sessionData?.total_cash_sales ?? 0) || 0);
 
       if (sessionData?.business_account) {
         const { data: accountData, error: accountError } = await supabase
@@ -1203,16 +1210,24 @@ export const usePOS = () => {
           .single();
 
         if (accountError) throw accountError;
-
-        setSessionExpectedAmount(Number(accountData?.total_amount ?? 0));
+        setSessionExpectedAmount(Number(accountData?.total_amount ?? 0) || 0);
       } else {
         setSessionExpectedAmount(0);
       }
+
+      // Ingresos/egresos from get-pos-session-detail edge function (single source of truth).
+      // The SP filters movements strictly between opened_at and closed_at/NOW()
+      // so only movements made DURING this session appear.
+      const detail = await getPOSSessionDetail(POSSessionHook.session.id);
+      setSessionOtherIngresos(Number(detail?.session?.other_income ?? 0) || 0);
+      setSessionOtherEgresos(Number(detail?.session?.other_expenses ?? 0) || 0);
 
     } catch (error) {
       console.error("Error loading session close data:", error);
       setSessionTotalCashSales(0);
       setSessionExpectedAmount(0);
+      setSessionOtherIngresos(0);
+      setSessionOtherEgresos(0);
     }
   }, [POSSessionHook.session?.id]);
 
@@ -1359,6 +1374,8 @@ export const usePOS = () => {
     showCloseSessionModal,
     sessionTotalCashSales,
     sessionExpectedAmount,
+    sessionOtherIngresos,
+    sessionOtherEgresos,
 
     handleCloseSession,
     cancelCloseSession,

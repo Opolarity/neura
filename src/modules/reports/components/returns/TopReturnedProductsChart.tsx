@@ -1,4 +1,17 @@
-import { Card, Title, BarChart, Select, SelectItem } from '@tremor/react';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  ChartLoading,
+  ReportCard,
+  ReportSelect,
+} from '../shared/ReportScaffold';
+import {
+  chartAxis,
+  chartGrid,
+  formatNumber,
+  reportChartColors,
+  truncateLabel,
+} from '../shared/reportChartUtils';
 import type { TopReturnedProduct } from '../../types/reports.types';
 
 interface Props {
@@ -10,32 +23,42 @@ interface Props {
 
 export function TopReturnedProductsChart({ data, loading, limit, onLimitChange }: Props) {
   const chartData = data.map((d) => ({
-    Producto: d.product_title.length > 20 ? d.product_title.slice(0, 20) + '…' : d.product_title,
-    'N° devoluciones': d.return_count,
-    'Unidades devueltas': d.total_quantity_returned,
+    producto: truncateLabel(d.product_title, 24),
+    devoluciones: d.return_count,
+    unidades: d.total_quantity_returned,
   }));
 
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-4">
-        <Title>Productos más devueltos</Title>
-        <Select value={limit.toString()} onValueChange={(v) => onLimitChange(Number(v))} className="w-20">
-          <SelectItem value="5">Top 5</SelectItem>
-          <SelectItem value="10">Top 10</SelectItem>
-        </Select>
-      </div>
-      {loading ? (
-        <div className="h-48 bg-muted animate-pulse rounded" />
-      ) : (
-        <BarChart
-          data={chartData}
-          index="Producto"
-          categories={['N° devoluciones']}
-          colors={['blue']}
-          layout="vertical"
-          className="h-48"
+    <ReportCard
+      title="Productos más devueltos"
+      actions={
+        <ReportSelect
+          value={limit.toString()}
+          onValueChange={(value) => onLimitChange(Number(value))}
+          className="w-24"
+          options={[
+            { value: '5', label: 'Top 5' },
+            { value: '10', label: 'Top 10' },
+          ]}
         />
+      }
+    >
+      {loading ? (
+        <ChartLoading />
+      ) : (
+        <ChartContainer
+          config={{ devoluciones: { label: 'Devoluciones', color: reportChartColors.blue } }}
+          className="h-56 w-full aspect-auto"
+        >
+          <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 16 }}>
+            <CartesianGrid horizontal={false} className={chartGrid} />
+            <XAxis type="number" hide />
+            <YAxis type="category" dataKey="producto" tickLine={false} axisLine={false} width={136} className={chartAxis} />
+            <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatNumber(value as number)} />} />
+            <Bar dataKey="devoluciones" fill="var(--color-devoluciones)" radius={[0, 4, 4, 0]} />
+          </BarChart>
+        </ChartContainer>
       )}
-    </Card>
+    </ReportCard>
   );
 }
