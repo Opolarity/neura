@@ -76,8 +76,8 @@ const POSSessionDetailDialog = ({
       setTotalIngresos(adapted.totalIngresos);
       setTotalVueltos(adapted.totalVueltos);
       // get_pos_session_detail already calculates these with proper session bounds
-      setOtherIngresos(adapted.session.otherIngresos);
-      setOtherEgresos(adapted.session.otherEgresos);
+      setOtherIngresos(adapted.session.otherIncome);
+      setOtherEgresos(adapted.session.otherExpenses);
     } catch (err) {
       console.error("Error loading session detail:", err);
     } finally {

@@ -18,8 +18,8 @@ export interface POSSessionDetail {
   difference: number | null;
   openingDifference: number;
   otherMovements: number;
-  otherIngresos: number;
-  otherEgresos: number;
+  otherIncome: number;
+  otherExpenses: number;
   statusId: number;
   statusName: string;
   statusCode: string;
@@ -63,8 +63,8 @@ export interface POSSessionDetailApiResponse {
     difference: number | null;
     opening_difference: number;
     other_movements: number | null;
-    other_ingresos: number | null;
-    other_egresos: number | null;
+    other_income: number | null;
+    other_expenses: number | null;
     status_id: number;
     status_name: string;
     status_code: string;
