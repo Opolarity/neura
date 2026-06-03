@@ -44,6 +44,7 @@ import {
 } from "../services";
 import { getPriceListIsActiveTrue, getActivePaymentMethodsBySaleTypeId, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { createPOSOrder } from "../services/POS.service";
+import { getPOSSessionDetail } from "@/modules/pos/services/POSDetail.service";
 
 import { filterShippingCostsByLocation } from "../utils";
 
@@ -1177,10 +1178,10 @@ export const usePOS = () => {
   const [sessionOtherIngresos, setSessionOtherIngresos] = useState(0);
   const [sessionOtherEgresos, setSessionOtherEgresos] = useState(0);
 
-  // Load session close data:
-  // - expectedAmount comes directly from business_accounts.total_amount (source of truth,
-  //   already reflects all movements: sales, external INC/OUT, etc.)
-  // - otherIngresos/otherEgresos from edge function for visual breakdown only
+  // Load session close data using get_pos_session_detail as the single source of truth.
+  // That SP calculates other_ingresos/other_egresos with proper session bounds
+  // (opened_at … closed_at-4s for closed sessions, opened_at … NOW()+1s for open ones),
+  // avoiding movements from other sessions leaking into the breakdown.
   const loadSessionCloseData = useCallback(async () => {
     if (!POSSessionHook.session?.id) {
       setSessionTotalCashSales(0);
@@ -1191,23 +1192,19 @@ export const usePOS = () => {
     }
 
     try {
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("pos_sessions")
-        .select("total_cash_sales, business_account, opened_at")
-        .eq("id", POSSessionHook.session.id)
-        .single();
+      const response = await getPOSSessionDetail(POSSessionHook.session.id);
+      const s = response.session;
 
-      if (sessionError) throw sessionError;
+      setSessionTotalCashSales(Number(s.total_cash_sales ?? 0) || 0);
+      setSessionOtherIngresos(Number(s.other_ingresos ?? 0) || 0);
+      setSessionOtherEgresos(Number(s.other_egresos ?? 0) || 0);
 
-      const cashSales = Number(sessionData?.total_cash_sales ?? 0) || 0;
-      setSessionTotalCashSales(cashSales);
-
-      // Expected amount = current BA balance (already includes all movements)
-      if (sessionData?.business_account) {
+      // Expected = current live balance (source of truth for closing)
+      if (s.business_account) {
         const { data: accountData, error: accountError } = await supabase
           .from("business_accounts")
           .select("total_amount")
-          .eq("id", sessionData.business_account)
+          .eq("id", s.business_account)
           .single();
 
         if (accountError) throw accountError;
@@ -1215,27 +1212,6 @@ export const usePOS = () => {
       } else {
         setSessionExpectedAmount(0);
       }
-
-      // Visual breakdown: ingresos/egresos from edge function (display only)
-      if (sessionData?.business_account && sessionData?.opened_at) {
-        const { data: movements, error: movErr } = await supabase.functions.invoke(
-          "get-pos-session-close-details",
-          {
-            body: {
-              business_account_id: sessionData.business_account,
-              opened_at: sessionData.opened_at,
-            },
-          }
-        );
-
-        if (!movErr && Array.isArray(movements)) {
-          const external = (movements as Array<{ amount: number; movement_type_code: string; order_payment_id: number | null }>)
-            .filter((m) => m.order_payment_id === null);
-          setSessionOtherIngresos(Math.round(external.filter(m => m.movement_type_code === "INC").reduce((sum, m) => sum + m.amount, 0) * 100) / 100);
-          setSessionOtherEgresos(Math.round(external.filter(m => m.movement_type_code !== "INC").reduce((sum, m) => sum + m.amount, 0) * 100) / 100);
-        }
-      }
-
     } catch (error) {
       console.error("Error loading session close data:", error);
       setSessionTotalCashSales(0);
