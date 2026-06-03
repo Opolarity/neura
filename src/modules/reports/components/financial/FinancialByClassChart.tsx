@@ -1,4 +1,15 @@
-import { Card, Title, BarChart } from '@tremor/react';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  ChartLoading,
+  ReportCard,
+} from '../shared/ReportScaffold';
+import {
+  chartAxis,
+  chartGrid,
+  formatCurrencyAxis,
+  reportChartColors,
+} from '../shared/reportChartUtils';
 import type { FinancialByClassItem } from '../../types/reports.types';
 
 interface Props {
@@ -8,26 +19,33 @@ interface Props {
 
 export function FinancialByClassChart({ data, loading }: Props) {
   const chartData = data.map((d) => ({
-    Clase: d.class_name,
-    'Ingresos (S/)': d.income,
-    'Egresos (S/)': d.expense,
+    clase: d.class_name,
+    ingresos: d.income,
+    egresos: d.expense,
   }));
 
   return (
-    <Card>
-      <Title>Por clase de movimiento</Title>
+    <ReportCard title="Por clase de movimiento">
       {loading ? (
-        <div className="h-48 bg-muted animate-pulse rounded mt-4" />
+        <ChartLoading />
       ) : (
-        <BarChart
-          data={chartData}
-          index="Clase"
-          categories={['Ingresos (S/)', 'Egresos (S/)']}
-          colors={['emerald', 'rose']}
-          valueFormatter={(v) => `S/ ${v.toLocaleString('es-PE')}`}
-          className="h-48 mt-4"
-        />
+        <ChartContainer
+          config={{
+            ingresos: { label: 'Ingresos', color: reportChartColors.emerald },
+            egresos: { label: 'Egresos', color: reportChartColors.rose },
+          }}
+          className="h-56 w-full aspect-auto"
+        >
+          <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
+            <CartesianGrid vertical={false} className={chartGrid} />
+            <XAxis dataKey="clase" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
+            <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={formatCurrencyAxis} className={chartAxis} />
+            <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrencyAxis(value as number)} />} />
+            <Bar dataKey="ingresos" fill="var(--color-ingresos)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="egresos" fill="var(--color-egresos)" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ChartContainer>
       )}
-    </Card>
+    </ReportCard>
   );
 }
