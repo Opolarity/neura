@@ -23,9 +23,11 @@ export type FranchiseProductsFilters = {
   date_from?: string;
   date_to?: string;
   payment_statuses?: FranchisePaymentStatus[];
+  sales_status?: FranchiseSalesStatus;
 };
 
 export type FranchisePaymentStatus = "paid" | "unpaid" | "partial";
+export type FranchiseSalesStatus = "all" | "with_sales" | "without_sales";
 
 export type FranchiseSummary = {
   totalSent: number;
@@ -79,6 +81,7 @@ export const fetchFranchiseProducts = async (
     ...(filters.payment_statuses?.length
       ? { payment_statuses: filters.payment_statuses.join(",") }
       : {}),
+    ...(filters.sales_status ? { sales_status: filters.sales_status } : {}),
   });
 
   const { data, error } = await supabase.functions.invoke(endpoint, {

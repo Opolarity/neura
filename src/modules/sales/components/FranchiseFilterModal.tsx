@@ -9,6 +9,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -19,7 +26,10 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/shared/utils/utils";
-import type { FranchisePaymentStatus } from "../services/FranchiseProducts.service";
+import type {
+  FranchisePaymentStatus,
+  FranchiseSalesStatus,
+} from "../services/FranchiseProducts.service";
 
 const PAYMENT_STATUS_OPTIONS: Array<{
   value: FranchisePaymentStatus;
@@ -30,16 +40,27 @@ const PAYMENT_STATUS_OPTIONS: Array<{
   { value: "partial", label: "Pagado parcialmente" },
 ];
 
+const SALES_STATUS_OPTIONS: Array<{
+  value: FranchiseSalesStatus;
+  label: string;
+}> = [
+  { value: "all", label: "Todos" },
+  { value: "with_sales", label: "Con ventas" },
+  { value: "without_sales", label: "Sin ventas" },
+];
+
 interface FranchiseFilterModalProps {
   isOpen: boolean;
   dateFrom: string | undefined;
   dateTo: string | undefined;
   paymentStatuses: FranchisePaymentStatus[];
+  salesStatus: FranchiseSalesStatus;
   onClose: () => void;
   onApply: (
     dateFrom: string | undefined,
     dateTo: string | undefined,
     paymentStatuses: FranchisePaymentStatus[],
+    salesStatus: FranchiseSalesStatus,
   ) => void;
   onClear: () => void;
 }
@@ -49,6 +70,7 @@ const FranchiseFilterModal = ({
   dateFrom,
   dateTo,
   paymentStatuses,
+  salesStatus,
   onClose,
   onApply,
   onClear,
@@ -61,12 +83,15 @@ const FranchiseFilterModal = ({
   );
   const [selectedPaymentStatuses, setSelectedPaymentStatuses] =
     useState<FranchisePaymentStatus[]>(paymentStatuses);
+  const [selectedSalesStatus, setSelectedSalesStatus] =
+    useState<FranchiseSalesStatus>(salesStatus);
 
   useEffect(() => {
     setStartDate(dateFrom ? new Date(dateFrom) : undefined);
     setEndDate(dateTo ? new Date(dateTo) : undefined);
     setSelectedPaymentStatuses(paymentStatuses);
-  }, [dateFrom, dateTo, paymentStatuses, isOpen]);
+    setSelectedSalesStatus(salesStatus);
+  }, [dateFrom, dateTo, paymentStatuses, salesStatus, isOpen]);
 
   const togglePaymentStatus = (status: FranchisePaymentStatus) => {
     setSelectedPaymentStatuses((current) =>
@@ -81,6 +106,7 @@ const FranchiseFilterModal = ({
       startDate ? format(startDate, "yyyy-MM-dd") : undefined,
       endDate ? format(endDate, "yyyy-MM-dd") : undefined,
       selectedPaymentStatuses,
+      selectedSalesStatus,
     );
   };
 
@@ -174,6 +200,27 @@ const FranchiseFilterModal = ({
                 ))}
               </div>
             </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Estado de venta</Label>
+            <Select
+              value={selectedSalesStatus}
+              onValueChange={(value) =>
+                setSelectedSalesStatus(value as FranchiseSalesStatus)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SALES_STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
