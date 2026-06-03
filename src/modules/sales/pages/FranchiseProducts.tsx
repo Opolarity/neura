@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Filter, Loader2, RefreshCw, Search } from "lucide-react";
+import { Download, Filter, Loader2, RefreshCw, Search } from "lucide-react";
+import { toast } from "sonner";
 import { PagosConfirmarModal } from "../components/PagosConfirmarModal";
 import FranchiseFilterModal from "../components/FranchiseFilterModal";
+import { generateFranchiseProductsExcel } from "../utils/generateFranchiseProductsExcel";
 import {
   fetchFranchiseProducts,
   type FranchiseProductRow,
@@ -75,6 +77,7 @@ const FranchiseProducts = () => {
     total: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagosModalOpen, setPagosModalOpen] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -132,6 +135,49 @@ const FranchiseProducts = () => {
   };
 
   const handleRefresh = () => loadProducts(filters);
+
+  const handleExportExcel = async () => {
+    try {
+      setExporting(true);
+
+      let total = pagination.total;
+      let exportSummary = summary;
+
+      if (!total) {
+        const probe = await fetchFranchiseProducts({
+          ...filters,
+          page: 1,
+          size: 1,
+        });
+        total = probe.pagination.total;
+        exportSummary = probe.summary;
+      }
+
+      if (!total) {
+        toast.info("No hay registros para exportar con los filtros aplicados.");
+        return;
+      }
+
+      const result = await fetchFranchiseProducts({
+        ...filters,
+        page: 1,
+        size: total,
+      });
+
+      generateFranchiseProductsExcel({
+        rows: result.data,
+        summary: result.summary ?? exportSummary,
+        filters,
+      });
+
+      toast.success(`${result.data.length} registros exportados correctamente.`);
+    } catch (err) {
+      console.error("Error exporting franchise products:", err);
+      toast.error("No se pudo generar el Excel. Inténtalo de nuevo.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleApplyFilters = (
     dateFrom: string | undefined,
@@ -259,6 +305,18 @@ const FranchiseProducts = () => {
             >
               <Filter className="mr-2 h-4 w-4" />
               Filtrar
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleExportExcel}
+              disabled={loading || exporting}
+            >
+              {exporting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              {exporting ? "Generando..." : "Descargar Excel"}
             </Button>
           </div>
         </CardHeader>
