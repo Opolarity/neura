@@ -1,4 +1,24 @@
-import { Card, Title, BarChart, Select, SelectItem } from '@tremor/react';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  ChartLoading,
+  ReportCard,
+  ReportSelect,
+} from '../shared/ReportScaffold';
+import {
+  chartAxis,
+  chartGrid,
+  formatCurrencyAxis,
+  reportChartColors,
+  truncateLabel,
+} from '../shared/reportChartUtils';
 import type { TopProductItem, TopLimit, ProductsByCategoryItem } from '../../types/reports.types';
 
 interface Props {
@@ -15,49 +35,68 @@ const ALL = '__all__';
 
 export function TopProductsChart({ data, loading, limit, onLimitChange, categoryId, categories, onCategoryChange }: Props) {
   const chartData = data.map((d) => ({
-    Producto: d.product_title.length > 32 ? d.product_title.slice(0, 32) + '…' : d.product_title,
-    'Ingresos (S/)': d.total_revenue,
-    Unidades: d.total_quantity,
+    producto: truncateLabel(d.product_title, 32),
+    ingresos: d.total_revenue,
+    unidades: d.total_quantity,
   }));
 
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-4">
-        <Title>Productos más vendidos</Title>
-        <div className="flex gap-2">
+    <ReportCard
+      title="Productos más vendidos"
+      actions={
+        <div className="flex flex-wrap gap-2">
           <Select
             value={categoryId?.toString() ?? ALL}
             onValueChange={(v) => onCategoryChange(v === ALL ? null : Number(v))}
-            className="w-40"
           >
+            <SelectTrigger className="h-9 w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
             <SelectItem value={ALL}>Todas las categorías</SelectItem>
             {categories.map((c) => (
               <SelectItem key={c.category_id ?? 'null'} value={c.category_id?.toString() ?? 'null'}>
                 {c.category_name}
               </SelectItem>
             ))}
+            </SelectContent>
           </Select>
-          <Select value={limit.toString()} onValueChange={(v) => onLimitChange(Number(v) as TopLimit)} className="w-20">
-            <SelectItem value="5">Top 5</SelectItem>
-            <SelectItem value="10">Top 10</SelectItem>
-            <SelectItem value="20">Top 20</SelectItem>
-          </Select>
+          <ReportSelect
+            value={limit.toString()}
+            onValueChange={(value) => onLimitChange(Number(value) as TopLimit)}
+            className="w-24"
+            options={[
+              { value: '5', label: 'Top 5' },
+              { value: '10', label: 'Top 10' },
+              { value: '20', label: 'Top 20' },
+            ]}
+          />
         </div>
-      </div>
+      }
+    >
       {loading ? (
-        <div className="h-96 bg-muted animate-pulse rounded" />
+        <ChartLoading className="h-96" />
       ) : (
-        <BarChart
-          data={chartData}
-          index="Producto"
-          categories={['Ingresos (S/)']}
-          colors={['blue']}
-          valueFormatter={(v) => `S/ ${v.toLocaleString('es-PE')}`}
-          layout="vertical"
-          className="h-96"
-          yAxisWidth={180}
-        />
+        <ChartContainer
+          config={{ ingresos: { label: 'Ingresos', color: reportChartColors.blue } }}
+          className="h-96 w-full aspect-auto"
+        >
+          <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 16 }}>
+            <CartesianGrid horizontal={false} className={chartGrid} />
+            <XAxis type="number" hide />
+            <YAxis
+              type="category"
+              dataKey="producto"
+              tickLine={false}
+              axisLine={false}
+              width={184}
+              className={chartAxis}
+            />
+            <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrencyAxis(value as number)} />} />
+            <Bar dataKey="ingresos" fill="var(--color-ingresos)" radius={[0, 4, 4, 0]} />
+          </BarChart>
+        </ChartContainer>
       )}
-    </Card>
+    </ReportCard>
   );
 }

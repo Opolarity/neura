@@ -233,7 +233,7 @@ All colors MUST be HSL.
 
 .ProseMirror h1 { font-size: 1.5em; font-weight: 700; margin: 0.5em 0; }
 
-/* Recharts/Tremor: mapear blue-500 → blue-600 (hsl(var(--primary))) del sistema */
+/* Recharts: mapear blue-500 → blue-600 (hsl(var(--primary))) del sistema */
 [class~="fill-blue-500"] {
   fill: hsl(var(--primary)) !important;
 }
@@ -250,19 +250,6 @@ All colors MUST be HSL.
 .recharts-active-dot circle {
   fill: hsl(var(--primary)) !important;
   stroke: white !important;
-}
-
-/* Tremor: fondo sólido en Cards, selects y tooltips de charts */
-.tremor-Card-root {
-  background-color: white !important;
-}
-
-.tremor-SelectButton-root,
-.tremor-SelectPopover-root,
-.tremor-SelectItem-root,
-[data-radix-popper-content-wrapper] .tremor-SelectPopover-root {
-  background-color: white !important;
-  color: #111827 !important;
 }
 
 .recharts-tooltip-wrapper .recharts-default-tooltip,
@@ -294,10 +281,5 @@ All colors MUST be HSL.
   font-size: 11px !important;
 }
 
-/* Tremor custom tooltip */
-.tremor-Card-root [class*="tooltip"],
-[class*="tremor-"][class*="Tooltip"] {
-  font-size: 11px !important;
-}
 .ProseMirror h2 { font-size: 1.25em; font-weight: 600; margin: 0.5em 0; }
 .ProseMirror h3 { font-size: 1.1em; font-weight: 600; margin: 0.5em 0; }

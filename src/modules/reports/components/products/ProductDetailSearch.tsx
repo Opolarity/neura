@@ -1,5 +1,18 @@
-import { Card, Title, LineChart, Grid, Col, Text, Metric } from '@tremor/react';
+import { Line, LineChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { PackageSearch } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  ChartLoading,
+  EmptyReportState,
+  ReportCard,
+} from '../shared/ReportScaffold';
+import {
+  chartAxis,
+  chartGrid,
+  formatNumber,
+  reportChartColors,
+} from '../shared/reportChartUtils';
 import type { ProductDetailData } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
 
@@ -17,72 +30,78 @@ export function ProductDetailSearch({
   detailLoading,
 }: Props) {
   const chartData = detail?.sales_over_time.map((d) => ({
-    Fecha: d.period,
-    'Ventas (S/)': d.total_revenue,
-    Unidades: d.total_quantity,
+    fecha: d.period,
+    ventas: d.total_revenue,
+    unidades: d.total_quantity,
   })) ?? [];
 
   return (
-    <Card>
-      <Title className="mb-4">Análisis de producto individual</Title>
-
+    <ReportCard title="Análisis de producto individual">
       {selectedProductId === null && (
         <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
           <PackageSearch className="w-10 h-10 text-muted-foreground/60" />
-          <Text className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Selecciona un producto en el filtro <span className="font-medium">"Más opciones +"</span> para ver su análisis individual.
-          </Text>
+          </p>
         </div>
       )}
 
       {selectedProductId !== null && detailLoading && (
-        <div className="h-48 bg-muted animate-pulse rounded" />
+        <ChartLoading />
       )}
 
       {selectedProductId !== null && detail && !detailLoading && (
         <div className="space-y-6">
           <div>
-            <Text className="font-semibold text-base">
+            <p className="text-base font-semibold">
               {detail.product_info?.title ?? selectedProductTitle}
-            </Text>
-            <Text className="text-xs text-muted-foreground">
+            </p>
+            <p className="text-xs text-muted-foreground">
               {detail.product_info?.variations?.map((v) => v.sku).join(', ')}
-            </Text>
+            </p>
           </div>
 
           {/* Stock by warehouse */}
-          <Grid numItemsSm={2} numItemsLg={4} className="gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {detail.current_stock.map((s) => (
-              <Col key={s.warehouse_id}>
-                <Card decoration="top" decorationColor="blue">
-                  <Text>{s.warehouse_name}</Text>
-                  <Metric>{s.total_stock}</Metric>
-                  <Text className="text-xs text-muted-foreground">unidades en stock</Text>
-                </Card>
-              </Col>
+              <Card key={s.warehouse_id} className="border-t-4 border-t-primary">
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">{s.warehouse_name}</p>
+                  <p className="mt-1 text-2xl font-semibold tabular-nums">{s.total_stock}</p>
+                  <p className="text-xs text-muted-foreground">unidades en stock</p>
+                </CardContent>
+              </Card>
             ))}
-          </Grid>
+          </div>
 
           {/* Sales over time */}
           {chartData.length > 0 ? (
-            <LineChart
-              data={chartData}
-              index="Fecha"
-              categories={['Ventas (S/)', 'Unidades']}
-              colors={['indigo', 'emerald']}
-              valueFormatter={(v) => v.toLocaleString('es-PE')}
-              className="h-48"
-            />
+            <ChartContainer
+              config={{
+                ventas: { label: 'Ventas', color: reportChartColors.indigo },
+                unidades: { label: 'Unidades', color: reportChartColors.emerald },
+              }}
+              className="h-56 w-full aspect-auto"
+            >
+              <LineChart data={chartData} margin={{ left: 12, right: 12 }}>
+                <CartesianGrid vertical={false} className={chartGrid} />
+                <XAxis dataKey="fecha" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
+                <YAxis tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
+                <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatNumber(value as number)} />} />
+                <Line dataKey="ventas" type="monotone" stroke="var(--color-ventas)" strokeWidth={2} dot={false} />
+                <Line dataKey="unidades" type="monotone" stroke="var(--color-unidades)" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ChartContainer>
           ) : (
-            <Text className="text-muted-foreground text-sm text-center py-8">
+            <EmptyReportState>
               Sin ventas en el periodo seleccionado
-            </Text>
+            </EmptyReportState>
           )}
 
           {/* Top variations */}
           {detail.top_variations.length > 0 && (
             <div>
-              <Text className="font-medium mb-2">Variaciones más vendidas</Text>
+              <p className="mb-2 text-sm font-medium">Variaciones más vendidas</p>
               <div className="space-y-1">
                 {detail.top_variations.map((v) => (
                   <div key={v.variation_id} className="flex justify-between text-sm py-1 border-b">
@@ -95,6 +114,6 @@ export function ProductDetailSearch({
           )}
         </div>
       )}
-    </Card>
+    </ReportCard>
   );
 }

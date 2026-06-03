@@ -1,9 +1,15 @@
-import {
-  Card, Title, Table, TableHead, TableHeaderCell, TableBody,
-  TableRow, TableCell, Badge,
-} from '@tremor/react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChartLoading, ReportCard } from '../shared/ReportScaffold';
 import type { LowStockProduct } from '../../types/reports.types';
 
 interface Props {
@@ -19,24 +25,23 @@ export function LowStockTable({ data, loading, total, page, pageSize, onPageChan
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-4">
-        <Title>Productos con stock bajo</Title>
-        <Badge color="amber">{total} productos</Badge>
-      </div>
+    <ReportCard
+      title="Productos con stock bajo"
+      actions={<Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">{total} productos</Badge>}
+    >
       {loading ? (
-        <div className="h-40 bg-muted animate-pulse rounded" />
+        <ChartLoading className="h-40" />
       ) : (
         <>
           <Table>
-            <TableHead>
+            <TableHeader>
               <TableRow>
-                <TableHeaderCell>Producto</TableHeaderCell>
-                <TableHeaderCell>SKU</TableHeaderCell>
-                <TableHeaderCell>Almacén</TableHeaderCell>
-                <TableHeaderCell className="text-right">Stock</TableHeaderCell>
+                <TableHead>Producto</TableHead>
+                <TableHead>SKU</TableHead>
+                <TableHead>Almacén</TableHead>
+                <TableHead className="text-right">Stock</TableHead>
               </TableRow>
-            </TableHead>
+            </TableHeader>
             <TableBody>
               {data.map((item) => (
                 <TableRow key={`${item.product_variation_id}-${item.warehouse_id}`}>
@@ -44,7 +49,10 @@ export function LowStockTable({ data, loading, total, page, pageSize, onPageChan
                   <TableCell className="text-xs text-muted-foreground">{item.sku}</TableCell>
                   <TableCell className="text-sm">{item.warehouse_name}</TableCell>
                   <TableCell className="text-right">
-                    <Badge color={item.stock === 0 ? 'red' : 'amber'} size="xs">
+                    <Badge
+                      variant={item.stock === 0 ? 'destructive' : 'outline'}
+                      className={item.stock === 0 ? '' : 'border-amber-200 bg-amber-50 text-amber-700'}
+                    >
                       {item.stock}
                     </Badge>
                   </TableCell>
@@ -67,6 +75,6 @@ export function LowStockTable({ data, loading, total, page, pageSize, onPageChan
           )}
         </>
       )}
-    </Card>
+    </ReportCard>
   );
 }

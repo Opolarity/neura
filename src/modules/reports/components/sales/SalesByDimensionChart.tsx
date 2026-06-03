@@ -1,4 +1,15 @@
-import { Card, Title, BarChart } from '@tremor/react';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  ChartLoading,
+  ReportCard,
+} from '../shared/ReportScaffold';
+import {
+  chartAxis,
+  chartGrid,
+  formatCurrencyAxis,
+  reportChartColors,
+} from '../shared/reportChartUtils';
 import type { SalesByDimensionItem, SalesDimension } from '../../types/reports.types';
 
 interface DimensionBlock {
@@ -38,30 +49,37 @@ export function SalesByDimensionChart({ dimensions }: Props) {
               .slice(0, 5)
           : data;
         const chartData = sliced.map((d) => ({
-          Dimensión: d.label,
-          'Ventas (S/)': d.total_revenue,
+          dimension: d.label,
+          ventas: d.total_revenue,
         }));
 
         return (
-          <Card key={dim}>
-            <Title>Ventas por {DIMENSION_LABELS[dim]}</Title>
+          <ReportCard key={dim} title={`Ventas por ${DIMENSION_LABELS[dim]}`}>
             {loading ? (
-              <div className="h-40 bg-muted animate-pulse rounded mt-4" />
+              <ChartLoading className="h-44" />
             ) : (
-              <BarChart
-                data={chartData}
-                index="Dimensión"
-                categories={['Ventas (S/)']}
-                colors={['blue']}
-                valueFormatter={(v) => `S/ ${v.toLocaleString('es-PE')}`}
-                layout="vertical"
-                yAxisWidth={130}
-                showLegend={false}
-                className="mt-4"
-                style={{ height: Math.max(chartData.length * 40, 120) }}
-              />
+              <ChartContainer
+                config={{ ventas: { label: 'Ventas', color: reportChartColors.blue } }}
+                className="w-full aspect-auto"
+                style={{ height: Math.max(chartData.length * 38, 140) }}
+              >
+                <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 16 }}>
+                  <CartesianGrid horizontal={false} className={chartGrid} />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    type="category"
+                    dataKey="dimension"
+                    tickLine={false}
+                    axisLine={false}
+                    width={132}
+                    className={chartAxis}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrencyAxis(value as number)} />} />
+                  <Bar dataKey="ventas" fill="var(--color-ventas)" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ChartContainer>
             )}
-          </Card>
+          </ReportCard>
         );
       })}
     </div>
