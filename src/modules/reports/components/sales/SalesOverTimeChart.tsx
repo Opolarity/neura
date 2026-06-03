@@ -1,4 +1,16 @@
-import { Card, Title, AreaChart, Select, SelectItem } from '@tremor/react';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  ChartLoading,
+  ReportCard,
+  ReportSelect,
+} from '../shared/ReportScaffold';
+import {
+  chartAxis,
+  chartGrid,
+  formatCurrencyAxis,
+  reportChartColors,
+} from '../shared/reportChartUtils';
 import type { SalesOverTimeItem, Granularity } from '../../types/reports.types';
 
 interface Props {
@@ -16,40 +28,56 @@ const GRANULARITY_LABELS: Record<Granularity, string> = {
 
 export function SalesOverTimeChart({ data, loading, granularity, onGranularityChange }: Props) {
   const chartData = data.map((d) => ({
-    Fecha: d.period,
-    'Ventas (S/)': d.total_revenue,
-    'Pedidos': d.order_count,
+    fecha: d.period,
+    ventas: d.total_revenue,
+    pedidos: d.order_count,
   }));
 
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-4">
-        <Title>Ventas en el tiempo</Title>
-        <Select
+    <ReportCard
+      title="Ventas en el tiempo"
+      actions={
+        <ReportSelect
           value={granularity}
-          onValueChange={(v) => onGranularityChange(v as Granularity)}
+          onValueChange={onGranularityChange}
+          options={(Object.entries(GRANULARITY_LABELS) as [Granularity, string][]).map(([value, label]) => ({
+            value,
+            label,
+          }))}
           className="w-32"
-        >
-          {(Object.entries(GRANULARITY_LABELS) as [Granularity, string][]).map(([key, label]) => (
-            <SelectItem key={key} value={key}>{label}</SelectItem>
-          ))}
-        </Select>
-      </div>
-      {loading ? (
-        <div className="h-48 bg-muted animate-pulse rounded" />
-      ) : (
-        <AreaChart
-          data={chartData}
-          index="Fecha"
-          categories={['Ventas (S/)']}
-          colors={['blue']}
-          valueFormatter={(v) => `S/ ${v.toLocaleString('es-PE')}`}
-          showLegend
-          showGridLines
-          yAxisWidth={90}
-          className="h-48"
         />
+      }
+    >
+      {loading ? (
+        <ChartLoading />
+      ) : (
+        <ChartContainer
+          config={{ ventas: { label: 'Ventas', color: reportChartColors.blue } }}
+          className="h-56 w-full aspect-auto"
+        >
+          <AreaChart data={chartData} margin={{ left: 12, right: 12 }}>
+            <CartesianGrid vertical={false} className={chartGrid} />
+            <XAxis dataKey="fecha" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              width={84}
+              tickFormatter={formatCurrencyAxis}
+              className={chartAxis}
+            />
+            <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrencyAxis(value as number)} />} />
+            <Area
+              dataKey="ventas"
+              type="monotone"
+              fill="var(--color-ventas)"
+              fillOpacity={0.18}
+              stroke="var(--color-ventas)"
+              strokeWidth={2}
+            />
+          </AreaChart>
+        </ChartContainer>
       )}
-    </Card>
+    </ReportCard>
   );
 }

@@ -193,10 +193,24 @@ const POSSessionDetailDialog = ({
                   )
                 }
               />
-              <InfoItem
-                label="Otros ajustes de efectivo externos"
-                value={`S/ ${formatCurrency(session.otherMovements)}`}
-              />
+              {session.otherIngresos > 0 && (
+                <InfoItem
+                  label="Ajustes externos — Ingresos"
+                  value={<span className="text-blue-600">+ S/ {formatCurrency(session.otherIngresos)}</span>}
+                />
+              )}
+              {session.otherEgresos > 0 && (
+                <InfoItem
+                  label="Ajustes externos — Egresos"
+                  value={<span className="text-destructive">- S/ {formatCurrency(session.otherEgresos)}</span>}
+                />
+              )}
+              {session.otherIngresos === 0 && session.otherEgresos === 0 && (
+                <InfoItem
+                  label="Otros ajustes de efectivo externos"
+                  value="S/ 0.00"
+                />
+              )}
             </div>
 
             {session.notes && (

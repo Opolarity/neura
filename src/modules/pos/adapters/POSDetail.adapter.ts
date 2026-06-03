@@ -25,6 +25,8 @@ export const adaptPOSSessionDetail = (
       difference: s.difference,
       openingDifference: s.opening_difference,
       otherMovements: s.other_movements ?? 0,
+      otherIngresos: s.other_ingresos ?? 0,
+      otherEgresos: s.other_egresos ?? 0,
       statusId: s.status_id,
       statusName: s.status_name,
       statusCode: s.status_code,

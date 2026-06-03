@@ -1,4 +1,14 @@
-import { Card, Title, DonutChart } from '@tremor/react';
+import { Cell, Pie, PieChart } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  ChartLoading,
+  EmptyReportState,
+  ReportCard,
+} from '../shared/ReportScaffold';
+import {
+  formatNumber,
+  reportChartColors,
+} from '../shared/reportChartUtils';
 import type { ReturnsByReasonItem } from '../../types/reports.types';
 
 interface Props {
@@ -11,24 +21,36 @@ export function ReturnsByReasonChart({ data, loading }: Props) {
     name: d.reason,
     value: d.count,
   }));
+  const colors = [
+    reportChartColors.rose,
+    reportChartColors.orange,
+    reportChartColors.amber,
+    reportChartColors.pink,
+    reportChartColors.fuchsia,
+    reportChartColors.slate,
+  ];
 
   return (
-    <Card>
-      <Title>Devoluciones por motivo</Title>
+    <ReportCard title="Devoluciones por motivo">
       {loading ? (
-        <div className="h-48 bg-muted animate-pulse rounded mt-4" />
+        <ChartLoading />
       ) : data.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-12">Sin datos en el periodo</p>
+        <EmptyReportState>Sin datos en el periodo</EmptyReportState>
       ) : (
-        <DonutChart
-          data={chartData}
-          category="value"
-          index="name"
-          valueFormatter={(v) => `${v} dev.`}
-          colors={['rose', 'orange', 'amber', 'red', 'pink', 'fuchsia']}
-          className="h-48 mt-4"
-        />
+        <ChartContainer
+          config={{ value: { label: 'Devoluciones', color: reportChartColors.rose } }}
+          className="h-56 w-full aspect-auto"
+        >
+          <PieChart>
+            <ChartTooltip content={<ChartTooltipContent hideLabel formatter={(value) => `${formatNumber(value as number)} dev.`} />} />
+            <Pie data={chartData} dataKey="value" nameKey="name" innerRadius={52} outerRadius={82} paddingAngle={2}>
+              {chartData.map((entry, index) => (
+                <Cell key={entry.name} fill={colors[index % colors.length]} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ChartContainer>
       )}
-    </Card>
+    </ReportCard>
   );
 }

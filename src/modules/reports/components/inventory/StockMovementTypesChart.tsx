@@ -1,4 +1,15 @@
-import { Card, Title, BarChart } from '@tremor/react';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  ChartLoading,
+  ReportCard,
+} from '../shared/ReportScaffold';
+import {
+  chartAxis,
+  chartGrid,
+  formatNumber,
+  reportChartColors,
+} from '../shared/reportChartUtils';
 import type { StockMovementTypeItem } from '../../types/reports.types';
 
 interface Props {
@@ -8,25 +19,33 @@ interface Props {
 
 export function StockMovementTypesChart({ data, loading }: Props) {
   const chartData = data.map((d) => ({
-    Tipo: d.type_name,
-    Movimientos: d.movement_count,
-    'Unidades totales': d.total_quantity,
+    tipo: d.type_name,
+    movimientos: d.movement_count,
+    unidades: d.total_quantity,
   }));
 
   return (
-    <Card>
-      <Title>Tipos de movimiento de inventario</Title>
+    <ReportCard title="Tipos de movimiento de inventario">
       {loading ? (
-        <div className="h-48 bg-muted animate-pulse rounded mt-4" />
+        <ChartLoading />
       ) : (
-        <BarChart
-          data={chartData}
-          index="Tipo"
-          categories={['Movimientos', 'Unidades totales']}
-          colors={['blue', 'sky']}
-          className="h-48 mt-4"
-        />
+        <ChartContainer
+          config={{
+            movimientos: { label: 'Movimientos', color: reportChartColors.blue },
+            unidades: { label: 'Unidades totales', color: reportChartColors.sky },
+          }}
+          className="h-56 w-full aspect-auto"
+        >
+          <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
+            <CartesianGrid vertical={false} className={chartGrid} />
+            <XAxis dataKey="tipo" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
+            <YAxis tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
+            <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatNumber(value as number)} />} />
+            <Bar dataKey="movimientos" fill="var(--color-movimientos)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="unidades" fill="var(--color-unidades)" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ChartContainer>
       )}
-    </Card>
+    </ReportCard>
   );
 }

@@ -6,6 +6,8 @@ import {
   fetchFranchiseProducts,
   type FranchiseProductRow,
   type FranchiseProductsFilters,
+  type FranchisePaymentStatus,
+  type FranchiseSalesStatus,
   type FranchiseSummary,
 } from "../services/FranchiseProducts.service";
 import {
@@ -39,6 +41,12 @@ const formatNumber = (value: number | null): string => {
   );
 };
 
+const DEFAULT_PAYMENT_STATUSES: FranchisePaymentStatus[] = [
+  "unpaid",
+  "partial",
+];
+const DEFAULT_SALES_STATUS: FranchiseSalesStatus = "with_sales";
+
 const DEFAULT_FILTERS: FranchiseProductsFilters = {
   page: 1,
   size: 20,
@@ -46,6 +54,17 @@ const DEFAULT_FILTERS: FranchiseProductsFilters = {
   franchisee_only: false,
   date_from: undefined,
   date_to: undefined,
+  payment_statuses: DEFAULT_PAYMENT_STATUSES,
+  sales_status: DEFAULT_SALES_STATUS,
+};
+
+const hasDefaultPaymentStatuses = (
+  statuses: FranchisePaymentStatus[] | undefined,
+): boolean => {
+  if (!statuses || statuses.length !== DEFAULT_PAYMENT_STATUSES.length) {
+    return false;
+  }
+  return DEFAULT_PAYMENT_STATUSES.every((status) => statuses.includes(status));
 };
 
 const FranchiseProducts = () => {
@@ -117,11 +136,15 @@ const FranchiseProducts = () => {
   const handleApplyFilters = (
     dateFrom: string | undefined,
     dateTo: string | undefined,
+    paymentStatuses: FranchisePaymentStatus[],
+    salesStatus: FranchiseSalesStatus,
   ) => {
     const newFilters: FranchiseProductsFilters = {
       ...filters,
       date_from: dateFrom,
       date_to: dateTo,
+      payment_statuses: paymentStatuses,
+      sales_status: salesStatus,
       page: 1,
     };
     setFilters(newFilters);
@@ -134,6 +157,8 @@ const FranchiseProducts = () => {
       ...filters,
       date_from: undefined,
       date_to: undefined,
+      payment_statuses: DEFAULT_PAYMENT_STATUSES,
+      sales_status: DEFAULT_SALES_STATUS,
       page: 1,
     };
     setFilters(newFilters);
@@ -141,7 +166,10 @@ const FranchiseProducts = () => {
     setFilterModalOpen(false);
   };
 
-  const hasActiveFilters = !!(filters.date_from || filters.date_to);
+  const hasActiveFilters =
+    !!(filters.date_from || filters.date_to) ||
+    !hasDefaultPaymentStatuses(filters.payment_statuses) ||
+    filters.sales_status !== DEFAULT_SALES_STATUS;
 
   const totals = useMemo(
     () =>
@@ -149,11 +177,12 @@ const FranchiseProducts = () => {
         (acc, item) => {
           acc.quantity += item.quantity;
           acc.sold += item.soldByFranchise ?? 0;
+          acc.soldAmount += item.productPrice * (item.soldByFranchise ?? 0);
           acc.paid += item.paidByFranchise ?? 0;
           acc.total += item.total;
           return acc;
         },
-        { quantity: 0, sold: 0, paid: 0, total: 0 },
+        { quantity: 0, sold: 0, soldAmount: 0, paid: 0, total: 0 },
       ),
     [products],
   );
@@ -242,7 +271,7 @@ const FranchiseProducts = () => {
                   <TableHead>ID de la orden</TableHead>
                   <TableHead className="text-right">Cantidad</TableHead>
                   <TableHead className="text-right">Cantidad vendida</TableHead>
-                  <TableHead className="text-right">Precio unitario</TableHead>
+                  <TableHead className="text-right">Monto vendido</TableHead>
                   <TableHead className="text-right">Total pagado</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead>Franquiciado</TableHead>
@@ -290,7 +319,9 @@ const FranchiseProducts = () => {
                         {formatNumber(item.soldByFranchise)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {formatCurrency(item.productPrice)}
+                        {formatCurrency(
+                          item.productPrice * (item.soldByFranchise ?? 0),
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(item.paidByFranchise)}
@@ -318,7 +349,9 @@ const FranchiseProducts = () => {
                     <TableCell className="text-right font-semibold">
                       {formatNumber(totals.sold)}
                     </TableCell>
-                    <TableCell />
+                    <TableCell className="text-right font-semibold">
+                      {formatCurrency(totals.soldAmount)}
+                    </TableCell>
                     <TableCell className="text-right font-semibold">
                       {formatCurrency(totals.paid)}
                     </TableCell>
@@ -351,6 +384,8 @@ const FranchiseProducts = () => {
         isOpen={filterModalOpen}
         dateFrom={filters.date_from}
         dateTo={filters.date_to}
+        paymentStatuses={filters.payment_statuses ?? DEFAULT_PAYMENT_STATUSES}
+        salesStatus={filters.sales_status ?? DEFAULT_SALES_STATUS}
         onClose={() => setFilterModalOpen(false)}
         onApply={handleApplyFilters}
         onClear={handleClearFilters}

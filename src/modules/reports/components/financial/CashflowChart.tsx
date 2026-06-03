@@ -1,4 +1,16 @@
-import { Card, Title, AreaChart, Select, SelectItem } from '@tremor/react';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  ChartLoading,
+  ReportCard,
+  ReportSelect,
+} from '../shared/ReportScaffold';
+import {
+  chartAxis,
+  chartGrid,
+  formatCurrencyAxis,
+  reportChartColors,
+} from '../shared/reportChartUtils';
 import type { CashflowItem, Granularity } from '../../types/reports.types';
 
 interface Props {
@@ -10,34 +22,48 @@ interface Props {
 
 export function CashflowChart({ data, loading, granularity, onGranularityChange }: Props) {
   const chartData = data.map((d) => ({
-    Fecha: d.period,
-    'Ingresos (S/)': d.income,
-    'Egresos (S/)': d.expense,
-    'Neto (S/)': d.net,
+    fecha: d.period,
+    ingresos: d.income,
+    egresos: d.expense,
+    neto: d.net,
   }));
 
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-4">
-        <Title>Flujo de caja en el tiempo</Title>
-        <Select value={granularity} onValueChange={(v) => onGranularityChange(v as Granularity)} className="w-32">
-          <SelectItem value="day">Diario</SelectItem>
-          <SelectItem value="week">Semanal</SelectItem>
-          <SelectItem value="month">Mensual</SelectItem>
-        </Select>
-      </div>
-      {loading ? (
-        <div className="h-48 bg-muted animate-pulse rounded" />
-      ) : (
-        <AreaChart
-          data={chartData}
-          index="Fecha"
-          categories={['Ingresos (S/)', 'Egresos (S/)']}
-          colors={['emerald', 'rose']}
-          valueFormatter={(v) => `S/ ${v.toLocaleString('es-PE')}`}
-          className="h-48"
+    <ReportCard
+      title="Flujo de caja en el tiempo"
+      actions={
+        <ReportSelect<Granularity>
+          value={granularity}
+          onValueChange={onGranularityChange}
+          className="w-32"
+          options={[
+            { value: 'day', label: 'Diario' },
+            { value: 'week', label: 'Semanal' },
+            { value: 'month', label: 'Mensual' },
+          ]}
         />
+      }
+    >
+      {loading ? (
+        <ChartLoading />
+      ) : (
+        <ChartContainer
+          config={{
+            ingresos: { label: 'Ingresos', color: reportChartColors.emerald },
+            egresos: { label: 'Egresos', color: reportChartColors.rose },
+          }}
+          className="h-56 w-full aspect-auto"
+        >
+          <AreaChart data={chartData} margin={{ left: 12, right: 12 }}>
+            <CartesianGrid vertical={false} className={chartGrid} />
+            <XAxis dataKey="fecha" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
+            <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={formatCurrencyAxis} className={chartAxis} />
+            <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrencyAxis(value as number)} />} />
+            <Area dataKey="ingresos" type="monotone" fill="var(--color-ingresos)" fillOpacity={0.16} stroke="var(--color-ingresos)" strokeWidth={2} />
+            <Area dataKey="egresos" type="monotone" fill="var(--color-egresos)" fillOpacity={0.12} stroke="var(--color-egresos)" strokeWidth={2} />
+          </AreaChart>
+        </ChartContainer>
       )}
-    </Card>
+    </ReportCard>
   );
 }

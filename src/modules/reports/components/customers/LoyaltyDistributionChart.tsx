@@ -1,4 +1,16 @@
-import { Card, Title, BarChart, Badge } from '@tremor/react';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Badge } from '@/components/ui/badge';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  ChartLoading,
+  ReportCard,
+} from '../shared/ReportScaffold';
+import {
+  chartAxis,
+  chartGrid,
+  formatNumber,
+  reportChartColors,
+} from '../shared/reportChartUtils';
 import type { LoyaltyDistributionItem, CustomersByLoyaltyItem, LoyaltyLevel } from '../../types/reports.types';
 
 interface Props {
@@ -7,12 +19,12 @@ interface Props {
   byLoyalty: CustomersByLoyaltyItem[];
 }
 
-const LOYALTY_COLORS: Record<LoyaltyLevel, string> = {
-  sin_nivel: 'slate',
-  L1: 'sky',
-  L2: 'indigo',
-  L3: 'violet',
-  L4: 'amber',
+const LOYALTY_CLASSES: Record<LoyaltyLevel, string> = {
+  sin_nivel: 'border-slate-200 bg-slate-50 text-slate-700',
+  L1: 'border-sky-200 bg-sky-50 text-sky-700',
+  L2: 'border-indigo-200 bg-indigo-50 text-indigo-700',
+  L3: 'border-violet-200 bg-violet-50 text-violet-700',
+  L4: 'border-amber-200 bg-amber-50 text-amber-700',
 };
 
 const LOYALTY_LABELS: Record<LoyaltyLevel, string> = {
@@ -25,33 +37,37 @@ const LOYALTY_LABELS: Record<LoyaltyLevel, string> = {
 
 export function LoyaltyDistributionChart({ data, loading, byLoyalty }: Props) {
   const chartData = data.map((d) => ({
-    Nivel: LOYALTY_LABELS[d.level] ?? d.level,
-    Clientes: d.count,
+    nivel: LOYALTY_LABELS[d.level] ?? d.level,
+    clientes: d.count,
   }));
 
   return (
-    <Card>
-      <Title>Distribución por nivel de fidelización</Title>
+    <ReportCard title="Distribución por nivel de fidelización">
       {loading ? (
-        <div className="h-48 bg-muted animate-pulse rounded mt-4" />
+        <ChartLoading />
       ) : (
         <>
-          <BarChart
-            data={chartData}
-            index="Nivel"
-            categories={['Clientes']}
-            colors={['blue']}
-            className="h-40 mt-4"
-          />
+          <ChartContainer
+            config={{ clientes: { label: 'Clientes', color: reportChartColors.blue } }}
+            className="h-48 w-full aspect-auto"
+          >
+            <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
+              <CartesianGrid vertical={false} className={chartGrid} />
+              <XAxis dataKey="nivel" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
+              <YAxis tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
+              <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatNumber(value as number)} />} />
+              <Bar dataKey="clientes" fill="var(--color-clientes)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ChartContainer>
           <div className="flex flex-wrap gap-2 mt-3">
             {data.map((d) => (
-              <Badge key={d.level} color={LOYALTY_COLORS[d.level] as never} size="sm">
+              <Badge key={d.level} variant="outline" className={LOYALTY_CLASSES[d.level]}>
                 {LOYALTY_LABELS[d.level]}: {d.count}
               </Badge>
             ))}
           </div>
         </>
       )}
-    </Card>
+    </ReportCard>
   );
 }

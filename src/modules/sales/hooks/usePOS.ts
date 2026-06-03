@@ -1174,8 +1174,10 @@ export const usePOS = () => {
   const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
   const [sessionTotalCashSales, setSessionTotalCashSales] = useState(0);
   const [sessionExpectedAmount, setSessionExpectedAmount] = useState(0);
+  const [sessionOtherIngresos, setSessionOtherIngresos] = useState(0);
+  const [sessionOtherEgresos, setSessionOtherEgresos] = useState(0);
 
-  // Load session cash sales and current business account balance for closing
+  // Load session cash sales and expected amount for closing using SP movements
   const loadSessionCloseData = useCallback(async () => {
     if (!POSSessionHook.session?.id) {
       setSessionTotalCashSales(0);
@@ -1186,28 +1188,42 @@ export const usePOS = () => {
     try {
       const { data: sessionData, error: sessionError } = await supabase
         .from("pos_sessions")
-        .select("total_cash_sales, business_account")
+        .select("opening_amount, total_cash_sales, business_account, opened_at")
         .eq("id", POSSessionHook.session.id)
         .single();
 
       if (sessionError) throw sessionError;
 
-      const cashSales = sessionData?.total_cash_sales ?? 0;
+      const openingAmount = Number(sessionData?.opening_amount ?? 0) || 0;
+      const cashSales = Number(sessionData?.total_cash_sales ?? 0) || 0;
       setSessionTotalCashSales(cashSales);
 
-      if (sessionData?.business_account) {
-        const { data: accountData, error: accountError } = await supabase
-          .from("business_accounts")
-          .select("total_amount")
-          .eq("id", sessionData.business_account)
-          .single();
+      let otherIngresos = 0;
+      let otherEgresos = 0;
+      if (sessionData?.business_account && sessionData?.opened_at) {
+        const { data: movements, error: movErr } = await supabase.functions.invoke(
+          "get-pos-session-close-details",
+          {
+            body: {
+              business_account_id: sessionData.business_account,
+              opened_at: sessionData.opened_at,
+            },
+          }
+        );
 
-        if (accountError) throw accountError;
-
-        setSessionExpectedAmount(Number(accountData?.total_amount ?? 0));
-      } else {
-        setSessionExpectedAmount(0);
+        if (!movErr && Array.isArray(movements)) {
+          // Amounts are stored as signed values: positive=ingreso, negative=egreso
+          const external = (movements as Array<{ amount: number; order_payment_id: number | null }>)
+            .filter((m) => m.order_payment_id === null);
+          otherIngresos = Math.round(external.filter(m => m.amount > 0).reduce((sum, m) => sum + m.amount, 0) * 100) / 100;
+          otherEgresos = Math.round(external.filter(m => m.amount < 0).reduce((sum, m) => sum + Math.abs(m.amount), 0) * 100) / 100;
+        }
       }
+
+      setSessionOtherIngresos(otherIngresos);
+      setSessionOtherEgresos(otherEgresos);
+      const expectedAmount = Math.round((openingAmount + cashSales + otherIngresos - otherEgresos) * 100) / 100;
+      setSessionExpectedAmount(expectedAmount);
 
     } catch (error) {
       console.error("Error loading session close data:", error);
@@ -1359,6 +1375,8 @@ export const usePOS = () => {
     showCloseSessionModal,
     sessionTotalCashSales,
     sessionExpectedAmount,
+    sessionOtherIngresos,
+    sessionOtherEgresos,
 
     handleCloseSession,
     cancelCloseSession,
