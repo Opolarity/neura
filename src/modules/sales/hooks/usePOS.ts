@@ -1173,13 +1173,13 @@ export const usePOS = () => {
   // State for close session modal
   const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
   const [sessionTotalCashSales, setSessionTotalCashSales] = useState(0);
-  const [sessionExternalMovements, setSessionExternalMovements] = useState(0);
+  const [sessionExpectedAmount, setSessionExpectedAmount] = useState(0);
 
-  // Load session cash sales and net external movements during the session
+  // Load session cash sales and current business account balance for closing
   const loadSessionCloseData = useCallback(async () => {
     if (!POSSessionHook.session?.id) {
       setSessionTotalCashSales(0);
-      setSessionExternalMovements(0);
+      setSessionExpectedAmount(0);
       return;
     }
 
@@ -1195,50 +1195,24 @@ export const usePOS = () => {
       const cashSales = sessionData?.total_cash_sales ?? 0;
       setSessionTotalCashSales(cashSales);
 
-      if (sessionData?.business_account && POSSessionHook.session.openedAt) {
-        // // Legacy: query movements directly and filter out order-linked ones
-        // const { data: movementsData, error: movementsError } = await (supabase as any)
-        //   .from("movements")
-        //   .select("id, amount, types!movement_type_id(code), order_payment(id)")
-        //   .eq("business_account_id", sessionData.business_account)
-        //   .gte("movement_date", POSSessionHook.session.openedAt);
-        // if (movementsError) throw movementsError;
-        // const filteredMovementsData = (movementsData ?? []).filter(
-        //   (m: any) => !m.order_payment || (Array.isArray(m.order_payment) ? m.order_payment.length === 0 : false)
-        // );
-        // const externalMovements = (filteredMovementsData ?? []).reduce(
-        //   (acc: number, m: any) => acc + Number(m.amount), 0
-        // );
+      if (sessionData?.business_account) {
+        const { data: accountData, error: accountError } = await supabase
+          .from("business_accounts")
+          .select("total_amount")
+          .eq("id", sessionData.business_account)
+          .single();
 
-        type SessionCloseMovement = {
-          id: number;
-          amount: number;
-          movement_type_code: string;
-          order_payment_id: number | null;
-        };
+        if (accountError) throw accountError;
 
-        const { data: closeDetails } = await supabase.functions.invoke<SessionCloseMovement[]>(
-          "get-pos-session-close-details",
-          {
-            body: {
-              business_account_id: sessionData.business_account,
-              opened_at: POSSessionHook.session.openedAt,
-            },
-          }
-        );
-
-        const externalMovements = (closeDetails ?? []).reduce(
-          (acc, m) => acc + Number(m.amount ?? 0),
-          0
-        );
-
-        setSessionExternalMovements(externalMovements);
+        setSessionExpectedAmount(Number(accountData?.total_amount ?? 0));
+      } else {
+        setSessionExpectedAmount(0);
       }
 
     } catch (error) {
       console.error("Error loading session close data:", error);
       setSessionTotalCashSales(0);
-      setSessionExternalMovements(0);
+      setSessionExpectedAmount(0);
     }
   }, [POSSessionHook.session?.id]);
 
@@ -1384,7 +1358,7 @@ export const usePOS = () => {
     // Close session modal
     showCloseSessionModal,
     sessionTotalCashSales,
-    sessionExternalMovements,
+    sessionExpectedAmount,
 
     handleCloseSession,
     cancelCloseSession,

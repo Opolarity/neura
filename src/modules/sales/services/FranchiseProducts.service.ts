@@ -22,7 +22,12 @@ export type FranchiseProductsFilters = {
   franchisee_only?: boolean;
   date_from?: string;
   date_to?: string;
+  payment_statuses?: FranchisePaymentStatus[];
+  sales_status?: FranchiseSalesStatus;
 };
+
+export type FranchisePaymentStatus = "paid" | "unpaid" | "partial";
+export type FranchiseSalesStatus = "all" | "with_sales" | "without_sales";
 
 export type FranchiseSummary = {
   totalSent: number;
@@ -73,6 +78,10 @@ export const fetchFranchiseProducts = async (
     ...(filters.franchisee_only ? { franchisee_only: true } : {}),
     ...(filters.date_from ? { date_from: filters.date_from } : {}),
     ...(filters.date_to ? { date_to: filters.date_to } : {}),
+    ...(filters.payment_statuses?.length
+      ? { payment_statuses: filters.payment_statuses.join(",") }
+      : {}),
+    ...(filters.sales_status ? { sales_status: filters.sales_status } : {}),
   });
 
   const { data, error } = await supabase.functions.invoke(endpoint, {
@@ -107,12 +116,13 @@ export const fetchFranchiseProducts = async (
   };
 
   const totalSent = toNumber(data?.summary?.total_sent);
+  const totalSold = toNumber(data?.summary?.total_sold);
   const totalPaid = toNumber(data?.summary?.total_paid);
   const summary: FranchiseSummary = {
     totalSent,
-    totalSold: toNumber(data?.summary?.total_sold),
+    totalSold,
     totalPaid,
-    totalPending: totalSent - totalPaid,
+    totalPending: totalSold - totalPaid,
   };
 
   return { data: rows, pagination, summary };

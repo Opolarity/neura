@@ -211,7 +211,7 @@ export default function POS() {
         isOpen={pos.showCloseSessionModal}
         session={pos.session}
         totalCashSales={pos.sessionTotalCashSales}
-        externalMovements={pos.sessionExternalMovements}
+        expectedAmount={pos.sessionExpectedAmount}
 
         isClosing={pos.closingSession}
         onClose={pos.handleCloseSession}
