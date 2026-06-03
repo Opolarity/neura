@@ -1212,11 +1212,11 @@ export const usePOS = () => {
         );
 
         if (!movErr && Array.isArray(movements)) {
-          // Amounts are stored as signed values: positive=ingreso, negative=egreso
-          const external = (movements as Array<{ amount: number; order_payment_id: number | null }>)
+          // Amounts stored as ABS (unsigned): type code determines direction (INC=positive, any other=negative)
+          const external = (movements as Array<{ amount: number; movement_type_code: string; order_payment_id: number | null }>)
             .filter((m) => m.order_payment_id === null);
-          otherIngresos = Math.round(external.filter(m => m.amount > 0).reduce((sum, m) => sum + m.amount, 0) * 100) / 100;
-          otherEgresos = Math.round(external.filter(m => m.amount < 0).reduce((sum, m) => sum + Math.abs(m.amount), 0) * 100) / 100;
+          otherIngresos = Math.round(external.filter(m => m.movement_type_code === "INC").reduce((sum, m) => sum + m.amount, 0) * 100) / 100;
+          otherEgresos = Math.round(external.filter(m => m.movement_type_code !== "INC").reduce((sum, m) => sum + m.amount, 0) * 100) / 100;
         }
       }
 
