@@ -21,8 +21,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Check, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/shared/utils/utils";
@@ -48,6 +47,19 @@ const SALES_STATUS_OPTIONS: Array<{
   { value: "with_sales", label: "Con ventas" },
   { value: "without_sales", label: "Sin ventas" },
 ];
+
+const getPaymentStatusesLabel = (
+  statuses: FranchisePaymentStatus[],
+): string => {
+  if (statuses.length === 0) return "Seleccionar estados";
+  if (statuses.length === PAYMENT_STATUS_OPTIONS.length) return "Todos";
+
+  return PAYMENT_STATUS_OPTIONS.filter((option) =>
+    statuses.includes(option.value),
+  )
+    .map((option) => option.label)
+    .join(", ");
+};
 
 interface FranchiseFilterModalProps {
   isOpen: boolean;
@@ -184,22 +196,44 @@ const FranchiseFilterModal = ({
 
           <div className="grid gap-2">
             <Label>Estado de pago</Label>
-            <div className="rounded-md border p-3">
-              <div className="grid gap-3">
-                {PAYMENT_STATUS_OPTIONS.map((option) => (
-                  <label
-                    key={option.value}
-                    className="flex cursor-pointer items-center gap-2 text-sm"
-                  >
-                    <Checkbox
-                      checked={selectedPaymentStatuses.includes(option.value)}
-                      onCheckedChange={() => togglePaymentStatus(option.value)}
-                    />
-                    <span>{option.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "justify-between text-left font-normal",
+                    selectedPaymentStatuses.length === 0 &&
+                      "text-muted-foreground",
+                  )}
+                >
+                  <span className="truncate">
+                    {getPaymentStatusesLabel(selectedPaymentStatuses)}
+                  </span>
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-1">
+                {PAYMENT_STATUS_OPTIONS.map((option) => {
+                  const checked = selectedPaymentStatuses.includes(
+                    option.value,
+                  );
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => togglePaymentStatus(option.value)}
+                    >
+                      <span className="flex h-4 w-4 items-center justify-center">
+                        {checked && <Check className="h-4 w-4" />}
+                      </span>
+                      <span>{option.label}</span>
+                    </button>
+                  );
+                })}
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="grid gap-2">
