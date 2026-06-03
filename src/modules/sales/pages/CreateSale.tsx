@@ -2384,7 +2384,10 @@ const CreateSale = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-auto flex-1">
-            <Table>
+            <div className="flex flex-row gap-4 px-2 py-4">
+              <Input placeholder="Buscar producto"/>
+            </div>
+            <Table className="px-2">
               <TableHeader>
                 <TableRow>
                   <TableHead>Producto</TableHead>
