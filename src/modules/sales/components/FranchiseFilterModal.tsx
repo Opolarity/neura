@@ -61,6 +61,15 @@ const getPaymentStatusesLabel = (
     .join(", ");
 };
 
+const parseDateFilter = (value: string | undefined): Date | undefined => {
+  if (!value) return undefined;
+
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return undefined;
+
+  return new Date(year, month - 1, day);
+};
+
 interface FranchiseFilterModalProps {
   isOpen: boolean;
   dateFrom: string | undefined;
@@ -88,10 +97,10 @@ const FranchiseFilterModal = ({
   onClear,
 }: FranchiseFilterModalProps) => {
   const [startDate, setStartDate] = useState<Date | undefined>(
-    dateFrom ? new Date(dateFrom) : undefined,
+    parseDateFilter(dateFrom),
   );
   const [endDate, setEndDate] = useState<Date | undefined>(
-    dateTo ? new Date(dateTo) : undefined,
+    parseDateFilter(dateTo),
   );
   const [selectedPaymentStatuses, setSelectedPaymentStatuses] =
     useState<FranchisePaymentStatus[]>(paymentStatuses);
@@ -99,8 +108,8 @@ const FranchiseFilterModal = ({
     useState<FranchiseSalesStatus>(salesStatus);
 
   useEffect(() => {
-    setStartDate(dateFrom ? new Date(dateFrom) : undefined);
-    setEndDate(dateTo ? new Date(dateTo) : undefined);
+    setStartDate(parseDateFilter(dateFrom));
+    setEndDate(parseDateFilter(dateTo));
     setSelectedPaymentStatuses(paymentStatuses);
     setSelectedSalesStatus(salesStatus);
   }, [dateFrom, dateTo, paymentStatuses, salesStatus, isOpen]);
