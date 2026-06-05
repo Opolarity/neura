@@ -1,6 +1,7 @@
 import { Calendar } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { MovementsFilters } from '../../types/Movements.types';
+import { getTodayDate, toLimaDateInput } from '@/shared/utils/date';
 
 interface MovementsDateRangeProps {
     filters: MovementsFilters;
@@ -10,12 +11,12 @@ interface MovementsDateRangeProps {
 
 const MovementsDateRange = ({ filters, onStartDateChange, onEndDateChange }: MovementsDateRangeProps) => {
     // Fecha actual (hoy)
-    const hoy = new Date().toISOString().split("T")[0];
+    const hoy = getTodayDate();
     // Calcula la fecha mínima (180 días atrás desde la fecha de inicio)
     const calcularMinFechaFin = (inicio: string) => {
         const date = new Date(inicio);
         date.setDate(date.getDate() - 180);
-        return date.toISOString().split("T")[0];
+        return toLimaDateInput(date);
     };
 
     return (

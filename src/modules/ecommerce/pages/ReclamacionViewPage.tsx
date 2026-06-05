@@ -9,6 +9,7 @@ import {
   getReclamacionById,
   ReclamacionDetalle,
 } from "../services/reclamaciones.service";
+import { formatDateDisplay } from "@/shared/utils/date";
 
 const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
   <div className="space-y-1">
@@ -19,11 +20,7 @@ const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
 
 const formatDate = (date: string) =>
   date
-    ? new Date(date).toLocaleDateString("es-PE", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
+    ? formatDateDisplay(date)
     : "-";
 
 const formatCurrency = (amount: number) =>

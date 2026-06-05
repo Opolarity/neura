@@ -8,6 +8,7 @@ import { applyPriceRules, type GiftItem } from "../rules/applyPriceRules";
 import { getPriceListIsActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { LIMA_TIME_ZONE } from "@/shared/utils/date";
 import { useToast } from "@/hooks/use-toast";
 import type {
   SaleFormData,
@@ -1018,7 +1019,7 @@ export const useCreateSale = () => {
     }
 
     const now = new Date();
-    const monthYear = now.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
+    const monthYear = now.toLocaleDateString("es-PE", { month: "long", year: "numeric", timeZone: LIMA_TIME_ZONE });
 
     let franchiseProductsPayload: {
       products: Array<{
