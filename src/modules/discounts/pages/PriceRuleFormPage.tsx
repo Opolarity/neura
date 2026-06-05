@@ -7,6 +7,7 @@ import { RuleValiditySection } from "../components/rule-form/RuleValiditySection
 import { ConditionBuilder } from "../components/rule-form/ConditionBuilder";
 import { ActionBuilder } from "../components/rule-form/ActionBuilder";
 import { CouponSection } from "../components/rule-form/CouponSection";
+import { ExclusionSection } from "../components/rule-form/ExclusionSection";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -27,6 +28,7 @@ const PriceRuleFormPage = () => {
     addAction,
     updateAction,
     removeAction,
+    updateExclusions,
     handleSubmit,
     navigate,
   } = usePriceRuleForm();
@@ -105,7 +107,20 @@ const PriceRuleFormPage = () => {
         </CardContent>
       </Card>
 
-      {/* 5. Stacking */}
+      {/* 5. Exclusiones */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Exclusiones</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ExclusionSection
+            exclusions={formData.exclusions}
+            onChange={updateExclusions}
+          />
+        </CardContent>
+      </Card>
+
+      {/* 6. Stacking */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Apilamiento</CardTitle>

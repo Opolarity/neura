@@ -50,6 +50,13 @@ export interface TargetFilter {
   include_descendants?: boolean;
 }
 
+export interface ExclusionFilter {
+  product_ids?: number[];
+  variation_ids?: number[];
+  category_ids?: number[];
+  include_descendants?: boolean;
+}
+
 export interface ActionConfig {
   type: ActionType;
   value?: number;
@@ -82,6 +89,7 @@ export interface PriceRule {
   price_list_id: number | null;
   conditions: ConditionsConfig;
   actions: ActionConfig[];
+  exclusions?: ExclusionFilter | null;
   created_at: string;
   updated_at: string | null;
   created_by: string | null;
@@ -118,6 +126,7 @@ export interface PriceRuleFormData {
   price_list_id: number | null;
   conditions: ConditionsConfig;
   actions: ActionConfig[];
+  exclusions: ExclusionFilter | null;
   // Coupon fields
   coupon_code: string;
   max_uses: number | null;
