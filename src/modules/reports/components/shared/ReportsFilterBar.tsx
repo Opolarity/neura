@@ -4,6 +4,7 @@ import { refreshReportMviews } from '../../services/reports.service';
 import type { ReportsFilters } from '../../types/reports.types';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { LIMA_TIME_ZONE } from '@/shared/utils/date';
 
 interface ReportsFilterBarProps {
   filters: ReportsFilters;
@@ -16,7 +17,7 @@ const MAX_RANGE_DAYS = 90;
 function addDays(dateStr: string, days: number): string {
   const d = new Date(dateStr.replace(/-/g, "/"));
   d.setDate(d.getDate() + days);
-  return d.toLocaleDateString("sv-SE", { timeZone: "America/Lima" });
+  return d.toLocaleDateString("sv-SE", { timeZone: LIMA_TIME_ZONE });
 }
 
 function diffDays(a: string, b: string): number {

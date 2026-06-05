@@ -19,6 +19,7 @@ import {
   formatCurrency,
   formatTime,
 } from "@/modules/sales/adapters/POS.adapter";
+import { formatDateDisplay } from "@/shared/utils/date";
 import { getPOSSessionDetail } from "../services/POSDetail.service";
 import { adaptPOSSessionDetail } from "../adapters/POSDetail.adapter";
 import type {
@@ -85,14 +86,7 @@ const POSSessionDetailDialog = ({
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("es-PE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
+  const formatDate = (dateString: string) => formatDateDisplay(dateString);
 
   const getStatusBadge = (statusCode: string, statusName: string) => {
     if (statusCode === "OPE") {

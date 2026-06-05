@@ -4,6 +4,7 @@ import type {
   PriceRulePagination,
   ConditionsConfig,
 } from "../types/priceRule.types";
+import { limaDateTimeLocalToIso, LIMA_TIME_ZONE } from "@/shared/utils/date";
 
 export const DEFAULT_CONDITIONS: ConditionsConfig = {
   operator: "AND",
@@ -29,15 +30,11 @@ export const DEFAULT_FORM_DATA: PriceRuleFormData = {
   price_list_id: null,
   conditions: DEFAULT_CONDITIONS,
   actions: [],
+  exclusions: null,
   coupon_code: "",
   max_uses: null,
   max_uses_per_customer: null,
 };
-// Proyecto opera en hora Lima (UTC-5). Los inputs datetime-local no manejan
-// timezone, así que convertimos manualmente al cargar y al enviar.
-const LIMA_OFFSET_MINUTES = -5 * 60; // UTC-5
-const LIMA_OFFSET_STRING = "-05:00";
-
 function pad(n: number): string {
   return n.toString().padStart(2, "0");
 }
@@ -47,25 +44,29 @@ export function isoToDateTimeLocal(iso: string | null | undefined): string {
   if (!iso) return "";
   const date = new Date(iso);
   if (isNaN(date.getTime())) return "";
-  // Convertir UTC → Lima sumando el offset (negativo).
-  const lima = new Date(date.getTime() + LIMA_OFFSET_MINUTES * 60 * 1000);
-  const y = lima.getUTCFullYear();
-  const m = pad(lima.getUTCMonth() + 1);
-  const d = pad(lima.getUTCDate());
-  const hh = pad(lima.getUTCHours());
-  const mm = pad(lima.getUTCMinutes());
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: LIMA_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  const y = get("year");
+  const m = get("month");
+  const d = get("day");
+  const hh = pad(Number(get("hour")));
+  const mm = pad(Number(get("minute")));
   return `${y}-${m}-${d}T${hh}:${mm}`;
 }
 
 // "YYYY-MM-DDTHH:mm" (asumido en hora Lima) → ISO 8601 con offset -05:00, o "" si vacío.
 // El backend interpreta "" como NULL, así que conservamos string para mantener la forma del tipo PriceRuleFormData.
 export function dateTimeLocalToISO(local: string | null | undefined): string {
-  if (!local || typeof local !== "string" || local.trim() === "") return "";
-  // Si ya trae timezone (ej. string antiguo sin migrar), lo respetamos tal cual.
-  if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(local)) return local;
-  // datetime-local produce "YYYY-MM-DDTHH:mm" (16 chars) o con segundos.
-  const hasSeconds = /T\d{2}:\d{2}:\d{2}$/.test(local);
-  return `${local}${hasSeconds ? "" : ":00"}${LIMA_OFFSET_STRING}`;
+  return limaDateTimeLocalToIso(local);
 }
 
 export function adaptPriceRuleToForm(rule: PriceRule): PriceRuleFormData {
@@ -85,6 +86,7 @@ export function adaptPriceRuleToForm(rule: PriceRule): PriceRuleFormData {
     price_list_id: rule.price_list_id,
     conditions: rule.conditions || DEFAULT_CONDITIONS,
     actions: rule.actions || [],
+    exclusions: rule.exclusions || null,
     coupon_code: coupon?.code || "",
     max_uses: coupon?.max_uses ?? null,
     max_uses_per_customer: coupon?.max_uses_per_customer ?? null,

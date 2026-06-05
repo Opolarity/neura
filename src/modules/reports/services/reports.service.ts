@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { limaDateRangeToIsoBounds } from '@/shared/utils/date';
 import { buildEndpoint } from '@/shared/utils/utils';
 import type {
   ReportsFilters,
@@ -426,8 +427,8 @@ export const priceRulesReportService = {
       .from('order_discounts')
       .select('code')
       .not('code', 'is', null);
-    if (startDate) query = query.gte('created_at', startDate + 'T00:00:00Z');
-    if (endDate)   query = query.lte('created_at', endDate   + 'T23:59:59Z');
+    if (startDate) query = query.gte('created_at', limaDateRangeToIsoBounds(startDate).start);
+    if (endDate)   query = query.lte('created_at', limaDateRangeToIsoBounds(endDate).end);
 
     const { data: discounts, error: discountsError } = await query;
     if (discountsError) throw discountsError;

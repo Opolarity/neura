@@ -8,6 +8,7 @@ import { MovementsFilters } from '../../types/Movements.types';
 import { useState } from 'react';
 import MovementsDateRange from './MovementsDateRange';
 import { SimpleWarehouses, MovementsTypes, SimpleUsers } from '../../types/Movements.types';
+import { toLimaDateInput } from '@/shared/utils/date';
 
 interface InventoryFilterModalProps {
     filters: MovementsFilters;
@@ -34,7 +35,7 @@ const MovementsFilterModal = ({
     const calculateMinimumEndDate = (start_date: string) => {
         const date = new Date(start_date);
         date.setDate(date.getDate() - 180);
-        return date.toISOString().split("T")[0];
+        return toLimaDateInput(date);
     };
 
     const handleStartDateChange = (value: string) => {

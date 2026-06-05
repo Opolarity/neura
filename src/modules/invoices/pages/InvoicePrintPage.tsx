@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { Loader2 } from "lucide-react";
 import { getParameters } from "@/modules/settings/services/Parameters.service";
+import { formatDateTime } from "@/shared/utils/date";
 
 interface InvoiceData {
   id: number;
@@ -450,8 +451,7 @@ export default function InvoicePrintPage() {
         doc.setFontSize(fontSize.normal);
         doc.setFont("helvetica", "normal");
 
-        const date = new Date(invoice.created_at);
-        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${date.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
+        const dateStr = formatDateTime(invoice.created_at);
 
         const detailLines: [string, string][] = [
           ["FECHA DE EMISIÓN:", dateStr],

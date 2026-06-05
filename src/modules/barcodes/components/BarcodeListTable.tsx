@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Printer, Loader2 } from "lucide-react";
 import { BarcodeListItem } from "../types/Barcodes.types";
+import { formatDateDisplay } from "@/shared/utils/date";
 
 interface BarcodeListTableProps {
   items: BarcodeListItem[];
@@ -67,7 +68,7 @@ const BarcodeListTable = ({ items, loading, onReprint }: BarcodeListTableProps) 
               <TableCell>{item.quantities ?? "—"}</TableCell>
               <TableCell>{item.stockMovementId ?? "—"}</TableCell>
               <TableCell>
-                {new Date(item.createdAt).toLocaleDateString("es-PE")}
+                {formatDateDisplay(item.createdAt)}
               </TableCell>
               <TableCell>
                 <Button

@@ -14,13 +14,9 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { Loader2, Search, Eye } from "lucide-react";
 import { useReclamaciones } from "../hooks/useReclamaciones";
+import { formatDateDisplay } from "@/shared/utils/date";
 
-const formatDate = (date: string) =>
-  new Date(date).toLocaleDateString("es-PE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+const formatDate = (date: string) => formatDateDisplay(date);
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(amount);
@@ -135,4 +131,3 @@ export default function ReclamacionesPage() {
     </div>
   );
 }
-
