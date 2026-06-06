@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CustomerPoint } from "../hooks/useCustomerPoints";
+import { formatDateDisplay } from "@/shared/utils/date";
 
 interface CustomerPointsTableProps {
   data: CustomerPoint[];
@@ -17,11 +18,7 @@ interface CustomerPointsTableProps {
 
 const formatDate = (iso: string) => {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("es-PE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  return formatDateDisplay(iso);
 };
 
 const getLevel = (points: number | null) => {

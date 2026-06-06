@@ -9,6 +9,7 @@ import {
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useNavigate } from "react-router-dom";
 import type { POSSessionsFilterValues } from "../components/POSSessionsFilterModal";
+import { limaDateRangeToIsoBounds } from "@/shared/utils/date";
 
 const defaultFilters: POSSessionsFilters = {
   search: null,
@@ -93,11 +94,13 @@ export const usePOSSessions = () => {
   const onApplyFilters = (values: POSSessionsFilterValues) => {
     setFilterValues(values);
     setFiltersOpen(false);
+    const dateFromBounds = limaDateRangeToIsoBounds(values.dateFrom);
+    const dateToBounds = limaDateRangeToIsoBounds(values.dateTo);
     const newFilters: POSSessionsFilters = {
       ...filters,
       page: 1,
-      dateFrom: values.dateFrom || null,
-      dateTo: values.dateTo ? values.dateTo + "T23:59:59Z" : null,
+      dateFrom: dateFromBounds.start,
+      dateTo: dateToBounds.end,
       differenceType: values.differenceType || null,
       salesMin: values.salesMin ? parseFloat(values.salesMin) : null,
       salesMax: values.salesMax ? parseFloat(values.salesMax) : null,

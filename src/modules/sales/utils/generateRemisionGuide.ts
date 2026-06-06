@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { getParameters } from "@/modules/settings/services/Parameters.service";
+import { formatDateDisplay, nowIso } from "@/shared/utils/date";
 
 const EMPRESA = {
   name: "PERCEPTION ENDLESS COMPANY E.I.R.L.",
@@ -145,11 +146,7 @@ export async function generateRemisionGuide(data: RemisionGuideData): Promise<vo
   };
 
   // ── FORMAT DATE ──────────────────────────────────────────────────────────
-  const fechaStr = new Date().toLocaleDateString("es-PE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  const fechaStr = formatDateDisplay(nowIso());
 
   // ── DESTINATARIO ─────────────────────────────────────────────────────────
   drawSectionHeader("Destinatario");

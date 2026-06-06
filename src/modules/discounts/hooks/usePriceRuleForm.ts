@@ -7,6 +7,7 @@ import type {
   ConditionGroup,
   Condition,
   ActionConfig,
+  ExclusionFilter,
 } from "../types/priceRule.types";
 import {
   createPriceRule,
@@ -158,6 +159,11 @@ export function usePriceRuleForm() {
     }));
   };
 
+  // --- Exclusion management ---
+  const updateExclusions = (exclusions: ExclusionFilter | null) => {
+    setFormData((prev) => ({ ...prev, exclusions }));
+  };
+
   // --- Action management ---
   const addAction = (action: ActionConfig) => {
     setFormData((prev) => ({
@@ -238,6 +244,7 @@ export function usePriceRuleForm() {
     addAction,
     updateAction,
     removeAction,
+    updateExclusions,
     handleSubmit,
     navigate,
   };

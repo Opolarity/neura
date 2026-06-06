@@ -16,6 +16,7 @@ import { ProductSalesFilter } from "../types/Movements.types";
 import { useCreateMovements } from "../hooks/useCreateMovements";
 import CMovementSelectProductTypes from "../components/create-movements/CMovementSelectProductTypes";
 import { Plus } from "lucide-react";
+import { getTodayDate } from "@/shared/utils/date";
 
 const CreateMovement = () => {
   const {
@@ -65,7 +66,7 @@ const CreateMovement = () => {
 
       <Card className="flex flex-col gap-4 p-6">
         <CMovementSummary
-          currentDate={new Date().toISOString().split("T")[0]}
+          currentDate={getTodayDate()}
           userName={`${userSummary?.account_name} ${userSummary?.account_last_name} ${userSummary?.account_last_name2}`}
           warehouseName={userSummary?.warehouse_name}
           movementType={movementType?.name}

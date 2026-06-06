@@ -1,6 +1,7 @@
 // ============================================================
 // REPORTS MODULE — TYPE DEFINITIONS
 // ============================================================
+import { LIMA_TIME_ZONE } from "@/shared/utils/date";
 
 // -------------------------------------------------------
 // Shared Filter State
@@ -18,7 +19,7 @@ export interface ReportsFilters {
 }
 
 function toISODate(date: Date): string {
-  return date.toLocaleDateString("sv-SE", { timeZone: "America/Lima" });
+  return date.toLocaleDateString("sv-SE", { timeZone: LIMA_TIME_ZONE });
 }
 
 const _today = new Date();

@@ -14,6 +14,7 @@ import { Package, X, Calendar, User, Hash, Loader2 } from "lucide-react";
 import { StockMovementOption } from "../types/Barcodes.types";
 import { searchBarcodeMovements } from "../services/Barcodes.service";
 import { stockMovementsFromRpcAdapter } from "../adapters/Barcodes.adapter";
+import { formatDateDisplay } from "@/shared/utils/date";
 
 interface StockMovementSearcherProps {
   selectedMovement: StockMovementOption | null;
@@ -94,7 +95,7 @@ const StockMovementSearcher = ({
             </div>
             <div className="text-muted-foreground text-xs flex flex-wrap gap-x-3">
               <span>Cant: {selectedMovement.quantity}</span>
-              <span>{new Date(selectedMovement.createdAt).toLocaleDateString("es-PE")}</span>
+              <span>{formatDateDisplay(selectedMovement.createdAt)}</span>
               <span>{selectedMovement.userName}</span>
             </div>
           </div>
@@ -158,7 +159,7 @@ const StockMovementSearcher = ({
                               </span>
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                {new Date(sm.createdAt).toLocaleDateString("es-PE")}
+                                {formatDateDisplay(sm.createdAt)}
                               </span>
                               <span className="flex items-center gap-1">
                                 <User className="h-3 w-3" />

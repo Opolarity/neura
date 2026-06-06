@@ -2376,15 +2376,18 @@ const CreateSale = () => {
         open={franchiseProductsModalOpen}
         onOpenChange={setFranchiseProductsModalOpen}
       >
-        <DialogContent className="sm:max-w-[720px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[720px] max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Enviado a franquiciado</DialogTitle>
             <DialogDescription>
               Productos enviados y cantidades recibidas por franquicia.
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-[60vh] overflow-auto">
-            <Table>
+          <div className="overflow-auto flex-1">
+            <div className="flex flex-row gap-4 px-2 py-4">
+              <Input placeholder="Buscar producto"/>
+            </div>
+            <Table className="px-2">
               <TableHeader>
                 <TableRow>
                   <TableHead>Producto</TableHead>

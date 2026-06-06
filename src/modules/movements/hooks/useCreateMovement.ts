@@ -21,6 +21,7 @@ import {
   CurrentUserProfile,
 } from "../types/Movements.types";
 import { getPaymentMethodsIsActiveTrueAndActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
+import { getTodayDate } from "@/shared/utils/date";
 
 const movementSchema = z.object({
   amount: z
@@ -81,7 +82,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
   const form = useForm<MovementFormData>({
     resolver: zodResolver(movementSchema),
     defaultValues: {
-      movement_date: new Date().toISOString().split("T")[0],
+      movement_date: getTodayDate(),
     },
   });
 

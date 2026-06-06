@@ -4,6 +4,7 @@
 // =============================================
 
 import type { POSSession, POSSessionApiResponse } from "../types/POS.types";
+export { formatTime } from "@/shared/utils/date";
 
 export const adaptPOSSession = (
   apiResponse: POSSessionApiResponse
@@ -32,13 +33,5 @@ export const formatCurrency = (amount: number | null | undefined): string => {
   return amount.toLocaleString("es-PE", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  });
-};
-
-export const formatTime = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleTimeString("es-PE", {
-    hour: "2-digit",
-    minute: "2-digit",
   });
 };
