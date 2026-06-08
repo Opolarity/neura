@@ -33,6 +33,7 @@ import {
   getIdInventoryTypeAdapter,
   getOrdersSituationsByIdAdapter,
   adaptSaleById,
+  adaptSaleByIdProducts,
 } from "../adapters";
 import {
   fetchSalesFormData,
@@ -49,6 +50,7 @@ import {
   getIdInventoryTypeApi,
   getOrdersSituationsById,
   fetchSaleById,
+  fetchSaleByIdProducts,
   changeOrderProducts,
 } from "../services";
 import {
@@ -705,14 +707,18 @@ export const useCreateSale = () => {
     try {
       setLoading(true);
 
-      // Single call to get all data
-      const data = await fetchSaleById(id);
+      // Parallel calls: order data + products
+      const [data, productsData] = await Promise.all([
+        fetchSaleById(id),
+        fetchSaleByIdProducts(id),
+      ]);
       const adapted = adaptSaleById(data);
+      const adaptedProducts = adaptSaleByIdProducts(productsData);
 
       // Set all state at once
       setFormData(adapted.formData);
-      setProducts(adapted.products);
-      setOriginalProducts(adapted.products);
+      setProducts(adaptedProducts);
+      setOriginalProducts(adaptedProducts);
       setPayments(
         adapted.payments.length > 0
           ? adapted.payments
@@ -797,7 +803,7 @@ export const useCreateSale = () => {
       // Snapshot for dirty checking
       const snap = {
         formData: adapted.formData,
-        products: adapted.products.map(p => ({ ...p })),
+        products: adaptedProducts.map(p => ({ ...p })),
         payments: adapted.payments.map(p => ({ ...p, voucherFile: undefined, voucherPreview: undefined })),
         changeEntries: adapted.changeEntries ? adapted.changeEntries.map(c => ({ ...c, voucherFile: undefined, voucherPreview: undefined })) : [],
         orderSituation: adapted.currentSituation,
