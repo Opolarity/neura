@@ -240,8 +240,8 @@ export const getOrdersSituationsByIdAdapter = (
 };
 
 // Adapt products from get-sale-by-id-products response
-export const adaptSaleByIdProducts = (data: any) => {
-  return (data?.products || []).map((p: any) => ({
+export const adaptSaleByIdProducts = (data: any[]) => {
+  return (data || []).map((p: any) => ({
     variationId: p.variation_id,
     productId: p.product_id,
     productName: p.product_name,
