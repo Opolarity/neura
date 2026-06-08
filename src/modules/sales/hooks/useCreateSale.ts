@@ -1979,7 +1979,12 @@ export const useCreateSale = () => {
           isConsignment,
           discounts: [
             // Custom discounts only (product discounts are saved per-unit in order_products)
-            ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
+            ...orderDiscounts.map((d) => ({
+              id: d.id && /^\d+$/.test(d.id) ? parseInt(d.id) : null,
+              name: d.name,
+              discount_amount: d.amount,
+              code: d.code || "CUSTOM",
+            })),
           ],
         };
 
