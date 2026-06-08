@@ -206,6 +206,10 @@ export const useCreateSale = () => {
   const [lastSavedAt, setLastSavedAt] = useState<number>(0);
   const [productsUnlocked, setProductsUnlocked] = useState(false);
 
+  // Products table pagination (client-side)
+  const [productsTablePage, setProductsTablePage] = useState(1);
+  const [productsTableSize, setProductsTableSize] = useState(20);
+
   useEffect(() => {
     if (lastSavedAt > 0) setProductsUnlocked(false);
   }, [lastSavedAt]);
@@ -1537,6 +1541,8 @@ export const useCreateSale = () => {
         updated[existingIndex] = { ...existing, quantity: newQuantity };
         return updated;
       });
+      // Navigate to the page containing the existing product
+      setProductsTablePage(Math.floor(existingIndex / productsTableSize) + 1);
       return { added: false, existingIndex };
     }
 
@@ -1588,15 +1594,21 @@ export const useCreateSale = () => {
       ...prev,
     ]);
 
+    setProductsTablePage(1);
     setSearchQuery("");
     setSelectedVariation(null);
     return { added: true };
-  }, [selectedVariation, formData.priceListId, selectedStockTypeId, products, salesData?.stockTypes, toast]);
+  }, [selectedVariation, formData.priceListId, selectedStockTypeId, products, productsTableSize, salesData?.stockTypes, toast]);
 
   // Remove product from list
   const removeProduct = useCallback((index: number) => {
-    setProducts((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+    setProducts((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      const maxPage = Math.max(1, Math.ceil(next.length / productsTableSize));
+      setProductsTablePage((p) => Math.min(p, maxPage));
+      return next;
+    });
+  }, [productsTableSize]);
 
   // Update product in list
   const updateProduct = useCallback(
@@ -1798,6 +1810,27 @@ export const useCreateSale = () => {
 
   const removeOrderDiscount = useCallback((id: string) => {
     setOrderDiscounts((prev) => prev.filter((d) => d.id !== id));
+  }, []);
+
+  // Computed: paginated slice of products for the table
+  const paginatedTableProducts = useMemo(() => {
+    const start = (productsTablePage - 1) * productsTableSize;
+    return products.slice(start, start + productsTableSize);
+  }, [products, productsTablePage, productsTableSize]);
+
+  const productsTablePagination = useMemo(() => ({
+    p_page: productsTablePage,
+    p_size: productsTableSize,
+    total: products.length,
+  }), [productsTablePage, productsTableSize, products.length]);
+
+  const handleProductsTablePageChange = useCallback((page: number) => {
+    setProductsTablePage(page);
+  }, []);
+
+  const handleProductsTableSizeChange = useCallback((size: number) => {
+    setProductsTableSize(size);
+    setProductsTablePage(1);
   }, []);
 
   // Check if form is dirty
@@ -2231,6 +2264,12 @@ export const useCreateSale = () => {
     // Products unlock (VIR situation)
     productsUnlocked,
     setProductsUnlocked,
+
+    // Products table pagination (client-side)
+    paginatedTableProducts,
+    productsTablePagination,
+    handleProductsTablePageChange,
+    handleProductsTableSizeChange,
 
     // Signals
     lastSavedAt,

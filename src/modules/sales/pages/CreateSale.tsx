@@ -202,6 +202,11 @@ const CreateSale = () => {
     // Products unlock (VIR situation)
     productsUnlocked,
     setProductsUnlocked,
+    // Products table pagination
+    paginatedTableProducts,
+    productsTablePagination,
+    handleProductsTablePageChange,
+    handleProductsTableSizeChange,
     // Signals
     lastSavedAt,
   } = useCreateSale();
@@ -716,7 +721,9 @@ const CreateSale = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {products.map((product, index) => (
+                    {paginatedTableProducts.map((product, relativeIndex) => {
+                      const index = (productsTablePagination.p_page - 1) * productsTablePagination.p_size + relativeIndex;
+                      return (
                       <TableRow
                         key={index}
                         className={cn(
@@ -846,13 +853,14 @@ const CreateSale = () => {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
                 <PaginationBar
-                  pagination={{ p_page: 1, p_size: 10, total: 50 }}
-                  onPageChange={() => {}}
-                  onPageSizeChange={() => {}}
+                  pagination={productsTablePagination}
+                  onPageChange={handleProductsTablePageChange}
+                  onPageSizeChange={handleProductsTableSizeChange}
                 />
                 </>
               )}
