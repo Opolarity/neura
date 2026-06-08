@@ -151,6 +151,7 @@ export const updateOrder = async (
         stock_type_id: p.stockTypeId,
       })),
       payments: orderData.payments.map((p) => ({
+        id: p.dbId ?? null,
         payment_method_id: p.paymentMethodId,
         amount: p.amount,
         date: p.date,
