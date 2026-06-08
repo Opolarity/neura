@@ -84,6 +84,7 @@ import { SalesCambiosModal } from "../components/SalesCambiosModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 import placeholderImage from "@/assets/product-placeholder.png";
+import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 
 const CreateSale = () => {
   const {
@@ -693,6 +694,7 @@ const CreateSale = () => {
               </div>
 
               {products.length > 0 && (
+                <>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -847,6 +849,12 @@ const CreateSale = () => {
                     ))}
                   </TableBody>
                 </Table>
+                <PaginationBar
+                  pagination={{ p_page: 1, p_size: 10, total: 50 }}
+                  onPageChange={() => {}}
+                  onPageSizeChange={() => {}}
+                />
+                </>
               )}
             </CardContent>
           </Card>
