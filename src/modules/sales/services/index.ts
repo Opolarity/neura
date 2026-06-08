@@ -478,3 +478,16 @@ export const fetchSaleById = async (orderId: number) => {
   if (error) throw error;
   return data;
 };
+// Fetch sale by ID (consolidated data for editing)
+export const fetchSaleByIdProducts = async (orderId: number) => {
+  const { data, error } = await supabase.functions.invoke(
+    "get-sale-by-id-products",
+    {
+      body: {
+        order_id: orderId
+      }
+    }
+  );
+  if (error) throw error;
+  return data;
+};
