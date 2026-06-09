@@ -1680,7 +1680,7 @@ const CreateSale = () => {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Descuento regla de precios</span>
-                  <span>{formatCurrency(0)}</span>
+                  <span>{formatCurrency(savedPriceRules.reduce((sum, r) => sum + r.discount_amount, 0))}</span>
                 </div>
 
                 {savedPriceRules.length > 0 && (
@@ -1689,9 +1689,11 @@ const CreateSale = () => {
                       <div key={r.id} className="flex justify-between text-xs text-muted-foreground">
                         <span>{r.name}</span>
                         {
-                          r.discount_amount > 0 &&
+                          r.discount_amount > 0 ?
                           (
                             <span>{formatCurrency(r.discount_amount)}</span>
+                          ) : (
+                            <span>Inc. en productos</span>
                           ) 
                         }
                       </div>
