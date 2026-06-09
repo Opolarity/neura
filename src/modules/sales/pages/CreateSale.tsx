@@ -1141,16 +1141,9 @@ const CreateSale = () => {
                 </div>
               </div>
 
-              {/* Nivel y Promoción Aplicada */}
+              {/* Promoción Aplicada */}
               <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label>Nivel</Label>
-                  <Input
-                    value={customerPoints?.lvl ?? "—"}
-                    disabled
-                    className="bg-muted"
-                  />
-                </div>
+                
                 <div>
                   <Label>Promoción Aplicada</Label>
                   <Input
