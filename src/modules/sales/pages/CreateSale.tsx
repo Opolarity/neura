@@ -1678,6 +1678,17 @@ const CreateSale = () => {
                     </button>
                   ))}
 
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Descuento regla de precios</span>
+                  <span>{formatCurrency(0)}</span>
+                </div>
+
+                {(savedPriceRules || appliedRules.length > 0) && (
+                  <div className="text-xs text-muted-foreground">
+                    {savedPriceRules || appliedRules.map((r) => r.rule_name).join(" - ")}
+                  </div>
+                )}
+
                 {/* Applied price rules messages */}
                 {appliedRules.length > 0 && (
                   <div className="flex flex-col gap-1">
