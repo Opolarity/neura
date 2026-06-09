@@ -1611,6 +1611,11 @@ const CreateSale = () => {
                   </div>
                 ))}
 
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Descuento Manual</span>
+                  <span>{formatCurrency(0)}</span>
+                </div>
+
                 {/* Add discount button/form */}
                 {!isPhySituation &&
                   (showAddDiscount ? (
