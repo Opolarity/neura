@@ -1575,6 +1575,11 @@ const CreateSale = () => {
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
 
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Descuento Manual</span>
+                  <span>{formatCurrency(orderDiscounts.reduce((acc, d) => acc + d.amount, 0))}</span>
+                </div>
+
                 {/* Custom order discounts */}
                 {orderDiscounts.map((d) => (
                   <div
@@ -1610,11 +1615,6 @@ const CreateSale = () => {
                     </div>
                   </div>
                 ))}
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Descuento Manual</span>
-                  <span>{formatCurrency(0)}</span>
-                </div>
 
                 {/* Add discount button/form */}
                 {!isPhySituation &&
