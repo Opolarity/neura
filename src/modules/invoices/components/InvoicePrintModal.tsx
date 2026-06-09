@@ -1,0 +1,559 @@
+import { useEffect, useRef, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Loader2, Printer } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import jsPDF from "jspdf";
+import QRCode from "qrcode";
+import { getParameters } from "@/modules/settings/services/Parameters.service";
+import { formatDateTime } from "@/shared/utils/date";
+
+interface InvoicePrintModalProps {
+  invoiceId: number | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+interface InvoiceData {
+  id: number;
+  tax_serie: string | null;
+  invoice_number: string | null;
+  total_amount: number;
+  total_taxes: number | null;
+  client_name: string | null;
+  customer_document_number: string;
+  customer_document_type_id: number;
+  invoice_type_id: number;
+  created_at: string;
+  declared: boolean;
+  client_email: string | null;
+  client_address: string | null;
+  qr_data: string | null;
+  created_by: string;
+}
+
+interface InvoiceItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  discount: number | null;
+  igv: number;
+  total: number;
+  measurement_unit: string;
+}
+
+function numberToWords(num: number): string {
+  const units = ["", "UNO", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
+  const teens = ["DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE", "DIECISÉIS", "DIECISIETE", "DIECIOCHO", "DIECINUEVE"];
+  const tens = ["", "", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
+  const hundreds = ["", "CIENTO", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
+
+  if (num === 0) return "CERO";
+
+  const intPart = Math.floor(num);
+  const decPart = Math.round((num - intPart) * 100);
+
+  let words = "";
+
+  const convertGroup = (n: number): string => {
+    if (n === 0) return "";
+    if (n === 100) return "CIEN";
+    let result = "";
+    if (n >= 100) {
+      result += hundreds[Math.floor(n / 100)] + " ";
+      n %= 100;
+    }
+    if (n >= 20) {
+      result += tens[Math.floor(n / 10)];
+      const u = n % 10;
+      if (u > 0) result += " Y " + units[u];
+    } else if (n >= 10) {
+      result += teens[n - 10];
+    } else if (n > 0) {
+      result += units[n];
+    }
+    return result.trim();
+  };
+
+  if (intPart >= 1000) {
+    const thousands = Math.floor(intPart / 1000);
+    if (thousands === 1) {
+      words += "MIL ";
+    } else {
+      words += convertGroup(thousands) + " MIL ";
+    }
+    const remainder = intPart % 1000;
+    if (remainder > 0) words += convertGroup(remainder);
+  } else {
+    words = convertGroup(intPart);
+  }
+
+  words = words.trim();
+  words += ` Y ${decPart.toString().padStart(2, "0")}/100 SOLES`;
+  return words;
+}
+
+async function loadImage(url: string): Promise<{ dataUrl: string; width: number; height: number }> {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(objectUrl);
+      resolve({ dataUrl: canvas.toDataURL("image/png"), width: img.width, height: img.height });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to load image"));
+    };
+    img.src = objectUrl;
+  });
+}
+
+export function InvoicePrintModal({ invoiceId, open, onOpenChange }: InvoicePrintModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const pdfUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (open && invoiceId) {
+      generatePdf(invoiceId);
+    }
+    if (!open) {
+      if (pdfUrlRef.current) {
+        URL.revokeObjectURL(pdfUrlRef.current);
+        pdfUrlRef.current = null;
+      }
+      setPdfUrl(null);
+      setError(null);
+    }
+  }, [open, invoiceId]);
+
+  const handlePrint = () => {
+    if (!pdfUrl) return;
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "position:fixed;top:0;left:0;width:0;height:0;opacity:0;pointer-events:none";
+    document.body.appendChild(iframe);
+    iframe.src = pdfUrl;
+    iframe.onload = () => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        try { document.body.removeChild(iframe); } catch {}
+      }, 10000);
+    };
+  };
+
+  const generatePdf = async (invoiceId: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes, companyParams] =
+        await Promise.all([
+          supabase
+            .from("invoices")
+            .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by, qr_data")
+            .eq("id", invoiceId)
+            .single(),
+          supabase
+            .from("invoice_items")
+            .select("description, quantity, unit_price, discount, igv, total, measurement_unit")
+            .eq("invoice_id", invoiceId),
+          supabase.from("paremeters").select("name, value, code"),
+          supabase.from("parameters").select("name, value").eq("name", "InvoiceLogoUrl").maybeSingle(),
+          supabase.from("order_invoices").select("orders(*, branches(*))").eq("invoice_id", invoiceId).single(),
+          getParameters(["CompanyName", "CompanyPhoneNumber", "CompanyDocumentNumber", "CompanyEmail", "InvoiceFooterMessage"]),
+        ]);
+
+      const shippingMethodCode = (branchRes.data as any)?.orders?.shipping_method_code;
+      const shippingMethod = shippingMethodCode
+        ? await supabase.from("shipping_methods").select("name").eq("code", shippingMethodCode).single()
+        : null;
+
+      const discountOrders = await supabase
+        .from("order_discounts")
+        .select("name, discount_amount")
+        .eq("order_id", (branchRes.data as any)?.orders?.id);
+
+      const neighborhood = await supabase
+        .from("neighborhoods")
+        .select("name")
+        .eq("id", (branchRes.data as any)?.orders?.branches?.neighborhood_id)
+        .single();
+
+      if (invoiceRes.error || !invoiceRes.data) {
+        setError("No se encontró el comprobante");
+        setLoading(false);
+        return;
+      }
+
+      const invoice = invoiceRes.data as InvoiceData;
+      const items = (itemsRes.data || []) as InvoiceItem[];
+      const params = (paramsRes.data || []) as { name: string; value: string; code: string | null }[];
+
+      const getParam = (code: string) => params.find((p) => p.code === code)?.value || "";
+
+      const [docTypeRes, invTypeRes, profileRes] = await Promise.all([
+        supabase.from("document_types").select("name").eq("id", invoice.customer_document_type_id).single(),
+        supabase.from("types").select("name").eq("id", invoice.invoice_type_id).single(),
+        supabase.from("profiles").select("account_id").eq("UID", invoice.created_by).single(),
+      ]);
+
+      let cashierName = "";
+      if (profileRes.data) {
+        const { data: account } = await supabase
+          .from("accounts")
+          .select("name, last_name")
+          .eq("id", profileRes.data.account_id)
+          .single();
+        if (account) {
+          cashierName = [account.name, account.last_name].filter(Boolean).join(" ");
+        }
+      }
+
+      const companyName = companyParams["CompanyName"] || "EMPRESA";
+      const companyAddress =
+        (branchRes.data as any)?.orders?.branches?.address +
+          " " +
+          neighborhood?.data?.name || "";
+      const companyPhone = companyParams["CompanyPhoneNumber"];
+      const companyEmail = companyParams["CompanyEmail"];
+      const companyRuc = companyParams["CompanyDocumentNumber"];
+
+      const pageWidth = 80;
+      const margin = 3;
+      const contentWidth = pageWidth - margin * 2;
+
+      const fontSize = { title: 9, subtitle: 7.5, normal: 6.5, small: 6, tiny: 5.5 };
+
+      const invoiceLogoUrl = parametersRes.data?.value;
+      const logoUrl = invoiceLogoUrl || "/images/logo-ticket.png";
+
+      let logoImg: { dataUrl: string; width: number; height: number } | null = null;
+      try {
+        logoImg = await loadImage(logoUrl);
+      } catch {}
+
+      let qrCodeDataUrl: string | null = null;
+      if (invoice.qr_data) {
+        try {
+          qrCodeDataUrl = await QRCode.toDataURL(invoice.qr_data, { width: 200, margin: 1 });
+        } catch {}
+      }
+
+      const drawContent = (doc: jsPDF): number => {
+        let y = 4;
+
+        if (logoImg) {
+          const maxW = 60;
+          const maxH = 22;
+          const ratio = Math.min(maxW / logoImg.width, maxH / logoImg.height);
+          const w = logoImg.width * ratio;
+          const h = logoImg.height * ratio;
+          const logoX = (pageWidth - maxW) / 2;
+          const offsetX = (maxW - w) / 2;
+          const offsetY = (maxH - h) / 2;
+          doc.addImage(logoImg.dataUrl, "PNG", logoX + offsetX, y + offsetY, w, h);
+          y += offsetY + h + 5;
+        } else {
+          y += 2;
+        }
+
+        doc.setFontSize(fontSize.title);
+        doc.setFont("helvetica", "bold");
+        const companyLines = doc.splitTextToSize(companyName.toUpperCase(), contentWidth);
+        for (const line of companyLines) {
+          doc.text(line, pageWidth / 2, y, { align: "center" });
+          y += 3.5;
+        }
+        y += 0.5;
+
+        doc.setFontSize(fontSize.small);
+        doc.setFont("helvetica", "normal");
+
+        if (companyAddress) {
+          const addrLines = doc.splitTextToSize(companyAddress, contentWidth);
+          for (const line of addrLines) {
+            doc.text(line, pageWidth / 2, y, { align: "center" });
+            y += 2.5;
+          }
+        }
+        if (companyPhone) {
+          doc.text(`Teléfono: ${companyPhone}`, pageWidth / 2, y, { align: "center" });
+          y += 2.5;
+        }
+        if (companyEmail) {
+          doc.text(`E-mail: ${companyEmail}`, pageWidth / 2, y, { align: "center" });
+          y += 2.5;
+        }
+        if (companyRuc) {
+          doc.setFont("helvetica", "bold");
+          doc.text(`R.U.C.: ${companyRuc}`, pageWidth / 2, y, { align: "center" });
+          doc.setFont("helvetica", "normal");
+          y += 3;
+        }
+
+        y += 1;
+        doc.setLineWidth(0.3);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 3;
+
+        const docTypeName = invTypeRes.data?.name || "COMPROBANTE";
+        doc.setFontSize(fontSize.title);
+        doc.setFont("helvetica", "bold");
+        doc.text(docTypeName.toUpperCase(), pageWidth / 2, y, { align: "center" });
+        y += 4;
+
+        const orderNumber = "PEDIDO: #" + (branchRes.data as any)?.orders?.id || "";
+        doc.setFontSize(fontSize.title);
+        doc.setFont("helvetica", "bold");
+        doc.text(orderNumber.toUpperCase(), pageWidth / 2, y, { align: "center" });
+        y += 4;
+
+        const serieNum = [invoice.tax_serie, invoice.invoice_number].filter(Boolean).join(" - ");
+        if (serieNum) {
+          doc.setFontSize(fontSize.subtitle);
+          doc.setFont("helvetica", "bold");
+          doc.text(serieNum, pageWidth / 2, y, { align: "center" });
+          y += 4;
+        }
+
+        doc.setLineWidth(0.2);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 3;
+
+        doc.setFontSize(fontSize.normal);
+        doc.setFont("helvetica", "normal");
+
+        const dateStr = formatDateTime(invoice.created_at);
+        const detailLines: [string, string][] = [
+          ["FECHA DE EMISIÓN:", dateStr],
+          ["CLIENTE:", invoice.client_name || "Clientes Varios"],
+          [`${docTypeRes.data?.name || "Doc"}:`, invoice.customer_document_number],
+        ];
+
+        for (const [label, value] of detailLines) {
+          doc.setFont("helvetica", "bold");
+          doc.text(label, margin, y);
+          doc.setFont("helvetica", "normal");
+          const labelWidth = doc.getTextWidth(label) + 1;
+          const valueLines = doc.splitTextToSize(value, contentWidth - labelWidth);
+          for (let i = 0; i < valueLines.length; i++) {
+            doc.text(valueLines[i], margin + labelWidth, y + i * 2.5);
+          }
+          y += Math.max(valueLines.length * 2.5, 3);
+        }
+
+        y += 1;
+        doc.setLineWidth(0.2);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 3;
+
+        doc.setFontSize(fontSize.small);
+        doc.setFont("helvetica", "bold");
+
+        const col = {
+          cant: margin,
+          desc: margin + 10,
+          pu: pageWidth - margin - 12,
+          total: pageWidth - margin,
+        };
+
+        doc.text("CANT.", col.cant, y);
+        doc.text("DESCRIPCIÓN", col.desc, y);
+        doc.text("P.U.", col.pu, y, { align: "right" });
+
+        y += 2;
+        doc.setLineWidth(0.1);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 2.5;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(fontSize.small);
+
+        for (const item of items) {
+          const qtyStr = item.quantity % 1 === 0 ? String(item.quantity) : item.quantity.toFixed(2);
+          doc.text(qtyStr, col.cant, y);
+
+          const descWidth = col.pu - col.desc - 14;
+          const descLines = doc.splitTextToSize(item.description, descWidth > 0 ? descWidth : 30);
+          for (let i = 0; i < descLines.length; i++) {
+            doc.text(descLines[i], col.desc, y + i * 2.5);
+          }
+
+          doc.text(item.unit_price.toFixed(2), col.pu, y, { align: "right" });
+          y += Math.max(descLines.length * 2.5, 3) + 0.5;
+        }
+
+        if (shippingMethodCode) {
+          const shippingLabel = shippingMethod?.data?.name || shippingMethodCode;
+          const descWidth = col.pu - col.desc - 14;
+          const shippingLines = doc.splitTextToSize(shippingLabel, descWidth > 0 ? descWidth : 30);
+          for (let i = 0; i < shippingLines.length; i++) {
+            doc.text(shippingLines[i], col.desc, y + i * 2.5);
+          }
+          doc.text((branchRes.data as any).orders.shipping_cost.toFixed(2), col.pu, y, { align: "right" });
+          y += Math.max(shippingLines.length * 2.5, 3) + 0.5;
+        }
+
+        for (const discount of discountOrders.data ?? []) {
+          const descWidth = col.pu - col.desc - 14;
+          const descLines = doc.splitTextToSize(discount.name, descWidth > 0 ? descWidth : 30);
+          for (let i = 0; i < descLines.length; i++) {
+            doc.text(descLines[i], col.desc, y + i * 2.5);
+          }
+          doc.text("-" + discount.discount_amount.toFixed(2), col.pu, y, { align: "right" });
+          y += Math.max(descLines.length * 2.5, 3) + 0.5;
+        }
+
+        y += 1;
+        doc.setLineWidth(0.2);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 3;
+
+        doc.setFontSize(fontSize.normal);
+
+        const subtotal = invoice.total_amount - (invoice.total_taxes || 0);
+        const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
+
+        const totalLines: [string, string][] = [
+          ["TOTAL CANT.", totalQty % 1 === 0 ? String(totalQty) : totalQty.toFixed(2)],
+          ["OP. GRAVADAS", `S/ ${subtotal.toFixed(2)}`],
+          ["IGV 18%", `S/ ${(invoice.total_taxes || 0).toFixed(2)}`],
+          ["IMPORTE TOTAL:", `S/ ${invoice.total_amount.toFixed(2)}`],
+        ];
+
+        for (const [label, value] of totalLines) {
+          const isTotal = label === "IMPORTE TOTAL:";
+          doc.setFont("helvetica", isTotal ? "bold" : "normal");
+          if (isTotal) doc.setFontSize(fontSize.subtitle);
+          doc.text(label, margin, y);
+          doc.text(value, pageWidth - margin, y, { align: "right" });
+          if (isTotal) doc.setFontSize(fontSize.normal);
+          y += 3;
+        }
+
+        y += 0.5;
+        doc.setFont("helvetica", "bold");
+        doc.text("SON:", margin, y);
+        doc.setFont("helvetica", "normal");
+        const wordsText = numberToWords(invoice.total_amount);
+        const wordsLines = doc.splitTextToSize(wordsText, contentWidth - 8);
+        for (let i = 0; i < wordsLines.length; i++) {
+          doc.text(wordsLines[i], margin + 8, y + i * 2.5);
+        }
+        y += wordsLines.length * 2.5 + 1;
+
+        if (cashierName) {
+          doc.setFont("helvetica", "bold");
+          doc.text("CAJERO:", margin, y);
+          doc.setFont("helvetica", "normal");
+          doc.text(cashierName.toUpperCase(), margin + 14, y);
+          y += 4;
+        }
+
+        doc.setLineWidth(0.3);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 4;
+
+        doc.setFontSize(fontSize.subtitle);
+        doc.setFont("helvetica", "bold");
+        doc.text("CAMBIOS Y DEVOLUCIONES", pageWidth / 2, y, { align: "center" });
+        y += 3;
+
+        doc.setFontSize(fontSize.tiny);
+        doc.setFont("helvetica", "normal");
+        const policyText =
+          companyParams["InvoiceFooterMessage"] ||
+          "Recuerda que puedes realizar cambios y devoluciones dentro de los 15 días posteriores a la compra, siempre y cuando el producto esté en su estado original y con el ticket de compra.";
+        const policyLines = doc.splitTextToSize(policyText, contentWidth);
+        for (const line of policyLines) {
+          doc.text(line, pageWidth / 2, y, { align: "center" });
+          y += 2.2;
+        }
+
+        y += 2;
+        doc.setFontSize(fontSize.normal);
+        doc.setFont("helvetica", "bold");
+        doc.text("Gracias por tu confianza.", pageWidth / 2, y, { align: "center" });
+        y += 4;
+
+        if (qrCodeDataUrl) {
+          const qrSize = 35;
+          const qrX = (pageWidth - qrSize) / 2;
+          doc.addImage(qrCodeDataUrl, "PNG", qrX, y, qrSize, qrSize);
+          y += qrSize + 2;
+        }
+
+        return y;
+      };
+
+      const measureDoc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pageWidth, 9999] });
+      const finalY = drawContent(measureDoc);
+
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pageWidth, finalY + 4] });
+      drawContent(doc);
+
+      const pdfBlob = doc.output("blob");
+      const url = URL.createObjectURL(pdfBlob);
+      pdfUrlRef.current = url;
+      setPdfUrl(url);
+    } catch (err: any) {
+      setError(err.message || "Error al generar el PDF");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[520px] h-[90vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="flex flex-row items-center justify-between px-6 py-4 shrink-0 border-b">
+          <DialogTitle>Vista previa</DialogTitle>
+          <Button
+            onClick={handlePrint}
+            disabled={!pdfUrl || loading}
+            size="sm"
+            className="mr-8"
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Imprimir
+          </Button>
+        </DialogHeader>
+        <div className="flex-1 min-h-0 p-2">
+          {loading ? (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Generando PDF...</span>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-full text-destructive text-sm">
+              {error}
+            </div>
+          ) : pdfUrl ? (
+            <embed
+              src={pdfUrl}
+              type="application/pdf"
+              className="w-full h-full rounded"
+            />
+          ) : null}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

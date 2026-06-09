@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import GuiaRemisionModal, { type GuiaRemisionData } from "./GuiaRemisionModal";
+import { useInvoicePrint } from "@/modules/invoices/hooks/useInvoicePrint";
 
 interface Invoice {
   id: number;
@@ -91,6 +92,7 @@ export const SalesInvoicesModal = ({
 
   const [guiaModalOpen, setGuiaModalOpen] = useState(false);
   const [pendingGuiaInvoiceType, setPendingGuiaInvoiceType] = useState<InvoiceType | null>(null);
+  const { printInvoice, printingId } = useInvoicePrint();
 
   useEffect(() => {
     if (open && orderId) {
@@ -638,9 +640,12 @@ export const SalesInvoicesModal = ({
                                 size="icon"
                                 className="h-8 w-8"
                                 title="Imprimir ticket"
-                                onClick={() => window.open(`/invoices/print/${inv.id}`, "_blank")}
+                                disabled={printingId === inv.id}
+                                onClick={() => printInvoice(inv.id)}
                               >
-                                <Printer className="h-4 w-4" />
+                                {printingId === inv.id
+                                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                                  : <Printer className="h-4 w-4" />}
                               </Button>
                               <Button
                                 variant="ghost"
@@ -733,11 +738,12 @@ export const SalesInvoicesModal = ({
                                 size="icon"
                                 className="h-8 w-8"
                                 title="Imprimir ticket"
-                                onClick={() => {
-                                  window.open(`/invoices/print/${inv.id}`, "_blank");
-                                }}
+                                disabled={printingId === inv.id}
+                                onClick={() => printInvoice(inv.id)}
                               >
-                                <Printer className="h-4 w-4" />
+                                {printingId === inv.id
+                                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                                  : <Printer className="h-4 w-4" />}
                               </Button>
                             </>
                           ) : (
@@ -828,6 +834,7 @@ export const SalesInvoicesModal = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
     </Dialog>
   );
 };

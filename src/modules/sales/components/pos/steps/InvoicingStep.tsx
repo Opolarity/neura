@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import GuiaRemisionModal, { type GuiaRemisionData } from "../../GuiaRemisionModal";
+import { useInvoicePrint } from "@/modules/invoices/hooks/useInvoicePrint";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -85,6 +86,7 @@ export default function InvoicingStep({
 
   const [guiaModalOpen, setGuiaModalOpen] = useState(false);
   const [pendingGuiaInvoiceType, setPendingGuiaInvoiceType] = useState<InvoiceType | null>(null);
+  const { printInvoice, printingId } = useInvoicePrint();
 
   useEffect(() => {
     if (orderId) {
@@ -663,11 +665,11 @@ export default function InvoicingStep({
           toast({ title: "Error de emisión", description: emitData?.error || "Error al emitir a SUNAT", variant: "destructive" });
         } else {
           toast({ title: "Éxito", description: `${invoiceType.name} emitido a SUNAT correctamente` });
-          window.open(`/invoices/print/${newInvoice.id}`, "_blank");
+          printInvoice(newInvoice.id);
         }
       } else if (newInvoice) {
         toast({ title: "Éxito", description: `${invoiceType.name} creado correctamente` });
-        window.open(`/invoices/print/${newInvoice.id}`, "_blank");
+        printInvoice(newInvoice.id);
       }
 
       fetchInvoices();
@@ -781,9 +783,12 @@ export default function InvoicingStep({
                                 size="icon"
                                 className="h-8 w-8"
                                 title="Imprimir ticket"
-                                onClick={() => window.open(`/invoices/print/${inv.id}`, "_blank")}
+                                disabled={printingId === inv.id}
+                                onClick={() => printInvoice(inv.id)}
                               >
-                                <Printer className="h-4 w-4" />
+                                {printingId === inv.id
+                                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                                  : <Printer className="h-4 w-4" />}
                               </Button>
                               <Button
                                 variant="ghost"
@@ -872,11 +877,12 @@ export default function InvoicingStep({
                                 size="icon"
                                 className="h-8 w-8"
                                 title="Imprimir ticket"
-                                onClick={() => {
-                                  window.open(`/invoices/print/${inv.id}`, "_blank");
-                                }}
+                                disabled={printingId === inv.id}
+                                onClick={() => printInvoice(inv.id)}
                               >
-                                <Printer className="h-4 w-4" />
+                                {printingId === inv.id
+                                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                                  : <Printer className="h-4 w-4" />}
                               </Button>
                             </>
                           ) : (
@@ -967,6 +973,7 @@ export default function InvoicingStep({
         orderId={orderId}
         onConfirm={handleCreateGuia}
       />
+
     </div>
   );
 }

@@ -84,6 +84,7 @@ import { SalesCambiosModal } from "../components/SalesCambiosModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 import placeholderImage from "@/assets/product-placeholder.png";
+import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 
 const CreateSale = () => {
   const {
@@ -201,6 +202,11 @@ const CreateSale = () => {
     // Products unlock (VIR situation)
     productsUnlocked,
     setProductsUnlocked,
+    // Products table pagination
+    paginatedTableProducts,
+    productsTablePagination,
+    handleProductsTablePageChange,
+    handleProductsTableSizeChange,
     // Signals
     lastSavedAt,
   } = useCreateSale();
@@ -693,6 +699,7 @@ const CreateSale = () => {
               </div>
 
               {products.length > 0 && (
+                <>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -714,7 +721,9 @@ const CreateSale = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {products.map((product, index) => (
+                    {paginatedTableProducts.map((product, relativeIndex) => {
+                      const index = (productsTablePagination.p_page - 1) * productsTablePagination.p_size + relativeIndex;
+                      return (
                       <TableRow
                         key={index}
                         className={cn(
@@ -844,9 +853,16 @@ const CreateSale = () => {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
+                <PaginationBar
+                  pagination={productsTablePagination}
+                  onPageChange={handleProductsTablePageChange}
+                  onPageSizeChange={handleProductsTableSizeChange}
+                />
+                </>
               )}
             </CardContent>
           </Card>

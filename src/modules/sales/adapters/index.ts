@@ -239,6 +239,27 @@ export const getOrdersSituationsByIdAdapter = (
   });
 };
 
+// Adapt products from get-sale-by-id-products response
+export const adaptSaleByIdProducts = (data: any[]) => {
+  return (data || []).map((p: any) => ({
+    variationId: p.variation_id,
+    productId: p.product_id,
+    productName: p.product_name,
+    variationName: p.variation_name,
+    sku: p.sku,
+    quantity: p.quantity,
+    receivedByFranchise: p.received_by_franchise ?? null,
+    price: p.price,
+    originalPrice: p.price,
+    discountAmount: p.discount_amount,
+    stockTypeId: p.stock_type_id,
+    stockTypeName: p.stock_type_name,
+    maxStock: p.max_stock,
+    fromOrder: true,
+    imageUrl: p.product_image || null,
+  }));
+};
+
 // Adapt sale by ID response for CreateSale form
 export const adaptSaleById = (data: any) => {
   // Parse order_discounts - separate PRO (auto) from custom
