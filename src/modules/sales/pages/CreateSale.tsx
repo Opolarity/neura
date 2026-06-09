@@ -1142,7 +1142,7 @@ const CreateSale = () => {
               </div>
 
               {/* Promoción Aplicada */}
-              <div className="grid grid-cols-2 gap-2">
+              {/* <div className="grid grid-cols-2 gap-2">
                 
                 <div>
                   <Label>Promoción Aplicada</Label>
@@ -1157,7 +1157,7 @@ const CreateSale = () => {
                     className="bg-muted"
                   />
                 </div>
-              </div>
+              </div> */}
 
               <div className="flex items-center space-x-4 pt-2">
                 <div className="flex items-center space-x-2">
