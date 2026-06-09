@@ -193,7 +193,7 @@ export const useCreateSale = () => {
   const [orderDiscounts, setOrderDiscounts] = useState<OrderDiscount[]>([]);
   const [orderReturns, setOrderReturns] = useState<import("../types/Sales.types").SaleReturn[]>([]);
   const [customerPoints, setCustomerPoints] = useState<{ lvl: string; points: number } | null>(null);
-  const [savedPriceRules, setSavedPriceRules] = useState<string>("");
+  const [savedPriceRules, setSavedPriceRules] = useState<Array<{ id: number; code: string; name: string; discount_amount: number }>>([]);
 
   // History modal state
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -2018,6 +2018,14 @@ export const useCreateSale = () => {
               discount_amount: d.amount,
               code: d.code || "CUSTOM",
             })),
+            ...(orderId && savedPriceRules.length > 0
+              ? savedPriceRules.map((r) => ({
+                  id: r.id,
+                  name: r.name,
+                  discount_amount: r.discount_amount,
+                  code: r.code,
+                }))
+              : []),
           ],
         };
 
@@ -2117,6 +2125,7 @@ export const useCreateSale = () => {
       isExistingClient,
       isAnonymousPurchase,
       isConsignment,
+      savedPriceRules,
       toast,
       navigate,
     ],

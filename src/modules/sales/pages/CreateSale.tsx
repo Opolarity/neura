@@ -1683,9 +1683,19 @@ const CreateSale = () => {
                   <span>{formatCurrency(0)}</span>
                 </div>
 
-                {(savedPriceRules || appliedRules.length > 0) && (
-                  <div className="text-xs text-muted-foreground">
-                    {savedPriceRules || appliedRules.map((r) => r.rule_name).join(" - ")}
+                {savedPriceRules.length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    {savedPriceRules.map((r) => (
+                      <div key={r.id} className="flex justify-between text-xs text-muted-foreground">
+                        <span>{r.name}</span>
+                        {
+                          r.discount_amount > 0 &&
+                          (
+                            <span>{formatCurrency(r.discount_amount)}</span>
+                          ) 
+                        }
+                      </div>
+                    ))}
                   </div>
                 )}
 
