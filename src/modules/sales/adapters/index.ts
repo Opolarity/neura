@@ -272,6 +272,7 @@ export const adaptSaleById = (data: any) => {
 
   // Custom discounts = non-PRO codes (user-created), with non-zero amount
   const orderDiscounts = rawDiscounts.filter((d: any) => d.code !== "PRO" && d.amount !== 0);
+console.log(data.pricerules || [], "aaa");
 
   return {
     formData: {
@@ -357,7 +358,12 @@ export const adaptSaleById = (data: any) => {
       ? { id: data.order.sale_type_id, name: data.order.sale_type_name || "" }
       : null,
     returns: (data.returns || []) as SaleReturn[],
-    pricerules: (data.pricerules || []).map((r: any) => r.name).join(" - "),
+    pricerules: (data.pricerules || []).map((r: any) => ({
+      id: r.id as number,
+      code: r.code as string,
+      name: r.name as string,
+      discount_amount: r.discount_amount as number,
+    })),
     customerPoints: (data.customer_points ?? null) as { lvl: string; points: number } | null,
   };
 };
