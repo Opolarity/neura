@@ -207,6 +207,8 @@ const CreateSale = () => {
     productsTablePagination,
     handleProductsTablePageChange,
     handleProductsTableSizeChange,
+    productsTableSearchQuery,
+    handleProductsTableSearchChange,
     // Signals
     lastSavedAt,
   } = useCreateSale();
@@ -708,6 +710,17 @@ const CreateSale = () => {
                 </Button>
               </div>
 
+              <div className="flex flex-row gap-2">
+                <Input
+                  placeholder="Buscar productos en la orden"
+                  value={productsTableSearchQuery}
+                  onChange={(e) => handleProductsTableSearchChange(e.target.value)}
+                />
+                <Button className="flex-shrink-0" size="icon" type="button">
+                  <Search />
+                </Button>
+              </div>
+
               {products.length > 0 && (
                 <>
                   <Table>
@@ -731,11 +744,8 @@ const CreateSale = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedTableProducts.map((product, relativeIndex) => {
-                        const index =
-                          (productsTablePagination.p_page - 1) *
-                            productsTablePagination.p_size +
-                          relativeIndex;
+                      {paginatedTableProducts.map(({ product, originalIndex }) => {
+                        const index = originalIndex;
                         return (
                           <TableRow
                             key={index}
@@ -896,6 +906,16 @@ const CreateSale = () => {
                           </TableRow>
                         );
                       })}
+                      {paginatedTableProducts.length === 0 && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={7}
+                            className="text-center text-sm text-muted-foreground py-6"
+                          >
+                            No se encontraron productos en la orden.
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                   <PaginationBar

@@ -209,6 +209,7 @@ export const useCreateSale = () => {
   // Products table pagination (client-side)
   const [productsTablePage, setProductsTablePage] = useState(1);
   const [productsTableSize, setProductsTableSize] = useState(20);
+  const [productsTableSearchQuery, setProductsTableSearchQuery] = useState("");
 
   useEffect(() => {
     if (lastSavedAt > 0) setProductsUnlocked(false);
@@ -1812,17 +1813,29 @@ export const useCreateSale = () => {
     setOrderDiscounts((prev) => prev.filter((d) => d.id !== id));
   }, []);
 
-  // Computed: paginated slice of products for the table
+  // Computed: products with their original index, filtered by the table search query
+  const filteredTableProducts = useMemo(() => {
+    const indexed = products.map((product, originalIndex) => ({ product, originalIndex }));
+    const query = productsTableSearchQuery.trim().toLowerCase();
+    if (!query) return indexed;
+    return indexed.filter(({ product }) =>
+      product.productName.toLowerCase().includes(query) ||
+      product.variationName.toLowerCase().includes(query) ||
+      product.sku.toLowerCase().includes(query),
+    );
+  }, [products, productsTableSearchQuery]);
+
+  // Computed: paginated slice of (filtered) products for the table
   const paginatedTableProducts = useMemo(() => {
     const start = (productsTablePage - 1) * productsTableSize;
-    return products.slice(start, start + productsTableSize);
-  }, [products, productsTablePage, productsTableSize]);
+    return filteredTableProducts.slice(start, start + productsTableSize);
+  }, [filteredTableProducts, productsTablePage, productsTableSize]);
 
   const productsTablePagination = useMemo(() => ({
     p_page: productsTablePage,
     p_size: productsTableSize,
-    total: products.length,
-  }), [productsTablePage, productsTableSize, products.length]);
+    total: filteredTableProducts.length,
+  }), [productsTablePage, productsTableSize, filteredTableProducts.length]);
 
   const handleProductsTablePageChange = useCallback((page: number) => {
     setProductsTablePage(page);
@@ -1830,6 +1843,12 @@ export const useCreateSale = () => {
 
   const handleProductsTableSizeChange = useCallback((size: number) => {
     setProductsTableSize(size);
+    setProductsTablePage(1);
+  }, []);
+
+  // Handle products table search query change - resets to first page
+  const handleProductsTableSearchChange = useCallback((query: string) => {
+    setProductsTableSearchQuery(query);
     setProductsTablePage(1);
   }, []);
 
@@ -2279,6 +2298,8 @@ export const useCreateSale = () => {
     productsTablePagination,
     handleProductsTablePageChange,
     handleProductsTableSizeChange,
+    productsTableSearchQuery,
+    handleProductsTableSearchChange,
 
     // Signals
     lastSavedAt,
