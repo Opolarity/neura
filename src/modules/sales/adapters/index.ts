@@ -239,6 +239,27 @@ export const getOrdersSituationsByIdAdapter = (
   });
 };
 
+// Adapt products from get-sale-by-id-products response
+export const adaptSaleByIdProducts = (data: any[]) => {
+  return (data || []).map((p: any) => ({
+    variationId: p.variation_id,
+    productId: p.product_id,
+    productName: p.product_name,
+    variationName: p.variation_name,
+    sku: p.sku,
+    quantity: p.quantity,
+    receivedByFranchise: p.received_by_franchise ?? null,
+    price: p.price,
+    originalPrice: p.price,
+    discountAmount: p.discount_amount,
+    stockTypeId: p.stock_type_id,
+    stockTypeName: p.stock_type_name,
+    maxStock: p.max_stock,
+    fromOrder: true,
+    imageUrl: p.product_image || null,
+  }));
+};
+
 // Adapt sale by ID response for CreateSale form
 export const adaptSaleById = (data: any) => {
   // Parse order_discounts - separate PRO (auto) from custom
@@ -251,6 +272,7 @@ export const adaptSaleById = (data: any) => {
 
   // Custom discounts = non-PRO codes (user-created), with non-zero amount
   const orderDiscounts = rawDiscounts.filter((d: any) => d.code !== "PRO" && d.amount !== 0);
+console.log(data.pricerules || [], "aaa");
 
   return {
     formData: {
@@ -336,7 +358,12 @@ export const adaptSaleById = (data: any) => {
       ? { id: data.order.sale_type_id, name: data.order.sale_type_name || "" }
       : null,
     returns: (data.returns || []) as SaleReturn[],
-    pricerules: (data.pricerules || []).map((r: any) => r.name).join(" - "),
+    pricerules: (data.pricerules || []).map((r: any) => ({
+      id: r.id as number,
+      code: r.code as string,
+      name: r.name as string,
+      discount_amount: r.discount_amount as number,
+    })),
     customerPoints: (data.customer_points ?? null) as { lvl: string; points: number } | null,
   };
 };

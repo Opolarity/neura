@@ -151,6 +151,7 @@ export const updateOrder = async (
         stock_type_id: p.stockTypeId,
       })),
       payments: orderData.payments.map((p) => ({
+        id: p.dbId ?? null,
         payment_method_id: p.paymentMethodId,
         amount: p.amount,
         date: p.date,
@@ -473,6 +474,19 @@ export const changeOrderProducts = async (payload: {
 export const fetchSaleById = async (orderId: number) => {
   const { data, error } = await supabase.functions.invoke(
     `get-sale-by-id?id=${orderId}`
+  );
+  if (error) throw error;
+  return data;
+};
+// Fetch sale by ID (consolidated data for editing)
+export const fetchSaleByIdProducts = async (orderId: number) => {
+  const { data, error } = await supabase.functions.invoke(
+    "get-sale-by-id-products",
+    {
+      body: {
+        order_id: orderId
+      }
+    }
   );
   if (error) throw error;
   return data;
