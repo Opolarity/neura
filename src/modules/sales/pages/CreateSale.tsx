@@ -228,6 +228,7 @@ const CreateSale = () => {
   const [showAddDiscount, setShowAddDiscount] = useState(false);
   const [newDiscountName, setNewDiscountName] = useState("");
   const [newDiscountAmount, setNewDiscountAmount] = useState("");
+  const [productsTableSearchInput, setProductsTableSearchInput] = useState("");
 
   const [open, setOpen] = useState(false);
   const [tempPriceListId, setTempPriceListId] = useState<string>("");
@@ -713,10 +714,23 @@ const CreateSale = () => {
               <div className="flex flex-row gap-2">
                 <Input
                   placeholder="Buscar productos en la orden"
-                  value={productsTableSearchQuery}
-                  onChange={(e) => handleProductsTableSearchChange(e.target.value)}
+                  value={productsTableSearchInput}
+                  onChange={(e) => setProductsTableSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleProductsTableSearchChange(productsTableSearchInput);
+                    }
+                  }}
                 />
-                <Button className="flex-shrink-0" size="icon" type="button">
+                <Button
+                  className="flex-shrink-0"
+                  size="icon"
+                  type="button"
+                  onClick={() =>
+                    handleProductsTableSearchChange(productsTableSearchInput)
+                  }
+                >
                   <Search />
                 </Button>
               </div>
