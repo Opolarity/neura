@@ -2614,7 +2614,8 @@ const CreateSale = () => {
                       )}
                     </TableCell>
                     <TableCell className="text-center">
-                      {(product.receivedByFranchise ?? 0) === product.quantity
+                      {(product.receivedByFranchise ?? 0) <= 0 ||
+                      (product.receivedByFranchise ?? 0) === product.quantity
                         ? "-"
                         : (product.receivedByFranchise ?? 0) - product.quantity}
                     </TableCell>
