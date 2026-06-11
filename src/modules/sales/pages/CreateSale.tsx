@@ -2517,16 +2517,30 @@ const CreateSale = () => {
             <Table className="px-2">
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-20">Imagen</TableHead>
                   <TableHead>Producto</TableHead>
-                  <TableHead className="w-24 text-center">Cantidad</TableHead>
+                  <TableHead className="w-24 text-center">Enviado</TableHead>
                   <TableHead className="w-40 text-center">
-                    Recibido por franquicia
+                    Recibido
+                  </TableHead>
+                  <TableHead className="w-40 text-center">
+                    Estado
+                  </TableHead>
+                  <TableHead className="w-40 text-center">
+                    Diferencia
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {products.map((product, index) => (
                   <TableRow key={`${product.variationId}-${index}`}>
+                    <TableCell>
+                      <img
+                        src={product.imageUrl ?? placeholderImage}
+                        alt={product.productName}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-medium">
@@ -2543,6 +2557,22 @@ const CreateSale = () => {
                     </TableCell>
                     <TableCell className="text-center">
                       {product.receivedByFranchise ?? 0}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {(product.receivedByFranchise ?? 0) > 0 ? (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                          Completado
+                        </span>
+                      ) : (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                          Pendiente
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {(product.receivedByFranchise ?? 0) === product.quantity
+                        ? "-"
+                        : (product.receivedByFranchise ?? 0) - product.quantity}
                     </TableCell>
                   </TableRow>
                 ))}
