@@ -229,6 +229,8 @@ const CreateSale = () => {
   const [newDiscountName, setNewDiscountName] = useState("");
   const [newDiscountAmount, setNewDiscountAmount] = useState("");
   const [productsTableSearchInput, setProductsTableSearchInput] = useState("");
+  const [franchiseProductsPage, setFranchiseProductsPage] = useState(1);
+  const [franchiseProductsPageSize, setFranchiseProductsPageSize] = useState(20);
 
   const [open, setOpen] = useState(false);
   const [tempPriceListId, setTempPriceListId] = useState<string>("");
@@ -255,6 +257,11 @@ const CreateSale = () => {
   const totalProductPages = Math.ceil(
     productPagination.total / productPagination.size,
   );
+
+  const paginatedFranchiseProducts = useMemo(() => {
+    const start = (franchiseProductsPage - 1) * franchiseProductsPageSize;
+    return products.slice(start, start + franchiseProductsPageSize);
+  }, [products, franchiseProductsPage, franchiseProductsPageSize]);
 
   // Get selected price list name
   const selectedPriceListName = useMemo(() => {
@@ -475,7 +482,10 @@ const CreateSale = () => {
             <Button
               variant="secondary"
               type="button"
-              onClick={() => setFranchiseProductsModalOpen(true)}
+              onClick={() => {
+                setFranchiseProductsPage(1);
+                setFranchiseProductsModalOpen(true);
+              }}
             >
               Enviado a franquiciado
             </Button>
@@ -2532,7 +2542,7 @@ const CreateSale = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.map((product, index) => (
+                {paginatedFranchiseProducts.map((product, index) => (
                   <TableRow key={`${product.variationId}-${index}`}>
                     <TableCell>
                       <img
@@ -2578,6 +2588,18 @@ const CreateSale = () => {
                 ))}
               </TableBody>
             </Table>
+            <PaginationBar
+              pagination={{
+                p_page: franchiseProductsPage,
+                p_size: franchiseProductsPageSize,
+                total: products.length,
+              }}
+              onPageChange={setFranchiseProductsPage}
+              onPageSizeChange={(size) => {
+                setFranchiseProductsPageSize(size);
+                setFranchiseProductsPage(1);
+              }}
+            />
           </div>
         </DialogContent>
       </Dialog>
