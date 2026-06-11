@@ -231,6 +231,8 @@ const CreateSale = () => {
   const [productsTableSearchInput, setProductsTableSearchInput] = useState("");
   const [franchiseProductsPage, setFranchiseProductsPage] = useState(1);
   const [franchiseProductsPageSize, setFranchiseProductsPageSize] = useState(20);
+  const [franchiseProductsSearchInput, setFranchiseProductsSearchInput] = useState("");
+  const [franchiseProductsSearchQuery, setFranchiseProductsSearchQuery] = useState("");
 
   const [open, setOpen] = useState(false);
   const [tempPriceListId, setTempPriceListId] = useState<string>("");
@@ -258,10 +260,20 @@ const CreateSale = () => {
     productPagination.total / productPagination.size,
   );
 
+  const filteredFranchiseProducts = useMemo(() => {
+    const query = franchiseProductsSearchQuery.trim().toLowerCase();
+    if (!query) return products;
+    return products.filter((p) =>
+      [p.productName, p.variationName, p.sku]
+        .filter(Boolean)
+        .some((field) => field!.toLowerCase().includes(query)),
+    );
+  }, [products, franchiseProductsSearchQuery]);
+
   const paginatedFranchiseProducts = useMemo(() => {
     const start = (franchiseProductsPage - 1) * franchiseProductsPageSize;
-    return products.slice(start, start + franchiseProductsPageSize);
-  }, [products, franchiseProductsPage, franchiseProductsPageSize]);
+    return filteredFranchiseProducts.slice(start, start + franchiseProductsPageSize);
+  }, [filteredFranchiseProducts, franchiseProductsPage, franchiseProductsPageSize]);
 
   // Get selected price list name
   const selectedPriceListName = useMemo(() => {
@@ -2521,8 +2533,30 @@ const CreateSale = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-auto flex-1">
-            <div className="flex flex-row gap-4 px-2 py-4">
-              <Input placeholder="Buscar producto" />
+            <div className="flex flex-row gap-2 px-2 py-4">
+              <Input
+                placeholder="Buscar producto"
+                value={franchiseProductsSearchInput}
+                onChange={(e) => setFranchiseProductsSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    setFranchiseProductsSearchQuery(franchiseProductsSearchInput);
+                    setFranchiseProductsPage(1);
+                  }
+                }}
+              />
+              <Button
+                className="flex-shrink-0"
+                size="icon"
+                type="button"
+                onClick={() => {
+                  setFranchiseProductsSearchQuery(franchiseProductsSearchInput);
+                  setFranchiseProductsPage(1);
+                }}
+              >
+                <Search/>
+              </Button>
             </div>
             <Table className="px-2">
               <TableHeader>
@@ -2592,7 +2626,7 @@ const CreateSale = () => {
               pagination={{
                 p_page: franchiseProductsPage,
                 p_size: franchiseProductsPageSize,
-                total: products.length,
+                total: filteredFranchiseProducts.length,
               }}
               onPageChange={setFranchiseProductsPage}
               onPageSizeChange={(size) => {
