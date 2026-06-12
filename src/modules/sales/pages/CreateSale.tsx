@@ -2567,12 +2567,12 @@ const CreateSale = () => {
                   <TableHead className="w-40 text-center">
                     Recibido
                   </TableHead>
-                  <TableHead className="w-40 text-center">
+                  {/* <TableHead className="w-40 text-center">
                     Estado
                   </TableHead>
                   <TableHead className="w-40 text-center">
                     Diferencia
-                  </TableHead>
+                  </TableHead> */}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -2599,10 +2599,19 @@ const CreateSale = () => {
                     <TableCell className="text-center">
                       {product.quantity}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell
+                      className={cn(
+                        "text-center",
+                        (product.receivedByFranchise ?? 0) === product.quantity
+                          ? "text-green-500"
+                          : (product.receivedByFranchise ?? 0) > 0
+                            ? "text-yellow-500"
+                            : "text-red-700",
+                      )}
+                    >
                       {product.receivedByFranchise ?? 0}
                     </TableCell>
-                    <TableCell className="text-center">
+                    {/* <TableCell className="text-center">
                       {(product.receivedByFranchise ?? 0) > 0 ? (
                         <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                           Completado
@@ -2618,7 +2627,7 @@ const CreateSale = () => {
                       (product.receivedByFranchise ?? 0) === product.quantity
                         ? "-"
                         : (product.receivedByFranchise ?? 0) - product.quantity}
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 ))}
               </TableBody>
