@@ -64,6 +64,7 @@ export interface ActionConfig {
   tiers?: { qty: number; unit_price: number }[];
   variation_id?: number;
   quantity?: number;
+  max_qty?: number;
   // buy_x_get_y fields
   buy_qty?: number;
   get_qty?: number;
