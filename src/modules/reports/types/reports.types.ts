@@ -98,6 +98,17 @@ export type SalesDimension =
 export type Granularity = 'day' | 'week' | 'month';
 export type TopMetric = 'revenue' | 'quantity';
 export type TopLimit = 5 | 10 | 20;
+export type HeatmapMetric = 'total_revenue' | 'order_count';
+
+export interface SalesGeoHeatmapItem {
+  state_id?: number;
+  city_id?: number;
+  geo_map: string | null;
+  label: string;
+  state_geo_map?: string | null;
+  order_count: number;
+  total_revenue: number;
+}
 
 // -------------------------------------------------------
 // Products Dashboard
