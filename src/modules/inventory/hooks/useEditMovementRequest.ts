@@ -33,7 +33,6 @@ export const useEditMovementRequest = () => {
   const [statusName, setStatusName] = useState("");
   const [statusCode, setStatusCode] = useState("");
   const [currentSituationCode, setCurrentSituationCode] = useState("");
-  const [isDirectSend, setIsDirectSend] = useState(false);
   const [createdAt, setCreatedAt] = useState<string>("");
   const [situationsHistory, setSituationsHistory] = useState<SituationHistoryItem[]>([]);
   const [situationOptions, setSituationOptions] = useState<SituationOption[]>([]);
@@ -124,12 +123,6 @@ export const useEditMovementRequest = () => {
       const historyList = reqData.history || [];
       const createdByIds = [...new Set<string>(historyList.map((s: any) => s.created_by).filter(Boolean))];
       let profilesMap: Record<string, string> = {};
-      
-      if (historyList.length > 0) {
-        // Evaluate if this movement was a CreateSendMovement (initial situation was ENV)
-        const firstSit = historyList[historyList.length - 1]; // Last item since it is descending by created_at
-        setIsDirectSend(firstSit.situation?.code === "ENV");
-      }
 
       if (createdByIds.length > 0) {
         const { data: profilesData } = await supabase
@@ -476,13 +469,18 @@ export const useEditMovementRequest = () => {
     }
 
     if (s.code === "NEG") {
-      // Solo el que recibe puede negociar, PERO no en envios directos, y no si ya esta enviado o recibido
-      return isReceiver && !isDirectSend && currentSituationCode !== "ENV" && currentSituationCode !== "REC";
+      // El que despacha inicia la negociacion desde Solicitado; una vez en Negociacion, ambos pueden mantenerse ahi
+      return (isSender && currentSituationCode === "REQ") || ((isSender || isReceiver) && currentSituationCode === "NEG");
     }
 
-    if (s.code === "ENV" || s.code === "APR") {
-      // Solo el que envia puede aprobar/enviar, PERO no si ya esta enviado
-      return isSender && currentSituationCode !== "ENV";
+    if (s.code === "APR") {
+      // Solo el que despacha puede aprobar, desde Solicitado o Negociacion
+      return isSender && (currentSituationCode === "REQ" || currentSituationCode === "NEG");
+    }
+
+    if (s.code === "ENV") {
+      // Solo el que despacha puede enviar, una vez aprobado
+      return isSender && currentSituationCode === "APR";
     }
 
     return true;
