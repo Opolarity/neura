@@ -489,6 +489,7 @@ export const useEditMovementRequest = () => {
   });
   
   const isReadOnly = currentSituationCode === "CAN" || currentSituationCode === "REC";
+  const isQuantityReadOnly = currentSituationCode !== "NEG";
 
   return {
     requestId: id,
@@ -527,6 +528,7 @@ export const useEditMovementRequest = () => {
     toggleDisapprove,
     isSourceWarehouseUser,
     isReadOnly,
+    isQuantityReadOnly,
     inWarehouseName,
   };
 };
