@@ -99,15 +99,15 @@ export const useCreateSendMovement = () => {
           .order("id");
 
         if (sitData && sitData.length > 0) {
-          // Filter situations whose parent status has code "CFM"
+          // Filter situations whose own code is "ENV"
           const cfmSituations = sitData
-            .filter((s: any) => s.statuses?.code === "CFM")
+            .filter((s: any) => s.code === "ENV")
             .map((s: any) => ({ id: s.id, name: s.name, code: s.code || "" }));
           setSituations(cfmSituations);
 
-          // Set status name from the first CFM situation
+          // Set status name from the first ENV situation
           if (cfmSituations.length > 0) {
-            const firstCfm = sitData.find((s: any) => s.statuses?.code === "CFM");
+            const firstCfm = sitData.find((s: any) => s.code === "ENV");
             if (firstCfm) setStatusName((firstCfm as any).statuses.name);
           }
         }
