@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import { ChevronLeft } from 'lucide-react';
@@ -15,6 +15,35 @@ const METRIC_OPTIONS: Array<{ value: HeatmapMetric; label: string }> = [
   { value: 'total_revenue', label: 'Ingresos' },
   { value: 'order_count',   label: 'Pedidos'  },
 ];
+
+// Recorre todas las coordenadas de un array GeoJSON anidado
+function walkCoords(coords: unknown, cb: (lon: number, lat: number) => void): void {
+  if (!Array.isArray(coords)) return;
+  if (typeof coords[0] === 'number') { cb(coords[0] as number, coords[1] as number); return; }
+  (coords as unknown[]).forEach((c) => walkCoords(c, cb));
+}
+
+// Calcula center + scale para hacer zoom al bounding box de las features dadas
+function fitProjection(
+  features: Array<{ geometry?: { coordinates?: unknown } }>,
+): { center: [number, number]; scale: number } {
+  let minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity;
+  features.forEach((f) => {
+    walkCoords(f.geometry?.coordinates, (lon, lat) => {
+      if (lon < minLon) minLon = lon; if (lon > maxLon) maxLon = lon;
+      if (lat < minLat) minLat = lat; if (lat > maxLat) maxLat = lat;
+    });
+  });
+  if (!isFinite(minLon)) return { center: [-75.0, -9.5], scale: 1700 };
+  const centerLon = (minLon + maxLon) / 2;
+  const centerLat = (minLat + maxLat) / 2;
+  const extentLon = maxLon - minLon;
+  const extentLat = maxLat - minLat;
+  const maxExtent = Math.max(extentLon, extentLat, 0.1);
+  // Perú cubre ~18° lat a scale 1700 en 480px → escalar proporcionalmente con padding del 65%
+  const scale = Math.round((1700 * 18) / maxExtent * 0.65);
+  return { center: [centerLon, centerLat], scale };
+}
 
 function getColor(value: number, max: number): string {
   if (max === 0 || value === 0) return 'hsl(221,30%,93%)';
@@ -67,13 +96,24 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
     return Math.max(...activeData.map((d) => d[metric] as number));
   }, [activeData, metric]);
 
-  const handleDeptClick = (geoProps: Record<string, string>) => {
+  // Proyección calculada dinámicamente al hacer drill-down
+  const drillProjection = useMemo(() => {
+    if (!selectedDept) return null;
+    const features = ((provTopo as unknown as { features: Array<{ properties: Record<string, string>; geometry?: { coordinates?: unknown } }> }).features ?? [])
+      .filter((f) => f.properties['FIRST_NOMB'] === selectedDept.geoMap);
+    return fitProjection(features);
+  }, [selectedDept]);
+
+  const projectionConfig = drillProjection ?? { center: [-75.0, -9.5] as [number, number], scale: 1700 };
+
+  // useCallback para evitar re-renders innecesarios en Geography
+  const handleDeptClick = useCallback((geoProps: Record<string, string>) => {
     const geoMap = geoProps['NOMBDEP'];
     const item   = dataMap.get(geoMap);
     if (!item?.state_id) return;
     setSelectedDept({ geoMap, label: item.label, id: item.state_id });
     setHovered(null);
-  };
+  }, [dataMap]);
 
   const title = selectedDept
     ? `Mapa de calor — ${selectedDept.label}`
@@ -114,7 +154,7 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
         <div className="relative">
           <ComposableMap
             projection="geoMercator"
-            projectionConfig={{ center: [-75.0, -9.5], scale: 1700 }}
+            projectionConfig={projectionConfig}
             style={{ width: '100%', height: '480px' }}
           >
             {selectedDept ? (
