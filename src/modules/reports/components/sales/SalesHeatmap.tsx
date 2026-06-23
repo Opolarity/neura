@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
+import { feature as topoFeature } from 'topojson-client';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ReportCard, ReportSelect, ChartLoading, EmptyReportState } from '../shared/ReportScaffold';
@@ -10,6 +11,11 @@ import type { HeatmapMetric, ReportsFilters, SalesGeoHeatmapItem } from '../../t
 
 import deptTopo from '@/assets/geo/peru-departments.json';
 import provTopo from '@/assets/geo/peru-provinces.json';
+
+// Convertir TopoJSON → GeoJSON una sola vez al cargar el módulo
+const PROV_FEATURES = (
+  topoFeature(provTopo as any, (provTopo as any).objects['peru_provincial_simple']) as any
+).features as Array<{ properties: Record<string, string>; geometry: { type: string; coordinates: unknown } }>;
 
 const METRIC_OPTIONS: Array<{ value: HeatmapMetric; label: string }> = [
   { value: 'total_revenue', label: 'Ingresos' },
@@ -99,8 +105,9 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
   // Proyección calculada dinámicamente al hacer drill-down
   const drillProjection = useMemo(() => {
     if (!selectedDept) return null;
-    const features = ((provTopo as unknown as { features: Array<{ properties: Record<string, string>; geometry?: { coordinates?: unknown } }> }).features ?? [])
-      .filter((f) => f.properties['FIRST_NOMB'] === selectedDept.geoMap);
+    const features = PROV_FEATURES.filter(
+      (f) => f.properties['FIRST_NOMB'] === selectedDept.geoMap
+    );
     return fitProjection(features);
   }, [selectedDept]);
 
@@ -153,6 +160,7 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
       ) : (
         <div className="relative">
           <ComposableMap
+            key={selectedDept?.geoMap ?? 'national'}
             projection="geoMercator"
             projectionConfig={projectionConfig}
             style={{ width: '100%', height: '480px' }}
