@@ -191,6 +191,7 @@ export default function POSTicketPrintPage() {
       // ============ LOGO ============
       const invoiceLogoUrl = invoiceLogoRes.data?.value;
       const logoSrc = invoice.declared && invoiceLogoUrl ? invoiceLogoUrl : "/images/logo-ticket.png";
+      let logoLoaded = false;
       try {
         const { dataUrl: logoImg, width: imgW, height: imgH } = await loadImage(logoSrc);
         const logoMaxWidth = 40;
@@ -208,17 +209,20 @@ export default function POSTicketPrintPage() {
         doc.rect(logoX, y, renderW, renderH, "F");
         doc.addImage(logoImg, imgFormat, logoX, y, renderW, renderH);
         y += renderH + 2;
+        logoLoaded = true;
       } catch {
         y += 2;
       }
 
       // ============ COMPANY NAME ============
-      doc.setFontSize(fontSize.title);
-      doc.setFont("helvetica", "bold");
-      const companyLines = doc.splitTextToSize(companyName.toUpperCase(), contentWidth);
-      for (const line of companyLines) {
-        doc.text(line, pageWidth / 2, y, { align: "center" });
-        y += 3.5;
+      if (!logoLoaded) {
+        doc.setFontSize(fontSize.title);
+        doc.setFont("helvetica", "bold");
+        const companyLines = doc.splitTextToSize(companyName.toUpperCase(), contentWidth);
+        for (const line of companyLines) {
+          doc.text(line, pageWidth / 2, y, { align: "center" });
+          y += 3.5;
+        }
       }
       y += 0.5;
 
