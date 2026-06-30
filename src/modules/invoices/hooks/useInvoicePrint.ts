@@ -174,9 +174,11 @@ async function generateInvoicePdf(invoiceId: number): Promise<string> {
       y += 2;
     }
 
-    doc.setFontSize(fontSize.title); doc.setFont("helvetica", "bold");
-    for (const line of doc.splitTextToSize(companyName.toUpperCase(), contentWidth)) {
-      doc.text(line, pageWidth / 2, y, { align: "center" }); y += 3.5;
+    if (!logoImg) {
+      doc.setFontSize(fontSize.title); doc.setFont("helvetica", "bold");
+      for (const line of doc.splitTextToSize(companyName.toUpperCase(), contentWidth)) {
+        doc.text(line, pageWidth / 2, y, { align: "center" }); y += 3.5;
+      }
     }
     y += 0.5;
 
@@ -340,7 +342,7 @@ export function useInvoicePrint() {
         setTimeout(() => {
           URL.revokeObjectURL(pdfUrl);
           try { document.body.removeChild(iframe); } catch {}
-        }, 10000);
+        }, 300000);
       };
     } finally {
       setPrintingId(null);

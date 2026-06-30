@@ -85,10 +85,11 @@ export const salesService = {
       p_limit: limit,
     }),
 
-  getGeoHeatmap: (f: ReportsFilters, stateId?: number) =>
+  getGeoHeatmap: (f: ReportsFilters, mapStateId?: number, mapCityId?: number) =>
     rpc<SalesGeoHeatmapItem[]>('sp_rpt_sales_geo_heatmap', {
       ...mapFilters(f),
-      p_state_id: stateId ?? f.stateId ?? undefined,
+      p_map_state_id: mapStateId ?? null,
+      p_map_city_id:  mapCityId  ?? null,
     }),
 };
 
