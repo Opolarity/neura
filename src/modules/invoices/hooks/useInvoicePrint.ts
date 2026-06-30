@@ -149,7 +149,7 @@ async function generateInvoicePdf(invoiceId: number): Promise<string> {
   const pageWidth = 80;
   const margin = 3;
   const contentWidth = pageWidth - margin * 2;
-  const fontSize = { title: 9, subtitle: 7.5, normal: 6.5, small: 6, tiny: 5.5 };
+  const fontSize = { title: 11, subtitle: 9.5, normal: 8.5, small: 8, tiny: 7.5 };
 
   let logoImg: { dataUrl: string; width: number; height: number } | null = null;
   try { logoImg = await loadImage(parametersRes.data?.value || "/images/logo-ticket.png"); } catch {}
