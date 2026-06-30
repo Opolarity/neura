@@ -1,6 +1,7 @@
 import { KpiCard } from '../shared/KpiCard';
 import { SalesOverTimeChart } from './SalesOverTimeChart';
 import { SalesByDimensionChart } from './SalesByDimensionChart';
+import { SalesHeatmap } from './SalesHeatmap';
 import { TopProductsTable } from './TopProductsTable';
 import { useSalesDashboard } from '../../hooks/useSalesDashboard';
 import type { ReportsFilters, SalesByDimensionItem, SalesDimension } from '../../types/reports.types';
@@ -59,6 +60,9 @@ export function SalesDashboard({ filters }: SalesDashboardProps) {
         granularity={dash.granularity}
         onGranularityChange={dash.setGranularity}
       />
+
+      {/* Mapa de calor por departamento / provincia */}
+      <SalesHeatmap filters={filters} />
 
       {/* Sales by dimension — un bloque por dimensión */}
       <SalesByDimensionChart dimensions={dimensions} />

@@ -215,6 +215,24 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
                 onChange={(e) => updateField("value", parseFloat(e.target.value) || 0)}
               />
             </div>
+            {action.type === "set_fixed_price" && (
+              <div className="space-y-1">
+                <Label className="text-xs">Cantidad máxima con precio fijo</Label>
+                <Input
+                  type="number"
+                  className="w-[140px]"
+                  placeholder="Sin límite"
+                  value={action.max_qty ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value === "" ? undefined : parseInt(e.target.value) || 1;
+                    updateField("max_qty", val);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Dejar vacío para aplicar a todas las unidades
+                </p>
+              </div>
+            )}
             <TargetFilterEditor
               target={action.target || DEFAULT_TARGET}
               onChange={(t) => updateField("target", t)}

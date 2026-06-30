@@ -23,6 +23,7 @@ interface CRequestProductTableProps {
   isSourceWarehouseUser?: boolean;
   onToggleDisapprove?: (variationId: number) => void;
   readOnly?: boolean;
+  quantityReadOnly?: boolean;
 }
 
 const CRequestProductTable = ({
@@ -35,6 +36,7 @@ const CRequestProductTable = ({
   isSourceWarehouseUser = false,
   onToggleDisapprove,
   readOnly = false,
+  quantityReadOnly = false,
 }: CRequestProductTableProps) => {
   return (
     <Table>
@@ -89,8 +91,8 @@ const CRequestProductTable = ({
                       onQuantityChange(product.variationId, e.target.value)
                     }
                     placeholder="0"
-                    className={cn("text-center", (isDisapproved || readOnly) && "bg-muted")}
-                    disabled={isDisapproved || readOnly}
+                    className={cn("text-center", (isDisapproved || readOnly || quantityReadOnly) && "bg-muted")}
+                    disabled={isDisapproved || readOnly || quantityReadOnly}
                   />
                 </TableCell>
                 <TableCell className="text-center">

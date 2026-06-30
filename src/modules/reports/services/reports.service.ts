@@ -6,6 +6,7 @@ import type {
   SalesKpis,
   SalesOverTimeItem,
   SalesByDimensionItem,
+  SalesGeoHeatmapItem,
   TopProductItem,
   SalesDimension,
   Granularity,
@@ -82,6 +83,13 @@ export const salesService = {
       p_branch_id: f.branchId ?? undefined,
       p_metric: metric,
       p_limit: limit,
+    }),
+
+  getGeoHeatmap: (f: ReportsFilters, mapStateId?: number, mapCityId?: number) =>
+    rpc<SalesGeoHeatmapItem[]>('sp_rpt_sales_geo_heatmap', {
+      ...mapFilters(f),
+      p_map_state_id: mapStateId ?? null,
+      p_map_city_id:  mapCityId  ?? null,
     }),
 };
 

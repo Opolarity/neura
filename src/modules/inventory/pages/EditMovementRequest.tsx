@@ -44,6 +44,7 @@ const EditMovementRequest = () => {
     toggleDisapprove,
     isSourceWarehouseUser,
     isReadOnly,
+    isQuantityReadOnly,
     inWarehouseName,
   } = useEditMovementRequest();
 
@@ -96,6 +97,7 @@ const EditMovementRequest = () => {
               isSourceWarehouseUser={isSourceWarehouseUser}
               onToggleDisapprove={toggleDisapprove}
               readOnly={isReadOnly}
+              quantityReadOnly={isQuantityReadOnly}
             />
 
             <RequestSituationsHistory

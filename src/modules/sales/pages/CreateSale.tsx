@@ -229,6 +229,10 @@ const CreateSale = () => {
   const [newDiscountName, setNewDiscountName] = useState("");
   const [newDiscountAmount, setNewDiscountAmount] = useState("");
   const [productsTableSearchInput, setProductsTableSearchInput] = useState("");
+  const [franchiseProductsPage, setFranchiseProductsPage] = useState(1);
+  const [franchiseProductsPageSize, setFranchiseProductsPageSize] = useState(20);
+  const [franchiseProductsSearchInput, setFranchiseProductsSearchInput] = useState("");
+  const [franchiseProductsSearchQuery, setFranchiseProductsSearchQuery] = useState("");
 
   const [open, setOpen] = useState(false);
   const [tempPriceListId, setTempPriceListId] = useState<string>("");
@@ -255,6 +259,21 @@ const CreateSale = () => {
   const totalProductPages = Math.ceil(
     productPagination.total / productPagination.size,
   );
+
+  const filteredFranchiseProducts = useMemo(() => {
+    const query = franchiseProductsSearchQuery.trim().toLowerCase();
+    if (!query) return products;
+    return products.filter((p) =>
+      [p.productName, p.variationName, p.sku]
+        .filter(Boolean)
+        .some((field) => field!.toLowerCase().includes(query)),
+    );
+  }, [products, franchiseProductsSearchQuery]);
+
+  const paginatedFranchiseProducts = useMemo(() => {
+    const start = (franchiseProductsPage - 1) * franchiseProductsPageSize;
+    return filteredFranchiseProducts.slice(start, start + franchiseProductsPageSize);
+  }, [filteredFranchiseProducts, franchiseProductsPage, franchiseProductsPageSize]);
 
   // Get selected price list name
   const selectedPriceListName = useMemo(() => {
@@ -475,7 +494,10 @@ const CreateSale = () => {
             <Button
               variant="secondary"
               type="button"
-              onClick={() => setFranchiseProductsModalOpen(true)}
+              onClick={() => {
+                setFranchiseProductsPage(1);
+                setFranchiseProductsModalOpen(true);
+              }}
             >
               Enviado a franquiciado
             </Button>
@@ -2511,22 +2533,58 @@ const CreateSale = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-auto flex-1">
-            <div className="flex flex-row gap-4 px-2 py-4">
-              <Input placeholder="Buscar producto" />
+            <div className="flex flex-row gap-2 px-2 py-4">
+              <Input
+                placeholder="Buscar producto"
+                value={franchiseProductsSearchInput}
+                onChange={(e) => setFranchiseProductsSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    setFranchiseProductsSearchQuery(franchiseProductsSearchInput);
+                    setFranchiseProductsPage(1);
+                  }
+                }}
+              />
+              <Button
+                className="flex-shrink-0"
+                size="icon"
+                type="button"
+                onClick={() => {
+                  setFranchiseProductsSearchQuery(franchiseProductsSearchInput);
+                  setFranchiseProductsPage(1);
+                }}
+              >
+                <Search/>
+              </Button>
             </div>
             <Table className="px-2">
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-20">Imagen</TableHead>
                   <TableHead>Producto</TableHead>
-                  <TableHead className="w-24 text-center">Cantidad</TableHead>
+                  <TableHead className="w-24 text-center">Enviado</TableHead>
                   <TableHead className="w-40 text-center">
-                    Recibido por franquicia
+                    Recibido
                   </TableHead>
+                  {/* <TableHead className="w-40 text-center">
+                    Estado
+                  </TableHead>
+                  <TableHead className="w-40 text-center">
+                    Diferencia
+                  </TableHead> */}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.map((product, index) => (
+                {paginatedFranchiseProducts.map((product, index) => (
                   <TableRow key={`${product.variationId}-${index}`}>
+                    <TableCell>
+                      <img
+                        src={product.imageUrl ?? placeholderImage}
+                        alt={product.productName}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-medium">
@@ -2541,13 +2599,51 @@ const CreateSale = () => {
                     <TableCell className="text-center">
                       {product.quantity}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell
+                      className={cn(
+                        "text-center",
+                        (product.receivedByFranchise ?? 0) === product.quantity
+                          ? "text-green-500"
+                          : (product.receivedByFranchise ?? 0) > 0
+                            ? "text-yellow-500"
+                            : "text-red-700",
+                      )}
+                    >
                       {product.receivedByFranchise ?? 0}
                     </TableCell>
+                    {/* <TableCell className="text-center">
+                      {(product.receivedByFranchise ?? 0) > 0 ? (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                          Completado
+                        </span>
+                      ) : (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                          Pendiente
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {(product.receivedByFranchise ?? 0) <= 0 ||
+                      (product.receivedByFranchise ?? 0) === product.quantity
+                        ? "-"
+                        : (product.receivedByFranchise ?? 0) - product.quantity}
+                    </TableCell> */}
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            <PaginationBar
+              pagination={{
+                p_page: franchiseProductsPage,
+                p_size: franchiseProductsPageSize,
+                total: filteredFranchiseProducts.length,
+              }}
+              onPageChange={setFranchiseProductsPage}
+              onPageSizeChange={(size) => {
+                setFranchiseProductsPageSize(size);
+                setFranchiseProductsPage(1);
+              }}
+            />
           </div>
         </DialogContent>
       </Dialog>
