@@ -185,18 +185,18 @@ async function generateInvoicePdf(invoiceId: number): Promise<string> {
     doc.setFontSize(fontSize.small); doc.setFont("helvetica", "normal");
     if (companyAddress) {
       for (const line of doc.splitTextToSize(companyAddress, contentWidth)) {
-        doc.text(line, pageWidth / 2, y, { align: "center" }); y += 2.5;
+        doc.text(line, pageWidth / 2, y, { align: "center" }); y += 3;
       }
     }
-    if (companyPhone) { doc.text(`Teléfono: ${companyPhone}`, pageWidth / 2, y, { align: "center" }); y += 2.5; }
-    if (companyEmail) { doc.text(`E-mail: ${companyEmail}`, pageWidth / 2, y, { align: "center" }); y += 2.5; }
+    if (companyPhone) { doc.text(`Teléfono: ${companyPhone}`, pageWidth / 2, y, { align: "center" }); y += 3; }
+    if (companyEmail) { doc.text(`E-mail: ${companyEmail}`, pageWidth / 2, y, { align: "center" }); y += 3; }
     if (companyRuc) {
       doc.setFont("helvetica", "bold");
       doc.text(`R.U.C.: ${companyRuc}`, pageWidth / 2, y, { align: "center" });
-      doc.setFont("helvetica", "normal"); y += 3;
+      doc.setFont("helvetica", "normal"); y += 3.5;
     }
 
-    y += 1; doc.setLineWidth(0.3); doc.line(margin, y, pageWidth - margin, y); y += 3;
+    y += 1.5; doc.setLineWidth(0.3); doc.line(margin, y, pageWidth - margin, y); y += 3.5;
 
     doc.setFontSize(fontSize.title); doc.setFont("helvetica", "bold");
     doc.text((invTypeRes.data?.name || "COMPROBANTE").toUpperCase(), pageWidth / 2, y, { align: "center" }); y += 4;
