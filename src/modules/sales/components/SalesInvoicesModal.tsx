@@ -58,6 +58,14 @@ interface InvoiceType {
   code: string;
 }
 
+const buildVariantTitle = (op: any, baseTitle: string): string => {
+  const termsStr = (op.variations?.variation_terms || [])
+    .map((vt: any) => vt.terms?.name || "")
+    .filter(Boolean)
+    .join("-");
+  return termsStr ? `${baseTitle} (${termsStr})` : baseTitle;
+};
+
 interface SalesInvoicesModalProps {
   orderId: number;
   orderTotal: number;
@@ -369,7 +377,7 @@ export const SalesInvoicesModal = ({
 
       const { data: orderProducts, error: productsError } = await supabase
         .from("order_products")
-        .select("*, variations:product_variation_id(id, sku, product_id, products:product_id(title))")
+        .select("*, variations:product_variation_id(id, sku, product_id, products:product_id(title), variation_terms(terms(name)))")
         .eq("order_id", orderId);
 
       if (productsError || !orderProducts) {
@@ -377,15 +385,18 @@ export const SalesInvoicesModal = ({
         return;
       }
 
-      const items = orderProducts.map((op: any) => ({
-        description: op.variations?.products?.title || op.product_name || `Producto ${op.product_variation_id}`,
-        quantity: Number(op.quantity),
-        measurement_unit: "NIU",
-        unit_price: 0,
-        discount: 0,
-        igv: 0,
-        total: 0,
-      }));
+      const items = orderProducts.map((op: any) => {
+        const baseTitle = op.variations?.products?.title || op.product_name || `Producto ${op.product_variation_id}`;
+        return {
+          description: buildVariantTitle(op, baseTitle),
+          quantity: Number(op.quantity),
+          measurement_unit: "NIU",
+          unit_price: 0,
+          discount: 0,
+          igv: 0,
+          total: 0,
+        };
+      });
 
       const clientName = [order.customer_name, order.customer_lastname].filter(Boolean).join(" ") || null;
 
@@ -447,7 +458,7 @@ export const SalesInvoicesModal = ({
 
       const { data: orderProducts, error: productsError } = await supabase
         .from("order_products")
-        .select("*, variations:product_variation_id(id, sku, product_id, products:product_id(title))")
+        .select("*, variations:product_variation_id(id, sku, product_id, products:product_id(title), variation_terms(terms(name)))")
         .eq("order_id", orderId);
 
       if (productsError || !orderProducts) {
@@ -471,9 +482,9 @@ export const SalesInvoicesModal = ({
       const items = orderProducts.map((op: any) => {
         const lineTotal = (Number(op.product_price) * Number(op.quantity)) - Number(op.product_discount || 0);
         const igv = lineTotal - (lineTotal / 1.18);
-        const productTitle = op.variations?.products?.title || op.product_name || `Producto ${op.product_variation_id}`;
+        const baseTitle = op.variations?.products?.title || op.product_name || `Producto ${op.product_variation_id}`;
         return {
-          description: productTitle,
+          description: buildVariantTitle(op, baseTitle),
           quantity: Number(op.quantity),
           measurement_unit: "NIU",
           unit_price: Number(op.product_price),
