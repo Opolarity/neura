@@ -20,17 +20,15 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import {
   createShippingMethodApi,
-  getCitiesByStateIdApi,
-  getCountries,
-  getDistrictsByCityIdApi,
   getShippingById,
   updateShippingMethodApi,
 } from "../services/Shipping.service";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Trash } from "lucide-react";
-import { Countrie, ShippingCost, State } from "../types/Shipping.types";
-import { getStatesByCountryIdApi } from "@/shared/services/service";
+import { ShippingCost } from "../types/Shipping.types";
 import { shippingDetailsAdapter } from "../adapters/Shipping.adapter";
+import { useShippingLocations } from "../hooks/useShippingLocations";
+import { PageLoader } from "@/shared/components/page-loader";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -42,9 +40,17 @@ const CreateShipping = () => {
   const [shippingName, setShippingName] = useState<string>("");
   const [shippingCode, setShippingCode] = useState<string>("");
   const [shippingCosts, setShippingCosts] = useState<ShippingCost[]>([]);
-  const [countries, setCountries] = useState<Countrie[]>([]);
   const [loadingCreate, setLoadingCreate] = useState<boolean>(false);
+  const [shippingLoaded, setShippingLoaded] = useState<boolean>(false);
   const { id } = useParams();
+
+  const {
+    countries,
+    states,
+    cities,
+    neighborhoods,
+    isLoading: loadingLocations,
+  } = useShippingLocations();
 
   const navigate = useNavigate();
 
@@ -68,9 +74,6 @@ const CreateShipping = () => {
         state_id: null,
         city_id: null,
         neighborhood_id: null,
-        states: [],
-        cities: [],
-        neighborhoods: [],
       },
     ]);
   };
@@ -130,179 +133,62 @@ const CreateShipping = () => {
     return true;
   }
 
-  const handleCountry = async (value: string, cost: ShippingCost) => {
-    if (value === "none") {
-      setShippingCosts((prev) =>
-        prev.map((item) =>
-          item.id === cost.id
-            ? {
-              ...item,
-              country_id: null,
-              state_id: null,
-              city_id: null,
-              neighborhood_id: null,
-              states: [],
-              cities: [],
-              neighborhoods: [],
-            }
-            : item,
-        ),
-      );
-      return;
-    }
-
+  const handleCountry = (value: string, cost: ShippingCost) => {
     setShippingCosts((prev) =>
       prev.map((item) =>
         item.id === cost.id
           ? {
             ...item,
-            country_id: Number(value),
+            country_id: value === "none" ? null : Number(value),
             state_id: null,
             city_id: null,
             neighborhood_id: null,
-            states: [],
-            cities: [],
-            neighborhoods: [],
           }
           : item,
       ),
     );
   };
 
-  const handleOpenCountries = async (open: boolean) => {
-    if (!open && countries.length > 0) return;
-    try {
-      const res = await getCountries();
-      setCountries(res);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const handleState = async (value: string, cost: ShippingCost) => {
-    if (value === "none") {
-      setShippingCosts((prev) =>
-        prev.map((item) =>
-          item.id === cost.id
-            ? {
-              ...item,
-              state_id: null,
-              city_id: null,
-              neighborhood_id: null,
-              cities: [],
-              neighborhoods: [],
-            }
-            : item,
-        ),
-      );
-      return;
-    }
-    setShippingCosts((prev) =>
-      prev.map((item) =>
-        item.id === cost.id ? { ...item, state_id: Number(value) } : item,
-      ),
-    );
-  };
-
-  const handleOpenStates = async (open: boolean, cost: ShippingCost) => {
-    if (!open && cost.states.length > 0) return;
-
-    try {
-      const states = await getStatesByCountryIdApi(cost.country_id);
-      console.log(states);
-
-      setShippingCosts((prev) =>
-        prev.map((item) => (item.id === cost.id ? { ...item, states } : item)),
-      );
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const handleCity = async (value: string, cost: ShippingCost) => {
-    if (value === "none") {
-      setShippingCosts((prev) =>
-        prev.map((item) =>
-          item.id === cost.id
-            ? {
-              ...item,
-              city_id: null,
-              neighborhood_id: null,
-              neighborhoods: [],
-            }
-            : item,
-        ),
-      );
-      return;
-    }
-
-    setShippingCosts((prev) =>
-      prev.map((item) =>
-        item.id === cost.id ? { ...item, city_id: Number(value) } : item,
-      ),
-    );
-  };
-
-  const handleOpenCities = async (open: boolean, cost: ShippingCost) => {
-    if (!open && cost.cities.length > 0) return;
-
-    try {
-      const cities = await getCitiesByStateIdApi(
-        cost.country_id,
-        cost.state_id,
-      );
-      console.log(cities);
-
-      setShippingCosts((prev) =>
-        prev.map((item) => (item.id === cost.id ? { ...item, cities } : item)),
-      );
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const handleDistrict = async (value: string, cost: ShippingCost) => {
-    if (value === "none") {
-      setShippingCosts((prev) =>
-        prev.map((item) =>
-          item.id === cost.id
-            ? {
-              ...item,
-              neighborhood_id: null,
-            }
-            : item,
-        ),
-      );
-      return;
-    }
+  const handleState = (value: string, cost: ShippingCost) => {
     setShippingCosts((prev) =>
       prev.map((item) =>
         item.id === cost.id
-          ? { ...item, neighborhood_id: Number(value) }
+          ? {
+            ...item,
+            state_id: value === "none" ? null : Number(value),
+            city_id: null,
+            neighborhood_id: null,
+          }
           : item,
       ),
     );
   };
 
-  const handleOpenDistricts = async (open: boolean, cost: ShippingCost) => {
-    if (!open && cost.neighborhoods.length > 0) return;
+  const handleCity = (value: string, cost: ShippingCost) => {
+    setShippingCosts((prev) =>
+      prev.map((item) =>
+        item.id === cost.id
+          ? {
+            ...item,
+            city_id: value === "none" ? null : Number(value),
+            neighborhood_id: null,
+          }
+          : item,
+      ),
+    );
+  };
 
-    try {
-      const districts = await getDistrictsByCityIdApi(
-        cost.country_id,
-        cost.state_id,
-        cost.city_id,
-      );
-      console.log(districts);
-
-      setShippingCosts((prev) =>
-        prev.map((item) =>
-          item.id === cost.id ? { ...item, neighborhoods: districts } : item,
-        ),
-      );
-    } catch (error) {
-      console.log(error);
-    }
+  const handleDistrict = (value: string, cost: ShippingCost) => {
+    setShippingCosts((prev) =>
+      prev.map((item) =>
+        item.id === cost.id
+          ? {
+            ...item,
+            neighborhood_id: value === "none" ? null : Number(value),
+          }
+          : item,
+      ),
+    );
   };
 
   const handleCreateShipping = async () => {
@@ -364,41 +250,14 @@ const CreateShipping = () => {
     try {
       const data = await getShippingById(id);
       const dataAdapter = shippingDetailsAdapter(data);
-      console.log(dataAdapter);
       setShippingId(dataAdapter.id);
       setShippingName(dataAdapter.name);
       setShippingCode(dataAdapter.code);
-
-      // Load location dropdowns for each cost
-      const costsWithLocations = await Promise.all(
-        dataAdapter.costs.map(async (cost) => {
-          let states: State[] = [];
-          let cities: { id: number; name: string }[] = [];
-          let neighborhoods: { id: number; name: string }[] = [];
-
-          if (cost.country_id) {
-            try {
-              states = await getStatesByCountryIdApi(cost.country_id);
-            } catch (e) { console.error(e); }
-          }
-          if (cost.country_id && cost.state_id) {
-            try {
-              cities = await getCitiesByStateIdApi(cost.country_id, cost.state_id);
-            } catch (e) { console.error(e); }
-          }
-          if (cost.country_id && cost.state_id && cost.city_id) {
-            try {
-              neighborhoods = await getDistrictsByCityIdApi(cost.country_id, cost.state_id, cost.city_id);
-            } catch (e) { console.error(e); }
-          }
-
-          return { ...cost, states, cities, neighborhoods };
-        })
-      );
-
-      setShippingCosts(costsWithLocations);
+      setShippingCosts(dataAdapter.costs);
     } catch (error) {
       console.log(error);
+    } finally {
+      setShippingLoaded(true);
     }
   };
 
@@ -407,6 +266,14 @@ const CreateShipping = () => {
       loadShippingById(id);
     }
   }, [id]);
+
+  if (loadingLocations || (id && !shippingLoaded)) {
+    return (
+      <div className="relative w-full h-[80vh]">
+        <PageLoader message="Cargando datos..." />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -475,7 +342,18 @@ const CreateShipping = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              shippingCosts.map((cost) => (
+              shippingCosts.map((cost) => {
+                const costStates = states.filter(
+                  (state) => state.country_id === cost.country_id,
+                );
+                const costCities = cities.filter(
+                  (city) => city.state_id === cost.state_id,
+                );
+                const costNeighborhoods = neighborhoods.filter(
+                  (neighborhood) => neighborhood.city_id === cost.city_id,
+                );
+
+                return (
                 <TableRow key={cost.id}>
                   <TableCell>
                     <Input
@@ -493,7 +371,6 @@ const CreateShipping = () => {
                           : "none"
                       }
                       onValueChange={(value) => handleCountry(value, cost)}
-                      onOpenChange={handleOpenCountries}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione un país" />
@@ -519,10 +396,7 @@ const CreateShipping = () => {
                           : "none"
                       }
                       onValueChange={(value) => handleState(value, cost)}
-                      onOpenChange={(open) => handleOpenStates(open, cost)}
-                      disabled={
-                        cost.country_id === null && cost.states.length === 0
-                      }
+                      disabled={cost.country_id === null}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione un estado" />
@@ -531,7 +405,7 @@ const CreateShipping = () => {
                         <SelectItem value="none">
                           Seleccione un estado
                         </SelectItem>
-                        {cost.states.map((state) => (
+                        {costStates.map((state) => (
                           <SelectItem
                             key={state.id}
                             value={state.id.toString()}
@@ -550,10 +424,7 @@ const CreateShipping = () => {
                           : "none"
                       }
                       onValueChange={(value) => handleCity(value, cost)}
-                      onOpenChange={(open) => handleOpenCities(open, cost)}
-                      disabled={
-                        cost.state_id === null && cost.cities.length === 0
-                      }
+                      disabled={cost.state_id === null}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione una ciudad" />
@@ -562,7 +433,7 @@ const CreateShipping = () => {
                         <SelectItem value="none">
                           Seleccione una ciudad
                         </SelectItem>
-                        {cost.cities.map((city) => (
+                        {costCities.map((city) => (
                           <SelectItem key={city.id} value={city.id.toString()}>
                             {city.name}
                           </SelectItem>
@@ -578,10 +449,7 @@ const CreateShipping = () => {
                           : "none"
                       }
                       onValueChange={(value) => handleDistrict(value, cost)}
-                      onOpenChange={(open) => handleOpenDistricts(open, cost)}
-                      disabled={
-                        cost.city_id === null && cost.neighborhoods.length === 0
-                      }
+                      disabled={cost.city_id === null}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Distrito" />
@@ -590,7 +458,7 @@ const CreateShipping = () => {
                         <SelectItem value="none">
                           Seleccione un distrito
                         </SelectItem>
-                        {cost.neighborhoods.map((neighborhood) => (
+                        {costNeighborhoods.map((neighborhood) => (
                           <SelectItem
                             key={neighborhood.id}
                             value={neighborhood.id.toString()}
@@ -623,7 +491,8 @@ const CreateShipping = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
+                );
+              })
             )}
           </TableBody>
         </Table>

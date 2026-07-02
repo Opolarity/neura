@@ -74,9 +74,6 @@ export interface ShippingCost {
   state_id: number | null;
   city_id: number | null;
   neighborhood_id: number | null;
-  states?: State[];
-  cities?: City[];
-  neighborhoods?: Neighborhood[];
 }
 
 export interface ShippingPayload {

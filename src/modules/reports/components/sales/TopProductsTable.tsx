@@ -26,9 +26,9 @@ export function TopProductsTable({ data, loading, metric, limit, onMetricChange,
       title="Top productos"
       actions={
         <div className="flex flex-wrap gap-2">
-          <ReportSelect<TopMetric>
+          <ReportSelect
             value={metric}
-            onValueChange={onMetricChange}
+            onValueChange={(value) => onMetricChange(value as TopMetric)}
             className="w-36"
             options={[
               { value: 'revenue', label: 'Por ingresos' },
