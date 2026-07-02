@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { supabase } from "@/integrations/supabase/client";
 import { getParameters } from "@/modules/settings/services/Parameters.service";
 
 export interface DeliveryLabelData {
@@ -95,10 +96,16 @@ const inlineText = (
 };
 
 export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
-  const params = await getParameters(["CompanyName", "CompanyDocumentNumber", "CompanyPhoneNumber"]);
+  const params = await getParameters(["CompanyName", "CompanyDocumentNumber", "CompanyPhoneNumber", "CompanyAddress"]);
+  const { data: logoParam } = await supabase
+    .from("parameters")
+    .select("value")
+    .eq("name", "InvoiceLogoUrl")
+    .maybeSingle();
   const companyName = params["CompanyName"] || REMITENTE.name;
   const companyRuc = params["CompanyDocumentNumber"] || REMITENTE.ruc;
   const companyPhone = params["CompanyPhoneNumber"] || REMITENTE.phone;
+  const companyAddress = params["CompanyAddress"] || REMITENTE.address;
   const W = 100;
   const H = 140;
   const doc = new jsPDF({
@@ -123,7 +130,7 @@ export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
 
   let logoLoaded = false;
   try {
-    const logoDataUrl = await loadImageAsDataUrl("/images/logo-rotulo-pdf.png");
+    const logoDataUrl = await loadImageAsDataUrl(logoParam?.value || "/images/logo-rotulo-pdf.png");
     const nativeLogo = new Image();
     nativeLogo.src = logoDataUrl;
     await new Promise<void>((res) => {
@@ -207,7 +214,7 @@ export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
   y += 5.5;
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...BLACK);
-  const addrLines = doc.splitTextToSize(data.senderAddress || REMITENTE.address, innerW);
+  const addrLines = doc.splitTextToSize(data.senderAddress || companyAddress, innerW);
   staticText(doc, addrLines, innerX, y);
   y += addrLines.length * 5.5 + 13;
 
