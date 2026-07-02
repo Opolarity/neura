@@ -9,6 +9,7 @@ export const CountriesApi = async (): Promise<Country[]> => {
   const { data, error } = await supabase
     .from("countries")
     .select("id, name, phone_code")
+    .filter("name", "match", "\\S")
     .order("name");
   if (error) throw error;
   return data ?? [];
@@ -20,6 +21,7 @@ export const getStatesByCountryIdApi = async (countryId: number): Promise<State[
     .from("states")
     .select("id, name, countries(*)")
     .eq("country_id", countryId)
+    .filter("name", "match", "\\S")
     .order("name");
   if (error) throw error;
   return data ?? [];
@@ -32,6 +34,7 @@ export const getCitiesByStateIdApi = async (stateId: number, countryId): Promise
     .select("id, name, states(*, countries(*))")
     .eq("country_id", countryId)
     .eq("state_id", stateId)
+    .filter("name", "match", "\\S")
     .order("name");
   if (error) throw error;
   return data ?? [];
@@ -45,6 +48,7 @@ export const getNeighborhoodsByCityIdApi = async (cityId: number, stateId: numbe
     .eq("country_id", countryId)
     .eq("state_id", stateId)
     .eq("city_id", cityId)
+    .filter("name", "match", "\\S")
     .order("name");
   if (error) throw error;
   return data ?? [];

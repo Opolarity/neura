@@ -91,6 +91,7 @@ export const CountryApi = async (): Promise<IdNameResponse[]> => {
     const { data, error } = await supabase
         .from("countries")
         .select("id , name")
+        .filter("name", "match", "\\S")
     if (error) throw error;
     return data ?? [];
 }
@@ -100,6 +101,7 @@ export const StateApi = async (countryID: number): Promise<IdNameResponse[]> => 
         .from("states")
         .select("id , name")
         .eq("country_id", countryID)
+        .filter("name", "match", "\\S")
     if (error) throw error;
     return data ?? [];
 }
@@ -110,6 +112,7 @@ export const CityApi = async (countryID: number, stateID: number): Promise<IdNam
         .select("id,name")
         .eq("country_id", countryID)
         .eq("state_id", stateID)
+        .filter("name", "match", "\\S")
     if (error) throw error;
     return data ?? [];
 }
@@ -121,6 +124,7 @@ export const NeighborhoodApi = async (countryID: number, stateID: number, cityID
         .eq("country_id", countryID)
         .eq("state_id", stateID)
         .eq("city_id", cityID)
+        .filter("name", "match", "\\S")
     if (error) throw error;
     return data ?? [];
 }
