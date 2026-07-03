@@ -14,7 +14,13 @@ const DEFAULT_COMPANY = {
 };
 
 export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
-  const params = await getParameters(["CompanyName", "CompanyDocumentNumber", "CompanyPhoneNumber", "CompanyAddress"]);
+  const params = await getParameters([
+    "CompanyName",
+    "CompanyDocumentNumber",
+    "CompanyPhoneNumber",
+    "CompanyAddress",
+    "CompanyShortName",
+  ]);
   const { data: logoParam } = await supabase
     .from("parameters")
     .select("value")
@@ -27,6 +33,7 @@ export const generateDeliveryLabel = async (data: DeliveryLabelData) => {
     phone: params["CompanyPhoneNumber"] || DEFAULT_COMPANY.phone,
     address: params["CompanyAddress"] || DEFAULT_COMPANY.address,
     logoUrl: logoParam?.value,
+    shortName: params["CompanyShortName"],
   };
 
   if (company.ruc === "20611215895") {

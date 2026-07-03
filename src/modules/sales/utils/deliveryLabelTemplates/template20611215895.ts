@@ -30,9 +30,9 @@ export const generateTemplate20611215895 = async (
 
   let y = margin + 4;
 
-  doc.setFontSize(9);
+  doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
-  y = centeredWrapped(`PERCEPTION - ${company.ruc}`, y);
+  y = centeredWrapped(`${company.shortName || "PERCEPTION"} - ${company.ruc}`, y);
 
   try {
     const logoDataUrl = await loadImageAsDataUrl(company.logoUrl || "/images/logo-rotulo-pdf.png");
@@ -42,7 +42,7 @@ export const generateTemplate20611215895 = async (
       nativeLogo.onload = () => res();
     });
     const maxLogoW = 38;
-    const maxLogoH = 14;
+    const maxLogoH = 12;
     const logoGap = 5;
     const ratio = Math.min(maxLogoW / nativeLogo.naturalWidth, maxLogoH / nativeLogo.naturalHeight);
     const w = nativeLogo.naturalWidth * ratio;
