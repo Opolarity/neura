@@ -39,12 +39,50 @@ export const ShippingApi = async (
 };
 
 export async function getCountries(): Promise<Countrie[]> {
-  let query = supabase.from("countries").select("id, name").order("name");
-
-  const { data, error } = await query;
+  const { data, error } = await supabase
+    .from("countries")
+    .select("id, name")
+    .filter("name", "match", "\\S")
+    .order("name");
 
   if (error) throw error;
-  return data;
+  return data ?? [];
+}
+
+export async function getAllStates(): Promise<State[]> {
+  const { data, error } = await supabase
+    .from("states")
+    .select("id, name, country_id")
+    .filter("name", "match", "\\S")
+    .order("name");
+
+  if (error) throw error;
+
+  return data ?? [];
+}
+
+export async function getAllCities(): Promise<City[]> {
+  const { data, error } = await supabase
+    .from("cities")
+    .select("id, name, country_id, state_id")
+    .filter("name", "match", "\\S")
+    .order("name");
+
+  if (error) throw error;
+
+  return data ?? [];
+}
+
+export async function getAllNeighborhoods(): Promise<Neighborhood[]> {
+  const { data, error } = await supabase
+    .from("neighborhoods")
+    .select("id, name, country_id, state_id, city_id")
+    .filter("name", "match", "\\S")
+    .order("name");
+
+  if (error) throw error;
+
+  return data ?? [];
 }
 
 export async function getStatesByCountryIdApi(
@@ -54,6 +92,7 @@ export async function getStatesByCountryIdApi(
     .from("states")
     .select("id, name")
     .eq("country_id", countryId)
+    .filter("name", "match", "\\S")
     .order("name");
 
   if (error) throw error;
@@ -70,6 +109,7 @@ export async function getCitiesByStateIdApi(
     .select("id, name")
     .eq("state_id", stateId)
     .eq("country_id", countryId)
+    .filter("name", "match", "\\S")
     .order("name");
 
   if (error) throw error;
@@ -88,6 +128,7 @@ export async function getDistrictsByCityIdApi(
     .eq("city_id", cityId)
     .eq("state_id", stateId)
     .eq("country_id", countryId)
+    .filter("name", "match", "\\S")
     .order("name");
 
   if (error) throw error;

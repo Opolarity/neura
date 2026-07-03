@@ -32,9 +32,9 @@ export function CashflowChart({ data, loading, granularity, onGranularityChange 
     <ReportCard
       title="Flujo de caja en el tiempo"
       actions={
-        <ReportSelect<Granularity>
+        <ReportSelect
           value={granularity}
-          onValueChange={onGranularityChange}
+          onValueChange={(value) => onGranularityChange(value as Granularity)}
           className="w-32"
           options={[
             { value: 'day', label: 'Diario' },

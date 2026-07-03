@@ -46,9 +46,6 @@ export const shippingDetailsAdapter = (
           city_id: cost.city_id,
           neighborhood_id: cost.neighborhood_id,
           cost: cost.cost,
-          states: [],
-          cities: [],
-          neighborhoods: [],
         }))
       : [],
   };
