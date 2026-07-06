@@ -613,7 +613,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                                     type="number"
                                     placeholder="0.00"
                                     min={0}
-                                    value={price?.price || 0}
+                                    value={price?.price ?? ''}
                                     onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                     onChange={(e) => updateVariationPrice(variation.id, pl.id, 'price', e.target.value)}
                                     className="h-8 text-sm"
