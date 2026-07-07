@@ -86,6 +86,8 @@ import { getOrdersSituationsByIdAdapter } from "../adapters";
 import placeholderImage from "@/assets/product-placeholder.png";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 
+const hasHtmlTags = (text: string) => /<\/?[a-z][\s\S]*>/i.test(text);
+
 const CreateSale = () => {
   const {
     loading,
@@ -1764,7 +1766,11 @@ const CreateSale = () => {
                   <div className="flex flex-col gap-1">
                     {appliedRules.map((rule, i) => (
                       <div key={i} className="text-xs text-green-600">
-                        {rule.message}
+                        {hasHtmlTags(rule.message) ? (
+                          <span dangerouslySetInnerHTML={{ __html: rule.message }} />
+                        ) : (
+                          rule.message
+                        )}
                       </div>
                     ))}
                   </div>
