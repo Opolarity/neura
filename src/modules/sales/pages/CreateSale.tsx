@@ -1889,7 +1889,7 @@ const CreateSale = () => {
                               </Button>
                             )}
                           </div>
-                          {!isComSituation && (
+                          {!orderId && (
                             <Button
                               variant="ghost"
                               size="icon"
