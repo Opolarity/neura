@@ -733,29 +733,31 @@ const CreateSale = () => {
                 </Button>
               </div>
 
-              <div className="flex flex-row gap-2">
-                <Input
-                  placeholder="Buscar productos en la orden"
-                  value={productsTableSearchInput}
-                  onChange={(e) => setProductsTableSearchInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleProductsTableSearchChange(productsTableSearchInput);
+              {products.length > 0 && (
+                <div className="flex flex-row gap-2">
+                  <Input
+                    placeholder="Buscar productos en la orden"
+                    value={productsTableSearchInput}
+                    onChange={(e) => setProductsTableSearchInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleProductsTableSearchChange(productsTableSearchInput);
+                      }
+                    }}
+                  />
+                  <Button
+                    className="flex-shrink-0"
+                    size="icon"
+                    type="button"
+                    onClick={() =>
+                      handleProductsTableSearchChange(productsTableSearchInput)
                     }
-                  }}
-                />
-                <Button
-                  className="flex-shrink-0"
-                  size="icon"
-                  type="button"
-                  onClick={() =>
-                    handleProductsTableSearchChange(productsTableSearchInput)
-                  }
-                >
-                  <Search />
-                </Button>
-              </div>
+                  >
+                    <Search />
+                  </Button>
+                </div>
+              )}
 
               {products.length > 0 && (
                 <>
