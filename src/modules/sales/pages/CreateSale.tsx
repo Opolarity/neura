@@ -46,6 +46,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Loader2,
@@ -185,6 +186,7 @@ const CreateSale = () => {
     // Voucher actions
     handleVoucherSelect,
     removeVoucher,
+    handleExistingPaymentVoucherSelect,
     historyModalOpen,
     createdOrderId,
     orderSituationTable,
@@ -248,12 +250,16 @@ const CreateSale = () => {
   const [selectedVoucherPaymentId, setSelectedVoucherPaymentId] = useState<
     string | null
   >(null);
+  const [selectedExistingPaymentId, setSelectedExistingPaymentId] = useState<
+    string | null
+  >(null);
   const [highlightedRowIndex, setHighlightedRowIndex] = useState<number | null>(
     null,
   );
   const noteFileInputRef = useRef<HTMLInputElement>(null);
   const voucherFileInputRef = useRef<HTMLInputElement>(null);
   const changeVoucherFileInputRef = useRef<HTMLInputElement>(null);
+  const existingPaymentVoucherInputRef = useRef<HTMLInputElement>(null);
   const isAcceptingRef = useRef(false);
   const { toast } = useToast();
 
@@ -1864,36 +1870,37 @@ const CreateSale = () => {
                             >
                               {formatCurrency(parseFloat(p.amount) || 0)}
                             </span>
-                            {p.voucherPreview && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => {
-                                  setSelectedVoucherPreview(
-                                    p.voucherPreview || null,
-                                  );
-                                  setSelectedVoucherCompleted(
-                                    p.completed === true,
-                                  );
-                                  setSelectedVoucherPaymentId(
-                                    p.dbId?.toString() ?? null,
-                                  );
-                                  setVoucherModalOpen(true);
-                                }}
-                                title="Ver comprobante"
-                              >
-                                <Paperclip
-                                  className={cn(
-                                    "w-3 h-3",
-                                    isCompleted
-                                      ? "text-green-600 dark:text-green-400"
-                                      : "text-red-600 dark:text-red-400",
-                                  )}
-                                />
-                              </Button>
-                            )}
+                            {p.voucherPreview &&
+                              !(orderId && p.dbId && p.voucherFile) && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => {
+                                    setSelectedVoucherPreview(
+                                      p.voucherPreview || null,
+                                    );
+                                    setSelectedVoucherCompleted(
+                                      p.completed === true,
+                                    );
+                                    setSelectedVoucherPaymentId(
+                                      p.dbId?.toString() ?? null,
+                                    );
+                                    setVoucherModalOpen(true);
+                                  }}
+                                  title="Ver comprobante"
+                                >
+                                  <Paperclip
+                                    className={cn(
+                                      "w-3 h-3",
+                                      isCompleted
+                                        ? "text-green-600 dark:text-green-400"
+                                        : "text-red-600 dark:text-red-400",
+                                    )}
+                                  />
+                                </Button>
+                              )}
                           </div>
                           {!orderId && (
                             <Button
@@ -1905,11 +1912,56 @@ const CreateSale = () => {
                               <Trash2 className="w-3 h-3 text-destructive" />
                             </Button>
                           )}
+                          {orderId && p.dbId && (!p.voucherUrl || p.voucherFile) && (
+                            <div className="flex items-center gap-1">
+                              {p.voucherFile && (
+                                <Badge
+                                  variant="destructive"
+                                  className="h-5 px-1"
+                                >
+                                  <ImageIcon className="size-3" />
+                                </Badge>
+                              )}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  setSelectedExistingPaymentId(p.id);
+                                  existingPaymentVoucherInputRef.current?.click();
+                                }}
+                                title="Subir comprobante"
+                              >
+                                <Upload className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
                 </div>
               )}
+
+              <input
+                ref={existingPaymentVoucherInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*,.pdf"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file && selectedExistingPaymentId) {
+                    handleExistingPaymentVoucherSelect(
+                      selectedExistingPaymentId,
+                      file,
+                    );
+                    toast({
+                      description: "Actualizar la orden para guardar comprobante",
+                    });
+                  }
+                  e.target.value = "";
+                }}
+              />
 
               {/* Formulario para agregar nuevo pago */}
               <div
