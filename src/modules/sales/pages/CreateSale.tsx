@@ -86,10 +86,12 @@ import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 import placeholderImage from "@/assets/product-placeholder.png";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
+import { useAuth } from "@/modules/auth";
 
 const hasHtmlTags = (text: string) => /<\/?[a-z][\s\S]*>/i.test(text);
 
 const CreateSale = () => {
+  const { user } = useAuth();
   const {
     loading,
     saving,
@@ -867,14 +869,17 @@ const CreateSale = () => {
                               <div className="relative flex items-center">
                                 <Input
                                   type="number"
-                                  value={product.price}
-                                  onChange={(e) =>
+                                  value={
+                                    product.price === 0 ? "" : product.price
+                                  }
+                                  onChange={(e) => {
+                                    const val = e.target.value;
                                     updateProduct(
                                       index,
                                       "price",
-                                      parseFloat(e.target.value) || 0,
-                                    )
-                                  }
+                                      val === "" ? 0 : parseFloat(val) || 0,
+                                    );
+                                  }}
                                   min="0"
                                   step="0.01"
                                   className={cn(
@@ -897,19 +902,24 @@ const CreateSale = () => {
                               <div className="relative flex items-center">
                                 <Input
                                   type="number"
-                                  value={product.discountAmount}
+                                  value={
+                                    product.discountAmount === 0
+                                      ? ""
+                                      : product.discountAmount
+                                  }
                                   readOnly={
                                     isComSituation ||
                                     isPhySituation ||
                                     (isVirSituation && !productsUnlocked)
                                   }
-                                  onChange={(e) =>
+                                  onChange={(e) => {
+                                    const val = e.target.value;
                                     updateProduct(
                                       index,
                                       "discountAmount",
-                                      parseFloat(e.target.value) || 0,
-                                    )
-                                  }
+                                      val === "" ? 0 : parseFloat(val) || 0,
+                                    );
+                                  }}
                                   min="0"
                                   step="0.01"
                                   className={cn(
@@ -1103,7 +1113,6 @@ const CreateSale = () => {
                     <Input
                       value={formData.vendorName}
                       disabled
-                      placeholder="Juan Pérez"
                       className="bg-muted"
                     />
                   </div>
