@@ -40,7 +40,4 @@ export interface PriceListFilters {
 export interface PriceListPayload {
   id?: number;
   name: string;
-  code: string;
-  location?: string;
-  web?: boolean;
 }

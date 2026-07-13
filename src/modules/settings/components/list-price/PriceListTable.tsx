@@ -33,8 +33,6 @@ const PriceListTable = ({
           <TableHead className="w-16">ID</TableHead>
           <TableHead>Nombre</TableHead>
           <TableHead>Código</TableHead>
-          <TableHead className="text-center">Ubicación</TableHead>
-          <TableHead className="text-center">Web</TableHead>
           <TableHead className="text-center w-28">Acciones</TableHead>
         </TableRow>
       </TableHeader>
@@ -72,12 +70,6 @@ const PriceListTable = ({
                 ) : (
                   <span className="text-muted-foreground">—</span>
                 )}
-              </TableCell>
-              <TableCell className="text-center">{item.location}</TableCell>
-              <TableCell className="text-center">
-                <Badge variant={item.isWeb ? "default" : "secondary"}>
-                  {item.isWeb ? "Sí" : "No"}
-                </Badge>
               </TableCell>
               <TableCell className="text-center">
                 <div className="flex items-center justify-center gap-1">
