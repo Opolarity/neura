@@ -282,7 +282,6 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
                 neighborhoods: formData.neighborhoods,
                 address: formData.address,
                 address_reference: formData.address_reference,
-                web: formData.web,
             };
 
             if (isEdit && warehouseId) {

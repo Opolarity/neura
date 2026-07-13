@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import AuthContext from "./AuthContext";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { UserPermissions, defaultPermissions } from "../types";
+import { getHeaderUserData } from "@/shared/services/service";
+import { UserPermissions, defaultPermissions, AppUser } from "../types";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -11,6 +12,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState<UserPermissions>(defaultPermissions);
+  const [appUser, setAppUser] = useState<AppUser | null>(null);
+  const [appUserLoading, setAppUserLoading] = useState(true);
   // Evita recargar permisos cuando cambia el token (tab switch) sin cambio de usuario
   const lastFetchedUserId = useRef<string | null>('__unset__');
 
@@ -46,12 +49,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   }, []);
 
-  const maybeRefetchPermissions = useCallback((currentUser: User | null) => {
+  const fetchAppUser = useCallback(async (currentUser: User | null) => {
+    if (!currentUser) {
+      setAppUser(null);
+      setAppUserLoading(false);
+      return;
+    }
+    setAppUserLoading(true);
+    const profile = await getHeaderUserData(currentUser.id);
+    setAppUser(profile);
+    setAppUserLoading(false);
+  }, []);
+
+  const maybeRefetchUserData = useCallback((currentUser: User | null) => {
     const userId = currentUser?.id ?? null;
     if (userId === lastFetchedUserId.current) return;
     lastFetchedUserId.current = userId;
     fetchPermissions(currentUser);
-  }, [fetchPermissions]);
+    fetchAppUser(currentUser);
+  }, [fetchPermissions, fetchAppUser]);
 
   useEffect(() => {
     const {
@@ -64,18 +80,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return prev?.id === next?.id ? prev : next;
       });
       setLoading(false);
-      maybeRefetchPermissions(session?.user ?? null);
+      maybeRefetchUserData(session?.user ?? null);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      maybeRefetchPermissions(session?.user ?? null);
+      maybeRefetchUserData(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
-  }, [maybeRefetchPermissions]);
+  }, [maybeRefetchUserData]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -87,6 +103,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signOut = async () => {
     setPermissions({ views: [], functionIds: [], functionData: [], role: null, permissionsLoading: false });
+    setAppUser(null);
+    setAppUserLoading(false);
     await supabase.auth.signOut({scope: 'local'});
   };
 
@@ -99,6 +117,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     session,
     loading,
     permissions,
+    appUser,
+    appUserLoading,
     signIn,
     signOut,
     refreshPermissions,
