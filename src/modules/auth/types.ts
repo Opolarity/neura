@@ -23,11 +23,18 @@ export const defaultPermissions: UserPermissions = {
   permissionsLoading: true,
 };
 
+export interface AppUser {
+  accountName: string;
+  roleName: string;
+}
+
 export interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   permissions: UserPermissions;
+  appUser: AppUser | null;
+  appUserLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshPermissions: () => Promise<void>;

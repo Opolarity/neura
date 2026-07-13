@@ -110,6 +110,17 @@ Deno.serve(async (req) => {
     // Fetch order_discounts
     const { data: orderDiscounts } = await supabase.from("order_discounts").select("id, name, discount_amount, code").eq("order_id", parseInt(orderId));
 
+    // Fetch seller (vendor) name from the user who registered the order
+    let sellerName = "";
+    if (order.user_id) {
+      const { data: sellerProfile } = await supabase
+        .from("profiles")
+        .select("accounts!inner(name)")
+        .eq("UID", order.user_id)
+        .maybeSingle();
+      sellerName = sellerProfile?.accounts?.name || "";
+    }
+
     const productsMap = new Map(products.map((p) => [p.id, p.title]));
     const variationsMap = new Map(variations.map((v) => [v.id, v]));
     const termsMap = new Map(terms.map((t) => [t.id, t.name]));
@@ -147,6 +158,7 @@ Deno.serve(async (req) => {
         address_reference: order.address_reference, reception_person: order.reception_person,
         reception_phone: order.reception_phone, subtotal: order.subtotal,
         discount: order.discount, total: order.total, warehouse_id: warehouseId || null,
+        seller: sellerName,
       },
       products: enrichedProducts,
       payments: (payments || []).filter((p: any) => p.amount >= 0).map((p: any) => ({

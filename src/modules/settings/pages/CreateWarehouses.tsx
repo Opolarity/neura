@@ -167,15 +167,6 @@ const CreateWarehouses = () => {
                                 />
                             </div>
 
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="web"
-                                    checked={formData.web}
-                                    onCheckedChange={handleSwitchChange}
-                                />
-                                <Label htmlFor="web">Mostrar en Web</Label>
-                            </div>
-
                             <div className="flex justify-end gap-2 pt-4">
                                 <Button
                                     type="button"

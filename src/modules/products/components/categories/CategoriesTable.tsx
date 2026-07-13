@@ -52,7 +52,16 @@ const CategoriesTable = ({ categories, loading, onEdit, onDelete }: CategoriesTa
                             />
                         </TableCell>
                         <TableCell>{category.name}</TableCell>
-                        <TableCell>{category.description || '-'}</TableCell>
+                        <TableCell>
+                            {category.description ? (
+                                <div
+                                    className="prose prose-sm max-w-none line-clamp-2 [&_p]:m-0"
+                                    dangerouslySetInnerHTML={{ __html: category.description }}
+                                />
+                            ) : (
+                                '-'
+                            )}
+                        </TableCell>
                         <TableCell>{category.parent_category}</TableCell>
                         <TableCell>{category.products}</TableCell>
                         <TableCell>

@@ -104,7 +104,7 @@ const createEmptyPayment = (): SalePayment => ({
 });
 
 export const useCreateSale = () => {
-  const {user} = useAuth();
+  const {user, appUser} = useAuth();
   const navigate = useNavigate();
   const { id: orderId } = useParams();
   const { toast } = useToast();
@@ -234,6 +234,14 @@ export const useCreateSale = () => {
       setShowPriceListModal(false); // Don't show modal when editing
     }
   }, [orderId, salesData]);
+
+  // Autofill vendor name with the logged-in user's account name when creating a new sale
+  // (when editing, vendorName comes from the order's seller via loadOrderData)
+  useEffect(() => {
+    if (!orderId && appUser?.accountName) {
+      setFormData((prev) => ({ ...prev, vendorName: appUser.accountName }));
+    }
+  }, [orderId, appUser]);
 
   // Load shipping costs when location changes
   useEffect(() => {

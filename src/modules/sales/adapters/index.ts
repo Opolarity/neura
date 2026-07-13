@@ -293,7 +293,7 @@ console.log(data.pricerules || [], "aaa");
       saleType: data.order.sale_type_id?.toString() || "",
       priceListId: data.order.price_list_id?.toString() || "",
       saleDate: data.order.date?.split("T")[0] || "",
-      vendorName: "",
+      vendorName: data.order.seller || "",
       shippingMethod: data.order.shipping_method_code || "",
       shippingMethodId: data.order.shipping_method_id?.toString() || "",
       shippingCost: data.order.shipping_cost?.toString() || "",

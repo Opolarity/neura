@@ -3,9 +3,8 @@ import { User, LogOut, Store } from "lucide-react";
 import { NotificationPanel } from "@/modules/notifications/components/NotificationPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
-import { getHeaderUserData } from "@/shared/services/service";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { useAuth } from "@/modules/auth";
 import { useNavigate } from "react-router-dom";
 import { usePOSSessionStatus } from "@/modules/pos/hooks/usePOSSessionStatus";
 import { POSOpenWarningDialog } from "@/modules/pos/components/POSOpenWarningDialog";
@@ -21,30 +20,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
   const navigate = useNavigate();
   const { isOpen, loading } = usePOSSessionStatus();
   const [showPOSWarning, setShowPOSWarning] = useState(false);
-  const [userData, setUserData] = useState({
-    account: "Cargando...",
-    role: "Sin Rol",
-  });
-  useEffect(() => {
-    const initHeader = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        const profile = await getHeaderUserData(user.id);
-
-        if (profile) {
-          setUserData({
-            account: profile.accountName,
-            role: profile.roleName,
-          });
-        }
-      }
-    };
-
-    initHeader();
-  }, []);
+  const { appUser, appUserLoading } = useAuth();
 
   return (
     <>
@@ -79,9 +55,9 @@ const Header = ({ onSignOut }: HeaderProps) => {
               <User className="w-5 h-5 text-white" />
             </div>
             <div className="text-sm">
-              <p className="font-medium">{userData.account || "Cargando..."}</p>
+              <p className="font-medium">{appUserLoading ? "Cargando..." : (appUser?.accountName || "Sin Cuenta")}</p>
               <p className="text-gray-500 text-xs">
-                {userData.role || "Sin Rol"}
+                {appUserLoading ? "Sin Rol" : (appUser?.roleName || "Sin Rol")}
               </p>
             </div>
             <Button

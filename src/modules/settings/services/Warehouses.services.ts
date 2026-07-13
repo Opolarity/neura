@@ -60,7 +60,6 @@ export const CreateWarehouses = async (warehouse: Warehouses): Promise<Warehouse
         neighborhoodsID: warehouse.neighborhoods,
         addres: warehouse.address || "",
         addresreferenc: warehouse.address_reference || "",
-        web: warehouse.web ?? false
     };
 
     const { data, error } = await supabase.functions.invoke("create-warehouses", {
