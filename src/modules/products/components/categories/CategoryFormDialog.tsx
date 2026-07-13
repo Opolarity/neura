@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import WysiwygEditor from "@/components/ui/wysiwyg-editor";
 import {
     Select,
     SelectContent,
@@ -114,7 +114,7 @@ export const CategoryFormDialog = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[512px]">
                 <DialogHeader>
                     <DialogTitle>
                         {initialData ? "Editar categoría" : "Añadir Categoría"}
@@ -136,13 +136,14 @@ export const CategoryFormDialog = ({
                     </div>
 
                     <div className="space-y-1">
-                        <Label htmlFor="description">Descripción</Label>
-                        <Textarea
-                            id="description"
+                        <WysiwygEditor
+                            label="Descripción"
+                            value={watch("description") || ""}
+                            onChange={(value) => setValue("description", value)}
                             placeholder="Descripción de la categoría"
+                            height="150px"
+                            toolbar="basic"
                             disabled={saving}
-                            rows={3}
-                            {...register("description")}
                         />
                     </div>
 
