@@ -26,10 +26,8 @@ export interface PriceListApiResponse {
 
 export interface PriceList {
   id: number;
-  isWeb: boolean;
   code: string;
   name: string;
-  location: string;
 }
 
 export interface PriceListFilters {
@@ -41,6 +39,4 @@ export interface PriceListPayload {
   id?: number;
   name: string;
   code: string;
-  location?: string;
-  web?: boolean;
 }

@@ -32,14 +32,10 @@ export const PriceListFormDialog = ({
       ? {
         name: item.name,
         code: item.code,
-        location: item.location.toString(),
-        web: item.isWeb,
       }
       : {
         name: "",
         code: "",
-        location: "",
-        web: false,
       },
   });
 
@@ -48,8 +44,6 @@ export const PriceListFormDialog = ({
     let payload: PriceListPayload = {
       name: newPriceList.name,
       code: newPriceList.code,
-      location: newPriceList.location,
-      web: newPriceList.web,
     };
     if (item?.id) {
       payload.id = item.id;
@@ -59,8 +53,6 @@ export const PriceListFormDialog = ({
     reset({
       name: "",
       code: "",
-      location: "",
-      web: false,
     });
   };
 
