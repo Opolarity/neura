@@ -5,7 +5,7 @@ import type {
   PriceRule,
   PriceRuleFilters,
 } from "../types/priceRule.types";
-import { getPriceRules, deletePriceRule } from "../services/PriceRule.services";
+import { getPriceRules, deletePriceRule, updatePriceRule } from "../services/PriceRule.services";
 import { adaptPriceRulesListResponse } from "../adapters/priceRule.adapter";
 
 const DEFAULT_FILTERS: PriceRuleFilters = {
@@ -29,6 +29,9 @@ export function usePriceRules() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<PriceRule | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<"true" | "false">("true");
+  const [isApplyingBulk, setIsApplyingBulk] = useState(false);
 
   const loadRules = useCallback(async (currentFilters: PriceRuleFilters) => {
     setLoading(true);
@@ -91,6 +94,46 @@ export function usePriceRules() {
     }
   };
 
+  const toggleSelectAll = (checked: boolean) => {
+    setSelectedIds(checked ? new Set(rules.map((r) => r.id)) : new Set());
+  };
+
+  const toggleSelectRow = (id: number, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  };
+
+  const applyBulkStatus = async () => {
+    if (selectedIds.size === 0) return;
+    setIsApplyingBulk(true);
+    try {
+      await Promise.all(
+        [...selectedIds].map((id) =>
+          updatePriceRule(id, { is_active: bulkStatus === "true" })
+        )
+      );
+      toast.success(
+        bulkStatus === "true"
+          ? "Reglas activadas correctamente"
+          : "Reglas desactivadas correctamente"
+      );
+      setSelectedIds(new Set());
+      loadRules(filters);
+    } catch (error) {
+      console.error("Error applying bulk status:", error);
+      toast.error("Error al actualizar el estado de las reglas");
+    } finally {
+      setIsApplyingBulk(false);
+    }
+  };
+
   const refresh = () => loadRules(filters);
 
   return {
@@ -109,5 +152,12 @@ export function usePriceRules() {
     setDeleteDialogOpen,
     handleDelete,
     refresh,
+    selectedIds,
+    bulkStatus,
+    setBulkStatus,
+    isApplyingBulk,
+    toggleSelectAll,
+    toggleSelectRow,
+    applyBulkStatus,
   };
 }

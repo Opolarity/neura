@@ -24,11 +24,25 @@ const PriceRulesPage = () => {
     openDeleteDialog,
     setDeleteDialogOpen,
     handleDelete,
+    selectedIds,
+    bulkStatus,
+    setBulkStatus,
+    isApplyingBulk,
+    toggleSelectAll,
+    toggleSelectRow,
+    applyBulkStatus,
   } = usePriceRules();
 
   return (
     <div className="p-6 space-y-6">
-      <PriceRulesHeader onNewRule={() => navigate("/discounts/price-rules/create")} />
+      <PriceRulesHeader
+        onNewRule={() => navigate("/discounts/price-rules/create")}
+        selectedCount={selectedIds.size}
+        bulkStatus={bulkStatus}
+        onBulkStatusChange={setBulkStatus}
+        onApplyBulkStatus={applyBulkStatus}
+        isApplying={isApplyingBulk}
+      />
 
       <Card>
         <CardHeader>
@@ -44,6 +58,9 @@ const PriceRulesPage = () => {
             loading={loading}
             onEdit={(rule) => navigate(`/discounts/price-rules/edit/${rule.id}`)}
             onDelete={openDeleteDialog}
+            selectedIds={selectedIds}
+            onToggleAll={toggleSelectAll}
+            onToggleRow={toggleSelectRow}
           />
         </CardContent>
       </Card>
