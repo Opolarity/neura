@@ -1,6 +1,7 @@
 import { Pencil, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -17,6 +18,9 @@ interface PriceRulesTableProps {
   loading: boolean;
   onEdit: (rule: PriceRule) => void;
   onDelete: (rule: PriceRule) => void;
+  selectedIds: Set<number>;
+  onToggleAll: (checked: boolean) => void;
+  onToggleRow: (id: number, checked: boolean) => void;
 }
 
 export const PriceRulesTable = ({
@@ -24,7 +28,13 @@ export const PriceRulesTable = ({
   loading,
   onEdit,
   onDelete,
+  selectedIds,
+  onToggleAll,
+  onToggleRow,
 }: PriceRulesTableProps) => {
+  const allSelected = rules.length > 0 && rules.every((r) => selectedIds.has(r.id));
+  const someSelected = rules.some((r) => selectedIds.has(r.id));
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -45,6 +55,12 @@ export const PriceRulesTable = ({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-10">
+            <Checkbox
+              checked={allSelected ? true : someSelected ? "indeterminate" : false}
+              onCheckedChange={(checked) => onToggleAll(checked === true)}
+            />
+          </TableHead>
           <TableHead>Nombre</TableHead>
           <TableHead>Tipo</TableHead>
           <TableHead>Prioridad</TableHead>
@@ -57,6 +73,12 @@ export const PriceRulesTable = ({
       <TableBody>
         {rules.map((rule) => (
           <TableRow key={rule.id}>
+            <TableCell>
+              <Checkbox
+                checked={selectedIds.has(rule.id)}
+                onCheckedChange={(checked) => onToggleRow(rule.id, checked === true)}
+              />
+            </TableCell>
             <TableCell>
               <div>
                 <p className="font-medium">{rule.name}</p>
