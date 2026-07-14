@@ -120,7 +120,7 @@ async function generateInvoicePdf(invoiceId: number): Promise<string> {
   const [shippingMethod, discountOrders, neighborhood, docTypeRes, invTypeRes, profileRes] =
     await Promise.all([
       shippingMethodCode
-        ? supabase.from("shipping_methods").select("name").eq("code", shippingMethodCode).single()
+        ? supabase.from("shipping_costs").select("name").eq("id", shippingMethodCode).single()
         : Promise.resolve(null),
       supabase.from("order_discounts").select("name, discount_amount").eq("order_id", (branchRes.data as any)?.orders?.id),
       supabase.from("neighborhoods").select("name").eq("id", (branchRes.data as any)?.orders?.branches?.neighborhood_id).single(),
