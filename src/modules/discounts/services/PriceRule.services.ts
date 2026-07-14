@@ -43,6 +43,14 @@ export const updatePriceRule = async (id: number, rule: Partial<PriceRuleFormDat
   return data;
 };
 
+export const updateBulkPriceRule = async (ruleIds: number[], isActive: boolean) => {
+  const { data, error } = await supabase.functions.invoke("bulk-update-price-rule-status", {
+    body: { ruleIds, isActive },
+  });
+  if (error) throw error;
+  return data;
+};
+
 export const deletePriceRule = async (id: number) => {
   const { data, error } = await supabase.functions.invoke("delete-price-rule", {
     body: { id },
