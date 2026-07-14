@@ -5,8 +5,9 @@ import type {
   PriceRule,
   PriceRuleFilters,
 } from "../types/priceRule.types";
-import { getPriceRules, deletePriceRule, updatePriceRule } from "../services/PriceRule.services";
+import { getPriceRules, deletePriceRule, updatePriceRule, updateBulkPriceRule } from "../services/PriceRule.services";
 import { adaptPriceRulesListResponse } from "../adapters/priceRule.adapter";
+import { is } from "date-fns/locale";
 
 const DEFAULT_FILTERS: PriceRuleFilters = {
   page: 1,
@@ -114,11 +115,8 @@ export function usePriceRules() {
     if (selectedIds.size === 0) return;
     setIsApplyingBulk(true);
     try {
-      await Promise.all(
-        [...selectedIds].map((id) =>
-          updatePriceRule(id, { is_active: bulkStatus === "true" })
-        )
-      );
+      await updateBulkPriceRule([...selectedIds], bulkStatus === "true");
+
       toast.success(
         bulkStatus === "true"
           ? "Reglas activadas correctamente"
