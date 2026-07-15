@@ -32,9 +32,6 @@ const PriceListTable = ({
         <TableRow>
           <TableHead className="w-16">ID</TableHead>
           <TableHead>Nombre</TableHead>
-          <TableHead>Código</TableHead>
-          <TableHead className="text-center">Ubicación</TableHead>
-          <TableHead className="text-center">Web</TableHead>
           <TableHead className="text-center w-28">Acciones</TableHead>
         </TableRow>
       </TableHeader>
@@ -64,21 +61,6 @@ const PriceListTable = ({
                 {item.id}
               </TableCell>
               <TableCell className="font-medium">{item.name}</TableCell>
-              <TableCell>
-                {item.code ? (
-                  <code className="text-xs bg-muted px-2 py-1 rounded">
-                    {item.code}
-                  </code>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </TableCell>
-              <TableCell className="text-center">{item.location}</TableCell>
-              <TableCell className="text-center">
-                <Badge variant={item.isWeb ? "default" : "secondary"}>
-                  {item.isWeb ? "Sí" : "No"}
-                </Badge>
-              </TableCell>
               <TableCell className="text-center">
                 <div className="flex items-center justify-center gap-1">
                   <Button

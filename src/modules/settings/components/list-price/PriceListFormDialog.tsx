@@ -30,17 +30,13 @@ export const PriceListFormDialog = ({
   const { register, handleSubmit, control, reset } = useForm<PriceListPayload>({
     defaultValues: item
       ? {
-          name: item.name,
-          code: item.code,
-          location: item.location.toString(),
-          web: item.isWeb,
-        }
+        name: item.name,
+        code: item.code,
+      }
       : {
-          name: "",
-          code: "",
-          location: "",
-          web: false,
-        },
+        name: "",
+        code: "",
+      },
   });
 
   const onSubmit = async (newPriceList: PriceListPayload) => {
@@ -48,8 +44,6 @@ export const PriceListFormDialog = ({
     let payload: PriceListPayload = {
       name: newPriceList.name,
       code: newPriceList.code,
-      location: newPriceList.location,
-      web: newPriceList.web,
     };
     if (item?.id) {
       payload.id = item.id;
@@ -59,8 +53,6 @@ export const PriceListFormDialog = ({
     reset({
       name: "",
       code: "",
-      location: "",
-      web: false,
     });
   };
 
@@ -83,30 +75,6 @@ export const PriceListFormDialog = ({
           <div className="space-y-2">
             <Label htmlFor="pl-name">Nombre</Label>
             <Input id="pl-name" {...register("name")} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="pl-code">Código</Label>
-            <Input id="pl-code" {...register("code")} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="pl-location">Ubicación</Label>
-            <Input id="pl-location" type="number" {...register("location")} />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Label htmlFor="pl-web">Web</Label>
-            <Controller
-              name="web"
-              control={control}
-              render={({ field }) => (
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
           </div>
         </form>
 

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import WysiwygEditor from "@/components/ui/wysiwyg-editor";
 import {
   Select,
   SelectContent,
@@ -50,16 +50,14 @@ export const RuleBasicInfoSection = ({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Descripción</Label>
-          <Textarea
-            id="description"
-            placeholder="Describe qué hace esta regla..."
-            value={formData.description}
-            onChange={(e) => updateField("description", e.target.value)}
-            rows={2}
-          />
-        </div>
+        <WysiwygEditor
+          label="Descripción"
+          value={formData.description}
+          onChange={(val) => updateField("description", val)}
+          placeholder="Describe qué hace esta regla..."
+          height="150px"
+          toolbar="basic"
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">

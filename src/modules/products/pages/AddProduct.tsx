@@ -613,7 +613,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                                     type="number"
                                     placeholder="0.00"
                                     min={0}
-                                    value={price?.price || 0}
+                                    value={price?.price === 0 ? '' : price?.price ?? ''}
                                     onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                                     onChange={(e) => updateVariationPrice(variation.id, pl.id, 'price', e.target.value)}
                                     className="h-8 text-sm"
@@ -623,6 +623,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                                 <TableCell className="p-2">
                                   <Input
                                     type="number"
+                                    placeholder="0.00"
                                     min={0}
                                     value={price?.sale_price ?? ''}
                                     onKeyDown={(e) => e.key === "-" && e.preventDefault()}

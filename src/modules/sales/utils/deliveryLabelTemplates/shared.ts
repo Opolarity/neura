@@ -22,6 +22,7 @@ export interface CompanyInfo {
   phone: string;
   address: string;
   logoUrl?: string;
+  shortName?: string;
 }
 
 export const BLUE: [number, number, number] = [60, 78, 145]; // #3c4e91

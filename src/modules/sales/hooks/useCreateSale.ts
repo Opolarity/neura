@@ -104,7 +104,7 @@ const createEmptyPayment = (): SalePayment => ({
 });
 
 export const useCreateSale = () => {
-  const {user} = useAuth();
+  const {user, appUser} = useAuth();
   const navigate = useNavigate();
   const { id: orderId } = useParams();
   const { toast } = useToast();
@@ -234,6 +234,14 @@ export const useCreateSale = () => {
       setShowPriceListModal(false); // Don't show modal when editing
     }
   }, [orderId, salesData]);
+
+  // Autofill vendor name with the logged-in user's account name when creating a new sale
+  // (when editing, vendorName comes from the order's seller via loadOrderData)
+  useEffect(() => {
+    if (!orderId && appUser?.accountName) {
+      setFormData((prev) => ({ ...prev, vendorName: appUser.accountName }));
+    }
+  }, [orderId, appUser]);
 
   // Load shipping costs when location changes
   useEffect(() => {
@@ -1193,6 +1201,21 @@ export const useCreateSale = () => {
     }));
   }, []);
 
+  // Handle voucher file selection for an already-saved payment in the list
+  const handleExistingPaymentVoucherSelect = useCallback((paymentId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPayments((prev) =>
+        prev.map((p) =>
+          p.id === paymentId
+            ? { ...p, voucherFile: file, voucherPreview: reader.result as string }
+            : p,
+        ),
+      );
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
   // Check if selected payment method needs manual business account selection (for payments)
   const needsBusinessAccountSelect = useMemo(() => {
     if (!currentPayment.paymentMethodId) return false;
@@ -1855,6 +1878,12 @@ export const useCreateSale = () => {
   // Check if form is dirty
   const isDirty = useMemo(() => {
     if (!orderId || !originalState) return false;
+    // Pending voucher uploads aren't part of the JSON snapshot (files aren't serializable),
+    // so check for them separately to still unlock the save button.
+    const hasPendingVoucher =
+      payments.some((p) => p.voucherFile) ||
+      changeEntries.some((c) => c.voucherFile);
+    if (hasPendingVoucher) return true;
     const currentSnap = {
       formData,
       products: products.map(p => ({ ...p })),
@@ -2265,6 +2294,7 @@ export const useCreateSale = () => {
     // Voucher actions
     handleVoucherSelect,
     removeVoucher,
+    handleExistingPaymentVoucherSelect,
     historyModalOpen,
     createdOrderId,
     orderSituationTable,
