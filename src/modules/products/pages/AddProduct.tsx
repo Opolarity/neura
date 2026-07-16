@@ -230,6 +230,298 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Variation Details Card - Full Width */}
+          <Card className="overflow-hidden">
+            <CardHeader>
+              <CardTitle>{isVariable ? 'Detalles de variaciones' : 'Detalles del producto'}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6 min-w-0">
+
+              {/* Attributes Section (only for variable products) */}
+              {isVariable && (
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold">Atributos del producto</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {termGroups.filter(g => g.is_active !== false).map(group => {
+                      const groupTerms = terms.filter(term => term.term_group_id === group.id && term.is_active !== false);
+                      const selectedGroupTerms = selectedTerms[group.id] || [];
+
+                      return (
+                        <div key={group.id} className="space-y-2">
+                          <Label className="text-sm font-medium">
+                            {group.name}
+                            {group.description && (
+                              <span className="text-xs text-muted-foreground font-normal ml-1">— {group.description}</span>
+                            )}
+                          </Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className="w-full justify-between"
+                                disabled={viewOnly}
+                              >
+                                {selectedGroupTerms.length > 0
+                                  ? `${selectedGroupTerms.length} seleccionado${selectedGroupTerms.length > 1 ? 's' : ''}`
+                                  : `Seleccionar ${group.name.toLowerCase()}`
+                                }
+                                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-full p-0" align="start">
+                              <Command>
+                                <CommandEmpty>No se encontraron opciones.</CommandEmpty>
+                                <CommandGroup className="max-h-64 overflow-auto">
+                                  {groupTerms.map(term => (
+                                    <CommandItem
+                                      key={term.id}
+                                      onSelect={() => {
+                                        toggleTermSelection(group.id, term.id);
+                                        if (!selectedTermGroups.includes(group.id)) {
+                                          setSelectedTermGroups(prev => [...prev, group.id]);
+                                        }
+                                      }}
+                                    >
+                                      <Checkbox
+                                        checked={selectedGroupTerms.includes(term.id)}
+                                        className="mr-2"
+                                      />
+                                      {term.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Tabs for Prices, Inventory, Images */}
+              {variations.length > 0 && (
+                <Tabs defaultValue="prices" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="prices">Precios</TabsTrigger>
+                    <TabsTrigger value="inventory">Inventario</TabsTrigger>
+                    <TabsTrigger value="images">Imágenes</TabsTrigger>
+                  </TabsList>
+
+                  {/* Prices Tab */}
+                  <TabsContent value="prices" className="mt-4">
+                    <div className="border rounded-lg overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[150px] sticky left-0 bg-background">Variación</TableHead>
+                            {priceLists.map(pl => (
+                              <TableHead key={pl.id} colSpan={2} className="text-center min-w-[200px]">
+                                {pl.name}
+                                <div className="text-xs font-normal text-muted-foreground mt-1">
+                                  <span className="inline-block w-1/2">Precio</span>
+                                  <span className="inline-block w-1/2">Oferta</span>
+                                </div>
+                              </TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {variations.map(variation => (
+                            <TableRow key={variation.id}>
+                              <TableCell className="font-medium sticky left-0 bg-background">
+                                <div className="flex flex-col">
+                                  <span>{getVariationLabel(variation)}</span>
+                                  {variationSkus[variation.id] && (
+                                    <span className="text-xs text-muted-foreground">
+                                      SKU: {variationSkus[variation.id]}
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              {priceLists.map(pl => {
+                                const price = variation.prices.find(p => p.price_list_id === pl.id);
+                                return (
+                                  <React.Fragment key={pl.id}>
+                                    <TableCell className="p-2">
+                                      <Input
+                                        type="number"
+                                        placeholder="0.00"
+                                        min={0}
+                                        value={price?.price === 0 ? '' : price?.price ?? ''}
+                                        onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                                        onChange={(e) => updateVariationPrice(variation.id, pl.id, 'price', e.target.value)}
+                                        className="h-8 text-sm"
+                                        disabled={viewOnly}
+                                      />
+                                    </TableCell>
+                                    <TableCell className="p-2">
+                                      <Input
+                                        type="number"
+                                        placeholder="0.00"
+                                        min={0}
+                                        value={price?.sale_price ?? ''}
+                                        onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                                        onChange={(e) => updateVariationPrice(variation.id, pl.id, 'sale_price', e.target.value)}
+                                        className="h-8 text-sm"
+                                        disabled={viewOnly}
+                                      />
+                                    </TableCell>
+                                  </React.Fragment>
+                                );
+                              })}
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </TabsContent>
+
+                  {/* Inventory Tab */}
+                  <TabsContent value="inventory" className="mt-4">
+                    {/* Stock Type Filter */}
+                    <div className="mb-4 flex items-center gap-3">
+                      <Label className="text-sm font-medium">Tipo de Inventario:</Label>
+                      <Select
+                        value={selectedStockType?.toString() || ''}
+                        onValueChange={(value) => setSelectedStockType(Number(value))}
+                      >
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Seleccionar tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stockTypes.map(type => (
+                            <SelectItem key={type.id} value={type.id.toString()}>
+                              {type.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="border rounded-lg overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[150px] sticky left-0 bg-background">Variación</TableHead>
+                            {warehouses.map(wh => (
+                              <TableHead key={wh.id} className="text-center min-w-[120px]">
+                                {wh.name}
+                              </TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {variations.map(variation => (
+                            <TableRow key={variation.id}>
+                              <TableCell className="font-medium sticky left-0 bg-background">
+                                <div className="flex flex-col">
+                                  <span>{getVariationLabel(variation)}</span>
+                                  {variationSkus[variation.id] && (
+                                    <span className="text-xs text-muted-foreground">
+                                      SKU: {variationSkus[variation.id]}
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              {warehouses.map(wh => {
+                                const stockValue = getStockForType(variation, wh.id, selectedStockType);
+                                return (
+                                  <TableCell key={wh.id} className="p-2">
+                                    <Input
+                                      type="number"
+                                      placeholder="0"
+                                      min={0}
+                                      value={stockValue ?? ''}
+                                      onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                                      onChange={(e) => updateVariationStock(variation.id, wh.id, e.target.value, selectedStockType || undefined)}
+                                      className="h-8 text-sm"
+                                      disabled={viewOnly}
+                                    />
+                                  </TableCell>
+                                );
+                              })}
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </TabsContent>
+
+                  {/* Images Tab */}
+                  <TabsContent value="images" className="mt-4">
+                    {productImages.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8">
+                        No hay imágenes disponibles. Agregue imágenes en la sección "Galería general".
+                      </p>
+                    ) : (
+                      <div className="border rounded-lg overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="min-w-[150px] sticky left-0 bg-background">Variación</TableHead>
+                              <TableHead>Imágenes disponibles</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {variations.map(variation => (
+                              <TableRow key={variation.id}>
+                                <TableCell className="font-medium sticky left-0 bg-background">
+                                  <div className="flex flex-col">
+                                    <span>{getVariationLabel(variation)}</span>
+                                    {variationSkus[variation.id] && (
+                                      <span className="text-xs text-muted-foreground">
+                                        SKU: {variationSkus[variation.id]}
+                                      </span>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex flex-wrap gap-2">
+                                    {productImages
+                                      .sort((a, b) => a.order - b.order)
+                                      .map(image => {
+                                        const isSelected = variation.selectedImages.includes(image.id);
+                                        return (
+                                          <div
+                                            key={image.id}
+                                            className={`relative w-16 h-16 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-primary/50'
+                                              }`}
+                                            onClick={() => toggleVariationImage(variation.id, image.id)}
+                                          >
+                                            <img
+                                              src={image.preview}
+                                              alt="Product"
+                                              className="w-full h-full object-cover"
+                                            />
+                                            {isSelected && (
+                                              <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                                <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                                  <span className="text-primary-foreground text-xs">✓</span>
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              )}
+            </CardContent>
+          </Card>
+
         </div>
 
         {/* Right Column - 4 columns */}
@@ -492,296 +784,8 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
         </div>
       </div>
 
-      {/* Variation Details Card - Full Width */}
-      <Card className="overflow-hidden">
-        <CardHeader>
-          <CardTitle>{isVariable ? 'Detalles de variaciones' : 'Detalles del producto'}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6 min-w-0">
+      
 
-          {/* Attributes Section (only for variable products) */}
-          {isVariable && (
-            <div className="space-y-4">
-              <Label className="text-base font-semibold">Atributos del producto</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {termGroups.filter(g => g.is_active !== false).map(group => {
-                  const groupTerms = terms.filter(term => term.term_group_id === group.id && term.is_active !== false);
-                  const selectedGroupTerms = selectedTerms[group.id] || [];
-
-                  return (
-                    <div key={group.id} className="space-y-2">
-                      <Label className="text-sm font-medium">
-                        {group.name}
-                        {group.description && (
-                          <span className="text-xs text-muted-foreground font-normal ml-1">— {group.description}</span>
-                        )}
-                      </Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className="w-full justify-between"
-                            disabled={viewOnly}
-                          >
-                            {selectedGroupTerms.length > 0
-                              ? `${selectedGroupTerms.length} seleccionado${selectedGroupTerms.length > 1 ? 's' : ''}`
-                              : `Seleccionar ${group.name.toLowerCase()}`
-                            }
-                            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0" align="start">
-                          <Command>
-                            <CommandEmpty>No se encontraron opciones.</CommandEmpty>
-                            <CommandGroup className="max-h-64 overflow-auto">
-                              {groupTerms.map(term => (
-                                <CommandItem
-                                  key={term.id}
-                                  onSelect={() => {
-                                    toggleTermSelection(group.id, term.id);
-                                    if (!selectedTermGroups.includes(group.id)) {
-                                      setSelectedTermGroups(prev => [...prev, group.id]);
-                                    }
-                                  }}
-                                >
-                                  <Checkbox
-                                    checked={selectedGroupTerms.includes(term.id)}
-                                    className="mr-2"
-                                  />
-                                  {term.name}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Tabs for Prices, Inventory, Images */}
-          {variations.length > 0 && (
-            <Tabs defaultValue="prices" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="prices">Precios</TabsTrigger>
-                <TabsTrigger value="inventory">Inventario</TabsTrigger>
-                <TabsTrigger value="images">Imágenes</TabsTrigger>
-              </TabsList>
-
-              {/* Prices Tab */}
-              <TabsContent value="prices" className="mt-4">
-                <div className="border rounded-lg overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="min-w-[150px] sticky left-0 bg-background">Variación</TableHead>
-                        {priceLists.map(pl => (
-                          <TableHead key={pl.id} colSpan={2} className="text-center min-w-[200px]">
-                            {pl.name}
-                            <div className="text-xs font-normal text-muted-foreground mt-1">
-                              <span className="inline-block w-1/2">Precio</span>
-                              <span className="inline-block w-1/2">Oferta</span>
-                            </div>
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {variations.map(variation => (
-                        <TableRow key={variation.id}>
-                          <TableCell className="font-medium sticky left-0 bg-background">
-                            <div className="flex flex-col">
-                              <span>{getVariationLabel(variation)}</span>
-                              {variationSkus[variation.id] && (
-                                <span className="text-xs text-muted-foreground">
-                                  SKU: {variationSkus[variation.id]}
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          {priceLists.map(pl => {
-                            const price = variation.prices.find(p => p.price_list_id === pl.id);
-                            return (
-                              <React.Fragment key={pl.id}>
-                                <TableCell className="p-2">
-                                  <Input
-                                    type="number"
-                                    placeholder="0.00"
-                                    min={0}
-                                    value={price?.price === 0 ? '' : price?.price ?? ''}
-                                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                                    onChange={(e) => updateVariationPrice(variation.id, pl.id, 'price', e.target.value)}
-                                    className="h-8 text-sm"
-                                    disabled={viewOnly}
-                                  />
-                                </TableCell>
-                                <TableCell className="p-2">
-                                  <Input
-                                    type="number"
-                                    placeholder="0.00"
-                                    min={0}
-                                    value={price?.sale_price ?? ''}
-                                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                                    onChange={(e) => updateVariationPrice(variation.id, pl.id, 'sale_price', e.target.value)}
-                                    className="h-8 text-sm"
-                                    disabled={viewOnly}
-                                  />
-                                </TableCell>
-                              </React.Fragment>
-                            );
-                          })}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </TabsContent>
-
-              {/* Inventory Tab */}
-              <TabsContent value="inventory" className="mt-4">
-                {/* Stock Type Filter */}
-                <div className="mb-4 flex items-center gap-3">
-                  <Label className="text-sm font-medium">Tipo de Inventario:</Label>
-                  <Select
-                    value={selectedStockType?.toString() || ''}
-                    onValueChange={(value) => setSelectedStockType(Number(value))}
-                  >
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Seleccionar tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {stockTypes.map(type => (
-                        <SelectItem key={type.id} value={type.id.toString()}>
-                          {type.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="border rounded-lg overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="min-w-[150px] sticky left-0 bg-background">Variación</TableHead>
-                        {warehouses.map(wh => (
-                          <TableHead key={wh.id} className="text-center min-w-[120px]">
-                            {wh.name}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {variations.map(variation => (
-                        <TableRow key={variation.id}>
-                          <TableCell className="font-medium sticky left-0 bg-background">
-                            <div className="flex flex-col">
-                              <span>{getVariationLabel(variation)}</span>
-                              {variationSkus[variation.id] && (
-                                <span className="text-xs text-muted-foreground">
-                                  SKU: {variationSkus[variation.id]}
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          {warehouses.map(wh => {
-                            const stockValue = getStockForType(variation, wh.id, selectedStockType);
-                            return (
-                              <TableCell key={wh.id} className="p-2">
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  min={0}
-                                  value={stockValue ?? ''}
-                                  onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                                  onChange={(e) => updateVariationStock(variation.id, wh.id, e.target.value, selectedStockType || undefined)}
-                                  className="h-8 text-sm"
-                                  disabled={viewOnly}
-                                />
-                              </TableCell>
-                            );
-                          })}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </TabsContent>
-
-              {/* Images Tab */}
-              <TabsContent value="images" className="mt-4">
-                {productImages.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No hay imágenes disponibles. Agregue imágenes en la sección "Galería general".
-                  </p>
-                ) : (
-                  <div className="border rounded-lg overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="min-w-[150px] sticky left-0 bg-background">Variación</TableHead>
-                          <TableHead>Imágenes disponibles</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {variations.map(variation => (
-                          <TableRow key={variation.id}>
-                            <TableCell className="font-medium sticky left-0 bg-background">
-                              <div className="flex flex-col">
-                                <span>{getVariationLabel(variation)}</span>
-                                {variationSkus[variation.id] && (
-                                  <span className="text-xs text-muted-foreground">
-                                    SKU: {variationSkus[variation.id]}
-                                  </span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-2">
-                                {productImages
-                                  .sort((a, b) => a.order - b.order)
-                                  .map(image => {
-                                    const isSelected = variation.selectedImages.includes(image.id);
-                                    return (
-                                      <div
-                                        key={image.id}
-                                        className={`relative w-16 h-16 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-primary/50'
-                                          }`}
-                                        onClick={() => toggleVariationImage(variation.id, image.id)}
-                                      >
-                                        <img
-                                          src={image.preview}
-                                          alt="Product"
-                                          className="w-full h-full object-cover"
-                                        />
-                                        {isSelected && (
-                                          <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                                            <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                                              <span className="text-primary-foreground text-xs">✓</span>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 };
