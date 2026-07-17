@@ -240,10 +240,10 @@ export const getPaymentMethodsIsActiveTrue = async (): Promise<PaymentMethod[]> 
 
 //GET PAYMENT METHODS IS_ACTIVE TRUE AND ACTIVE TRUE//
 
-export const getPaymentMethodsIsActiveTrueAndActiveTrue = async (): Promise<(PaymentMethod & { business_accounts?: { name: string } })[]> => {
+export const getPaymentMethodsIsActiveTrueAndActiveTrue = async (): Promise<(PaymentMethod & { business_accounts?: { name: string, total_amount: number } })[]> => {
   const { data, error } = await supabase
     .from("payment_methods")
-    .select("*, business_accounts(name)")
+    .select("*, business_accounts(name, total_amount)")
     .eq("is_active", true)
     .eq("active", true);
 
