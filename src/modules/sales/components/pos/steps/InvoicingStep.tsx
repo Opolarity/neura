@@ -511,9 +511,19 @@ export default function InvoicingStep({
   };
 
   const handleEmitInvoice = async (invoice: Invoice) => {
+    const typeCode = getInvoiceTypeCode(invoice);
+    if (typeCode === "INV") {
+      toast({
+        title: "No se puede emitir",
+        description: "El comprobante interno no se emite a SUNAT. Usa Boleta o Factura.",
+        variant: "destructive",
+      });
+      setPendingEmitInvoice(null);
+      return;
+    }
+
     setEmitting(true);
     try {
-      const typeCode = getInvoiceTypeCode(invoice);
       const fnName = typeCode === "7" ? "emit-guia" : "emit-invoice";
       const { data, error } = await supabase.functions.invoke(fnName, {
         body: { invoice_id: invoice.id },
@@ -861,17 +871,6 @@ export default function InvoicingStep({
                             </>
                           ) : typeCode === "INV" ? (
                             <>
-                              {!inv.declared && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  title="Emitir comprobante"
-                                  onClick={() => setPendingEmitInvoice(inv)}
-                                >
-                                  <ArrowUp className="h-4 w-4" />
-                                </Button>
-                              )}
                               <Button
                                 variant="ghost"
                                 size="icon"
