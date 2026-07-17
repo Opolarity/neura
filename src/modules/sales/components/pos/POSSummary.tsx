@@ -100,7 +100,10 @@ export default function POSSummary({
               className="flex items-center justify-between text-sm">
 
                   <div className="flex-1 min-w-0">
-                    <div className="truncate font-medium text-xs">{item.productName}</div>
+                    <div className="truncate font-medium text-xs">
+                      {item.productName}
+                      {item.variationName ? ` (${item.variationName})` : ""}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {item.quantity} x S/ {formatCurrency(item.price)}
                     </div>
