@@ -129,6 +129,7 @@ export interface PaymentMethodWithAccount {
   business_account_id: number;
   business_accounts: {
     name: string;
+    total_amount: number;
   };
 }
 
