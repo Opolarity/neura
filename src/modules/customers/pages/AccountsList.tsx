@@ -29,7 +29,6 @@ const AccountsList = () => {
         handlePageChange,
         handlePageSizeChange,
         clearFilters,
-        accountTypes,
     } = useAccounts();
 
 
@@ -45,7 +44,6 @@ const AccountsList = () => {
                 onClose={() => setIsFilterModalOpen(false)}
                 onApply={handleFiltersChange}
                 onClear={clearFilters}
-                accountTypes={accountTypes}
             />
             {/* Header */}
             <div className="flex justify-between items-center mb-6">

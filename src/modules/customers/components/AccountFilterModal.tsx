@@ -15,7 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { AccountsFilters, AccountType } from '../types/accounts.types';
+import { AccountsFilters } from '../types/accounts.types';
 
 interface AccountFilterModalProps {
     isOpen: boolean;
@@ -23,7 +23,6 @@ interface AccountFilterModalProps {
     onApply: (filters: AccountsFilters) => void;
     onClear: () => void;
     filters: AccountsFilters;
-    accountTypes: AccountType[];
 }
 
 export const AccountFilterModal = ({
@@ -32,7 +31,6 @@ export const AccountFilterModal = ({
     onApply,
     onClear,
     filters,
-    accountTypes,
 }: AccountFilterModalProps) => {
     const [localFilters, setLocalFilters] = useState<AccountsFilters>(filters);
 
@@ -49,7 +47,6 @@ export const AccountFilterModal = ({
         setLocalFilters({
             ...localFilters,
             show: null,
-            account_type: null,
         });
     };
 
@@ -79,31 +76,6 @@ export const AccountFilterModal = ({
                                 <SelectItem value="all">Todos</SelectItem>
                                 <SelectItem value="active">Activo</SelectItem>
                                 <SelectItem value="inactive">Inactivo</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="account_type">Tipo de Cuenta</Label>
-                        <Select
-                            value={localFilters?.account_type ? localFilters.account_type.toString() : 'all'}
-                            onValueChange={(value) =>
-                                setLocalFilters({
-                                    ...localFilters,
-                                    account_type: value === 'all' ? null : parseInt(value),
-                                })
-                            }
-                        >
-                            <SelectTrigger id="account_type">
-                                <SelectValue placeholder="Seleccione tipo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todos</SelectItem>
-                                {accountTypes.filter(type => type && type.id).map((type) => (
-                                    <SelectItem key={type.id} value={type.id.toString()}>
-                                        {type.name}
-                                    </SelectItem>
-                                ))}
                             </SelectContent>
                         </Select>
                     </div>
