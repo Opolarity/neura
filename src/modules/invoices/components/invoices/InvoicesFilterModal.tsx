@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ActiveInvoiceFilters } from "@/modules/invoices/hooks/useInvoices";
+import type { InvoiceType } from "@/modules/invoices/types/Invoices.types";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import { ListFilter } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -24,6 +25,7 @@ interface InvoicesFilterModalProps {
   activeFilters?: ActiveInvoiceFilters | null;
   onApply?: (filters: ActiveInvoiceFilters) => void;
   onClear?: () => void;
+  invoiceTypes?: InvoiceType[];
 }
 
 interface ModalFilters {
@@ -63,7 +65,7 @@ const toActiveFilters = (modal: ModalFilters): ActiveInvoiceFilters => ({
   end_date: modal.end_date || null,
 });
 
-const InvoicesFilterModal = ({ activeFilters, onApply, onClear }: InvoicesFilterModalProps) => {
+const InvoicesFilterModal = ({ activeFilters, onApply, onClear, invoiceTypes = [] }: InvoicesFilterModalProps) => {
   const [open, setOpen] = useState(false);
   const [localFilters, setLocalFilters] = useState<ModalFilters>(defaultModalFilters);
 
@@ -119,13 +121,21 @@ const InvoicesFilterModal = ({ activeFilters, onApply, onClear }: InvoicesFilter
 
           <div className="grid gap-2">
             <Label htmlFor="type">Tipo de factura</Label>
-            <Input
-              id="type"
-              type="number"
-              placeholder="ID del tipo"
+            <Select
               value={localFilters.type}
-              onChange={(e) => handleChange("type", e.target.value)}
-            />
+              onValueChange={(v) => handleChange("type", v)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {invoiceTypes.map((t) => (
+                  <SelectItem key={t.id} value={String(t.id)}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

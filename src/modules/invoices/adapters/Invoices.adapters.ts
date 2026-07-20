@@ -1,4 +1,4 @@
-import { InvoicesAdapted, InvoicesResponse } from "../types/Invoices.types";
+import { InvoicesAdapted, InvoicesResponse, InvoiceType } from "../types/Invoices.types";
 
 export const invoicesAdapter = (response: InvoicesResponse): InvoicesAdapted => {
   return {
@@ -17,4 +17,11 @@ export const invoicesAdapter = (response: InvoicesResponse): InvoicesAdapted => 
     })),
     page: response.invoicesData.page,
   };
+};
+
+export const invoiceTypesAdapter = (response: { id: number; name: string }[]): InvoiceType[] => {
+  return response.map((item) => ({
+    id: item.id,
+    name: item.name,
+  }));
 };

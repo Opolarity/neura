@@ -1,14 +1,16 @@
 import { Search } from "lucide-react";
 import InvoicesFilterModal from "./InvoicesFilterModal";
 import type { ActiveInvoiceFilters } from "@/modules/invoices/hooks/useInvoices";
+import type { InvoiceType } from "@/modules/invoices/types/Invoices.types";
 
 interface InvoicesFilterBarProps {
   activeFilters?: ActiveInvoiceFilters;
   onApply?: (filters: ActiveInvoiceFilters) => void;
   onClear?: () => void;
+  invoiceTypes?: InvoiceType[];
 }
 
-const InvoicesFilterBar = ({ activeFilters, onApply, onClear }: InvoicesFilterBarProps) => {
+const InvoicesFilterBar = ({ activeFilters, onApply, onClear, invoiceTypes }: InvoicesFilterBarProps) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -21,7 +23,7 @@ const InvoicesFilterBar = ({ activeFilters, onApply, onClear }: InvoicesFilterBa
           />
         </div>
 
-        <InvoicesFilterModal activeFilters={activeFilters} onApply={onApply} onClear={onClear} />
+        <InvoicesFilterModal activeFilters={activeFilters} onApply={onApply} onClear={onClear} invoiceTypes={invoiceTypes} />
       </div>
     </div>
   );
