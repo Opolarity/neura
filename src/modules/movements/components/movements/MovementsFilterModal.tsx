@@ -93,12 +93,12 @@ const MovementsFilterModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[70vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Filtrar Movimientos</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 px-2 overflow-y-auto flex-1">
           
           <div className="space-y-2">
             <Label className="text-sm font-medium">Canales de Venta</Label>
