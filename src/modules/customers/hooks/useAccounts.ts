@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { Account, AccountsFilters, AccountType } from '../types/accounts.types';
 import { accountsAdapter } from '../adapters/accounts.adapter';
-import { accountsApi, accountsTypesApi } from '../services/Account.services';
+import { accountsApi } from '../services/Account.services';
 
 
 export const useAccounts = () => {
@@ -25,8 +25,6 @@ export const useAccounts = () => {
             size: 20,
         }
     );
-    const [accountTypes, setAccountTypes] = useState<AccountType[]>([]);
-
     const fetchAccounts = useCallback(async () => {
         try {
             setLoading(true);
@@ -52,33 +50,6 @@ export const useAccounts = () => {
     useEffect(() => {
         fetchAccounts();
     }, [fetchAccounts]);
-
-    useEffect(() => {
-        const fetchAccountTypes = async () => {
-            try {
-                const response = await accountsTypesApi();
-                const allTypes: AccountType[] = [];
-
-                response.forEach(item => {
-                    if (Array.isArray(item.types)) {
-                        allTypes.push(...item.types);
-                    } else if (item.types) {
-                        allTypes.push(item.types);
-                    }
-                });
-
-                // Filter out any duplicates or types without ID
-                const uniqueTypes = allTypes.filter((type, index, self) =>
-                    type && type.id && self.findIndex(t => t.id === type.id) === index
-                );
-
-                setAccountTypes(uniqueTypes);
-            } catch (error) {
-                console.error('Error fetching account types:', error);
-            }
-        };
-        fetchAccountTypes();
-    }, []);
 
     const handleOrderChange = (value: string) => {
         const newFilters = { ...filters, order: value };
@@ -136,7 +107,6 @@ export const useAccounts = () => {
         handlePageChange,
         handlePageSizeChange,
         clearFilters,
-        accountTypes,
         reload: fetchAccounts,
     };
 };

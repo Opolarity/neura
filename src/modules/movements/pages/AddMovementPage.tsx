@@ -29,10 +29,11 @@ import {
 import { ArrowLeft, Check, ChevronsUpDown, Link2, Loader2, Paperclip, Plus, X } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import { useCreateMovement, MovementType } from "../hooks/useCreateMovement";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { MovementFilePreviewModal } from "../components/movements/MovementFilePreviewModal";
 import { LinkOrdersModal, OrderSummary } from "../components/movements/LinkOrdersModal";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
 
 interface AddMovementPageProps {
   movementType: MovementType;
@@ -46,6 +47,7 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
     classes,
     currentUserProfile,
     selectedBusinessAccount,
+    businessAccountAmount,
     isIncome,
     messages,
     onSubmit,
@@ -90,11 +92,16 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
   const [linkModalOpen, setLinkModalOpen] = useState(false);
 
   const {
+    watch,
     register,
     handleSubmit,
     setValue,
     formState: { errors },
   } = form;
+
+  const inputAmount = watch('amount');
+  const flagSelectPaymentMethod = watch('payment_method_id')? true: false ;
+  const flagSelectBusinessAccount = selectedManualBusinessAccountId? true:false
 
   return (
     <div className="space-y-6">
@@ -117,6 +124,16 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
               // SP combines p_movement_date (date) with current Lima time internally.
               // Always pass the Lima-local date so it doesn't shift to "tomorrow"
               // when UTC has already crossed midnight (Lima is UTC-5).
+              if(((flagSelectPaymentMethod && Number(inputAmount) || flagSelectBusinessAccount && Number(inputAmount)) && Number(inputAmount)> Number(businessAccountAmount))) 
+               {
+                  toast({
+                    title: "Error",
+                    description: 'El gasto es mayor al disponible.',
+                    variant: "destructive",
+                  });
+                  return;
+               } 
+              
               const limaDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
               const submittedDate = useCustomDate ? data.movement_date : limaDate;
               onSubmit({ ...data, movement_date: submittedDate }, attachments, linkedOrders.map((o) => o.id));
@@ -130,6 +147,7 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
                   type="number"
                   step="0.01"
                   placeholder="0.00"
+                  className={((flagSelectPaymentMethod && Number(inputAmount) || flagSelectBusinessAccount && Number(inputAmount)) && Number(inputAmount)> Number(businessAccountAmount))? "border border-red-500": ''}
                   {...register("amount")}
                 />
                 {errors.amount && (
@@ -202,7 +220,16 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
 
               {/* Cuenta de Negocio */}
               <div className="space-y-2">
-                <Label htmlFor="business_account">Cuenta de Negocio{needsManualBusinessAccount ? " *" : ""}</Label>
+                <Label htmlFor="business_account">Cuenta de Negocio {needsManualBusinessAccount ? " *" : ""}
+                  {selectedBusinessAccount || selectedManualBusinessAccountId ? (
+                    <span >
+                      {" "} Monto disponible: {new Intl.NumberFormat("es-PE", {
+                        style: "currency",
+                        currency: "PEN",
+                      }).format(businessAccountAmount)}
+                    </span>
+                  ) : ''}
+                </Label>
                 {needsManualBusinessAccount ? (
                   <Select
                     value={selectedManualBusinessAccountId}

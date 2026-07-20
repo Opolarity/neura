@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { getInvoicesApi } from "../services/Invoices.services";
-import { invoicesAdapter } from "../adapters/Invoices.adapters";
-import type { InvoiceItem } from "../types/Invoices.types";
+import { getInvoicesApi, getInvoiceTypesApi } from "../services/Invoices.services";
+import { invoicesAdapter, invoiceTypesAdapter } from "../adapters/Invoices.adapters";
+import type { InvoiceItem, InvoiceType } from "../types/Invoices.types";
 
 export interface ActiveInvoiceFilters {
   declared?: boolean | null;
@@ -17,6 +17,24 @@ export const useInvoices = () => {
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ p_page: 1, p_size: 20, total: 0 });
   const [activeFilters, setActiveFilters] = useState<ActiveInvoiceFilters>({});
+  const [invoiceTypes, setInvoiceTypes] = useState<InvoiceType[]>([]);
+  const [loadingInvoiceTypes, setLoadingInvoiceTypes] = useState(true);
+
+  useEffect(() => {
+    const fetchInvoiceTypes = async () => {
+      setLoadingInvoiceTypes(true);
+      try {
+        const apiResponse = await getInvoiceTypesApi();
+        setInvoiceTypes(invoiceTypesAdapter(apiResponse));
+      } catch (err) {
+        console.error("Error fetching invoice types:", err);
+      } finally {
+        setLoadingInvoiceTypes(false);
+      }
+    };
+
+    fetchInvoiceTypes();
+  }, []);
 
   const fetchInvoices = useCallback(async (page = 1, size = 20, filters: ActiveInvoiceFilters = {}) => {
     setLoading(true);
@@ -50,5 +68,5 @@ export const useInvoices = () => {
     fetchInvoices(1, pagination.p_size, {});
   };
 
-  return { invoices, loading, pagination, onPageChange, onPageSizeChange, activeFilters, applyFilters, clearFilters };
+  return { invoices, loading, pagination, onPageChange, onPageSizeChange, activeFilters, applyFilters, clearFilters, invoiceTypes, loadingInvoiceTypes };
 };
