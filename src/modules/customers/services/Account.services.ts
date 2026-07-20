@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/utils";
-import { AccountsApiResponse, AccountsFilters, AccountsTypesApiResponse } from "../types/accounts.types";
+import { AccountsApiResponse, AccountsFilters, AccountType } from "../types/accounts.types";
 
 export const accountsApi = async (
   filters: AccountsFilters
@@ -27,14 +27,21 @@ export const accountsApi = async (
   );
 };
 
-export const accountsTypesApi = async (): Promise<
-  AccountsTypesApiResponse[]
-> => {
-  const { data, error } = await supabase
+export const accountsTypesApi = async (): Promise<AccountType[]> => {
+  const { data: moduleData, error: moduleError } = await supabase
     .from("modules")
-    .select("types(id,name,code)")
-    .eq("code", "CLI")
+    .select("id")
+    .eq("code", "CUT")
+    .single();
+
+  if (moduleError) throw moduleError;
+
+  const { data, error } = await supabase
+    .from("types")
+    .select("id,name,code")
+    .eq("module_id", moduleData.id)
     .order("name");
+
   if (error) throw error;
-  return data as unknown as AccountsTypesApiResponse[];
+  return data ?? [];
 };

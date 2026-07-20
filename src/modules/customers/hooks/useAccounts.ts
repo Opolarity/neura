@@ -57,22 +57,7 @@ export const useAccounts = () => {
         const fetchAccountTypes = async () => {
             try {
                 const response = await accountsTypesApi();
-                const allTypes: AccountType[] = [];
-
-                response.forEach(item => {
-                    if (Array.isArray(item.types)) {
-                        allTypes.push(...item.types);
-                    } else if (item.types) {
-                        allTypes.push(item.types);
-                    }
-                });
-
-                // Filter out any duplicates or types without ID
-                const uniqueTypes = allTypes.filter((type, index, self) =>
-                    type && type.id && self.findIndex(t => t.id === type.id) === index
-                );
-
-                setAccountTypes(uniqueTypes);
+                setAccountTypes(response);
             } catch (error) {
                 console.error('Error fetching account types:', error);
             }
