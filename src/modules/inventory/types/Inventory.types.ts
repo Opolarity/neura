@@ -4,6 +4,7 @@ export interface WarehouseApiResponse {
   warehouse_name: string;
   stock_type: string;
   stock?: number | null;
+  stock_virtual?: number | null;
 }
 export interface InventoryApiResponse {
   data: Array<{
@@ -26,6 +27,7 @@ export interface Warehouse {
   name: string;
   stock_type?: string;
   stock?: number | null;
+  stock_virtual?: number | null;
 }
 
 export interface Inventory {

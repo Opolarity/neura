@@ -17,6 +17,7 @@ export const inventoryAdapter = (response: InventoryApiResponse) => {
       name: w.warehouse_name,
       stock_type: w.stock_type,
       stock: w.stock ?? null,
+      stock_virtual: w.stock_virtual ?? null,
     })),
   }));
 
