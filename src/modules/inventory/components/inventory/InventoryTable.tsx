@@ -93,7 +93,7 @@ const InventoryTable = ({
 
                 return (
                   <TableCell key={warehouse.id}>
-                    <div className="flex gap-2">
+                    <div className="flex w-fit items-stretch rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                       <Input
                         type="number"
                         value={getStockValue(item, warehouse.id, baseValue)}
@@ -102,13 +102,13 @@ const InventoryTable = ({
                         onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                         onWheel={(e) => e.currentTarget.blur()}
                         disabled={!isEditing}
-                        className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-20 rounded-r-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <Input
                         type="number"
                         value={stockRecord?.stock_virtual ?? 0}
                         disabled
-                        className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-20 rounded-l-none border-0 border-l border-input bg-muted/50 text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                   </TableCell>
