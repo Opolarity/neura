@@ -43,7 +43,7 @@ const InventoryTable = ({
           <TableHead>Producto</TableHead>
           <TableHead>Variación</TableHead>
           {warehouses.map((warehouse) => (
-            <TableHead key={warehouse.id}>{warehouse.name}</TableHead>
+            <TableHead key={warehouse.id} className="text-center">{warehouse.name}</TableHead>
           ))}
           <TableHead>Total</TableHead>
         </TableRow>
@@ -93,16 +93,24 @@ const InventoryTable = ({
 
                 return (
                   <TableCell key={warehouse.id}>
-                    <Input
-                      type="number"
-                      value={getStockValue(item, warehouse.id, baseValue)}
-                      onChange={(e) => handleStockChange(item, warehouse.id, e.target.value)}
-                      min="0"
-                      onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                      onWheel={(e) => e.currentTarget.blur()}
-                      disabled={!isEditing}
-                      className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        value={getStockValue(item, warehouse.id, baseValue)}
+                        onChange={(e) => handleStockChange(item, warehouse.id, e.target.value)}
+                        min="0"
+                        onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                        onWheel={(e) => e.currentTarget.blur()}
+                        disabled={!isEditing}
+                        className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <Input
+                        type="number"
+                        value={stockRecord?.stock_virtual ?? 0}
+                        disabled
+                        className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                    </div>
                   </TableCell>
                 );
               })}
