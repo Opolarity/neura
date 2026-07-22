@@ -290,6 +290,7 @@ console.log(data.pricerules || [], "aaa");
       })(),
       email: data.order.email || "",
       phone: data.order.phone?.toString() || "",
+      phoneWhatsapp: data.order.phone_whatsapp?.toString() || "",
       saleType: data.order.sale_type_id?.toString() || "",
       priceListId: data.order.price_list_id?.toString() || "",
       saleDate: data.order.date?.split("T")[0] || "",
@@ -332,8 +333,13 @@ console.log(data.pricerules || [], "aaa");
       paymentMethodId: p.payment_method_id?.toString() || "",
       amount: p.amount?.toString() || "",
       confirmationCode: p.confirmation_code || "",
-      voucherUrl: p.voucher_url || "",
-      voucherPreview: p.voucher_url || undefined,
+      voucherUrls: Array.isArray(p.voucher_url)
+        ? p.voucher_url
+        : p.voucher_url
+          ? [p.voucher_url]
+          : [],
+      voucherFiles: [],
+      voucherPreviews: [],
       businessAccountId: p.business_account_id?.toString() || "",
       completed: p.completed ?? false,
       updated_by: p.updated_by ?? null,
@@ -343,7 +349,13 @@ console.log(data.pricerules || [], "aaa");
       paymentMethodId: e.payment_method_id?.toString() || "",
       amount: e.amount?.toString() || "",
       confirmationCode: "",
-      voucherUrl: "",
+      voucherUrls: Array.isArray(e.voucher_url)
+        ? e.voucher_url
+        : e.voucher_url
+          ? [e.voucher_url]
+          : [],
+      voucherFiles: [],
+      voucherPreviews: [],
       businessAccountId: e.business_account_id?.toString() || "",
     })),
     currentSituation: (data.current_situation as CurrentSituation | null)?.situation_id?.toString() || "",

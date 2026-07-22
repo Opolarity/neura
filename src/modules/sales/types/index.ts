@@ -11,6 +11,7 @@ export interface SaleFormData {
   customerLastname2: string;
   email: string;
   phone: string;
+  phoneWhatsapp: string;
   saleType: string;
   priceListId: string;
   saleDate: string;
@@ -56,9 +57,10 @@ export interface SalePayment {
   paymentMethodId: string;
   amount: string;
   confirmationCode: string;
-  voucherUrl?: string;
-  voucherFile?: File;
-  voucherPreview?: string;
+  // Hasta 3 comprobantes por pago/vuelto (T-116)
+  voucherUrls?: string[];
+  voucherFiles?: File[];
+  voucherPreviews?: string[];
   businessAccountId?: string; // manual selection when payment method has business_account_id = 0
   completed?: boolean;
   updated_by?: string | null;
@@ -209,6 +211,7 @@ export interface CreateOrderRequest {
   customerLastname2: string | null;
   email: string | null;
   phone: string | null;
+  phoneWhatsapp: string | null;
   saleType: string;
   priceListId: string | null;
   shippingMethod: string | null;
@@ -241,7 +244,7 @@ export interface CreateOrderRequest {
     amount: number;
     date: string;
     confirmationCode: string | null;
-    voucherUrl: string | null;
+    voucherUrls: string[] | null;
     businessAccountId?: number | null;
     completed?: boolean;
     updated_by?: string | null;
@@ -249,6 +252,7 @@ export interface CreateOrderRequest {
   changeEntries: Array<{
     paymentMethodId: number;
     amount: number;
+    voucherUrls?: string[] | null;
     businessAccountId?: number | null;
   }>;
   initialSituationId: number;
