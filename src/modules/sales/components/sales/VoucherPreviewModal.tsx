@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink, CheckCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils/utils";
 
 interface VoucherPreviewModalProps {
   open: boolean;
