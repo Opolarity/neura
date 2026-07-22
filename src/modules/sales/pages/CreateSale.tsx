@@ -189,6 +189,7 @@ const CreateSale = () => {
     handleVoucherSelect,
     removeVoucher,
     handleExistingPaymentVoucherSelect,
+    removeExistingPaymentVoucher,
     historyModalOpen,
     createdOrderId,
     orderSituationTable,
@@ -245,8 +246,8 @@ const CreateSale = () => {
   const [tempSaleTypeId, setTempSaleTypeId] = useState<string>("");
   const [voucherModalOpen, setVoucherModalOpen] = useState(false);
   const [selectedVoucherPreview, setSelectedVoucherPreview] = useState<
-    string | null
-  >(null);
+    string[]
+  >([]);
   const [selectedVoucherCompleted, setSelectedVoucherCompleted] =
     useState<boolean>(false);
   const [selectedVoucherPaymentId, setSelectedVoucherPaymentId] = useState<
@@ -1217,6 +1218,21 @@ const CreateSale = () => {
                 </div>
               </div>
 
+              {/* WhatsApp */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>WhatsApp</Label>
+                  <Input
+                    type="tel"
+                    placeholder="Opcional"
+                    value={formData.phoneWhatsapp}
+                    onChange={(e) =>
+                      handleInputChange("phoneWhatsapp", e.target.value)
+                    }
+                  />
+                </div>
+              </div>
+
               {/* Promoción Aplicada */}
               {/* <div className="grid grid-cols-2 gap-2">
                 
@@ -1880,37 +1896,40 @@ const CreateSale = () => {
                             >
                               {formatCurrency(parseFloat(p.amount) || 0)}
                             </span>
-                            {p.voucherPreview &&
-                              !(orderId && p.dbId && p.voucherFile) && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => {
-                                    setSelectedVoucherPreview(
-                                      p.voucherPreview || null,
-                                    );
-                                    setSelectedVoucherCompleted(
-                                      p.completed === true,
-                                    );
-                                    setSelectedVoucherPaymentId(
-                                      p.dbId?.toString() ?? null,
-                                    );
-                                    setVoucherModalOpen(true);
-                                  }}
-                                  title="Ver comprobante"
-                                >
-                                  <Paperclip
-                                    className={cn(
-                                      "w-3 h-3",
-                                      isCompleted
-                                        ? "text-green-600 dark:text-green-400"
-                                        : "text-red-600 dark:text-red-400",
-                                    )}
-                                  />
-                                </Button>
-                              )}
+                            {[
+                              ...(p.voucherUrls ?? []),
+                              ...(p.voucherPreviews ?? []),
+                            ].length > 0 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  setSelectedVoucherPreview([
+                                    ...(p.voucherUrls ?? []),
+                                    ...(p.voucherPreviews ?? []),
+                                  ]);
+                                  setSelectedVoucherCompleted(
+                                    p.completed === true,
+                                  );
+                                  setSelectedVoucherPaymentId(
+                                    p.dbId?.toString() ?? null,
+                                  );
+                                  setVoucherModalOpen(true);
+                                }}
+                                title="Ver comprobantes"
+                              >
+                                <Paperclip
+                                  className={cn(
+                                    "w-3 h-3",
+                                    isCompleted
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400",
+                                  )}
+                                />
+                              </Button>
+                            )}
                           </div>
                           {!orderId && (
                             <Button
@@ -1922,31 +1941,35 @@ const CreateSale = () => {
                               <Trash2 className="w-3 h-3 text-destructive" />
                             </Button>
                           )}
-                          {orderId && p.dbId && (!p.voucherUrl || p.voucherFile) && (
-                            <div className="flex items-center gap-1">
-                              {p.voucherFile && (
-                                <Badge
-                                  variant="destructive"
-                                  className="h-5 px-1"
+                          {orderId &&
+                            p.dbId &&
+                            (p.voucherUrls?.length ?? 0) +
+                              (p.voucherFiles?.length ?? 0) <
+                              3 && (
+                              <div className="flex items-center gap-1">
+                                {(p.voucherFiles?.length ?? 0) > 0 && (
+                                  <Badge
+                                    variant="destructive"
+                                    className="h-5 px-1"
+                                  >
+                                    <ImageIcon className="size-3" />
+                                  </Badge>
+                                )}
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => {
+                                    setSelectedExistingPaymentId(p.id);
+                                    existingPaymentVoucherInputRef.current?.click();
+                                  }}
+                                  title="Subir comprobante"
                                 >
-                                  <ImageIcon className="size-3" />
-                                </Badge>
-                              )}
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => {
-                                  setSelectedExistingPaymentId(p.id);
-                                  existingPaymentVoucherInputRef.current?.click();
-                                }}
-                                title="Subir comprobante"
-                              >
-                                <Upload className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          )}
+                                  <Upload className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            )}
                         </div>
                       );
                     })}
@@ -2043,29 +2066,36 @@ const CreateSale = () => {
                   </div>
                 )}
 
-                {/* Voucher preview */}
-                {currentPayment.voucherPreview && (
-                  <div className="relative group">
-                    <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-                      <img
-                        src={currentPayment.voucherPreview}
-                        alt="Comprobante"
-                        className="h-12 w-12 object-cover rounded"
-                      />
-
-                      <span className="text-xs text-muted-foreground flex-1 truncate">
-                        {currentPayment.voucherFile?.name}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={removeVoucher}
+                {/* Voucher previews (hasta 3) */}
+                {[
+                  ...(currentPayment.voucherUrls ?? []),
+                  ...(currentPayment.voucherPreviews ?? []),
+                ].length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      ...(currentPayment.voucherUrls ?? []),
+                      ...(currentPayment.voucherPreviews ?? []),
+                    ].map((src, idx) => (
+                      <div
+                        key={idx}
+                        className="relative flex items-center gap-1 p-1 bg-muted/50 rounded-md"
                       >
-                        <X className="w-3 h-3 text-destructive" />
-                      </Button>
-                    </div>
+                        <img
+                          src={src}
+                          alt={`Comprobante ${idx + 1}`}
+                          className="h-12 w-12 object-cover rounded"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => removeVoucher(idx)}
+                        >
+                          <X className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -2084,18 +2114,24 @@ const CreateSale = () => {
                     }}
                   />
 
-                  <Button
-                    type="button"
-                    variant={
-                      currentPayment.voucherPreview ? "default" : "outline"
-                    }
-                    size="sm"
-                    className="w-full"
-                    onClick={() => voucherFileInputRef.current?.click()}
-                  >
-                    <Upload className="w-4 h-4 mr-0.5" />
-                    {currentPayment.voucherPreview ? "Cambiar" : "Comprobante"}
-                  </Button>
+                  {(() => {
+                    const count =
+                      (currentPayment.voucherUrls?.length ?? 0) +
+                      (currentPayment.voucherPreviews?.length ?? 0);
+                    return (
+                      <Button
+                        type="button"
+                        variant={count > 0 ? "default" : "outline"}
+                        size="sm"
+                        className="w-full"
+                        disabled={count >= 3}
+                        onClick={() => voucherFileInputRef.current?.click()}
+                      >
+                        <Upload className="w-4 h-4 mr-0.5" />
+                        {count > 0 ? `Comprobante (${count}/3)` : "Comprobante"}
+                      </Button>
+                    );
+                  })()}
                   <Button
                     type="button"
                     variant="secondary"
@@ -2141,23 +2177,27 @@ const CreateSale = () => {
                                     <span className="text-sm font-medium">
                                       {formatCurrency(parseFloat(e.amount) || 0)}
                                     </span>
-                                    {e.voucherPreview && (
+                                    {[
+                                      ...(e.voucherUrls ?? []),
+                                      ...(e.voucherPreviews ?? []),
+                                    ].length > 0 && (
                                       <Button
                                         type="button"
                                         variant="ghost"
                                         size="icon"
                                         className="h-6 w-6"
                                         onClick={() => {
-                                          setSelectedVoucherPreview(
-                                            e.voucherPreview || null,
-                                          );
+                                          setSelectedVoucherPreview([
+                                            ...(e.voucherUrls ?? []),
+                                            ...(e.voucherPreviews ?? []),
+                                          ]);
                                           setSelectedVoucherCompleted(
                                             e.completed === true,
                                           );
                                           setSelectedVoucherPaymentId(e.id);
                                           setVoucherModalOpen(true);
                                         }}
-                                        title="Ver comprobante"
+                                        title="Ver comprobantes"
                                       >
                                         <Paperclip className="w-3 h-3 text-primary" />
                                       </Button>
@@ -2268,28 +2308,35 @@ const CreateSale = () => {
                             </div>
                           )}
 
-                          {currentChangeEntry.voucherPreview && (
-                            <div className="relative group">
-                              <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-                                <img
-                                  src={currentChangeEntry.voucherPreview}
-                                  alt="Comprobante"
-                                  className="h-12 w-12 object-cover rounded"
-                                />
-
-                                <span className="text-xs text-muted-foreground flex-1 truncate">
-                                  {currentChangeEntry.voucherFile?.name}
-                                </span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={removeChangeVoucher}
+                          {[
+                            ...(currentChangeEntry.voucherUrls ?? []),
+                            ...(currentChangeEntry.voucherPreviews ?? []),
+                          ].length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {[
+                                ...(currentChangeEntry.voucherUrls ?? []),
+                                ...(currentChangeEntry.voucherPreviews ?? []),
+                              ].map((src, idx) => (
+                                <div
+                                  key={idx}
+                                  className="relative flex items-center gap-1 p-1 bg-muted/50 rounded-md"
                                 >
-                                  <X className="w-3 h-3 text-destructive" />
-                                </Button>
-                              </div>
+                                  <img
+                                    src={src}
+                                    alt={`Comprobante ${idx + 1}`}
+                                    className="h-12 w-12 object-cover rounded"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => removeChangeVoucher(idx)}
+                                  >
+                                    <X className="w-3 h-3 text-destructive" />
+                                  </Button>
+                                </div>
+                              ))}
                             </div>
                           )}
 
@@ -2306,24 +2353,28 @@ const CreateSale = () => {
                               }}
                             />
 
-                            <Button
-                              type="button"
-                              variant={
-                                currentChangeEntry.voucherPreview
-                                  ? "default"
-                                  : "outline"
-                              }
-                              size="sm"
-                              className="w-full"
-                              onClick={() =>
-                                changeVoucherFileInputRef.current?.click()
-                              }
-                            >
-                              <Upload className="w-4 h-4 mr-0.5" />
-                              {currentChangeEntry.voucherPreview
-                                ? "Cambiar"
-                                : "Comprobante"}
-                            </Button>
+                            {(() => {
+                              const count =
+                                (currentChangeEntry.voucherUrls?.length ?? 0) +
+                                (currentChangeEntry.voucherPreviews?.length ?? 0);
+                              return (
+                                <Button
+                                  type="button"
+                                  variant={count > 0 ? "default" : "outline"}
+                                  size="sm"
+                                  className="w-full"
+                                  disabled={count >= 3}
+                                  onClick={() =>
+                                    changeVoucherFileInputRef.current?.click()
+                                  }
+                                >
+                                  <Upload className="w-4 h-4 mr-0.5" />
+                                  {count > 0
+                                    ? `Comprobante (${count}/3)`
+                                    : "Comprobante"}
+                                </Button>
+                              );
+                            })()}
                             <Button
                               type="button"
                               variant="secondary"
@@ -2368,17 +2419,23 @@ const CreateSale = () => {
                               {formatCurrency(p.amount)}
                             </span>
                           </div>
-                          {p.voucher_url && (
+                          {(Array.isArray(p.voucher_url)
+                            ? p.voucher_url.length > 0
+                            : !!p.voucher_url) && (
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6"
                               onClick={() => {
-                                setSelectedVoucherPreview(p.voucher_url);
+                                setSelectedVoucherPreview(
+                                  Array.isArray(p.voucher_url)
+                                    ? p.voucher_url
+                                    : [p.voucher_url as string],
+                                );
                                 setVoucherModalOpen(true);
                               }}
-                              title="Ver comprobante"
+                              title="Ver comprobantes"
                             >
                               <Paperclip className="w-3 h-3 text-orange-500" />
                             </Button>
@@ -2562,7 +2619,7 @@ const CreateSale = () => {
       <VoucherPreviewModal
         open={voucherModalOpen}
         onOpenChange={setVoucherModalOpen}
-        voucherSrc={selectedVoucherPreview || ""}
+        voucherSrc={selectedVoucherPreview}
         completed={selectedVoucherCompleted}
         paymentId={selectedVoucherPaymentId}
         onConfirmPayment={async (paymentId) => {

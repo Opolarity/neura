@@ -7,12 +7,14 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface VoucherPreviewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  voucherSrc: string;
+  // Acepta una sola URL (retrocompat) o varias (hasta 3)
+  voucherSrc: string | string[];
   voucherName?: string;
   completed?: boolean;
   paymentId?: string | null;
@@ -28,36 +30,42 @@ export const VoucherPreviewModal = ({
   paymentId,
   onConfirmPayment,
 }: VoucherPreviewModalProps) => {
-  if (!voucherSrc) return null;
+  const sources = (Array.isArray(voucherSrc) ? voucherSrc : [voucherSrc]).filter(
+    Boolean,
+  );
 
-  // Detect if it's a PDF
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [confirming, setConfirming] = useState(false);
+
+  // Reinicia el índice al abrir o cambiar las fuentes
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [open, voucherSrc]);
+
+  if (sources.length === 0) return null;
+
+  const active = sources[Math.min(activeIndex, sources.length - 1)];
+
   const isPdf =
-    voucherSrc.includes("application/pdf") ||
-    voucherSrc.toLowerCase().endsWith(".pdf");
-
-  // Detect if it's a base64 string or URL
-  const isBase64 = voucherSrc.startsWith("data:");
+    active.includes("application/pdf") || active.toLowerCase().endsWith(".pdf");
+  const isBase64 = active.startsWith("data:");
 
   const handleDownload = () => {
     if (isBase64) {
-      // For base64 data, create a blob and download
       const link = document.createElement("a");
-      link.href = voucherSrc;
+      link.href = active;
       link.download = `${voucherName}.${isPdf ? "pdf" : "jpg"}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } else {
-      // For URLs, open in new tab
-      window.open(voucherSrc, "_blank");
+      window.open(active, "_blank");
     }
   };
 
   const handleOpenExternal = () => {
-    window.open(voucherSrc, "_blank");
+    window.open(active, "_blank");
   };
-
-  const [confirming, setConfirming] = useState(false);
 
   const handleConfirmPayment = async () => {
     if (!paymentId || confirming || completed) return;
@@ -74,7 +82,12 @@ export const VoucherPreviewModal = ({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
-            <DialogTitle>Vista previa del comprobante</DialogTitle>
+            <DialogTitle>
+              Vista previa del comprobante
+              {sources.length > 1
+                ? ` (${activeIndex + 1}/${sources.length})`
+                : ""}
+            </DialogTitle>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -99,18 +112,53 @@ export const VoucherPreviewModal = ({
         <div className="flex-1 overflow-auto min-h-0 flex items-center justify-center bg-muted/30 rounded-md p-4">
           {isPdf ? (
             <embed
-              src={voucherSrc}
+              src={active}
               type="application/pdf"
               className="w-full h-[60vh] rounded-md"
             />
           ) : (
             <img
-              src={voucherSrc}
+              src={active}
               alt="Comprobante"
               className="max-w-full max-h-[60vh] object-contain rounded-md shadow-md"
             />
           )}
         </div>
+
+        {sources.length > 1 && (
+          <div className="flex flex-wrap gap-2 justify-center flex-shrink-0 pt-2">
+            {sources.map((src, idx) => {
+              const thumbIsPdf =
+                src.includes("application/pdf") ||
+                src.toLowerCase().endsWith(".pdf");
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setActiveIndex(idx)}
+                  className={cn(
+                    "h-14 w-14 rounded-md overflow-hidden border-2 flex items-center justify-center bg-muted/40",
+                    idx === activeIndex
+                      ? "border-primary"
+                      : "border-transparent",
+                  )}
+                  title={`Comprobante ${idx + 1}`}
+                >
+                  {thumbIsPdf ? (
+                    <span className="text-[10px] font-medium">PDF</span>
+                  ) : (
+                    <img
+                      src={src}
+                      alt={`Comprobante ${idx + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <DialogFooter>
           {!completed && (
             <Button
