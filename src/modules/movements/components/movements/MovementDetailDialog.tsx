@@ -204,14 +204,25 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
                 </h3>
                 {detail.links.link_order.map((item) => (
                   <div key={item.order_payment_id} className="rounded-lg border px-4 py-3 space-y-1">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="font-semibold">{formatCurrency(item.amount)}</span>
-                      {item.date && (
-                        <span className="text-xs text-muted-foreground">
-                          {item.date.split("T")[0].split("-").reverse().join("/")}
+                      {item.completed !== null && (
+                        <span
+                          className={`text-xs ${
+                            item.completed ? "text-green-600" : "text-muted-foreground"
+                          }`}
+                        >
+                          {item.completed ? "Completado" : "Pendiente"}
                         </span>
                       )}
                     </div>
+                    {item.date && (
+                      <div className="flex justify-end">
+                        <span className="text-xs text-muted-foreground">
+                          {item.date.split("T")[0].split("-").reverse().join("/")}
+                        </span>
+                      </div>
+                    )}
                     {item.gateway_confirmation_code && (
                       <p className="text-xs text-muted-foreground">
                         Cód. confirmación: {item.gateway_confirmation_code}
