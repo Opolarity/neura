@@ -22,6 +22,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { buildVariantTitle } from "../utils/buildVariantTitle";
+import {
+  SHIPPING_ITEM_DESCRIPTION,
+  SHIPPING_MEASUREMENT_UNIT,
+  calcShippingAmounts,
+} from "@/modules/invoices/utils/shippingItem";
 import { formatDateDisplay } from "@/shared/utils/date";
 import { ArrowUp, ChevronDown, Code, Eye, FileText, Loader2, Printer } from "lucide-react";
 import {
@@ -57,14 +63,6 @@ interface InvoiceType {
   name: string;
   code: string;
 }
-
-const buildVariantTitle = (op: any, baseTitle: string): string => {
-  const termsStr = (op.variations?.variation_terms || [])
-    .map((vt: any) => vt.terms?.name || "")
-    .filter(Boolean)
-    .join("-");
-  return termsStr ? `${baseTitle} (${termsStr})` : baseTitle;
-};
 
 interface SalesInvoicesModalProps {
   orderId: number;
@@ -493,6 +491,21 @@ export const SalesInvoicesModal = ({
           total: Math.round(lineTotal * 100) / 100,
         };
       });
+
+      // Add shipping cost as line item if applicable
+      if (order.shipping_cost && Number(order.shipping_cost) > 0) {
+        const shippingCost = Number(order.shipping_cost);
+        const { total, igv } = calcShippingAmounts(shippingCost);
+        items.push({
+          description: SHIPPING_ITEM_DESCRIPTION,
+          quantity: 1,
+          measurement_unit: SHIPPING_MEASUREMENT_UNIT,
+          unit_price: shippingCost,
+          discount: 0,
+          igv,
+          total,
+        });
+      }
 
       const clientName = [order.customer_name, order.customer_lastname].filter(Boolean).join(" ") || null;
 

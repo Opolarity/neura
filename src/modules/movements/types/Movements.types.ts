@@ -211,6 +211,7 @@ export interface MovementLinkItem {
   customer_lastname: string;
   document_number: string;
   order_total: number;
+  completed: boolean | null;
 }
 
 export interface MovementLinks {

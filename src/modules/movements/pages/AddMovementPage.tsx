@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,10 +29,11 @@ import {
 import { ArrowLeft, Check, ChevronsUpDown, Link2, Loader2, Paperclip, Plus, X } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import { useCreateMovement, MovementType } from "../hooks/useCreateMovement";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { MovementFilePreviewModal } from "../components/movements/MovementFilePreviewModal";
 import { LinkOrdersModal, OrderSummary } from "../components/movements/LinkOrdersModal";
-import { Badge } from "@/components/ui/badge";
+import MovementFundsSource from "../components/movements/MovementFundsSource";
+import MovementSummary from "../components/movements/MovementSummary";
 import { toast } from "@/hooks/use-toast";
 
 interface AddMovementPageProps {
@@ -56,6 +57,11 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
     needsManualBusinessAccount,
     selectedManualBusinessAccountId,
     setSelectedManualBusinessAccountId,
+    selectedPaymentMethod,
+    hasAccountSelected,
+    fundsAccountName,
+    remainingAmount,
+    exceedsAvailableAmount,
     classSearchOpen,
     setClassSearchOpen,
     classSearch,
@@ -84,24 +90,22 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [stagedFile, setStagedFile] = useState<File | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const openFilePicker = () => fileInputRef.current?.click();
 
   const [linkedOrders, setLinkedOrders] = useState<OrderSummary[]>([]);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
 
   const {
-    watch,
     register,
     handleSubmit,
     setValue,
     formState: { errors },
   } = form;
 
-  const inputAmount = watch('amount');
-  const flagSelectPaymentMethod = watch('payment_method_id')? true: false ;
-  const flagSelectBusinessAccount = selectedManualBusinessAccountId? true:false
+  const formatSoles = (value: number) =>
+    `S/ ${new Intl.NumberFormat("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}`;
 
   return (
     <div className="space-y-6">
@@ -115,158 +119,106 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Información del {messages.label}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit((data) => {
-              // SP combines p_movement_date (date) with current Lima time internally.
-              // Always pass the Lima-local date so it doesn't shift to "tomorrow"
-              // when UTC has already crossed midnight (Lima is UTC-5).
-              if(((flagSelectPaymentMethod && Number(inputAmount) || flagSelectBusinessAccount && Number(inputAmount)) && Number(inputAmount)> Number(businessAccountAmount))) 
-               {
-                  toast({
-                    title: "Error",
-                    description: 'El gasto es mayor al disponible.',
-                    variant: "destructive",
-                  });
-                  return;
-               } 
-              
-              const limaDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
-              const submittedDate = useCustomDate ? data.movement_date : limaDate;
-              onSubmit({ ...data, movement_date: submittedDate }, attachments, linkedOrders.map((o) => o.id));
-            })} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Monto */}
-              <div className="space-y-2">
-                <Label htmlFor="amount">Monto *</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  className={((flagSelectPaymentMethod && Number(inputAmount) || flagSelectBusinessAccount && Number(inputAmount)) && Number(inputAmount)> Number(businessAccountAmount))? "border border-red-500": ''}
-                  {...register("amount")}
-                />
-                {errors.amount && (
-                  <p className="text-sm text-destructive">
-                    {errors.amount.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Fecha */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="movement_date">Fecha *</Label>
-                  <label className="flex items-center gap-1.5 cursor-pointer text-sm text-muted-foreground select-none">
-                    <input
-                      type="checkbox"
-                      className="h-3.5 w-3.5 cursor-pointer"
-                      checked={useCustomDate}
-                      onChange={(e) => setUseCustomDate(e.target.checked)}
-                    />
-                    Fecha personalizada
-                  </label>
-                </div>
-                {useCustomDate ? (
-                  <>
-                    <Input
-                      id="movement_date"
-                      type="date"
-                      {...register("movement_date")}
-                    />
-                    {errors.movement_date && (
-                      <p className="text-sm text-destructive">
-                        {errors.movement_date.message}
-                      </p>
-                    )}
-                  </>
-                ) : (
+      <form
+        onSubmit={handleSubmit((data) => {
+          if (exceedsAvailableAmount) {
+            toast({
+              title: "Error",
+              description: "El gasto es mayor al disponible.",
+              variant: "destructive",
+            });
+            return;
+          }
+          // El SP combina p_movement_date (date) con la hora actual de Lima.
+          // Se pasa siempre la fecha local de Lima para no saltar a "mañana" (UTC-5).
+          const limaDate = new Date().toLocaleDateString("en-CA", { timeZone: "America/Lima" });
+          const submittedDate = useCustomDate ? data.movement_date : limaDate;
+          onSubmit({ ...data, movement_date: submittedDate }, attachments, linkedOrders.map((o) => o.id));
+        })}
+      >
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          {/* Columna del formulario */}
+          <Card className="w-full flex-1">
+            <CardContent className="pt-6 space-y-5">
+              {/* Fila 2 columnas: Monto | Fecha */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Monto *</Label>
                   <Input
-                    id="movement_date"
-                    value={nowDisplay}
-                    disabled
-                    className="bg-muted"
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    className={exceedsAvailableAmount ? "border-destructive" : ""}
+                    {...register("amount")}
                   />
-                )}
+                  {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="movement_date">Fecha *</Label>
+                    <label className="flex items-center gap-1.5 cursor-pointer text-sm text-muted-foreground select-none">
+                      <input
+                        type="checkbox"
+                        className="h-3.5 w-3.5 cursor-pointer"
+                        checked={useCustomDate}
+                        onChange={(e) => setUseCustomDate(e.target.checked)}
+                      />
+                      Personalizada
+                    </label>
+                  </div>
+                  {useCustomDate ? (
+                    <>
+                      <Input id="movement_date" type="date" {...register("movement_date")} />
+                      {errors.movement_date && (
+                        <p className="text-sm text-destructive">{errors.movement_date.message}</p>
+                      )}
+                    </>
+                  ) : (
+                    <Input id="movement_date" value={nowDisplay} disabled className="bg-muted" />
+                  )}
+                </div>
               </div>
 
-              {/* Método de Pago */}
-              <div className="space-y-2">
-                <Label htmlFor="payment_method_id">Método de Pago *</Label>
-                <Select
-                  onValueChange={(value) => setValue("payment_method_id", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar método de pago" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {paymentMethods.map((method) => (
-                      <SelectItem key={method.id} value={method.id.toString()}>
-                        {method.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.payment_method_id && (
-                  <p className="text-sm text-destructive">
-                    {errors.payment_method_id.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Cuenta de Negocio */}
-              <div className="space-y-2">
-                <Label htmlFor="business_account">Cuenta de Negocio {needsManualBusinessAccount ? " *" : ""}
-                  {selectedBusinessAccount || selectedManualBusinessAccountId ? (
-                    <span >
-                      {" "} Monto disponible: {new Intl.NumberFormat("es-PE", {
-                        style: "currency",
-                        currency: "PEN",
-                      }).format(businessAccountAmount)}
-                    </span>
-                  ) : ''}
-                </Label>
-                {needsManualBusinessAccount ? (
-                  <Select
-                    value={selectedManualBusinessAccountId}
-                    onValueChange={setSelectedManualBusinessAccountId}
-                  >
+              {/* Fila 2 columnas: Método de pago | Cuenta */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="space-y-2">
+                  <Label htmlFor="payment_method_id">Método de pago *</Label>
+                  <Select onValueChange={(value) => setValue("payment_method_id", value)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar cuenta de negocio" />
+                      <SelectValue placeholder="Seleccionar método de pago" />
                     </SelectTrigger>
                     <SelectContent>
-                      {businessAccounts.map((ba) => (
-                        <SelectItem key={ba.id} value={ba.id.toString()}>
-                          {ba.name}
+                      {paymentMethods.map((method) => (
+                        <SelectItem key={method.id} value={method.id.toString()}>
+                          {method.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                ) : (
-                  <Input
-                    id="business_account"
-                    value={selectedBusinessAccount || "No especificado"}
-                    disabled
-                    className="bg-muted"
-                    placeholder="Selecciona un método de pago"
-                  />
-                )}
+                  {errors.payment_method_id && (
+                    <p className="text-sm text-destructive">{errors.payment_method_id.message}</p>
+                  )}
+                </div>
+
+                <MovementFundsSource
+                  selectedPaymentMethod={selectedPaymentMethod}
+                  selectedBusinessAccount={selectedBusinessAccount}
+                  needsManualBusinessAccount={needsManualBusinessAccount}
+                  businessAccounts={businessAccounts}
+                  selectedManualBusinessAccountId={selectedManualBusinessAccountId}
+                  setSelectedManualBusinessAccountId={setSelectedManualBusinessAccountId}
+                  isIncome={isIncome}
+                />
               </div>
 
-              {/* Categoría (Classes del módulo MOV) */}
+              {/* Categoría (ancho completo) */}
               <div className="space-y-2">
                 <Label>Categoría *</Label>
                 <Popover open={classSearchOpen} onOpenChange={setClassSearchOpen}>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className="w-full justify-between font-normal"
-                    >
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
                       {selectedClassName || "Seleccionar categoría"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -282,9 +234,7 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
                         <CommandEmpty>Sin resultados</CommandEmpty>
                         <CommandGroup>
                           {classes
-                            .filter((cls) =>
-                              cls.name.toLowerCase().includes(classSearch.toLowerCase())
-                            )
+                            .filter((cls) => cls.name.toLowerCase().includes(classSearch.toLowerCase()))
                             .map((cls) => (
                               <CommandItem
                                 key={cls.id}
@@ -327,150 +277,138 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
                   </PopoverContent>
                 </Popover>
                 {errors.movement_class_id && (
-                  <p className="text-sm text-destructive">
-                    {errors.movement_class_id.message}
-                  </p>
+                  <p className="text-sm text-destructive">{errors.movement_class_id.message}</p>
                 )}
               </div>
 
-              {/* Usuario (Bloqueado - Usuario actual) */}
+              {/* Descripción (ancho completo, 3 filas) */}
               <div className="space-y-2">
-                <Label htmlFor="user_id">Usuario</Label>
-                <Input
-                  id="user_id"
-                  value={
-                    currentUserProfile
-                      ? `${currentUserProfile.name} ${currentUserProfile.last_name}`
-                      : "Cargando..."
-                  }
-                  disabled
-                  className="bg-muted"
+                <Label htmlFor="description">Descripción</Label>
+                <Textarea
+                  id="description"
+                  placeholder={`Ingresa una descripción del ${isIncome ? "ingreso" : "gasto"}...`}
+                  rows={3}
+                  {...register("description")}
                 />
               </div>
-            </div>
 
-            {/* Descripción */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea
-                id="description"
-                placeholder={`Ingresa una descripción del ${
-                  isIncome ? "ingreso" : "gasto"
-                }...`}
-                rows={4}
-                {...register("description")}
-              />
-            </div>
+              {/* Separador de respaldo */}
+              <div className="flex items-center gap-3 pt-1">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Respaldo · Opcional
+                </span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
 
-            {/* Archivos adjuntos */}
-            <div className="space-y-2">
-              <Label>Archivos adjuntos</Label>
-              <div className="flex items-center gap-2 flex-wrap">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept="image/*,.pdf"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setStagedFile(file);
-                    e.target.value = "";
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Paperclip className="h-4 w-4 mr-1.5" />
-                  {stagedFile ? stagedFile.name.slice(0, 20) + (stagedFile.name.length > 20 ? "..." : "") : "Adjuntar archivo"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  disabled={!stagedFile}
-                  onClick={() => {
-                    if (stagedFile) {
-                      handleAddFiles([stagedFile]);
-                      setStagedFile(null);
-                    }
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-1.5" />
-                  Agregar
-                </Button>
-                {attachments.map((file, index) => {
-                  return (
-                    <div key={index} className="relative group">
-                      <button
-                        type="button"
-                        title={file.name}
-                        onClick={() => { setPreviewFile(file); setPreviewOpen(true); }}
-                        className="h-10 w-10 rounded border bg-muted/50 overflow-hidden flex items-center justify-center hover:ring-2 hover:ring-primary transition"
-                      >
-                        <Paperclip className="h-5 w-5 text-muted-foreground" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFile(index)}
-                        className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="h-2.5 w-2.5" />
-                      </button>
+              {/* Respaldo: Adjuntos | Ventas (ingreso). Colapsa a 1 columna. */}
+              <div className={cn("grid gap-6", isIncome ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
+                {/* Adjuntos */}
+                <div className="space-y-2">
+                  <Label>Adjuntos</Label>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*,.pdf"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files ?? []);
+                      if (files.length) handleAddFiles(files);
+                      e.target.value = "";
+                    }}
+                  />
+                  {attachments.length === 0 ? (
+                    <Button type="button" variant="outline" className="w-full justify-center gap-2" onClick={openFilePicker}>
+                      <Paperclip className="h-4 w-4" />
+                      Adjuntar archivo
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      {attachments.map((file, index) => (
+                        <div key={index} className="flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
+                          <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <button
+                            type="button"
+                            title={file.name}
+                            onClick={() => { setPreviewFile(file); setPreviewOpen(true); }}
+                            className="flex-1 truncate text-left hover:underline"
+                          >
+                            {file.name}
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Quitar"
+                            onClick={() => handleRemoveFile(index)}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      <Button type="button" variant="ghost" size="sm" className="gap-1.5 text-[13px]" onClick={openFilePicker}>
+                        <Plus className="h-3.5 w-3.5" />
+                        Agregar otro
+                      </Button>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {isIncome && (
-              <div className="space-y-2">
-                <Label>Ventas vinculadas</Label>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setLinkModalOpen(true)}
-                  >
-                    <Link2 className="h-4 w-4 mr-1.5" />
-                    Vincular venta
-                  </Button>
-                  {linkedOrders.map((order) => (
-                    <Badge key={order.id} variant="secondary" className="gap-1 pr-1">
-                      #{order.id} — {order.customer_name}
-                      <button
-                        type="button"
-                        className="ml-1 rounded-full hover:bg-muted"
-                        onClick={() => setLinkedOrders((prev) => prev.filter((o) => o.id !== order.id))}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
+                  )}
                 </div>
-              </div>
-            )}
 
-            <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={goBack}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Registrar {messages.label}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+                {/* Ventas vinculadas (solo ingreso) */}
+                {isIncome && (
+                  <div className="space-y-2">
+                    <Label>Ventas vinculadas</Label>
+                    {linkedOrders.length === 0 ? (
+                      <Button type="button" variant="outline" className="w-full justify-center gap-2" onClick={() => setLinkModalOpen(true)}>
+                        <Link2 className="h-4 w-4" />
+                        Vincular venta
+                      </Button>
+                    ) : (
+                      <div className="space-y-2">
+                        {linkedOrders.map((order) => (
+                          <div key={order.id} className="flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
+                            <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <span className="flex-1 truncate">#{order.id} · {order.customer_name}</span>
+                            <span className="text-muted-foreground shrink-0">{formatSoles(order.total)}</span>
+                            <button
+                              type="button"
+                              aria-label="Quitar"
+                              onClick={() => setLinkedOrders((prev) => prev.filter((o) => o.id !== order.id))}
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                        <Button type="button" variant="ghost" size="sm" className="gap-1.5 text-[13px]" onClick={() => setLinkModalOpen(true)}>
+                          <Plus className="h-3.5 w-3.5" />
+                          Vincular otra
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Columna de resumen */}
+          <Card className="w-full lg:w-80 shrink-0 lg:sticky lg:top-6">
+            <CardContent className="pt-6">
+              <MovementSummary
+                isIncome={isIncome}
+                label={messages.label}
+                fundsAccountName={fundsAccountName}
+                hasAccountSelected={hasAccountSelected}
+                businessAccountAmount={businessAccountAmount}
+                remainingAmount={remainingAmount}
+                exceedsAvailableAmount={exceedsAvailableAmount}
+                currentUserProfile={currentUserProfile}
+                loading={loading}
+                onCancel={goBack}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </form>
 
       <MovementFilePreviewModal
         open={previewOpen}
@@ -511,10 +449,7 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
             >
               Cancelar
             </Button>
-            <Button
-              onClick={handleCreateCategory}
-              disabled={creatingCategory || !newCategoryName.trim()}
-            >
+            <Button onClick={handleCreateCategory} disabled={creatingCategory || !newCategoryName.trim()}>
               {creatingCategory && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Agregar
             </Button>

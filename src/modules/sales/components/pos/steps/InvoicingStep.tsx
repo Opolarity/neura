@@ -29,6 +29,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowUp, CheckCircle2, ChevronDown, Code, Eye, FileText, Loader2, Printer, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { buildVariantTitle } from "../../../utils/buildVariantTitle";
+import {
+  SHIPPING_ITEM_DESCRIPTION,
+  SHIPPING_MEASUREMENT_UNIT,
+  calcShippingAmounts,
+} from "@/modules/invoices/utils/shippingItem";
 import { useToast } from "@/hooks/use-toast";
 import { formatDateDisplay } from "@/shared/utils/date";
 
@@ -51,14 +57,6 @@ interface InvoiceType {
   name: string;
   code: string;
 }
-
-const buildVariantTitle = (op: any, baseTitle: string): string => {
-  const termsStr = (op.variations?.variation_terms || [])
-    .map((vt: any) => vt.terms?.name || "")
-    .filter(Boolean)
-    .join("-");
-  return termsStr ? `${baseTitle} (${termsStr})` : baseTitle;
-};
 
 interface InvoicingStepProps {
   orderId: number;
@@ -458,16 +456,16 @@ export default function InvoicingStep({
 
       // Add shipping cost as line item if applicable
       if (order.shipping_cost && Number(order.shipping_cost) > 0) {
-        const shippingTotal = Number(order.shipping_cost);
-        const shippingIgv = shippingTotal - (shippingTotal / 1.18);
+        const shippingCost = Number(order.shipping_cost);
+        const { total, igv } = calcShippingAmounts(shippingCost);
         items.push({
-          description: "Costo de envío",
+          description: SHIPPING_ITEM_DESCRIPTION,
           quantity: 1,
-          measurement_unit: "ZZ",
-          unit_price: shippingTotal,
+          measurement_unit: SHIPPING_MEASUREMENT_UNIT,
+          unit_price: shippingCost,
           discount: 0,
-          igv: Math.round(shippingIgv * 100) / 100,
-          total: Math.round(shippingTotal * 100) / 100,
+          igv,
+          total,
         });
       }
 
@@ -616,16 +614,16 @@ export default function InvoicingStep({
       });
 
       if (order.shipping_cost && Number(order.shipping_cost) > 0) {
-        const shippingTotal = Number(order.shipping_cost);
-        const shippingIgv = shippingTotal - (shippingTotal / 1.18);
+        const shippingCost = Number(order.shipping_cost);
+        const { total, igv } = calcShippingAmounts(shippingCost);
         items.push({
-          description: "Costo de envío",
+          description: SHIPPING_ITEM_DESCRIPTION,
           quantity: 1,
-          measurement_unit: "ZZ",
-          unit_price: shippingTotal,
+          measurement_unit: SHIPPING_MEASUREMENT_UNIT,
+          unit_price: shippingCost,
           discount: 0,
-          igv: Math.round(shippingIgv * 100) / 100,
-          total: Math.round(shippingTotal * 100) / 100,
+          igv,
+          total,
         });
       }
 

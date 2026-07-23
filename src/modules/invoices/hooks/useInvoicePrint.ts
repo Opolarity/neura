@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { getParameters } from "@/modules/settings/services/Parameters.service";
 import { formatDateTime } from "@/shared/utils/date";
+import { hasShippingItem } from "../utils/shippingItem";
 
 interface InvoiceData {
   id: number;
@@ -242,7 +243,8 @@ async function generateInvoicePdf(invoiceId: number): Promise<string> {
       y += Math.max(dLines.length * 2.5, 3) + 0.5;
     }
 
-    if (shippingMethodCode && shippingMethod) {
+    // Comprobantes nuevos traen el envío como item; solo los anteriores necesitan esta línea.
+    if (shippingMethodCode && shippingMethod && !hasShippingItem(items)) {
       const label = (shippingMethod as any).data?.name || shippingMethodCode;
       const dw = col.pu - col.desc - 14;
       const sLines = doc.splitTextToSize(label, dw > 0 ? dw : 30);
