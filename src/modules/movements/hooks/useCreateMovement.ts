@@ -89,6 +89,46 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
 
   const { setValue, watch } = form;
   const selectedPaymentMethodId = watch("payment_method_id");
+  const inputAmount = watch("amount");
+
+  // Método de pago seleccionado (objeto completo, para el slot de origen de fondos)
+  const selectedPaymentMethod =
+    paymentMethods.find((pm) => pm.id.toString() === selectedPaymentMethodId) ?? null;
+
+  // Monto con debounce (150ms) para recalcular el saldo restante en vivo sin saltos
+  const [debouncedAmount, setDebouncedAmount] = useState(0);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const parsed = Number(inputAmount);
+      setDebouncedAmount(Number.isFinite(parsed) && parsed > 0 ? parsed : 0);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [inputAmount]);
+
+  // ¿Hay una cuenta resuelta? (fija por el método, o elegida manualmente)
+  const hasAccountSelected = needsManualBusinessAccount
+    ? !!selectedManualBusinessAccountId
+    : !!selectedBusinessAccount;
+
+  // Nombre de la cuenta resuelta (para el resumen)
+  const fundsAccountName = needsManualBusinessAccount
+    ? (businessAccounts.find((ba) => ba.id.toString() === selectedManualBusinessAccountId)?.name ?? "")
+    : selectedBusinessAccount;
+
+  // Saldo restante: gasto resta, ingreso suma
+  const remainingAmount = isIncome
+    ? businessAccountAmount + debouncedAmount
+    : businessAccountAmount - debouncedAmount;
+
+  // Sobregiro (solo gasto): el monto supera el saldo disponible (bloquea el envío).
+  const liveAmount = Number(inputAmount);
+  const exceedsAvailableAmount =
+    !isIncome &&
+    hasAccountSelected &&
+    businessAccountAmount > 0 &&
+    Number.isFinite(liveAmount) &&
+    liveAmount > 0 &&
+    liveAmount > businessAccountAmount;
 
   useEffect(() => {
     fetchData();
@@ -304,6 +344,11 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     needsManualBusinessAccount,
     selectedManualBusinessAccountId,
     setSelectedManualBusinessAccountId,
+    selectedPaymentMethod,
+    hasAccountSelected,
+    fundsAccountName,
+    remainingAmount,
+    exceedsAvailableAmount,
     classSearchOpen,
     setClassSearchOpen,
     classSearch,
