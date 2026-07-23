@@ -71,6 +71,7 @@ const INITIAL_FORM_DATA: SaleFormData = {
   customerLastname2: "",
   email: "",
   phone: "",
+  phoneWhatsapp: "",
   saleType: "",
   priceListId: "",
   saleDate: getTodayDate(),
@@ -96,12 +97,19 @@ const createEmptyPayment = (): SalePayment => ({
   paymentMethodId: "",
   amount: "",
   confirmationCode: "",
-  voucherUrl: "",
-  voucherFile: undefined,
-  voucherPreview: undefined,
+  voucherUrls: [],
+  voucherFiles: [],
+  voucherPreviews: [],
   businessAccountId: "",
   completed: false,
 });
+
+// Máximo de comprobantes por pago/vuelto (T-116)
+export const MAX_VOUCHERS = 3;
+
+// Cantidad total de comprobantes (existentes en servidor + archivos nuevos)
+const voucherCount = (p: SalePayment): number =>
+  (p.voucherUrls?.length ?? 0) + (p.voucherFiles?.length ?? 0);
 
 export const useCreateSale = () => {
   const {user, appUser} = useAuth();
@@ -817,8 +825,8 @@ export const useCreateSale = () => {
       const snap = {
         formData: adapted.formData,
         products: adaptedProducts.map(p => ({ ...p })),
-        payments: adapted.payments.map(p => ({ ...p, voucherFile: undefined, voucherPreview: undefined })),
-        changeEntries: adapted.changeEntries ? adapted.changeEntries.map(c => ({ ...c, voucherFile: undefined, voucherPreview: undefined })) : [],
+        payments: adapted.payments.map(p => ({ ...p, voucherFiles: [] })),
+        changeEntries: adapted.changeEntries ? adapted.changeEntries.map(c => ({ ...c, voucherFiles: [] })) : [],
         orderSituation: adapted.currentSituation,
         orderDiscounts: adapted.orderDiscounts || [],
       };
@@ -1179,26 +1187,36 @@ export const useCreateSale = () => {
     [filteredPaymentMethods],
   );
 
-  // Handle voucher file selection
+  // Handle voucher file selection (agrega un comprobante, hasta MAX_VOUCHERS)
   const handleVoucherSelect = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      setCurrentPayment((prev) => ({
-        ...prev,
-        voucherFile: file,
-        voucherPreview: reader.result as string,
-      }));
+      setCurrentPayment((prev) => {
+        if (voucherCount(prev) >= MAX_VOUCHERS) return prev;
+        return {
+          ...prev,
+          voucherFiles: [...(prev.voucherFiles ?? []), file],
+          voucherPreviews: [...(prev.voucherPreviews ?? []), reader.result as string],
+        };
+      });
     };
     reader.readAsDataURL(file);
   }, []);
 
-  // Remove selected voucher
-  const removeVoucher = useCallback(() => {
-    setCurrentPayment((prev) => ({
-      ...prev,
-      voucherFile: undefined,
-      voucherPreview: undefined,
-    }));
+  // Remove a voucher by display index (existentes primero, luego archivos nuevos)
+  const removeVoucher = useCallback((displayIndex: number) => {
+    setCurrentPayment((prev) => {
+      const urls = prev.voucherUrls ?? [];
+      if (displayIndex < urls.length) {
+        return { ...prev, voucherUrls: urls.filter((_, i) => i !== displayIndex) };
+      }
+      const fileIndex = displayIndex - urls.length;
+      return {
+        ...prev,
+        voucherFiles: (prev.voucherFiles ?? []).filter((_, i) => i !== fileIndex),
+        voucherPreviews: (prev.voucherPreviews ?? []).filter((_, i) => i !== fileIndex),
+      };
+    });
   }, []);
 
   // Handle voucher file selection for an already-saved payment in the list
@@ -1206,14 +1224,37 @@ export const useCreateSale = () => {
     const reader = new FileReader();
     reader.onloadend = () => {
       setPayments((prev) =>
-        prev.map((p) =>
-          p.id === paymentId
-            ? { ...p, voucherFile: file, voucherPreview: reader.result as string }
-            : p,
-        ),
+        prev.map((p) => {
+          if (p.id !== paymentId) return p;
+          if (voucherCount(p) >= MAX_VOUCHERS) return p;
+          return {
+            ...p,
+            voucherFiles: [...(p.voucherFiles ?? []), file],
+            voucherPreviews: [...(p.voucherPreviews ?? []), reader.result as string],
+          };
+        }),
       );
     };
     reader.readAsDataURL(file);
+  }, []);
+
+  // Remove a voucher from an already-saved payment by display index
+  const removeExistingPaymentVoucher = useCallback((paymentId: string, displayIndex: number) => {
+    setPayments((prev) =>
+      prev.map((p) => {
+        if (p.id !== paymentId) return p;
+        const urls = p.voucherUrls ?? [];
+        if (displayIndex < urls.length) {
+          return { ...p, voucherUrls: urls.filter((_, i) => i !== displayIndex) };
+        }
+        const fileIndex = displayIndex - urls.length;
+        return {
+          ...p,
+          voucherFiles: (p.voucherFiles ?? []).filter((_, i) => i !== fileIndex),
+          voucherPreviews: (p.voucherPreviews ?? []).filter((_, i) => i !== fileIndex),
+        };
+      }),
+    );
   }, []);
 
   // Check if selected payment method needs manual business account selection (for payments)
@@ -1303,25 +1344,35 @@ export const useCreateSale = () => {
     [filteredPaymentMethods],
   );
 
-  // Handle change entry voucher
+  // Handle change entry voucher (agrega un comprobante, hasta MAX_VOUCHERS)
   const handleChangeVoucherSelect = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      setCurrentChangeEntry((prev) => ({
-        ...prev,
-        voucherFile: file,
-        voucherPreview: reader.result as string,
-      }));
+      setCurrentChangeEntry((prev) => {
+        if (voucherCount(prev) >= MAX_VOUCHERS) return prev;
+        return {
+          ...prev,
+          voucherFiles: [...(prev.voucherFiles ?? []), file],
+          voucherPreviews: [...(prev.voucherPreviews ?? []), reader.result as string],
+        };
+      });
     };
     reader.readAsDataURL(file);
   }, []);
 
-  const removeChangeVoucher = useCallback(() => {
-    setCurrentChangeEntry((prev) => ({
-      ...prev,
-      voucherFile: undefined,
-      voucherPreview: undefined,
-    }));
+  const removeChangeVoucher = useCallback((displayIndex: number) => {
+    setCurrentChangeEntry((prev) => {
+      const urls = prev.voucherUrls ?? [];
+      if (displayIndex < urls.length) {
+        return { ...prev, voucherUrls: urls.filter((_, i) => i !== displayIndex) };
+      }
+      const fileIndex = displayIndex - urls.length;
+      return {
+        ...prev,
+        voucherFiles: (prev.voucherFiles ?? []).filter((_, i) => i !== fileIndex),
+        voucherPreviews: (prev.voucherPreviews ?? []).filter((_, i) => i !== fileIndex),
+      };
+    });
   }, []);
 
   // Add change entry to list
@@ -1881,14 +1932,14 @@ export const useCreateSale = () => {
     // Pending voucher uploads aren't part of the JSON snapshot (files aren't serializable),
     // so check for them separately to still unlock the save button.
     const hasPendingVoucher =
-      payments.some((p) => p.voucherFile) ||
-      changeEntries.some((c) => c.voucherFile);
+      payments.some((p) => (p.voucherFiles?.length ?? 0) > 0) ||
+      changeEntries.some((c) => (c.voucherFiles?.length ?? 0) > 0);
     if (hasPendingVoucher) return true;
     const currentSnap = {
       formData,
       products: products.map(p => ({ ...p })),
-      payments: payments.map(p => ({ ...p, voucherFile: undefined, voucherPreview: undefined })),
-      changeEntries: changeEntries.map(c => ({ ...c, voucherFile: undefined, voucherPreview: undefined })),
+      payments: payments.map(p => ({ ...p, voucherFiles: [] })),
+      changeEntries: changeEntries.map(c => ({ ...c, voucherFiles: [] })),
       orderSituation,
       orderDiscounts,
     };
@@ -2005,6 +2056,7 @@ export const useCreateSale = () => {
           customerLastname2: isAnonymousPurchase ? null : (formData.customerLastname2 || null),
           email: formData.email || null,
           phone: formData.phone || null,
+          phoneWhatsapp: formData.phoneWhatsapp || null,
           saleType: formData.saleType,
           priceListId: formData.priceListId || null,
           shippingMethod: formData.shippingMethod || null,
@@ -2044,7 +2096,7 @@ export const useCreateSale = () => {
               amount: parseFloat(p.amount) || 0,
               date: new Date().toISOString(),
               confirmationCode: p.confirmationCode || null,
-              voucherUrl: p.voucherUrl || null,
+              voucherUrls: (p.voucherUrls?.length ?? 0) > 0 ? p.voucherUrls! : null,
               businessAccountId: p.businessAccountId ? parseInt(p.businessAccountId) : null,
               completed: p.completed ?? true,
               updated_by: p.updated_by ?? null,
@@ -2054,6 +2106,7 @@ export const useCreateSale = () => {
             .map((e) => ({
               paymentMethodId: parseInt(e.paymentMethodId),
               amount: parseFloat(e.amount) || 0,
+              voucherUrls: (e.voucherUrls?.length ?? 0) > 0 ? e.voucherUrls! : null,
               businessAccountId: e.businessAccountId ? parseInt(e.businessAccountId) : null,
             })),
           initialSituationId: parseInt(orderSituation),
@@ -2093,36 +2146,66 @@ export const useCreateSale = () => {
           }
         }
 
-        // Upload vouchers to storage after order is created
+        // Upload vouchers to storage after order is created (hasta 3 por pago/vuelto)
         if (createdOrderId) {
           const validPayments = payments.filter(
             (p) => p.paymentMethodId && p.amount,
           );
-          const paymentsWithVoucher = validPayments.filter((p) => p.voucherFile);
+          const validChangeEntries = changeEntries.filter(
+            (e) => e.paymentMethodId && e.amount,
+          );
 
-          if (paymentsWithVoucher.length > 0) {
-            const { data: orderPayments } = await supabase
+          // Sube los archivos nuevos de una entrada y persiste [urls existentes + nuevas]
+          const uploadVouchersFor = async (
+            entry: SalePayment,
+            orderPaymentId: number,
+          ) => {
+            const files = entry.voucherFiles ?? [];
+            if (files.length === 0) return;
+            const existing = entry.voucherUrls ?? [];
+            const uploaded: string[] = [];
+            for (let k = 0; k < files.length; k++) {
+              try {
+                const url = await uploadPaymentVoucher(
+                  createdOrderId!,
+                  orderPaymentId,
+                  files[k],
+                  existing.length + k,
+                );
+                uploaded.push(url);
+              } catch (voucherError) {
+                console.error("Error uploading voucher:", voucherError);
+              }
+            }
+            await updatePaymentVoucherUrl(orderPaymentId, [...existing, ...uploaded]);
+          };
+
+          const hasNewFiles =
+            validPayments.some((p) => (p.voucherFiles?.length ?? 0) > 0) ||
+            validChangeEntries.some((e) => (e.voucherFiles?.length ?? 0) > 0);
+
+          if (hasNewFiles) {
+            // Positivos → pagos; negativos → vueltos. Ambos en orden de inserción (id asc).
+            const { data: positiveRows } = await supabase
               .from("order_payment")
               .select("id")
               .eq("order_id", createdOrderId)
+              .gte("amount", 0)
+              .order("id", { ascending: true });
+            const { data: negativeRows } = await supabase
+              .from("order_payment")
+              .select("id")
+              .eq("order_id", createdOrderId)
+              .lt("amount", 0)
               .order("id", { ascending: true });
 
-            if (orderPayments && orderPayments.length > 0) {
-              for (let i = 0; i < validPayments.length; i++) {
-                const payment = validPayments[i];
-                if (!payment.voucherFile || !orderPayments[i]) continue;
-
-                try {
-                  const voucherUrl = await uploadPaymentVoucher(
-                    createdOrderId,
-                    orderPayments[i].id,
-                    payment.voucherFile,
-                  );
-                  await updatePaymentVoucherUrl(orderPayments[i].id, voucherUrl);
-                } catch (voucherError) {
-                  console.error("Error uploading voucher:", voucherError);
-                }
-              }
+            for (let i = 0; i < validPayments.length; i++) {
+              if (!positiveRows?.[i]) continue;
+              await uploadVouchersFor(validPayments[i], positiveRows[i].id);
+            }
+            for (let i = 0; i < validChangeEntries.length; i++) {
+              if (!negativeRows?.[i]) continue;
+              await uploadVouchersFor(validChangeEntries[i], negativeRows[i].id);
             }
           }
         }
@@ -2295,6 +2378,7 @@ export const useCreateSale = () => {
     handleVoucherSelect,
     removeVoucher,
     handleExistingPaymentVoucherSelect,
+    removeExistingPaymentVoucher,
     historyModalOpen,
     createdOrderId,
     orderSituationTable,

@@ -217,11 +217,10 @@ export function usePriceRuleForm() {
       navigate("/discounts/price-rules");
     } catch (error) {
       console.error("Error saving price rule:", error);
-      toast.error(
-        isEditMode
-          ? "Error al actualizar la regla de precios"
-          : "Error al crear la regla de precios"
-      );
+      const fallbackMessage = isEditMode
+        ? "Error al actualizar la regla de precios"
+        : "Error al crear la regla de precios";
+      toast.error(error instanceof Error && error.message ? error.message : fallbackMessage);
     } finally {
       setSaving(false);
     }

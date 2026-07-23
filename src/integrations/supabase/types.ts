@@ -1547,7 +1547,7 @@ export type Database = {
           movement_id: number
           order_id: number
           payment_method_id: number
-          voucher_url: string | null
+          voucher_url: string[] | null
         }
         Insert: {
           amount: number
@@ -1558,7 +1558,7 @@ export type Database = {
           movement_id: number
           order_id: number
           payment_method_id: number
-          voucher_url?: string | null
+          voucher_url?: string[] | null
         }
         Update: {
           amount?: number
@@ -1569,7 +1569,7 @@ export type Database = {
           movement_id?: number
           order_id?: number
           payment_method_id?: number
-          voucher_url?: string | null
+          voucher_url?: string[] | null
         }
         Relationships: [
           {

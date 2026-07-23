@@ -52,8 +52,9 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
   const [classes, setClasses] = useState<MovementClass[]>([]);
   const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfile | null>(null);
   const [selectedBusinessAccount, setSelectedBusinessAccount] = useState<string>("");
+  const [businessAccountAmount, setBusinessAccountAmount] = useState<number>(0);
   const [movementTypeId, setMovementTypeId] = useState<number | null>(null);
-  const [businessAccounts, setBusinessAccounts] = useState<{ id: number; name: string }[]>([]);
+  const [businessAccounts, setBusinessAccounts] = useState<{ id: number; name: string; total_amount: number }[]>([]);
   const [needsManualBusinessAccount, setNeedsManualBusinessAccount] = useState(false);
   const [selectedManualBusinessAccountId, setSelectedManualBusinessAccountId] = useState<string>("");
   const [classSearchOpen, setClassSearchOpen] = useState(false);
@@ -104,11 +105,14 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
         if (needsManual) {
           setSelectedBusinessAccount("");
           setSelectedManualBusinessAccountId("");
+          setBusinessAccountAmount(0);
         } else if (selected.business_accounts) {
           setSelectedBusinessAccount(selected.business_accounts.name);
           setSelectedManualBusinessAccountId("");
+          setBusinessAccountAmount(selected.business_accounts.total_amount);
         } else {
           setSelectedBusinessAccount("");
+          setBusinessAccountAmount(0);
         }
       }
     } else {
@@ -117,6 +121,17 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
       setSelectedManualBusinessAccountId("");
     }
   }, [selectedPaymentMethodId, paymentMethods]);
+
+  useEffect(() => {
+    if (needsManualBusinessAccount && selectedManualBusinessAccountId) {
+      const selected = businessAccounts.find(
+        (ba) => ba.id.toString() === selectedManualBusinessAccountId
+      );
+      setBusinessAccountAmount(selected ? selected.total_amount : 0);
+    } else if (needsManualBusinessAccount) {
+      setBusinessAccountAmount(0);
+    }
+  }, [selectedManualBusinessAccountId, needsManualBusinessAccount, businessAccounts]);
 
   const fetchData = async () => {
     if (!user) return;
@@ -131,7 +146,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
       ]);
 
       setPaymentMethods(pmData as any as PaymentMethodWithAccount[]);
-      setBusinessAccounts((baData || []).map((ba: any) => ({ id: ba.id, name: ba.name })));
+      setBusinessAccounts((baData || []).map((ba: any) => ({ id: ba.id, name: ba.name, total_amount: ba.total_amount })));
       setClasses(classesData);
       setCurrentUserProfile(userProfile);
 
@@ -280,6 +295,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     classes,
     currentUserProfile,
     selectedBusinessAccount,
+    businessAccountAmount,
     isIncome,
     messages,
     onSubmit,

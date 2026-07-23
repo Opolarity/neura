@@ -13,7 +13,7 @@ import OrderSelectionModal from "../components/invoices/OrderSelectionModal";
 import InvoicesHeader from "../components/invoices/InvoicesHeader.tsx";
 
 const Invoices = () => {
-  const { invoices, loading, pagination, onPageChange, onPageSizeChange, activeFilters, applyFilters, clearFilters } = useInvoices();
+  const { invoices, loading, pagination, onPageChange, onPageSizeChange, activeFilters, applyFilters, clearFilters, invoiceTypes } = useInvoices();
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
 
   return (
@@ -27,7 +27,7 @@ const Invoices = () => {
       />
       <Card>
         <CardHeader>
-          <InvoicesFilterBar activeFilters={activeFilters} onApply={applyFilters} onClear={clearFilters} />
+          <InvoicesFilterBar activeFilters={activeFilters} onApply={applyFilters} onClear={clearFilters} invoiceTypes={invoiceTypes} />
         </CardHeader>
         <CardContent>
           <InvoicesTable invoices={invoices} loading={loading} />

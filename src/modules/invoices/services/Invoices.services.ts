@@ -114,6 +114,25 @@ export const updateInvoiceApi = async (payload: UpdateInvoicePayload) => {
   return data;
 };
 
+export const getInvoiceTypesApi = async () => {
+  const { data: moduleData, error: moduleError } = await supabase
+    .from("modules")
+    .select("id")
+    .eq("code", "INV")
+    .single();
+
+  if (moduleError) throw moduleError;
+
+  const { data, error } = await supabase
+    .from("types")
+    .select("id, name")
+    .eq("module_id", moduleData.id)
+    .order("name");
+
+  if (error) throw error;
+  return data || [];
+};
+
 export const getInvoiceFormDataApi = async (params: { invoiceId?: number; orderId?: number; movementId?: number }) => {
   const urlParams = new URLSearchParams();
   if (params.invoiceId) urlParams.append("invoice_id", params.invoiceId.toString());

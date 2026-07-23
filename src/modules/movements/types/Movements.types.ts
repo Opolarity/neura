@@ -129,6 +129,7 @@ export interface PaymentMethodWithAccount {
   business_account_id: number;
   business_accounts: {
     name: string;
+    total_amount: number;
   };
 }
 
@@ -210,6 +211,7 @@ export interface MovementLinkItem {
   customer_lastname: string;
   document_number: string;
   order_total: number;
+  completed: boolean | null;
 }
 
 export interface MovementLinks {

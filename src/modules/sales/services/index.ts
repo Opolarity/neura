@@ -53,6 +53,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
       customer_lastname2: orderData.customerLastname2,
       email: orderData.email,
       phone: orderData.phone,
+      phone_whatsapp: orderData.phoneWhatsapp,
       sale_type: orderData.saleType,
       price_list_id: orderData.priceListId,
       shipping_method: orderData.shippingMethod,
@@ -86,13 +87,14 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
         amount: p.amount,
         date: p.date,
         confirmation_code: p.confirmationCode,
-        voucher_url: p.voucherUrl,
+        voucher_url: p.voucherUrls,
         business_account_id: p.businessAccountId || null,
         completed: p.completed ?? true,
       })),
       change_entries: orderData.changeEntries.map((e) => ({
         payment_method_id: e.paymentMethodId,
         amount: e.amount,
+        voucher_url: e.voucherUrls || null,
         business_account_id: e.businessAccountId || null,
       })),
       initial_situation_id: orderData.initialSituationId,
@@ -123,6 +125,7 @@ export const updateOrder = async (
       customer_lastname: fullLastname,
       email: orderData.email,
       phone: orderData.phone,
+      phone_whatsapp: orderData.phoneWhatsapp,
       sale_type: orderData.saleType,
       price_list_id: orderData.priceListId,
       shipping_method: orderData.shippingMethod,
@@ -156,7 +159,7 @@ export const updateOrder = async (
         amount: p.amount,
         date: p.date,
         confirmation_code: p.confirmationCode,
-        voucher_url: p.voucherUrl,
+        voucher_url: p.voucherUrls,
         business_account_id: p.businessAccountId || null,
         completed: p.completed ?? true,
         updated_by: p.updated_by ?? null,
@@ -164,6 +167,7 @@ export const updateOrder = async (
       change_entries: orderData.changeEntries.map((e) => ({
         payment_method_id: e.paymentMethodId,
         amount: e.amount,
+        voucher_url: e.voucherUrls || null,
         business_account_id: e.businessAccountId || null,
       })),
       consignament: orderData.isConsignment ?? false,
@@ -278,9 +282,10 @@ export const uploadPaymentVoucher = async (
   orderId: number,
   orderPaymentId: number,
   file: File,
+  index = 0,
 ): Promise<string> => {
   const fileExt = file.name.split(".").pop() || "jpg";
-  const fileName = `${orderPaymentId}-${orderId}.${fileExt}`;
+  const fileName = `${orderPaymentId}-${orderId}-${index}.${fileExt}`;
   const filePath = `sale-vouchers/${orderId}/${fileName}`;
 
   const { error: uploadError } = await supabase.storage
@@ -299,11 +304,11 @@ export const uploadPaymentVoucher = async (
 // Update voucher_url in order_payment
 export const updatePaymentVoucherUrl = async (
   orderPaymentId: number,
-  voucherUrl: string,
+  voucherUrls: string[],
 ): Promise<void> => {
   const { error } = await supabase
     .from("order_payment")
-    .update({ voucher_url: voucherUrl })
+    .update({ voucher_url: voucherUrls.length > 0 ? voucherUrls : null })
     .eq("id", orderPaymentId);
 
   if (error) throw error;

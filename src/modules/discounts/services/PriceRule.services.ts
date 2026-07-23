@@ -1,6 +1,27 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { PriceRuleFormData, PriceRuleFilters } from "../types/priceRule.types";
 
+const throwFunctionError = async (error: unknown): Promise<never> => {
+  const functionError = error as { context?: unknown; message?: string };
+
+  if (functionError.context instanceof Response) {
+    let body: { error?: unknown; message?: unknown; details?: unknown } | null = null;
+    try {
+      body = await functionError.context.json();
+    } catch {
+      body = null;
+    }
+
+    const message = body?.error || body?.message || body?.details;
+    if (message) {
+      throw new Error(String(message));
+    }
+  }
+
+  if (error instanceof Error) throw error;
+  throw new Error("Error desconocido al llamar la función");
+};
+
 export const getPriceRules = async (filters: PriceRuleFilters) => {
   const params = new URLSearchParams();
   params.set("page", String(filters.page));
@@ -14,7 +35,7 @@ export const getPriceRules = async (filters: PriceRuleFilters) => {
     `get-price-rules?${params.toString()}`,
     { method: "GET" }
   );
-  if (error) throw error;
+  if (error) await throwFunctionError(error);
   return data;
 };
 
@@ -23,7 +44,7 @@ export const getPriceRuleDetails = async (id: number) => {
     `get-price-rule-details?id=${id}`,
     { method: "GET" }
   );
-  if (error) throw error;
+  if (error) await throwFunctionError(error);
   return data;
 };
 
@@ -31,7 +52,7 @@ export const createPriceRule = async (rule: PriceRuleFormData) => {
   const { data, error } = await supabase.functions.invoke("create-price-rule", {
     body: rule,
   });
-  if (error) throw error;
+  if (error) await throwFunctionError(error);
   return data;
 };
 
@@ -39,7 +60,7 @@ export const updatePriceRule = async (id: number, rule: Partial<PriceRuleFormDat
   const { data, error } = await supabase.functions.invoke("update-price-rule", {
     body: { id, ...rule },
   });
-  if (error) throw error;
+  if (error) await throwFunctionError(error);
   return data;
 };
 
@@ -47,7 +68,7 @@ export const updateBulkPriceRule = async (ruleIds: number[], isActive: boolean) 
   const { data, error } = await supabase.functions.invoke("bulk-update-price-rule-status", {
     body: { ruleIds, isActive },
   });
-  if (error) throw error;
+  if (error) await throwFunctionError(error);
   return data;
 };
 
@@ -55,6 +76,6 @@ export const deletePriceRule = async (id: number) => {
   const { data, error } = await supabase.functions.invoke("delete-price-rule", {
     body: { id },
   });
-  if (error) throw error;
+  if (error) await throwFunctionError(error);
   return data;
 };

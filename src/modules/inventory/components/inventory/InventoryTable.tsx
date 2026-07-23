@@ -43,7 +43,7 @@ const InventoryTable = ({
           <TableHead>Producto</TableHead>
           <TableHead>Variación</TableHead>
           {warehouses.map((warehouse) => (
-            <TableHead key={warehouse.id}>{warehouse.name}</TableHead>
+            <TableHead key={warehouse.id} className="text-center">{warehouse.name}</TableHead>
           ))}
           <TableHead>Total</TableHead>
         </TableRow>
@@ -93,16 +93,24 @@ const InventoryTable = ({
 
                 return (
                   <TableCell key={warehouse.id}>
-                    <Input
-                      type="number"
-                      value={getStockValue(item, warehouse.id, baseValue)}
-                      onChange={(e) => handleStockChange(item, warehouse.id, e.target.value)}
-                      min="0"
-                      onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                      onWheel={(e) => e.currentTarget.blur()}
-                      disabled={!isEditing}
-                      className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
+                    <div className="flex w-fit items-stretch rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                      <Input
+                        type="number"
+                        value={getStockValue(item, warehouse.id, baseValue)}
+                        onChange={(e) => handleStockChange(item, warehouse.id, e.target.value)}
+                        min="0"
+                        onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                        onWheel={(e) => e.currentTarget.blur()}
+                        disabled={!isEditing}
+                        className="w-20 rounded-r-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <Input
+                        type="number"
+                        value={stockRecord?.stock_virtual ?? 0}
+                        disabled
+                        className="w-20 rounded-l-none border-0 border-l border-input bg-muted/50 text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                    </div>
                   </TableCell>
                 );
               })}

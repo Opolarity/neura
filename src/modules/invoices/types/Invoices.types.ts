@@ -154,3 +154,8 @@ export interface DocumentType {
   code: string;
   personType: number;
 }
+
+export interface InvoiceType {
+  id: number;
+  name: string;
+}
