@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { Loader2 } from "lucide-react";
 import { getParameters } from "@/modules/settings/services/Parameters.service";
+import { hasShippingItem } from "../utils/shippingItem";
 import { formatDateTime } from "@/shared/utils/date";
 
 interface InvoiceData {
@@ -530,7 +531,8 @@ export default function InvoicePrintPage() {
         }
 
         // ============ IF HAVE SHIPPING ============
-        if (shippingMethodCode) {
+        // Comprobantes nuevos traen el envío como item; solo los anteriores necesitan esta línea.
+        if (shippingMethodCode && !hasShippingItem(items)) {
           const shippingLabel =
             shippingMethod?.data?.name || shippingMethodCode;
           const descWidth = col.pu - col.desc - 14;

@@ -7,6 +7,7 @@ import { getTypes } from "@/shared/services/service";
 import { getTypesAdapter } from "@/shared/adapters/adapter";
 import type { Types } from "@/shared/types/type";
 import type { InvoiceItemForm, InvoiceFormData, DocumentType, InvoiceProvider, InvoiceSerie } from "../types/Invoices.types";
+import { buildShippingFormItem } from "../utils/shippingItem";
 
 
 const createEmptyItem = (): InvoiceItemForm => ({
@@ -217,28 +218,31 @@ export const useCreateInvoice = () => {
             // Match document type ID locally once loaded
           }));
 
-          if (orderProducts.length > 0) {
-            setItems(orderProducts.map((p: any) => {
-              const unitPrice = parseFloat(p.product_price) || 0;
-              const quantity = p.quantity || 1;
-              const discount = parseFloat(p.product_discount) || 0;
-              const base = quantity * unitPrice;
-              const baseWithDiscount = base - discount;
-              const igv = +(baseWithDiscount * 0.18).toFixed(2);
-              const total = +(baseWithDiscount + igv).toFixed(2);
+          const orderItems: InvoiceItemForm[] = orderProducts.map((p: any) => {
+            const unitPrice = parseFloat(p.product_price) || 0;
+            const quantity = p.quantity || 1;
+            const discount = parseFloat(p.product_discount) || 0;
+            const base = quantity * unitPrice;
+            const baseWithDiscount = base - discount;
+            const igv = +(baseWithDiscount * 0.18).toFixed(2);
+            const total = +(baseWithDiscount + igv).toFixed(2);
 
-              return {
-                id: crypto.randomUUID(),
-                description: p.product_title || p.product_name || "Producto",
-                quantity,
-                measurementUnit: "NIU",
-                unitPrice,
-                discount,
-                igv,
-                total,
-              };
-            }));
-          }
+            return {
+              id: crypto.randomUUID(),
+              description: p.product_title || p.product_name || "Producto",
+              quantity,
+              measurementUnit: "NIU",
+              unitPrice,
+              discount,
+              igv,
+              total,
+            };
+          });
+
+          const shippingItem = buildShippingFormItem(order.shipping_cost);
+          if (shippingItem) orderItems.push(shippingItem);
+
+          if (orderItems.length > 0) setItems(orderItems);
           toast({ title: "Datos del pedido cargados correctamente" });
         }
 
@@ -360,28 +364,31 @@ export const useCreateInvoice = () => {
       }));
 
       // Populate items
-      if (orderProducts.length > 0) {
-        setItems(orderProducts.map((p: any) => {
-          const unitPrice = p.price || 0;
-          const quantity = p.quantity || 1;
-          const discount = p.discount_amount || 0;
-          const base = quantity * unitPrice;
-          const baseWithDiscount = base - discount;
-          const igv = +(baseWithDiscount * 0.18).toFixed(2);
-          const total = +(baseWithDiscount + igv).toFixed(2);
+      const orderItems: InvoiceItemForm[] = orderProducts.map((p: any) => {
+        const unitPrice = p.price || 0;
+        const quantity = p.quantity || 1;
+        const discount = p.discount_amount || 0;
+        const base = quantity * unitPrice;
+        const baseWithDiscount = base - discount;
+        const igv = +(baseWithDiscount * 0.18).toFixed(2);
+        const total = +(baseWithDiscount + igv).toFixed(2);
 
-          return {
-            id: crypto.randomUUID(),
-            description: p.product_title || p.product_name || "Producto",
-            quantity,
-            measurementUnit: "NIU",
-            unitPrice,
-            discount,
-            igv,
-            total,
-          };
-        }));
-      }
+        return {
+          id: crypto.randomUUID(),
+          description: p.product_title || p.product_name || "Producto",
+          quantity,
+          measurementUnit: "NIU",
+          unitPrice,
+          discount,
+          igv,
+          total,
+        };
+      });
+
+      const shippingItem = buildShippingFormItem(order.shipping_cost);
+      if (shippingItem) orderItems.push(shippingItem);
+
+      if (orderItems.length > 0) setItems(orderItems);
 
       toast({ title: "Datos del pedido cargados correctamente" });
     } catch (error: any) {
