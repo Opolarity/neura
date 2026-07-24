@@ -45,15 +45,6 @@ const MovementSummary = ({
         Resumen
       </p>
 
-      {/* Cuenta */}
-      <div className="space-y-0.5">
-        <p className="text-sm text-muted-foreground">
-          {isIncome ? "Cuenta de destino" : "Cuenta de origen"}
-        </p>
-        <p className="text-base font-semibold">
-          {hasAccountSelected ? fundsAccountName || "—" : "—"}
-        </p>
-      </div>
 
       {/* Saldos */}
       {hasAccountSelected && (
@@ -72,8 +63,8 @@ const MovementSummary = ({
                 movementAmount <= 0
                   ? "text-muted-foreground"
                   : isIncome
-                  ? "text-green-600"
-                  : "text-destructive"
+                    ? "text-green-600"
+                    : "text-destructive"
               )}
             >
               {movementAmount > 0
