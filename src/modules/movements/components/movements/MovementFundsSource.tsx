@@ -57,14 +57,13 @@ const MovementFundsSource = ({
     !needsManualBusinessAccount
       ? selectedBusinessAccount || selectedPaymentMethod?.business_accounts?.name || ""
       : singleAccount && !manualOverride
-      ? singleAccount.name
-      : null;
+        ? singleAccount.name
+        : null;
 
   return (
     <div className="rounded-lg border bg-muted/40 px-3 py-3 transition-colors">
       <div className="flex items-center justify-between">
         <p className="flex items-center gap-2 text-sm font-medium">
-          <Wallet className="h-4 w-4 shrink-0 text-muted-foreground" />
           {label}
         </p>
         <div className="flex items-center gap-2">

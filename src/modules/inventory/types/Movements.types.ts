@@ -176,20 +176,53 @@ export interface StockMovementDetailLink_SupplierService {
     service_name: string | null;
 }
 
+export interface StockMovementDetailLinks {
+    order_products: StockMovementDetailLink_OrderProduct[];
+    returns_products: StockMovementDetailLink_ReturnProduct[];
+    linked_stock_movement_requests: StockMovementDetailLink_MovementRequest[];
+    supplier_service_stock: StockMovementDetailLink_SupplierService[];
+}
+
+export interface StockMovementDetailApiResponse {
+    movement: {
+        id: number;
+        quantity: number;
+        created_at: string;
+        vinculated_movement_id: number | null;
+        movement_type: { id: number; name: string } | null;
+        stock_type: { id: number; name: string } | null;
+        warehouse: { id: number; name: string } | null;
+        variation: {
+            id: number;
+            sku: string | null;
+            product: { id: number; title: string } | null;
+            variation_terms: Array<{
+                term: {
+                    id: number;
+                    name: string;
+                    term_group: { id: number; name: string } | null;
+                } | null;
+            }>;
+        } | null;
+        created_by_profile: {
+            user_name: string | null;
+            account: { name: string | null; last_name: string | null; last_name2: string | null } | null;
+        } | null;
+    };
+    links: StockMovementDetailLinks;
+}
+
 export interface StockMovementDetail {
     id: number;
     quantity: number;
-    created_at: string;
-    vinculated_movement_id: number | null;
-    movement_type: { id: number; name: string } | null;
-    stock_type: { id: number; name: string } | null;
-    warehouse: { id: number; name: string } | null;
-    variation: { id: number; sku: string } | null;
-    created_by_profile: { user_name: string } | null;
-    links: {
-        order_products: StockMovementDetailLink_OrderProduct[];
-        returns_products: StockMovementDetailLink_ReturnProduct[];
-        linked_stock_movement_requests: StockMovementDetailLink_MovementRequest[];
-        supplier_service_stock: StockMovementDetailLink_SupplierService[];
-    };
+    createdAt: string;
+    vinculatedMovementId: number | null;
+    movementType: string;
+    stockType: string;
+    warehouse: string;
+    productTitle: string;
+    variationLabel: string;
+    sku: string;
+    user: string;
+    links: StockMovementDetailLinks;
 }

@@ -5,6 +5,8 @@ import {
   MovementsTypes,
   MovementsTypesApiResponse,
   ProductSalesApiResponse,
+  StockMovementDetail,
+  StockMovementDetailApiResponse,
   UserSummaryApiResponse
 } from "../types/Movements.types";
 
@@ -35,6 +37,38 @@ export const movementsAdapter = (response: MovementsApiResponse) => {
   return {
     data: formattedMovements,
     pagination,
+  };
+};
+
+export const stockMovementDetailAdapter = (
+  response: StockMovementDetailApiResponse,
+): StockMovementDetail => {
+  const { movement } = response;
+
+  // La variación se muestra como "Talla L, Denim" — mismo criterio que sp_get_stock_movements
+  const terms = (movement.variation?.variation_terms ?? [])
+    .map((vt) => vt.term?.name)
+    .filter((name): name is string => Boolean(name));
+
+  const account = movement.created_by_profile?.account;
+  const fullName = [account?.name, account?.last_name, account?.last_name2]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return {
+    id: movement.id,
+    quantity: movement.quantity,
+    createdAt: movement.created_at,
+    vinculatedMovementId: movement.vinculated_movement_id,
+    movementType: movement.movement_type?.name ?? "—",
+    stockType: movement.stock_type?.name ?? "—",
+    warehouse: movement.warehouse?.name ?? "—",
+    productTitle: movement.variation?.product?.title ?? "—",
+    variationLabel: terms.length > 0 ? terms.join(", ") : "sin variación",
+    sku: movement.variation?.sku ?? "—",
+    user: fullName || movement.created_by_profile?.user_name || "—",
+    links: response.links,
   };
 };
 
