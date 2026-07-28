@@ -14,10 +14,12 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  LifeBuoy,
   LucideIcon,
 } from "lucide-react";
 import { useFunctions } from "@/hooks/useFunctions";
 import { getParameter } from "@/modules/settings/services/Parameters.service";
+import { SupportDialog } from "@/modules/support";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -60,6 +62,7 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
     rect: DOMRect;
     subItems: any[];
   } | null>(null);
+  const [supportOpen, setSupportOpen] = useState(false);
   const subMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -365,6 +368,36 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
           })}
         </nav>
       </div>
+
+      {/* Support footer */}
+      <div className="flex-shrink-0 border-t border-white/10 px-2 py-3">
+        <button
+          onClick={() => {
+            setSupportOpen(true);
+            setHoveredItem(null);
+          }}
+          onMouseEnter={(e) => {
+            if (isCollapsed && !activeSubMenu) {
+              setHoveredItem({
+                id: -1,
+                name: "Soporte",
+                rect: e.currentTarget.getBoundingClientRect(),
+              });
+            }
+          }}
+          onMouseLeave={() => setHoveredItem(null)}
+          className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg w-full text-left text-slate-400 hover:bg-white/5 hover:text-white transition-all duration-200"
+        >
+          <div className="flex items-center justify-center w-5 h-5 shrink-0">
+            <LifeBuoy className="w-5 h-5" />
+          </div>
+          {!isCollapsed && (
+            <span className="font-medium whitespace-nowrap">Soporte</span>
+          )}
+        </button>
+      </div>
+
+      <SupportDialog open={supportOpen} onOpenChange={setSupportOpen} />
 
       {/* Hover Chip / Tooltip */}
       {isCollapsed && hoveredItem && !activeSubMenu && (
