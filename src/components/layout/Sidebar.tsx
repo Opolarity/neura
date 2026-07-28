@@ -370,7 +370,7 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
       </div>
 
       {/* Support footer */}
-      <div className="flex-shrink-0 border-t border-white/10 px-2 py-3">
+      <div className="flex-shrink-0 border-t border-white/10 px-2 py-1.5">
         <button
           onClick={() => {
             setSupportOpen(true);
@@ -386,10 +386,10 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
             }
           }}
           onMouseLeave={() => setHoveredItem(null)}
-          className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg w-full text-left text-slate-400 hover:bg-white/5 hover:text-white transition-all duration-200"
+          className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg w-full text-left text-slate-400 hover:bg-white/5 hover:text-white transition-all duration-200"
         >
-          <div className="flex items-center justify-center w-5 h-5 shrink-0">
-            <LifeBuoy className="w-5 h-5" />
+          <div className="flex items-center justify-center w-4 h-4 shrink-0">
+            <LifeBuoy className="w-4 h-4" />
           </div>
           {!isCollapsed && (
             <span className="font-medium whitespace-nowrap">Soporte</span>

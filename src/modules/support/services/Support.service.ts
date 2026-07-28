@@ -11,6 +11,14 @@ export const createSupportRequest = async (payload: SupportRequestPayload) => {
         description: payload.description || null,
         request_type: payload.requestType,
         reporter_name: payload.reporterName,
+        attachments:
+          payload.attachments && payload.attachments.length > 0
+            ? payload.attachments.map((a) => ({
+                file_name: a.fileName,
+                mime_type: a.mimeType,
+                content_base64: a.contentBase64,
+              }))
+            : null,
       },
     },
   );

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -17,24 +16,55 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import WysiwygEditor from "@/components/ui/wysiwyg-editor";
+import { Loader2, Paperclip, X, FileText, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/modules/auth";
 import { useSupportRequest } from "../hooks/useSupportRequest";
-import type { SupportRequestType } from "../types/Support.types";
+import {
+  MAX_ATTACHMENTS,
+  MAX_ATTACHMENT_BYTES,
+  type SupportRequestType,
+} from "../types/Support.types";
 
 interface SupportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+interface PendingFile {
+  file: File;
+}
+
+const isHtmlEmpty = (html: string) =>
+  !html || (html.replace(/<[^>]*>/g, "").trim() === "" && !html.includes("<img"));
+
+const formatSize = (bytes: number) =>
+  bytes >= 1024 * 1024
+    ? `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+
+const readFileAsBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Quitar el prefijo data URI: la API acepta base64 puro
+      resolve(result.substring(result.indexOf(",") + 1));
+    };
+    reader.onerror = () => reject(new Error(`No se pudo leer "${file.name}"`));
+    reader.readAsDataURL(file);
+  });
+
 export const SupportDialog = ({ open, onOpenChange }: SupportDialogProps) => {
   const { user, appUser } = useAuth();
   const { sending, submit } = useSupportRequest();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [requestType, setRequestType] = useState<SupportRequestType>("suggestion");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
 
   const reporterName =
     (appUser?.accountName && appUser.accountName !== "Sin Cuenta"
@@ -49,8 +79,32 @@ export const SupportDialog = ({ open, onOpenChange }: SupportDialogProps) => {
       setRequestType("suggestion");
       setTitle("");
       setDescription("");
+      setPendingFiles([]);
     }
   }, [open]);
+
+  const handleAddFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const incoming = Array.from(files);
+    const next = [...pendingFiles];
+
+    for (const file of incoming) {
+      if (next.length >= MAX_ATTACHMENTS) {
+        toast.error(`Máximo ${MAX_ATTACHMENTS} archivos por solicitud`);
+        break;
+      }
+      if (file.size > MAX_ATTACHMENT_BYTES) {
+        toast.error(`"${file.name}" supera el límite de 5 MB`);
+        continue;
+      }
+      next.push({ file });
+    }
+    setPendingFiles(next);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -59,11 +113,20 @@ export const SupportDialog = ({ open, onOpenChange }: SupportDialogProps) => {
     }
 
     try {
+      const attachments = await Promise.all(
+        pendingFiles.map(async ({ file }) => ({
+          fileName: file.name,
+          mimeType: file.type || "application/octet-stream",
+          contentBase64: await readFileAsBase64(file),
+        })),
+      );
+
       await submit({
         title: title.trim(),
-        description: description.trim() || undefined,
+        description: isHtmlEmpty(description) ? undefined : description,
         requestType,
         reporterName,
+        attachments: attachments.length > 0 ? attachments : undefined,
       });
       toast.success("Solicitud enviada al equipo de soporte");
       onOpenChange(false);
@@ -74,7 +137,7 @@ export const SupportDialog = ({ open, onOpenChange }: SupportDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Solicitud de soporte</DialogTitle>
         </DialogHeader>
@@ -107,15 +170,72 @@ export const SupportDialog = ({ open, onOpenChange }: SupportDialogProps) => {
             />
           </div>
 
+          <WysiwygEditor
+            label="Descripción"
+            value={description}
+            onChange={setDescription}
+            placeholder="Cuéntanos qué pasó o qué te gustaría mejorar..."
+            height="140px"
+            toolbar="basic"
+            allowImages
+          />
+
+          {/* Attachments */}
           <div className="space-y-1.5">
-            <Label htmlFor="support-description">Descripción</Label>
-            <Textarea
-              id="support-description"
-              placeholder="Cuéntanos qué pasó o qué te gustaría mejorar..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
+            <Label>Archivos adjuntos</Label>
+            <input
+              type="file"
+              ref={fileInputRef}
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                handleAddFiles(e.target.files);
+                e.target.value = "";
+              }}
             />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={sending || pendingFiles.length >= MAX_ATTACHMENTS}
+            >
+              <Paperclip className="w-4 h-4 mr-2" />
+              Adjuntar archivos
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Hasta {MAX_ATTACHMENTS} archivos de 5 MB cada uno (capturas, PDFs...)
+            </p>
+
+            {pendingFiles.length > 0 && (
+              <ul className="space-y-1 mt-2">
+                {pendingFiles.map(({ file }, index) => (
+                  <li
+                    key={`${file.name}-${index}`}
+                    className="flex items-center gap-2 text-sm bg-muted/50 rounded-md px-2 py-1.5"
+                  >
+                    {file.type.startsWith("image/") ? (
+                      <ImageIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <FileText className="w-4 h-4 shrink-0 text-muted-foreground" />
+                    )}
+                    <span className="truncate flex-1">{file.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {formatSize(file.size)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFile(index)}
+                      disabled={sending}
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                      aria-label={`Quitar ${file.name}`}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <p className="text-xs text-muted-foreground">
