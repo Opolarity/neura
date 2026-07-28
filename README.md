@@ -1,81 +1,72 @@
-# Welcome to your Lovable project
+# Neura ERP
 
-## Project info
+Frontend del ERP de Neura: panel de gestión empresarial construido con React + Vite. Consume el backend `neura-backend` (Supabase self-hosted: Auth, RPCs y edge functions) y comparte base de datos con el ecommerce (`ecommerce-overtake`).
 
-**URL**: https://lovable.dev/projects/8252ea40-417e-4baa-8deb-6a2c723d8a9b
+## Stack
 
-## How can I edit this code?
+- React 18 + TypeScript
+- Vite (`@vitejs/plugin-react-swc`)
+- Tailwind CSS + shadcn/ui (Radix)
+- Supabase JS (Auth, RPCs, Storage, edge functions)
 
-There are several ways of editing your application.
+## Requisitos
 
-**Use Lovable**
+Node.js 20 y npm ([instalar con nvm](https://github.com/nvm-sh/nvm#installing-and-updating)).
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8252ea40-417e-4baa-8deb-6a2c723d8a9b) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-### Prompt para separar lógica y bloques en páginas complejas
-
-Si deseas que Lovable mantenga una convención similar a Angular, donde las páginas con lógica compleja separan su lógica de negocio de los bloques JSX, puedes usar el siguiente prompt al trabajar dentro de la plataforma:
-
-> "Cuando una página de React tenga lógica compleja, crea dos archivos: uno que contenga únicamente el componente con los bloques JSX/TSX y otro que agrupe toda la lógica (funciones, hooks personalizados, handlers). No dividas los bloques JSX entre múltiples archivos; simplemente importa la lógica desde el archivo dedicado y deja la presentación limpia. Sigue esta convención de forma consistente y documenta cualquier decisión relevante en comentarios breves."
-
-Este mensaje pide explícitamente que la lógica viva en un archivo separado y que el componente principal se mantenga enfocado en el renderizado, replicando el estilo de separación que ofrece Angular.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Puesta en marcha
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm ci
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+El servidor de desarrollo queda en `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Scripts
 
-**Use GitHub Codespaces**
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo con HMR (puerto 8080) |
+| `npm run build` | Build de producción a `dist/` |
+| `npm run build:dev` | Build en modo development |
+| `npm run preview` | Sirve localmente el build de `dist/` |
+| `npm run lint` | ESLint sobre todo el proyecto |
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Estructura del código
 
-## What technologies are used for this project?
+El código nuevo va en `src/modules/<dominio>/` (por dominio de negocio) o `src/shared/` (transversal). Las carpetas legacy en la raíz de `src/` (`components/`, `contexts/`, `hooks/`, `layouts/`, `types/`) se mantienen solo por compatibilidad; no agregar código nuevo ahí.
 
-This project is built with:
+Flujo de datos dentro de un módulo:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```
+Page → Hook → Service → Supabase
+                 ↓
+             Adapter → UI
+```
 
-## How can I deploy this project?
+Las pages no llaman a Supabase directamente: eso vive en `services/`, y la respuesta pasa por el `adapter` antes de llegar a la UI.
 
-Simply open [Lovable](https://lovable.dev/projects/8252ea40-417e-4baa-8deb-6a2c723d8a9b) and click on Share -> Publish.
+Alias de importación configurados en `vite.config.ts`: `@` (`src/`), `@app`, `@modules`, `@shared`.
 
-## Can I connect a custom domain to my Lovable project?
+### Convención para páginas con lógica compleja
 
-Yes, you can!
+Cuando una página tenga lógica compleja, sepárala en dos archivos: uno con el componente y sus bloques JSX/TSX, y otro que agrupe la lógica (funciones, hooks personalizados, handlers). No dividas el JSX entre múltiples archivos — importa la lógica desde el archivo dedicado y deja la presentación limpia.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Entornos y ramas
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+| Entorno | Rama | URL |
+|---------|------|-----|
+| Producción | `main` | https://erp.neura.pe |
+| Perception | `perception` | — |
+| Desarrollo | `develop` | https://demo.neura.pe |
+
+Se trabaja directamente sobre la rama del entorno; no se crean ramas feature. Los cambios de backend (migraciones, edge functions) van siempre en `neura-backend/supabase/`, nunca en este proyecto.
+
+## Despliegue
+
+Build multi-stage con Docker (ver [Dockerfile](Dockerfile)): compila con `npm ci && npm run build` sobre `node:20-alpine` y sirve `dist/` con nginx usando la config de [nginx.conf](nginx.conf) (fallback SPA a `index.html` y cache de assets estáticos).
+
+```sh
+docker build -t neura-erp .
+docker run -p 8080:80 neura-erp
+```
