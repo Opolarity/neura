@@ -11,6 +11,7 @@ import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
+import ImageExtension from '@tiptap/extension-image';
 import { Label } from './label';
 import { Toggle } from './toggle';
 import { Separator } from './separator';
@@ -20,6 +21,7 @@ import {
   Link as LinkIcon, Unlink, Heading1, Heading2, Heading3,
   Undo, Redo, Highlighter, RemoveFormatting, Quote,
   Code, Code2, Pilcrow, ListChecks, Palette, Tag,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 
@@ -67,7 +69,25 @@ interface WysiwygEditorProps {
   height?: string;
   toolbar?: 'basic' | 'full';
   disabled?: boolean;
+  /** Permite insertar/pegar imágenes como data URI base64 dentro del contenido */
+  allowImages?: boolean;
 }
+
+const MAX_INLINE_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+
+const insertImageFile = (editor: any, file: File) => {
+  if (!file.type.startsWith('image/')) return;
+  if (file.size > MAX_INLINE_IMAGE_BYTES) {
+    window.alert(`La imagen "${file.name}" supera el límite de 5 MB`);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const src = reader.result as string;
+    editor.chain().focus().setImage({ src }).run();
+  };
+  reader.readAsDataURL(file);
+};
 
 const ToolbarButton = ({
   onClick,
@@ -114,9 +134,11 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   height = '120px',
   toolbar = 'basic',
   disabled = false,
+  allowImages = false,
 }) => {
   const isInternalChange = useRef(false);
   const colorInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
     extensions: [
@@ -136,6 +158,14 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
       TaskList,
       TaskItem.configure({ nested: true }),
       CustomClass,
+      ...(allowImages
+        ? [
+            ImageExtension.configure({
+              allowBase64: true,
+              HTMLAttributes: { class: 'max-w-full h-auto rounded' },
+            }),
+          ]
+        : []),
     ],
     content: value,
     editable: !disabled,
@@ -148,6 +178,48 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
         class: 'prose prose-sm max-w-none focus:outline-none px-3 py-2 min-h-[80px]',
         style: `height: ${height}; overflow-y: auto;`,
       },
+      ...(allowImages
+        ? {
+            handlePaste: (view: any, event: ClipboardEvent) => {
+              const files = Array.from(event.clipboardData?.files ?? []);
+              const images = files.filter((f) => f.type.startsWith('image/'));
+              if (images.length === 0) return false;
+              event.preventDefault();
+              images.forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const node = view.state.schema.nodes.image?.create({
+                    src: reader.result as string,
+                  });
+                  if (node && file.size <= MAX_INLINE_IMAGE_BYTES) {
+                    view.dispatch(view.state.tr.replaceSelectionWith(node));
+                  }
+                };
+                reader.readAsDataURL(file);
+              });
+              return true;
+            },
+            handleDrop: (view: any, event: DragEvent) => {
+              const files = Array.from(event.dataTransfer?.files ?? []);
+              const images = files.filter((f) => f.type.startsWith('image/'));
+              if (images.length === 0) return false;
+              event.preventDefault();
+              images.forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const node = view.state.schema.nodes.image?.create({
+                    src: reader.result as string,
+                  });
+                  if (node && file.size <= MAX_INLINE_IMAGE_BYTES) {
+                    view.dispatch(view.state.tr.replaceSelectionWith(node));
+                  }
+                };
+                reader.readAsDataURL(file);
+              });
+              return true;
+            },
+          }
+        : {}),
     },
   });
 
@@ -321,6 +393,26 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
             <ToolbarButton onClick={applyClass} isActive={editor.isActive('customClass')} tooltip="Clase CSS">
               <Tag className="h-4 w-4" />
             </ToolbarButton>
+
+            {/* Insert image */}
+            {allowImages && (
+              <>
+                <ToolbarButton onClick={() => imageInputRef.current?.click()} tooltip="Insertar imagen">
+                  <ImageIcon className="h-4 w-4" />
+                </ToolbarButton>
+                <input
+                  type="file"
+                  ref={imageInputRef}
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) insertImageFile(editor, file);
+                    e.target.value = '';
+                  }}
+                />
+              </>
+            )}
 
             <ToolbarSeparator />
 
