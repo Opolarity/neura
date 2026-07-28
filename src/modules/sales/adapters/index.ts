@@ -270,9 +270,9 @@ export const adaptSaleById = (data: any) => {
     code: d.code || "",
   }));
 
-  // Custom discounts = non-PRO codes (user-created), with non-zero amount
-  const orderDiscounts = rawDiscounts.filter((d: any) => d.code !== "PRO" && d.amount !== 0);
-console.log(data.pricerules || [], "aaa");
+  // Custom discounts = non-PRO codes (user-created). Se conservan aunque el monto sea 0:
+  // si se filtraran, el ERP no las reenviaría al guardar y update-order las eliminaría.
+  const orderDiscounts = rawDiscounts.filter((d: any) => d.code !== "PRO");
 
   return {
     formData: {
