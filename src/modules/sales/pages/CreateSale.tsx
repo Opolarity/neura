@@ -1781,7 +1781,9 @@ const CreateSale = () => {
                       <div key={r.id} className="flex justify-between text-xs text-muted-foreground">
                         <span>{r.name}</span>
                         {
-                          r.discount_amount > 0 ?
+                          // Monto 0 = el descuento ya viene aplicado al precio de cada línea.
+                          // Cualquier otro monto (los de subtotal son negativos) se muestra tal cual.
+                          r.discount_amount !== 0 ?
                             (
                               <span>{formatCurrency(r.discount_amount)}</span>
                             ) : (

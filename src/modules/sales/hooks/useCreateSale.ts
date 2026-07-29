@@ -369,9 +369,21 @@ export const useCreateSale = () => {
     () => calculateDiscountAmount(products),
     [products],
   );
+  // Reglas ya guardadas en la orden que NO estén también en orderDiscounts. Al editar una orden
+  // y agregar productos, el motor de reglas vuelve a correr y mezcla sus descuentos en
+  // orderDiscounts (por nombre); sin este filtro la misma regla se contaría dos veces.
+  const priceRulesNotInOrderDiscounts = useMemo(
+    () => savedPriceRules.filter((r) => !orderDiscounts.some((d) => d.name === r.name)),
+    [savedPriceRules, orderDiscounts],
+  );
+  // Los descuentos de regla a nivel de subtotal (percent/fixed_discount_subtotal) y el recargo
+  // por método de pago traen monto real y deben afectar el total. Los que descuentan sobre el
+  // precio de línea guardan 0, así que sumarlos no altera nada.
   const extraDiscountsAmount = useMemo(
-    () => orderDiscounts.reduce((sum, d) => sum + d.amount, 0),
-    [orderDiscounts],
+    () =>
+      orderDiscounts.reduce((sum, d) => sum + d.amount, 0) +
+      priceRulesNotInOrderDiscounts.reduce((sum, r) => sum + r.discount_amount, 0),
+    [orderDiscounts, priceRulesNotInOrderDiscounts],
   );
   const discountAmount = extraDiscountsAmount;
   const shippingCostValue = formData.shippingCost
