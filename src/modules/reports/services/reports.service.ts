@@ -121,6 +121,7 @@ export const productsService = {
       p_branch_id: f.branchId ?? undefined,
       p_category_id: categoryId ?? undefined,
       p_limit: limit,
+      p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 
   search: (query: string, limit = 10) =>
