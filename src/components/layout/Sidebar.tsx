@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Store,
   Archive,
@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { useFunctions } from "@/hooks/useFunctions";
 import { getParameter } from "@/modules/settings/services/Parameters.service";
-import { SupportDialog } from "@/modules/support";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -44,6 +43,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { functions: menuItems, loading, error } = useFunctions();
   const [expandedSections, setExpandedSections] = useState<
     Record<number, boolean>
@@ -62,7 +62,6 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
     rect: DOMRect;
     subItems: any[];
   } | null>(null);
-  const [supportOpen, setSupportOpen] = useState(false);
   const subMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -373,8 +372,9 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
       <div className="flex-shrink-0 border-t border-white/10 px-2 py-1.5">
         <button
           onClick={() => {
-            setSupportOpen(true);
+            navigate("/support");
             setHoveredItem(null);
+            setActiveSubMenu(null);
           }}
           onMouseEnter={(e) => {
             if (isCollapsed && !activeSubMenu) {
@@ -386,7 +386,11 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
             }
           }}
           onMouseLeave={() => setHoveredItem(null)}
-          className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg w-full text-left text-slate-400 hover:bg-white/5 hover:text-white transition-all duration-200"
+          className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg w-full text-left transition-all duration-200 ${
+            location.pathname === "/support"
+              ? "bg-blue-600 text-white"
+              : "text-slate-400 hover:bg-white/5 hover:text-white"
+          }`}
         >
           <div className="flex items-center justify-center w-4 h-4 shrink-0">
             <LifeBuoy className="w-4 h-4" />
@@ -396,8 +400,6 @@ const Sidebar = ({ isOpen: initialOpen, onCollapseChange }: SidebarProps) => {
           )}
         </button>
       </div>
-
-      <SupportDialog open={supportOpen} onOpenChange={setSupportOpen} />
 
       {/* Hover Chip / Tooltip */}
       {isCollapsed && hoveredItem && !activeSubMenu && (

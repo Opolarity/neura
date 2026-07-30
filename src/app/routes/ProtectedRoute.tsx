@@ -7,6 +7,13 @@ function escapeRegExp(str: string) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// Vistas transversales que NO viven en la tabla `functions` (no son parte del menú
+// DB-driven de useFunctions) y por lo tanto nunca aparecen en sp_get_user_views.
+// Van accesibles para cualquier usuario autenticado, igual que el botón que las abre.
+// Ojo: la comparación es por pathname exacto; si más adelante hay /support/:id,
+// hay que pasar a un match por prefijo.
+const ALWAYS_ALLOWED_VIEWS = ["/support"];
+
 function isViewAllowed(currentPath: string, allowedViews: string[]): boolean {
   if (currentPath === "/") return true;
 
@@ -48,6 +55,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   const allowed =
     !user ||
+    ALWAYS_ALLOWED_VIEWS.includes(location.pathname) ||
     permissions.role?.isAdmin ||
     permissions.views.length === 0 ||
     isViewAllowed(location.pathname, permissions.views);
