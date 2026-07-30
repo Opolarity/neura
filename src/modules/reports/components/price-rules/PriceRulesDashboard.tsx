@@ -1,12 +1,9 @@
-import { useEffect, useState, useMemo, type ReactNode } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Tags, Zap, Ticket, CheckCircle2, XCircle } from 'lucide-react';
-import {
-  priceRulesReportService,
-  type PriceRuleKpis,
-  type PriceRuleReportRow,
-} from '../../services/reports.service';
+import { priceRulesReportService } from '../../services/reports.service';
 import type { ReportsFilters } from '../../types/reports.types';
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -16,23 +13,16 @@ interface Props {
 }
 
 export function PriceRulesDashboard({ filters }: Props) {
-  const [kpis, setKpis] = useState<PriceRuleKpis>({ active: 0, inactive: 0, automatic: 0, coupon: 0 });
-  const [rows, setRows] = useState<PriceRuleReportRow[]>([]);
-  const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      priceRulesReportService.getKpis(),
-      priceRulesReportService.getTable(filters.startDate, filters.endDate),
-    ])
-      .then(([k, r]) => {
-        setKpis(k);
-        setRows(r);
-      })
-      .finally(() => setLoading(false));
-  }, [filters.startDate, filters.endDate]);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['rpt_price_rules_report', filters.startDate, filters.endDate],
+    queryFn: () => priceRulesReportService.getReport(filters.startDate, filters.endDate),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const kpis = data?.kpis ?? { active: 0, inactive: 0, automatic: 0, coupon: 0 };
+  const rows = data?.table ?? [];
 
   const filteredRows = useMemo(() => {
     if (statusFilter === 'active')   return rows.filter((r) => r.is_active);

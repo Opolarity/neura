@@ -92,7 +92,28 @@ export function TopProductsChart({ data, loading, limit, onLimitChange, category
               width={184}
               className={chartAxis}
             />
-            <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrencyAxis(value as number)} />} />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  formatter={(value, _name, _item, _index, payload) => (
+                    <div className="flex w-full flex-col gap-1">
+                      <div className="flex flex-1 items-center justify-between leading-none">
+                        <span className="text-muted-foreground">Ingresos</span>
+                        <span className="font-mono font-medium tabular-nums text-foreground">
+                          {formatCurrencyAxis(value as number)}
+                        </span>
+                      </div>
+                      <div className="flex flex-1 items-center justify-between leading-none">
+                        <span className="text-muted-foreground">Unidades vendidas</span>
+                        <span className="font-mono font-medium tabular-nums text-foreground">
+                          {(payload as unknown as { unidades: number }).unidades.toLocaleString('es-PE')}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                />
+              }
+            />
             <Bar dataKey="ingresos" fill="var(--color-ingresos)" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ChartContainer>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { salesService } from '../services/reports.service';
 import type { SalesExtraFilters } from '../services/reports.service';
-import type { ReportsFilters, Granularity, SalesDimension, TopMetric, TopLimit } from '../types/reports.types';
+import type { ReportsFilters, Granularity, SalesDimension } from '../types/reports.types';
 
 const ALL_DIMENSIONS: SalesDimension[] = [
   'branch', 'sale_type', 'payment_method', 'situation', 'state', 'city', 'neighborhood',
@@ -10,8 +10,6 @@ const ALL_DIMENSIONS: SalesDimension[] = [
 
 export function useSalesDashboard(filters: ReportsFilters, extra?: SalesExtraFilters) {
   const [granularity, setGranularity] = useState<Granularity>('day');
-  const [topMetric, setTopMetric] = useState<TopMetric>('revenue');
-  const [topLimit, setTopLimit] = useState<TopLimit>(10);
 
   const queryKey = [filters, extra];
 
@@ -40,22 +38,11 @@ export function useSalesDashboard(filters: ReportsFilters, extra?: SalesExtraFil
     ]),
   ) as Record<SalesDimension, ReturnType<typeof useQuery>>;
 
-  const topProducts = useQuery({
-    queryKey: ['rpt_top_products_sales', ...queryKey, topMetric, topLimit],
-    queryFn: () => salesService.getTopProducts(filters, topMetric, topLimit),
-    staleTime: 1000 * 60 * 5,
-  });
-
   return {
     kpis,
     overTime,
     byDimensionQueries,
-    topProducts,
     granularity,
     setGranularity,
-    topMetric,
-    setTopMetric,
-    topLimit,
-    setTopLimit,
   };
 }

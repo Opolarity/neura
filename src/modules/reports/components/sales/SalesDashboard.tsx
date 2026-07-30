@@ -2,7 +2,6 @@ import { KpiCard } from '../shared/KpiCard';
 import { SalesOverTimeChart } from './SalesOverTimeChart';
 import { SalesByDimensionChart } from './SalesByDimensionChart';
 import { SalesHeatmap } from './SalesHeatmap';
-import { TopProductsTable } from './TopProductsTable';
 import { useSalesDashboard } from '../../hooks/useSalesDashboard';
 import type { SalesExtraFilters } from '../../services/reports.service';
 import type { ReportsFilters, SalesByDimensionItem, SalesDimension } from '../../types/reports.types';
@@ -79,16 +78,6 @@ export function SalesDashboard({ filters, extra }: SalesDashboardProps) {
 
       {/* Sales by dimension — un bloque por dimensión */}
       <SalesByDimensionChart dimensions={dimensions} />
-
-      {/* Top products */}
-      <TopProductsTable
-        data={dash.topProducts.data ?? []}
-        loading={dash.topProducts.isLoading}
-        metric={dash.topMetric}
-        limit={dash.topLimit}
-        onMetricChange={dash.setTopMetric}
-        onLimitChange={dash.setTopLimit}
-      />
     </div>
   );
 }
