@@ -28,9 +28,11 @@ interface ReportsFilterBarProps {
   onClearExtra?: () => void;
   /** Botón "Descargar" del tab (si tiene exportación). */
   exportSlot?: ReactNode;
+  /** true si hay cambios sin aplicar en los filtros propios del tab (ej. producto/monto de Ventas). */
+  extraDirty?: boolean;
 }
 
-export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExtra, exportSlot }: ReportsFilterBarProps) {
+export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExtra, exportSlot, extraDirty = false }: ReportsFilterBarProps) {
   const { draft, setDraft, apply, isDirty } = useReportsFilters();
   const [open, setOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -126,7 +128,7 @@ export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExt
             </Button>
           )}
           {exportSlot}
-          <Button size="sm" onClick={apply} disabled={!isDirty} className="gap-1.5">
+          <Button size="sm" onClick={apply} disabled={!isDirty && !extraDirty} className="gap-1.5">
             <Check className="h-4 w-4" />
             Aplicar
           </Button>

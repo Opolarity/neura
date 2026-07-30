@@ -24,6 +24,12 @@ export default function SalesPage() {
   const [extraApplied, setExtraApplied] = useState<SalesExtraFilters>({});
   const [exportOpen, setExportOpen] = useState(false);
 
+  const isExtraDirty = JSON.stringify(extraDraft) !== JSON.stringify(extraApplied);
+
+  function handleExtraDraftChange(partial: Partial<SalesExtraFilters>) {
+    setExtraDraft((prev) => ({ ...prev, ...partial }));
+  }
+
   useEffect(() => {
     setExtraApplied(extraDraft);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -60,8 +66,9 @@ export default function SalesPage() {
   return (
     <div className="space-y-4">
       <ReportsFilterBar
-        extraFields={<SalesGeoFilters extraDraft={extraDraft} onExtraDraftChange={setExtraDraft} />}
+        extraFields={<SalesGeoFilters extraDraft={extraDraft} onExtraDraftChange={handleExtraDraftChange} />}
         extraActiveCount={extraActiveCount}
+        extraDirty={isExtraDirty}
         onClearExtra={handleClearExtra}
         exportSlot={
           <Button variant="outline" size="sm" onClick={() => setExportOpen(true)} className="gap-1.5">
