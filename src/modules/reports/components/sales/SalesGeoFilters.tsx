@@ -18,19 +18,19 @@ import { cn } from '@/shared/utils/utils';
 import { filterOptionsService, productsService } from '../../services/reports.service';
 import type { SalesExtraFilters } from '../../services/reports.service';
 import { SalesExportModal } from '../shared/SalesExportModal';
-import type { ReportsFilters } from '../../types/reports.types';
-
+import { useReportsFilters } from '../../context/ReportsFiltersContext';
 
 interface Props {
-  filters: ReportsFilters;
-  onChange: (partial: Partial<ReportsFilters>) => void;
-  extra: SalesExtraFilters;
-  onExtraChange: (partial: Partial<SalesExtraFilters>) => void;
+  extraDraft: SalesExtraFilters;
+  onExtraDraftChange: (partial: Partial<SalesExtraFilters>) => void;
+  appliedExtra: SalesExtraFilters;
+  onClearExtra: () => void;
 }
 
 const ALL_VALUE = '__all__';
 
-export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Props) {
+export function SalesGeoFilters({ extraDraft, onExtraDraftChange, appliedExtra, onClearExtra }: Props) {
+  const { draft, setDraft, applyImmediate, filters } = useReportsFilters();
   const [open, setOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [comboOpen, setComboOpen] = useState(false);
@@ -52,23 +52,23 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
   });
 
   const states = useQuery({
-    queryKey: ['filter_states', filters.countryId],
-    queryFn: () => filterOptionsService.getStates(filters.countryId!),
-    enabled: filters.countryId !== null,
+    queryKey: ['filter_states', draft.countryId],
+    queryFn: () => filterOptionsService.getStates(draft.countryId!),
+    enabled: draft.countryId !== null,
     staleTime: 1000 * 60 * 30,
   });
 
   const cities = useQuery({
-    queryKey: ['filter_cities', filters.stateId],
-    queryFn: () => filterOptionsService.getCities(filters.stateId!),
-    enabled: filters.stateId !== null,
+    queryKey: ['filter_cities', draft.stateId],
+    queryFn: () => filterOptionsService.getCities(draft.stateId!),
+    enabled: draft.stateId !== null,
     staleTime: 1000 * 60 * 30,
   });
 
   const neighborhoods = useQuery({
-    queryKey: ['filter_neighborhoods', filters.cityId],
-    queryFn: () => filterOptionsService.getNeighborhoods(filters.cityId!),
-    enabled: filters.cityId !== null,
+    queryKey: ['filter_neighborhoods', draft.cityId],
+    queryFn: () => filterOptionsService.getNeighborhoods(draft.cityId!),
+    enabled: draft.cityId !== null,
     staleTime: 1000 * 60 * 30,
   });
 
@@ -91,22 +91,23 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
   });
 
   const activeCount = [
-    filters.branchId,
-    filters.countryId,
-    filters.stateId,
-    filters.cityId,
-    filters.neighborhoodId,
-    filters.saleTypeId,
-    filters.paymentMethodId,
-    extra.productId,
-    extra.minTotal,
-    extra.maxTotal,
+    draft.branchId,
+    draft.countryId,
+    draft.stateId,
+    draft.cityId,
+    draft.neighborhoodId,
+    draft.saleTypeId,
+    draft.paymentMethodId,
+    extraDraft.productId,
+    extraDraft.minTotal,
+    extraDraft.maxTotal,
   ].filter((v) => v !== null && v !== undefined).length;
 
   const hasActiveFilter = activeCount > 0;
 
   function clearAll() {
-    onChange({
+    applyImmediate({
+      ...draft,
       branchId: null,
       countryId: null,
       stateId: null,
@@ -115,7 +116,7 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
       saleTypeId: null,
       paymentMethodId: null,
     });
-    onExtraChange({ productId: null, minTotal: null, maxTotal: null });
+    onClearExtra();
     setProductTitle('');
     setProductSearch('');
   }
@@ -128,7 +129,7 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
         className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium hover:bg-muted/50 transition-colors"
       >
         <span className="flex items-center gap-2">
-          Más opciones
+          Más filtros
           {hasActiveFilter && (
             <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
               {activeCount}
@@ -146,9 +147,9 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground font-medium">Sucursal</span>
             <Select
-              value={filters.branchId?.toString() ?? ALL_VALUE}
+              value={draft.branchId?.toString() ?? ALL_VALUE}
               onValueChange={(v) =>
-                onChange({ branchId: v === ALL_VALUE ? null : Number(v) })
+                setDraft({ branchId: v === ALL_VALUE ? null : Number(v) })
               }
             >
               <SelectTrigger className="h-9 w-[160px]">
@@ -167,9 +168,9 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground font-medium">Canal de venta</span>
             <Select
-              value={filters.saleTypeId?.toString() ?? ALL_VALUE}
+              value={draft.saleTypeId?.toString() ?? ALL_VALUE}
               onValueChange={(v) =>
-                onChange({ saleTypeId: v === ALL_VALUE ? null : Number(v) })
+                setDraft({ saleTypeId: v === ALL_VALUE ? null : Number(v) })
               }
             >
               <SelectTrigger className="h-9 w-[160px]">
@@ -188,9 +189,9 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground font-medium">Método de pago</span>
             <Select
-              value={filters.paymentMethodId?.toString() ?? ALL_VALUE}
+              value={draft.paymentMethodId?.toString() ?? ALL_VALUE}
               onValueChange={(v) =>
-                onChange({ paymentMethodId: v === ALL_VALUE ? null : Number(v) })
+                setDraft({ paymentMethodId: v === ALL_VALUE ? null : Number(v) })
               }
             >
               <SelectTrigger className="h-9 w-[160px]">
@@ -217,7 +218,7 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
                   className="h-9 w-[220px] justify-between font-normal"
                 >
                   <span className="truncate">
-                    {extra.productId ? productTitle : 'Todos'}
+                    {extraDraft.productId ? productTitle : 'Todos'}
                   </span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -246,7 +247,7 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
                             key={r.id}
                             value={`${r.id}`}
                             onSelect={() => {
-                              onExtraChange({ productId: r.id });
+                              onExtraDraftChange({ productId: r.id });
                               setProductTitle(r.title);
                               setComboOpen(false);
                             }}
@@ -254,7 +255,7 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
                             <Check
                               className={cn(
                                 'mr-2 h-4 w-4',
-                                extra.productId === r.id ? 'opacity-100' : 'opacity-0',
+                                extraDraft.productId === r.id ? 'opacity-100' : 'opacity-0',
                               )}
                             />
                             <div className="flex flex-col min-w-0">
@@ -278,8 +279,8 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
               type="number"
               min={0}
               className="h-9 w-[110px]"
-              value={extra.minTotal ?? ''}
-              onChange={(e) => onExtraChange({ minTotal: e.target.value === '' ? null : Number(e.target.value) })}
+              value={extraDraft.minTotal ?? ''}
+              onChange={(e) => onExtraDraftChange({ minTotal: e.target.value === '' ? null : Number(e.target.value) })}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -288,8 +289,8 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
               type="number"
               min={0}
               className="h-9 w-[110px]"
-              value={extra.maxTotal ?? ''}
-              onChange={(e) => onExtraChange({ maxTotal: e.target.value === '' ? null : Number(e.target.value) })}
+              value={extraDraft.maxTotal ?? ''}
+              onChange={(e) => onExtraDraftChange({ maxTotal: e.target.value === '' ? null : Number(e.target.value) })}
             />
           </div>
 
@@ -297,10 +298,10 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground font-medium">País</span>
             <Select
-              value={filters.countryId?.toString() ?? ALL_VALUE}
+              value={draft.countryId?.toString() ?? ALL_VALUE}
               onValueChange={(v) => {
                 const countryId = v === ALL_VALUE ? null : Number(v);
-                onChange({ countryId, stateId: null, cityId: null, neighborhoodId: null });
+                setDraft({ countryId, stateId: null, cityId: null, neighborhoodId: null });
               }}
             >
               <SelectTrigger className="h-9 w-[150px]">
@@ -319,11 +320,11 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground font-medium">Departamento</span>
             <Select
-              value={filters.stateId?.toString() ?? ALL_VALUE}
-              disabled={!filters.countryId}
+              value={draft.stateId?.toString() ?? ALL_VALUE}
+              disabled={!draft.countryId}
               onValueChange={(v) => {
                 const stateId = v === ALL_VALUE ? null : Number(v);
-                onChange({ stateId, cityId: null, neighborhoodId: null });
+                setDraft({ stateId, cityId: null, neighborhoodId: null });
               }}
             >
               <SelectTrigger className="h-9 w-[160px]">
@@ -342,11 +343,11 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground font-medium">Provincia</span>
             <Select
-              value={filters.cityId?.toString() ?? ALL_VALUE}
-              disabled={!filters.stateId}
+              value={draft.cityId?.toString() ?? ALL_VALUE}
+              disabled={!draft.stateId}
               onValueChange={(v) => {
                 const cityId = v === ALL_VALUE ? null : Number(v);
-                onChange({ cityId, neighborhoodId: null });
+                setDraft({ cityId, neighborhoodId: null });
               }}
             >
               <SelectTrigger className="h-9 w-[160px]">
@@ -365,10 +366,10 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground font-medium">Distrito</span>
             <Select
-              value={filters.neighborhoodId?.toString() ?? ALL_VALUE}
-              disabled={!filters.cityId}
+              value={draft.neighborhoodId?.toString() ?? ALL_VALUE}
+              disabled={!draft.cityId}
               onValueChange={(v) =>
-                onChange({ neighborhoodId: v === ALL_VALUE ? null : Number(v) })
+                setDraft({ neighborhoodId: v === ALL_VALUE ? null : Number(v) })
               }
             >
               <SelectTrigger className="h-9 w-[160px]">
@@ -412,7 +413,7 @@ export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Pro
         </div>
       )}
 
-      <SalesExportModal open={exportOpen} onOpenChange={setExportOpen} filters={filters} extra={extra} />
+      <SalesExportModal open={exportOpen} onOpenChange={setExportOpen} filters={filters} extra={appliedExtra} />
     </div>
   );
 }

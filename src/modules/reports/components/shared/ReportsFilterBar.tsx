@@ -1,17 +1,11 @@
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { refreshReportMviews } from '../../services/reports.service';
-import type { ReportsFilters } from '../../types/reports.types';
+import { useReportsFilters } from '../../context/ReportsFiltersContext';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { LIMA_TIME_ZONE } from '@/shared/utils/date';
 
-interface ReportsFilterBarProps {
-  filters: ReportsFilters;
-  onChange: (filters: Partial<ReportsFilters>) => void;
-}
-
-const ALL_VALUE = '__all__';
 const MAX_RANGE_DAYS = 90;
 
 function addDays(dateStr: string, days: number): string {
@@ -24,7 +18,8 @@ function diffDays(a: string, b: string): number {
   return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000);
 }
 
-export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
+export function ReportsFilterBar() {
+  const { draft, setDraft, apply, isDirty } = useReportsFilters();
   const [refreshing, setRefreshing] = useState(false);
 
   async function handleRefresh() {
@@ -46,15 +41,15 @@ export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
         <span className="text-xs text-muted-foreground font-medium">Desde</span>
         <input
           type="date"
-          value={filters.startDate ?? ''}
+          value={draft.startDate ?? ''}
           onChange={(e) => {
             const start = e.target.value || null;
-            const updates: Partial<typeof filters> = { startDate: start };
+            const updates: Partial<typeof draft> = { startDate: start };
             // Si el endDate actual supera el rango máximo, lo recorta
-            if (start && filters.endDate && diffDays(start, filters.endDate) > MAX_RANGE_DAYS) {
+            if (start && draft.endDate && diffDays(start, draft.endDate) > MAX_RANGE_DAYS) {
               updates.endDate = addDays(start, MAX_RANGE_DAYS);
             }
-            onChange(updates);
+            setDraft(updates);
           }}
           className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
@@ -63,12 +58,21 @@ export function ReportsFilterBar({ filters, onChange }: ReportsFilterBarProps) {
         <span className="text-xs text-muted-foreground font-medium">Hasta</span>
         <input
           type="date"
-          value={filters.endDate ?? ''}
-          min={filters.startDate ?? undefined}
-          max={filters.startDate ? addDays(filters.startDate, MAX_RANGE_DAYS) : undefined}
-          onChange={(e) => onChange({ endDate: e.target.value || null })}
+          value={draft.endDate ?? ''}
+          min={draft.startDate ?? undefined}
+          max={draft.startDate ? addDays(draft.startDate, MAX_RANGE_DAYS) : undefined}
+          onChange={(e) => setDraft({ endDate: e.target.value || null })}
           className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
+      </div>
+
+      {/* Aplicar */}
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-muted-foreground font-medium opacity-0">.</span>
+        <Button size="sm" onClick={apply} disabled={!isDirty} className="gap-1.5">
+          <Check className="h-4 w-4" />
+          Aplicar
+        </Button>
       </div>
 
       {/* Refresh button */}

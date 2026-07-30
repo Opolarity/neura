@@ -9,11 +9,11 @@ const ProductsDashboard = lazy(() =>
 );
 
 export default function ProductsPage() {
-  const { filters, onChange } = useReportsFilters();
+  const { filters } = useReportsFilters();
   const dash = useProductsDashboard(filters);
   return (
     <div className="space-y-4">
-      <ProductsOptionsPanel dash={dash} filters={filters} onChange={onChange} />
+      <ProductsOptionsPanel dash={dash} />
       <Suspense fallback={<TabSkeleton />}>
         <ProductsDashboard dash={dash} />
       </Suspense>

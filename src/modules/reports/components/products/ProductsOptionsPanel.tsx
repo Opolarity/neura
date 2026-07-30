@@ -15,18 +15,17 @@ import {
 import { cn } from '@/shared/utils/utils';
 import { ProductsExportModal } from './ProductsExportModal';
 import { filterOptionsService } from '../../services/reports.service';
+import { useReportsFilters } from '../../context/ReportsFiltersContext';
 import type { ProductsDashboardState } from '../../hooks/useProductsDashboard';
-import type { ReportsFilters } from '../../types/reports.types';
 
 const ALL_VALUE = '__all__';
 
 interface Props {
   dash: ProductsDashboardState;
-  filters: ReportsFilters;
-  onChange: (partial: Partial<ReportsFilters>) => void;
 }
 
-export function ProductsOptionsPanel({ dash, filters, onChange }: Props) {
+export function ProductsOptionsPanel({ dash }: Props) {
+  const { draft, setDraft, applyImmediate } = useReportsFilters();
   const [open, setOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [comboOpen, setComboOpen] = useState(false);
@@ -53,9 +52,14 @@ export function ProductsOptionsPanel({ dash, filters, onChange }: Props) {
   });
 
   const hasSelectedProduct = selectedProductId !== null;
-  const activeCount = [hasSelectedProduct, filters.branchId, filters.saleTypeId].filter(Boolean).length;
+  const activeCount = [hasSelectedProduct, draft.branchId, draft.saleTypeId].filter(Boolean).length;
   const results = searchResults.data ?? [];
   const isSearching = searchResults.isFetching && productSearch.length >= 2;
+
+  function clearAll() {
+    selectProduct(null);
+    applyImmediate({ ...draft, branchId: null, saleTypeId: null });
+  }
 
   return (
     <div className="border rounded-lg bg-card overflow-hidden">
@@ -65,7 +69,7 @@ export function ProductsOptionsPanel({ dash, filters, onChange }: Props) {
         className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium hover:bg-muted/50 transition-colors"
       >
         <span className="flex items-center gap-2">
-          Más opciones
+          Más filtros
           {activeCount > 0 && (
             <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
               {activeCount}
@@ -149,8 +153,8 @@ export function ProductsOptionsPanel({ dash, filters, onChange }: Props) {
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground font-medium">Sede</span>
             <Select
-              value={filters.branchId?.toString() ?? ALL_VALUE}
-              onValueChange={(v) => onChange({ branchId: v === ALL_VALUE ? null : Number(v) })}
+              value={draft.branchId?.toString() ?? ALL_VALUE}
+              onValueChange={(v) => setDraft({ branchId: v === ALL_VALUE ? null : Number(v) })}
             >
               <SelectTrigger className="h-9 w-[160px]">
                 <SelectValue placeholder="Todas" />
@@ -168,8 +172,8 @@ export function ProductsOptionsPanel({ dash, filters, onChange }: Props) {
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground font-medium">Canal de venta</span>
             <Select
-              value={filters.saleTypeId?.toString() ?? ALL_VALUE}
-              onValueChange={(v) => onChange({ saleTypeId: v === ALL_VALUE ? null : Number(v) })}
+              value={draft.saleTypeId?.toString() ?? ALL_VALUE}
+              onValueChange={(v) => setDraft({ saleTypeId: v === ALL_VALUE ? null : Number(v) })}
             >
               <SelectTrigger className="h-9 w-[160px]">
                 <SelectValue placeholder="Todos" />
@@ -185,14 +189,11 @@ export function ProductsOptionsPanel({ dash, filters, onChange }: Props) {
 
           {/* Acciones */}
           <div className="ml-auto flex items-end gap-2">
-            {(hasSelectedProduct || filters.branchId || filters.saleTypeId) && (
+            {(hasSelectedProduct || draft.branchId || draft.saleTypeId) && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  selectProduct(null);
-                  onChange({ branchId: null, saleTypeId: null });
-                }}
+                onClick={clearAll}
                 className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
               >
                 <X className="w-3.5 h-3.5" />
