@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   SupportServiceError,
   type SupportErrorCode,
+  type SupportRequestDetailApiResponse,
   type SupportRequestsApiResponse,
   type SupportRequestsFilters,
 } from "../types/Support.types";
@@ -63,4 +64,27 @@ export const getSupportRequests = async (
   }
 
   return data as SupportRequestsApiResponse;
+};
+
+/**
+ * Detalle de UNA solicitud. Se pide solo cuando el usuario la abre: trae la
+ * descripción con sus imágenes, así que no se llama por cada fila del listado.
+ */
+export const getSupportRequest = async (
+  id: string,
+): Promise<SupportRequestDetailApiResponse> => {
+  const { data, error } = await supabase.functions.invoke("get-support-request", {
+    method: "POST",
+    body: { id },
+  });
+
+  if (error) await throwSupportFunctionError(error);
+  if (data?.error) {
+    throw new SupportServiceError(
+      String(data.error),
+      (data.error_code as SupportErrorCode) ?? "upstream_error",
+    );
+  }
+
+  return data as SupportRequestDetailApiResponse;
 };

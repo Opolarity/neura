@@ -1,4 +1,4 @@
-import { Paperclip, Plus } from "lucide-react";
+import { Eye, Paperclip, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +21,7 @@ interface SupportRequestsTableProps {
   filteredByType: boolean;
   onNewRequest: () => void;
   onClearFilter: () => void;
+  onViewDetail: (id: string) => void;
 }
 
 const SKELETON_ROWS = 5;
@@ -31,6 +32,7 @@ export const SupportRequestsTable = ({
   filteredByType,
   onNewRequest,
   onClearFilter,
+  onViewDetail,
 }: SupportRequestsTableProps) => {
   if (loading) {
     return (
@@ -75,6 +77,7 @@ export const SupportRequestsTable = ({
           <TableHead>Reportado por</TableHead>
           <TableHead className="text-center">Adjuntos</TableHead>
           <TableHead>Creada</TableHead>
+          <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -111,6 +114,16 @@ export const SupportRequestsTable = ({
             </TableCell>
             <TableCell>
               <span className="text-sm">{formatDateTime(request.createdAt)}</span>
+            </TableCell>
+            <TableCell className="text-right">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Ver detalle de ${request.title}`}
+                onClick={() => onViewDetail(request.id)}
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
             </TableCell>
           </TableRow>
         ))}

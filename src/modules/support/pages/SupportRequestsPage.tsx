@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useSupportRequests } from "../hooks/useSupportRequests";
+import { useSupportRequestDetail } from "../hooks/useSupportRequestDetail";
 import { SupportDialog } from "../components/SupportDialog";
+import { SupportRequestDetailModal } from "../components/support-requests/SupportRequestDetailModal";
 import { SupportRequestsHeader } from "../components/support-requests/SupportRequestsHeader";
 import { SupportRequestsFilterBar } from "../components/support-requests/SupportRequestsFilterBar";
 import { SupportRequestsTable } from "../components/support-requests/SupportRequestsTable";
@@ -22,6 +24,8 @@ const SupportRequestsPage = () => {
     openNewRequest,
     onDialogOpenChange,
   } = useSupportRequests();
+
+  const detail = useSupportRequestDetail();
 
   return (
     <div className="p-6 space-y-6">
@@ -54,6 +58,7 @@ const SupportRequestsPage = () => {
               filteredByType={filters.requestType !== null}
               onNewRequest={openNewRequest}
               onClearFilter={() => onRequestTypeChange(null)}
+              onViewDetail={detail.open}
             />
           )}
         </CardContent>
@@ -69,6 +74,15 @@ const SupportRequestsPage = () => {
 
       {/* Se reutiliza el formulario que antes vivía en el Sidebar, sin cambios */}
       <SupportDialog open={dialogOpen} onOpenChange={onDialogOpenChange} />
+
+      <SupportRequestDetailModal
+        open={detail.isOpen}
+        detail={detail.detail}
+        loading={detail.loading}
+        errorState={detail.errorState}
+        onClose={detail.close}
+        onRetry={detail.retry}
+      />
     </div>
   );
 };

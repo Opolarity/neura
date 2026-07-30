@@ -9,6 +9,8 @@ interface SupportRequestsErrorStateProps {
   message: string;
   onRetry: () => void;
   retrying?: boolean;
+  /** Título cuando el código no tiene copy propio (el detalle usa otro). */
+  fallbackTitle?: string;
 }
 
 const COPY: Partial<
@@ -49,9 +51,10 @@ export const SupportRequestsErrorState = ({
   message,
   onRetry,
   retrying,
+  fallbackTitle = "No se pudieron cargar las solicitudes",
 }: SupportRequestsErrorStateProps) => {
   const copy = COPY[code];
-  const title = copy?.title ?? "No se pudieron cargar las solicitudes";
+  const title = copy?.title ?? fallbackTitle;
   const description = copy?.description ?? message;
   const extraMessage = copy?.showMessage ? message : null;
 
