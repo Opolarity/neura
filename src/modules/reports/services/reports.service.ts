@@ -64,6 +64,8 @@ async function rpc<T>(fn: string, params?: Record<string, unknown>): Promise<T> 
 // ============================================================
 export interface SalesExtraFilters {
   productId?: number | null;
+  /** Solo para mostrar en el combobox — no se manda al backend. */
+  productTitle?: string;
   minTotal?: number | null;
   maxTotal?: number | null;
 }

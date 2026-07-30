@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Download, X, Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -13,7 +13,6 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { cn } from '@/shared/utils/utils';
-import { ProductsExportModal } from './ProductsExportModal';
 import { filterOptionsService } from '../../services/reports.service';
 import { useReportsFilters } from '../../context/ReportsFiltersContext';
 import type { ProductsDashboardState } from '../../hooks/useProductsDashboard';
@@ -24,10 +23,10 @@ interface Props {
   dash: ProductsDashboardState;
 }
 
+/** Solo devuelve los campos de "Más filtros" de Productos — el contenedor
+ * (caja, toggle, Limpiar, Descargar, Aplicar) vive en ReportsFilterBar. */
 export function ProductsOptionsPanel({ dash }: Props) {
-  const { draft, setDraft, applyImmediate } = useReportsFilters();
-  const [open, setOpen] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
+  const { draft, setDraft } = useReportsFilters();
   const [comboOpen, setComboOpen] = useState(false);
 
   const {
@@ -52,169 +51,113 @@ export function ProductsOptionsPanel({ dash }: Props) {
   });
 
   const hasSelectedProduct = selectedProductId !== null;
-  const activeCount = [hasSelectedProduct, draft.branchId, draft.saleTypeId].filter(Boolean).length;
   const results = searchResults.data ?? [];
   const isSearching = searchResults.isFetching && productSearch.length >= 2;
 
-  function clearAll() {
-    selectProduct(null);
-    applyImmediate({ ...draft, branchId: null, saleTypeId: null });
-  }
-
   return (
-    <div className="border rounded-lg bg-card overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((p) => !p)}
-        className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium hover:bg-muted/50 transition-colors"
-      >
-        <span className="flex items-center gap-2">
-          Más filtros
-          {activeCount > 0 && (
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-              {activeCount}
-            </span>
-          )}
-          <span className="text-primary font-semibold">+</span>
-        </span>
-        {open
-          ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
-          : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-      </button>
-
-      {open && (
-        <div className="flex flex-wrap items-end gap-3 px-4 pb-4 border-t pt-3">
-          {/* Buscador de producto (combobox) */}
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground font-medium">Producto</span>
-            <Popover open={comboOpen} onOpenChange={setComboOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={comboOpen}
-                  className="h-9 w-[280px] justify-between font-normal"
-                >
-                  <span className="truncate">
-                    {hasSelectedProduct ? selectedProductTitle : 'Buscar producto…'}
-                  </span>
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[320px] p-0" align="start">
-                <Command shouldFilter={false}>
-                  <CommandInput
-                    placeholder="Nombre o SKU…"
-                    value={productSearch}
-                    onValueChange={setProductSearch}
-                  />
-                  <CommandList>
-                    {productSearch.length < 2 ? (
-                      <CommandEmpty>Escribe al menos 2 caracteres…</CommandEmpty>
-                    ) : isSearching ? (
-                      <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Buscando…
-                      </div>
-                    ) : results.length === 0 ? (
-                      <CommandEmpty>Sin resultados.</CommandEmpty>
-                    ) : (
-                      <CommandGroup>
-                        {results.map((r) => (
-                          <CommandItem
-                            key={r.id}
-                            value={`${r.id}`}
-                            onSelect={() => {
-                              selectProduct(r);
-                              setComboOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                'mr-2 h-4 w-4',
-                                selectedProductId === r.id ? 'opacity-100' : 'opacity-0',
-                              )}
-                            />
-                            <div className="flex flex-col min-w-0">
-                              <span className="truncate text-sm">{r.title}</span>
-                              <span className="truncate text-xs text-muted-foreground">{r.sku}</span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Sede */}
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground font-medium">Sede</span>
-            <Select
-              value={draft.branchId?.toString() ?? ALL_VALUE}
-              onValueChange={(v) => setDraft({ branchId: v === ALL_VALUE ? null : Number(v) })}
-            >
-              <SelectTrigger className="h-9 w-[160px]">
-                <SelectValue placeholder="Todas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_VALUE}>Todas</SelectItem>
-                {branches.data?.map((b) => (
-                  <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Canal de venta */}
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground font-medium">Canal de venta</span>
-            <Select
-              value={draft.saleTypeId?.toString() ?? ALL_VALUE}
-              onValueChange={(v) => setDraft({ saleTypeId: v === ALL_VALUE ? null : Number(v) })}
-            >
-              <SelectTrigger className="h-9 w-[160px]">
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_VALUE}>Todos</SelectItem>
-                {saleTypes.data?.map((st) => (
-                  <SelectItem key={st.id} value={st.id.toString()}>{st.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Acciones */}
-          <div className="ml-auto flex items-end gap-2">
-            {(hasSelectedProduct || draft.branchId || draft.saleTypeId) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAll}
-                className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-3.5 h-3.5" />
-                Limpiar
-              </Button>
-            )}
-
+    <>
+      {/* Buscador de producto (combobox) */}
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-muted-foreground font-medium">Producto</span>
+        <Popover open={comboOpen} onOpenChange={setComboOpen}>
+          <PopoverTrigger asChild>
             <Button
               variant="outline"
-              size="sm"
-              onClick={() => setExportOpen(true)}
-              className="h-9 gap-1.5"
+              role="combobox"
+              aria-expanded={comboOpen}
+              className="h-9 w-[280px] justify-between font-normal"
             >
-              <Download className="w-3.5 h-3.5" />
-              Descargar reporte
+              <span className="truncate">
+                {hasSelectedProduct ? selectedProductTitle : 'Buscar producto…'}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
-          </div>
-        </div>
-      )}
+          </PopoverTrigger>
+          <PopoverContent className="w-[320px] p-0" align="start">
+            <Command shouldFilter={false}>
+              <CommandInput
+                placeholder="Nombre o SKU…"
+                value={productSearch}
+                onValueChange={setProductSearch}
+              />
+              <CommandList>
+                {productSearch.length < 2 ? (
+                  <CommandEmpty>Escribe al menos 2 caracteres…</CommandEmpty>
+                ) : isSearching ? (
+                  <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Buscando…
+                  </div>
+                ) : results.length === 0 ? (
+                  <CommandEmpty>Sin resultados.</CommandEmpty>
+                ) : (
+                  <CommandGroup>
+                    {results.map((r) => (
+                      <CommandItem
+                        key={r.id}
+                        value={`${r.id}`}
+                        onSelect={() => {
+                          selectProduct(r);
+                          setComboOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            selectedProductId === r.id ? 'opacity-100' : 'opacity-0',
+                          )}
+                        />
+                        <div className="flex flex-col min-w-0">
+                          <span className="truncate text-sm">{r.title}</span>
+                          <span className="truncate text-xs text-muted-foreground">{r.sku}</span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
 
-      <ProductsExportModal open={exportOpen} onOpenChange={setExportOpen} />
-    </div>
+      {/* Sede */}
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-muted-foreground font-medium">Sede</span>
+        <Select
+          value={draft.branchId?.toString() ?? ALL_VALUE}
+          onValueChange={(v) => setDraft({ branchId: v === ALL_VALUE ? null : Number(v) })}
+        >
+          <SelectTrigger className="h-9 w-[160px]">
+            <SelectValue placeholder="Todas" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_VALUE}>Todas</SelectItem>
+            {branches.data?.map((b) => (
+              <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Canal de venta */}
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-muted-foreground font-medium">Canal de venta</span>
+        <Select
+          value={draft.saleTypeId?.toString() ?? ALL_VALUE}
+          onValueChange={(v) => setDraft({ saleTypeId: v === ALL_VALUE ? null : Number(v) })}
+        >
+          <SelectTrigger className="h-9 w-[160px]">
+            <SelectValue placeholder="Todos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_VALUE}>Todos</SelectItem>
+            {saleTypes.data?.map((st) => (
+              <SelectItem key={st.id} value={st.id.toString()}>{st.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </>
   );
 }
