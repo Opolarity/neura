@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Download, X, Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Command,
   CommandEmpty,
@@ -12,13 +14,19 @@ import {
 } from '@/components/ui/command';
 import { cn } from '@/shared/utils/utils';
 import { ProductsExportModal } from './ProductsExportModal';
+import { filterOptionsService } from '../../services/reports.service';
 import type { ProductsDashboardState } from '../../hooks/useProductsDashboard';
+import type { ReportsFilters } from '../../types/reports.types';
+
+const ALL_VALUE = '__all__';
 
 interface Props {
   dash: ProductsDashboardState;
+  filters: ReportsFilters;
+  onChange: (partial: Partial<ReportsFilters>) => void;
 }
 
-export function ProductsOptionsPanel({ dash }: Props) {
+export function ProductsOptionsPanel({ dash, filters, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [comboOpen, setComboOpen] = useState(false);
@@ -32,8 +40,20 @@ export function ProductsOptionsPanel({ dash }: Props) {
     selectProduct,
   } = dash;
 
+  const branches = useQuery({
+    queryKey: ['filter_branches'],
+    queryFn: filterOptionsService.getBranches,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const saleTypes = useQuery({
+    queryKey: ['filter_sale_types'],
+    queryFn: filterOptionsService.getSaleTypes,
+    staleTime: 1000 * 60 * 60,
+  });
+
   const hasSelectedProduct = selectedProductId !== null;
-  const activeCount = hasSelectedProduct ? 1 : 0;
+  const activeCount = [hasSelectedProduct, filters.branchId, filters.saleTypeId].filter(Boolean).length;
   const results = searchResults.data ?? [];
   const isSearching = searchResults.isFetching && productSearch.length >= 2;
 
@@ -125,13 +145,54 @@ export function ProductsOptionsPanel({ dash }: Props) {
             </Popover>
           </div>
 
+          {/* Sede */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground font-medium">Sede</span>
+            <Select
+              value={filters.branchId?.toString() ?? ALL_VALUE}
+              onValueChange={(v) => onChange({ branchId: v === ALL_VALUE ? null : Number(v) })}
+            >
+              <SelectTrigger className="h-9 w-[160px]">
+                <SelectValue placeholder="Todas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_VALUE}>Todas</SelectItem>
+                {branches.data?.map((b) => (
+                  <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Canal de venta */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground font-medium">Canal de venta</span>
+            <Select
+              value={filters.saleTypeId?.toString() ?? ALL_VALUE}
+              onValueChange={(v) => onChange({ saleTypeId: v === ALL_VALUE ? null : Number(v) })}
+            >
+              <SelectTrigger className="h-9 w-[160px]">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_VALUE}>Todos</SelectItem>
+                {saleTypes.data?.map((st) => (
+                  <SelectItem key={st.id} value={st.id.toString()}>{st.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Acciones */}
           <div className="ml-auto flex items-end gap-2">
-            {hasSelectedProduct && (
+            {(hasSelectedProduct || filters.branchId || filters.saleTypeId) && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => selectProduct(null)}
+                onClick={() => {
+                  selectProduct(null);
+                  onChange({ branchId: null, saleTypeId: null });
+                }}
                 className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
               >
                 <X className="w-3.5 h-3.5" />

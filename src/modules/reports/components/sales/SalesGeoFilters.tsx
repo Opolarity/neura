@@ -1,9 +1,22 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, X, Download } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Download, Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { filterOptionsService } from '../../services/reports.service';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { useDebounce } from '@/hooks/useDebounce';
+import { cn } from '@/shared/utils/utils';
+import { filterOptionsService, productsService } from '../../services/reports.service';
+import type { SalesExtraFilters } from '../../services/reports.service';
 import { SalesExportModal } from '../shared/SalesExportModal';
 import type { ReportsFilters } from '../../types/reports.types';
 
@@ -11,13 +24,26 @@ import type { ReportsFilters } from '../../types/reports.types';
 interface Props {
   filters: ReportsFilters;
   onChange: (partial: Partial<ReportsFilters>) => void;
+  extra: SalesExtraFilters;
+  onExtraChange: (partial: Partial<SalesExtraFilters>) => void;
 }
 
 const ALL_VALUE = '__all__';
 
-export function SalesGeoFilters({ filters, onChange }: Props) {
+export function SalesGeoFilters({ filters, onChange, extra, onExtraChange }: Props) {
   const [open, setOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [comboOpen, setComboOpen] = useState(false);
+  const [productSearch, setProductSearch] = useState('');
+  const [productTitle, setProductTitle] = useState('');
+  const debouncedSearch = useDebounce(productSearch, 400);
+
+  const productResults = useQuery({
+    queryKey: ['rpt_product_search', debouncedSearch],
+    queryFn: () => productsService.search(debouncedSearch),
+    enabled: debouncedSearch.length >= 2,
+    staleTime: 1000 * 60 * 2,
+  });
 
   const countries = useQuery({
     queryKey: ['filter_countries'],
@@ -72,7 +98,10 @@ export function SalesGeoFilters({ filters, onChange }: Props) {
     filters.neighborhoodId,
     filters.saleTypeId,
     filters.paymentMethodId,
-  ].filter(Boolean).length;
+    extra.productId,
+    extra.minTotal,
+    extra.maxTotal,
+  ].filter((v) => v !== null && v !== undefined).length;
 
   const hasActiveFilter = activeCount > 0;
 
@@ -86,6 +115,9 @@ export function SalesGeoFilters({ filters, onChange }: Props) {
       saleTypeId: null,
       paymentMethodId: null,
     });
+    onExtraChange({ productId: null, minTotal: null, maxTotal: null });
+    setProductTitle('');
+    setProductSearch('');
   }
 
   return (
@@ -171,6 +203,94 @@ export function SalesGeoFilters({ filters, onChange }: Props) {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Producto específico */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground font-medium">Producto</span>
+            <Popover open={comboOpen} onOpenChange={setComboOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={comboOpen}
+                  className="h-9 w-[220px] justify-between font-normal"
+                >
+                  <span className="truncate">
+                    {extra.productId ? productTitle : 'Todos'}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[320px] p-0" align="start">
+                <Command shouldFilter={false}>
+                  <CommandInput
+                    placeholder="Nombre o SKU…"
+                    value={productSearch}
+                    onValueChange={setProductSearch}
+                  />
+                  <CommandList>
+                    {productSearch.length < 2 ? (
+                      <CommandEmpty>Escribe al menos 2 caracteres…</CommandEmpty>
+                    ) : productResults.isFetching ? (
+                      <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Buscando…
+                      </div>
+                    ) : (productResults.data ?? []).length === 0 ? (
+                      <CommandEmpty>Sin resultados.</CommandEmpty>
+                    ) : (
+                      <CommandGroup>
+                        {(productResults.data ?? []).map((r) => (
+                          <CommandItem
+                            key={r.id}
+                            value={`${r.id}`}
+                            onSelect={() => {
+                              onExtraChange({ productId: r.id });
+                              setProductTitle(r.title);
+                              setComboOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                extra.productId === r.id ? 'opacity-100' : 'opacity-0',
+                              )}
+                            />
+                            <div className="flex flex-col min-w-0">
+                              <span className="truncate text-sm">{r.title}</span>
+                              <span className="truncate text-xs text-muted-foreground">{r.sku}</span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Monto de compra */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground font-medium">Monto mín. (S/.)</span>
+            <Input
+              type="number"
+              min={0}
+              className="h-9 w-[110px]"
+              value={extra.minTotal ?? ''}
+              onChange={(e) => onExtraChange({ minTotal: e.target.value === '' ? null : Number(e.target.value) })}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground font-medium">Monto máx. (S/.)</span>
+            <Input
+              type="number"
+              min={0}
+              className="h-9 w-[110px]"
+              value={extra.maxTotal ?? ''}
+              onChange={(e) => onExtraChange({ maxTotal: e.target.value === '' ? null : Number(e.target.value) })}
+            />
           </div>
 
           {/* País */}
@@ -292,7 +412,7 @@ export function SalesGeoFilters({ filters, onChange }: Props) {
         </div>
       )}
 
-      <SalesExportModal open={exportOpen} onOpenChange={setExportOpen} />
+      <SalesExportModal open={exportOpen} onOpenChange={setExportOpen} filters={filters} extra={extra} />
     </div>
   );
 }

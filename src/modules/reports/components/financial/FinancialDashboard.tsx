@@ -2,6 +2,8 @@ import { KpiCard } from '../shared/KpiCard';
 import { CashflowChart } from './CashflowChart';
 import { FinancialByClassChart } from './FinancialByClassChart';
 import { FinancialByPaymentChart } from './FinancialByPaymentChart';
+import { ProfitKpis } from './ProfitKpis';
+import { MarginByProductTable } from './MarginByProductTable';
 import { useFinancialDashboard } from '../../hooks/useFinancialDashboard';
 import type { ReportsFilters } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
@@ -62,6 +64,13 @@ export function FinancialDashboard({ filters }: FinancialDashboardProps) {
           loading={dash.byPaymentMethod.isLoading}
         />
       </div>
+
+      {/* Ganancia neta y margen (costo actual, no histórico) */}
+      <ProfitKpis data={dash.profitKpis.data} loading={dash.profitKpis.isLoading} />
+      <MarginByProductTable
+        data={dash.marginByProduct.data ?? []}
+        loading={dash.marginByProduct.isLoading}
+      />
     </div>
   );
 }

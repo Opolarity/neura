@@ -4,15 +4,17 @@ import { SalesByDimensionChart } from './SalesByDimensionChart';
 import { SalesHeatmap } from './SalesHeatmap';
 import { TopProductsTable } from './TopProductsTable';
 import { useSalesDashboard } from '../../hooks/useSalesDashboard';
+import type { SalesExtraFilters } from '../../services/reports.service';
 import type { ReportsFilters, SalesByDimensionItem, SalesDimension } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
 
 interface SalesDashboardProps {
   filters: ReportsFilters;
+  extra?: SalesExtraFilters;
 }
 
-export function SalesDashboard({ filters }: SalesDashboardProps) {
-  const dash = useSalesDashboard(filters);
+export function SalesDashboard({ filters, extra }: SalesDashboardProps) {
+  const dash = useSalesDashboard(filters, extra);
   const kpis = dash.kpis.data;
 
   const dimensions = Object.fromEntries(
@@ -49,6 +51,17 @@ export function SalesDashboard({ filters }: SalesDashboardProps) {
         <KpiCard
           title="Descuentos Totales"
           value={kpis ? formatCurrency(kpis.total_discount) : '—'}
+          loading={dash.kpis.isLoading}
+        />
+        <KpiCard
+          title="Productos Vendidos"
+          value={kpis?.units_sold ?? '—'}
+          loading={dash.kpis.isLoading}
+          suffix=" uds"
+        />
+        <KpiCard
+          title="Promedio Productos/Pedido"
+          value={kpis?.avg_products_per_order ?? '—'}
           loading={dash.kpis.isLoading}
         />
       </div>

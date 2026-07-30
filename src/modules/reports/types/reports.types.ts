@@ -61,6 +61,8 @@ export interface SalesKpis {
   avg_ticket: number;
   total_discount: number;
   total_shipping: number;
+  units_sold: number;
+  avg_products_per_order: number;
 }
 
 export interface SalesOverTimeItem {
@@ -134,6 +136,22 @@ export interface ProductDetailData {
     is_variable: boolean;
     variations: Array<{ id: number; sku: string; cost: number }>;
   };
+  kpis: {
+    total_quantity: number;
+    total_revenue: number;
+  };
+  by_branch: Array<{
+    branch_id: number | null;
+    branch_name: string;
+    total_quantity: number;
+    total_revenue: number;
+  }>;
+  by_sale_type: Array<{
+    sale_type_id: number | null;
+    sale_type_name: string;
+    total_quantity: number;
+    total_revenue: number;
+  }>;
   sales_over_time: Array<{
     period: string;
     total_quantity: number;
@@ -274,6 +292,27 @@ export interface AccountBalance {
   account_name: string;
   bank: string;
   balance: number;
+}
+
+export interface FinancialProfitKpis {
+  units_sold_total: number;
+  units_with_known_cost: number;
+  cost_coverage_pct: number | null;
+  revenue_known_cost: number;
+  total_cost: number;
+  net_profit: number;
+  margin_pct: number | null;
+}
+
+export interface MarginByProductItem {
+  product_id: number;
+  product_title: string;
+  units_sold: number;
+  units_with_known_cost: number;
+  revenue: number | null;
+  cost: number | null;
+  margin: number | null;
+  margin_pct: number | null;
 }
 
 // -------------------------------------------------------

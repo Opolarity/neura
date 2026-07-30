@@ -23,14 +23,18 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/shared/utils/utils";
 
 import { fetchSalesReport } from "../../services/reports.service";
+import type { SalesExtraFilters } from "../../services/reports.service";
 import { generateSalesReportExcel } from "../../utils/generateSalesReportExcel";
+import type { ReportsFilters } from "../../types/reports.types";
 
 interface SalesExportModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  filters?: ReportsFilters;
+  extra?: SalesExtraFilters;
 }
 
-export function SalesExportModal({ open, onOpenChange }: SalesExportModalProps) {
+export function SalesExportModal({ open, onOpenChange, filters, extra }: SalesExportModalProps) {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [isLoading, setIsLoading] = useState(false);
@@ -61,7 +65,7 @@ export function SalesExportModal({ open, onOpenChange }: SalesExportModalProps) 
     try {
       const start = format(startDate, "yyyy-MM-dd");
       const end = format(endDate, "yyyy-MM-dd");
-      const rows = await fetchSalesReport(start, end);
+      const rows = await fetchSalesReport(start, end, filters, extra);
       generateSalesReportExcel(rows, start, end);
       toast.success(`${rows.length} ventas exportadas correctamente`);
       onOpenChange(false);

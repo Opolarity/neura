@@ -27,6 +27,8 @@ import type {
   FinancialByClassItem,
   FinancialByPaymentItem,
   AccountBalance,
+  FinancialProfitKpis,
+  MarginByProductItem,
   CustomersKpis,
   TopCustomer,
   GeoDistributionData,
@@ -60,20 +62,36 @@ async function rpc<T>(fn: string, params?: Record<string, unknown>): Promise<T> 
 // ============================================================
 // SALES
 // ============================================================
-export const salesService = {
-  getKpis: (f: ReportsFilters) =>
-    rpc<SalesKpis>('sp_rpt_sales_kpis', mapFilters(f)),
+export interface SalesExtraFilters {
+  productId?: number | null;
+  minTotal?: number | null;
+  maxTotal?: number | null;
+}
 
-  getOverTime: (f: ReportsFilters, granularity: Granularity = 'day') =>
+function mapSalesExtraFilters(extra?: SalesExtraFilters) {
+  return {
+    p_product_id: extra?.productId ?? undefined,
+    p_min_total: extra?.minTotal ?? undefined,
+    p_max_total: extra?.maxTotal ?? undefined,
+  };
+}
+
+export const salesService = {
+  getKpis: (f: ReportsFilters, extra?: SalesExtraFilters) =>
+    rpc<SalesKpis>('sp_rpt_sales_kpis', { ...mapFilters(f), ...mapSalesExtraFilters(extra) }),
+
+  getOverTime: (f: ReportsFilters, granularity: Granularity = 'day', extra?: SalesExtraFilters) =>
     rpc<SalesOverTimeItem[]>('sp_rpt_sales_over_time', {
       ...mapFilters(f),
       p_granularity: granularity,
+      ...mapSalesExtraFilters(extra),
     }),
 
-  getByDimension: (f: ReportsFilters, dimension: SalesDimension) =>
+  getByDimension: (f: ReportsFilters, dimension: SalesDimension, extra?: SalesExtraFilters) =>
     rpc<SalesByDimensionItem[]>('sp_rpt_sales_by_dimension', {
       ...mapFilters(f),
       p_dimension: dimension,
+      ...mapSalesExtraFilters(extra),
     }),
 
   getTopProducts: (f: ReportsFilters, metric: TopMetric = 'revenue', limit = 10) =>
@@ -124,6 +142,8 @@ export const productsService = {
       p_product_id: productId,
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+      p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 };
 
@@ -230,6 +250,21 @@ export const financialService = {
 
   getAccountBalances: () =>
     rpc<AccountBalance[]>('sp_rpt_financial_accounts_balances'),
+
+  getProfitKpis: (f: ReportsFilters) =>
+    rpc<FinancialProfitKpis>('sp_rpt_financial_profit_kpis', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+    }),
+
+  getMarginByProduct: (f: ReportsFilters, limit = 20) =>
+    rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+      p_limit: limit,
+    }),
 };
 
 // ============================================================
@@ -294,11 +329,23 @@ export interface SalesReportRow {
 
 export const fetchSalesReport = async (
   startDate: string,
-  endDate: string
+  endDate: string,
+  filters?: ReportsFilters,
+  extra?: SalesExtraFilters,
 ): Promise<SalesReportRow[]> => {
   const endpoint = buildEndpoint('get-sales-report', {
     start_date: startDate,
     end_date: endDate,
+    branch_id: filters?.branchId ?? undefined,
+    sale_type_id: filters?.saleTypeId ?? undefined,
+    payment_method_id: filters?.paymentMethodId ?? undefined,
+    country_id: filters?.countryId ?? undefined,
+    state_id: filters?.stateId ?? undefined,
+    city_id: filters?.cityId ?? undefined,
+    neighborhood_id: filters?.neighborhoodId ?? undefined,
+    product_id: extra?.productId ?? undefined,
+    min_total: extra?.minTotal ?? undefined,
+    max_total: extra?.maxTotal ?? undefined,
   });
   const { data, error } = await supabase.functions.invoke(endpoint, {
     method: 'GET',
