@@ -13,8 +13,8 @@ const ProductsDashboard = lazy(() =>
 );
 
 export default function ProductsPage() {
-  const { filters, draft, applyImmediate } = useReportsFilters();
-  const dash = useProductsDashboard(filters);
+  const { filters, draft, applyImmediate, applyVersion } = useReportsFilters();
+  const dash = useProductsDashboard(filters, applyVersion);
   const [exportOpen, setExportOpen] = useState(false);
 
   const extraActiveCount = [
@@ -33,6 +33,7 @@ export default function ProductsPage() {
       <ReportsFilterBar
         extraFields={<ProductsOptionsPanel dash={dash} />}
         extraActiveCount={extraActiveCount}
+        extraDirty={dash.isProductDirty}
         onClearExtra={handleClearExtra}
         exportSlot={
           <Button variant="outline" size="sm" onClick={() => setExportOpen(true)} className="gap-1.5">

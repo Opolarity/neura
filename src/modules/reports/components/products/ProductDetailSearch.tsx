@@ -42,7 +42,7 @@ export function ProductDetailSearch({
         <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
           <PackageSearch className="w-10 h-10 text-muted-foreground/60" />
           <p className="text-sm text-muted-foreground">
-            Selecciona un producto en el filtro <span className="font-medium">"Más filtros +"</span> para ver su análisis individual.
+            Selecciona un producto en el filtro <span className="font-medium">"Más filtros +"</span> y da clic en <span className="font-medium">"Aplicar"</span> para ver su análisis individual.
           </p>
         </div>
       )}
