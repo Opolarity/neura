@@ -7,6 +7,7 @@ import {
   EmptyReportState,
   ReportCard,
 } from '../shared/ReportScaffold';
+import { KpiCard } from '../shared/KpiCard';
 import {
   chartAxis,
   chartGrid,
@@ -41,7 +42,7 @@ export function ProductDetailSearch({
         <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
           <PackageSearch className="w-10 h-10 text-muted-foreground/60" />
           <p className="text-sm text-muted-foreground">
-            Selecciona un producto en el filtro <span className="font-medium">"Más opciones +"</span> para ver su análisis individual.
+            Selecciona un producto en el filtro <span className="font-medium">"Más filtros +"</span> y da clic en <span className="font-medium">"Aplicar"</span> para ver su análisis individual.
           </p>
         </div>
       )}
@@ -61,6 +62,12 @@ export function ProductDetailSearch({
             </p>
           </div>
 
+          {/* KPIs del periodo */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <KpiCard title="Cantidad vendida" value={detail.kpis.total_quantity} suffix=" uds" />
+            <KpiCard title="Monto vendido" value={formatCurrency(detail.kpis.total_revenue)} />
+          </div>
+
           {/* Stock by warehouse */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {detail.current_stock.map((s) => (
@@ -73,6 +80,38 @@ export function ProductDetailSearch({
               </Card>
             ))}
           </div>
+
+          {/* Desglose por sede / canal */}
+          {(detail.by_branch.length > 0 || detail.by_sale_type.length > 0) && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {detail.by_branch.length > 0 && (
+                <div>
+                  <p className="mb-2 text-sm font-medium">Por sede</p>
+                  <div className="space-y-1">
+                    {detail.by_branch.map((b) => (
+                      <div key={b.branch_id ?? 'none'} className="flex justify-between text-sm py-1 border-b">
+                        <span className="text-muted-foreground">{b.branch_name}</span>
+                        <span>{b.total_quantity} uds · {formatCurrency(b.total_revenue)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {detail.by_sale_type.length > 0 && (
+                <div>
+                  <p className="mb-2 text-sm font-medium">Por canal de venta</p>
+                  <div className="space-y-1">
+                    {detail.by_sale_type.map((st) => (
+                      <div key={st.sale_type_id ?? 'none'} className="flex justify-between text-sm py-1 border-b">
+                        <span className="text-muted-foreground">{st.sale_type_name}</span>
+                        <span>{st.total_quantity} uds · {formatCurrency(st.total_revenue)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Sales over time */}
           {chartData.length > 0 ? (

@@ -1,5 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-import { limaDateRangeToIsoBounds } from '@/shared/utils/date';
 import { buildEndpoint } from '@/shared/utils/utils';
 import type {
   ReportsFilters,
@@ -10,7 +9,6 @@ import type {
   TopProductItem,
   SalesDimension,
   Granularity,
-  TopMetric,
   ProductsByCategoryItem,
   ProductSearchResult,
   ProductDetailData,
@@ -27,6 +25,8 @@ import type {
   FinancialByClassItem,
   FinancialByPaymentItem,
   AccountBalance,
+  FinancialProfitKpis,
+  MarginByProductItem,
   CustomersKpis,
   TopCustomer,
   GeoDistributionData,
@@ -60,29 +60,38 @@ async function rpc<T>(fn: string, params?: Record<string, unknown>): Promise<T> 
 // ============================================================
 // SALES
 // ============================================================
-export const salesService = {
-  getKpis: (f: ReportsFilters) =>
-    rpc<SalesKpis>('sp_rpt_sales_kpis', mapFilters(f)),
+export interface SalesExtraFilters {
+  productId?: number | null;
+  /** Solo para mostrar en el combobox — no se manda al backend. */
+  productTitle?: string;
+  minTotal?: number | null;
+  maxTotal?: number | null;
+}
 
-  getOverTime: (f: ReportsFilters, granularity: Granularity = 'day') =>
+function mapSalesExtraFilters(extra?: SalesExtraFilters) {
+  return {
+    p_product_id: extra?.productId ?? undefined,
+    p_min_total: extra?.minTotal ?? undefined,
+    p_max_total: extra?.maxTotal ?? undefined,
+  };
+}
+
+export const salesService = {
+  getKpis: (f: ReportsFilters, extra?: SalesExtraFilters) =>
+    rpc<SalesKpis>('sp_rpt_sales_kpis', { ...mapFilters(f), ...mapSalesExtraFilters(extra) }),
+
+  getOverTime: (f: ReportsFilters, granularity: Granularity = 'day', extra?: SalesExtraFilters) =>
     rpc<SalesOverTimeItem[]>('sp_rpt_sales_over_time', {
       ...mapFilters(f),
       p_granularity: granularity,
+      ...mapSalesExtraFilters(extra),
     }),
 
-  getByDimension: (f: ReportsFilters, dimension: SalesDimension) =>
+  getByDimension: (f: ReportsFilters, dimension: SalesDimension, extra?: SalesExtraFilters) =>
     rpc<SalesByDimensionItem[]>('sp_rpt_sales_by_dimension', {
       ...mapFilters(f),
       p_dimension: dimension,
-    }),
-
-  getTopProducts: (f: ReportsFilters, metric: TopMetric = 'revenue', limit = 10) =>
-    rpc<TopProductItem[]>('sp_rpt_top_products_sales', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-      p_metric: metric,
-      p_limit: limit,
+      ...mapSalesExtraFilters(extra),
     }),
 
   getGeoHeatmap: (f: ReportsFilters, mapStateId?: number, mapCityId?: number) =>
@@ -102,6 +111,7 @@ export const productsService = {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
       p_branch_id: f.branchId ?? undefined,
+      p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 
   getTopByCategory: (f: ReportsFilters, categoryId: number | null, limit = 10) =>
@@ -111,6 +121,7 @@ export const productsService = {
       p_branch_id: f.branchId ?? undefined,
       p_category_id: categoryId ?? undefined,
       p_limit: limit,
+      p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 
   search: (query: string, limit = 10) =>
@@ -124,6 +135,8 @@ export const productsService = {
       p_product_id: productId,
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+      p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 };
 
@@ -230,6 +243,21 @@ export const financialService = {
 
   getAccountBalances: () =>
     rpc<AccountBalance[]>('sp_rpt_financial_accounts_balances'),
+
+  getProfitKpis: (f: ReportsFilters) =>
+    rpc<FinancialProfitKpis>('sp_rpt_financial_profit_kpis', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+    }),
+
+  getMarginByProduct: (f: ReportsFilters, limit = 20) =>
+    rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+      p_limit: limit,
+    }),
 };
 
 // ============================================================
@@ -294,11 +322,23 @@ export interface SalesReportRow {
 
 export const fetchSalesReport = async (
   startDate: string,
-  endDate: string
+  endDate: string,
+  filters?: ReportsFilters,
+  extra?: SalesExtraFilters,
 ): Promise<SalesReportRow[]> => {
   const endpoint = buildEndpoint('get-sales-report', {
     start_date: startDate,
     end_date: endDate,
+    branch_id: filters?.branchId ?? undefined,
+    sale_type_id: filters?.saleTypeId ?? undefined,
+    payment_method_id: filters?.paymentMethodId ?? undefined,
+    country_id: filters?.countryId ?? undefined,
+    state_id: filters?.stateId ?? undefined,
+    city_id: filters?.cityId ?? undefined,
+    neighborhood_id: filters?.neighborhoodId ?? undefined,
+    product_id: extra?.productId ?? undefined,
+    min_total: extra?.minTotal ?? undefined,
+    max_total: extra?.maxTotal ?? undefined,
   });
   const { data, error } = await supabase.functions.invoke(endpoint, {
     method: 'GET',
@@ -406,62 +446,15 @@ export interface PriceRuleReportRow {
   rendimiento: number;
 }
 
+export interface PriceRulesReport {
+  kpis: PriceRuleKpis;
+  table: PriceRuleReportRow[];
+}
+
 export const priceRulesReportService = {
-  getKpis: async (): Promise<PriceRuleKpis> => {
-    const { data, error } = await supabase.functions.invoke(
-      'get-price-rules?size=1000',
-      { method: 'GET' }
-    );
-    if (error) throw error;
-    const rules: any[] = data?.data ?? [];
-    return {
-      active:    rules.filter((r) =>  r.is_active).length,
-      inactive:  rules.filter((r) => !r.is_active).length,
-      automatic: rules.filter((r) => r.rule_type === 'automatic').length,
-      coupon:    rules.filter((r) => r.rule_type === 'coupon').length,
-    };
-  },
-
-  getTable: async (startDate: string | null, endDate: string | null): Promise<PriceRuleReportRow[]> => {
-    const { data: rulesResponse, error: rulesError } = await supabase.functions.invoke(
-      'get-price-rules?size=1000',
-      { method: 'GET' }
-    );
-    if (rulesError) throw rulesError;
-    const rules: any[] = rulesResponse?.data ?? [];
-    if (rules.length === 0) return [];
-
-    let query = (supabase as any)
-      .from('order_discounts')
-      .select('code')
-      .not('code', 'is', null);
-    if (startDate) query = query.gte('created_at', limaDateRangeToIsoBounds(startDate).start);
-    if (endDate)   query = query.lte('created_at', limaDateRangeToIsoBounds(endDate).end);
-
-    const { data: discounts, error: discountsError } = await query;
-    if (discountsError) throw discountsError;
-
-    const codeCountMap = new Map<string, number>();
-    for (const d of discounts || []) {
-      if (!d.code) continue;
-      codeCountMap.set(d.code, (codeCountMap.get(d.code) ?? 0) + 1);
-    }
-
-    const total = discounts?.length ?? 0;
-
-    return (rules as any[])
-      .map((rule) => {
-        const applications = rule.code ? (codeCountMap.get(rule.code) ?? 0) : 0;
-        return {
-          id: rule.id,
-          name: rule.name,
-          code: rule.code,
-          rule_type: rule.rule_type,
-          is_active: rule.is_active,
-          applications,
-          rendimiento: total > 0 ? parseFloat(((applications / total) * 100).toFixed(1)) : 0,
-        };
-      })
-      .sort((a, b) => b.applications - a.applications);
-  },
+  getReport: (startDate: string | null, endDate: string | null) =>
+    rpc<PriceRulesReport>('sp_rpt_price_rules_report', {
+      p_start_date: startDate ?? undefined,
+      p_end_date: endDate ?? undefined,
+    }),
 };

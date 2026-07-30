@@ -38,12 +38,26 @@ export function useFinancialDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 10,
   });
 
+  const profitKpis = useQuery({
+    queryKey: ['rpt_financial_profit_kpis', ...queryKey],
+    queryFn: () => financialService.getProfitKpis(filters),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const marginByProduct = useQuery({
+    queryKey: ['rpt_financial_margin_by_product', ...queryKey],
+    queryFn: () => financialService.getMarginByProduct(filters),
+    staleTime: 1000 * 60 * 5,
+  });
+
   return {
     kpis,
     cashflowOverTime,
     byClass,
     byPaymentMethod,
     accountBalances,
+    profitKpis,
+    marginByProduct,
     granularity,
     setGranularity,
   };

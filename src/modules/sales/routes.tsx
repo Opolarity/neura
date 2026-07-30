@@ -4,7 +4,10 @@ import CreateSale from '@/modules/sales/pages/CreateSale';
 import POS from '@/modules/sales/pages/POS';
 import CreateShipping from '@/modules/sales/pages/CreateShipping';
 import Shipping from '@/modules/sales/pages/Shipping';
-import POSTicketPrintPage from '@/modules/sales/pages/POSTicketPrintPage';
+// POSTicketPrintPage es otra copia del ticket 80mm que hoy vive en useInvoicePrint
+// (el POS imprime desde InvoicingStep). Nada navegaba a /pos/ticket/:invoiceId, así
+// que la ruta queda desconectada (el archivo se conserva).
+// import POSTicketPrintPage from '@/modules/sales/pages/POSTicketPrintPage';
 import FranchiseProducts from '@/modules/sales/pages/FranchiseProducts';
 
 export const salesRoutes: RouteObject[] = [
@@ -13,7 +16,7 @@ export const salesRoutes: RouteObject[] = [
   { path: 'sales/create', element: <CreateSale /> },
   { path: 'sales/edit/:id', element: <CreateSale /> },
   { path: 'pos/open', element: <POS /> },
-  { path: 'pos/ticket/:invoiceId', element: <POSTicketPrintPage /> },
+  // { path: 'pos/ticket/:invoiceId', element: <POSTicketPrintPage /> },
   { path: 'shipping', element: <Shipping /> },
   { path: 'shipping/create', element: <CreateShipping /> },
   { path: 'shipping/edit/:id', element: <CreateShipping /> },

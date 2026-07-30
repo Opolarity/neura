@@ -1,15 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import { productsService } from '../services/reports.service';
 import type { ProductSearchResult, ReportsFilters, TopLimit } from '../types/reports.types';
 
-export function useProductsDashboard(filters: ReportsFilters) {
+export function useProductsDashboard(filters: ReportsFilters, applyVersion?: number) {
   const [topLimit, setTopLimit] = useState<TopLimit>(10);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [productSearch, setProductSearch] = useState('');
+  // selectedProductId/Title: lo que el combobox muestra elegido (borrador).
+  // appliedProductId/Title: lo que realmente dispara la query de "Análisis de
+  // producto individual" — espera al botón Aplicar, igual que el resto de filtros.
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [selectedProductTitle, setSelectedProductTitle] = useState<string>('');
+  const [appliedProductId, setAppliedProductId] = useState<number | null>(null);
+  const [appliedProductTitle, setAppliedProductTitle] = useState<string>('');
+
+  useEffect(() => {
+    setAppliedProductId(selectedProductId);
+    setAppliedProductTitle(selectedProductTitle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applyVersion]);
 
   const debouncedSearch = useDebounce(productSearch, 400);
 
@@ -35,9 +46,9 @@ export function useProductsDashboard(filters: ReportsFilters) {
   });
 
   const productDetail = useQuery({
-    queryKey: ['rpt_product_detail', selectedProductId, ...queryKey],
-    queryFn: () => productsService.getDetail(selectedProductId!, filters),
-    enabled: selectedProductId !== null,
+    queryKey: ['rpt_product_detail', appliedProductId, ...queryKey],
+    queryFn: () => productsService.getDetail(appliedProductId!, filters),
+    enabled: appliedProductId !== null,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -52,6 +63,8 @@ export function useProductsDashboard(filters: ReportsFilters) {
     }
   };
 
+  const isProductDirty = selectedProductId !== appliedProductId;
+
   return {
     byCategory,
     topByCategory,
@@ -65,7 +78,10 @@ export function useProductsDashboard(filters: ReportsFilters) {
     setProductSearch,
     selectedProductId,
     selectedProductTitle,
+    appliedProductId,
+    appliedProductTitle,
     selectProduct,
+    isProductDirty,
   };
 }
 

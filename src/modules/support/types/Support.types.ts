@@ -64,6 +64,83 @@ export interface SupportRequestListItem {
   updatedAt: string;
 }
 
+/* ------------------------------------------------------------------ *
+ * Detalle de una solicitud (edge function get-support-request)
+ * ------------------------------------------------------------------ */
+
+/** Adjunto tal como lo devuelve la edge function. */
+export interface SupportAttachmentApiFile {
+  id: string;
+  file_name: string | null;
+  mime_type: string | null;
+  size_bytes: number | null;
+  /** Enlace directo de descarga: se usa TAL CUAL, no se construye a mano. */
+  file_url: string;
+  created_at: string;
+}
+
+/**
+ * Seguimiento de la tarea. Las tareas marcadas como internas en OPOLARITY llegan
+ * recortadas a code/status/status_category, así que el resto es opcional.
+ */
+export interface SupportTaskApiTracking {
+  code: number | null;
+  status: string | null;
+  status_category: string | null;
+  priority?: string | null;
+  environments?: string[] | null;
+  start_date?: string | null;
+  due_date?: string | null;
+  subtasks_total?: number | null;
+  subtasks_done?: number | null;
+  /** null cuando la tarea no tiene subtareas: NO se muestra barra en cero. */
+  progress?: number | null;
+}
+
+/** Detalle tal como lo devuelve la edge function (snake_case, crudo). */
+export interface SupportRequestDetailApi extends SupportRequestApiItem {
+  /** HTML (viene del WysiwygEditor del formulario): se sanea antes de pintarlo. */
+  description: string | null;
+  attachments: SupportAttachmentApiFile[] | null;
+  /** null mientras la solicitud siga en revisión. */
+  reviewed_at: string | null;
+  /** null mientras la solicitud no se haya convertido en tarea. */
+  task: SupportTaskApiTracking | null;
+}
+
+export interface SupportRequestDetailApiResponse {
+  data: SupportRequestDetailApi | null;
+}
+
+export interface SupportAttachmentFile {
+  id: string;
+  fileName: string;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  fileUrl: string;
+}
+
+export interface SupportTaskTracking {
+  code: number | null;
+  status: string;
+  statusCategory: string | null;
+  priority: string | null;
+  environments: string[];
+  startDate: string | null;
+  dueDate: string | null;
+  subtasksTotal: number | null;
+  subtasksDone: number | null;
+  progress: number | null;
+}
+
+/** Detalle adaptado para la UI. `status` se muestra TAL CUAL (es configurable). */
+export interface SupportRequestDetail extends SupportRequestListItem {
+  descriptionHtml: string | null;
+  attachments: SupportAttachmentFile[];
+  reviewedAt: string | null;
+  task: SupportTaskTracking | null;
+}
+
 export interface SupportRequestsFilters {
   page: number;
   size: number;
@@ -78,6 +155,7 @@ export type SupportErrorCode =
   | "client_not_found"
   | "company_document"
   | "bad_request"
+  | "not_found"
   | "upstream_error"
   | "upstream_unreachable"
   | "server_config"

@@ -1,5 +1,11 @@
 import { Badge } from "@/components/ui/badge";
-import type { SupportRequestListItem } from "../../types/Support.types";
+
+/** Solo los campos de estado: lo cumplen tanto el item del listado como el detalle. */
+interface SupportStatusFields {
+  status: string;
+  statusSource: string;
+  statusCategory: string | null;
+}
 
 const FALLBACK_CLASS = "bg-slate-100 text-slate-700 border-slate-200";
 
@@ -19,7 +25,7 @@ const SOLICITUD_CLASS: Record<string, string> = {
   rechazado: "bg-rose-100 text-rose-700 border-rose-200",
 };
 
-const resolveStatusClass = (item: SupportRequestListItem): string => {
+const resolveStatusClass = (item: SupportStatusFields): string => {
   if (item.statusCategory) {
     return CATEGORY_CLASS[item.statusCategory.toLowerCase()] ?? FALLBACK_CLASS;
   }
@@ -30,7 +36,7 @@ const resolveStatusClass = (item: SupportRequestListItem): string => {
 };
 
 interface SupportStatusBadgeProps {
-  item: SupportRequestListItem;
+  item: SupportStatusFields;
 }
 
 /**

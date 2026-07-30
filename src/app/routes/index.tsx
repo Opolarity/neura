@@ -17,28 +17,32 @@ import { discountsRoutes } from "@/modules/discounts";
 import { supportRoutes } from "@/modules/support";
 import NotFound from "@/shared/components/NotFound";
 import { ProtectedLayout } from "./ProtectedLayout";
-import ProtectedRoute from "./ProtectedRoute";
-import InvoicePrintPage from "@/modules/invoices/pages/InvoicePrintPage";
+// InvoicePrintPage es una copia desfasada del ticket 80mm que hoy vive en
+// useInvoicePrint (src/modules/invoices/hooks/useInvoicePrint.ts): tamaños de fuente
+// viejos y consulta shipping_methods en lugar de shipping_costs. Ninguna vista
+// navegaba a estas rutas, así que quedan desconectadas (el archivo se conserva).
+// import ProtectedRoute from "./ProtectedRoute";
+// import InvoicePrintPage from "@/modules/invoices/pages/InvoicePrintPage";
 
 const AppRouter = () => {
   return useRoutes([
     ...authRoutes,
-    {
-      path: "/invoices/print/v/:viewerId",
-      element: (
-        <ProtectedRoute>
-          <InvoicePrintPage />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: "/invoices/print/:id",
-      element: (
-        <ProtectedRoute>
-          <InvoicePrintPage />
-        </ProtectedRoute>
-      ),
-    },
+    // {
+    //   path: "/invoices/print/v/:viewerId",
+    //   element: (
+    //     <ProtectedRoute>
+    //       <InvoicePrintPage />
+    //     </ProtectedRoute>
+    //   ),
+    // },
+    // {
+    //   path: "/invoices/print/:id",
+    //   element: (
+    //     <ProtectedRoute>
+    //       <InvoicePrintPage />
+    //     </ProtectedRoute>
+    //   ),
+    // },
     {
       path: "/",
       ...ProtectedLayout,
