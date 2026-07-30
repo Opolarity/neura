@@ -111,6 +111,7 @@ export const productsService = {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
       p_branch_id: f.branchId ?? undefined,
+      p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 
   getTopByCategory: (f: ReportsFilters, categoryId: number | null, limit = 10) =>
