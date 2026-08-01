@@ -68,7 +68,7 @@ const drawLabel = (
   }
 
   // Price at the bottom
-  doc.setFontSize(6);
+  doc.setFontSize(7);
   doc.setFont("helvetica", "bold");
   doc.text(`S/.${ticketData.price.toFixed(1)}`, centerX, y + height - 1.5, {
     align: "center",
