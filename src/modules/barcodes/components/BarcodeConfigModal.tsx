@@ -20,9 +20,11 @@ import {
   VariationOption,
   StockMovementOption,
   PriceListOption,
+  BarcodeLabelLayout,
 } from "../types/Barcodes.types";
 import StockMovementSearcher from "./StockMovementSearcher";
 import ProductVariationSearcher from "./ProductVariationSearcher";
+import LabelLayoutSelector from "./LabelLayoutSelector";
 
 interface BarcodeConfigModalProps {
   open: boolean;
@@ -34,6 +36,7 @@ interface BarcodeConfigModalProps {
   sequence: number;
   quantities: number;
   price: number | null;
+  labelLayout: BarcodeLabelLayout;
   loading: boolean;
   initialLoading: boolean;
   productLocked: boolean;
@@ -43,6 +46,7 @@ interface BarcodeConfigModalProps {
   onPriceListChange: (id: number) => void;
   onQuantitiesChange: (qty: number) => void;
   onSequenceChange: (seq: number) => void;
+  onLabelLayoutChange: (layout: BarcodeLabelLayout) => void;
   onSubmit: () => void;
 }
 
@@ -56,6 +60,7 @@ const BarcodeConfigModal = ({
   sequence,
   quantities,
   price,
+  labelLayout,
   loading,
   initialLoading,
   productLocked,
@@ -65,6 +70,7 @@ const BarcodeConfigModal = ({
   onPriceListChange,
   onQuantitiesChange,
   onSequenceChange,
+  onLabelLayoutChange,
   onSubmit,
 }: BarcodeConfigModalProps) => {
   const isValid =
@@ -149,6 +155,12 @@ const BarcodeConfigModal = ({
                 onChange={(e) => onQuantitiesChange(Number(e.target.value))}
               />
             </div>
+
+            {/* 6. Formato del papel de la ticketera */}
+            <LabelLayoutSelector
+              layout={labelLayout}
+              onChange={onLabelLayoutChange}
+            />
           </div>
         )}
 
