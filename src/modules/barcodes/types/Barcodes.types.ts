@@ -62,10 +62,6 @@ export interface BarcodeLabelLayout {
   labelHeight: number; // mm — alto de la fila (etiqueta + separación vertical)
   columns: number; // etiquetas a lo ancho del rollo
   gapX: number; // mm — separación entre columnas
-  marginX: number; // mm — margen izq/der del rollo
-  marginY: number; // mm — margen sup/inf de cada fila
-  offsetX: number; // mm — corrimiento fino de todo el contenido (+ derecha)
-  offsetY: number; // mm — corrimiento fino de todo el contenido (+ abajo)
 }
 
 // =============================================================================

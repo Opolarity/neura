@@ -81,8 +81,8 @@ const BarcodeConfigModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-lg">
+        <DialogHeader className="shrink-0">
           <DialogTitle>Generar Código de Barras</DialogTitle>
         </DialogHeader>
 
@@ -92,7 +92,8 @@ const BarcodeConfigModal = ({
             <span className="ml-2 text-muted-foreground">Cargando datos...</span>
           </div>
         ) : (
-          <div className="space-y-4">
+          // El cuerpo scrollea; header y footer quedan fijos
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-1 py-1">
             {/* 1. Movimiento de Stock (opcional, primero) */}
             <StockMovementSearcher
               selectedMovement={selectedMovement}
@@ -164,7 +165,7 @@ const BarcodeConfigModal = ({
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>

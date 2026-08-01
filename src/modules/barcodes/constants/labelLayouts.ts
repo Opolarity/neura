@@ -9,16 +9,12 @@ export const DEFAULT_LABEL_LAYOUT: BarcodeLabelLayout = {
   labelHeight: 20,
   columns: 1,
   gapX: 0,
-  marginX: 0,
-  marginY: 0,
-  offsetX: 0,
-  offsetY: 0,
 };
 
 /**
- * Presets de papel. El usuario puede ajustar columnas/medidas si su rollo difiere.
- * El nombre incluye el tamaño de papel que hay que configurar en el driver de la
- * ticketera: si no coincide, el visor escala el PDF para que quepa.
+ * Formatos de rollo soportados. El nombre incluye el tamaño de papel que hay que
+ * configurar en el driver de la ticketera: si no coincide, el visor escala el PDF
+ * para que quepa y las etiquetas salen encogidas.
  */
 export const LABEL_LAYOUT_PRESETS: { id: string; name: string; layout: BarcodeLabelLayout }[] = [
   {
@@ -41,26 +37,16 @@ export const LABEL_LAYOUT_PRESETS: { id: string; name: string; layout: BarcodeLa
 export const LABEL_LAYOUT_STORAGE_KEY = "neura:barcodes:labelLayout";
 
 /**
- * Devuelve el id del preset que coincide con el layout, o "custom" si fue ajustado a mano.
+ * Tamaño de papel que produce el layout: es el que debe configurarse en la impresora.
  */
-export const findPresetId = (layout: BarcodeLabelLayout): string => {
-  const match = LABEL_LAYOUT_PRESETS.find(
-    (preset) =>
-      preset.layout.labelWidth === layout.labelWidth &&
-      preset.layout.labelHeight === layout.labelHeight &&
-      preset.layout.columns === layout.columns &&
-      preset.layout.gapX === layout.gapX &&
-      preset.layout.marginX === layout.marginX &&
-      preset.layout.marginY === layout.marginY &&
-      preset.layout.offsetX === layout.offsetX &&
-      preset.layout.offsetY === layout.offsetY
-  );
-  return match?.id ?? "custom";
-};
+export const getPaperSize = (layout: BarcodeLabelLayout) => ({
+  width: layout.columns * layout.labelWidth + (layout.columns - 1) * layout.gapX,
+  height: layout.labelHeight,
+});
 
 /**
- * Sanea un layout venido de localStorage o de los inputs del modal.
- * Evita que un valor inválido genere un PDF con páginas de 0mm o un bucle enorme.
+ * Sanea un layout venido de localStorage. Evita que un valor inválido guardado por
+ * una versión anterior genere un PDF con páginas de 0mm o un bucle enorme.
  */
 export const normalizeLabelLayout = (
   layout: Partial<BarcodeLabelLayout> | null | undefined
@@ -76,9 +62,5 @@ export const normalizeLabelLayout = (
     labelHeight: clamp(layout?.labelHeight, 8, 200, DEFAULT_LABEL_LAYOUT.labelHeight),
     columns: Math.round(clamp(layout?.columns, 1, 10, DEFAULT_LABEL_LAYOUT.columns)),
     gapX: clamp(layout?.gapX, 0, 50, DEFAULT_LABEL_LAYOUT.gapX),
-    marginX: clamp(layout?.marginX, 0, 50, DEFAULT_LABEL_LAYOUT.marginX),
-    marginY: clamp(layout?.marginY, 0, 50, DEFAULT_LABEL_LAYOUT.marginY),
-    offsetX: clamp(layout?.offsetX, -20, 20, DEFAULT_LABEL_LAYOUT.offsetX),
-    offsetY: clamp(layout?.offsetY, -20, 20, DEFAULT_LABEL_LAYOUT.offsetY),
   };
 };

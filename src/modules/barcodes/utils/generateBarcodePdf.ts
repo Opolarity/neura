@@ -87,12 +87,11 @@ export const generateBarcodePdf = (
   quantity: number,
   layout: BarcodeLabelLayout = DEFAULT_LABEL_LAYOUT
 ) => {
-  const { labelWidth, labelHeight, columns, gapX, marginX, marginY, offsetX, offsetY } =
-    normalizeLabelLayout(layout);
+  const { labelWidth, labelHeight, columns, gapX } = normalizeLabelLayout(layout);
 
   // Una página = una fila del rollo
-  const pageWidth = marginX * 2 + columns * labelWidth + (columns - 1) * gapX;
-  const pageHeight = marginY * 2 + labelHeight;
+  const pageWidth = columns * labelWidth + (columns - 1) * gapX;
+  const pageHeight = labelHeight;
   const format: [number, number] = [pageWidth, pageHeight];
   // Fijamos la orientación según las medidas reales: jsPDF reordena el formato si no coinciden.
   const orientation = pageWidth >= pageHeight ? "landscape" : "portrait";
@@ -121,8 +120,8 @@ export const generateBarcodePdf = (
     // Nueva fila del rollo → nueva página (la primera ya existe)
     if (i > 0 && column === 0) doc.addPage(format, orientation);
 
-    const x = marginX + offsetX + column * (labelWidth + gapX);
-    drawLabel(doc, ticketData, barcodeDataUrl, x, marginY + offsetY, labelWidth, labelHeight);
+    const x = column * (labelWidth + gapX);
+    drawLabel(doc, ticketData, barcodeDataUrl, x, 0, labelWidth, labelHeight);
   }
 
   // Open in new window
