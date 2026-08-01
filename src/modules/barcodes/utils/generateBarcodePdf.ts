@@ -1,7 +1,11 @@
 import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
 import { BarcodeTicketData, BarcodeLabelLayout } from "../types/Barcodes.types";
-import { DEFAULT_LABEL_LAYOUT, normalizeLabelLayout } from "../constants/labelLayouts";
+import {
+  DEFAULT_LABEL_LAYOUT,
+  getLabelWidth,
+  normalizeLabelLayout,
+} from "../constants/labelLayouts";
 
 /**
  * Alto del diseño original de la etiqueta. Si la fila es más alta (p. ej. papeles de
@@ -87,10 +91,12 @@ export const generateBarcodePdf = (
   quantity: number,
   layout: BarcodeLabelLayout = DEFAULT_LABEL_LAYOUT
 ) => {
-  const { labelWidth, labelHeight, columns, gapX } = normalizeLabelLayout(layout);
+  const normalized = normalizeLabelLayout(layout);
+  const { paperWidth, labelHeight, columns, gapX } = normalized;
+  const labelWidth = getLabelWidth(normalized);
 
   // Una página = una fila del rollo
-  const pageWidth = columns * labelWidth + (columns - 1) * gapX;
+  const pageWidth = paperWidth;
   const pageHeight = labelHeight;
   const format: [number, number] = [pageWidth, pageHeight];
   // Fijamos la orientación según las medidas reales: jsPDF reordena el formato si no coinciden.

@@ -58,10 +58,10 @@ export interface BarcodeTicketData {
 // =============================================================================
 
 export interface BarcodeLabelLayout {
-  labelWidth: number; // mm — ancho de cada etiqueta
+  paperWidth: number; // mm — ancho total del rollo; es el que se configura en la impresora
   labelHeight: number; // mm — alto de la fila (etiqueta + separación vertical)
   columns: number; // etiquetas a lo ancho del rollo
-  gapX: number; // mm — separación entre columnas
+  gapX: number; // mm — separación entre columnas; reparte las etiquetas dentro del ancho
 }
 
 // =============================================================================
