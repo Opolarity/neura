@@ -54,6 +54,17 @@ export interface BarcodeTicketData {
 }
 
 // =============================================================================
+// TIPOS PARA EL FORMATO FÍSICO DEL PAPEL (rollo de 1 o más columnas)
+// =============================================================================
+
+export interface BarcodeLabelLayout {
+  labelWidth: number; // mm — ancho de cada etiqueta
+  labelHeight: number; // mm — alto de la fila (etiqueta + separación vertical)
+  columns: number; // etiquetas a lo ancho del rollo
+  gapX: number; // mm — separación entre columnas
+}
+
+// =============================================================================
 // TIPOS PARA LISTADO
 // =============================================================================
 

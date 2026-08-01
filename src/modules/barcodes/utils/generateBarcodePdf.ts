@@ -1,81 +1,127 @@
 import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
-import { BarcodeTicketData } from "../types/Barcodes.types";
+import { BarcodeTicketData, BarcodeLabelLayout } from "../types/Barcodes.types";
+import { DEFAULT_LABEL_LAYOUT, normalizeLabelLayout } from "../constants/labelLayouts";
 
 /**
- * Genera un PDF con etiquetas de código de barras de 30x20mm
+ * Alto del diseño original de la etiqueta. Si la fila es más alta (p. ej. papeles de
+ * 25mm de paso), el bloque se centra en vez de quedar pegado al borde superior.
+ */
+const DESIGN_HEIGHT = 20;
+
+/**
+ * Dibuja una etiqueta dentro del rectángulo (x, y, width, height) de la página actual.
+ * Las coordenadas son relativas a la celda, así la misma etiqueta sirve para rollos
+ * de 1 columna o de N columnas.
+ */
+const drawLabel = (
+  doc: jsPDF,
+  ticketData: BarcodeTicketData,
+  barcodeDataUrl: string | null,
+  x: number,
+  rowY: number,
+  width: number,
+  rowHeight: number
+) => {
+  // El contenido conserva su alto de diseño y se centra en la fila
+  const height = Math.min(rowHeight, DESIGN_HEIGHT);
+  const y = rowY + (rowHeight - height) / 2;
+  const centerX = x + width / 2;
+
+  // Title: Product name + variation in parentheses
+  const title = ticketData.variationTerms
+    ? `${ticketData.productTitle} (${ticketData.variationTerms.replace(/,\s*/g, "-")})`
+    : ticketData.productTitle;
+
+  // Draw title (top)
+  doc.setFontSize(5);
+  doc.setFont("helvetica", "bold");
+  const titleLines = doc.splitTextToSize(title, width - 4);
+  doc.text(titleLines, centerX, y + 3, { align: "center" });
+
+  if (barcodeDataUrl) {
+    // Barcode in the center
+    const barcodeY = y + titleLines.length * 2 + 3;
+    const barcodeWidth = width - 6;
+    const barcodeHeight = 7;
+    doc.addImage(
+      barcodeDataUrl,
+      "PNG",
+      x + (width - barcodeWidth) / 2,
+      barcodeY,
+      barcodeWidth,
+      barcodeHeight
+    );
+
+    // SKU-Lote text below barcode
+    const skuLabel = ticketData.sku
+      ? `${ticketData.sku}-${ticketData.barcodeValue.split("-").pop() || ""}`
+      : ticketData.barcodeValue;
+    doc.setFontSize(4);
+    doc.setFont("helvetica", "normal");
+    doc.text(skuLabel, centerX, barcodeY + barcodeHeight + 1.5, {
+      align: "center",
+    });
+  } else {
+    doc.setFontSize(5);
+    doc.text(ticketData.barcodeValue, centerX, y + height / 2, { align: "center" });
+  }
+
+  // Price at the bottom
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "bold");
+  doc.text(`S/.${ticketData.price.toFixed(1)}`, centerX, y + height - 1.5, {
+    align: "center",
+  });
+};
+
+/**
+ * Genera un PDF con etiquetas de código de barras.
+ *
+ * El papel se describe con `layout`: cada página del PDF es una fila del rollo, con
+ * tantas etiquetas como columnas tenga el papel. Con `columns: 1` (default) el
+ * resultado es una página por etiqueta, igual que la ticketera de una sola columna.
  */
 export const generateBarcodePdf = (
   ticketData: BarcodeTicketData,
-  quantity: number
+  quantity: number,
+  layout: BarcodeLabelLayout = DEFAULT_LABEL_LAYOUT
 ) => {
-  // 30mm ancho x 20mm alto
-  const doc = new jsPDF({
-    orientation: "landscape",
-    unit: "mm",
-    format: [30, 20],
-  });
+  const { labelWidth, labelHeight, columns, gapX } = normalizeLabelLayout(layout);
+
+  // Una página = una fila del rollo
+  const pageWidth = columns * labelWidth + (columns - 1) * gapX;
+  const pageHeight = labelHeight;
+  const format: [number, number] = [pageWidth, pageHeight];
+  // Fijamos la orientación según las medidas reales: jsPDF reordena el formato si no coinciden.
+  const orientation = pageWidth >= pageHeight ? "landscape" : "portrait";
+
+  const doc = new jsPDF({ orientation, unit: "mm", format });
+
+  // El código de barras es el mismo para todas las etiquetas: se rasteriza una sola vez
+  let barcodeDataUrl: string | null = null;
+  try {
+    const canvas = document.createElement("canvas");
+    JsBarcode(canvas, ticketData.barcodeValue, {
+      format: "CODE128",
+      width: 1.5,
+      height: 30,
+      displayValue: false,
+      margin: 0,
+    });
+    barcodeDataUrl = canvas.toDataURL("image/png");
+  } catch (e) {
+    console.error("Error generating barcode:", e);
+  }
 
   for (let i = 0; i < quantity; i++) {
-    if (i > 0) doc.addPage([30, 20], "landscape");
+    const column = i % columns;
 
-    // Title: Product name + variation in parentheses
-    const title = ticketData.variationTerms
-      ? `${ticketData.productTitle} (${ticketData.variationTerms.replace(/,\s*/g, "-")})`
-      : ticketData.productTitle;
+    // Nueva fila del rollo → nueva página (la primera ya existe)
+    if (i > 0 && column === 0) doc.addPage(format, orientation);
 
-    // Draw title (top)
-    doc.setFontSize(5);
-    doc.setFont("helvetica", "bold");
-    const titleLines = doc.splitTextToSize(title, 26);
-    doc.text(titleLines, 15, 3, { align: "center" });
-
-    // Generate barcode as canvas
-    const canvas = document.createElement("canvas");
-    try {
-      JsBarcode(canvas, ticketData.barcodeValue, {
-        format: "CODE128",
-        width: 1.5,
-        height: 30,
-        displayValue: false,
-        margin: 0,
-      });
-
-      const barcodeDataUrl = canvas.toDataURL("image/png");
-      // Barcode in the center
-      const barcodeY = titleLines.length * 2 + 3;
-      const barcodeWidth = 24;
-      const barcodeHeight = 7;
-      doc.addImage(
-        barcodeDataUrl,
-        "PNG",
-        (30 - barcodeWidth) / 2,
-        barcodeY,
-        barcodeWidth,
-        barcodeHeight
-      );
-
-      // SKU-Lote text below barcode
-      const skuLabel = ticketData.sku
-        ? `${ticketData.sku}-${ticketData.barcodeValue.split("-").pop() || ""}`
-        : ticketData.barcodeValue;
-      doc.setFontSize(4);
-      doc.setFont("helvetica", "normal");
-      doc.text(skuLabel, 15, barcodeY + barcodeHeight + 1.5, {
-        align: "center",
-      });
-    } catch (e) {
-      console.error("Error generating barcode:", e);
-      doc.setFontSize(5);
-      doc.text(ticketData.barcodeValue, 15, 12, { align: "center" });
-    }
-
-    // Price at the bottom
-    doc.setFontSize(6);
-    doc.setFont("helvetica", "bold");
-    doc.text(`S/.${ticketData.price.toFixed(1)}`, 15, 18.5, {
-      align: "center",
-    });
+    const x = column * (labelWidth + gapX);
+    drawLabel(doc, ticketData, barcodeDataUrl, x, 0, labelWidth, labelHeight);
   }
 
   // Open in new window

@@ -20,10 +20,14 @@ import {
   BarcodeListItem,
 } from "../types/Barcodes.types";
 import { generateBarcodePdf } from "../utils/generateBarcodePdf";
+import { useLabelLayout } from "./useLabelLayout";
 
 export const useBarcodes = () => {
   // Select options
   const [priceLists, setPriceLists] = useState<PriceListOption[]>([]);
+
+  // Formato del papel (persistido por equipo)
+  const { labelLayout, setLabelLayout } = useLabelLayout();
 
   // Selected values
   const [selectedVariation, setSelectedVariation] = useState<VariationOption | null>(null);
@@ -226,7 +230,7 @@ export const useBarcodes = () => {
         barcodeValue: `${selectedVariation.variationId}-${sequence}`,
       };
 
-      generateBarcodePdf(ticketData, quantities);
+      generateBarcodePdf(ticketData, quantities, labelLayout);
 
       toast({
         title: "Éxito",
@@ -280,7 +284,7 @@ export const useBarcodes = () => {
         price: priceData.price,
         barcodeValue: item.barcodeValue,
       };
-      generateBarcodePdf(ticketData, item.quantities ?? 1);
+      generateBarcodePdf(ticketData, item.quantities ?? 1, labelLayout);
     } catch (error: any) {
       toast({ title: "Error", description: "No se pudo reimprimir", variant: "destructive" });
     }
@@ -298,6 +302,7 @@ export const useBarcodes = () => {
     quantities,
     price,
     productLocked,
+    labelLayout,
     // State
     loading,
     initialLoading,
@@ -307,6 +312,7 @@ export const useBarcodes = () => {
     setQuantities,
     setSequence,
     setModalOpen,
+    setLabelLayout,
     handleVariationChange,
     handleStockMovementChange,
     handleProductClear,
