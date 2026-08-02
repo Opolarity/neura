@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Save, ChevronDown, Loader2 } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
@@ -27,10 +27,8 @@ import {
 import useCreateUser from "../hooks/useCreateUser";
 
 const CreateUser = () => {
-  const [searchParams] = useSearchParams();
-  const id = searchParams.get("id");
-  const uid = searchParams.get("uid");
-  const isEdit = !!id;
+  const { uid } = useParams();
+  const isEdit = !!uid;
 
   const {
     formData,
@@ -58,7 +56,7 @@ const CreateUser = () => {
     isSearchingDocument,
     isDocumentFound,
     handleDocumentLookup,
-  } = useCreateUser(id, isEdit, uid);
+  } = useCreateUser(uid, isEdit);
 
   if (fetchingUser || optionsLoading) {
     return (

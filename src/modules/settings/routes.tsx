@@ -25,6 +25,7 @@ export const settingsRoutes: RouteObject[] = [
     children: [
       { path: "users", element: <UsersList /> },
       { path: "users/create", element: <CreateUser /> },
+      { path: "users/edit/:uid", element: <CreateUser /> },
       { path: "users/functions", element: <UserFunctions /> },
       { path: "roles", element: <RolesList /> },
       { path: "roles/create", element: <CreateRole /> },
