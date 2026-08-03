@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { PropsWithChildren } from "react";
 import { useAuth } from "@/modules/auth";
-import PageLoader from "@/shared/components/page-loader/PageLoader";
+import SplashPage from "@/shared/components/splash/SplashPage";
 
 export default function ProtectedLayout({ children }: PropsWithChildren) {
   const { user, loading, permissionsLoading, appUserLoading, companyShortNameLoading } = useAuth();
@@ -19,7 +19,7 @@ export default function ProtectedLayout({ children }: PropsWithChildren) {
   return (
     <div className="relative min-h-screen">
       {children}
-      {isLoading && <PageLoader className="bg-white" message="Cargando..." />}
+      {isLoading && <SplashPage />}
     </div>
   );
 }
