@@ -1,5 +1,5 @@
+import { Loader2 } from "lucide-react"
 import { useEffect } from "react"
-import SplashImage from "@/assets/splash-image.png"
 
 export default function SplashPage() {
   useEffect(() => {
@@ -12,7 +12,10 @@ export default function SplashPage() {
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-background">
-      <img className="aspect-square w-3/5 max-w-[180px] min-w-[64px]" src={SplashImage} alt="image-splash.png" />
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-muted-foreground text-sm">Cargando...</p>
+      </div>
     </div>
   )
 }
