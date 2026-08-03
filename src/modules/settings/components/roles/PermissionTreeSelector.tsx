@@ -17,7 +17,9 @@ interface PermissionTreeSelectorProps {
   searchPlaceholder?: string;
 }
 
-/** Coincide el nodo o alguno de sus descendientes con el término de búsqueda. */
+// El `code` no se muestra en la lista, pero sí se busca a propósito: los
+// nombres están en español y los codes en inglés, así que buscar "invoice"
+// encuentra "Lista de comprobantes".
 const matches = (node: PermissionNode, term: string) =>
   node.name.toLowerCase().includes(term) ||
   node.code.toLowerCase().includes(term);
@@ -135,9 +137,6 @@ const PermissionTreeSelector = ({
             className="text-sm cursor-pointer flex items-baseline gap-2"
           >
             {node.name}
-            <span className="text-xs text-muted-foreground font-mono">
-              {node.code}
-            </span>
             {hasChildren && (
               <span className="text-xs text-muted-foreground">
                 ({selectedDescendants}/{totalDescendants})
