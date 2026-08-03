@@ -1,5 +1,4 @@
-import { RouteObject, Outlet } from "react-router-dom";
-import Settings from "./pages/Settings";
+import { RouteObject } from "react-router-dom";
 import UsersList from "./pages/UsersList";
 import CreateUser from "./pages/CreateUser";
 import UserFunctions from "./pages/UserFunctions";
@@ -19,37 +18,25 @@ import MovementClassesPage from "./pages/MovementClassesPage";
 
 
 export const settingsRoutes: RouteObject[] = [
-  {
-    path: "settings",
-    element: <Settings />,
-    children: [
-      { path: "users", element: <UsersList /> },
-      { path: "users/create", element: <CreateUser /> },
-      { path: "users/edit/:uid", element: <CreateUser /> },
-      { path: "users/functions", element: <UserFunctions /> },
-      { path: "roles", element: <RolesList /> },
-      { path: "roles/create", element: <CreateRole /> },
-      { path: "roles/edit/:id", element: <CreateRole /> },
-      { path: "warehouses", element: <WarehousesList /> },
-      { path: "warehouses/create", element: <CreateWarehouses /> },
-      { path: "warehouses/edit/:id", element: <CreateWarehouses /> },
-      { path: "branches", element: <BranchesList /> },
-      { path: "branches/create", element: <CreateBranch /> },
-      { path: "branches/edit/:id", element: <CreateBranch /> },
-      { path: "payment-methods", element: <PaymentMethodsList /> },
-      { path: "order-channel-types", element: <OrderChannelTypesList /> },
-      {
-        path: "order-channel-types/create",
-        element: <CreateOrderChannelType />,
-      },
-      {
-        path: "order-channel-types/edit/:id",
-        element: <CreateOrderChannelType />,
-      },
-      { path: "price-list", element: <PriceListPage /> },
-      { path: "stock-types", element: <StockTypePage /> },
-      { path: "business-accounts", element: <BusinessAccountPage /> },
-      { path: "movement-classes", element: <MovementClassesPage /> },
-    ],
-  },
+  { path: "settings/users", element: <UsersList /> },
+  { path: "settings/users/create", element: <CreateUser /> },
+  { path: "settings/users/edit/:uid", element: <CreateUser /> },
+  { path: "settings/users/functions", element: <UserFunctions /> },
+  { path: "settings/roles", element: <RolesList /> },
+  { path: "settings/roles/create", element: <CreateRole /> },
+  { path: "settings/roles/edit/:id", element: <CreateRole /> },
+  { path: "settings/warehouses", element: <WarehousesList /> },
+  { path: "settings/warehouses/create", element: <CreateWarehouses /> },
+  { path: "settings/warehouses/edit/:id", element: <CreateWarehouses /> },
+  { path: "settings/branches", element: <BranchesList /> },
+  { path: "settings/branches/create", element: <CreateBranch /> },
+  { path: "settings/branches/edit/:id", element: <CreateBranch /> },
+  { path: "settings/payment-methods", element: <PaymentMethodsList /> },
+  { path: "settings/order-channel-types", element: <OrderChannelTypesList /> },
+  { path: "settings/order-channel-types/create", element: <CreateOrderChannelType /> },
+  { path: "settings/order-channel-types/edit/:id", element: <CreateOrderChannelType /> },
+  { path: "settings/price-list", element: <PriceListPage /> },
+  { path: "settings/stock-types", element: <StockTypePage /> },
+  { path: "settings/business-accounts", element: <BusinessAccountPage /> },
+  { path: "settings/movement-classes", element: <MovementClassesPage /> },
 ];

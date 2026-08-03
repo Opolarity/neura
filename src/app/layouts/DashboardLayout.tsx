@@ -20,10 +20,7 @@ const DashboardLayout = () => {
           sidebarOpen ? "ml-64" : "ml-16"
         }`}
       >
-        <Header
-          toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          onSignOut={handleSignOut}
-        />
+        <Header onSignOut={handleSignOut} />
         <main className="p-6 min-w-0 overflow-hidden">
           <Outlet />
         </main>

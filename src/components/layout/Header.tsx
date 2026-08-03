@@ -8,12 +8,11 @@ import { useAuth } from "@/modules/auth";
 import { useNavigate } from "react-router-dom";
 import { usePOSSessionStatus } from "@/modules/pos/hooks/usePOSSessionStatus";
 import { POSOpenWarningDialog } from "@/modules/pos/components/POSOpenWarningDialog";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface HeaderProps {
   onSignOut: () => void;
-  toggleSidebar?: () => void;
-  accountName?: string;
-  roleName?: string;
 }
 
 const Header = ({ onSignOut }: HeaderProps) => {
@@ -21,6 +20,7 @@ const Header = ({ onSignOut }: HeaderProps) => {
   const { isOpen, loading } = usePOSSessionStatus();
   const [showPOSWarning, setShowPOSWarning] = useState(false);
   const { appUser, appUserLoading } = useAuth();
+  const isMobile = useIsMobile();
 
   return (
     <>
@@ -32,7 +32,10 @@ const Header = ({ onSignOut }: HeaderProps) => {
     <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {/* Espacio para buscador o toggle */}
+          {/* En escritorio el toggle vive en el header del propio sidebar; en
+              móvil ese header queda dentro del Sheet cerrado, así que el único
+              modo de abrirlo es este disparador. */}
+          {isMobile && <SidebarTrigger className="h-9 w-9" />}
         </div>
 
         <div className="flex items-center gap-4">

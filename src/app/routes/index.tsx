@@ -1,71 +1,47 @@
-import { useRoutes } from "react-router-dom";
-import { authRoutes } from "@/modules/auth/routes";
-import { dashboardRoutes } from "@/modules/dashboard/routes";
-import { productsRoutes } from "@/modules/products/products.routes";
-import { inventoryRoutes } from "@/modules/inventory/routes";
-import { salesRoutes } from "@/modules/sales";
-import { customersRoutes } from "@/modules/customers";
-import { returnsRoutes } from "@/modules/returns";
-import { invoicesRoutes } from "@/modules/invoices";
-import { posRoutes } from "@/modules/pos";
-import { movementsRoutes } from "@/modules/movements";
-import { reportsRoutes } from "@/modules/reports";
-import { settingsRoutes } from "@/modules/settings";
-import { ecommerceRoutes } from "@/modules/ecommerce";
-import { barcodesRoutes } from "@/modules/barcodes";
-import { discountsRoutes } from "@/modules/discounts";
-import { supportRoutes } from "@/modules/support";
+import { createBrowserRouter } from "react-router-dom";
+import DashboardLayout from "@/layouts/DashboardLayout";
+import Dashboard from "@/modules/dashboard/pages/Dashboard";
+import Login from "@/modules/auth/pages/Login";
 import NotFound from "@/shared/components/NotFound";
-import { ProtectedLayout } from "./ProtectedLayout";
-// InvoicePrintPage es una copia desfasada del ticket 80mm que hoy vive en
-// useInvoicePrint (src/modules/invoices/hooks/useInvoicePrint.ts): tamaños de fuente
-// viejos y consulta shipping_methods en lugar de shipping_costs. Ninguna vista
-// navegaba a estas rutas, así que quedan desconectadas (el archivo se conserva).
-// import ProtectedRoute from "./ProtectedRoute";
-// import InvoicePrintPage from "@/modules/invoices/pages/InvoicePrintPage";
+import PublicRoute from "./PublicRoute";
+import { ProtectedRoute } from "./ProtectedRoute";
+import ProtectedLayout from "./ProtectedLayout";
+import { APP_PERMISSIONS_CONFIG, getRoutes } from "@/app/data/permissions";
+import { supportRoutes } from "@/modules/support";
 
-const AppRouter = () => {
-  return useRoutes([
-    ...authRoutes,
-    // {
-    //   path: "/invoices/print/v/:viewerId",
-    //   element: (
-    //     <ProtectedRoute>
-    //       <InvoicePrintPage />
-    //     </ProtectedRoute>
-    //   ),
-    // },
-    // {
-    //   path: "/invoices/print/:id",
-    //   element: (
-    //     <ProtectedRoute>
-    //       <InvoicePrintPage />
-    //     </ProtectedRoute>
-    //   ),
-    // },
-    {
-      path: "/",
-      ...ProtectedLayout,
-      children: [
-        ...dashboardRoutes,
-        ...productsRoutes,
-        ...inventoryRoutes,
-        ...salesRoutes,
-        ...customersRoutes,
-        ...returnsRoutes,
-        ...invoicesRoutes,
-        ...posRoutes,
-        ...movementsRoutes,
-        ...reportsRoutes,
-        ...settingsRoutes,
-        ...ecommerceRoutes,
-        ...barcodesRoutes,
-        ...discountsRoutes,
-        ...supportRoutes,
-      ],
-    },
-    { path: "*", element: <NotFound /> },
-  ]);
-};
+// Único archivo de rutas. La navegación del sidebar es data aparte
+// (`src/app/data/permissions.tsx`); un enlace del sidebar puede apuntar a un
+// path que todavía no esté declarado aquí.
+const protectedRoutes = getRoutes(APP_PERMISSIONS_CONFIG).map((route) => ({
+  path: route.path,
+  element: (
+    <ProtectedRoute code={route.code}>
+      {route.element}
+    </ProtectedRoute>
+  ),
+}));
 
-export default AppRouter;
+export const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: (
+      <PublicRoute>
+        <Login />
+      </PublicRoute>
+    ),
+  },
+  {
+    element: (
+      <ProtectedLayout>
+        <DashboardLayout />
+      </ProtectedLayout>
+    ),
+    children: [
+      { index: true, element: <Dashboard /> },
+      ...protectedRoutes,
+      // Soporte queda fuera del sistema de permisos, pero sigue requiriendo sesión.
+      ...supportRoutes,
+      { path: "*", element: <NotFound /> },
+    ],
+  },
+]);

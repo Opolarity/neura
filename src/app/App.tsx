@@ -1,5 +1,5 @@
-import { BrowserRouter } from "react-router-dom";
-import AppRouter from "./routes";
+import { RouterProvider } from "react-router-dom";
+import { router } from "./routes";
 import { AuthProvider } from "@/modules/auth";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Toaster } from "@/components/ui/toaster";
@@ -19,11 +19,9 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <AppRouter />
-          </AuthProvider>
-        </BrowserRouter>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </TooltipProvider>
     </QueryProvider>
   );

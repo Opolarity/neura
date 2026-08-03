@@ -1993,6 +1993,30 @@ export type Database = {
           },
         ]
       }
+      permissions: {
+        Row: {
+          active: boolean
+          code: string
+          id: number
+          name: string
+          type: Database["public"]["Enums"]["permission_type_enum"]
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          id?: number
+          name: string
+          type: Database["public"]["Enums"]["permission_type_enum"]
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          id?: number
+          name?: string
+          type?: Database["public"]["Enums"]["permission_type_enum"]
+        }
+        Relationships: []
+      }
       pos_order: {
         Row: {
           amount_paid: number | null
@@ -3556,6 +3580,39 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_role_functions_role_id_roles_id"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_permissions: {
+        Row: {
+          id: number
+          permission_id: number
+          role_id: number
+        }
+        Insert: {
+          id?: number
+          permission_id: number
+          role_id: number
+        }
+        Update: {
+          id?: number
+          permission_id?: number
+          role_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_role_permissions_permission"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_role_permissions_role"
             columns: ["role_id"]
             isOneToOne: false
             referencedRelation: "roles"
@@ -5933,6 +5990,10 @@ export type Database = {
         Returns: Json
       }
       sp_get_user_details_by_uid: { Args: { p_uid: string }; Returns: Json }
+      sp_get_user_permissions: {
+        Args: Record<string, never>
+        Returns: Json
+      }
       sp_get_users: {
         Args: {
           p_branches?: number
@@ -6100,7 +6161,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      permission_type_enum: "component" | "route"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6227,6 +6288,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      permission_type_enum: ["component", "route"],
+    },
   },
 } as const

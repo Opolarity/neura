@@ -3,7 +3,21 @@ import AuthContext from "./AuthContext";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { getHeaderUserData } from "@/shared/services/service";
-import { UserPermissions, defaultPermissions, AppUser } from "../types";
+import { getParameter } from "@/modules/settings/services/Parameters.service";
+import { AppUser } from "../types";
+
+// sp_get_user_permissions está tipado como Json: puede llegar como array plano
+// de códigos, como array de objetos ({ code }) o envuelto en un objeto
+// ({ permissions: [...] }). getFilterSidebar necesita string[] sí o sí.
+function toPermissionCodes(data: unknown): string[] {
+  const list = Array.isArray(data)
+    ? data
+    : Object.values(data ?? {}).find(Array.isArray) ?? [];
+
+  return (list as unknown[])
+    .map((item) => (typeof item === "string" ? item : (item as any)?.code))
+    .filter((code): code is string => typeof code === "string");
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -11,42 +25,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [permissions, setPermissions] = useState<UserPermissions>(defaultPermissions);
+  const [permissionCodes, setPermissionCodes] = useState<string[]>([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [appUserLoading, setAppUserLoading] = useState(true);
+  const [companyShortName, setCompanyShortName] = useState("");
+  const [companyShortNameLoading, setCompanyShortNameLoading] = useState(true);
   // Evita recargar permisos cuando cambia el token (tab switch) sin cambio de usuario
   const lastFetchedUserId = useRef<string | null>('__unset__');
 
   const fetchPermissions = useCallback(async (currentUser: User | null) => {
     if (!currentUser) {
-      setPermissions({ views: [], functionIds: [], functionData: [], role: null, permissionsLoading: false });
+      setPermissionCodes([]);
+      setPermissionsLoading(false);
       return;
     }
-    setPermissions(prev => ({ ...prev, permissionsLoading: true }));
-    const { data, error } = await supabase.rpc('sp_get_user_views');
-    console.log('[AuthProvider] sp_get_user_views →', { data, error });
-    if (error || !data) {
-      console.error('[AuthProvider] SP falló:', error);
-      setPermissions({ views: [], functionIds: [], functionData: [], role: null, permissionsLoading: false });
-      return;
+    setPermissionsLoading(true);
+    // El finally es obligatorio: si una excepción deja permissionsLoading en
+    // true, ProtectedRoute devuelve null para siempre y las rutas protegidas
+    // quedan en blanco.
+    try {
+      const { data, error } = await supabase.rpc('sp_get_user_permissions');
+      console.log('[AuthProvider] sp_get_user_permissions →', { data, error });
+      if (error || !data) {
+        console.error('[AuthProvider] sp_get_user_permissions falló:', error);
+        setPermissionCodes([]);
+        return;
+      }
+      setPermissionCodes(toPermissionCodes(data));
+    } catch (error) {
+      console.error('[AuthProvider] sp_get_user_permissions lanzó:', error);
+      setPermissionCodes([]);
+    } finally {
+      setPermissionsLoading(false);
     }
-    const parsed = data as any;
-    const funcs = parsed.functions ?? [];
-    console.log('[AuthProvider] functions recibidas:', funcs.length, funcs.slice(0, 2));
-    console.log('[AuthProvider] views recibidas:', parsed.views);
-    setPermissions({
-      views: parsed.views ?? [],
-      functionIds: funcs.map((f: any) => f.id),
-      functionData: funcs,
-      role: {
-        roleIds: parsed.role?.role_id ?? [],
-        roleNames: parsed.role?.role_name ?? [],
-        isAdmin: parsed.role?.admin ?? false,
-        capabilityIds: parsed.role?.capability_id ?? [],
-        capabilityNames: parsed.role?.capability_name ?? [],
-      },
-      permissionsLoading: false,
-    });
   }, []);
 
   const fetchAppUser = useCallback(async (currentUser: User | null) => {
@@ -56,9 +68,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
     setAppUserLoading(true);
-    const profile = await getHeaderUserData(currentUser.id);
-    setAppUser(profile);
-    setAppUserLoading(false);
+    try {
+      const profile = await getHeaderUserData(currentUser.id);
+      setAppUser(profile);
+    } catch (error) {
+      console.error('[AuthProvider] getHeaderUserData falló:', error);
+      setAppUser(null);
+    } finally {
+      setAppUserLoading(false);
+    }
   }, []);
 
   const maybeRefetchUserData = useCallback((currentUser: User | null) => {
@@ -68,6 +86,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchPermissions(currentUser);
     fetchAppUser(currentUser);
   }, [fetchPermissions, fetchAppUser]);
+
+  // No depende del usuario: se carga una sola vez, no en cada cambio de sesión.
+  useEffect(() => {
+    getParameter("CompanyShortName")
+      .then((value) => {
+        if (value) setCompanyShortName(value);
+      })
+      .finally(() => setCompanyShortNameLoading(false));
+  }, []);
 
   useEffect(() => {
     const {
@@ -83,12 +110,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       maybeRefetchUserData(session?.user ?? null);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-      maybeRefetchUserData(session?.user ?? null);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        maybeRefetchUserData(session?.user ?? null);
+      })
+      .catch((error) => {
+        console.error('[AuthProvider] getSession falló:', error);
+      })
+      // Igual que arriba: si loading nunca baja, PublicRoute se queda en null
+      // y el login no llega a renderizarse.
+      .finally(() => setLoading(false));
 
     return () => subscription.unsubscribe();
   }, [maybeRefetchUserData]);
@@ -102,7 +135,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const signOut = async () => {
-    setPermissions({ views: [], functionIds: [], functionData: [], role: null, permissionsLoading: false });
+    setPermissionCodes([]);
+    setPermissionsLoading(false);
     setAppUser(null);
     setAppUserLoading(false);
     await supabase.auth.signOut({scope: 'local'});
@@ -116,9 +150,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     user,
     session,
     loading,
-    permissions,
+    permissionCodes,
+    permissionsLoading,
     appUser,
     appUserLoading,
+    companyShortName,
+    companyShortNameLoading,
     signIn,
     signOut,
     refreshPermissions,
