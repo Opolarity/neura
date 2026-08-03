@@ -15,7 +15,7 @@ import { supportRoutes } from "@/modules/support";
 const protectedRoutes = getRoutes(APP_PERMISSIONS_CONFIG).map((route) => ({
   path: route.path,
   element: (
-    <ProtectedRoute code={route.code}>
+    <ProtectedRoute key={route.path} code={route.code}>
       {route.element}
     </ProtectedRoute>
   ),

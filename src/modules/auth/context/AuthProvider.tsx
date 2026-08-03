@@ -8,13 +8,15 @@ import { AppUser } from "../types";
 
 // sp_get_user_permissions está tipado como Json: puede llegar como array plano
 // de códigos, como array de objetos ({ code }) o envuelto en un objeto
-// ({ permissions: [...] }). getFilterSidebar necesita string[] sí o sí.
+// ({ isAdmin, permissions: [...] }). getFilterSidebar necesita string[] sí o sí.
+// El campo se lee por nombre: buscar "el primer array del objeto" solo acertaba
+// por el orden en que jsonb serializa las claves.
 function toPermissionCodes(data: unknown): string[] {
-  const list = Array.isArray(data)
+  const raw = Array.isArray(data)
     ? data
-    : Object.values(data ?? {}).find(Array.isArray) ?? [];
+    : (data as { permissions?: unknown })?.permissions;
 
-  return (list as unknown[])
+  return (Array.isArray(raw) ? raw : [])
     .map((item) => (typeof item === "string" ? item : (item as any)?.code))
     .filter((code): code is string => typeof code === "string");
 }
