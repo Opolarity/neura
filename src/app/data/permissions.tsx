@@ -127,9 +127,9 @@ export const APP_PERMISSIONS_CONFIG = [
           { name: "Crear Movimiento", path: "/inventory/movements/create", code: "inventory_movements.create", element: <CreateMovement />, showSidebar: true, node: [] },
           { name: "Código de barras", path: "/bar-codes", code: "barcodes.list", element: <BarcodesPage />, showSidebar: true, node: [] },
           { name: "Solicitudes de movimiento", path: "/inventory/movement-requests", code: "inventory_movement_requests.list", element: <MovementRequests />, showSidebar: true, node: [] },
-          { name: "Crear solicitud", path: "/inventory/movement-requests/create", code: "inventory_movement_requests.create", element: <CreateMovementRequest />, showSidebar: true, node: [] },
+          { name: "Crear solicitud", path: "/inventory/movement-requests/create", code: "inventory_movement_requests.create", element: <CreateMovementRequest />, showSidebar: false, node: [] },
           { name: "Editar solicitud", path: "/inventory/movement-requests/edit/:id", code: "inventory_movement_requests.edit", element: <EditMovementRequest />, showSidebar: false, node: [] },
-          { name: "Enviar solicitud", path: "/inventory/movement-requests/send", code: "inventory_movement_requests.send", element: <CreateSendMovement />, showSidebar: true, node: [] },
+          { name: "Enviar solicitud", path: "/inventory/movement-requests/send", code: "inventory_movement_requests.send", element: <CreateSendMovement />, showSidebar: false, node: [] },
         ]
       },
 
@@ -162,12 +162,12 @@ export const APP_PERMISSIONS_CONFIG = [
           { name: "Añadir venta", path: "/sales/create", code: "sales.create", element: <CreateSale />, showSidebar: true, node: [] },
           { name: "Editar venta", path: "/sales/edit/:id", code: "sales.edit", element: <CreateSale />, showSidebar: false, node: [] },
           { name: "Envíos", path: "/shipping", code: "shipments.list", element: <Shipping />, showSidebar: true, node: [] },
-          { name: "Crear envío", path: "/shipping/create", code: "shipments.create", element: <CreateShipping />, showSidebar: true, node: [] },
+          { name: "Crear envío", path: "/shipping/create", code: "shipments.create", element: <CreateShipping />, showSidebar: false, node: [] },
           { name: "Editar envío", path: "/shipping/edit/:id", code: "shipments.edit", element: <CreateShipping />, showSidebar: false, node: [] },
           { name: "Sesiones de Caja", path: "/pos", code: "pos.list", element: <POSList />, showSidebar: true, node: [] },
-          { name: "Punto de Venta", path: "/pos/open", code: "pos.open", element: <SalesPOS />, showSidebar: true, node: [] },
+          { name: "Punto de Venta", path: "/pos/open", code: "pos.open", element: <SalesPOS />, showSidebar: false, node: [] },
           { name: "Canales de venta", path: "/settings/order-channel-types", code: "sales_channels.list", element: <OrderChannelTypesList />, showSidebar: true, node: [] },
-          { name: "Crear canal de venta", path: "/settings/order-channel-types/create", code: "sales_channels.create", element: <CreateOrderChannelType />, showSidebar: true, node: [] },
+          { name: "Crear canal de venta", path: "/settings/order-channel-types/create", code: "sales_channels.create", element: <CreateOrderChannelType />, showSidebar: false, node: [] },
           { name: "Editar canal de venta", path: "/settings/order-channel-types/edit/:id", code: "sales_channels.edit", element: <CreateOrderChannelType />, showSidebar: false, node: [] },
         ]
       },
@@ -183,7 +183,7 @@ export const APP_PERMISSIONS_CONFIG = [
   {
     code: "discounts.group", name: "Descuentos", node: [
       { name: "Reglas de precios", path: "/discounts/price-rules", code: "price_rules.list", element: <PriceRulesPage />, showSidebar: true, node: [] },
-      { name: "Crear regla de precio", path: "/discounts/price-rules/create", code: "price_rules.create", element: <PriceRuleFormPage />, showSidebar: true, node: [] },
+      { name: "Crear regla de precio", path: "/discounts/price-rules/create", code: "price_rules.create", element: <PriceRuleFormPage />, showSidebar: false, node: [] },
       { name: "Editar regla de precio", path: "/discounts/price-rules/edit/:id", code: "price_rules.edit", element: <PriceRuleFormPage />, showSidebar: false, node: [] },
       { name: "Cumpleaños clientes", path: "/discounts/birthday-notification", code: "birthday_notifications.list", element: <BirthdayNotification />, showSidebar: true, node: [] },
     ]
@@ -217,7 +217,7 @@ export const APP_PERMISSIONS_CONFIG = [
               { name: "Editar comprobante", path: "/invoices/edit/:invoiceId", code: "invoices.edit", element: <CreateInvoice />, showSidebar: false, node: [] },
               { name: "Ver comprobante", path: "/invoices/view/:invoiceId", code: "invoices.view", element: <CreateInvoice viewOnly />, showSidebar: false, node: [] },
               { name: "Series", path: "/invoices/series", code: "invoice_series.list", element: <InvoiceSeriesPage />, showSidebar: true, node: [] },
-              { name: "Crear serie", path: "/invoices/series/add", code: "invoice_series.create", element: <InvoiceSeriesFormPage />, showSidebar: true, node: [] },
+              { name: "Crear serie", path: "/invoices/series/add", code: "invoice_series.create", element: <InvoiceSeriesFormPage />, showSidebar: false, node: [] },
               { name: "Editar serie", path: "/invoices/series/edit/:serieId", code: "invoice_series.edit", element: <InvoiceSeriesFormPage />, showSidebar: false, node: [] },
             ]
           },
@@ -253,10 +253,10 @@ export const APP_PERMISSIONS_CONFIG = [
               { name: "Métodos de pago", path: "/settings/payment-methods", code: "payment_methods.list", element: <PaymentMethodsList />, showSidebar: true, node: [] },
               { name: "Cuentas bancarias", path: "/settings/business-accounts", code: "business_accounts.list", element: <BusinessAccountPage />, showSidebar: true, node: [] },
               { name: "Almacenes", path: "/settings/warehouses", code: "warehouses.list", element: <WarehousesList />, showSidebar: true, node: [] },
-              { name: "Crear almacén", path: "/settings/warehouses/create", code: "warehouses.create", element: <CreateWarehouses />, showSidebar: true, node: [] },
+              { name: "Crear almacén", path: "/settings/warehouses/create", code: "warehouses.create", element: <CreateWarehouses />, showSidebar: false, node: [] },
               { name: "Editar almacén", path: "/settings/warehouses/edit/:id", code: "warehouses.edit", element: <CreateWarehouses />, showSidebar: false, node: [] },
               { name: "Sucursales", path: "/settings/branches", code: "branches.list", element: <BranchesList />, showSidebar: true, node: [] },
-              { name: "Crear sucursal", path: "/settings/branches/create", code: "branches.create", element: <CreateBranch />, showSidebar: true, node: [] },
+              { name: "Crear sucursal", path: "/settings/branches/create", code: "branches.create", element: <CreateBranch />, showSidebar: false, node: [] },
               { name: "Editar sucursal", path: "/settings/branches/edit/:id", code: "branches.edit", element: <CreateBranch />, showSidebar: false, node: [] },
             ]
           },
