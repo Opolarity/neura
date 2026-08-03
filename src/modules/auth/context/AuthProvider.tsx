@@ -11,14 +11,29 @@ import { AppUser } from "../types";
 // ({ isAdmin, permissions: [...] }). getFilterSidebar necesita string[] sí o sí.
 // El campo se lee por nombre: buscar "el primer array del objeto" solo acertaba
 // por el orden en que jsonb serializa las claves.
+function toCodes(raw: unknown): string[] {
+  return (Array.isArray(raw) ? raw : [])
+    .map((item) => (typeof item === "string" ? item : (item as any)?.code))
+    .filter((code): code is string => typeof code === "string");
+}
+
 function toPermissionCodes(data: unknown): string[] {
   const raw = Array.isArray(data)
     ? data
     : (data as { permissions?: unknown })?.permissions;
 
-  return (Array.isArray(raw) ? raw : [])
-    .map((item) => (typeof item === "string" ? item : (item as any)?.code))
-    .filter((code): code is string => typeof code === "string");
+  return toCodes(raw);
+}
+
+// Permisos con type='component': acciones dentro de una vista. Se mantienen
+// SEPARADOS de permissionCodes — ProtectedRoute trata cada entrada de
+// permissionCodes como concesión de ruta y AppSidebar se la pasa a
+// getFilterSidebar, así que mezclarlas contaminaría ambos.
+// El fallback al array plano no aplica aquí: ese formato solo trae rutas.
+function toCapabilityCodes(data: unknown): string[] {
+  if (Array.isArray(data)) return [];
+
+  return toCodes((data as { capabilities?: unknown })?.capabilities);
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -28,6 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [permissionCodes, setPermissionCodes] = useState<string[]>([]);
+  const [capabilityCodes, setCapabilityCodes] = useState<string[]>([]);
   const [permissionsLoading, setPermissionsLoading] = useState(true);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [appUserLoading, setAppUserLoading] = useState(true);
@@ -39,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchPermissions = useCallback(async (currentUser: User | null) => {
     if (!currentUser) {
       setPermissionCodes([]);
+      setCapabilityCodes([]);
       setPermissionsLoading(false);
       return;
     }
@@ -52,12 +69,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (error || !data) {
         console.error('[AuthProvider] sp_get_user_permissions falló:', error);
         setPermissionCodes([]);
+        setCapabilityCodes([]);
         return;
       }
       setPermissionCodes(toPermissionCodes(data));
+      setCapabilityCodes(toCapabilityCodes(data));
     } catch (error) {
       console.error('[AuthProvider] sp_get_user_permissions lanzó:', error);
       setPermissionCodes([]);
+      setCapabilityCodes([]);
     } finally {
       setPermissionsLoading(false);
     }
@@ -138,6 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signOut = async () => {
     setPermissionCodes([]);
+    setCapabilityCodes([]);
     setPermissionsLoading(false);
     setAppUser(null);
     setAppUserLoading(false);
@@ -153,6 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     session,
     loading,
     permissionCodes,
+    capabilityCodes,
     permissionsLoading,
     appUser,
     appUserLoading,

@@ -16,10 +16,11 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Nombre</TableHead>
+                    <TableHead>Rol</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead>Funciones Asignadas</TableHead>
+                    <TableHead>Usuarios</TableHead>
+                    <TableHead>Permisos</TableHead>
+                    <TableHead>Capacidades</TableHead>
                     <TableHead>Acciones</TableHead>
                 </TableRow>
             </TableHeader>
@@ -27,7 +28,7 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                 {
                     loading && roles.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8">
+                            <TableCell colSpan={6} className="text-center py-8">
                                 <div className="flex items-center justify-center gap-2">
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                     Cargando roles...
@@ -36,14 +37,13 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                         </TableRow>
                     ) : roles.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground">
+                            <TableCell colSpan={6} className="text-center text-muted-foreground">
                                 No se encontraron roles
                             </TableCell>
                         </TableRow>
                     ) : (
                         roles.map((r) => (
                             <TableRow key={r.id}>
-                                <TableCell className="font-mono text-sm">{r.id}</TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -61,7 +61,19 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                                     </Badge>
                                 </TableCell>
                                 <TableCell>
-                                    <Badge variant="outline">{r.functionCount || 0} funciones</Badge>
+                                    <Badge variant="outline">
+                                        {r.userCount || 0}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant="outline">
+                                        {r.permissionCount || 0} {r.permissionCount === 1 ? 'permiso' : 'permisos'}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant="outline">
+                                        {r.capabilityCount || 0} {r.capabilityCount === 1 ? 'capacidad' : 'capacidades'}
+                                    </Badge>
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex gap-1">
