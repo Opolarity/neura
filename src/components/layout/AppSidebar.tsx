@@ -42,6 +42,29 @@ import {
 
 type SidebarModuleItem = ReturnType<typeof getFilterSidebar>[number];
 
+// El fondo, el texto inactivo y el hover salen de los tokens --sidebar-* (src/index.css).
+// Aquí solo van los estados que el token no puede expresar y los portales
+// (popover/tooltip), que al montarse fuera del sidebar no heredan sus colores.
+const MENU_BUTTON_COLORS = [
+  "data-[active=true]:bg-blue-600 data-[active=true]:text-white",
+  "data-[active=true]:shadow-lg data-[active=true]:shadow-blue-600/20",
+  "data-[state=open]:data-[active=false]:bg-white/5 data-[state=open]:data-[active=false]:text-white",
+  // El estado del ícono se escribe como variante arbitraria completa: encadenar
+  // `hover:` o `data-[...]:` con `[&>svg]` deja la condición sobre el <svg> y no
+  // sobre el botón, así que el selector nunca coincide.
+  "[&>svg]:transition-colors",
+  "[&:hover:not([data-active=true])>svg]:text-blue-400",
+  "[&[data-state=open][data-active=false]>svg]:text-blue-400",
+  "[&[data-active=true]>svg]:text-white",
+].join(" ");
+
+const SUB_BUTTON_COLORS =
+  "data-[active=true]:bg-blue-400/5 data-[active=true]:text-blue-400 data-[active=true]:font-semibold";
+
+const SUB_LABEL_COLORS = "text-slate-500";
+
+const TOOLTIP_COLORS = "border-0 bg-blue-600 text-white";
+
 function SidebarModule({
   item,
   pathname,
@@ -88,6 +111,7 @@ function SidebarModule({
                 <SidebarMenuButton
                   isActive={isModuleActive}
                   onClick={() => setTooltipOpen(false)}
+                  className={MENU_BUTTON_COLORS}
                 >
                   <item.icon />
                   <span>{item.name}</span>
@@ -95,12 +119,17 @@ function SidebarModule({
               </PopoverTrigger>
             </TooltipTrigger>
 
-            <TooltipContent side="right" align="center">
+            <TooltipContent side="right" align="center" className={TOOLTIP_COLORS}>
               {item.name}
             </TooltipContent>
           </Tooltip>
 
-          <PopoverContent side="right" align="start" sideOffset={18} className="w-56 p-1">
+          <PopoverContent
+            side="right"
+            align="start"
+            sideOffset={18}
+            className="w-56 border-white/10 bg-[#0f172a] p-1 text-white shadow-2xl shadow-black/50"
+          >
             {item.node.map((subItem) => {
               if ("path" in subItem) {
                 return (
@@ -109,7 +138,7 @@ function SidebarModule({
                     to={subItem.path}
                     onClick={() => onPopoverOpenChange(null)}
                     data-active={subItem.path === pathname}
-                    className="flex w-full items-center rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
+                    className={`flex w-full items-center rounded-md px-2 py-1.5 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-white ${SUB_BUTTON_COLORS}`}
                   >
                     {subItem.name}
                   </Link>
@@ -119,7 +148,7 @@ function SidebarModule({
               return (
                 <span
                   key={subItem.code}
-                  className="block px-2 py-1 text-xs font-medium text-muted-foreground"
+                  className={`block px-2 py-1 text-xs font-medium ${SUB_LABEL_COLORS}`}
                 >
                   {subItem.name}
                 </span>
@@ -144,7 +173,7 @@ function SidebarModule({
       <SidebarMenuItem>
 
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton isActive={isModuleActive}>
+          <SidebarMenuButton isActive={isModuleActive} className={MENU_BUTTON_COLORS}>
             <item.icon />
 
             <span>{item.name}</span>
@@ -167,6 +196,7 @@ function SidebarModule({
                     <SidebarMenuSubButton
                       asChild
                       isActive={subItem.path === pathname}
+                      className={SUB_BUTTON_COLORS}
                     >
                       <Link to={subItem.path}>
                         <span>{subItem.name}</span>
@@ -182,7 +212,7 @@ function SidebarModule({
 
               return (
                 <SidebarMenuSubItem key={subItem.code}>
-                  <span className="px-2 text-xs font-medium text-muted-foreground">
+                  <span className={`px-2 text-xs font-medium ${SUB_LABEL_COLORS}`}>
                     {subItem.name}
                   </span>
                 </SidebarMenuSubItem>
@@ -212,27 +242,27 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b">
+      <SidebarHeader className="border-b border-white/10">
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2 py-1.5">
             <button
               type="button"
               onClick={toggleSidebar}
-              className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"
+              className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-lg shadow-blue-900/20"
             >
               <Store className="size-4" />
             </button>
 
             <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-              <span className="truncate font-semibold">
+              <span className="truncate font-semibold text-white">
                 {companyShortNameLoading ? "ERP" : (companyShortName.toUpperCase() || "ERP")}
               </span>
-              <span className="truncate text-xs text-muted-foreground">
+              <span className="truncate text-xs text-slate-400">
                 ERP System
               </span>
             </div>
 
-            <SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
+            <SidebarTrigger className="text-slate-400 hover:bg-white/5 hover:text-white group-data-[collapsible=icon]:hidden" />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -245,9 +275,11 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === "/"}
+                  className={MENU_BUTTON_COLORS}
                   tooltip={{
                     children: "Dashboard",
                     hidden: state !== "collapsed" || isMobile || isAnyPopoverOpen,
+                    className: TOOLTIP_COLORS,
                   }}
                 >
                   <Link to="/">
@@ -272,15 +304,17 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t">
+      <SidebarFooter className="border-t border-white/10">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               isActive={pathname === "/support"}
+              className={MENU_BUTTON_COLORS}
               tooltip={{
                 children: "Soporte",
                 hidden: state !== "collapsed" || isMobile || isAnyPopoverOpen,
+                className: TOOLTIP_COLORS,
               }}
             >
               <Link to="/support">

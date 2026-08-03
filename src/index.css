@@ -38,19 +38,21 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Paleta oscura del sidebar (equivalente a los colores del ERP anterior) */
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-background: 222.2 47.4% 11.2%; /* #0f172a */
 
-    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-foreground: 215 20.2% 65.1%; /* slate-400 */
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary: 221.2 83.2% 53.3%; /* blue-600 */
 
-    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-primary-foreground: 0 0% 100%;
 
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-accent: 221.5 32.5% 15.7%; /* white/5 sobre #0f172a */
 
-    --sidebar-border: 220 13% 91%;
+    --sidebar-accent-foreground: 0 0% 100%;
+
+    --sidebar-border: 222.5 23.5% 20%; /* white/10 sobre #0f172a */
 
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
