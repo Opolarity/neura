@@ -199,7 +199,7 @@ function SidebarModule({
                       className={SUB_BUTTON_COLORS}
                     >
                       <Link to={subItem.path}>
-                        <span>{subItem.name}</span>
+                        <span className="text-sm">{subItem.name}</span>
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
@@ -212,7 +212,7 @@ function SidebarModule({
 
               return (
                 <SidebarMenuSubItem key={subItem.code}>
-                  <span className={`px-2 text-xs font-medium ${SUB_LABEL_COLORS}`}>
+                  <span className={`px-2 text-[10px] uppercase font-bold text-slate-500 ${SUB_LABEL_COLORS}`}>
                     {subItem.name}
                   </span>
                 </SidebarMenuSubItem>
