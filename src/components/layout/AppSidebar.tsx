@@ -128,7 +128,7 @@ function SidebarModule({
             side="right"
             align="start"
             sideOffset={18}
-            className="w-56 border-white/10 bg-[#0f172a] p-1 text-white shadow-2xl shadow-black/50"
+            className="max-h-[80vh] w-56 overflow-y-auto border-white/10 bg-[#0f172a] p-1 text-white shadow-2xl shadow-black/50 sidebar-scroll"
           >
             {item.node.map((subItem) => {
               if ("path" in subItem) {
@@ -267,7 +267,9 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      {/* `sidebar-scroll` (index.css) reproduce el scrollbar fino del sidebar
+          anterior; el primitivo solo trae `overflow-auto` y deja el nativo. */}
+      <SidebarContent className="sidebar-scroll overflow-x-hidden">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
