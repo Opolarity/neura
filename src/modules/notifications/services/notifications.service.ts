@@ -1,33 +1,25 @@
 import { supabase } from '@/integrations/supabase/client';
+import { adaptNotifications } from '../adapters/notifications.adapter';
 import type { Notification } from '../types/notification.types';
 
-export async function getNotifications(userId: string): Promise<Notification[]> {
-  const { data, error } = await supabase
-    .from('notifications')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(50);
+// La tabla notifications ya no se consulta directo: la visibilidad por
+// permisos y el estado leído/no leído (notification_reads) los resuelven las
+// RPCs SECURITY DEFINER.
 
+export async function getMyNotifications(): Promise<Notification[]> {
+  const { data, error } = await supabase.rpc('sp_get_my_notifications');
   if (error) throw error;
-  return (data ?? []) as Notification[];
+  return adaptNotifications(data);
 }
 
 export async function markAsRead(id: number): Promise<void> {
-  const { error } = await supabase
-    .from('notifications')
-    .update({ is_read: true, read_at: new Date().toISOString() })
-    .eq('id', id);
-
+  const { error } = await supabase.rpc('sp_mark_notification_read', {
+    p_notification_id: id,
+  });
   if (error) throw error;
 }
 
-export async function markAllAsRead(userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('notifications')
-    .update({ is_read: true, read_at: new Date().toISOString() })
-    .eq('user_id', userId)
-    .eq('is_read', false);
-
+export async function markAllAsRead(): Promise<void> {
+  const { error } = await supabase.rpc('sp_mark_all_notifications_read');
   if (error) throw error;
 }

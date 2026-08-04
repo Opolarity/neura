@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Bell } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,9 +8,11 @@ import { NotificationItem } from './NotificationItem';
 
 export function NotificationPanel() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  // Controlado para poder cerrarlo al navegar por deep-link desde un item.
+  const [open, setOpen] = useState(false);
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
           <Bell className="w-5 h-5" />
@@ -47,6 +50,7 @@ export function NotificationPanel() {
                 key={notification.id}
                 notification={notification}
                 onRead={markAsRead}
+                onNavigate={() => setOpen(false)}
               />
             ))}
           </ScrollArea>
