@@ -101,13 +101,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  const maybeRefetchUserData = useCallback((currentUser: User | null) => {
+  // El ERP comparte Supabase Auth con el ecommerce: solo los usuarios cuyo
+  // account tiene el tipo COL pueden usarlo. La RPC valida contra
+  // profiles → account_types → types en el backend.
+  const validateErpAccess = useCallback(async (): Promise<boolean> => {
+    const { data, error } = await supabase.rpc('sp_validate_erp_access');
+    if (error) {
+      console.error('[AuthProvider] sp_validate_erp_access falló:', error);
+      return false;
+    }
+    return (data as { allowed?: boolean } | null)?.allowed === true;
+  }, []);
+
+  const maybeRefetchUserData = useCallback(async (currentUser: User | null) => {
     const userId = currentUser?.id ?? null;
     if (userId === lastFetchedUserId.current) return;
     lastFetchedUserId.current = userId;
+    if (currentUser) {
+      const allowed = await validateErpAccess();
+      if (!allowed) {
+        // Sesión de un usuario sin tipo COL (ej: cliente del ecommerce):
+        // se expulsa. signOut deja los estados de carga en false, así que
+        // no queda splash colgado.
+        lastFetchedUserId.current = null;
+        await signOut();
+        return;
+      }
+    }
     fetchPermissions(currentUser);
     fetchAppUser(currentUser);
-  }, [fetchPermissions, fetchAppUser]);
+  }, [fetchPermissions, fetchAppUser, validateErpAccess]);
 
   // No depende del usuario: se carga una sola vez, no en cada cambio de sesión.
   useEffect(() => {
@@ -153,7 +176,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       email,
       password,
     });
-    return { error };
+    if (error) return { error };
+
+    const allowed = await validateErpAccess();
+    if (!allowed) {
+      await supabase.auth.signOut({ scope: 'local' });
+      return {
+        error: {
+          name: 'ErpAccessDenied',
+          code: 'erp_access_denied',
+          message: 'El usuario no tiene acceso al ERP',
+        },
+      };
+    }
+    return { error: null };
   };
 
   const signOut = async () => {
