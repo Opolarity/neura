@@ -13,6 +13,15 @@ import {
  */
 const DESIGN_HEIGHT = 20;
 
+const PT_TO_MM = 25.4 / 72;
+const PRICE_FONT_SIZE = 9;
+/** Alto del código de barras cuando el título entra en una línea. */
+const MAX_BARCODE_HEIGHT = 7;
+/** Por debajo de esto el código de barras deja de ser fiable al escanear. */
+const MIN_BARCODE_HEIGHT = 4;
+/** Espacio que ocupa la línea de SKU entre el código de barras y el precio. */
+const SKU_BLOCK_HEIGHT = 2.2;
+
 /**
  * Dibuja una etiqueta dentro del rectángulo (x, y, width, height) de la página actual.
  * Las coordenadas son relativas a la celda, así la misma etiqueta sirve para rollos
@@ -43,11 +52,20 @@ const drawLabel = (
   const titleLines = doc.splitTextToSize(title, width - 4);
   doc.text(titleLines, centerX, y + 3, { align: "center" });
 
+  // Línea de precio: anclada abajo, es la que marca hasta dónde puede llegar el resto
+  const priceBaseline = y + height - 1.5;
+  const priceTop = priceBaseline - PRICE_FONT_SIZE * PT_TO_MM;
+
   if (barcodeDataUrl) {
     // Barcode in the center
     const barcodeY = y + titleLines.length * 2 + 3;
     const barcodeWidth = width - 6;
-    const barcodeHeight = 7;
+    // Un título de dos líneas empuja el código de barras hacia abajo: se achica lo
+    // necesario para no pisar el precio, en vez de superponerse.
+    const barcodeHeight = Math.max(
+      MIN_BARCODE_HEIGHT,
+      Math.min(MAX_BARCODE_HEIGHT, priceTop - SKU_BLOCK_HEIGHT - barcodeY)
+    );
     doc.addImage(
       barcodeDataUrl,
       "PNG",
@@ -72,7 +90,7 @@ const drawLabel = (
   }
 
   // Price at the bottom
-  doc.setFontSize(7);
+  doc.setFontSize(PRICE_FONT_SIZE);
   doc.setFont("helvetica", "bold");
   doc.text(`S/.${ticketData.price.toFixed(2)}`, centerX, y + height - 1.5, {
     align: "center",

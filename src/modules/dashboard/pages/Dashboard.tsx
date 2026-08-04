@@ -2,19 +2,17 @@ import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Bell, BellOff, Clock, LogIn, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getParameter } from "@/modules/settings/services/Parameters.service";
+import { useAuth } from "@/modules/auth";
 import { formatDistanceToNow, format } from "date-fns";
 import { es } from "date-fns/locale";
 
 const Dashboard = () => {
-  const [companyName, setCompanyName] = useState("");
+  const { companyShortName, companyShortNameLoading } = useAuth();
   const [lastSignIn, setLastSignIn] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const init = async () => {
-      getParameter("CompanyShortName").then(setCompanyName);
-
       const { data: { user } } = await supabase.auth.getUser();
       setLastSignIn(user?.last_sign_in_at ?? null);
       setLoading(false);
@@ -34,7 +32,9 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Inicio</h1>
-        <p className="text-gray-600">Bienvenido al ERP de {companyName}</p>
+        <p className="text-gray-600">
+          Bienvenido al ERP de {companyShortNameLoading ? "..." : companyShortName}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

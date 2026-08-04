@@ -1,5 +1,10 @@
 import { PaginationState } from "@/shared/components/pagination/Pagination";
-import { Role, RolesApiResponse } from "../types/Roles.types";
+import {
+    Role,
+    RoleDetail,
+    RoleDetailApiResponse,
+    RolesApiResponse,
+} from "../types/Roles.types";
 
 export const rolesAdapter = (response: RolesApiResponse) => {
     const formattedRoles: Role[] = response.rolesdata.data.map(
@@ -8,7 +13,8 @@ export const rolesAdapter = (response: RolesApiResponse) => {
             name: item.name,
             userCount: item.users,
             isAdmin: item.is_admin,
-            functionCount: item.functions,
+            permissionCount: item.permissions ?? 0,
+            capabilityCount: item.capabilities ?? 0,
         })
     );
 
@@ -20,3 +26,13 @@ export const rolesAdapter = (response: RolesApiResponse) => {
 
     return { data: formattedRoles, pagination };
 };
+
+export const roleDetailAdapter = (
+    response: RoleDetailApiResponse
+): RoleDetail => ({
+    id: response.role.id,
+    name: response.role.name,
+    admin: response.role.admin,
+    permissions: response.permissionIds ?? [],
+    capabilities: response.capabilityIds ?? [],
+});

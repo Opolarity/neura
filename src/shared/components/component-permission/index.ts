@@ -1,0 +1,1 @@
+export { ComponentPermission } from "./ComponentPermission";

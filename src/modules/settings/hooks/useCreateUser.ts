@@ -39,7 +39,7 @@ interface FormData {
     profiles_id: string;
 }
 
-const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null) => {
+const useCreateUser = (uid?: string, isEdit?: boolean) => {
     const navigate = useNavigate();
     const { toast } = useToast();
 
@@ -51,6 +51,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null
     const [showPasswordField, setShowPasswordField] = useState(false);
     const [isSearchingDocument, setIsSearchingDocument] = useState(false);
     const [isDocumentFound, setIsDocumentFound] = useState(false);
+    const [recordId, setRecordId] = useState<number | null>(null);
 
     // Options state
     const [roles, setRoles] = useState<FilterOption[]>([]);
@@ -174,13 +175,13 @@ const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null
 
     // Load user data when editing
     useEffect(() => {
-        if (isEdit && id && !optionsLoading) {
+        if (isEdit && uid && !optionsLoading) {
             const loadUserData = async () => {
                 try {
                     setFetchingUser(true);
-                    console.log("=== Fetching user for ID:", id, "===");
+                    console.log("=== Fetching user for UID:", uid, "===");
 
-                    const response = await getUserByIdApi(parseInt(id), uid || undefined);
+                    const response = await getUserByIdApi(uid);
                     console.log("=== Raw API Response ===", JSON.stringify(response, null, 2));
 
                     if (!response) {
@@ -188,6 +189,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null
                     }
 
                     const user = response.user || response;
+                    setRecordId(user.id ?? null);
 
                     const profileData = user.profiles || user.profile;
                     const profile = Array.isArray(profileData) ? profileData[0] : profileData;
@@ -271,7 +273,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null
 
             loadUserData();
         }
-    }, [isEdit, id, optionsLoading]);
+    }, [isEdit, uid, optionsLoading]);
 
     // Load states when country changes
     useEffect(() => {
@@ -477,7 +479,7 @@ const useCreateUser = (id?: string | null, isEdit?: boolean, uid?: string | null
             console.log("=== Submitting payload ===", JSON.stringify(payload, null, 2));
 
             if (isEdit) {
-                await updateUserApi(parseInt(id!), formData.profiles_id, payload);
+                await updateUserApi(recordId!, uid!, payload);
                 toast({
                     title: "Éxito",
                     description: "Usuario actualizado correctamente",

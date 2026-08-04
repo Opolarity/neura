@@ -1,46 +1,238 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import {
+  createRoleApi,
+  roleDetailApi,
+  updateRoleApi,
+} from "../services/Roles.services";
+import { permissionsCatalogApi } from "../services/Permissions.services";
+import { roleDetailAdapter } from "../adapters/Roles.adapters";
+import { permissionsCatalogAdapter } from "../adapters/Permissions.adapters";
+import { PermissionTree } from "../types/Permissions.types";
 import { RolePayload } from "../types/Roles.types";
-import { createRoleApi, updateRoleApi } from "../services/Roles.services";
-import { useState } from "react";
 
-const useCreateRole = () => {
-  const [role, setRole] = useState<RolePayload>({
-    id: undefined,
+const EMPTY_TREE: PermissionTree = {
+  permissions: [],
+  capabilities: [],
+  allPermissionIds: [],
+  allCapabilityIds: [],
+  parentOf: new Map(),
+  descendantsOf: new Map(),
+};
+
+const useCreateRole = (roleId?: number) => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const isEdit = Boolean(roleId);
+
+  const [formData, setFormData] = useState<RolePayload>({
     name: "",
     admin: false,
-    functions: [],
+    permissions: [],
     capabilities: [],
   });
-  const [createLoading, setCreateLoading] = useState(false);
-  const [updateLoading, setUpdateLoading] = useState(false);
+  const [tree, setTree] = useState<PermissionTree>(EMPTY_TREE);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [permissionSearch, setPermissionSearch] = useState("");
+  const [capabilitySearch, setCapabilitySearch] = useState("");
 
-  const createRole = async (role: RolePayload) => {
-    setCreateLoading(true);
-    try {
-      await createRoleApi(role);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setCreateLoading(false);
-    }
+  /**
+   * Selección vigente antes de marcar "Rol de Administrador". Permite
+   * restaurarla al desmarcarlo, en lugar de dejar el rol en cero como hacía la
+   * versión anterior.
+   */
+  const previousSelection = useRef<{
+    permissions: number[];
+    capabilities: number[];
+  }>({ permissions: [], capabilities: [] });
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [catalogResponse, detailResponse] = await Promise.all([
+          permissionsCatalogApi(),
+          isEdit && roleId ? roleDetailApi(roleId) : Promise.resolve(null),
+        ]);
+
+        const permissionTree = permissionsCatalogAdapter(catalogResponse);
+        setTree(permissionTree);
+
+        if (detailResponse) {
+          const detail = roleDetailAdapter(detailResponse);
+          previousSelection.current = {
+            permissions: detail.permissions,
+            capabilities: detail.capabilities,
+          };
+          setFormData({
+            id: detail.id,
+            name: detail.name,
+            admin: detail.admin,
+            // Un rol admin no guarda asignaciones: se muestran todas marcadas.
+            permissions: detail.admin
+              ? permissionTree.allPermissionIds
+              : detail.permissions,
+            capabilities: detail.admin
+              ? permissionTree.allCapabilityIds
+              : detail.capabilities,
+          });
+        }
+      } catch (error) {
+        console.error("Error loading role form:", error);
+        toast({
+          title: "Error",
+          description: isEdit
+            ? "No se pudieron cargar el rol y los permisos"
+            : "No se pudieron cargar los permisos",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [roleId, isEdit]);
+
+  const handleNameChange = (name: string) => {
+    setFormData((prev) => ({ ...prev, name }));
   };
 
-  const updateRole = async (role: RolePayload) => {
-    setUpdateLoading(true);
+  /**
+   * Cascada de selección: marcar un hijo marca toda su cadena de padres (un
+   * permiso hijo sin su padre no tiene sentido) y desmarcar un padre desmarca
+   * a todos sus descendientes.
+   */
+  const buildNextSelection = useCallback(
+    (current: number[], id: number) => {
+      const next = new Set(current);
+
+      if (next.has(id)) {
+        next.delete(id);
+        (tree.descendantsOf.get(id) ?? []).forEach((childId) =>
+          next.delete(childId)
+        );
+      } else {
+        next.add(id);
+        let parentId = tree.parentOf.get(id) ?? null;
+        while (parentId !== null && !next.has(parentId)) {
+          next.add(parentId);
+          parentId = tree.parentOf.get(parentId) ?? null;
+        }
+      }
+
+      return Array.from(next);
+    },
+    [tree]
+  );
+
+  const togglePermission = useCallback(
+    (id: number) => {
+      setFormData((prev) => ({
+        ...prev,
+        permissions: buildNextSelection(prev.permissions, id),
+      }));
+    },
+    [buildNextSelection]
+  );
+
+  const toggleCapability = useCallback(
+    (id: number) => {
+      setFormData((prev) => ({
+        ...prev,
+        capabilities: buildNextSelection(prev.capabilities, id),
+      }));
+    },
+    [buildNextSelection]
+  );
+
+  const handleToggleAdmin = (isAdmin: boolean) => {
+    setFormData((prev) => {
+      if (isAdmin) {
+        previousSelection.current = {
+          permissions: prev.permissions,
+          capabilities: prev.capabilities,
+        };
+        return {
+          ...prev,
+          admin: true,
+          permissions: tree.allPermissionIds,
+          capabilities: tree.allCapabilityIds,
+        };
+      }
+
+      return {
+        ...prev,
+        admin: false,
+        permissions: previousSelection.current.permissions,
+        capabilities: previousSelection.current.capabilities,
+      };
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name.trim()) {
+      toast({
+        title: "Error",
+        description: "El nombre del rol es requerido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
     try {
-      await updateRoleApi(role);
-    } catch (error) {
-      console.error(error);
+      // Un rol admin recibe todos los permisos por su flag; sp_save_role
+      // ignora el array en ese caso, así que no se envía nada.
+      const payload: RolePayload = {
+        name: formData.name.trim(),
+        admin: formData.admin,
+        permissions: formData.admin ? [] : formData.permissions,
+        capabilities: formData.admin ? [] : formData.capabilities,
+      };
+
+      if (isEdit && roleId) {
+        await updateRoleApi({ ...payload, id: roleId });
+        toast({ title: "Éxito", description: "Rol actualizado correctamente" });
+      } else {
+        await createRoleApi(payload);
+        toast({ title: "Éxito", description: "Rol creado correctamente" });
+      }
+
+      navigate("/settings/roles");
+    } catch (error: any) {
+      console.error("Error saving role:", error);
+      toast({
+        title: "Error",
+        description: error?.message || "No se pudo guardar el rol",
+        variant: "destructive",
+      });
     } finally {
-      setUpdateLoading(false);
+      setSaving(false);
     }
   };
 
   return {
-    createLoading,
-    updateLoading,
-    role,
-    updateRole,
-    createRole,
+    isEdit,
+    formData,
+    loading,
+    saving,
+    permissionNodes: tree.permissions,
+    capabilityNodes: tree.capabilities,
+    permissionSearch,
+    capabilitySearch,
+    setPermissionSearch,
+    setCapabilitySearch,
+    handleNameChange,
+    handleToggleAdmin,
+    togglePermission,
+    toggleCapability,
+    handleSubmit,
   };
 };
 

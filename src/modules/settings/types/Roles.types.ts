@@ -5,7 +5,14 @@ export interface RolesApiResponse {
       name: string;
       users: number;
       is_admin: boolean;
-      functions: number;
+      permissions: number;
+      capabilities: number;
+      /**
+       * Alias transitorio que sp_get_roles mantiene con el mismo valor que
+       * `permissions`, para cubrir la ventana entre aplicar la migración y
+       * desplegar este build. Eliminable después.
+       */
+      functions?: number;
     }>;
     page: {
       page: number;
@@ -20,7 +27,8 @@ export interface Role {
   name: string;
   userCount: number;
   isAdmin: boolean;
-  functionCount: number;
+  permissionCount: number;
+  capabilityCount: number;
 }
 
 export interface RolesFilters {
@@ -43,6 +51,26 @@ export interface RolePayload {
   id?: number;
   name: string;
   admin: boolean;
-  functions: number[];
+  /** ids de `permissions` con type = 'route' */
+  permissions: number[];
+  /** ids de `permissions` con type = 'component' */
+  capabilities: number[];
+}
+
+export interface RoleDetailApiResponse {
+  role: {
+    id: number;
+    name: string;
+    admin: boolean;
+  };
+  permissionIds: number[];
+  capabilityIds: number[];
+}
+
+export interface RoleDetail {
+  id: number;
+  name: string;
+  admin: boolean;
+  permissions: number[];
   capabilities: number[];
 }

@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/utils";
 import {
+  RoleDetailApiResponse,
   RolesApiResponse,
   RolesFilters,
   RolePayload,
@@ -28,6 +29,22 @@ export const rolesApi = async (
       },
     }
   );
+};
+
+export const roleDetailApi = async (
+  roleId: number,
+): Promise<RoleDetailApiResponse> => {
+  const { data, error } = await supabase.functions.invoke("get-role-details", {
+    body: { roleId },
+  });
+
+  if (error) {
+    console.error("Invoke error in roleDetailApi:", error);
+    throw error;
+  }
+  if (data?.error) throw new Error(data.error);
+
+  return data;
 };
 
 export const deleteRoleApi = async (roleId: number) => {

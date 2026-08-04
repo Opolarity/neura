@@ -1,1 +1,0 @@
-export { priceListRoutes } from "./routes";
