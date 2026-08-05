@@ -42,7 +42,9 @@ import {
   updateOrder,
   updateOrderSituation,
   fetchOrderPaidAmount,
+  fetchOrderRefunds,
   type OrderRefund,
+  type OrderRefundLine,
   uploadPaymentVoucher,
   uploadNoteImage,
   updatePaymentVoucherUrl,
@@ -154,6 +156,10 @@ export const useCreateSale = () => {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelPaidAmount, setCancelPaidAmount] = useState(0);
   const [cancelling, setCancelling] = useState(false);
+
+  // Devoluciones de dinero ya registradas para esta orden (se muestran en el
+  // resumen; vienen de retornos con reembolso o de una cancelación)
+  const [orderRefunds, setOrderRefunds] = useState<OrderRefundLine[]>([]);
   const [orderSaleType, setOrderSaleType] = useState<{ id: number; name: string } | null>(null);
 
   // Dropdown data
@@ -652,10 +658,14 @@ export const useCreateSale = () => {
     try {
       setLoading(true);
 
-      // Parallel calls: order data + products
-      const [data, productsData] = await Promise.all([
+      // Parallel calls: order data + products + devoluciones registradas
+      const [data, productsData, refunds] = await Promise.all([
         fetchSaleById(id),
         fetchSaleByIdProducts(id),
+        fetchOrderRefunds(id).catch((e) => {
+          console.error("Error cargando devoluciones de la orden:", e);
+          return [];
+        }),
       ]);
       const adapted = adaptSaleById(data);
       const adaptedProducts = adaptSaleByIdProducts(productsData);
@@ -663,6 +673,7 @@ export const useCreateSale = () => {
       // Set all state at once
       setFormData(adapted.formData);
       setProducts(adaptedProducts);
+      setOrderRefunds(refunds);
       setOriginalProducts(adaptedProducts);
       setPayments(
         adapted.payments.length > 0
@@ -2295,6 +2306,8 @@ export const useCreateSale = () => {
     isComSituation: !orderId ? false : isComSituation,
     isVirSituation: !orderId ? false : isVirSituation,
     filteredSituations,
+
+    orderRefunds,
 
     // Cancelación de pedido
     canCancelOrder,
