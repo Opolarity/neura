@@ -504,9 +504,11 @@ export const useCreateSale = () => {
       (s) =>
         s.order != null &&
         s.order >= baseSituation.order &&
-        // Cancelar deja de ser una opción del combo: tiene su propio flujo
-        // (libera stock y, si hubo cobro, devuelve el dinero).
-        s.code !== "CAN-HDN",
+        // Cancelar tiene su propio flujo (libera stock y, si hubo cobro,
+        // devuelve el dinero) y Reembolsado lo pone el sistema al registrar
+        // un retorno: ninguno se elige a mano desde el combo.
+        s.code !== "CAN-HDN" &&
+        s.code !== "REB-HDN",
     );
   }, [savedOrderSituation, orderSituation, salesData?.situations, orderId]);
 
