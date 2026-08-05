@@ -3,7 +3,7 @@
 // Main logic for Create/Edit Sale page
 // =============================================
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { applyPriceRules, type GiftItem } from "../rules/applyPriceRules";
 import { getPriceListIsActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { useNavigate, useParams } from "react-router-dom";
@@ -19,8 +19,6 @@ import type {
   ProductVariation,
   PriceList,
   LocalNote,
-  PaginatedProductVariation,
-  PaginationMeta,
   OrdersSituationsById,
   BusinessAccountOption,
   OrderDiscount,
@@ -43,7 +41,6 @@ import {
   createOrder,
   updateOrder,
   updateOrderSituation,
-  fetchSaleProducts,
   uploadPaymentVoucher,
   uploadNoteImage,
   updatePaymentVoucherUrl,
@@ -175,21 +172,7 @@ export const useCreateSale = () => {
   const [appliedRules, setAppliedRules] = useState<{ message: string; rule_name: string }[]>([]);
   const [selectedVariation, setSelectedVariation] =
     useState<ProductVariation | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedStockTypeId, setSelectedStockTypeId] = useState<string>("");
-
-  // Server-side product pagination state
-  const [paginatedProducts, setPaginatedProducts] = useState<
-    PaginatedProductVariation[]
-  >([]);
-  const [productPage, setProductPage] = useState(1);
-  const [productPagination, setProductPagination] = useState<PaginationMeta>({
-    page: 1,
-    size: 10,
-    total: 0,
-  });
-  const [productsLoading, setProductsLoading] = useState(false);
-  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Notes state (chat-style)
   const [notes, setNotes] = useState<LocalNote[]>([]);
@@ -258,31 +241,6 @@ export const useCreateSale = () => {
     }
   }, [formData.withShipping]);
 
-  // Debounced search effect - also re-load when stockTypeId or warehouseId changes
-  useEffect(() => {
-    // Don't load products until we have the warehouse ID
-    if (!userWarehouseId) return;
-
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-    }
-    searchDebounceRef.current = setTimeout(() => {
-      setProductPage(1);
-      loadProducts(
-        1,
-        searchQuery,
-        selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
-        userWarehouseId,
-      );
-    }, 300);
-
-    return () => {
-      if (searchDebounceRef.current) {
-        clearTimeout(searchDebounceRef.current);
-      }
-    };
-  }, [searchQuery, selectedStockTypeId, userWarehouseId]);
-
   useEffect(() => {
     const load = async () => {
       if (createdOrderId) {
@@ -320,24 +278,6 @@ export const useCreateSale = () => {
     formData.cityId,
     formData.neighborhoodId,
   ]);
-
-  // Computed: Filtered variations from server-side paginated data (for dropdown display)
-  const filteredVariations = useMemo(() => {
-    return paginatedProducts.map((p) => ({
-      id: p.variationId,
-      sku: p.sku,
-      productId: p.productId,
-      productTitle: p.productTitle,
-      imageUrl: p.imageUrl,
-      stock: p.stock,
-      terms: p.terms,
-      prices: p.prices.map((pr) => ({
-        priceListId: pr.price_list_id,
-        price: pr.price,
-        salePrice: pr.sale_price,
-      })),
-    }));
-  }, [paginatedProducts]);
 
   // Computed: Filtered states by country
   const filteredStates = useMemo(() => {
@@ -596,58 +536,6 @@ export const useCreateSale = () => {
       console.error("Error loading shipping costs:", error);
     }
   };
-
-  // Load products with server-side pagination
-  const loadProducts = async (
-    page: number,
-    search: string,
-    stockTypeId?: number,
-    warehouseId?: number,
-  ) => {
-    try {
-      setProductsLoading(true);
-      const result = await fetchSaleProducts({
-        page,
-        size: 10,
-        search: search || undefined,
-        stockTypeId,
-        warehouseId,
-      });
-
-      // Map response with default values for imageUrl and stock
-      const mappedProducts = (result.data || []).map((p: any) => ({
-        ...p,
-        imageUrl: p.imageUrl ?? null,
-        stock: p.stock ?? 0,
-        stockTypeId: p.stockTypeId ?? 0,
-      }));
-      setPaginatedProducts(mappedProducts);
-      setProductPagination(result.page);
-    } catch (error) {
-      console.error("Error loading products:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los productos",
-        variant: "destructive",
-      });
-    } finally {
-      setProductsLoading(false);
-    }
-  };
-
-  // Handle product page change
-  const handleProductPageChange = useCallback(
-    (newPage: number) => {
-      setProductPage(newPage);
-      loadProducts(
-        newPage,
-        searchQuery,
-        selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
-        userWarehouseId || undefined,
-      );
-    },
-    [searchQuery, selectedStockTypeId, userWarehouseId],
-  );
 
   // Load price lists
   const loadPriceLists = async () => {
@@ -2288,13 +2176,7 @@ export const useCreateSale = () => {
     salesData,
     clientFound,
     selectedVariation,
-    searchQuery,
     selectedStockTypeId,
-
-    // Server-side pagination state
-    productPage,
-    productPagination,
-    productsLoading,
 
     // Notes state (chat-style)
     notes,
@@ -2316,7 +2198,6 @@ export const useCreateSale = () => {
     // Computed
     allShippingCosts,
     availableShippingCosts,
-    filteredVariations,
     filteredStates,
     filteredCities,
     filteredNeighborhoods,
@@ -2353,7 +2234,6 @@ export const useCreateSale = () => {
     // Actions
     setOrderSituation,
     setSelectedVariation,
-    setSearchQuery,
     handleStockTypeChange,
     handleInputChange,
     handlePaymentChange,
@@ -2362,7 +2242,6 @@ export const useCreateSale = () => {
     updatePaymentInList,
     handleSearchClient,
     handleSelectPriceList,
-    handleProductPageChange,
     handleAnonymousToggle,
     handleConsignmentToggle,
     handleSendToFranchisee,

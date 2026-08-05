@@ -166,7 +166,7 @@ export interface ProductVariation {
   sku: string;
   productId: number;
   productTitle: string;
-  imageUrl?: string | null;
+  imageUrl: string | null;
   stock: number;
   terms: Array<{
     id: number;
