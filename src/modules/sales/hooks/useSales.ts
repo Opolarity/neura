@@ -36,12 +36,16 @@ export const useSales = () => {
     startDate: null,
     endDate: null,
     consignament: null,
+    paymentStatus: null,
     order: "date_desc",
     page: 1,
     size: 20,
   });
   const [selectedSales, setSelectedSales] = useState<number[]>([]);
   const filtersRef = useRef(filters);
+  // Descarta respuestas obsoletas: loadData se dispara desde el search
+  // debounced, page, order y size, y ahora encadena una segunda consulta.
+  const requestIdRef = useRef(0);
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -52,6 +56,7 @@ export const useSales = () => {
   }, []);
 
   const loadData = useCallback(async (currentFilters: SalesFilters) => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
 
@@ -59,10 +64,13 @@ export const useSales = () => {
       const response = await fetchSalesList(currentFilters);
       const { sales: salesData, pagination: paginationData } =
         salesListAdapter(response);
+
+      if (requestId !== requestIdRef.current) return;
       setSales(salesData);
       setPagination(paginationData);
     } catch (err) {
       console.error("Error loading sales:", err);
+      if (requestId !== requestIdRef.current) return;
       setError("Ocurrió un error al cargar las ventas");
       toast({
         title: "Error",
@@ -70,7 +78,7 @@ export const useSales = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, [toast]);
 
@@ -173,6 +181,7 @@ export const useSales = () => {
       startDate: null,
       endDate: null,
       consignament: null,
+      paymentStatus: null,
       order: "date_desc",
       page: 1,
       size: filtersRef.current.size,
@@ -196,7 +205,8 @@ export const useSales = () => {
     filters.saleType !== null ||
     filters.startDate !== null ||
     filters.endDate !== null ||
-    filters.consignament !== null;
+    filters.consignament !== null ||
+    filters.paymentStatus !== null;
 
   return {
     sales,

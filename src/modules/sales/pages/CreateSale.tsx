@@ -60,6 +60,8 @@ import { useCreateSale } from "../hooks/useCreateSale";
 import { ProductVariationSelector } from "@/shared/components/product-variation-selector";
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
+import { getSalePaymentStatus } from "../utils/salePaymentStatus";
+import { SalePaymentStatusBadge } from "../components/sales/SalePaymentStatusBadge";
 import { generateDeliveryLabel } from "../utils/generateDeliveryLabel";
 import { generateRemisionGuide } from "../utils/generateRemisionGuide";
 import { generateSaleExcel } from "../utils/generateSaleExcel";
@@ -1367,6 +1369,11 @@ const CreateSale = () => {
               <CardTitle className="text-lg">Estado del Pedido</CardTitle>
             </CardHeader>
             <CardContent className="pb-2">
+              <div className="mb-2">
+                <SalePaymentStatusBadge
+                  status={getSalePaymentStatus(payments, total)}
+                />
+              </div>
               <Select value={orderSituation} onValueChange={handleSituationChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar estado" />
