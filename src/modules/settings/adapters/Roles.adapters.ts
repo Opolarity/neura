@@ -14,7 +14,6 @@ export const rolesAdapter = (response: RolesApiResponse) => {
             userCount: item.users,
             isAdmin: item.is_admin,
             permissionCount: item.permissions ?? 0,
-            capabilityCount: item.capabilities ?? 0,
         })
     );
 
@@ -34,5 +33,4 @@ export const roleDetailAdapter = (
     name: response.role.name,
     admin: response.role.admin,
     permissions: response.permissionIds ?? [],
-    capabilities: response.capabilityIds ?? [],
 });
