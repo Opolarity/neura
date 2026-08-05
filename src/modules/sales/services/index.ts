@@ -235,30 +235,6 @@ export const fetchOrderPaidAmount = async (orderId: number): Promise<number> => 
   return (data || []).reduce((sum, p: any) => sum + Number(p.amount || 0), 0);
 };
 
-// Devoluciones de dinero de la orden: return_payments negativos de sus
-// retornos. Cubre tanto la cancelación con reembolso (retorno sin ítems) como
-// los retornos normales con devolución.
-export interface OrderRefundLine {
-  amount: number;
-  payment_method_id: number;
-}
-
-export const fetchOrderRefunds = async (
-  orderId: number,
-): Promise<OrderRefundLine[]> => {
-  const { data, error } = await supabase
-    .from("return_payments")
-    .select("amount, payment_method_id, returns!inner(order_id)")
-    .eq("returns.order_id", orderId)
-    .lt("amount", 0);
-
-  if (error) throw error;
-  return (data || []).map((r: any) => ({
-    amount: Number(r.amount || 0),
-    payment_method_id: Number(r.payment_method_id),
-  }));
-};
-
 // Fetch order by ID (for editing)
 export const fetchOrderById = async (orderId: number) => {
   const { data, error } = await supabase

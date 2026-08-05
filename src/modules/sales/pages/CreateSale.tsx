@@ -55,7 +55,6 @@ import {
   Image as ImageIcon,
   Warehouse,
   Lock,
-  Undo2,
 } from "lucide-react";
 import { useCreateSale } from "../hooks/useCreateSale";
 import { ProductVariationSelector } from "@/shared/components/product-variation-selector";
@@ -116,7 +115,6 @@ const CreateSale = () => {
     isComSituation,
     isVirSituation,
     filteredSituations,
-    orderRefunds,
     handleSituationChange,
     cancelModalOpen,
     setCancelModalOpen,
@@ -1827,44 +1825,7 @@ const CreateSale = () => {
                 </div>
               )}
 
-              {/* Devoluciones de dinero registradas para esta orden */}
-              {orderRefunds.length > 0 && (
-                <div className="space-y-2 p-3 rounded-md ring-1 bg-red-50 dark:bg-red-900/20 ring-red-400 dark:ring-red-600">
-                  <div className="flex items-center gap-2">
-                    <Undo2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                    <Label className="text-sm font-medium text-red-700 dark:text-red-300">
-                      Devolución de dinero
-                    </Label>
-                  </div>
-
-                  {orderRefunds.length > 1 &&
-                    orderRefunds.map((r, i) => {
-                      const method = allPaymentMethods.find(
-                        (pm) => pm.id === r.payment_method_id,
-                      );
-                      return (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between text-sm text-red-700 dark:text-red-300"
-                        >
-                          <span>{method?.name || "Método"}</span>
-                          <span>- {formatCurrency(Math.abs(r.amount))}</span>
-                        </div>
-                      );
-                    })}
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-red-700 dark:text-red-300">
-                      Monto devuelto
-                    </span>
-                    <span className="font-semibold text-red-600 dark:text-red-400">
-                      - {formatCurrency(
-                        orderRefunds.reduce((s, r) => s + Math.abs(r.amount), 0),
-                      )}
-                    </span>
-                  </div>
-                </div>
-              )}
+              {/* Las devoluciones de dinero se listan en "Pagos de Retorno" */}
 
               <input
                 ref={existingPaymentVoucherInputRef}

@@ -42,9 +42,7 @@ import {
   updateOrder,
   updateOrderSituation,
   fetchOrderPaidAmount,
-  fetchOrderRefunds,
   type OrderRefund,
-  type OrderRefundLine,
   uploadPaymentVoucher,
   uploadNoteImage,
   updatePaymentVoucherUrl,
@@ -157,9 +155,6 @@ export const useCreateSale = () => {
   const [cancelPaidAmount, setCancelPaidAmount] = useState(0);
   const [cancelling, setCancelling] = useState(false);
 
-  // Devoluciones de dinero ya registradas para esta orden (se muestran en el
-  // resumen; vienen de retornos con reembolso o de una cancelación)
-  const [orderRefunds, setOrderRefunds] = useState<OrderRefundLine[]>([]);
   const [orderSaleType, setOrderSaleType] = useState<{ id: number; name: string } | null>(null);
 
   // Dropdown data
@@ -500,17 +495,30 @@ export const useCreateSale = () => {
     );
     if (!baseSituation || baseSituation.order == null) return salesData.situations;
 
-    return salesData.situations.filter(
-      (s) =>
+    return salesData.situations.filter((s) => {
+      // La situación vigente siempre está en la lista: es el value del Select y
+      // sin su item el combo se ve vacío. Pasa con una orden ya cancelada
+      // (CAN-HDN deja de ser cancelable) o reembolsada (REB-HDN nunca es
+      // seleccionable).
+      if (s.id.toString() === baseId) return true;
+
+      return (
         s.order != null &&
         s.order >= baseSituation.order &&
         // Reembolsado lo pone el sistema al registrar un retorno, nunca el
         // usuario. Cancelado sí sigue en el combo (es donde se manejaba
         // siempre), pero solo mientras la orden pueda cancelarse.
         s.code !== "REB-HDN" &&
-        (s.code !== "CAN-HDN" || canCancelOrder),
-    );
-  }, [savedOrderSituation, orderSituation, salesData?.situations, orderId]);
+        (s.code !== "CAN-HDN" || canCancelOrder)
+      );
+    });
+  }, [
+    savedOrderSituation,
+    orderSituation,
+    salesData?.situations,
+    orderId,
+    canCancelOrder,
+  ]);
 
   // Computed: Available sale types — always includes the order's current sale type (e.g. POS)
   const availableSaleTypes = useMemo(() => {
@@ -660,14 +668,10 @@ export const useCreateSale = () => {
     try {
       setLoading(true);
 
-      // Parallel calls: order data + products + devoluciones registradas
-      const [data, productsData, refunds] = await Promise.all([
+      // Parallel calls: order data + products
+      const [data, productsData] = await Promise.all([
         fetchSaleById(id),
         fetchSaleByIdProducts(id),
-        fetchOrderRefunds(id).catch((e) => {
-          console.error("Error cargando devoluciones de la orden:", e);
-          return [];
-        }),
       ]);
       const adapted = adaptSaleById(data);
       const adaptedProducts = adaptSaleByIdProducts(productsData);
@@ -675,7 +679,6 @@ export const useCreateSale = () => {
       // Set all state at once
       setFormData(adapted.formData);
       setProducts(adaptedProducts);
-      setOrderRefunds(refunds);
       setOriginalProducts(adaptedProducts);
       setPayments(
         adapted.payments.length > 0
@@ -2325,8 +2328,6 @@ export const useCreateSale = () => {
     isComSituation: !orderId ? false : isComSituation,
     isVirSituation: !orderId ? false : isVirSituation,
     filteredSituations,
-
-    orderRefunds,
 
     // Cancelación de pedido
     handleSituationChange,
