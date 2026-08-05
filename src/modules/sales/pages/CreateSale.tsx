@@ -55,7 +55,6 @@ import {
   Image as ImageIcon,
   Warehouse,
   Lock,
-  Ban,
   Undo2,
 } from "lucide-react";
 import { useCreateSale } from "../hooks/useCreateSale";
@@ -118,12 +117,11 @@ const CreateSale = () => {
     isVirSituation,
     filteredSituations,
     orderRefunds,
-    canCancelOrder,
+    handleSituationChange,
     cancelModalOpen,
     setCancelModalOpen,
     cancelPaidAmount,
     cancelling,
-    openCancelModal,
     confirmCancelOrder,
     availableSaleTypes,
     filteredPaymentMethods,
@@ -496,17 +494,6 @@ const CreateSale = () => {
               }}
             >
               Enviado a franquiciado
-            </Button>
-          )}
-          {canCancelOrder && (
-            <Button
-              variant="destructive"
-              type="button"
-              onClick={openCancelModal}
-              disabled={saving || cancelling}
-            >
-              <Ban className="w-4 h-4 mr-2" />
-              Cancelar pedido
             </Button>
           )}
           <Button
@@ -1382,7 +1369,7 @@ const CreateSale = () => {
               <CardTitle className="text-lg">Estado del Pedido</CardTitle>
             </CardHeader>
             <CardContent className="pb-2">
-              <Select value={orderSituation} onValueChange={setOrderSituation}>
+              <Select value={orderSituation} onValueChange={handleSituationChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>

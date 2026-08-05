@@ -504,11 +504,11 @@ export const useCreateSale = () => {
       (s) =>
         s.order != null &&
         s.order >= baseSituation.order &&
-        // Cancelar tiene su propio flujo (libera stock y, si hubo cobro,
-        // devuelve el dinero) y Reembolsado lo pone el sistema al registrar
-        // un retorno: ninguno se elige a mano desde el combo.
-        s.code !== "CAN-HDN" &&
-        s.code !== "REB-HDN",
+        // Reembolsado lo pone el sistema al registrar un retorno, nunca el
+        // usuario. Cancelado sí sigue en el combo (es donde se manejaba
+        // siempre), pero solo mientras la orden pueda cancelarse.
+        s.code !== "REB-HDN" &&
+        (s.code !== "CAN-HDN" || canCancelOrder),
     );
   }, [savedOrderSituation, orderSituation, salesData?.situations, orderId]);
 
@@ -2259,6 +2259,23 @@ export const useCreateSale = () => {
     [orderId, salesData?.situations, toast, navigate],
   );
 
+  // Elegir "Cancelado" en el combo no es un cambio de estado más: hay que
+  // confirmar y, si la orden tenía cobro, capturar por dónde sale la
+  // devolución. Se abre el modal en vez de dejar el estado seleccionado.
+  const handleSituationChange = useCallback(
+    (value: string) => {
+      const situation = (salesData?.situations || []).find(
+        (s: any) => s.id.toString() === value,
+      );
+      if (orderId && situation?.code === "CAN-HDN") {
+        openCancelModal();
+        return;
+      }
+      setOrderSituation(value);
+    },
+    [orderId, salesData?.situations, openCancelModal],
+  );
+
   return {
     // State
     loading,
@@ -2312,6 +2329,7 @@ export const useCreateSale = () => {
     orderRefunds,
 
     // Cancelación de pedido
+    handleSituationChange,
     canCancelOrder,
     cancelModalOpen,
     setCancelModalOpen,
