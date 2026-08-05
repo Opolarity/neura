@@ -55,6 +55,7 @@ import {
   Image as ImageIcon,
   Warehouse,
   Lock,
+  Ban,
 } from "lucide-react";
 import { useCreateSale } from "../hooks/useCreateSale";
 import { ProductVariationSelector } from "@/shared/components/product-variation-selector";
@@ -69,6 +70,7 @@ import { SalesHistoryModal } from "../components/SalesHistoryModal";
 import { SalesInvoicesModal } from "../components/SalesInvoicesModal";
 import { SalesReturnsModal } from "../components/SalesReturnsModal";
 import { SalesCambiosModal } from "../components/SalesCambiosModal";
+import { CancelOrderModal } from "../components/CancelOrderModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 import placeholderImage from "@/assets/product-placeholder.png";
@@ -114,6 +116,13 @@ const CreateSale = () => {
     isComSituation,
     isVirSituation,
     filteredSituations,
+    canCancelOrder,
+    cancelModalOpen,
+    setCancelModalOpen,
+    cancelPaidAmount,
+    cancelling,
+    openCancelModal,
+    confirmCancelOrder,
     availableSaleTypes,
     filteredPaymentMethods,
     allPaymentMethods,
@@ -485,6 +494,17 @@ const CreateSale = () => {
               }}
             >
               Enviado a franquiciado
+            </Button>
+          )}
+          {canCancelOrder && (
+            <Button
+              variant="destructive"
+              type="button"
+              onClick={openCancelModal}
+              disabled={saving || cancelling}
+            >
+              <Ban className="w-4 h-4 mr-2" />
+              Cancelar pedido
             </Button>
           )}
           <Button
@@ -2616,6 +2636,16 @@ const CreateSale = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <CancelOrderModal
+        open={cancelModalOpen}
+        onOpenChange={setCancelModalOpen}
+        orderId={createdOrderId}
+        paidAmount={cancelPaidAmount}
+        paymentMethods={allPaymentMethods}
+        saving={cancelling}
+        onConfirm={confirmCancelOrder}
+      />
 
       {createdOrderId && (
         <SalesInvoicesModal

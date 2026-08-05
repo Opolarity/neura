@@ -41,6 +41,8 @@ import {
   createOrder,
   updateOrder,
   updateOrderSituation,
+  fetchOrderPaidAmount,
+  type OrderRefund,
   uploadPaymentVoucher,
   uploadNoteImage,
   updatePaymentVoucherUrl,
@@ -147,6 +149,11 @@ export const useCreateSale = () => {
   const [savedOrderSituation, setSavedOrderSituation] = useState<string>("");
   const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
   const [currentSituationCode, setCurrentSituationCode] = useState<string>("");
+
+  // Cancelación de pedido (flujo propio, fuera del combo de situaciones)
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelPaidAmount, setCancelPaidAmount] = useState(0);
+  const [cancelling, setCancelling] = useState(false);
   const [orderSaleType, setOrderSaleType] = useState<{ id: number; name: string } | null>(null);
 
   // Dropdown data
@@ -463,6 +470,18 @@ export const useCreateSale = () => {
   }, [currentStatusCode, orderId]);
 
   // Computed: Filter situations to only show those with order >= saved (DB) situation's order
+  // Computed: una orden con entrega física ya no se cancela — su stock fue
+  // descontado y liberarlo devolvería mercadería que salió (o que un retorno
+  // ya reingresó). El backend valida sobre el historial completo; aquí basta
+  // con la situación vigente para decidir si mostrar el botón.
+  const canCancelOrder = useMemo(() => {
+    if (!orderId || !currentSituationCode) return false;
+    return (
+      !currentSituationCode.includes("PHY") &&
+      currentSituationCode !== "CAN-HDN"
+    );
+  }, [orderId, currentSituationCode]);
+
   const filteredSituations = useMemo(() => {
     if (!salesData?.situations) return [];
     if (!orderId) return salesData.situations;
@@ -476,7 +495,12 @@ export const useCreateSale = () => {
     if (!baseSituation || baseSituation.order == null) return salesData.situations;
 
     return salesData.situations.filter(
-      (s) => s.order != null && s.order >= baseSituation.order,
+      (s) =>
+        s.order != null &&
+        s.order >= baseSituation.order &&
+        // Cancelar deja de ser una opción del combo: tiene su propio flujo
+        // (libera stock y, si hubo cobro, devuelve el dinero).
+        s.code !== "CAN-HDN",
     );
   }, [savedOrderSituation, orderSituation, salesData?.situations, orderId]);
 
@@ -2162,6 +2186,66 @@ export const useCreateSale = () => {
     ],
   );
 
+  // ── Cancelación de pedido ────────────────────────────────────────────────
+  // Se abre el modal con el monto realmente cobrado: si es 0 no se pregunta
+  // por devolución, porque sin pago completado nunca hubo ingreso de dinero.
+  const openCancelModal = useCallback(async () => {
+    if (!orderId) return;
+    try {
+      const paid = await fetchOrderPaidAmount(Number(orderId));
+      setCancelPaidAmount(paid);
+      setCancelModalOpen(true);
+    } catch (error: any) {
+      console.error("Error obteniendo pagos de la orden:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo verificar los pagos del pedido",
+        variant: "destructive",
+      });
+    }
+  }, [orderId, toast]);
+
+  const confirmCancelOrder = useCallback(
+    async (refund: OrderRefund | null) => {
+      if (!orderId) return;
+      setCancelling(true);
+      try {
+        // Cancelar es un cambio de situación más: mismo endpoint, con refund.
+        const cancelSituation = (salesData?.situations || []).find(
+          (s: any) => s.code === "CAN-HDN",
+        );
+        if (!cancelSituation) {
+          throw new Error("No se encontró la situación Cancelado");
+        }
+
+        const result = await updateOrderSituation(
+          Number(orderId),
+          Number(cancelSituation.id),
+          refund,
+        );
+
+        setCancelModalOpen(false);
+        toast({
+          title: "Pedido cancelado",
+          description: result?.refunded_amount
+            ? `Se registró la devolución de ${result.refunded_amount}`
+            : "El stock reservado fue liberado",
+        });
+        navigate("/sales");
+      } catch (error: any) {
+        console.error("Error cancelando el pedido:", error);
+        toast({
+          title: "No se pudo cancelar",
+          description: error?.message || "Error al cancelar el pedido",
+          variant: "destructive",
+        });
+      } finally {
+        setCancelling(false);
+      }
+    },
+    [orderId, salesData?.situations, toast, navigate],
+  );
+
   return {
     // State
     loading,
@@ -2211,6 +2295,15 @@ export const useCreateSale = () => {
     isComSituation: !orderId ? false : isComSituation,
     isVirSituation: !orderId ? false : isVirSituation,
     filteredSituations,
+
+    // Cancelación de pedido
+    canCancelOrder,
+    cancelModalOpen,
+    setCancelModalOpen,
+    cancelPaidAmount,
+    cancelling,
+    openCancelModal,
+    confirmCancelOrder,
     availableSaleTypes,
     filteredPaymentMethods,
     allPaymentMethods: salesData?.paymentMethods ?? [],
