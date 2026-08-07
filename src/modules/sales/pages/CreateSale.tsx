@@ -157,6 +157,7 @@ const CreateSale = () => {
     handleConsignmentToggle,
     handleSendToFranchisee,
     addProduct,
+    handleBarcodeScan,
     removeProduct,
     updateProduct,
     handleSubmit,
@@ -570,6 +571,7 @@ const CreateSale = () => {
                   <ProductVariationSelector
                     selectedVariation={selectedVariation}
                     onSelect={setSelectedVariation}
+                    onScan={handleBarcodeScan}
                     stockTypeId={
                       selectedStockTypeId
                         ? parseInt(selectedStockTypeId)

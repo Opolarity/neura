@@ -113,5 +113,45 @@ export const AddProductService = {
   getPublicUrl(path: string): string {
     const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(path);
     return publicUrl;
+  },
+
+  // TODO: evaluar migrar SizeImagesModal (módulo ecommerce) a estos helpers,
+  // hoy replica el mismo patrón de subida a products-images/sizes y sizes-ref.
+
+  /**
+   * Sube una imagen única de tallas o de referencia de tallas y devuelve su path y URL pública
+   */
+  async uploadSizeImage(file: File, folder: 'sizes' | 'sizes-ref'): Promise<{ path: string; url: string }> {
+    const fileExtension = file.name.split('.').pop() || 'jpg';
+    const path = `products-images/${folder}/${crypto.randomUUID()}.${fileExtension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('products')
+      .upload(path, file, {
+        upsert: true,
+        contentType: file.type
+      });
+
+    if (uploadError) throw uploadError;
+    return { path, url: this.getPublicUrl(path) };
+  },
+
+  /**
+   * Deriva el path dentro del bucket 'products' a partir de una URL pública
+   */
+  getStoragePathFromUrl(publicUrl: string): string | null {
+    const marker = '/products/';
+    const index = publicUrl.indexOf(marker);
+    if (index === -1) return null;
+    return publicUrl.substring(index + marker.length);
+  },
+
+  /**
+   * Elimina del storage una imagen a partir de su URL pública
+   */
+  async deleteImageByUrl(publicUrl: string): Promise<void> {
+    const path = this.getStoragePathFromUrl(publicUrl);
+    if (!path) return;
+    await this.deleteImage(path);
   }
 };
