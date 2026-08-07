@@ -51,7 +51,9 @@ import {
   fetchSaleById,
   fetchSaleByIdProducts,
   changeOrderProducts,
+  fetchSaleProducts,
 } from "../services";
+import { findExactScanMatch } from "../utils/scan";
 import {
   calculateSubtotal,
   calculateDiscountAmount,
@@ -1522,8 +1524,11 @@ export const useCreateSale = () => {
   );
 
   // Add product to list - returns info about whether product was added or already existed
-  const addProduct = useCallback((): { added: boolean; existingIndex?: number } => {
-    if (!selectedVariation) {
+  const addProduct = useCallback((
+    variationArg?: ProductVariation,
+  ): { added: boolean; existingIndex?: number } => {
+    const variation = variationArg ?? selectedVariation;
+    if (!variation) {
       toast({
         title: "Error",
         description: "Seleccione una variación",
@@ -1544,7 +1549,7 @@ export const useCreateSale = () => {
     // Check if product with same variation AND same stock type already exists
     const existingIndex = products.findIndex(
       (p) =>
-        p.variationId === selectedVariation.id &&
+        p.variationId === variation.id &&
         p.stockTypeId === parseInt(selectedStockTypeId),
     );
 
@@ -1562,7 +1567,7 @@ export const useCreateSale = () => {
     }
 
     // Validate stock is greater than 0
-    const availableStock = selectedVariation.stock || 0;
+    const availableStock = variation.stock || 0;
     if (availableStock <= 0) {
       toast({
         title: "Sin stock",
@@ -1578,11 +1583,11 @@ export const useCreateSale = () => {
       ? parseInt(formData.priceListId)
       : null;
     const priceEntry = priceListId
-      ? selectedVariation.prices.find((p) => p.priceListId === priceListId)
-      : selectedVariation.prices[0];
+      ? variation.prices.find((p) => p.priceListId === priceListId)
+      : variation.prices[0];
 
     const price = priceEntry?.salePrice || priceEntry?.price || 0;
-    const termsNames = selectedVariation.terms.map((t) => t.name).join(" / ");
+    const termsNames = variation.terms.map((t) => t.name).join(" / ");
 
     // Get stock type name
     const stockTypeName =
@@ -1592,11 +1597,11 @@ export const useCreateSale = () => {
 
     setProducts((prev) => [
       {
-        variationId: selectedVariation.id,
-        productId: selectedVariation.productId,
-        productName: selectedVariation.productTitle,
-        variationName: termsNames || selectedVariation.sku,
-        sku: selectedVariation.sku,
+        variationId: variation.id,
+        productId: variation.productId,
+        productName: variation.productTitle,
+        variationName: termsNames || variation.sku,
+        sku: variation.sku,
         quantity: 1,
         price,
         originalPrice: price,
@@ -1604,7 +1609,7 @@ export const useCreateSale = () => {
         stockTypeId: parseInt(selectedStockTypeId),
         stockTypeName,
         maxStock: availableStock,
-        imageUrl: selectedVariation.imageUrl || null,
+        imageUrl: variation.imageUrl || null,
       },
       ...prev,
     ]);
@@ -1614,6 +1619,54 @@ export const useCreateSale = () => {
     setSelectedVariation(null);
     return { added: true };
   }, [selectedVariation, formData.priceListId, selectedStockTypeId, products, productsTableSize, salesData?.stockTypes, toast]);
+
+  const handleBarcodeScan = useCallback(
+    async (code: string) => {
+      const q = code.trim();
+      if (!q || !userWarehouseId) return false;
+
+      try {
+        const result = await fetchSaleProducts({
+          page: 1,
+          size: 10,
+          search: q,
+          stockTypeId: selectedStockTypeId
+            ? parseInt(selectedStockTypeId)
+            : undefined,
+          warehouseId: userWarehouseId,
+        });
+        const raw = result.data || [];
+        const match = findExactScanMatch(q, raw);
+
+        if (match) {
+          const variation: ProductVariation = {
+            id: match.variationId,
+            sku: match.sku,
+            productId: match.productId,
+            productTitle: match.productTitle,
+            imageUrl: match.imageUrl ?? null,
+            stock: match.stock ?? 0,
+            terms: match.terms,
+            prices: (match.prices || []).map((pr) => ({
+              priceListId: pr.price_list_id,
+              price: pr.price,
+              salePrice: pr.sale_price,
+            })),
+          };
+          addProduct(variation);
+          setSelectedVariation(null);
+          return true;
+        }
+        // Sin coincidencia exacta: el selector conserva el texto tipeado y su
+        // propia búsqueda debounced muestra los candidatos para elegir a mano.
+        return false;
+      } catch (error) {
+        console.error("Error scanning product:", error);
+        return false;
+      }
+    },
+    [userWarehouseId, selectedStockTypeId, addProduct],
+  );
 
   // Remove product from list
   const removeProduct = useCallback((index: number) => {
@@ -2373,6 +2426,7 @@ export const useCreateSale = () => {
     handleConsignmentToggle,
     handleSendToFranchisee,
     addProduct,
+    handleBarcodeScan,
     removeProduct,
     updateProduct,
     handleSubmit,

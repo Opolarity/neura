@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, Barcode, Percent, ChevronDown, ChevronUp, User, X } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, Percent, ChevronDown, ChevronUp, User, X } from "lucide-react";
 import type { POSCartItem } from "../../../types/POS.types";
 import type { PaginatedProductVariation, PaginationMeta, OrderDiscount } from "../../../types";
 import { formatCurrency } from "../../../adapters/POS.adapter";
@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 interface ProductsStepProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
+  onScan: (code: string) => void;
   products: PaginatedProductVariation[];
   productsLoading: boolean;
   cart: POSCartItem[];
@@ -55,6 +56,7 @@ interface ProductsStepProps {
 export default function ProductsStep({
   searchQuery,
   onSearchChange,
+  onScan,
   products,
   productsLoading,
   cart,
@@ -78,6 +80,7 @@ export default function ProductsStep({
   customerDocumentNumber,
   isAnonymousPurchase,
 }: ProductsStepProps) {
+  const [inputValue, setInputValue] = useState(searchQuery);
   const [expandedDiscounts, setExpandedDiscounts] = useState<Set<number>>(new Set());
   const [showAddDiscount, setShowAddDiscount] = useState(false);
   const [newDiscountName, setNewDiscountName] = useState("");
@@ -112,14 +115,22 @@ export default function ProductsStep({
             <CardContent className="pt-4">
               {/* Search bar and stock type selector */}
               <div className="flex gap-2 mb-4">
-                <div className="flex-1 relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <div className="flex-1 flex gap-2">
                   <Input
-                    value={searchQuery}
-                    onChange={(e) => onSearchChange(e.target.value)}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        onScan(inputValue);
+                        setInputValue("");
+                      }
+                    }}
                     placeholder="Escanear SKU o buscar por nombre..."
-                    className="pl-10"
                   />
+                  <Button variant="outline" onClick={() => onSearchChange(inputValue)}>
+                    <Search className="w-4 h-4" />
+                  </Button>
                 </div>
                 <Select value={selectedStockTypeId} onValueChange={onStockTypeChange}>
                   <SelectTrigger className="w-[180px]">
@@ -133,10 +144,6 @@ export default function ProductsStep({
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" className="gap-2">
-                  <Barcode className="w-4 h-4" />
-                  F2 Scanner
-                </Button>
               </div>
 
               {/* Products table */}

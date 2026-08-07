@@ -47,6 +47,7 @@ import { createPOSOrder } from "../services/POS.service";
 import { getPOSSessionDetail } from "@/modules/pos/services/POSDetail.service";
 
 import { filterShippingCostsByLocation } from "../utils";
+import { findExactScanMatch } from "../utils/scan";
 
 // Initial state values
 const DEFAULT_CUSTOMER: POSCustomerData = {
@@ -532,6 +533,49 @@ export const usePOS = () => {
       return true;
     },
     [selectedStockTypeId, configuration, cart, formData, toast]
+  );
+
+  const handleScan = useCallback(
+    async (code: string) => {
+      const q = code.trim();
+      if (!q || !configuration?.warehouseId) return;
+
+      try {
+        setProductsLoading(true);
+        const result = await fetchSaleProducts({
+          page: 1,
+          size: 10,
+          search: q,
+          stockTypeId: selectedStockTypeId
+            ? parseInt(selectedStockTypeId)
+            : undefined,
+          warehouseId: configuration.warehouseId,
+        });
+        const products = result.data || [];
+        const match = findExactScanMatch(q, products);
+
+        if (match) {
+          const added = addToCart(match);
+          if (added) {
+            toast({
+              title: "Producto agregado",
+              description: match.productTitle,
+            });
+          }
+        }
+
+        // Siempre se muestra la lista filtrada (búsqueda normal), haya o no
+        // coincidencia exacta, para no vaciar la tabla al agregar por escaneo.
+        setSearchQuery(q);
+        setPaginatedProducts(products);
+        setProductPagination(result.page);
+      } catch (error) {
+        console.error("Error scanning product:", error);
+      } finally {
+        setProductsLoading(false);
+      }
+    },
+    [configuration?.warehouseId, selectedStockTypeId, addToCart, toast]
   );
 
   const updateCartItem = useCallback(
@@ -1315,6 +1359,7 @@ export const usePOS = () => {
     selectedStockTypeId,
     setSelectedStockTypeId,
     addToCart,
+    handleScan,
     updateCartItem,
     removeFromCart,
     clearCart,
