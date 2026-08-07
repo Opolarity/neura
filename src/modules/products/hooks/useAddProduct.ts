@@ -25,9 +25,11 @@ export const useAddProduct = () => {
   const [promotionalBgColor, setPromotionalBgColor] = useState('#ffffff');
   const [promotionalTextColor, setPromotionalTextColor] = useState('#000000');
   const [sizesImageUrl, setSizesImageUrl] = useState<string | null>(null);
-  const [sizesImageFile, setSizesImageFile] = useState<File | null>(null);
   const [sizesRefImageUrl, setSizesRefImageUrl] = useState<string | null>(null);
-  const [sizesRefImageFile, setSizesRefImageFile] = useState<File | null>(null);
+  // URLs de imágenes de tallas ya persistidas que se borrarán del storage al guardar
+  const [sizesImagesToDelete, setSizesImagesToDelete] = useState<string[]>([]);
+  // URLs subidas en esta sesión (aún no persistidas): se borran del storage al instante
+  const [sizesImagesUploadedNow, setSizesImagesUploadedNow] = useState<string[]>([]);
   const [description, setDescription] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [isVariable, setIsVariable] = useState(false);
@@ -315,6 +317,67 @@ export const useAddProduct = () => {
     });
   };
 
+  // ---- Imagen de tallas / de referencia (una sola imagen por campo) ----
+
+  type SizeImageKind = 'sizes' | 'sizes-ref';
+
+  const setSizeImageUrl = (kind: SizeImageKind, url: string | null) => {
+    if (kind === 'sizes') setSizesImageUrl(url);
+    else setSizesRefImageUrl(url);
+  };
+
+  /**
+   * Suelta la URL anterior del campo: si se subió en esta sesión se borra del storage
+   * al instante; si ya estaba persistida se encola para borrarla al guardar.
+   */
+  const discardSizeImage = async (url: string) => {
+    if (sizesImagesUploadedNow.includes(url)) {
+      setSizesImagesUploadedNow(prev => prev.filter(u => u !== url));
+      try {
+        await AddProductService.deleteImageByUrl(url);
+      } catch (error) {
+        console.error('Error deleting size image from storage:', error);
+      }
+      return;
+    }
+    setSizesImagesToDelete(prev => prev.includes(url) ? prev : [...prev, url]);
+  };
+
+  const handleSizeImageUpload = async (file: File, kind: SizeImageKind) => {
+    setLoading(true);
+    try {
+      const previousUrl = kind === 'sizes' ? sizesImageUrl : sizesRefImageUrl;
+      const { url } = await AddProductService.uploadSizeImage(file, kind);
+
+      if (previousUrl) await discardSizeImage(previousUrl);
+
+      setSizesImagesUploadedNow(prev => [...prev, url]);
+      setSizeImageUrl(kind, url);
+
+      toast({
+        title: "Imagen subida",
+        description: "Imagen subida correctamente"
+      });
+    } catch (error) {
+      console.error('Error uploading size image:', error);
+      toast({
+        title: "Error",
+        description: "Error al subir la imagen",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeSizeImage = async (kind: SizeImageKind) => {
+    const url = kind === 'sizes' ? sizesImageUrl : sizesRefImageUrl;
+    if (!url) return;
+
+    await discardSizeImage(url);
+    setSizeImageUrl(kind, null);
+  };
+
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, imageId: string) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', imageId);
@@ -565,31 +628,7 @@ export const useAddProduct = () => {
     setLoading(true);
     try {
       if (isEditMode) {
-        // In edit mode, productId is known → upload with product ID
-        let finalSizesImageUrl = sizesImageUrl;
-        if (sizesImageFile) {
-          const fileExt = sizesImageFile.name.split('.').pop();
-          const filePath = `products-images/sizes/size-img-${productId}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage
-            .from('products')
-            .upload(filePath, sizesImageFile, { upsert: true });
-          if (uploadError) throw new Error('Error al subir imagen de tallas: ' + uploadError.message);
-          const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
-          finalSizesImageUrl = urlData.publicUrl;
-        }
-
-        let finalSizesRefImageUrl = sizesRefImageUrl;
-        if (sizesRefImageFile) {
-          const fileExt = sizesRefImageFile.name.split('.').pop();
-          const filePath = `products-images/sizes-ref/size-ref-img-${productId}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage
-            .from('products')
-            .upload(filePath, sizesRefImageFile, { upsert: true });
-          if (uploadError) throw new Error('Error al subir imagen de referencia de tallas: ' + uploadError.message);
-          const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
-          finalSizesRefImageUrl = urlData.publicUrl;
-        }
-
+        // Las imágenes de tallas ya se subieron al seleccionarlas; aquí solo se persisten sus URLs
         const request = AddProductAdapter.prepareUpdateRequest(
           Number(productId),
           productName,
@@ -597,8 +636,8 @@ export const useAddProduct = () => {
           promotionalText,
           promotionalBgColor,
           promotionalTextColor,
-          finalSizesImageUrl,
-          finalSizesRefImageUrl,
+          sizesImageUrl,
+          sizesRefImageUrl,
           description,
           isVariable,
           isActive,
@@ -621,7 +660,7 @@ export const useAddProduct = () => {
         // Save sizes image URLs directly to the products table
         await supabase
           .from('products')
-          .update({ sizes_image_url: finalSizesImageUrl, sizes_ref_image_url: finalSizesRefImageUrl })
+          .update({ sizes_image_url: sizesImageUrl, sizes_ref_image_url: sizesRefImageUrl })
           .eq('id', Number(productId));
 
         toast({
@@ -629,15 +668,15 @@ export const useAddProduct = () => {
           description: "Producto actualizado correctamente"
         });
       } else {
-        // In create mode: create product first, then upload sizes image with the new product ID
+        // Las imágenes de tallas ya se subieron al seleccionarlas; solo falta asociarlas al nuevo producto
         const request = AddProductAdapter.prepareCreateRequest(
           productName,
           shortDescription,
           promotionalText,
           promotionalBgColor,
           promotionalTextColor,
-          sizesImageFile ? null : sizesImageUrl,
-          sizesRefImageFile ? null : sizesRefImageUrl,
+          sizesImageUrl,
+          sizesRefImageUrl,
           description,
           isVariable,
           isActive,
@@ -655,39 +694,12 @@ export const useAddProduct = () => {
           throw new Error(result.error || 'Error al crear el producto');
         }
 
-        // Upload sizes images with the new product ID and save URLs to products table
-        if (result.product?.id && (sizesImageFile || sizesRefImageFile)) {
-          const newProductId = result.product.id;
-          const updateData: Record<string, string> = {};
-
-          if (sizesImageFile) {
-            const fileExt = sizesImageFile.name.split('.').pop();
-            const filePath = `products-images/sizes/size-img-${newProductId}.${fileExt}`;
-            const { error: uploadError } = await supabase.storage
-              .from('products')
-              .upload(filePath, sizesImageFile, { upsert: true });
-            if (uploadError) throw new Error('Error al subir imagen de tallas: ' + uploadError.message);
-            const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
-            updateData.sizes_image_url = urlData.publicUrl;
-          }
-
-          if (sizesRefImageFile) {
-            const fileExt = sizesRefImageFile.name.split('.').pop();
-            const filePath = `products-images/sizes-ref/size-ref-img-${newProductId}.${fileExt}`;
-            const { error: uploadError } = await supabase.storage
-              .from('products')
-              .upload(filePath, sizesRefImageFile, { upsert: true });
-            if (uploadError) throw new Error('Error al subir imagen de referencia de tallas: ' + uploadError.message);
-            const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
-            updateData.sizes_ref_image_url = urlData.publicUrl;
-          }
-
-          if (Object.keys(updateData).length > 0) {
-            await supabase
-              .from('products')
-              .update(updateData)
-              .eq('id', newProductId);
-          }
+        // create-product no persiste estos campos → se guardan aquí
+        if (result.product?.id && (sizesImageUrl || sizesRefImageUrl)) {
+          await supabase
+            .from('products')
+            .update({ sizes_image_url: sizesImageUrl, sizes_ref_image_url: sizesRefImageUrl })
+            .eq('id', result.product.id);
         }
 
         toast({
@@ -695,6 +707,16 @@ export const useAddProduct = () => {
           description: result.message || "Producto creado correctamente"
         });
       }
+
+      // Ya persistido el NULL en BD: recién ahora se borran del storage las imágenes quitadas
+      for (const url of sizesImagesToDelete) {
+        try {
+          await AddProductService.deleteImageByUrl(url);
+        } catch (error) {
+          console.error('Error deleting size image from storage:', error);
+        }
+      }
+      setSizesImagesToDelete([]);
 
       navigate('/products');
     } catch (error) {
@@ -727,11 +749,9 @@ export const useAddProduct = () => {
     promotionalTextColor,
     setPromotionalTextColor,
     sizesImageUrl,
-    sizesImageFile,
-    setSizesImageFile,
     sizesRefImageUrl,
-    sizesRefImageFile,
-    setSizesRefImageFile,
+    handleSizeImageUpload,
+    removeSizeImage,
     description,
     setDescription,
     selectedCategories,

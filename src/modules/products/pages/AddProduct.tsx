@@ -34,11 +34,9 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     promotionalTextColor,
     setPromotionalTextColor,
     sizesImageUrl,
-    sizesImageFile,
-    setSizesImageFile,
     sizesRefImageUrl,
-    sizesRefImageFile,
-    setSizesRefImageFile,
+    handleSizeImageUpload,
+    removeSizeImage,
     description,
     setDescription,
     selectedCategories,
@@ -696,7 +694,8 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                   accept="image/*"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) setSizesImageFile(file);
+                    if (file) handleSizeImageUpload(file, 'sizes');
+                    e.target.value = '';
                   }}
                   className="hidden"
                 />
@@ -710,10 +709,10 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                   <Upload className="w-4 h-4 mr-2" />
                   Tabla de tallas
                 </Button>
-                {(sizesImageFile || sizesImageUrl) && (
+                {sizesImageUrl && (
                   <div className="relative">
                     <img
-                      src={sizesImageFile ? URL.createObjectURL(sizesImageFile) : sizesImageUrl!}
+                      src={sizesImageUrl}
                       alt="Imagen de tallas"
                       className="w-full rounded-lg border object-contain max-h-[200px]"
                     />
@@ -722,9 +721,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                         size="sm"
                         variant="destructive"
                         className="absolute top-1 right-1 h-6 w-6 p-0"
-                        onClick={() => {
-                          setSizesImageFile(null);
-                        }}
+                        onClick={() => removeSizeImage('sizes')}
                       >
                         <X className="w-3 h-3" />
                       </Button>
@@ -742,7 +739,8 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                   accept="image/*"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) setSizesRefImageFile(file);
+                    if (file) handleSizeImageUpload(file, 'sizes-ref');
+                    e.target.value = '';
                   }}
                   className="hidden"
                 />
@@ -754,12 +752,12 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                   disabled={loading || viewOnly}
                 >
                   <Upload className="w-4 h-4 mr-2" />
-                  Refrencia
+                  Referencia
                 </Button>
-                {(sizesRefImageFile || sizesRefImageUrl) && (
+                {sizesRefImageUrl && (
                   <div className="relative">
                     <img
-                      src={sizesRefImageFile ? URL.createObjectURL(sizesRefImageFile) : sizesRefImageUrl!}
+                      src={sizesRefImageUrl}
                       alt="Imagen de referencia de tallas"
                       className="w-full rounded-lg border object-contain max-h-[200px]"
                     />
@@ -768,9 +766,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                         size="sm"
                         variant="destructive"
                         className="absolute top-1 right-1 h-6 w-6 p-0"
-                        onClick={() => {
-                          setSizesRefImageFile(null);
-                        }}
+                        onClick={() => removeSizeImage('sizes-ref')}
                       >
                         <X className="w-3 h-3" />
                       </Button>
