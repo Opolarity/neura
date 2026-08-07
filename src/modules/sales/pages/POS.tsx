@@ -96,6 +96,7 @@ export default function POS() {
               <ProductsStep
                 searchQuery={pos.searchQuery}
                 onSearchChange={pos.setSearchQuery}
+                onScan={pos.handleScan}
                 products={pos.paginatedProducts}
                 productsLoading={pos.productsLoading}
                 cart={pos.cart}
