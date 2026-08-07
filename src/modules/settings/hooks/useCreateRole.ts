@@ -14,9 +14,7 @@ import { RolePayload } from "../types/Roles.types";
 
 const EMPTY_TREE: PermissionTree = {
   permissions: [],
-  capabilities: [],
   allPermissionIds: [],
-  allCapabilityIds: [],
   parentOf: new Map(),
   descendantsOf: new Map(),
 };
@@ -31,23 +29,18 @@ const useCreateRole = (roleId?: number) => {
     name: "",
     admin: false,
     permissions: [],
-    capabilities: [],
   });
   const [tree, setTree] = useState<PermissionTree>(EMPTY_TREE);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [permissionSearch, setPermissionSearch] = useState("");
-  const [capabilitySearch, setCapabilitySearch] = useState("");
 
   /**
    * Selección vigente antes de marcar "Rol de Administrador". Permite
    * restaurarla al desmarcarlo, en lugar de dejar el rol en cero como hacía la
    * versión anterior.
    */
-  const previousSelection = useRef<{
-    permissions: number[];
-    capabilities: number[];
-  }>({ permissions: [], capabilities: [] });
+  const previousSelection = useRef<number[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -63,10 +56,7 @@ const useCreateRole = (roleId?: number) => {
 
         if (detailResponse) {
           const detail = roleDetailAdapter(detailResponse);
-          previousSelection.current = {
-            permissions: detail.permissions,
-            capabilities: detail.capabilities,
-          };
+          previousSelection.current = detail.permissions;
           setFormData({
             id: detail.id,
             name: detail.name,
@@ -75,9 +65,6 @@ const useCreateRole = (roleId?: number) => {
             permissions: detail.admin
               ? permissionTree.allPermissionIds
               : detail.permissions,
-            capabilities: detail.admin
-              ? permissionTree.allCapabilityIds
-              : detail.capabilities,
           });
         }
       } catch (error) {
@@ -139,36 +126,21 @@ const useCreateRole = (roleId?: number) => {
     [buildNextSelection]
   );
 
-  const toggleCapability = useCallback(
-    (id: number) => {
-      setFormData((prev) => ({
-        ...prev,
-        capabilities: buildNextSelection(prev.capabilities, id),
-      }));
-    },
-    [buildNextSelection]
-  );
-
   const handleToggleAdmin = (isAdmin: boolean) => {
     setFormData((prev) => {
       if (isAdmin) {
-        previousSelection.current = {
-          permissions: prev.permissions,
-          capabilities: prev.capabilities,
-        };
+        previousSelection.current = prev.permissions;
         return {
           ...prev,
           admin: true,
           permissions: tree.allPermissionIds,
-          capabilities: tree.allCapabilityIds,
         };
       }
 
       return {
         ...prev,
         admin: false,
-        permissions: previousSelection.current.permissions,
-        capabilities: previousSelection.current.capabilities,
+        permissions: previousSelection.current,
       };
     });
   };
@@ -193,7 +165,6 @@ const useCreateRole = (roleId?: number) => {
         name: formData.name.trim(),
         admin: formData.admin,
         permissions: formData.admin ? [] : formData.permissions,
-        capabilities: formData.admin ? [] : formData.capabilities,
       };
 
       if (isEdit && roleId) {
@@ -223,15 +194,11 @@ const useCreateRole = (roleId?: number) => {
     loading,
     saving,
     permissionNodes: tree.permissions,
-    capabilityNodes: tree.capabilities,
     permissionSearch,
-    capabilitySearch,
     setPermissionSearch,
-    setCapabilitySearch,
     handleNameChange,
     handleToggleAdmin,
     togglePermission,
-    toggleCapability,
     handleSubmit,
   };
 };

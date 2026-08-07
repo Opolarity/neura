@@ -1,6 +1,7 @@
 import { RouterProvider } from "react-router-dom";
 import { router } from "./routes";
 import { AuthProvider } from "@/modules/auth";
+import { NotificationsProvider } from "@/modules/notifications/context/NotificationsProvider";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -20,7 +21,9 @@ const App = () => {
         <Toaster />
         <Sonner />
         <AuthProvider>
-          <RouterProvider router={router} />
+          <NotificationsProvider>
+            <RouterProvider router={router} />
+          </NotificationsProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryProvider>

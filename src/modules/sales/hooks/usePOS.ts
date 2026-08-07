@@ -569,6 +569,13 @@ export const usePOS = () => {
 
   const updateCustomer = useCallback(
     (field: keyof POSCustomerData, value: string | boolean) => {
+      // Si el cajero ingresa documento despues de pulsar "Venta anonima",
+      // salimos del modo anonimo: de lo contrario submitOrder descarta el
+      // documento y la orden se guarda con document_type 0 (state_code '-'),
+      // lo que impide emitir Factura en SUNAT.
+      if (field === "documentTypeId" || field === "documentNumber") {
+        if (value) setIsAnonymousPurchase(false);
+      }
       setCustomer((prev) => ({ ...prev, [field]: value }));
     },
     []
@@ -982,16 +989,24 @@ export const usePOS = () => {
       // Use the sale type from the POS session
       const saleTypeId = sessionSaleTypeId?.toString() || "1";
 
+      // Red de seguridad: solo tratamos la venta como anonima si ademas no hay
+      // documento cargado. Evita perder el documento del cliente si el flag
+      // quedo activo desde el boton "Venta anonima".
+      const isAnon =
+        isAnonymousPurchase &&
+        !customer.documentTypeId &&
+        !customer.documentNumber;
+
       const orderData: CreatePOSOrderRequest = {
         priceListId: configuration.priceListId,
-        documentType: isAnonymousPurchase ? "0" : customer.documentTypeId,
-        documentNumber: isAnonymousPurchase ? " " : customer.documentNumber,
+        documentType: isAnon ? "0" : customer.documentTypeId,
+        documentNumber: isAnon ? " " : customer.documentNumber,
         customerName: customer.customerName,
-        customerLastname: isAnonymousPurchase ? null : customer.customerLastname,
-        customerLastname2: isAnonymousPurchase ? null : (customer.customerLastname2 || null),
+        customerLastname: isAnon ? null : customer.customerLastname,
+        customerLastname2: isAnon ? null : (customer.customerLastname2 || null),
         email: customer.email || null,
         phone: customer.phone || null,
-        isExistingClient: isAnonymousPurchase ? true : customer.isExistingClient,
+        isExistingClient: isAnon ? true : customer.isExistingClient,
         withShipping: customer.requiresShipping,
         shippingMethod: customer.requiresShipping
           ? shipping.shippingMethodId
@@ -1091,6 +1106,7 @@ export const usePOS = () => {
     configuration,
     POSSessionHook.session,
     customer,
+    isAnonymousPurchase,
     shipping,
     cart,
     payments,

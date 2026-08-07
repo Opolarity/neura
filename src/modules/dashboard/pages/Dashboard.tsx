@@ -3,11 +3,18 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Bell, BellOff, Clock, LogIn, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/modules/auth";
+import { useNotifications } from "@/modules/notifications/hooks/useNotifications";
+import { NotificationItem } from "@/modules/notifications/components/NotificationItem";
 import { formatDistanceToNow, format } from "date-fns";
 import { es } from "date-fns/locale";
 
 const Dashboard = () => {
   const { companyShortName, companyShortNameLoading } = useAuth();
+  const {
+    notifications,
+    loading: notificationsLoading,
+    markAsRead,
+  } = useNotifications();
   const [lastSignIn, setLastSignIn] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -47,10 +54,26 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col items-center justify-center py-10 text-gray-400">
-              <BellOff className="w-10 h-10 mb-3" />
-              <p className="text-sm">No hay notificaciones disponibles</p>
-            </div>
+            {notificationsLoading ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                <BellOff className="w-10 h-10 mb-3" />
+                <p className="text-sm">No hay notificaciones disponibles</p>
+              </div>
+            ) : (
+              <div>
+                {notifications.slice(0, 5).map((notification) => (
+                  <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onRead={markAsRead}
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

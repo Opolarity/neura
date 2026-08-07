@@ -20,7 +20,6 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                     <TableHead>Tipo</TableHead>
                     <TableHead>Usuarios</TableHead>
                     <TableHead>Permisos</TableHead>
-                    <TableHead>Capacidades</TableHead>
                     <TableHead>Acciones</TableHead>
                 </TableRow>
             </TableHeader>
@@ -28,7 +27,7 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                 {
                     loading && roles.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8">
+                            <TableCell colSpan={5} className="text-center py-8">
                                 <div className="flex items-center justify-center gap-2">
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                     Cargando roles...
@@ -37,7 +36,7 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                         </TableRow>
                     ) : roles.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={6} className="text-center text-muted-foreground">
+                            <TableCell colSpan={5} className="text-center text-muted-foreground">
                                 No se encontraron roles
                             </TableCell>
                         </TableRow>
@@ -68,11 +67,6 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                                 <TableCell>
                                     <Badge variant="outline">
                                         {r.permissionCount || 0} {r.permissionCount === 1 ? 'permiso' : 'permisos'}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant="outline">
-                                        {r.capabilityCount || 0} {r.capabilityCount === 1 ? 'capacidad' : 'capacidades'}
                                     </Badge>
                                 </TableCell>
                                 <TableCell>

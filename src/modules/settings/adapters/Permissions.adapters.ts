@@ -13,26 +13,21 @@ import {
 const MAX_DEPTH = 20;
 
 /**
- * Arma el árbol de una partición (un único `type`).
+ * Arma el árbol de todo el catálogo de permisos.
  *
  * Reglas de robustez — un `parent_id` mal poblado NUNCA debe ocultar un
  * permiso: si se ocultara, su checkbox no existiría, su id no entraría en el
  * array que se envía al guardar y `sp_set_role_permissions` lo borraría en
  * silencio. Por eso todos estos casos degradan el nodo a raíz en vez de
  * descartarlo:
- *   - el padre no está en la partición (fila inactiva, o de otro `type`);
+ *   - el padre no está en el catálogo (fila inactiva);
  *   - autorreferencia (`parent_id === id`);
  *   - ciclo o profundidad excedida.
- *
- * Nota sobre el cruce de tipos: un `component` cuyo padre sea una `route` cae
- * en el primer caso y se muestra como raíz de "Capacidades". Es deliberado —
- * cada sección solo anida dentro de su propio tipo, así ningún permiso se
- * renderiza dos veces ni queda fuera.
  */
 const buildForest = (items: PermissionCatalogItem[]) => {
   const byId = new Map(items.map((item) => [item.id, item]));
 
-  // Padre efectivo: descarta autorreferencias y referencias fuera de la partición.
+  // Padre efectivo: descarta autorreferencias y referencias fuera del catálogo.
   const parentOf = new Map<number, number | null>();
   items.forEach((item) => {
     const parentId = item.parentId;
@@ -65,7 +60,7 @@ const buildForest = (items: PermissionCatalogItem[]) => {
     ])
   );
 
-  // El orden de `items` viene de la RPC (ORDER BY type, code), así que raíces
+  // El orden de `items` viene de la RPC (ORDER BY code), así que raíces
   // e hijos quedan alfabéticos por `code` sin ordenar de nuevo.
   const roots: PermissionNode[] = [];
   items.forEach((item) => {
@@ -106,24 +101,12 @@ export const permissionsCatalogAdapter = (
     })
   );
 
-  const routes = items.filter((item) => item.type === "route");
-  const components = items.filter((item) => item.type === "component");
-
-  const permissionsForest = buildForest(routes);
-  const capabilitiesForest = buildForest(components);
+  const forest = buildForest(items);
 
   return {
-    permissions: permissionsForest.roots,
-    capabilities: capabilitiesForest.roots,
-    allPermissionIds: routes.map((item) => item.id),
-    allCapabilityIds: components.map((item) => item.id),
-    parentOf: new Map([
-      ...permissionsForest.parentOf,
-      ...capabilitiesForest.parentOf,
-    ]),
-    descendantsOf: new Map([
-      ...permissionsForest.descendantsOf,
-      ...capabilitiesForest.descendantsOf,
-    ]),
+    permissions: forest.roots,
+    allPermissionIds: items.map((item) => item.id),
+    parentOf: forest.parentOf,
+    descendantsOf: forest.descendantsOf,
   };
 };

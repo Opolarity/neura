@@ -3,7 +3,7 @@
 // Main logic for Create/Edit Sale page
 // =============================================
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { applyPriceRules, type GiftItem } from "../rules/applyPriceRules";
 import { getPriceListIsActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { useNavigate, useParams } from "react-router-dom";
@@ -19,8 +19,6 @@ import type {
   ProductVariation,
   PriceList,
   LocalNote,
-  PaginatedProductVariation,
-  PaginationMeta,
   OrdersSituationsById,
   BusinessAccountOption,
   OrderDiscount,
@@ -43,7 +41,8 @@ import {
   createOrder,
   updateOrder,
   updateOrderSituation,
-  fetchSaleProducts,
+  fetchOrderPaidAmount,
+  type OrderRefund,
   uploadPaymentVoucher,
   uploadNoteImage,
   updatePaymentVoucherUrl,
@@ -150,6 +149,12 @@ export const useCreateSale = () => {
   const [savedOrderSituation, setSavedOrderSituation] = useState<string>("");
   const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
   const [currentSituationCode, setCurrentSituationCode] = useState<string>("");
+
+  // Cancelación de pedido (flujo propio, fuera del combo de situaciones)
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelPaidAmount, setCancelPaidAmount] = useState(0);
+  const [cancelling, setCancelling] = useState(false);
+
   const [orderSaleType, setOrderSaleType] = useState<{ id: number; name: string } | null>(null);
 
   // Dropdown data
@@ -175,21 +180,7 @@ export const useCreateSale = () => {
   const [appliedRules, setAppliedRules] = useState<{ message: string; rule_name: string }[]>([]);
   const [selectedVariation, setSelectedVariation] =
     useState<ProductVariation | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedStockTypeId, setSelectedStockTypeId] = useState<string>("");
-
-  // Server-side product pagination state
-  const [paginatedProducts, setPaginatedProducts] = useState<
-    PaginatedProductVariation[]
-  >([]);
-  const [productPage, setProductPage] = useState(1);
-  const [productPagination, setProductPagination] = useState<PaginationMeta>({
-    page: 1,
-    size: 10,
-    total: 0,
-  });
-  const [productsLoading, setProductsLoading] = useState(false);
-  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Notes state (chat-style)
   const [notes, setNotes] = useState<LocalNote[]>([]);
@@ -258,31 +249,6 @@ export const useCreateSale = () => {
     }
   }, [formData.withShipping]);
 
-  // Debounced search effect - also re-load when stockTypeId or warehouseId changes
-  useEffect(() => {
-    // Don't load products until we have the warehouse ID
-    if (!userWarehouseId) return;
-
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-    }
-    searchDebounceRef.current = setTimeout(() => {
-      setProductPage(1);
-      loadProducts(
-        1,
-        searchQuery,
-        selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
-        userWarehouseId,
-      );
-    }, 300);
-
-    return () => {
-      if (searchDebounceRef.current) {
-        clearTimeout(searchDebounceRef.current);
-      }
-    };
-  }, [searchQuery, selectedStockTypeId, userWarehouseId]);
-
   useEffect(() => {
     const load = async () => {
       if (createdOrderId) {
@@ -320,24 +286,6 @@ export const useCreateSale = () => {
     formData.cityId,
     formData.neighborhoodId,
   ]);
-
-  // Computed: Filtered variations from server-side paginated data (for dropdown display)
-  const filteredVariations = useMemo(() => {
-    return paginatedProducts.map((p) => ({
-      id: p.variationId,
-      sku: p.sku,
-      productId: p.productId,
-      productTitle: p.productTitle,
-      imageUrl: p.imageUrl,
-      stock: p.stock,
-      terms: p.terms,
-      prices: p.prices.map((pr) => ({
-        priceListId: pr.price_list_id,
-        price: pr.price,
-        salePrice: pr.sale_price,
-      })),
-    }));
-  }, [paginatedProducts]);
 
   // Computed: Filtered states by country
   const filteredStates = useMemo(() => {
@@ -523,6 +471,18 @@ export const useCreateSale = () => {
   }, [currentStatusCode, orderId]);
 
   // Computed: Filter situations to only show those with order >= saved (DB) situation's order
+  // Computed: una orden con entrega física ya no se cancela — su stock fue
+  // descontado y liberarlo devolvería mercadería que salió (o que un retorno
+  // ya reingresó). El backend valida sobre el historial completo; aquí basta
+  // con la situación vigente para decidir si mostrar el botón.
+  const canCancelOrder = useMemo(() => {
+    if (!orderId || !currentSituationCode) return false;
+    return (
+      !currentSituationCode.includes("PHY") &&
+      currentSituationCode !== "CAN-HDN"
+    );
+  }, [orderId, currentSituationCode]);
+
   const filteredSituations = useMemo(() => {
     if (!salesData?.situations) return [];
     if (!orderId) return salesData.situations;
@@ -535,10 +495,30 @@ export const useCreateSale = () => {
     );
     if (!baseSituation || baseSituation.order == null) return salesData.situations;
 
-    return salesData.situations.filter(
-      (s) => s.order != null && s.order >= baseSituation.order,
-    );
-  }, [savedOrderSituation, orderSituation, salesData?.situations, orderId]);
+    return salesData.situations.filter((s) => {
+      // La situación vigente siempre está en la lista: es el value del Select y
+      // sin su item el combo se ve vacío. Pasa con una orden ya cancelada
+      // (CAN-HDN deja de ser cancelable) o reembolsada (REB-HDN nunca es
+      // seleccionable).
+      if (s.id.toString() === baseId) return true;
+
+      return (
+        s.order != null &&
+        s.order >= baseSituation.order &&
+        // Reembolsado lo pone el sistema al registrar un retorno, nunca el
+        // usuario. Cancelado sí sigue en el combo (es donde se manejaba
+        // siempre), pero solo mientras la orden pueda cancelarse.
+        s.code !== "REB-HDN" &&
+        (s.code !== "CAN-HDN" || canCancelOrder)
+      );
+    });
+  }, [
+    savedOrderSituation,
+    orderSituation,
+    salesData?.situations,
+    orderId,
+    canCancelOrder,
+  ]);
 
   // Computed: Available sale types — always includes the order's current sale type (e.g. POS)
   const availableSaleTypes = useMemo(() => {
@@ -596,58 +576,6 @@ export const useCreateSale = () => {
       console.error("Error loading shipping costs:", error);
     }
   };
-
-  // Load products with server-side pagination
-  const loadProducts = async (
-    page: number,
-    search: string,
-    stockTypeId?: number,
-    warehouseId?: number,
-  ) => {
-    try {
-      setProductsLoading(true);
-      const result = await fetchSaleProducts({
-        page,
-        size: 10,
-        search: search || undefined,
-        stockTypeId,
-        warehouseId,
-      });
-
-      // Map response with default values for imageUrl and stock
-      const mappedProducts = (result.data || []).map((p: any) => ({
-        ...p,
-        imageUrl: p.imageUrl ?? null,
-        stock: p.stock ?? 0,
-        stockTypeId: p.stockTypeId ?? 0,
-      }));
-      setPaginatedProducts(mappedProducts);
-      setProductPagination(result.page);
-    } catch (error) {
-      console.error("Error loading products:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los productos",
-        variant: "destructive",
-      });
-    } finally {
-      setProductsLoading(false);
-    }
-  };
-
-  // Handle product page change
-  const handleProductPageChange = useCallback(
-    (newPage: number) => {
-      setProductPage(newPage);
-      loadProducts(
-        newPage,
-        searchQuery,
-        selectedStockTypeId ? parseInt(selectedStockTypeId) : undefined,
-        userWarehouseId || undefined,
-      );
-    },
-    [searchQuery, selectedStockTypeId, userWarehouseId],
-  );
 
   // Load price lists
   const loadPriceLists = async () => {
@@ -2274,6 +2202,83 @@ export const useCreateSale = () => {
     ],
   );
 
+  // ── Cancelación de pedido ────────────────────────────────────────────────
+  // Se abre el modal con el monto realmente cobrado: si es 0 no se pregunta
+  // por devolución, porque sin pago completado nunca hubo ingreso de dinero.
+  const openCancelModal = useCallback(async () => {
+    if (!orderId) return;
+    try {
+      const paid = await fetchOrderPaidAmount(Number(orderId));
+      setCancelPaidAmount(paid);
+      setCancelModalOpen(true);
+    } catch (error: any) {
+      console.error("Error obteniendo pagos de la orden:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo verificar los pagos del pedido",
+        variant: "destructive",
+      });
+    }
+  }, [orderId, toast]);
+
+  const confirmCancelOrder = useCallback(
+    async (refund: OrderRefund | null) => {
+      if (!orderId) return;
+      setCancelling(true);
+      try {
+        // Cancelar es un cambio de situación más: mismo endpoint, con refund.
+        const cancelSituation = (salesData?.situations || []).find(
+          (s: any) => s.code === "CAN-HDN",
+        );
+        if (!cancelSituation) {
+          throw new Error("No se encontró la situación Cancelado");
+        }
+
+        const result = await updateOrderSituation(
+          Number(orderId),
+          Number(cancelSituation.id),
+          refund,
+        );
+
+        setCancelModalOpen(false);
+        toast({
+          title: "Pedido cancelado",
+          description: result?.refunded_amount
+            ? `Se registró la devolución de ${result.refunded_amount}`
+            : "El stock reservado fue liberado",
+        });
+        navigate("/sales");
+      } catch (error: any) {
+        console.error("Error cancelando el pedido:", error);
+        toast({
+          title: "No se pudo cancelar",
+          description: error?.message || "Error al cancelar el pedido",
+          variant: "destructive",
+        });
+      } finally {
+        setCancelling(false);
+      }
+    },
+    [orderId, salesData?.situations, toast, navigate],
+  );
+
+  // Elegir "Cancelado" en el combo no es un cambio de estado más: hay que
+  // confirmar y, si la orden tenía cobro, capturar por dónde sale la
+  // devolución. Se abre el modal en vez de dejar el estado seleccionado.
+  const handleSituationChange = useCallback(
+    (value: string) => {
+      const situation = (salesData?.situations || []).find(
+        (s: any) => s.id.toString() === value,
+      );
+      if (orderId && situation?.code === "CAN-HDN") {
+        openCancelModal();
+        return;
+      }
+      setOrderSituation(value);
+    },
+    [orderId, salesData?.situations, openCancelModal],
+  );
+
   return {
     // State
     loading,
@@ -2288,13 +2293,7 @@ export const useCreateSale = () => {
     salesData,
     clientFound,
     selectedVariation,
-    searchQuery,
     selectedStockTypeId,
-
-    // Server-side pagination state
-    productPage,
-    productPagination,
-    productsLoading,
 
     // Notes state (chat-style)
     notes,
@@ -2316,7 +2315,6 @@ export const useCreateSale = () => {
     // Computed
     allShippingCosts,
     availableShippingCosts,
-    filteredVariations,
     filteredStates,
     filteredCities,
     filteredNeighborhoods,
@@ -2330,6 +2328,16 @@ export const useCreateSale = () => {
     isComSituation: !orderId ? false : isComSituation,
     isVirSituation: !orderId ? false : isVirSituation,
     filteredSituations,
+
+    // Cancelación de pedido
+    handleSituationChange,
+    canCancelOrder,
+    cancelModalOpen,
+    setCancelModalOpen,
+    cancelPaidAmount,
+    cancelling,
+    openCancelModal,
+    confirmCancelOrder,
     availableSaleTypes,
     filteredPaymentMethods,
     allPaymentMethods: salesData?.paymentMethods ?? [],
@@ -2353,7 +2361,6 @@ export const useCreateSale = () => {
     // Actions
     setOrderSituation,
     setSelectedVariation,
-    setSearchQuery,
     handleStockTypeChange,
     handleInputChange,
     handlePaymentChange,
@@ -2362,7 +2369,6 @@ export const useCreateSale = () => {
     updatePaymentInList,
     handleSearchClient,
     handleSelectPriceList,
-    handleProductPageChange,
     handleAnonymousToggle,
     handleConsignmentToggle,
     handleSendToFranchisee,

@@ -1,5 +1,7 @@
 // Sales List Types
 
+import type { SalePaymentStatus } from "../utils/salePaymentStatus";
+
 export interface SaleListItemApi {
   id: number;
   date: string;
@@ -10,6 +12,8 @@ export interface SaleListItemApi {
   situation_name: string | null;
   status_code: string | null;
   total: number;
+  // 'paid' | 'pending', calculado por sp_get_sales_list a partir de order_payment.
+  payment_status?: string | null;
 }
 
 export interface SaleListItem {
@@ -22,6 +26,9 @@ export interface SaleListItem {
   situationName: string;
   statusCode: string;
   total: number;
+  // Viene del backend. undefined = el SP no lo devolvió (versión antigua o
+  // valor inesperado); no equivale a "pending".
+  paymentStatus?: SalePaymentStatus;
 }
 
 export interface SalesFilters {
@@ -31,6 +38,7 @@ export interface SalesFilters {
   startDate: string | null;
   endDate: string | null;
   consignament: boolean | null;
+  paymentStatus: SalePaymentStatus | null;
   order: string;
   page: number;
   size: number;

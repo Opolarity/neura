@@ -26,19 +26,6 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -53,7 +40,6 @@ import {
   Plus,
   Trash2,
   ArrowLeft,
-  Check,
   Package,
   User,
   Truck,
@@ -71,8 +57,11 @@ import {
   Lock,
 } from "lucide-react";
 import { useCreateSale } from "../hooks/useCreateSale";
+import { ProductVariationSelector } from "@/shared/components/product-variation-selector";
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
+import { getSalePaymentStatus } from "../utils/salePaymentStatus";
+import { SalePaymentStatusBadge } from "../components/sales/SalePaymentStatusBadge";
 import { generateDeliveryLabel } from "../utils/generateDeliveryLabel";
 import { generateRemisionGuide } from "../utils/generateRemisionGuide";
 import { generateSaleExcel } from "../utils/generateSaleExcel";
@@ -82,6 +71,7 @@ import { SalesHistoryModal } from "../components/SalesHistoryModal";
 import { SalesInvoicesModal } from "../components/SalesInvoicesModal";
 import { SalesReturnsModal } from "../components/SalesReturnsModal";
 import { SalesCambiosModal } from "../components/SalesCambiosModal";
+import { CancelOrderModal } from "../components/CancelOrderModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 import placeholderImage from "@/assets/product-placeholder.png";
@@ -104,7 +94,6 @@ const CreateSale = () => {
     salesData,
     clientFound,
     selectedVariation,
-    searchQuery,
     selectedStockTypeId,
     showPriceListModal,
     priceLists,
@@ -115,7 +104,6 @@ const CreateSale = () => {
     loadingWarehouse,
     allShippingCosts,
     availableShippingCosts,
-    filteredVariations,
     filteredStates,
     filteredCities,
     filteredNeighborhoods,
@@ -129,6 +117,12 @@ const CreateSale = () => {
     isComSituation,
     isVirSituation,
     filteredSituations,
+    handleSituationChange,
+    cancelModalOpen,
+    setCancelModalOpen,
+    cancelPaidAmount,
+    cancelling,
+    confirmCancelOrder,
     availableSaleTypes,
     filteredPaymentMethods,
     allPaymentMethods,
@@ -145,10 +139,6 @@ const CreateSale = () => {
     // Change entries
     changeEntries,
     currentChangeEntry,
-    // Server-side pagination
-    productPage,
-    productPagination,
-    productsLoading,
     // Notes state
     notes,
     newNoteText,
@@ -156,7 +146,6 @@ const CreateSale = () => {
     // Actions
     setOrderSituation,
     setSelectedVariation,
-    setSearchQuery,
     handleStockTypeChange,
     handleInputChange,
     handlePaymentChange,
@@ -164,7 +153,6 @@ const CreateSale = () => {
     removePayment,
     handleSearchClient,
     handleSelectPriceList,
-    handleProductPageChange,
     handleAnonymousToggle,
     handleConsignmentToggle,
     handleSendToFranchisee,
@@ -241,7 +229,6 @@ const CreateSale = () => {
   const [franchiseProductsSearchInput, setFranchiseProductsSearchInput] = useState("");
   const [franchiseProductsSearchQuery, setFranchiseProductsSearchQuery] = useState("");
 
-  const [open, setOpen] = useState(false);
   const [tempPriceListId, setTempPriceListId] = useState<string>("");
   const [tempSaleTypeId, setTempSaleTypeId] = useState<string>("");
   const [voucherModalOpen, setVoucherModalOpen] = useState(false);
@@ -265,11 +252,6 @@ const CreateSale = () => {
   const existingPaymentVoucherInputRef = useRef<HTMLInputElement>(null);
   const isAcceptingRef = useRef(false);
   const { toast } = useToast();
-
-  // Total pages for product pagination
-  const totalProductPages = Math.ceil(
-    productPagination.total / productPagination.size,
-  );
 
   const filteredFranchiseProducts = useMemo(() => {
     const query = franchiseProductsSearchQuery.trim().toLowerCase();
@@ -585,150 +567,17 @@ const CreateSale = () => {
 
                 {/* Product Search */}
                 <div className="flex-1">
-                  <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-start text-muted-foreground font-normal"
-                      >
-                        <Search className="w-4 h-4 mr-2" />
-                        {selectedVariation
-                          ? `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`
-                          : "Buscar por nombre o SKU..."}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0 bg-popover">
-                      <Command shouldFilter={false}>
-                        <CommandInput
-                          placeholder="Buscar producto o SKU..."
-                          value={searchQuery}
-                          onValueChange={setSearchQuery}
-                        />
-
-                        <CommandList>
-                          {productsLoading ? (
-                            <div className="flex justify-center py-6">
-                              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                            </div>
-                          ) : (
-                            <>
-                              <CommandEmpty>
-                                No se encontraron productos.
-                              </CommandEmpty>
-                              <CommandGroup>
-                                {filteredVariations.map((variation) => {
-                                  const termsNames = variation.terms
-                                    .map((t) => t.name)
-                                    .join(" / ");
-                                  const displayTerms = termsNames
-                                    ? `${termsNames} (${variation.sku})`
-                                    : variation.sku;
-                                  return (
-                                    <CommandItem
-                                      key={variation.id}
-                                      value={`${variation.productTitle} ${variation.sku} ${termsNames}`}
-                                      onSelect={() => {
-                                        setSelectedVariation(variation);
-                                        setOpen(false);
-                                      }}
-                                      className="flex items-center gap-3 py-2"
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "h-4 w-4 shrink-0",
-                                          selectedVariation?.id === variation.id
-                                            ? "opacity-100"
-                                            : "opacity-0",
-                                        )}
-                                      />
-
-                                      {/* Product Image */}
-                                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
-                                        {variation.imageUrl ? (
-                                          <img
-                                            src={variation.imageUrl}
-                                            alt={variation.productTitle}
-                                            className="h-full w-full object-cover"
-                                          />
-                                        ) : (
-                                          <div className="flex h-full w-full items-center justify-center">
-                                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                                          </div>
-                                        )}
-                                      </div>
-                                      {/* Product Info */}
-                                      <div className="flex flex-1 flex-col min-w-0">
-                                        <span className="font-medium truncate">
-                                          {variation.productTitle}
-                                        </span>
-                                        <span className="text-sm text-muted-foreground truncate">
-                                          {displayTerms}
-                                        </span>
-                                      </div>
-                                      {/* Stock (filtered by selected stock type) */}
-                                      <span
-                                        className={cn(
-                                          "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
-                                          variation.stock > 0
-                                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-                                        )}
-                                      >
-                                        {variation.stock}
-                                      </span>
-                                    </CommandItem>
-                                  );
-                                })}
-                              </CommandGroup>
-                            </>
-                          )}
-                        </CommandList>
-                        {/* Pagination controls */}
-                        {totalProductPages > 1 && (
-                          <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
-                            <span className="text-xs text-muted-foreground">
-                              {(productPage - 1) * productPagination.size + 1}-
-                              {Math.min(
-                                productPage * productPagination.size,
-                                productPagination.total,
-                              )}{" "}
-                              de {productPagination.total}
-                            </span>
-                            <div className="flex gap-1">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-7 px-2 text-xs"
-                                onClick={() =>
-                                  handleProductPageChange(productPage - 1)
-                                }
-                                disabled={productPage <= 1 || productsLoading}
-                              >
-                                Anterior
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-7 px-2 text-xs"
-                                onClick={() =>
-                                  handleProductPageChange(productPage + 1)
-                                }
-                                disabled={
-                                  productPage >= totalProductPages ||
-                                  productsLoading
-                                }
-                              >
-                                Siguiente
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <ProductVariationSelector
+                    selectedVariation={selectedVariation}
+                    onSelect={setSelectedVariation}
+                    stockTypeId={
+                      selectedStockTypeId
+                        ? parseInt(selectedStockTypeId)
+                        : undefined
+                    }
+                    warehouseId={userWarehouseId || undefined}
+                    showStock={true}
+                  />
                 </div>
                 <Button
                   type="button"
@@ -1520,7 +1369,12 @@ const CreateSale = () => {
               <CardTitle className="text-lg">Estado del Pedido</CardTitle>
             </CardHeader>
             <CardContent className="pb-2">
-              <Select value={orderSituation} onValueChange={setOrderSituation}>
+              <div className="mb-2">
+                <SalePaymentStatusBadge
+                  status={getSalePaymentStatus(payments, total)}
+                />
+              </div>
+              <Select value={orderSituation} onValueChange={handleSituationChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
@@ -1977,6 +1831,8 @@ const CreateSale = () => {
                     })}
                 </div>
               )}
+
+              {/* Las devoluciones de dinero se listan en "Pagos de Retorno" */}
 
               <input
                 ref={existingPaymentVoucherInputRef}
@@ -2776,6 +2632,16 @@ const CreateSale = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <CancelOrderModal
+        open={cancelModalOpen}
+        onOpenChange={setCancelModalOpen}
+        orderId={createdOrderId}
+        paidAmount={cancelPaidAmount}
+        paymentMethods={allPaymentMethods}
+        saving={cancelling}
+        onConfirm={confirmCancelOrder}
+      />
 
       {createdOrderId && (
         <SalesInvoicesModal

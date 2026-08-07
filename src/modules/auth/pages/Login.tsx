@@ -25,7 +25,9 @@ const Login = () => {
 
     if (error) {
       setError(
-        "Credenciales inválidas. Por favor, verifica tu email y contraseña."
+        error.code === "erp_access_denied"
+          ? "Tu cuenta no tiene acceso al ERP."
+          : "Credenciales inválidas. Por favor, verifica tu email y contraseña."
       );
     } else {
       navigate("/");

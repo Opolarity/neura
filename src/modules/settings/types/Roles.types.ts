@@ -28,7 +28,6 @@ export interface Role {
   userCount: number;
   isAdmin: boolean;
   permissionCount: number;
-  capabilityCount: number;
 }
 
 export interface RolesFilters {
@@ -51,10 +50,7 @@ export interface RolePayload {
   id?: number;
   name: string;
   admin: boolean;
-  /** ids de `permissions` con type = 'route' */
   permissions: number[];
-  /** ids de `permissions` con type = 'component' */
-  capabilities: number[];
 }
 
 export interface RoleDetailApiResponse {
@@ -64,7 +60,6 @@ export interface RoleDetailApiResponse {
     admin: boolean;
   };
   permissionIds: number[];
-  capabilityIds: number[];
 }
 
 export interface RoleDetail {
@@ -72,5 +67,4 @@ export interface RoleDetail {
   name: string;
   admin: boolean;
   permissions: number[];
-  capabilities: number[];
 }
