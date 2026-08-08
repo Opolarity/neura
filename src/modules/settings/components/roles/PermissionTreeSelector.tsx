@@ -170,7 +170,12 @@ const PermissionTreeSelector = ({
         />
       </div>
 
-      <div className="space-y-1 max-h-96 overflow-y-auto">
+      {/* `relative` es necesario: el Checkbox de Radix renderiza un input
+          oculto con position:absolute. Sin un bloque contenedor aquí, esos
+          inputs se posicionan respecto a un ancestro de más arriba, escapan
+          al recorte del overflow y estiran el alto del documento (dejando un
+          gran espacio en blanco debajo del formulario). */}
+      <div className="relative space-y-1 max-h-96 overflow-y-auto">
         {visibleNodes.length > 0 ? (
           visibleNodes.map((node) => renderNode(node))
         ) : (
