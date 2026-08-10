@@ -74,8 +74,8 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
               <span
                 className={`px-2 py-1 rounded-full text-xs font-medium ${
                   item.declared
-                    ? "bg-green-100 text-green-700"
-                    : "bg-yellow-100 text-yellow-700"
+                    ? "bg-success/15 text-success"
+                    : "bg-warning/15 text-warning-foreground"
                 }`}
               >
                 {item.declared ? "Declarado" : "Pendiente"}

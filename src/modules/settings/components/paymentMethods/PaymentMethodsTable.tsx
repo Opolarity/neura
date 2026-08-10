@@ -44,7 +44,7 @@ const PaymentMethodsTable = ({ paymentMethods, loading }: PaymentMethodsTablePro
                                 <TableCell className="font-mono text-sm">{method.business_account_id}</TableCell>
                                 <TableCell>
                                     {method.active ? (
-                                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                                        <Badge variant="success">
                                             Activo
                                         </Badge>
                                     ) : (

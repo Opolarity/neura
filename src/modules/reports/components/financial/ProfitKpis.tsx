@@ -18,8 +18,8 @@ export function ProfitKpis({ data, loading }: Props) {
         <div
           className={`flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${
             isLowCoverage
-              ? 'border-amber-300 bg-amber-50 text-amber-800'
-              : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+              ? 'border-warning/30 bg-warning/10 text-warning-foreground'
+              : 'border-success/30 bg-success/10 text-success'
           }`}
         >
           <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />

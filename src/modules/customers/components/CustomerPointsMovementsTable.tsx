@@ -60,8 +60,8 @@ export const CustomerPointsMovementsTable = ({
                   <Badge
                     className={
                       isPositive
-                        ? "bg-green-100 text-green-700 hover:bg-green-100"
-                        : "bg-red-100 text-red-700 hover:bg-red-100"
+                        ? "bg-success/15 text-success hover:bg-success/15"
+                        : "bg-destructive/15 text-destructive hover:bg-destructive/15"
                     }
                   >
                     {isPositive ? "+" : ""}

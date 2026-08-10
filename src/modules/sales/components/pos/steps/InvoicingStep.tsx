@@ -704,15 +704,15 @@ export default function InvoicingStep({
   return (
     <div className="space-y-6">
       {/* Success banner */}
-      <Card className="border-green-200 bg-green-50">
+      <Card className="border-success/30 bg-success/10">
         <CardContent className="pt-6">
           <div className="flex items-center gap-3">
-            <CheckCircle2 className="w-8 h-8 text-green-600 shrink-0" />
+            <CheckCircle2 className="w-8 h-8 text-success shrink-0" />
             <div>
-              <h2 className="text-lg font-semibold text-green-800">
+              <h2 className="text-lg font-semibold text-success">
                 ¡Venta creada exitosamente!
               </h2>
-              <p className="text-sm text-green-700">
+              <p className="text-sm text-success">
                 Pedido <strong>#{orderId}</strong> registrado. Puedes crear comprobantes electrónicos o iniciar una nueva venta.
               </p>
             </div>

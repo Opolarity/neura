@@ -91,12 +91,12 @@ const POSSessionDetailDialog = ({
   const getStatusBadge = (statusCode: string, statusName: string) => {
     if (statusCode === "OPE") {
       return (
-        <Badge className="bg-green-500 hover:bg-green-500">{statusName}</Badge>
+        <Badge variant="success">{statusName}</Badge>
       );
     }
     if (statusCode === "CLO") {
       return (
-        <Badge className="bg-gray-500 hover:bg-gray-500">{statusName}</Badge>
+        <Badge variant="pending">{statusName}</Badge>
       );
     }
     return <Badge variant="outline">{statusName}</Badge>;
@@ -181,9 +181,9 @@ const POSSessionDetailDialog = ({
                     <span
                       className={
                         session.difference < 0
-                          ? "text-red-500"
+                          ? "text-destructive"
                           : session.difference > 0
-                            ? "text-green-500"
+                            ? "text-success"
                             : ""
                       }
                     >

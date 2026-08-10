@@ -66,9 +66,9 @@ const WarehousesTable = ({ warehouses, loading, onDeleteClick }: WarehousesTable
                                 </TableCell>
                                 <TableCell>
                                     {w.web ? (
-                                        <Badge className="bg-green-400 hover:bg-green-400">Activo</Badge>
+                                        <Badge variant="success">Activo</Badge>
                                     ) : (
-                                        <Badge className="bg-red-400 hover:bg-red-400">Inactivo</Badge>
+                                        <Badge variant="destructive">Inactivo</Badge>
                                     )}
                                 </TableCell>
                                 <TableCell>

@@ -170,7 +170,7 @@ const POSSessions = () => {
                     session.openingDifference < 0 ?
                     "text-destructive" :
                     session.openingDifference > 0 ?
-                    "text-green-600" :
+                    "text-success" :
                     ""
                     }>
 
@@ -184,7 +184,7 @@ const POSSessions = () => {
                     session.difference < 0 ?
                     "text-destructive" :
                     session.difference > 0 ?
-                    "text-green-600" :
+                    "text-success" :
                     ""
                     }>
 

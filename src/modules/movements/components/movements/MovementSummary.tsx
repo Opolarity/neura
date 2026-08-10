@@ -63,7 +63,7 @@ const MovementSummary = ({
                 movementAmount <= 0
                   ? "text-muted-foreground"
                   : isIncome
-                    ? "text-green-600"
+                    ? "text-success"
                     : "text-destructive"
               )}
             >

@@ -36,9 +36,9 @@ export interface SituationHistoryItem {
 }
 
 const getSituationBadgeColor = (code?: string) => {
-  if (code === 'APR' || code === 'REC' || code === 'ENV' || code === 'COM') return 'bg-green-500 hover:bg-green-500 text-white border-transparent';
-  if (code === 'NEG' || code === 'REQ') return 'bg-yellow-500 hover:bg-yellow-500 text-white border-transparent';
-  if (code === 'CAN') return 'bg-red-500 hover:bg-red-500 text-white border-transparent';
+  if (code === 'APR' || code === 'REC' || code === 'ENV' || code === 'COM') return 'bg-success hover:bg-success/80 text-success-foreground border-transparent';
+  if (code === 'NEG' || code === 'REQ') return 'bg-warning hover:bg-warning/80 text-warning-foreground border-transparent';
+  if (code === 'CAN') return 'bg-destructive hover:bg-destructive/80 text-destructive-foreground border-transparent';
   return 'bg-secondary text-secondary-foreground hover:bg-secondary';
 };
 
@@ -122,7 +122,7 @@ const RequestSituationsHistory = ({
               key={sit.id}
               className={`rounded-lg border p-4 space-y-1 ${
                 userWarehouseId && sit.warehouseId && sit.warehouseId !== userWarehouseId
-                  ? "border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-700"
+                  ? "border-warning/30 bg-warning/10"
                   : "border-border bg-muted/40"
               }`}
             >
