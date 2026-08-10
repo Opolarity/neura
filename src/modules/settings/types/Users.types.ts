@@ -64,6 +64,7 @@ export interface UsersFilterDraft {
 export interface FilterOption {
   id: number;
   name: string;
+  code?: string;
   warehouse_id?: number;
 }
 

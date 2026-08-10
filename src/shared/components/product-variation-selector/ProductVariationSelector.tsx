@@ -27,6 +27,13 @@ interface ProductVariationSelectorProps {
   disabled?: boolean;
   placeholder?: string;
   showStock?: boolean;
+  /**
+   * Escaneo por código de barras: se invoca con el texto tipeado al presionar
+   * Enter (el lector HID emite Enter al final). Si devuelve `true` (producto
+   * agregado), se limpia el input; si no, se conserva el texto para que la
+   * búsqueda debounced muestre los candidatos.
+   */
+  onScan?: (code: string) => Promise<boolean> | boolean;
 }
 
 const PAGE_SIZE = 10;
@@ -39,6 +46,7 @@ export default function ProductVariationSelector({
   disabled = false,
   placeholder = "Buscar por nombre o SKU...",
   showStock = true,
+  onScan,
 }: ProductVariationSelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -135,6 +143,19 @@ export default function ProductVariationSelector({
             placeholder="Buscar producto o SKU..."
             value={search}
             onValueChange={setSearch}
+            onKeyDown={
+              onScan
+                ? async (e) => {
+                    if (e.key !== "Enter") return;
+                    // Evitar que cmdk seleccione el item resaltado con el
+                    // Enter que emite el lector de códigos de barras.
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const added = await onScan(search);
+                    if (added) setSearch("");
+                  }
+                : undefined
+            }
           />
 
           <CommandList>

@@ -18,15 +18,11 @@ const CreateRole = () => {
     loading,
     saving,
     permissionNodes,
-    capabilityNodes,
     permissionSearch,
-    capabilitySearch,
     setPermissionSearch,
-    setCapabilitySearch,
     handleNameChange,
     handleToggleAdmin,
     togglePermission,
-    toggleCapability,
     handleSubmit,
   } = useCreateRole(roleId);
 
@@ -112,28 +108,6 @@ const CreateRole = () => {
                 </p>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Capacidades</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PermissionTreeSelector
-                  nodes={capabilityNodes}
-                  selectedIds={formData.capabilities}
-                  onToggle={toggleCapability}
-                  disabled={formData.admin}
-                  emptyMessage="Aún no hay capacidades configuradas en el sistema."
-                  search={capabilitySearch}
-                  onSearchChange={setCapabilitySearch}
-                  searchPlaceholder="Buscar capacidad..."
-                />
-                <p className="text-sm text-muted-foreground mt-4">
-                  Acciones dentro de una vista (botones, secciones) que este rol
-                  podrá usar.
-                </p>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Sidebar */}
@@ -147,14 +121,6 @@ const CreateRole = () => {
                   <p className="text-sm font-medium">Permisos seleccionados:</p>
                   <p className="text-2xl font-bold text-primary">
                     {formData.permissions.length}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">
-                    Capacidades seleccionadas:
-                  </p>
-                  <p className="text-2xl font-bold text-primary">
-                    {formData.capabilities.length}
                   </p>
                 </div>
                 <div>

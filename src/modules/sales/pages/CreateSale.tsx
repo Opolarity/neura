@@ -60,6 +60,8 @@ import { useCreateSale } from "../hooks/useCreateSale";
 import { ProductVariationSelector } from "@/shared/components/product-variation-selector";
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
+import { getSalePaymentStatus } from "../utils/salePaymentStatus";
+import { SalePaymentStatusBadge } from "../components/sales/SalePaymentStatusBadge";
 import { generateDeliveryLabel } from "../utils/generateDeliveryLabel";
 import { generateRemisionGuide } from "../utils/generateRemisionGuide";
 import { generateSaleExcel } from "../utils/generateSaleExcel";
@@ -69,6 +71,7 @@ import { SalesHistoryModal } from "../components/SalesHistoryModal";
 import { SalesInvoicesModal } from "../components/SalesInvoicesModal";
 import { SalesReturnsModal } from "../components/SalesReturnsModal";
 import { SalesCambiosModal } from "../components/SalesCambiosModal";
+import { CancelOrderModal } from "../components/CancelOrderModal";
 import { getOrdersSituationsById } from "../services";
 import { getOrdersSituationsByIdAdapter } from "../adapters";
 import placeholderImage from "@/assets/product-placeholder.png";
@@ -114,6 +117,12 @@ const CreateSale = () => {
     isComSituation,
     isVirSituation,
     filteredSituations,
+    handleSituationChange,
+    cancelModalOpen,
+    setCancelModalOpen,
+    cancelPaidAmount,
+    cancelling,
+    confirmCancelOrder,
     availableSaleTypes,
     filteredPaymentMethods,
     allPaymentMethods,
@@ -148,6 +157,7 @@ const CreateSale = () => {
     handleConsignmentToggle,
     handleSendToFranchisee,
     addProduct,
+    handleBarcodeScan,
     removeProduct,
     updateProduct,
     handleSubmit,
@@ -561,6 +571,7 @@ const CreateSale = () => {
                   <ProductVariationSelector
                     selectedVariation={selectedVariation}
                     onSelect={setSelectedVariation}
+                    onScan={handleBarcodeScan}
                     stockTypeId={
                       selectedStockTypeId
                         ? parseInt(selectedStockTypeId)
@@ -1360,7 +1371,12 @@ const CreateSale = () => {
               <CardTitle className="text-lg">Estado del Pedido</CardTitle>
             </CardHeader>
             <CardContent className="pb-2">
-              <Select value={orderSituation} onValueChange={setOrderSituation}>
+              <div className="mb-2">
+                <SalePaymentStatusBadge
+                  status={getSalePaymentStatus(payments, total)}
+                />
+              </div>
+              <Select value={orderSituation} onValueChange={handleSituationChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
@@ -1817,6 +1833,8 @@ const CreateSale = () => {
                     })}
                 </div>
               )}
+
+              {/* Las devoluciones de dinero se listan en "Pagos de Retorno" */}
 
               <input
                 ref={existingPaymentVoucherInputRef}
@@ -2616,6 +2634,16 @@ const CreateSale = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <CancelOrderModal
+        open={cancelModalOpen}
+        onOpenChange={setCancelModalOpen}
+        orderId={createdOrderId}
+        paidAmount={cancelPaidAmount}
+        paymentMethods={allPaymentMethods}
+        saving={cancelling}
+        onConfirm={confirmCancelOrder}
+      />
 
       {createdOrderId && (
         <SalesInvoicesModal

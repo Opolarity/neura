@@ -425,9 +425,13 @@ export const useEditReturn = () => {
                 total_refund_amount: totalRefundAmount,
                 total_exchange_difference: totalExchangeDifference,
                 return_products: allReturnProducts,
+                // El signo decide si trg_return_payment_movement crea un
+                // movement OUT (sale dinero) o INC (entra). Enviarlo siempre
+                // positivo hacía que una devolución SUMARA al saldo de la
+                // cuenta en vez de restarlo.
                 payment_methods: paymentsWithUrls.map(p => ({
                     payment_method_id: Number(p.paymentMethodId),
-                    amount: parseFloat(p.amount),
+                    amount: parseFloat(p.amount) * (totalExchangeDifference < 0 ? -1 : 1),
                     voucher_url: p.voucherUrl || null,
                 })),
                 business_account_id: userProfile?.business_account_id || 0,

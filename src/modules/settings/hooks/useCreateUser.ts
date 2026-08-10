@@ -39,6 +39,18 @@ interface FormData {
     profiles_id: string;
 }
 
+// Tipos de cuenta que SIEMPRE se asignan a un usuario creado desde el ERP.
+// COL es obligatorio: sp_validate_erp_access solo deja entrar al ERP a las
+// cuentas que lo tienen.
+const DEFAULT_ACCOUNT_TYPE_CODES = ['USE', 'COL'];
+
+const resolveDefaultAccountTypeIds = (accountTypes: FilterOption[]): number[] =>
+    DEFAULT_ACCOUNT_TYPE_CODES
+        .map(code => accountTypes.find(t =>
+            t.code?.toUpperCase() === code || t.name?.toUpperCase().includes(code)
+        )?.id)
+        .filter((id): id is number => id !== undefined);
+
 const useCreateUser = (uid?: string, isEdit?: boolean) => {
     const navigate = useNavigate();
     const { toast } = useToast();
@@ -93,7 +105,6 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
     // Reset form when switching from edit to create
     useEffect(() => {
         if (!isEdit) {
-            const useType = accountTypes.find(t => t.name?.toUpperCase().includes('USE'));
             setFormData({
                 user_name: '',
                 name: '',
@@ -114,7 +125,7 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
                 address: '',
                 address_reference: '',
                 show: true,
-                type_ids: useType ? [useType.id] : [],
+                type_ids: resolveDefaultAccountTypeIds(accountTypes),
                 role_ids: [],
                 profiles_id: '',
             });
@@ -148,13 +159,14 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
 
                 setAccountTypes(accountTypesData);
 
-                // Auto-select USE account type if not in edit mode
+                // Los usuarios creados desde el ERP son siempre USE + COL,
+                // por eso no hay selector de tipo de cuenta en el formulario.
                 if (!isEdit && accountTypesData.length > 0) {
-                    const useType = accountTypesData.find(t => t.name?.toUpperCase().includes('USE'));
-                    if (useType) {
+                    const defaultTypeIds = resolveDefaultAccountTypeIds(accountTypesData);
+                    if (defaultTypeIds.length > 0) {
                         setFormData(prev => ({
                             ...prev,
-                            type_ids: [useType.id]
+                            type_ids: defaultTypeIds
                         }));
                     }
                 }
@@ -370,29 +382,6 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
         }));
     };
 
-    const toggleAccountType = (id: number) => {
-        const accountType = accountTypes.find(t => t.id === id);
-        const isUseType = accountType?.name?.toUpperCase().includes('USE');
-
-        setFormData(prev => {
-            if (isUseType && prev.type_ids.includes(id)) {
-                toast({
-                    title: "Tipo de cuenta obligatorio",
-                    description: "El tipo de cuenta USE no puede ser removido",
-                    variant: "destructive",
-                });
-                return prev;
-            }
-
-            return {
-                ...prev,
-                type_ids: prev.type_ids.includes(id)
-                    ? prev.type_ids.filter(t => t !== id)
-                    : [...prev.type_ids, id]
-            };
-        });
-    };
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value, type, checked } = e.target;
         setFormData(prev => ({
@@ -516,7 +505,6 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
         warehouses,
         branches,
         documentTypes,
-        accountTypes,
         countries,
         states,
         cities,
@@ -525,7 +513,6 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
         handleSelectChange,
         handleBranchChange,
         toggleRole,
-        toggleAccountType,
         handleSubmit,
         showPasswordField,
         setShowPasswordField,

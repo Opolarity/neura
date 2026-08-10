@@ -47,6 +47,7 @@ import { createPOSOrder } from "../services/POS.service";
 import { getPOSSessionDetail } from "@/modules/pos/services/POSDetail.service";
 
 import { filterShippingCostsByLocation } from "../utils";
+import { findExactScanMatch } from "../utils/scan";
 
 // Initial state values
 const DEFAULT_CUSTOMER: POSCustomerData = {
@@ -534,6 +535,49 @@ export const usePOS = () => {
     [selectedStockTypeId, configuration, cart, formData, toast]
   );
 
+  const handleScan = useCallback(
+    async (code: string) => {
+      const q = code.trim();
+      if (!q || !configuration?.warehouseId) return;
+
+      try {
+        setProductsLoading(true);
+        const result = await fetchSaleProducts({
+          page: 1,
+          size: 10,
+          search: q,
+          stockTypeId: selectedStockTypeId
+            ? parseInt(selectedStockTypeId)
+            : undefined,
+          warehouseId: configuration.warehouseId,
+        });
+        const products = result.data || [];
+        const match = findExactScanMatch(q, products);
+
+        if (match) {
+          const added = addToCart(match);
+          if (added) {
+            toast({
+              title: "Producto agregado",
+              description: match.productTitle,
+            });
+          }
+        }
+
+        // Siempre se muestra la lista filtrada (búsqueda normal), haya o no
+        // coincidencia exacta, para no vaciar la tabla al agregar por escaneo.
+        setSearchQuery(q);
+        setPaginatedProducts(products);
+        setProductPagination(result.page);
+      } catch (error) {
+        console.error("Error scanning product:", error);
+      } finally {
+        setProductsLoading(false);
+      }
+    },
+    [configuration?.warehouseId, selectedStockTypeId, addToCart, toast]
+  );
+
   const updateCartItem = useCallback(
     (index: number, field: keyof POSCartItem, value: number | string) => {
       setCart((prev) => {
@@ -569,6 +613,13 @@ export const usePOS = () => {
 
   const updateCustomer = useCallback(
     (field: keyof POSCustomerData, value: string | boolean) => {
+      // Si el cajero ingresa documento despues de pulsar "Venta anonima",
+      // salimos del modo anonimo: de lo contrario submitOrder descarta el
+      // documento y la orden se guarda con document_type 0 (state_code '-'),
+      // lo que impide emitir Factura en SUNAT.
+      if (field === "documentTypeId" || field === "documentNumber") {
+        if (value) setIsAnonymousPurchase(false);
+      }
       setCustomer((prev) => ({ ...prev, [field]: value }));
     },
     []
@@ -982,16 +1033,24 @@ export const usePOS = () => {
       // Use the sale type from the POS session
       const saleTypeId = sessionSaleTypeId?.toString() || "1";
 
+      // Red de seguridad: solo tratamos la venta como anonima si ademas no hay
+      // documento cargado. Evita perder el documento del cliente si el flag
+      // quedo activo desde el boton "Venta anonima".
+      const isAnon =
+        isAnonymousPurchase &&
+        !customer.documentTypeId &&
+        !customer.documentNumber;
+
       const orderData: CreatePOSOrderRequest = {
         priceListId: configuration.priceListId,
-        documentType: isAnonymousPurchase ? "0" : customer.documentTypeId,
-        documentNumber: isAnonymousPurchase ? " " : customer.documentNumber,
+        documentType: isAnon ? "0" : customer.documentTypeId,
+        documentNumber: isAnon ? " " : customer.documentNumber,
         customerName: customer.customerName,
-        customerLastname: isAnonymousPurchase ? null : customer.customerLastname,
-        customerLastname2: isAnonymousPurchase ? null : (customer.customerLastname2 || null),
+        customerLastname: isAnon ? null : customer.customerLastname,
+        customerLastname2: isAnon ? null : (customer.customerLastname2 || null),
         email: customer.email || null,
         phone: customer.phone || null,
-        isExistingClient: isAnonymousPurchase ? true : customer.isExistingClient,
+        isExistingClient: isAnon ? true : customer.isExistingClient,
         withShipping: customer.requiresShipping,
         shippingMethod: customer.requiresShipping
           ? shipping.shippingMethodId
@@ -1091,6 +1150,7 @@ export const usePOS = () => {
     configuration,
     POSSessionHook.session,
     customer,
+    isAnonymousPurchase,
     shipping,
     cart,
     payments,
@@ -1299,6 +1359,7 @@ export const usePOS = () => {
     selectedStockTypeId,
     setSelectedStockTypeId,
     addToCart,
+    handleScan,
     updateCartItem,
     removeFromCart,
     clearCart,

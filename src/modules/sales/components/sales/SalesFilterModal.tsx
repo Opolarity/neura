@@ -26,6 +26,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/shared/utils/utils";
 import { SalesFilters, SaleType, SaleSituation } from "../../types/Sales.types";
+import type { SalePaymentStatus } from "../../utils/salePaymentStatus";
 
 interface SalesFilterModalProps {
   isOpen: boolean;
@@ -49,6 +50,9 @@ const SalesFilterModal = ({
   const [situationId, setSituationId] = useState<number | null>(filters.situationId);
   const [saleType, setSaleType] = useState<number | null>(filters.saleType);
   const [consignament, setConsignament] = useState<boolean | null>(filters.consignament ?? null);
+  const [paymentStatus, setPaymentStatus] = useState<SalePaymentStatus | null>(
+    filters.paymentStatus ?? null
+  );
   const [startDate, setStartDate] = useState<Date | undefined>(
     filters.startDate ? new Date(filters.startDate) : undefined
   );
@@ -60,6 +64,7 @@ const SalesFilterModal = ({
     setSituationId(filters.situationId);
     setSaleType(filters.saleType);
     setConsignament(filters.consignament ?? null);
+    setPaymentStatus(filters.paymentStatus ?? null);
     setStartDate(filters.startDate ? new Date(filters.startDate) : undefined);
     setEndDate(filters.endDate ? new Date(filters.endDate) : undefined);
   }, [filters, isOpen]);
@@ -69,6 +74,7 @@ const SalesFilterModal = ({
       situationId,
       saleType,
       consignament,
+      paymentStatus,
       startDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
       endDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
     });
@@ -78,6 +84,7 @@ const SalesFilterModal = ({
     setSituationId(null);
     setSaleType(null);
     setConsignament(null);
+    setPaymentStatus(null);
     setStartDate(undefined);
     setEndDate(undefined);
     onClear();
@@ -91,25 +98,47 @@ const SalesFilterModal = ({
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          {/* Situation Filter */}
-          <div className="grid gap-2">
-            <Label>Estado</Label>
-            <Select
-              value={situationId?.toString() || "all"}
-              onValueChange={(val) => setSituationId(val === "all" ? null : parseInt(val))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todos los estados" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                {saleSituations.map((s) => (
-                  <SelectItem key={s.id} value={s.id.toString()}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Situation Filter */}
+            <div className="grid gap-2">
+              <Label>Estado</Label>
+              <Select
+                value={situationId?.toString() || "all"}
+                onValueChange={(val) => setSituationId(val === "all" ? null : parseInt(val))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los estados" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  {saleSituations.map((s) => (
+                    <SelectItem key={s.id} value={s.id.toString()}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Payment Status Filter */}
+            <div className="grid gap-2">
+              <Label>Estado de pago</Label>
+              <Select
+                value={paymentStatus ?? "all"}
+                onValueChange={(val) =>
+                  setPaymentStatus(val === "all" ? null : (val as SalePaymentStatus))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="pending">Pendientes de pago</SelectItem>
+                  <SelectItem value="paid">Pagados</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Sale Type Filter */}

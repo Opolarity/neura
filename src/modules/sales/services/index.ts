@@ -178,19 +178,61 @@ export const updateOrder = async (
   return data;
 };
 
-// Update order situation
+// Cambio de situación de la orden — punto único, incluida la cancelación.
+// `refund` solo aplica cuando la situación destino es Cancelado (CAN-HDN):
+// el SP valida las reglas (no se cancela una orden con entrega física) y
+// registra la devolución como retorno sin ítems.
+export interface OrderRefund {
+  payment_methods: Array<{
+    payment_method_id: number;
+    amount: number; // positivo: el SP aplica el signo negativo
+    voucher_url?: string | null;
+  }>;
+}
+
 export const updateOrderSituation = async (
   orderId: number,
   situationId: number,
+  refund?: OrderRefund | null,
 ) => {
   const { data, error } = await supabase.functions.invoke(
     "update-order-situation",
     {
-      body: { orderId, situationId },
+      body: { orderId, situationId, refund: refund ?? null },
     },
   );
-  if (error) throw error;
+
+  // En un status != 2xx Supabase lanza error pero deja el cuerpo en data:
+  // preferimos el mensaje de negocio del SP sobre el genérico.
+  if (error) {
+    if (error.context instanceof Response) {
+      try {
+        const body = await error.context.json();
+        throw new Error(body?.error || body?.message || error.message);
+      } catch (parseErr: any) {
+        if (parseErr.message !== error.message) throw parseErr;
+      }
+    }
+    throw error;
+  }
+  if (data?.success === false) {
+    throw new Error(data.error || "No se pudo actualizar la situación");
+  }
   return data;
+};
+
+// Suma de pagos COMPLETADOS de la orden: es lo único devolvible, porque un
+// pago no completado nunca generó movement de ingreso.
+export const fetchOrderPaidAmount = async (orderId: number): Promise<number> => {
+  const { data, error } = await supabase
+    .from("order_payment")
+    .select("amount")
+    .eq("order_id", orderId)
+    .eq("completed", true)
+    .gt("amount", 0);
+
+  if (error) throw error;
+  return (data || []).reduce((sum, p: any) => sum + Number(p.amount || 0), 0);
 };
 
 // Fetch order by ID (for editing)

@@ -1,10 +1,6 @@
 /**
  * Catálogo de permisos — fuente de verdad: tabla `permissions` del backend.
  *
- * `type` discrimina cómo se muestra en la UI de roles:
- *   'route'     → sección "Permisos"
- *   'component' → sección "Capacidades"
- *
  * La jerarquía sale de `parentId` (autorreferencia de la tabla). El frontend
  * NO aporta agrupación: no se cruza nada con APP_PERMISSIONS_CONFIG.
  */
@@ -41,12 +37,8 @@ export interface PermissionNode {
 }
 
 export interface PermissionTree {
-  /** type = 'route' */
   permissions: PermissionNode[];
-  /** type = 'component' */
-  capabilities: PermissionNode[];
   allPermissionIds: number[];
-  allCapabilityIds: number[];
   /** id → id del padre efectivo (null si es raíz). Alimenta la cascada hacia arriba. */
   parentOf: Map<number, number | null>;
   /** id → todos sus descendientes. Alimenta la cascada hacia abajo. */

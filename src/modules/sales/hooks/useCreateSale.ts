@@ -41,6 +41,8 @@ import {
   createOrder,
   updateOrder,
   updateOrderSituation,
+  fetchOrderPaidAmount,
+  type OrderRefund,
   uploadPaymentVoucher,
   uploadNoteImage,
   updatePaymentVoucherUrl,
@@ -49,7 +51,9 @@ import {
   fetchSaleById,
   fetchSaleByIdProducts,
   changeOrderProducts,
+  fetchSaleProducts,
 } from "../services";
+import { findExactScanMatch } from "../utils/scan";
 import {
   calculateSubtotal,
   calculateDiscountAmount,
@@ -147,6 +151,12 @@ export const useCreateSale = () => {
   const [savedOrderSituation, setSavedOrderSituation] = useState<string>("");
   const [currentStatusCode, setCurrentStatusCode] = useState<string>("");
   const [currentSituationCode, setCurrentSituationCode] = useState<string>("");
+
+  // Cancelación de pedido (flujo propio, fuera del combo de situaciones)
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelPaidAmount, setCancelPaidAmount] = useState(0);
+  const [cancelling, setCancelling] = useState(false);
+
   const [orderSaleType, setOrderSaleType] = useState<{ id: number; name: string } | null>(null);
 
   // Dropdown data
@@ -463,6 +473,18 @@ export const useCreateSale = () => {
   }, [currentStatusCode, orderId]);
 
   // Computed: Filter situations to only show those with order >= saved (DB) situation's order
+  // Computed: una orden con entrega física ya no se cancela — su stock fue
+  // descontado y liberarlo devolvería mercadería que salió (o que un retorno
+  // ya reingresó). El backend valida sobre el historial completo; aquí basta
+  // con la situación vigente para decidir si mostrar el botón.
+  const canCancelOrder = useMemo(() => {
+    if (!orderId || !currentSituationCode) return false;
+    return (
+      !currentSituationCode.includes("PHY") &&
+      currentSituationCode !== "CAN-HDN"
+    );
+  }, [orderId, currentSituationCode]);
+
   const filteredSituations = useMemo(() => {
     if (!salesData?.situations) return [];
     if (!orderId) return salesData.situations;
@@ -475,10 +497,30 @@ export const useCreateSale = () => {
     );
     if (!baseSituation || baseSituation.order == null) return salesData.situations;
 
-    return salesData.situations.filter(
-      (s) => s.order != null && s.order >= baseSituation.order,
-    );
-  }, [savedOrderSituation, orderSituation, salesData?.situations, orderId]);
+    return salesData.situations.filter((s) => {
+      // La situación vigente siempre está en la lista: es el value del Select y
+      // sin su item el combo se ve vacío. Pasa con una orden ya cancelada
+      // (CAN-HDN deja de ser cancelable) o reembolsada (REB-HDN nunca es
+      // seleccionable).
+      if (s.id.toString() === baseId) return true;
+
+      return (
+        s.order != null &&
+        s.order >= baseSituation.order &&
+        // Reembolsado lo pone el sistema al registrar un retorno, nunca el
+        // usuario. Cancelado sí sigue en el combo (es donde se manejaba
+        // siempre), pero solo mientras la orden pueda cancelarse.
+        s.code !== "REB-HDN" &&
+        (s.code !== "CAN-HDN" || canCancelOrder)
+      );
+    });
+  }, [
+    savedOrderSituation,
+    orderSituation,
+    salesData?.situations,
+    orderId,
+    canCancelOrder,
+  ]);
 
   // Computed: Available sale types — always includes the order's current sale type (e.g. POS)
   const availableSaleTypes = useMemo(() => {
@@ -1482,8 +1524,11 @@ export const useCreateSale = () => {
   );
 
   // Add product to list - returns info about whether product was added or already existed
-  const addProduct = useCallback((): { added: boolean; existingIndex?: number } => {
-    if (!selectedVariation) {
+  const addProduct = useCallback((
+    variationArg?: ProductVariation,
+  ): { added: boolean; existingIndex?: number } => {
+    const variation = variationArg ?? selectedVariation;
+    if (!variation) {
       toast({
         title: "Error",
         description: "Seleccione una variación",
@@ -1504,7 +1549,7 @@ export const useCreateSale = () => {
     // Check if product with same variation AND same stock type already exists
     const existingIndex = products.findIndex(
       (p) =>
-        p.variationId === selectedVariation.id &&
+        p.variationId === variation.id &&
         p.stockTypeId === parseInt(selectedStockTypeId),
     );
 
@@ -1522,7 +1567,7 @@ export const useCreateSale = () => {
     }
 
     // Validate stock is greater than 0
-    const availableStock = selectedVariation.stock || 0;
+    const availableStock = variation.stock || 0;
     if (availableStock <= 0) {
       toast({
         title: "Sin stock",
@@ -1538,11 +1583,11 @@ export const useCreateSale = () => {
       ? parseInt(formData.priceListId)
       : null;
     const priceEntry = priceListId
-      ? selectedVariation.prices.find((p) => p.priceListId === priceListId)
-      : selectedVariation.prices[0];
+      ? variation.prices.find((p) => p.priceListId === priceListId)
+      : variation.prices[0];
 
     const price = priceEntry?.salePrice || priceEntry?.price || 0;
-    const termsNames = selectedVariation.terms.map((t) => t.name).join(" / ");
+    const termsNames = variation.terms.map((t) => t.name).join(" / ");
 
     // Get stock type name
     const stockTypeName =
@@ -1552,11 +1597,11 @@ export const useCreateSale = () => {
 
     setProducts((prev) => [
       {
-        variationId: selectedVariation.id,
-        productId: selectedVariation.productId,
-        productName: selectedVariation.productTitle,
-        variationName: termsNames || selectedVariation.sku,
-        sku: selectedVariation.sku,
+        variationId: variation.id,
+        productId: variation.productId,
+        productName: variation.productTitle,
+        variationName: termsNames || variation.sku,
+        sku: variation.sku,
         quantity: 1,
         price,
         originalPrice: price,
@@ -1564,7 +1609,7 @@ export const useCreateSale = () => {
         stockTypeId: parseInt(selectedStockTypeId),
         stockTypeName,
         maxStock: availableStock,
-        imageUrl: selectedVariation.imageUrl || null,
+        imageUrl: variation.imageUrl || null,
       },
       ...prev,
     ]);
@@ -1574,6 +1619,54 @@ export const useCreateSale = () => {
     setSelectedVariation(null);
     return { added: true };
   }, [selectedVariation, formData.priceListId, selectedStockTypeId, products, productsTableSize, salesData?.stockTypes, toast]);
+
+  const handleBarcodeScan = useCallback(
+    async (code: string) => {
+      const q = code.trim();
+      if (!q || !userWarehouseId) return false;
+
+      try {
+        const result = await fetchSaleProducts({
+          page: 1,
+          size: 10,
+          search: q,
+          stockTypeId: selectedStockTypeId
+            ? parseInt(selectedStockTypeId)
+            : undefined,
+          warehouseId: userWarehouseId,
+        });
+        const raw = result.data || [];
+        const match = findExactScanMatch(q, raw);
+
+        if (match) {
+          const variation: ProductVariation = {
+            id: match.variationId,
+            sku: match.sku,
+            productId: match.productId,
+            productTitle: match.productTitle,
+            imageUrl: match.imageUrl ?? null,
+            stock: match.stock ?? 0,
+            terms: match.terms,
+            prices: (match.prices || []).map((pr) => ({
+              priceListId: pr.price_list_id,
+              price: pr.price,
+              salePrice: pr.sale_price,
+            })),
+          };
+          addProduct(variation);
+          setSelectedVariation(null);
+          return true;
+        }
+        // Sin coincidencia exacta: el selector conserva el texto tipeado y su
+        // propia búsqueda debounced muestra los candidatos para elegir a mano.
+        return false;
+      } catch (error) {
+        console.error("Error scanning product:", error);
+        return false;
+      }
+    },
+    [userWarehouseId, selectedStockTypeId, addProduct],
+  );
 
   // Remove product from list
   const removeProduct = useCallback((index: number) => {
@@ -2162,6 +2255,83 @@ export const useCreateSale = () => {
     ],
   );
 
+  // ── Cancelación de pedido ────────────────────────────────────────────────
+  // Se abre el modal con el monto realmente cobrado: si es 0 no se pregunta
+  // por devolución, porque sin pago completado nunca hubo ingreso de dinero.
+  const openCancelModal = useCallback(async () => {
+    if (!orderId) return;
+    try {
+      const paid = await fetchOrderPaidAmount(Number(orderId));
+      setCancelPaidAmount(paid);
+      setCancelModalOpen(true);
+    } catch (error: any) {
+      console.error("Error obteniendo pagos de la orden:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo verificar los pagos del pedido",
+        variant: "destructive",
+      });
+    }
+  }, [orderId, toast]);
+
+  const confirmCancelOrder = useCallback(
+    async (refund: OrderRefund | null) => {
+      if (!orderId) return;
+      setCancelling(true);
+      try {
+        // Cancelar es un cambio de situación más: mismo endpoint, con refund.
+        const cancelSituation = (salesData?.situations || []).find(
+          (s: any) => s.code === "CAN-HDN",
+        );
+        if (!cancelSituation) {
+          throw new Error("No se encontró la situación Cancelado");
+        }
+
+        const result = await updateOrderSituation(
+          Number(orderId),
+          Number(cancelSituation.id),
+          refund,
+        );
+
+        setCancelModalOpen(false);
+        toast({
+          title: "Pedido cancelado",
+          description: result?.refunded_amount
+            ? `Se registró la devolución de ${result.refunded_amount}`
+            : "El stock reservado fue liberado",
+        });
+        navigate("/sales");
+      } catch (error: any) {
+        console.error("Error cancelando el pedido:", error);
+        toast({
+          title: "No se pudo cancelar",
+          description: error?.message || "Error al cancelar el pedido",
+          variant: "destructive",
+        });
+      } finally {
+        setCancelling(false);
+      }
+    },
+    [orderId, salesData?.situations, toast, navigate],
+  );
+
+  // Elegir "Cancelado" en el combo no es un cambio de estado más: hay que
+  // confirmar y, si la orden tenía cobro, capturar por dónde sale la
+  // devolución. Se abre el modal en vez de dejar el estado seleccionado.
+  const handleSituationChange = useCallback(
+    (value: string) => {
+      const situation = (salesData?.situations || []).find(
+        (s: any) => s.id.toString() === value,
+      );
+      if (orderId && situation?.code === "CAN-HDN") {
+        openCancelModal();
+        return;
+      }
+      setOrderSituation(value);
+    },
+    [orderId, salesData?.situations, openCancelModal],
+  );
+
   return {
     // State
     loading,
@@ -2211,6 +2381,16 @@ export const useCreateSale = () => {
     isComSituation: !orderId ? false : isComSituation,
     isVirSituation: !orderId ? false : isVirSituation,
     filteredSituations,
+
+    // Cancelación de pedido
+    handleSituationChange,
+    canCancelOrder,
+    cancelModalOpen,
+    setCancelModalOpen,
+    cancelPaidAmount,
+    cancelling,
+    openCancelModal,
+    confirmCancelOrder,
     availableSaleTypes,
     filteredPaymentMethods,
     allPaymentMethods: salesData?.paymentMethods ?? [],
@@ -2246,6 +2426,7 @@ export const useCreateSale = () => {
     handleConsignmentToggle,
     handleSendToFranchisee,
     addProduct,
+    handleBarcodeScan,
     removeProduct,
     updateProduct,
     handleSubmit,

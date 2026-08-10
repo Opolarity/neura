@@ -7,6 +7,8 @@ import type { SaleProduct, ShippingCost } from '../types';
 // Re-export shared utilities for backwards compatibility
 export { formatCurrency, getTodayDate, formatDateDisplay } from '@/shared/utils/utils';
 
+export * from './salePaymentStatus';
+
 // Calculate subtotal from products (net: already discounts per-unit applied)
 export const calculateSubtotal = (products: SaleProduct[]): number => {
   return products.reduce((sum, p) => sum + p.quantity * (p.price - p.discountAmount), 0);

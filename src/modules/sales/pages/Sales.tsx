@@ -2,6 +2,7 @@ import { useSales } from "../hooks/useSales";
 import SalesHeader from "../components/sales/SalesHeader";
 import SalesFilterBar from "../components/sales/SalesFilterBar";
 import SalesFilterModal from "../components/sales/SalesFilterModal";
+import { SalePaymentStatusBadge } from "../components/sales/SalePaymentStatusBadge";
 import {
   Card,
   CardContent,
@@ -107,6 +108,7 @@ const Sales = () => {
                 <TableHead className="w-[200px]">Cliente</TableHead>
                 <TableHead>Canal</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead className="text-center">Estado de pago</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead className="text-center">Acciones</TableHead>
               </TableRow>
@@ -114,7 +116,7 @@ const Sales = () => {
             <TableBody>
               {loading && sales.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
+                  <TableCell colSpan={10} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Cargando ventas...
@@ -124,7 +126,7 @@ const Sales = () => {
               ) : sales.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={10}
                     className="text-center py-8 text-muted-foreground"
                   >
                     {search
@@ -160,6 +162,9 @@ const Sales = () => {
                       ) : (
                         "-"
                       )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <SalePaymentStatusBadge status={sale.paymentStatus} short />
                     </TableCell>
                     <TableCell className="text-right">
                       S/ {Number(sale.total).toFixed(2)}

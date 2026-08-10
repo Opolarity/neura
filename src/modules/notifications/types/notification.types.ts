@@ -15,6 +15,13 @@ export interface NotificationApi {
   read_at: string | null;
 }
 
+/** Página cruda que devuelve la RPC sp_get_my_notifications (jsonb). */
+export interface NotificationsPageApi {
+  items: NotificationApi[];
+  has_more: boolean;
+  unread_count: number;
+}
+
 /** ViewModel de la UI. La notificación está ligada a permisos, no a un usuario;
  *  is_read/read_at se calculan por usuario (notification_reads). */
 export interface Notification {
@@ -29,4 +36,12 @@ export interface Notification {
   createdAt: string;
   isRead: boolean;
   readAt: string | null;
+}
+
+/** Página de notificaciones ya adaptada. unreadCount es el total del usuario,
+ *  no el de la página: el badge no depende de cuánto se haya scrolleado. */
+export interface NotificationsPage {
+  items: Notification[];
+  hasMore: boolean;
+  unreadCount: number;
 }

@@ -39,7 +39,6 @@ const CreateUser = () => {
     warehouses,
     branches,
     documentTypes,
-    accountTypes,
     countries,
     states,
     cities,
@@ -48,7 +47,6 @@ const CreateUser = () => {
     handleSelectChange,
     handleBranchChange,
     toggleRole,
-    toggleAccountType,
     handleSubmit,
     showPasswordField,
     setShowPasswordField,
@@ -313,61 +311,6 @@ const CreateUser = () => {
                     </PopoverContent>
                   </Popover>
                   {formData.role_ids.length === 0}
-                </div>
-
-                {/* Account Types Multi-select */}
-                <div className="space-y-2 pt-2">
-                  <Label>Tipos de Cuenta</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-between font-normal"
-                      >
-                        {formData.type_ids.length > 0
-                          ? `${formData.type_ids.length} seleccionado${formData.type_ids.length > 1 ? "s" : ""}`
-                          : "Seleccionar tipos de cuenta"}
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-[--radix-popover-trigger-width] p-0"
-                      align="start"
-                    >
-                      <Command>
-                        <CommandEmpty>No se encontraron tipos.</CommandEmpty>
-                        <CommandGroup className="max-h-64 overflow-auto">
-                          {accountTypes.map((type) => {
-                            const isUseType = type.name
-                              ?.toUpperCase()
-                              .includes("USE");
-                            return (
-                              <CommandItem
-                                key={type.id}
-                                onSelect={() => toggleAccountType(type.id)}
-                                className={`cursor-pointer ${isUseType ? "opacity-50" : ""}`}
-                                disabled={
-                                  isUseType &&
-                                  formData.type_ids.includes(type.id)
-                                }
-                              >
-                                <Checkbox
-                                  checked={formData.type_ids.includes(type.id)}
-                                  className="mr-2"
-                                  disabled={
-                                    isUseType &&
-                                    formData.type_ids.includes(type.id)
-                                  }
-                                />
-                                {type.name}
-                              </CommandItem>
-                            );
-                          })}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
                 </div>
               </CardContent>
             </Card>
