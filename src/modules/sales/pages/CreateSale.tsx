@@ -567,7 +567,7 @@ const CreateSale = () => {
                         : undefined
                     }
                     warehouseId={userWarehouseId || undefined}
-                    showStock={false}
+                    showStock={true}
                   />
                 </div>
                 <Button

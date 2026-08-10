@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import type { ActionConfig, ActionType, TargetFilter } from "../../types/priceRule.types";
 import { ACTION_TYPE_LABELS } from "../../types/priceRule.types";
+import { ProductVariationSelector, type ProductVariationOption } from "@/shared/components/product-variation-selector";
 
 interface ActionRowProps {
   action: ActionConfig;
@@ -133,6 +134,30 @@ const TargetFilterEditor = ({
 };
 
 export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
+  const [selectedGiftVariation, setSelectedGiftVariation] = useState<ProductVariationOption | null>(null);
+
+  
+  useEffect(() => {
+    if (action.type === "free_gift" && action.variation_id && action.variation_id > 0) {
+      
+      if (!selectedGiftVariation || selectedGiftVariation.id !== action.variation_id) {
+        
+        setSelectedGiftVariation({
+          id: action.variation_id,
+          sku: "",
+          productId: action.variation_id,
+          productTitle: `Producto #${action.variation_id}`,
+          imageUrl: null,
+          stock: 0,
+          terms: [],
+          prices: [],
+        });
+      }
+    } else if (action.type !== "free_gift") {
+      setSelectedGiftVariation(null);
+    }
+  }, [action.variation_id, action.type, selectedGiftVariation]);
+
   const handleTypeChange = (type: ActionType) => {
     const base: Record<string, unknown> = { type };
     switch (type) {
@@ -385,13 +410,15 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
       case "free_gift":
         return (
           <div className="flex gap-2 items-end">
-            <div className="space-y-1">
-              <Label className="text-xs">ID de variación del regalo</Label>
-              <Input
-                type="number"
-                className="w-[160px]"
-                value={action.variation_id ?? 0}
-                onChange={(e) => updateField("variation_id", parseInt(e.target.value) || 0)}
+            <div className="space-y-1 w-[280px]">
+              <Label className="text-xs">Producto de regalo</Label>
+              <ProductVariationSelector
+                selectedVariation={selectedGiftVariation}
+                onSelect={(variation) => {
+                  setSelectedGiftVariation(variation);
+                  updateField("variation_id", variation.id);
+                }}
+                showStock={false}
               />
             </div>
             <div className="space-y-1">
