@@ -62,6 +62,10 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     stockTypes,
     channels,
     selectedChannels,
+    tags,
+    brands,
+    selectedTags,
+    selectedBrands,
     selectedStockType,
     setSelectedStockType,
     loading,
@@ -77,6 +81,8 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     handleDrop,
     toggleCategorySelection,
     toggleChannelSelection,
+    toggleTagSelection,
+    toggleBrandsSelection,
     toggleTermSelection,
     updateVariationPrice,
     updateVariationStock,
@@ -674,6 +680,62 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                     </Label>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Etiquetas Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Etiquetas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1 max-h-[300px] overflow-y-auto">
+                {tags.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No hay etiquetas disponibles.</p>
+                ) : (
+                  tags.map(tag => (
+                    <div key={tag.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`tag-${tag.id}`}
+                        checked={selectedTags.includes(tag.id)}
+                        onCheckedChange={() => toggleTagSelection(tag.id)}
+                        disabled={viewOnly}
+                      />
+                      <Label htmlFor={`tag-${tag.id}`} className="text-sm cursor-pointer">
+                        {tag.name}
+                      </Label>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Marcas Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Marcas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1 max-h-[300px] overflow-y-auto">
+                {brands.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No hay marcas disponibles.</p>
+                ) : (
+                  brands.map(brand => (
+                    <div key={brand.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`brand-${brand.id}`}
+                        checked={selectedBrands.includes(brand.id)}
+                        onCheckedChange={() => toggleBrandsSelection(brand.id)}
+                        disabled={viewOnly}
+                      />
+                      <Label htmlFor={`brand-${brand.id}`} className="text-sm cursor-pointer">
+                        {brand.name}
+                      </Label>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

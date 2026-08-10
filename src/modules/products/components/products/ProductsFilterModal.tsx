@@ -17,10 +17,15 @@ import {
 } from "@/components/ui/select";
 import { Category } from "../../types/Products.types";
 import { ProductFilters } from "../../types/Products.types";
+import type { TagsResponse } from "@/shared/types/type";
 import { useEffect, useState } from "react";
 
 interface ProductsFilterModalProps {
   categories: Category[];
+  /** Etiquetas (tags.type = 'tag'), ya filtradas por useProducts. */
+  tags?: TagsResponse[];
+  /** Marcas (tags.type = 'brand'), ya filtradas por useProducts. */
+  brands?: TagsResponse[];
   filters: ProductFilters;
   isOpen: boolean;
   onClose?: () => void;
@@ -29,6 +34,8 @@ interface ProductsFilterModalProps {
 
 const ProductsFilterModal = ({
   categories,
+  tags = [],
+  brands = [],
   filters,
   isOpen,
   onClose,
@@ -47,6 +54,20 @@ const ProductsFilterModal = ({
     setInternalFilters((prev) => ({
       ...prev,
       category: value === "none" ? null : Number(value),
+    }));
+  };
+
+  const handleTagChange = (value: string) => {
+    setInternalFilters((prev) => ({
+      ...prev,
+      tag: value === "none" ? null : Number(value),
+    }));
+  };
+
+  const handleBrandChange = (value: string) => {
+    setInternalFilters((prev) => ({
+      ...prev,
+      brand: value === "none" ? null : Number(value),
     }));
   };
 
@@ -92,6 +113,8 @@ const ProductsFilterModal = ({
       minstock: null,
       maxstock: null,
       order: null,
+      tag: null,
+      brand: null,
     });
   };
 
@@ -122,6 +145,52 @@ const ProductsFilterModal = ({
                   {categories.map((c) => (
                     <SelectItem key={c.id} value={String(c.id)}>
                       {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Marcas</Label>
+            <div className="flex gap-2">
+              <Select
+                value={
+                  internalFilters?.brand ? String(internalFilters.brand) : "none"
+                }
+                onValueChange={handleBrandChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas las marcas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Todas las marcas</SelectItem>
+                  {brands.map((b) => (
+                    <SelectItem key={b.id} value={String(b.id)}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Etiquetas</Label>
+            <div className="flex gap-2">
+              <Select
+                value={
+                  internalFilters?.tag ? String(internalFilters.tag) : "none"
+                }
+                onValueChange={handleTagChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas las etiquetas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Todas las etiquetas</SelectItem>
+                  {tags.map((t) => (
+                    <SelectItem key={t.id} value={String(t.id)}>
+                      {t.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

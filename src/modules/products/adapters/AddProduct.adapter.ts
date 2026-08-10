@@ -4,7 +4,9 @@ import type {
   ProductImage,
   ProductVariation,
   CreateProductRequest,
-  UpdateProductRequest
+  UpdateProductRequest,
+  ProductTag,
+  ProductBrand
 } from '../types/AddProduct.types';
 import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock, StockType } from '@/types';
 import { getTodayDate, toLimaDateInput } from "@/shared/utils/date";
@@ -21,6 +23,8 @@ export const AddProductAdapter = {
     warehouses: Warehouse[];
     stockTypes: StockType[];
     channels: { id: number; name: string; code: string }[];
+    tags: ProductTag[];
+    brands: ProductBrand[];
   } {
     return {
       categories: data.categories || [],
@@ -48,6 +52,19 @@ export const AddProductAdapter = {
         id: ch.id,
         name: ch.name,
         code: ch.code
+      })),
+      // El backend ya devuelve etiquetas y marcas separadas por `type`.
+      tags: (data.tags || []).map((t: any) => ({
+        id: t.id,
+        name: t.name,
+        code: t.code,
+        type: t.type
+      })),
+      brands: (data.brands || []).map((b: any) => ({
+        id: b.id,
+        name: b.name,
+        code: b.code,
+        type: b.type
       }))
     };
   },
@@ -76,6 +93,8 @@ export const AddProductAdapter = {
     };
     categories: number[];
     channels: number[];
+    tags: number[];
+    brands: number[];
     images: ProductImage[];
     variations: ProductVariation[];
     variationSkus: Record<string, string>;
@@ -169,6 +188,8 @@ export const AddProductAdapter = {
       product,
       categories,
       channels: data.channels || [],
+      tags: data.tags || [],
+      brands: data.brands || [],
       images,
       variations,
       variationSkus,
@@ -195,7 +216,9 @@ export const AddProductAdapter = {
     selectedChannels: number[],
     productImages: ProductImage[],
     variations: ProductVariation[],
-    createdAt?: string
+    createdAt?: string,
+    selectedTags: number[] = [],
+    selectedBrands: number[] = []
   ): CreateProductRequest {
     const sortedImages = [...productImages].sort((a, b) => a.order - b.order);
 
@@ -221,6 +244,8 @@ export const AddProductAdapter = {
       isWeb,
       selectedCategories,
       selectedChannels,
+      selectedTags,
+      selectedBrands,
       productImages: imageRefs,
       variations: sanitizedVariations,
       createdAt,
@@ -249,7 +274,9 @@ export const AddProductAdapter = {
     productImages: ProductImage[],
     variations: ProductVariation[],
     resetVariations: boolean = false,
-    createdAt?: string
+    createdAt?: string,
+    selectedTags: number[] = [],
+    selectedBrands: number[] = []
   ): UpdateProductRequest {
     const imageRefs = productImages.map(img => ({
       id: img.id,
@@ -275,6 +302,8 @@ export const AddProductAdapter = {
       originalIsVariable,
       selectedCategories,
       selectedChannels,
+      selectedTags,
+      selectedBrands,
       productImages: imageRefs,
       variations: sanitizedVariations,
       resetVariations,

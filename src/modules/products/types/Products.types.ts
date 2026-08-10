@@ -43,6 +43,13 @@ export interface ProductFilters {
   maxstock?: number;
   order?: string;
   search?: string;
+  /** Id de etiqueta (tags.type = 'tag'). */
+  tag?: number;
+  /** Id de marca (tags.type = 'brand'). */
+  brand?: number;
+  /** Nombres que espera la edge function; se derivan de tag/brand al enviar. */
+  tag_id?: number;
+  brand_id?: number;
   page?: number;
   size?: number;
 }

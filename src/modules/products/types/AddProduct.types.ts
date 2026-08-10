@@ -39,6 +39,25 @@ export interface VariationAttribute {
 
 // ================= API Response Types =================
 
+/**
+ * Etiqueta de producto (fila de `tags` con type = 'tag').
+ * Marcas y etiquetas comparten tabla en el backend.
+ */
+export interface ProductTag {
+  id: number;
+  name: string;
+  code: string;
+  type: string;
+}
+
+/** Marca de producto (fila de `tags` con type = 'brand'). */
+export interface ProductBrand {
+  id: number;
+  name: string;
+  code: string;
+  type: string;
+}
+
 export interface ProductFormDataResponse {
   categories: Category[];
   termGroups: TermGroup[];
@@ -47,6 +66,8 @@ export interface ProductFormDataResponse {
   warehouses: Warehouse[];
   stockTypes: StockType[];
   channels: Channel[];
+  tags: ProductTag[];
+  brands: ProductBrand[];
 }
 
 export interface ProductDetailsResponse {
@@ -87,6 +108,10 @@ export interface ProductDetailsResponse {
     images: number[];
   }[];
   channels: number[];
+  /** Ids de etiquetas asignadas (tags.type = 'tag'). */
+  tags: number[];
+  /** Ids de marcas asignadas (tags.type = 'brand'). */
+  brands: number[];
 }
 
 // ================= Request Types =================
@@ -105,6 +130,8 @@ export interface CreateProductRequest {
   isWeb: boolean;
   selectedCategories: number[];
   selectedChannels: number[];
+  selectedTags: number[];
+  selectedBrands: number[];
   createdAt?: string;
   productImages: {
     id: string;
@@ -153,6 +180,10 @@ export interface AddProductState {
   stockTypes: StockType[];
   channels: Channel[];
   selectedChannels: number[];
+  tags: ProductTag[];
+  brands: ProductBrand[];
+  selectedTags: number[];
+  selectedBrands: number[];
   selectedStockType: number | null;
   loading: boolean;
   initialDataLoaded: boolean;
