@@ -1,5 +1,9 @@
 import type {
+  SupportAttachmentApiFile,
   SupportAttachmentFile,
+  SupportMessage,
+  SupportMessageApi,
+  SupportMessageOrigin,
   SupportRequestDetail,
   SupportRequestDetailApi,
   SupportTaskApiTracking,
@@ -11,6 +15,48 @@ const toNumberOrNull = (value: unknown): number | null => {
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 };
+
+/** Mismo formato para los adjuntos de la solicitud y los de cada mensaje. */
+const adaptAttachments = (
+  files: SupportAttachmentApiFile[] | null | undefined,
+): SupportAttachmentFile[] =>
+  (files ?? [])
+    // file_url es el enlace de descarga: sin él no hay nada que mostrar
+    .filter((file) => typeof file?.file_url === "string" && file.file_url !== "")
+    .map((file) => ({
+      id: file.id,
+      fileName: file.file_name?.trim() || "Archivo adjunto",
+      mimeType: file.mime_type ?? null,
+      sizeBytes: toNumberOrNull(file.size_bytes),
+      fileUrl: file.file_url,
+    }));
+
+/**
+ * `origin` es un conjunto abierto en la API. Un valor desconocido se pinta como
+ * mensaje del equipo: es el default seguro (nunca se atribuye al propio usuario).
+ */
+const adaptOrigin = (origin: string | null | undefined): SupportMessageOrigin => {
+  if (origin === "external" || origin === "system") return origin;
+  return "internal";
+};
+
+const adaptMessages = (
+  messages: SupportMessageApi[] | null | undefined,
+): SupportMessage[] =>
+  (messages ?? [])
+    .map((message) => ({
+      id: message.id,
+      origin: adaptOrigin(message.origin),
+      authorName: message.author_name?.trim() || null,
+      event: message.event ?? null,
+      content: message.content?.trim() || "",
+      createdAt: message.created_at,
+      attachments: adaptAttachments(message.attachments),
+    }))
+    // Un mensaje sin texto ni adjuntos no tiene nada que pintar
+    .filter((message) => message.content !== "" || message.attachments.length > 0)
+    // Ya vienen del más antiguo al más reciente, pero no se da por sentado
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
 const adaptTask = (task: SupportTaskApiTracking | null): SupportTaskTracking | null => {
   if (!task) return null;
@@ -41,16 +87,7 @@ const adaptTask = (task: SupportTaskApiTracking | null): SupportTaskTracking | n
 export const adaptSupportRequestDetail = (
   item: SupportRequestDetailApi,
 ): SupportRequestDetail => {
-  const attachments: SupportAttachmentFile[] = (item?.attachments ?? [])
-    // file_url es el enlace de descarga: sin él no hay nada que mostrar
-    .filter((file) => typeof file?.file_url === "string" && file.file_url !== "")
-    .map((file) => ({
-      id: file.id,
-      fileName: file.file_name?.trim() || "Archivo adjunto",
-      mimeType: file.mime_type ?? null,
-      sizeBytes: toNumberOrNull(file.size_bytes),
-      fileUrl: file.file_url,
-    }));
+  const attachments: SupportAttachmentFile[] = adaptAttachments(item?.attachments);
 
   return {
     id: item.id,
@@ -69,5 +106,9 @@ export const adaptSupportRequestDetail = (
     attachments,
     reviewedAt: item.reviewed_at ?? null,
     task: adaptTask(item.task ?? null),
+    messages: adaptMessages(item.messages),
+    // Independiente de `status`: habla del hilo, no de la tarea
+    conversationStatus: item.conversation_status ?? null,
+    lastMessageAt: item.last_message_at ?? null,
   };
 };

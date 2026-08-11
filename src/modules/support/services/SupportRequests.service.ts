@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   SupportServiceError,
   type SupportErrorCode,
+  type SupportMessageApiResponse,
   type SupportRequestDetailApiResponse,
   type SupportRequestsApiResponse,
   type SupportRequestsFilters,
@@ -87,4 +88,32 @@ export const getSupportRequest = async (
   }
 
   return data as SupportRequestDetailApiResponse;
+};
+
+/**
+ * Añade un mensaje al hilo de una solicitud. El nombre del autor lo resuelve la
+ * edge function a partir del usuario autenticado: no se envía desde aquí.
+ * La respuesta no trae la conversación completa: hay que volver a pedir el detalle.
+ */
+export const createSupportRequestMessage = async (
+  suggestionId: string,
+  content: string,
+): Promise<SupportMessageApiResponse> => {
+  const { data, error } = await supabase.functions.invoke(
+    "create-support-request-message",
+    {
+      method: "POST",
+      body: { suggestion_id: suggestionId, content },
+    },
+  );
+
+  if (error) await throwSupportFunctionError(error);
+  if (data?.error) {
+    throw new SupportServiceError(
+      String(data.error),
+      (data.error_code as SupportErrorCode) ?? "upstream_error",
+    );
+  }
+
+  return data as SupportMessageApiResponse;
 };
