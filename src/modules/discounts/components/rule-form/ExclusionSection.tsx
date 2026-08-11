@@ -1,45 +1,13 @@
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { ExclusionFilter } from "../../types/priceRule.types";
 import { ProductIdsField, VariationIdsField } from "./EntityIdFields";
+import { CategoryIdsField } from "./CategoryIdsField";
 
 interface ExclusionSectionProps {
   exclusions: ExclusionFilter | null;
   onChange: (exclusions: ExclusionFilter | null) => void;
 }
-
-const parseNumberArray = (value: string): number[] =>
-  value
-    .split(",")
-    .map((s) => parseInt(s.trim()))
-    .filter((n) => !isNaN(n));
-
-const IdsInput = ({
-  value,
-  onChangeIds,
-  placeholder,
-}: {
-  value: number[];
-  onChangeIds: (ids: number[]) => void;
-  placeholder?: string;
-}) => {
-  const [text, setText] = useState(value.join(", "));
-
-  useEffect(() => {
-    setText(value.join(", "));
-  }, [JSON.stringify(value)]);
-
-  return (
-    <Input
-      placeholder={placeholder}
-      value={text}
-      onChange={(e) => setText(e.target.value)}
-      onBlur={() => onChangeIds(parseNumberArray(text))}
-    />
-  );
-};
 
 const EMPTY: ExclusionFilter = {
   product_ids: [],
@@ -86,16 +54,12 @@ export const ExclusionSection = ({ exclusions, onChange }: ExclusionSectionProps
         />
       </div>
 
-      {/* IDs de categorías */}
       <div className="space-y-2">
-        <div className="space-y-1">
-          <Label className="text-xs">IDs de categorías excluidas (separados por coma)</Label>
-          <IdsInput
-            placeholder="Ej: 147, 118"
-            value={current.category_ids ?? []}
-            onChangeIds={(ids) => update({ category_ids: ids })}
-          />
-        </div>
+        <CategoryIdsField
+          label="Categorías excluidas"
+          value={current.category_ids ?? []}
+          onChange={(ids) => update({ category_ids: ids })}
+        />
         {!!current.category_ids?.length && (
           <div className="flex items-center gap-2">
             <Switch

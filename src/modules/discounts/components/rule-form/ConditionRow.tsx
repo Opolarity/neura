@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useActivePaymentMethods } from "@/modules/settings/hooks/usePaymentMethods";
 import { ProductIdsField, VariationIdsField } from "./EntityIdFields";
+import { CategoryIdsField } from "./CategoryIdsField";
 import type { Condition, ConditionType } from "../../types/priceRule.types";
 import { CONDITION_TYPE_LABELS } from "../../types/priceRule.types";
 
@@ -197,38 +197,6 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
     onChange({ ...condition, [key]: value } as Condition);
   };
 
-  const parseNumberArray = (value: string): number[] => {
-    return value
-      .split(",")
-      .map((s) => parseInt(s.trim()))
-      .filter((n) => !isNaN(n));
-  };
-
-  const IdsInput = ({
-    value,
-    onChangeIds,
-    placeholder,
-  }: {
-    value: number[];
-    onChangeIds: (ids: number[]) => void;
-    placeholder?: string;
-  }) => {
-    const [text, setText] = useState(value.join(", "));
-
-    useEffect(() => {
-      setText(value.join(", "));
-    }, [JSON.stringify(value)]);
-
-    return (
-      <Input
-        placeholder={placeholder}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onBlur={() => onChangeIds(parseNumberArray(text))}
-      />
-    );
-  };
-
   const renderFields = () => {
     switch (condition.type) {
       case "cart_subtotal":
@@ -294,12 +262,11 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
       case "category_in_cart":
         return (
           <div className="flex gap-2 items-end flex-wrap">
-            <div className="space-y-1 flex-1 min-w-[200px]">
-              <Label className="text-xs">IDs de categorías (separados por coma)</Label>
-              <IdsInput
-                placeholder="147, 118"
+            <div className="flex-1 min-w-[200px]">
+              <CategoryIdsField
+                label="Categorías"
                 value={(condition as any).category_ids ?? []}
-                onChangeIds={(ids) => updateField("category_ids", ids)}
+                onChange={(ids) => updateField("category_ids", ids)}
               />
             </div>
             <div className="space-y-1">
@@ -337,12 +304,11 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
       case "min_category_quantity":
         return (
           <div className="flex gap-2 items-end flex-wrap">
-            <div className="space-y-1 flex-1 min-w-[200px]">
-              <Label className="text-xs">IDs de categorías</Label>
-              <IdsInput
-                placeholder="147, 118"
+            <div className="flex-1 min-w-[200px]">
+              <CategoryIdsField
+                label="Categorías"
                 value={(condition as any).category_ids ?? []}
-                onChangeIds={(ids) => updateField("category_ids", ids)}
+                onChange={(ids) => updateField("category_ids", ids)}
               />
             </div>
             <div className="space-y-1">

@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +17,7 @@ import {
   VariationIdsField,
   VariationIdField,
 } from "./EntityIdFields";
+import { CategoryIdsField } from "./CategoryIdsField";
 
 interface ActionRowProps {
   action: ActionConfig;
@@ -27,38 +27,6 @@ interface ActionRowProps {
 
 const DEFAULT_TARGET: TargetFilter = {
   apply_to: "all",
-};
-
-const parseNumberArray = (value: string): number[] => {
-  return value
-    .split(",")
-    .map((s) => parseInt(s.trim()))
-    .filter((n) => !isNaN(n));
-};
-
-const IdsInput = ({
-  value,
-  onChangeIds,
-  placeholder,
-}: {
-  value: number[];
-  onChangeIds: (ids: number[]) => void;
-  placeholder?: string;
-}) => {
-  const [text, setText] = useState(value.join(", "));
-
-  useEffect(() => {
-    setText(value.join(", "));
-  }, [JSON.stringify(value)]);
-
-  return (
-    <Input
-      placeholder={placeholder}
-      value={text}
-      onChange={(e) => setText(e.target.value)}
-      onBlur={() => onChangeIds(parseNumberArray(text))}
-    />
-  );
 };
 
 const TargetFilterEditor = ({
@@ -100,14 +68,11 @@ const TargetFilterEditor = ({
 
       {target.apply_to === "specific_categories" && (
         <>
-          <div className="space-y-1">
-            <Label className="text-xs">IDs de categorías (separados por coma)</Label>
-            <IdsInput
-              placeholder="147, 118"
-              value={target.category_ids ?? []}
-              onChangeIds={(ids) => onChange({ ...target, category_ids: ids })}
-            />
-          </div>
+          <CategoryIdsField
+            label="Categorías"
+            value={target.category_ids ?? []}
+            onChange={(ids) => onChange({ ...target, category_ids: ids })}
+          />
           <div className="flex items-center gap-2">
             <Switch
               checked={target.include_descendants ?? true}
