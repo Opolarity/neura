@@ -91,7 +91,7 @@ export default function POSCloseSessionModal({
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-3 bg-primary/10 rounded-full">
-              <Calculator className="w-6 h-6 text-primary" />
+              <Calculator className="w-6 h-6" />
             </div>
             <div>
               <DialogTitle>Cierre de Caja</DialogTitle>
@@ -111,13 +111,13 @@ export default function POSCloseSessionModal({
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Total de ventas en efectivo</span>
-              <span className="font-medium text-green-600">+ {formatCurrency(totalCashSales)}</span>
+              <span className="font-medium">+ {formatCurrency(totalCashSales)}</span>
             </div>
             <div className="space-y-1">
               <span className="text-xs text-muted-foreground font-medium">Otros ajustes de efectivo externos</span>
               <div className="flex items-center justify-between text-xs pl-2">
                 <span className="text-muted-foreground">Ingresos</span>
-                <span className="font-medium text-blue-600">+ {formatCurrency(otherIngresos)}</span>
+                <span className="font-medium">+ {formatCurrency(otherIngresos)}</span>
               </div>
               <div className="flex items-center justify-between text-xs pl-2">
                 <span className="text-muted-foreground">Egresos</span>

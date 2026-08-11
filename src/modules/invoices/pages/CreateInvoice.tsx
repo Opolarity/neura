@@ -457,7 +457,7 @@ const CreateInvoice = ({ viewOnly = false }: { viewOnly?: boolean }) => {
           </Button>
         )}
         {isEditing && declared && (
-          <span className="flex items-center text-sm text-primary font-medium px-3">
+          <span className="flex items-center text-sm font-medium px-3">
             ✓ Emitido en SUNAT
           </span>
         )}

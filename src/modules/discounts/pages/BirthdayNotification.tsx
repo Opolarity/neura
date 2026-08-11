@@ -9,7 +9,7 @@ const BirthdayNotification = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex items-center gap-3 mb-6">
-        <Cake className="w-8 h-8 text-pink-500" />
+        <Cake className="w-8 h-8" />
         <div>
           <h1 className="text-3xl font-bold">Notificaciones de Cumpleaños</h1>
           <p className="text-muted-foreground">

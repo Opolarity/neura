@@ -233,7 +233,7 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
                         href={item.voucher_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
+                        className="font-medium inline-flex items-center gap-1 text-xs hover:underline"
                       >
                         <Eye className="w-3.5 h-3.5" /> Ver voucher
                       </a>

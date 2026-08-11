@@ -56,7 +56,7 @@ const Dashboard = () => {
           <CardContent>
             {notificationsLoading ? (
               <div className="flex justify-center py-10">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <Loader2 className="w-6 h-6 animate-spin" />
               </div>
             ) : notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-gray-400">
@@ -88,7 +88,7 @@ const Dashboard = () => {
           <CardContent>
             {loading ? (
               <div className="flex justify-center py-10">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <Loader2 className="w-6 h-6 animate-spin" />
               </div>
             ) : !lastSignIn ? (
               <p className="text-sm text-gray-400 italic py-4">

@@ -13,7 +13,7 @@ export default function SplashPage() {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-8 h-8 animate-spin" />
         <p className="text-muted-foreground text-sm">Cargando...</p>
       </div>
     </div>

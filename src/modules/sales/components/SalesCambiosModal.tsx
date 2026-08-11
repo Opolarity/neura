@@ -35,7 +35,7 @@ export const SalesCambiosModal = ({
       <DialogContent className="sm:max-w-[640px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ArrowLeftRight className="w-5 h-5 text-primary" />
+            <ArrowLeftRight className="w-5 h-5" />
             Cambios
             {orderId && (
               <span className="text-muted-foreground font-normal text-sm">
@@ -141,7 +141,7 @@ export const SalesCambiosModal = ({
 
                 <div className="flex justify-between text-sm font-semibold">
                   <span>Total reembolsado</span>
-                  <span className="text-primary">
+                  <span>
                     {formatCurrency(ret.total_refund_amount)}
                   </span>
                 </div>

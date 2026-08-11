@@ -347,7 +347,7 @@ const CreateReturn = () => {
                                     }}
                                     title="Ver comprobante"
                                   >
-                                    <Paperclip className="w-3 h-3 text-primary" />
+                                    <Paperclip className="w-3 h-3" />
                                   </Button>
                                 )}
                               </div>

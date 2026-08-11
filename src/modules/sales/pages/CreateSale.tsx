@@ -316,7 +316,7 @@ const CreateSale = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
   }
@@ -335,7 +335,7 @@ const CreateSale = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5 text-primary" />
+              <Settings className="w-5 h-5" />
               Ajustes de venta
             </DialogTitle>
             <DialogDescription>
@@ -346,7 +346,7 @@ const CreateSale = () => {
           <div className="space-y-4 py-4">
             {priceListsLoading || loadingWarehouse ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <Loader2 className="w-6 h-6 animate-spin" />
               </div>
             ) : (
               <>
@@ -521,7 +521,7 @@ const CreateSale = () => {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-primary" />
+                  <Package className="w-5 h-5" />
                   <CardTitle className="text-lg">Productos</CardTitle>
                 </div>
                 {isVirSituation && !isPhySituation && (
@@ -841,7 +841,7 @@ const CreateSale = () => {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <User className="w-5 h-5 text-primary" />
+                <User className="w-5 h-5" />
                 <CardTitle className="text-lg">
                   Información de la Venta
                 </CardTitle>
@@ -1163,7 +1163,7 @@ const CreateSale = () => {
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
-                  <Truck className="w-5 h-5 text-primary" />
+                  <Truck className="w-5 h-5" />
                   <CardTitle className="text-lg">Dirección de Envío</CardTitle>
                 </div>
               </CardHeader>
@@ -1512,7 +1512,7 @@ const CreateSale = () => {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-primary" />
+                <Receipt className="w-5 h-5" />
                 <CardTitle className="text-lg">Resumen</CardTitle>
               </div>
             </CardHeader>
@@ -1618,7 +1618,7 @@ const CreateSale = () => {
                   ) : (
                     <button
                       type="button"
-                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                      className="font-medium text-xs hover:underline flex items-center gap-1"
                       onClick={() => setShowAddDiscount(true)}
                     >
                       <Plus className="w-3 h-3" />
@@ -1690,7 +1690,7 @@ const CreateSale = () => {
                 <Separator />
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span className="text-primary">{formatCurrency(total)}</span>
+                  <span>{formatCurrency(total)}</span>
                 </div>
                 {changeAmount > 0 && (
                   <div className="flex justify-between font-medium mt-2">
@@ -2059,7 +2059,7 @@ const CreateSale = () => {
                                         }}
                                         title="Ver comprobantes"
                                       >
-                                        <Paperclip className="w-3 h-3 text-primary" />
+                                        <Paperclip className="w-3 h-3" />
                                       </Button>
                                     )}
                                   </div>
@@ -2297,7 +2297,7 @@ const CreateSale = () => {
                               }}
                               title="Ver comprobantes"
                             >
-                              <Paperclip className="w-3 h-3 text-orange-500" />
+                              <Paperclip className="w-3 h-3" />
                             </Button>
                           )}
                         </div>
@@ -2313,7 +2313,7 @@ const CreateSale = () => {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-primary" />
+                <MessageSquare className="w-5 h-5" />
                 <CardTitle className="text-lg">Notas del Pedido</CardTitle>
               </div>
             </CardHeader>
