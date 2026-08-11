@@ -133,6 +133,15 @@ export interface SupportMessage {
 /** Máximo por mensaje según la API externa. */
 export const MAX_MESSAGE_LENGTH = 5000;
 
+/**
+ * Adjuntos al RESPONDER. No coinciden con los de crear una solicitud
+ * (MAX_ATTACHMENT_BYTES, 5 MB): el endpoint de mensajes de la API externa corta
+ * en 4 MB por archivo y 10 MB entre todos.
+ */
+export const MAX_MESSAGE_ATTACHMENTS = 5;
+export const MAX_MESSAGE_ATTACHMENT_BYTES = 4 * 1024 * 1024; // 4 MB
+export const MAX_MESSAGE_ATTACHMENTS_TOTAL_BYTES = 10 * 1024 * 1024; // 10 MB
+
 /** Detalle tal como lo devuelve la edge function (snake_case, crudo). */
 export interface SupportRequestDetailApi extends SupportRequestApiItem {
   /** HTML (viene del WysiwygEditor del formulario): se sanea antes de pintarlo. */

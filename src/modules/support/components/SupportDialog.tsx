@@ -26,6 +26,7 @@ import {
   MAX_ATTACHMENT_BYTES,
   type SupportRequestType,
 } from "../types/Support.types";
+import { readFileAsBase64 } from "../utils/readFileAsBase64";
 
 interface SupportDialogProps {
   open: boolean;
@@ -43,18 +44,6 @@ const formatSize = (bytes: number) =>
   bytes >= 1024 * 1024
     ? `${(bytes / (1024 * 1024)).toFixed(1)} MB`
     : `${Math.max(1, Math.round(bytes / 1024))} KB`;
-
-const readFileAsBase64 = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      // Quitar el prefijo data URI: la API acepta base64 puro
-      resolve(result.substring(result.indexOf(",") + 1));
-    };
-    reader.onerror = () => reject(new Error(`No se pudo leer "${file.name}"`));
-    reader.readAsDataURL(file);
-  });
 
 export const SupportDialog = ({ open, onOpenChange }: SupportDialogProps) => {
   const { user, appUser } = useAuth();

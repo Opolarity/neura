@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import {
   SupportServiceError,
+  type SupportAttachment,
   type SupportErrorCode,
   type SupportRequestDetail,
 } from "../types/Support.types";
@@ -69,17 +70,18 @@ export function useSupportRequestDetail() {
   }, []);
 
   /**
-   * Añade un mensaje al hilo. Devuelve true si se envió, para que la caja de
-   * respuesta sepa si puede limpiar el texto (en error se conserva lo escrito).
+   * Añade un mensaje al hilo, con sus adjuntos si los hay. Devuelve true si se
+   * envió, para que la caja de respuesta sepa si puede limpiar texto y archivos
+   * (en error se conserva todo lo que se había preparado).
    * Tras enviar se recarga el detalle: la API de creación no trae el hilo.
    */
   const sendMessage = useCallback(
-    async (content: string): Promise<boolean> => {
+    async (content: string, attachments?: SupportAttachment[]): Promise<boolean> => {
       if (!selectedId) return false;
 
       setSending(true);
       try {
-        await createSupportRequestMessage(selectedId, content);
+        await createSupportRequestMessage(selectedId, content, attachments);
         await load(selectedId);
         return true;
       } catch (error) {
