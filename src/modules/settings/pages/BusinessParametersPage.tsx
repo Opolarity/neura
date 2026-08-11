@@ -85,6 +85,7 @@ const BusinessParametersPage = () => {
                 <Textarea
                     id={field.key}
                     rows={4}
+                    disabled={field.readOnly}
                     value={value}
                     onChange={(e) => handleChange(field.key, e.target.value)}
                 />
@@ -93,7 +94,11 @@ const BusinessParametersPage = () => {
 
         if (field.control === 'select') {
             return (
-                <Select value={value || undefined} onValueChange={(v) => handleChange(field.key, v)}>
+                <Select
+                    value={value || undefined}
+                    disabled={field.readOnly}
+                    onValueChange={(v) => handleChange(field.key, v)}
+                >
                     <SelectTrigger id={field.key}>
                         <SelectValue placeholder="Selecciona una opción" />
                     </SelectTrigger>
@@ -113,6 +118,7 @@ const BusinessParametersPage = () => {
                 id={field.key}
                 type={field.control === 'number' ? 'number' : field.control === 'email' ? 'email' : 'text'}
                 min={field.control === 'number' ? 0 : undefined}
+                disabled={field.readOnly}
                 value={value}
                 placeholder={field.placeholder}
                 onChange={(e) => handleChange(field.key, e.target.value)}
@@ -206,6 +212,7 @@ const BusinessParametersPage = () => {
                                             <TableCell>
                                                 <Input
                                                     value={row.value}
+                                                    disabled={row.readOnly}
                                                     onChange={(e) => handleAdvancedChange(index, 'value', e.target.value)}
                                                 />
                                             </TableCell>
@@ -214,6 +221,7 @@ const BusinessParametersPage = () => {
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
+                                                    disabled={row.readOnly}
                                                     onClick={() => removeAdvancedRow(index)}
                                                 >
                                                     <Trash2 className="h-4 w-4 text-destructive" />

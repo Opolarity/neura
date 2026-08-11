@@ -14,6 +14,8 @@ export interface BusinessField {
   control: BusinessFieldControl;
   placeholder?: string;
   options?: { label: string; value: string }[];
+  /** Se muestra pero no se puede editar ni se envía al guardar. */
+  readOnly?: boolean;
 }
 
 export interface BusinessSection {
@@ -36,7 +38,13 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
     fields: [
       { key: "CompanyName", label: "Razón social", control: "text", placeholder: "OPOLARITY SAC" },
       { key: "CompanyShortName", label: "Nombre comercial", control: "text", placeholder: "Opolarity" },
-      { key: "CompanyCode", label: "Código de empresa", control: "text", help: "Identificador interno usado por el chatbot y el ecommerce." },
+      {
+        key: "CompanyCode",
+        label: "Código de empresa",
+        control: "text",
+        readOnly: true,
+        help: "Identificador interno usado por el chatbot y el ecommerce. No es editable.",
+      },
       {
         key: "CompanyDocumentType",
         label: "Tipo de documento",
@@ -95,4 +103,9 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
 
 export const CURATED_KEYS = BUSINESS_SECTIONS.flatMap((section) =>
   section.fields.map((field) => field.key),
+);
+
+/** Parámetros que la página muestra pero nunca escribe. */
+export const READ_ONLY_KEYS = BUSINESS_SECTIONS.flatMap((section) =>
+  section.fields.filter((field) => field.readOnly).map((field) => field.key),
 );

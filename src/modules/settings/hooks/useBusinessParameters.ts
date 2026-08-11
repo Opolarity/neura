@@ -7,7 +7,7 @@ import {
   uploadInvoiceLogo,
   type ParameterRow,
 } from "../services/Parameters.service";
-import { CURATED_KEYS } from "../types/BusinessParameters.types";
+import { CURATED_KEYS, READ_ONLY_KEYS } from "../types/BusinessParameters.types";
 
 export interface AdvancedRow {
   /** id en BD; null si es una fila nueva aún no guardada */
@@ -15,6 +15,7 @@ export interface AdvancedRow {
   name: string;
   value: string;
   isNew: boolean;
+  readOnly?: boolean;
 }
 
 const useBusinessParameters = () => {
@@ -41,6 +42,7 @@ const useBusinessParameters = () => {
         name: row.name,
         value: row.value ?? "",
         isNew: false,
+        readOnly: READ_ONLY_KEYS.includes(row.name),
       })),
     );
     setInitialAdvanced(
@@ -87,6 +89,7 @@ const useBusinessParameters = () => {
     field: "name" | "value",
     value: string,
   ) => {
+    if (advancedRows[index]?.readOnly) return;
     setAdvancedRows((prev) =>
       prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
     );
@@ -101,6 +104,10 @@ const useBusinessParameters = () => {
 
   const removeAdvancedRow = async (index: number) => {
     const row = advancedRows[index];
+    if (row.readOnly) {
+      toast.error(`El parámetro "${row.name}" no se puede eliminar`);
+      return;
+    }
     if (row.id === null) {
       setAdvancedRows((prev) => prev.filter((_, i) => i !== index));
       return;
@@ -132,6 +139,12 @@ const useBusinessParameters = () => {
     if (new Set(names).size !== names.length) {
       return "Hay nombres de parámetro duplicados";
     }
+    const blocked = advancedRows.find(
+      (row) => row.isNew && READ_ONLY_KEYS.includes(row.name.trim()),
+    );
+    if (blocked) {
+      return `El parámetro "${blocked.name.trim()}" no es editable`;
+    }
     return null;
   };
 
@@ -147,6 +160,7 @@ const useBusinessParameters = () => {
     // Curados: solo lo que cambió.
     const entries: Record<string, string> = {};
     for (const key of CURATED_KEYS) {
+      if (READ_ONLY_KEYS.includes(key)) continue;
       const value = (formData[key] ?? "").trim();
       if (value !== (initialData[key] ?? "")) entries[key] = value;
     }
@@ -154,7 +168,7 @@ const useBusinessParameters = () => {
     // Avanzado: filas nuevas y valores modificados de filas existentes.
     for (const row of advancedRows) {
       const name = row.name.trim();
-      if (!name) continue;
+      if (!name || READ_ONLY_KEYS.includes(name)) continue;
       if (row.id === null) {
         entries[name] = row.value;
       } else if (row.value !== (initialAdvanced[row.id] ?? "")) {
