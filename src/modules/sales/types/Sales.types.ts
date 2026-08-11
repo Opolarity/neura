@@ -11,8 +11,15 @@ export interface SaleListItemApi {
   sale_type_name: string | null;
   situation_name: string | null;
   status_code: string | null;
+  // Total real de la venta, calculado por sp_get_sales_list desde order_products,
+  // order_discounts y shipping_cost — NO la columna persistida orders.total, que
+  // queda desactualizada cuando cambian las líneas del pedido.
   total: number;
-  // 'paid' | 'pending', calculado por sp_get_sales_list a partir de order_payment.
+  // Suma de los pagos confirmados (completed = true) con importe positivo.
+  // Solo se usa para derivar el estado de pago.
+  total_paid: number;
+  // 'paid' | 'pending' calculado por el SP. El listado no lo usa: el estado se
+  // deriva en el adapter a partir de total y total_paid.
   payment_status?: string | null;
 }
 
@@ -26,9 +33,9 @@ export interface SaleListItem {
   situationName: string;
   statusCode: string;
   total: number;
-  // Viene del backend. undefined = el SP no lo devolvió (versión antigua o
-  // valor inesperado); no equivale a "pending".
-  paymentStatus?: SalePaymentStatus;
+  totalPaid: number;
+  // Calculado en el adapter con getSalePaymentStatusFromAmounts(totalPaid, total).
+  paymentStatus: SalePaymentStatus;
 }
 
 export interface SalesFilters {
