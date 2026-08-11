@@ -47,7 +47,7 @@ const UsersList = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -65,7 +65,7 @@ const UsersList = () => {
       </div>
 
       {/* Users Table */}
-      <Card>
+      <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader>
           <UsersFilterBar
             search={search}
@@ -76,7 +76,7 @@ const UsersList = () => {
             hasActiveFilters={hasActiveFilters}
           />
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <UsersTable
             users={users}
             loading={loading}

@@ -332,7 +332,7 @@ const PromotionalTextPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       <div className="flex flex-wrap gap-4 justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Edición Masiva</h1>
@@ -427,7 +427,7 @@ const PromotionalTextPage = () => {
         </div>
       </div>
 
-      <Card>
+      <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <div className="flex items-center gap-2">
             <ProductsFilterBar
@@ -441,7 +441,7 @@ const PromotionalTextPage = () => {
           </div>
         </CardHeader>
 
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <ProductsTable
             search={search}
             products={products}
