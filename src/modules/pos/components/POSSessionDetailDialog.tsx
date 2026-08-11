@@ -199,7 +199,7 @@ const POSSessionDetailDialog = ({
                 <div className="flex gap-6 pl-2">
                   <div>
                     <span className="text-xs text-muted-foreground">Ingresos</span>
-                    <div className="text-sm font-medium text-blue-600">+ S/ {formatCurrency(otherIngresos)}</div>
+                    <div className="text-sm font-medium">+ S/ {formatCurrency(otherIngresos)}</div>
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground">Egresos</span>
@@ -255,7 +255,7 @@ const POSSessionDetailDialog = ({
                 {changePayments.length > 0 && (
                   <div className="flex-1">
                     <div className="bg-blue-50/50 rounded-lg p-3 space-y-1.5">
-                      <h4 className="text-sm font-semibold text-blue-600 mb-2">
+                      <h4 className="text-sm font-semibold mb-2">
                         CONTROL DE VUELTOS
                       </h4>
                       {changePayments.map((item) => (
@@ -263,15 +263,15 @@ const POSSessionDetailDialog = ({
                           key={item.payment_id}
                           className="flex items-center justify-between text-sm"
                         >
-                          <span className="text-blue-600">
+                          <span>
                             {item.payment_method}
                           </span>
-                          <span className="font-medium text-blue-600">
+                          <span className="font-medium">
                             S/ {formatCurrency(item.amount)}
                           </span>
                         </div>
                       ))}
-                      <div className="border-t border-blue-200 pt-1.5 flex items-center justify-between text-sm font-semibold text-blue-700">
+                      <div className="border-t border-blue-200 pt-1.5 flex items-center justify-between text-sm font-semibold">
                         <span>TOTAL VUELTOS</span>
                         <span>
                           S/ {formatCurrency(totalVueltos)}

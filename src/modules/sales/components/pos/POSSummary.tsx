@@ -32,7 +32,7 @@ export default function POSSummary({
             Resumen ({itemCount} {itemCount === 1 ? "item" : "items"})
           </CardTitle>
           {cart.length > 0 &&
-          <span className="text-lg font-bold text-primary">
+          <span className="text-lg font-bold">
               S/ {formatCurrency(total)}
             </span>
           }
@@ -61,8 +61,8 @@ export default function POSSummary({
           }
 
           <div className="border-t pt-2 flex justify-between">
-            <span className="text-primary font-medium">TOTAL FINAL</span>
-            <span className="text-2xl font-bold text-primary">
+            <span className="font-medium">TOTAL FINAL</span>
+            <span className="text-2xl font-bold">
               S/ {formatCurrency(total)}
             </span>
           </div>
@@ -73,7 +73,7 @@ export default function POSSummary({
         {customer.customerName &&
         <div className="border-t pt-4">
             <div className="bg-muted rounded-lg p-3">
-              <div className="flex items-center gap-2 text-xs text-primary font-medium mb-1">
+              <div className="flex items-center gap-2 text-xs font-medium mb-1">
                 <User className="w-3 h-3" />
                 CLIENTE SELECCIONADO
               </div>

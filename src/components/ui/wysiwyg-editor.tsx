@@ -147,7 +147,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
       }),
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: { class: 'text-primary underline cursor-pointer' },
+        HTMLAttributes: { class: 'font-medium underline cursor-pointer' },
       }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Underline,

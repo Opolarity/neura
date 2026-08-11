@@ -170,7 +170,7 @@ export default function POSSessionModal({
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-3 bg-primary/10 rounded-full">
-              <Store className="w-6 h-6 text-primary" />
+              <Store className="w-6 h-6" />
             </div>
             <div>
               <DialogTitle>Apertura de Caja</DialogTitle>

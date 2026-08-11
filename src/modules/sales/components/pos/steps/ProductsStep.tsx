@@ -251,7 +251,7 @@ export default function ProductsStep({
                 Carrito ({cart.length})
               </CardTitle>
               {cart.length > 0 && (
-                <span className="text-lg font-bold text-primary">
+                <span className="text-lg font-bold">
                   S/ {formatCurrency(total)}
                 </span>
               )}
@@ -261,7 +261,7 @@ export default function ProductsStep({
             {/* Customer info card */}
             {(customerName || isAnonymousPurchase) && (
               <div className="bg-muted rounded-lg p-3 mb-3">
-                <div className="flex items-center gap-2 text-xs text-primary font-medium mb-1">
+                <div className="flex items-center gap-2 text-xs font-medium mb-1">
                   <User className="w-3 h-3" />
                   CLIENTE SELECCIONADO
                 </div>
@@ -368,7 +368,7 @@ export default function ProductsStep({
                       {/* Per-item discount toggle */}
                       <button
                         type="button"
-                        className="flex items-center gap-1 text-xs text-primary hover:underline mt-2"
+                        className="font-medium flex items-center gap-1 text-xs hover:underline mt-2"
                         onClick={() => toggleDiscount(index)}
                       >
                         <Percent className="w-3 h-3" />
@@ -470,7 +470,7 @@ export default function ProductsStep({
                   ) : (
                     <button
                       type="button"
-                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                      className="font-medium text-xs hover:underline flex items-center gap-1"
                       onClick={() => setShowAddDiscount(true)}
                     >
                       <Plus className="w-3 h-3" />

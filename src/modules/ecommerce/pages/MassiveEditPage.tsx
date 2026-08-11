@@ -356,70 +356,70 @@ const PromotionalTextPage = () => {
                 className="gap-2"
                 onClick={() => setIsModalOpen(true)}
               >
-                <Tag className="w-4 h-4 text-blue-500" />
+                <Tag className="w-4 h-4" />
                 Texto Promocional
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={() => setIsSizeImagesModalOpen(true)}
               >
-                <Ruler className="w-4 h-4 text-purple-500" />
+                <Ruler className="w-4 h-4" />
                 Imágenes de Tallas
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={() => setIsPromotionalImageModal(true)}
               >
-                <Image className="w-4 h-4 text-orange-500" />
+                <Image className="w-4 h-4" />
                 Imágenes Promocionales
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={() => setIsShortDesMayModalOpen(true)}
               >
-                <AlignLeft className="w-4 h-4 text-green-600" />
+                <AlignLeft className="w-4 h-4" />
                 Descripción Mayorista
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={() => setIsShortDescModalOpen(true)}
               >
-                <AlignRight className="w-4 h-4 text-green-500" />
+                <AlignRight className="w-4 h-4" />
                 Descripción Minorista
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={() => setIsOtherDescMinModalOpen(true)}
               >
-                <AlignRight className="w-4 h-4 text-teal-500" />
+                <AlignRight className="w-4 h-4" />
                 Otra descripción min.
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={() => setIsOtherDescMayModalOpen(true)}
               >
-                <AlignLeft className="w-4 h-4 text-teal-600" />
+                <AlignLeft className="w-4 h-4" />
                 Otra descripción may.
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={() => setIsSalesChannelsModalOpen(true)}
               >
-                <Radio className="w-4 h-4 text-red-500" />
+                <Radio className="w-4 h-4" />
                 Canales de Venta
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={() => setIsAssignTagsOpen(true)}
               >
-                <Tags className="w-4 h-4 text-indigo-500" />
+                <Tags className="w-4 h-4" />
                 Etiquetas
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={() => setIsAssignBrandsOpen(true)}
               >
-                <Bookmark className="w-4 h-4 text-amber-500" />
+                <Bookmark className="w-4 h-4" />
                 Marcas
               </DropdownMenuItem>
             </DropdownMenuContent>

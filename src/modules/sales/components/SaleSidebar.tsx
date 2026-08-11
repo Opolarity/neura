@@ -265,7 +265,7 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
                             href={note.image_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm text-primary hover:underline"
+                            className="font-medium flex items-center gap-2 text-sm hover:underline"
                           >
                             <FileText className="w-4 h-4" />
                             Ver PDF

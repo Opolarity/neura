@@ -505,7 +505,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                                             {isSelected && (
                                               <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
                                                 <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                                                  <span className="text-primary-foreground text-xs">✓</span>
+                                                  <span className="-foreground text-xs">✓</span>
                                                 </div>
                                               </div>
                                             )}

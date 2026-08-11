@@ -22,7 +22,7 @@ const BarcodeListTable = ({ items, loading, onReprint }: BarcodeListTableProps) 
     <div className="relative h-full border rounded-md">
       {loading && items.length > 0 && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       )}
       <Table>
