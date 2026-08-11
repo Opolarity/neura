@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { ExclusionFilter } from "../../types/priceRule.types";
+import { ProductIdsField, VariationIdsField } from "./EntityIdFields";
 
 interface ExclusionSectionProps {
   exclusions: ExclusionFilter | null;
@@ -72,25 +73,17 @@ export const ExclusionSection = ({ exclusions, onChange }: ExclusionSectionProps
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {/* IDs de productos */}
-        <div className="space-y-1">
-          <Label className="text-xs">IDs de productos excluidos (separados por coma)</Label>
-          <IdsInput
-            placeholder="Ej: 10, 25, 300"
-            value={current.product_ids ?? []}
-            onChangeIds={(ids) => update({ product_ids: ids })}
-          />
-        </div>
+        <ProductIdsField
+          label="Productos excluidos"
+          value={current.product_ids ?? []}
+          onChange={(ids) => update({ product_ids: ids })}
+        />
 
-        {/* IDs de variaciones */}
-        <div className="space-y-1">
-          <Label className="text-xs">IDs de variaciones excluidas (separados por coma)</Label>
-          <IdsInput
-            placeholder="Ej: 4846, 5010"
-            value={current.variation_ids ?? []}
-            onChangeIds={(ids) => update({ variation_ids: ids })}
-          />
-        </div>
+        <VariationIdsField
+          label="Variaciones excluidas"
+          value={current.variation_ids ?? []}
+          onChange={(ids) => update({ variation_ids: ids })}
+        />
       </div>
 
       {/* IDs de categorías */}

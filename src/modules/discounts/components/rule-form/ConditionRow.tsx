@@ -27,96 +27,34 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useActivePaymentMethods } from "@/modules/settings/hooks/usePaymentMethods";
-import {
-  ProductVariationSelector,
-  fetchProducts,
-  productsFromApiAdapter,
-  type ProductVariationOption,
-} from "@/shared/components/product-variation-selector";
-import { usePriceRuleReferences } from "../../context/PriceRuleReferencesContext";
+import { ProductIdsField, VariationIdsField } from "./EntityIdFields";
 import type { Condition, ConditionType } from "../../types/priceRule.types";
 import { CONDITION_TYPE_LABELS } from "../../types/priceRule.types";
 
 /**
- * Campo de la condición "Producto en el carrito". Persiste ids de PRODUCTO
- * (`product_ids`), pero muestra los nombres: los ya guardados salen de
- * `references` (get-price-rule-details) y, si alguno falta ahí, se pide por id
- * al buscador de productos.
+ * Condiciones "Producto/Variación en el carrito": se elige con el popover pero
+ * se sigue persistiendo `product_ids` / `variation_ids` (ids, no nombres).
  */
-const ProductInCartField = ({
+const EntityInCartField = ({
+  kind,
   condition,
   updateField,
 }: {
+  kind: "product" | "variation";
   condition: Condition;
   updateField: (key: string, value: unknown) => void;
 }) => {
-  const productIds: number[] = (condition as any).product_ids ?? [];
-  const { products: referencedProducts } = usePriceRuleReferences();
-  const [selected, setSelected] = useState<ProductVariationOption[]>([]);
-
-  // Rehidrata los chips de los ids ya guardados (solo al montar / cuando llegan
-  // las referencias): primero desde references, y lo que falte se consulta.
-  useEffect(() => {
-    let cancelled = false;
-
-    const hydrate = async () => {
-      const known = new Map<number, string>(
-        referencedProducts.map((p) => [p.id, p.name]),
-      );
-      const missing = productIds.filter((id) => !known.has(id));
-
-      if (missing.length > 0) {
-        try {
-          const response = await fetchProducts({ ids: missing, size: missing.length });
-          productsFromApiAdapter(response).data.forEach((p) => {
-            known.set(p.id, p.productTitle);
-          });
-        } catch (error) {
-          console.error("Error loading products for condition:", error);
-        }
-      }
-
-      if (cancelled) return;
-      setSelected(
-        productIds.map((id) => ({
-          id,
-          sku: "",
-          productId: id,
-          productTitle: known.get(id) ?? `Producto #${id}`,
-          imageUrl: null,
-          stock: 0,
-          terms: [],
-          prices: [],
-        })),
-      );
-    };
-
-    hydrate();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [referencedProducts]);
-
-  const handleChange = (items: ProductVariationOption[]) => {
-    setSelected(items);
-    updateField(
-      "product_ids",
-      items.map((item) => item.id),
-    );
-  };
+  const key = kind === "product" ? "product_ids" : "variation_ids";
+  const ids: number[] = (condition as any)[key] ?? [];
+  const Field = kind === "product" ? ProductIdsField : VariationIdsField;
 
   return (
     <div className="flex gap-2 items-end">
-      <div className="space-y-1 flex-1">
-        <Label className="text-xs">Productos</Label>
-        <ProductVariationSelector
-          mode="product"
-          multiple
-          keepOpenOnSelect
-          selectedItems={selected}
-          onChangeItems={handleChange}
-          placeholder="Buscar producto por nombre o SKU..."
+      <div className="flex-1">
+        <Field
+          label={kind === "product" ? "Productos" : "Variaciones"}
+          value={ids}
+          onChange={(next) => updateField(key, next)}
         />
       </div>
       <div className="space-y-1">
@@ -336,29 +274,21 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
         );
 
       case "product_in_cart":
-        return <ProductInCartField condition={condition} updateField={updateField} />;
+        return (
+          <EntityInCartField
+            kind="product"
+            condition={condition}
+            updateField={updateField}
+          />
+        );
 
       case "variation_in_cart":
         return (
-          <div className="flex gap-2 items-end">
-            <div className="space-y-1 flex-1">
-              <Label className="text-xs">IDs de variaciones (separados por coma)</Label>
-              <IdsInput
-                placeholder="10, 20, 30"
-                value={(condition as any).variation_ids ?? []}
-                onChangeIds={(ids) => updateField("variation_ids", ids)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Cant. mín.</Label>
-              <Input
-                type="number"
-                className="w-[100px]"
-                value={(condition as any).min_quantity ?? 1}
-                onChange={(e) => updateField("min_quantity", parseInt(e.target.value) || 1)}
-              />
-            </div>
-          </div>
+          <EntityInCartField
+            kind="variation"
+            condition={condition}
+            updateField={updateField}
+          />
         );
 
       case "category_in_cart":
