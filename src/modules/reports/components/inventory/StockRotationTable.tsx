@@ -17,9 +17,9 @@ interface Props {
 
 function RotationBadge({ rate }: { rate: number | null }) {
   if (rate === null) return <Badge variant="outline">Sin stock</Badge>;
-  if (rate >= 3) return <Badge variant="outline" className="border-success/30 bg-success/10 text-success">Alta ({rate}x)</Badge>;
-  if (rate >= 1) return <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning-foreground">Media ({rate}x)</Badge>;
-  return <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-destructive">Baja ({rate}x)</Badge>;
+  if (rate >= 3) return <Badge variant="outline" className="border-success-soft bg-success-soft text-success-soft-foreground">Alta ({rate}x)</Badge>;
+  if (rate >= 1) return <Badge variant="outline" className="border-warning-soft bg-warning-soft text-warning-soft-foreground">Media ({rate}x)</Badge>;
+  return <Badge variant="outline" className="border-destructive-soft bg-destructive-soft text-destructive-soft-foreground">Baja ({rate}x)</Badge>;
 }
 
 export function StockRotationTable({ data, loading }: Props) {
