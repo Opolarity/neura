@@ -38,12 +38,12 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-muted flex items-center justify-center p-4">
-      <Card className="w-full max-w-md rounded-2xl shadow-lg">
+      <Card className="w-full max-w-md shadow-lg">
         <CardContent className="p-8">
           <div className="flex flex-col items-center text-center">
             {/* El logo es blanco sobre transparente: va sin filtros porque el
                 panel es oscuro. */}
-            <div className="flex items-center justify-center rounded-2xl bg-sidebar px-5 py-4">
+            <div className="flex items-center justify-center rounded-lg bg-sidebar px-5 py-4">
               <img src="/logo-neura.png" alt="Neura" className="h-7 w-auto" />
             </div>
 
@@ -71,7 +71,7 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
-                  className="h-11 rounded-xl pl-10"
+                  className="h-11 pl-10"
                   required
                 />
               </div>
@@ -92,7 +92,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Tu contraseña"
-                  className="h-11 rounded-xl pl-10 pr-10"
+                  className="h-11 pl-10 pr-10"
                   required
                 />
                 <button
@@ -117,7 +117,7 @@ const Login = () => {
 
             <Button
               type="submit"
-              className="h-11 w-full rounded-xl text-base font-semibold"
+              className="h-11 w-full text-base font-semibold"
               disabled={loading}
             >
               {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
