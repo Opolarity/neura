@@ -28,7 +28,7 @@ export const PriceRulesHeader = ({
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <Tags className="w-8 h-8 text-primary" />
+        <Tags className="w-8 h-8" />
         <div>
           <h1 className="text-3xl font-bold">Reglas de Precios</h1>
           <p className="text-muted-foreground">

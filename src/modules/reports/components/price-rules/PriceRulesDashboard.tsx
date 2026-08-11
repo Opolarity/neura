@@ -51,7 +51,7 @@ export function PriceRulesDashboard({ filters }: Props) {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Tags className="w-4 h-4 text-primary" />
+              <Tags className="w-4 h-4" />
               Reglas por aplicación
             </CardTitle>
             <div className="flex gap-1 p-1 bg-muted rounded-lg text-sm">

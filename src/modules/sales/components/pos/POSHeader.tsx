@@ -13,7 +13,7 @@ export default function POSHeader({ session, onExit }: POSHeaderProps) {
   return (
     <header className="bg-white border-b px-4 py-1.5 flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <Store className="w-4 h-4 text-blue-600" />
+        <Store className="w-4 h-4" />
         <span className="font-semibold text-sm">Punto de Venta</span>
       </div>
 

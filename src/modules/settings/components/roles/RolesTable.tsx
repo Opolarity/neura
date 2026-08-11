@@ -46,7 +46,7 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                                            <Shield className="w-4 h-4 text-primary" />
+                                            <Shield className="w-4 h-4" />
                                         </div>
                                         <div>
                                             <div className="font-medium">{r.name}</div>

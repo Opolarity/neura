@@ -255,13 +255,13 @@ const CreateOrderChannelType = () => {
                             <CardContent className="space-y-4">
                                 <div>
                                     <p className="text-sm font-medium">Métodos de pago seleccionados:</p>
-                                    <p className="text-2xl font-bold text-primary">
+                                    <p className="text-2xl font-bold">
                                         {selectedPaymentMethods.size}
                                     </p>
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium">Sucursales seleccionadas:</p>
-                                    <p className="text-2xl font-bold text-primary">
+                                    <p className="text-2xl font-bold">
                                         {selectedBranches.length}
                                     </p>
                                 </div>
