@@ -7,8 +7,10 @@ import {
 } from '../shared/ReportScaffold';
 import {
   chartAxis,
+  chartBadgeStyle,
   chartGrid,
   formatNumber,
+  loyaltyBadgeColors,
   reportChartColors,
 } from '../shared/reportChartUtils';
 import type { LoyaltyDistributionItem, CustomersByLoyaltyItem, LoyaltyLevel } from '../../types/reports.types';
@@ -18,14 +20,6 @@ interface Props {
   loading: boolean;
   byLoyalty: CustomersByLoyaltyItem[];
 }
-
-const LOYALTY_CLASSES: Record<LoyaltyLevel, string> = {
-  sin_nivel: 'border-slate-200 bg-slate-50 text-slate-700',
-  L1: 'border-sky-200 bg-sky-50 text-sky-700',
-  L2: 'border-indigo-200 bg-indigo-50 text-indigo-700',
-  L3: 'border-violet-200 bg-violet-50 text-violet-700',
-  L4: 'border-amber-200 bg-amber-50 text-amber-700',
-};
 
 const LOYALTY_LABELS: Record<LoyaltyLevel, string> = {
   sin_nivel: 'Sin nivel',
@@ -61,7 +55,7 @@ export function LoyaltyDistributionChart({ data, loading, byLoyalty }: Props) {
           </ChartContainer>
           <div className="flex flex-wrap gap-2 mt-3">
             {data.map((d) => (
-              <Badge key={d.level} variant="outline" className={LOYALTY_CLASSES[d.level]}>
+              <Badge key={d.level} variant="outline" style={chartBadgeStyle(loyaltyBadgeColors[d.level])}>
                 {LOYALTY_LABELS[d.level]}: {d.count}
               </Badge>
             ))}

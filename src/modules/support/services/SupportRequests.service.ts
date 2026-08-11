@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import {
   SupportServiceError,
+  type SupportAttachment,
   type SupportErrorCode,
   type SupportMessageApiResponse,
   type SupportRequestDetailApiResponse,
@@ -98,12 +99,24 @@ export const getSupportRequest = async (
 export const createSupportRequestMessage = async (
   suggestionId: string,
   content: string,
+  attachments?: SupportAttachment[],
 ): Promise<SupportMessageApiResponse> => {
   const { data, error } = await supabase.functions.invoke(
     "create-support-request-message",
     {
       method: "POST",
-      body: { suggestion_id: suggestionId, content },
+      body: {
+        suggestion_id: suggestionId,
+        content,
+        attachments:
+          attachments && attachments.length > 0
+            ? attachments.map((a) => ({
+                file_name: a.fileName,
+                mime_type: a.mimeType,
+                content_base64: a.contentBase64,
+              }))
+            : undefined,
+      },
     },
   );
 

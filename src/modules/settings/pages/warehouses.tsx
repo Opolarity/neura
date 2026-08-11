@@ -29,7 +29,7 @@ const WarehousesList = () => {
     };
 
     return (
-        <div className="h-full min-h-0 flex flex-col gap-6">
+        <div className="h-full min-h-0 flex flex-col gap-4">
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
@@ -56,7 +56,7 @@ const WarehousesList = () => {
             />
             {/* Warehouses Table */}
             <Card className="flex flex-col min-h-0 overflow-hidden">
-                <CardHeader>
+                <CardHeader className="!p-4">
                     <WarehousesFilterBar
                         search={search}
                         onSearchChange={handleSearchChange}
@@ -71,7 +71,7 @@ const WarehousesList = () => {
                         onDeleteClick={setWarehouseToDelete}
                     />
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="!p-0">
                     <PaginationBar
                         pagination={pagination}
                         onPageChange={handlePageChange}

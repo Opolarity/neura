@@ -20,7 +20,7 @@ export default function DashboardLayout() {
 
         {/* El scroll vive aquí: las páginas de tabla ocupan el alto disponible
             y solo desplazan sus filas. */}
-        <main className="flex-1 min-h-0 overflow-y-auto p-6 min-w-0 py-[20px] px-[20px]">
+        <main className="flex-1 min-h-0 overflow-y-auto min-w-0 p-4">
           <Outlet />
         </main>
       </div>

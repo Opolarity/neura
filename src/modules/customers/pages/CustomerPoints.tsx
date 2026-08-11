@@ -1,6 +1,6 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useCustomerPoints } from "../hooks/useCustomerPoints";
 import { CustomerPointsTable } from "../components/CustomerPointsTable";
@@ -17,14 +17,14 @@ const CustomerPoints = () => {
   } = useCustomerPoints();
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-6">
-      <div className="mb-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
+      <div>
         <h1 className="text-3xl font-bold">Puntos de Clientes</h1>
         <p className="text-muted-foreground">Ranking de puntos por cliente</p>
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader>
+        <CardHeader className="!p-4">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -37,12 +37,14 @@ const CustomerPoints = () => {
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <CustomerPointsTable data={data} loading={loading} />
+        </CardContent>
+        <CardFooter className="!p-0">
           <PaginationBar
             pagination={pagination}
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
           />
-        </CardContent>
+        </CardFooter>
       </Card>
     </div>
   );

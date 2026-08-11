@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateDisplay, formatDateTime } from "@/shared/utils/date";
 import type {
+  SupportAttachment,
   SupportErrorCode,
   SupportRequestDetail,
 } from "../../types/Support.types";
@@ -29,7 +30,10 @@ interface SupportRequestDetailSheetProps {
   errorState: { message: string; code: SupportErrorCode } | null;
   onClose: () => void;
   onRetry: () => void;
-  onSendMessage: (content: string) => Promise<boolean>;
+  onSendMessage: (
+    content: string,
+    attachments?: SupportAttachment[],
+  ) => Promise<boolean>;
 }
 
 // Los nombres de prioridad sí son un conjunto cerrado de la API (low/medium/high/urgent)

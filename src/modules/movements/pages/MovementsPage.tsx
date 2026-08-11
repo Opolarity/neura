@@ -48,14 +48,14 @@ const MovementsPage = () => {
 
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       <MovementsHeader
         onAddExpense={goToAddExpense}
         onAddIncome={goToAddIncome}
       />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader>
+        <CardHeader className="!p-4">
           <MovementsFilterBar
             search={search}
             onSearchChange={onSearchChange}
@@ -83,7 +83,7 @@ const MovementsPage = () => {
           )}
         </CardContent>
 
-        <CardFooter>
+        <CardFooter className="!p-0">
           <PaginationBar
             pagination={pagination}
             onPageChange={onPageChange}

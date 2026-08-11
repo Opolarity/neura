@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 
 import { useAccounts } from '../hooks/useAccounts';
 import { AccountsFilterBar } from '../components/AccountsFilterBar';
@@ -37,7 +37,7 @@ const AccountsList = () => {
     };
 
     return (
-        <div className="h-full min-h-0 flex flex-col gap-6">
+        <div className="h-full min-h-0 flex flex-col gap-4">
             <AccountFilterModal
                 filters={filters}
                 isOpen={isFilterModalOpen}
@@ -46,7 +46,7 @@ const AccountsList = () => {
                 onClear={clearFilters}
             />
             {/* Header */}
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold">Listado de Cuentas</h1>
                     <p className="text-muted-foreground">Administra tus cuentas</p>
@@ -56,7 +56,7 @@ const AccountsList = () => {
             {/* Tabla */}
             <Card className="flex flex-col min-h-0 overflow-hidden">
 
-                <CardHeader>
+                <CardHeader className="!p-4">
                     {/* Barra de búsqueda */}
                     <AccountsFilterBar
                         search={search}
@@ -75,14 +75,16 @@ const AccountsList = () => {
                         loading={loading}
 
                     />
+                </CardContent>
 
-                    {/* Paginación */}
+                {/* Paginación */}
+                <CardFooter className="!p-0">
                     <PaginationBar
                         pagination={pagination}
                         onPageChange={handlePageChange}
                         onPageSizeChange={handlePageSizeChange}
                     />
-                </CardContent>
+                </CardFooter>
             </Card>
         </div>
     );

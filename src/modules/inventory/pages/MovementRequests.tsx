@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, ListFilter } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,7 +28,7 @@ const MovementRequests = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Solicitudes de Traspaso</h1>
@@ -49,7 +49,7 @@ const MovementRequests = () => {
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader className="flex flex-row items-center gap-2 space-y-0">
+        <CardHeader className="!p-4 flex flex-row items-center gap-2 space-y-0">
           <Tabs
             value={filters.view}
             onValueChange={(v) => handleViewChange(v as MovementRequestView)}
@@ -71,12 +71,14 @@ const MovementRequests = () => {
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <MovementRequestsTable requests={requests} loading={loading} />
+        </CardContent>
+        <CardFooter className="!p-0">
           <PaginationBar
             pagination={pagination}
             onPageChange={handlePageChange}
             onPageSizeChange={handleSizeChange}
           />
-        </CardContent>
+        </CardFooter>
       </Card>
 
       <MovementRequestsFilterModal

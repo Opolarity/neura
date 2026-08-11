@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useSupportRequests } from "../hooks/useSupportRequests";
 import { useSupportRequestDetail } from "../hooks/useSupportRequestDetail";
@@ -28,7 +28,7 @@ const SupportRequestsPage = () => {
   const detail = useSupportRequestDetail();
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       <SupportRequestsHeader
         onNewRequest={openNewRequest}
         onRefresh={refresh}
@@ -36,7 +36,7 @@ const SupportRequestsPage = () => {
       />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader>
+        <CardHeader className="!p-4">
           <SupportRequestsFilterBar
             requestType={filters.requestType}
             onRequestTypeChange={onRequestTypeChange}
@@ -62,15 +62,17 @@ const SupportRequestsPage = () => {
             />
           )}
         </CardContent>
-      </Card>
 
-      {!errorState && pagination.total > 0 && (
-        <PaginationBar
-          pagination={pagination}
-          onPageChange={onPageChange}
-          onPageSizeChange={onPageSizeChange}
-        />
-      )}
+        {!errorState && pagination.total > 0 && (
+          <CardFooter className="!p-0">
+            <PaginationBar
+              pagination={pagination}
+              onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
+            />
+          </CardFooter>
+        )}
+      </Card>
 
       {/* Se reutiliza el formulario que antes vivía en el Sidebar, sin cambios */}
       <SupportDialog open={dialogOpen} onOpenChange={onDialogOpenChange} />
