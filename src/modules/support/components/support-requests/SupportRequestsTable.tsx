@@ -17,10 +17,10 @@ import { SupportStatusBadge } from "./SupportStatusBadge";
 interface SupportRequestsTableProps {
   requests: SupportRequestListItem[];
   loading: boolean;
-  /** Hay un filtro de tipo activo (cambia el copy del estado vacío). */
-  filteredByType: boolean;
+  /** Hay algún filtro activo (cambia el copy del estado vacío). */
+  hasActiveFilters: boolean;
   onNewRequest: () => void;
-  onClearFilter: () => void;
+  onClearFilters: () => void;
   onViewDetail: (id: string) => void;
 }
 
@@ -29,9 +29,9 @@ const SKELETON_ROWS = 5;
 export const SupportRequestsTable = ({
   requests,
   loading,
-  filteredByType,
+  hasActiveFilters,
   onNewRequest,
-  onClearFilter,
+  onClearFilters,
   onViewDetail,
 }: SupportRequestsTableProps) => {
   if (loading) {
@@ -47,10 +47,10 @@ export const SupportRequestsTable = ({
   if (requests.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12 text-muted-foreground">
-        {filteredByType ? (
+        {hasActiveFilters ? (
           <>
-            <p>No hay solicitudes de este tipo.</p>
-            <Button variant="outline" onClick={onClearFilter}>
+            <p>No hay solicitudes que cumplan los filtros.</p>
+            <Button variant="outline" onClick={onClearFilters}>
               Ver todas
             </Button>
           </>
@@ -75,6 +75,7 @@ export const SupportRequestsTable = ({
           <TableHead>Tipo</TableHead>
           <TableHead>Estado</TableHead>
           <TableHead>Reportado por</TableHead>
+          <TableHead>Origen</TableHead>
           <TableHead className="text-center">Adjuntos</TableHead>
           <TableHead>Creada</TableHead>
           <TableHead className="text-right">Acciones</TableHead>
@@ -101,6 +102,13 @@ export const SupportRequestsTable = ({
             </TableCell>
             <TableCell>
               {request.reporterName || <span className="text-muted-foreground">-</span>}
+            </TableCell>
+            <TableCell>
+              {request.originHost ? (
+                <span className="text-sm">{request.originLabel}</span>
+              ) : (
+                <span className="text-muted-foreground">-</span>
+              )}
             </TableCell>
             <TableCell className="text-center">
               {request.attachmentsCount > 0 ? (
