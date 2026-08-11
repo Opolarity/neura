@@ -39,10 +39,8 @@ const toPositiveAmount = (amount: PaymentLike["amount"]): number | null => {
  * Cualquier otro caso es "pendiente de pago", sin excepciones por situación
  * (canceladas, reembolsadas y borradores usan la misma regla).
  *
- * OJO con el `total`: el listado usa `orders.total` (persistido) mientras el
- * formulario usa el total recalculado en vivo. Normalmente coinciden, pero los
- * retornos/cambios modifican `order_products` sin actualizar `orders.total`, así
- * que un pedido con cambios puede mostrar estados distintos en cada vista.
+ * Se usa en el formulario, donde hay pagos línea a línea. El listado solo recibe
+ * agregados y usa `getSalePaymentStatusFromAmounts`.
  */
 export const getSalePaymentStatus = (
   payments: PaymentLike[],
@@ -60,6 +58,27 @@ export const getSalePaymentStatus = (
 
   // Comparación en céntimos para evitar el error de coma flotante.
   return Math.round(totalPaid * 100) >= Math.round((total || 0) * 100)
+    ? "paid"
+    : "pending";
+};
+
+/**
+ * Misma regla, pero a partir de los agregados que devuelve `sp_get_sales_list`:
+ * `total` (total real de la venta) y `total_paid` (suma de los pagos con
+ * `completed = true` e importe positivo).
+ *
+ * Diferencia con `getSalePaymentStatus`: aquí los pagos sin confirmar no llegan,
+ * así que una orden cuyos pagos confirmados ya cubren el total queda "paid"
+ * aunque además tenga un pago pendiente.
+ */
+export const getSalePaymentStatusFromAmounts = (
+  totalPaid: number,
+  total: number,
+): SalePaymentStatus => {
+  const paid = Number(totalPaid) || 0;
+  if (paid <= 0) return "pending";
+
+  return Math.round(paid * 100) >= Math.round((Number(total) || 0) * 100)
     ? "paid"
     : "pending";
 };
