@@ -21,8 +21,8 @@ export function POSOpenWarningDialog({ open, onOpenChange, onGoToPOS }: POSOpenW
       <DialogContent className="sm:max-w-[420px]" hideClose>
         <DialogHeader>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-              <Store className="w-5 h-5 text-amber-600" />
+            <div className="w-10 h-10 bg-warning/15 rounded-full flex items-center justify-center">
+              <Store className="w-5 h-5 text-warning" />
             </div>
             <DialogTitle>Punto de venta abierto</DialogTitle>
           </div>

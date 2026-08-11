@@ -94,10 +94,11 @@ const MovementsTable = ({
 
                 <TableCell>
                   <Badge
-                    variant={
-                      movement.type === "Ingreso" ? "default" : "destructive"
+                    className={
+                      movement.type === "Ingreso"
+                        ? "bg-success text-success-foreground hover:bg-success/80"
+                        : "bg-destructive text-destructive-foreground hover:bg-destructive/80"
                     }
-                    className={movement.type === "Ingreso" ? "bg-green-500" : "bg-red-500"}
                   >
                     {movement.type === "Egreso" ? (
                       <TrendingDown className="w-3 h-3" />
@@ -120,8 +121,8 @@ const MovementsTable = ({
 
                 <TableCell
                   className={`text-right font-semibold whitespace-nowrap ${movement.type === "Ingreso"
-                    ? "text-green-600"
-                    : "text-red-600"
+                    ? "text-success"
+                    : "text-destructive"
                     }`}
                 >
                   {movement.type === "Ingreso" ? "+" : ""}

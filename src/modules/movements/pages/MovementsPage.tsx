@@ -69,7 +69,7 @@ const MovementsPage = () => {
 
         <CardContent className="p-0">
           {error ? (
-            <div className="p-8 text-center text-red-500">{error}</div>
+            <div className="p-8 text-center text-destructive">{error}</div>
           ) : (
             <MovementsTable
               movements={movements}

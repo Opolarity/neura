@@ -108,7 +108,7 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
         )}
 
         {error && (
-          <div className="py-4 text-sm text-red-500">{error}</div>
+          <div className="py-4 text-sm text-destructive">{error}</div>
         )}
 
         {!loading && !error && detail && (
@@ -117,7 +117,7 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
             <div className="flex items-center gap-3">
               <div
                 className={`flex h-12 w-12 items-center justify-center rounded-full ${
-                  isIncome ? "bg-green-500/15 text-green-600" : "bg-red-500/15 text-red-600"
+                  isIncome ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
                 }`}
               >
                 {isIncome ? (
@@ -127,10 +127,10 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
                 )}
               </div>
               <div>
-                <p className={`text-xs font-medium ${isIncome ? "text-green-600" : "text-red-600"}`}>
+                <p className={`text-xs font-medium ${isIncome ? "text-success" : "text-destructive"}`}>
                   {detail.type}
                 </p>
-                <p className={`text-2xl font-bold ${isIncome ? "text-green-600" : "text-red-600"}`}>
+                <p className={`text-2xl font-bold ${isIncome ? "text-success" : "text-destructive"}`}>
                   {isIncome ? "+" : "-"}
                   {detail.formattedAmount}
                 </p>
@@ -167,7 +167,7 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
                     </button>
                   )}
                 </div>
-                {sendError && <p className="text-xs text-red-500 text-right">{sendError}</p>}
+                {sendError && <p className="text-xs text-destructive text-right">{sendError}</p>}
               </div>
             )}
 
@@ -209,7 +209,7 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
                       {item.completed !== null && (
                         <span
                           className={`text-xs ${
-                            item.completed ? "text-green-600" : "text-muted-foreground"
+                            item.completed ? "text-success" : "text-muted-foreground"
                           }`}
                         >
                           {item.completed ? "Completado" : "Pendiente"}

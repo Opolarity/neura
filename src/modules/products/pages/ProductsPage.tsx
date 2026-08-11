@@ -21,6 +21,8 @@ const Products = () => {
   const {
     products,
     categories,
+    tags,
+    brands,
     loading,
     search,
     pagination,
@@ -98,6 +100,8 @@ const Products = () => {
       <ProductsFilterModal
         isOpen={isOpenFilterModal}
         categories={categories}
+        tags={tags}
+        brands={brands}
         filters={filters}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}

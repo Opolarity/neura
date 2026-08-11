@@ -27,7 +27,7 @@ export function LowStockTable({ data, loading, total, page, pageSize, onPageChan
   return (
     <ReportCard
       title="Productos con stock bajo"
-      actions={<Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">{total} productos</Badge>}
+      actions={<Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning-foreground">{total} productos</Badge>}
     >
       {loading ? (
         <ChartLoading className="h-40" />
@@ -51,7 +51,7 @@ export function LowStockTable({ data, loading, total, page, pageSize, onPageChan
                   <TableCell className="text-right">
                     <Badge
                       variant={item.stock === 0 ? 'destructive' : 'outline'}
-                      className={item.stock === 0 ? '' : 'border-amber-200 bg-amber-50 text-amber-700'}
+                      className={item.stock === 0 ? '' : 'border-warning/30 bg-warning/10 text-warning-foreground'}
                     >
                       {item.stock}
                     </Badge>

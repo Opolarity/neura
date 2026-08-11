@@ -28,15 +28,15 @@ import { useNavigate } from "react-router-dom";
 const getStatusClassName = (statusCode: string): string => {
   switch (statusCode.toLowerCase()) {
     case "cfm":
-      return "bg-teal-400 hover:bg-teal-500 text-white";
+      return "bg-info hover:bg-info/80 text-info-foreground";
     case "com":
-      return "bg-green-500 hover:bg-green-600 text-white";
+      return "bg-success hover:bg-success/80 text-success-foreground";
     case "pen":
-      return "bg-yellow-400 hover:bg-yellow-500 text-white";
+      return "bg-warning hover:bg-warning/80 text-warning-foreground";
     case "drf":
-      return "bg-cyan-200 hover:bg-cyan-300 text-cyan-900";
+      return "bg-info/15 hover:bg-info/25 text-info";
     case "can":
-      return "bg-red-500 hover:bg-red-600 text-white";
+      return "bg-destructive hover:bg-destructive/80 text-destructive-foreground";
     default:
       return "bg-muted text-muted-foreground";
   }

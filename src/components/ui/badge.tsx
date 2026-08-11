@@ -14,6 +14,15 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        success:
+          "border-transparent bg-success/15 text-success hover:bg-success/25",
+        // warning usa -foreground (casi-negro) como texto: el ámbar (--warning) da solo 1.91:1 de contraste como texto.
+        warning:
+          "border-transparent bg-warning/15 text-warning-foreground hover:bg-warning/25",
+        info:
+          "border-transparent bg-info/15 text-info hover:bg-info/25",
+        pending:
+          "border-transparent bg-pending text-pending-foreground hover:bg-pending/80",
       },
     },
     defaultVariants: {

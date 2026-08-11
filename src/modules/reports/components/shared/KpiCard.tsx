@@ -39,10 +39,10 @@ export function KpiCard({
       ? ArrowDownRight
       : ArrowRight;
   const deltaClassName = normalizedDeltaType?.includes('increase')
-    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    ? 'border-success/30 bg-success/10 text-success'
     : normalizedDeltaType?.includes('decrease')
-      ? 'border-rose-200 bg-rose-50 text-rose-700'
-      : 'border-slate-200 bg-slate-50 text-slate-700';
+      ? 'border-destructive/30 bg-destructive/10 text-destructive'
+      : 'border-pending bg-pending text-pending-foreground';
 
   return (
     <Card>

@@ -30,13 +30,13 @@ interface ReturnsTableProps {
 
 const getSituationClassName = (code: string): string => {
     switch (code.toLowerCase()) {
-        case "cfm": return "bg-teal-400 hover:bg-teal-500 text-white";
-        case "com": return "bg-green-500 hover:bg-green-600 text-white";
-        case "pen": return "bg-yellow-400 hover:bg-yellow-500 text-white";
-        case "drf": return "bg-cyan-200 hover:bg-cyan-300 text-cyan-900";
-        case "can": return "bg-red-500 hover:bg-red-600 text-white";
-        case "phy": return "bg-blue-400 hover:bg-blue-500 text-white";
-        case "hdn": return "bg-gray-400 hover:bg-gray-500 text-white";
+        case "cfm": return "bg-info hover:bg-info/80 text-info-foreground";
+        case "com": return "bg-success hover:bg-success/80 text-success-foreground";
+        case "pen": return "bg-warning hover:bg-warning/80 text-warning-foreground";
+        case "drf": return "bg-info/15 hover:bg-info/25 text-info";
+        case "can": return "bg-destructive hover:bg-destructive/80 text-destructive-foreground";
+        case "phy": return "bg-info hover:bg-info/80 text-info-foreground";
+        case "hdn": return "bg-pending hover:bg-pending/80 text-pending-foreground";
         default:    return "bg-muted text-muted-foreground";
     }
 };
@@ -98,7 +98,7 @@ export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, sea
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <span className={returnItem.total_refund_amount < 0 ? 'text-red-500 font-medium' : returnItem.total_refund_amount > 0 ? 'text-emerald-500 font-medium' : ''}>
+                                        <span className={returnItem.total_refund_amount < 0 ? 'text-destructive font-medium' : returnItem.total_refund_amount > 0 ? 'text-success font-medium' : ''}>
                                             {formatCurrency(returnItem.total_refund_amount)}
                                         </span>
                                     </TableCell>

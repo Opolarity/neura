@@ -91,8 +91,8 @@ const MovementsTable = ({ movements, loading, onViewDetail }: MovementsTableProp
                                 <TableCell className="text-sm">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md ${
                                         movement.quantity > 0
-                                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                                            : "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-400"
+                                            ? "bg-success/15 text-success"
+                                            : "bg-destructive/15 text-destructive"
                                     }`}>
                                         {movement.quantity > 0 ? "+" : ""}{movement.quantity}
                                     </span>

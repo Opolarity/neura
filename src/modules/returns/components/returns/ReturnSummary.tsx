@@ -34,7 +34,7 @@ export const ReturnSummary = ({
                             <p>Costo de envío a devolver: {formatCurrency(shippingCost)}</p>
                         )}
                         <p>Total Productos Cambio: {formatCurrency(calculateExchangeTotal())}</p>
-                        <p className={`text-lg font-bold ${camDifference < 0 ? 'text-red-500' : camDifference > 0 ? 'text-emerald-500' : ''}`}>
+                        <p className={`text-lg font-bold ${camDifference < 0 ? 'text-destructive' : camDifference > 0 ? 'text-success' : ''}`}>
                             {camDifference < 0
                                 ? `A Reembolsar: ${formatCurrency(camDifference)}`
                                 : `Diferencia a Pagar: ${formatCurrency(camDifference)}`}
@@ -60,7 +60,7 @@ export const ReturnSummary = ({
                     {shippingReturn && (
                         <p>Costo de envío a devolver: {formatCurrency(shippingCost)}</p>
                     )}
-                    <p className="text-lg font-bold text-red-500">
+                    <p className="text-lg font-bold text-destructive">
                         Total a reembolsar: {formatCurrency(-refundWithShipping)}
                     </p>
                     {orderTotal > 0 && (

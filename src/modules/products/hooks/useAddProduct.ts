@@ -7,8 +7,10 @@ import { AddProductService } from '../services/AddProduct.service';
 import { AddProductAdapter } from '../adapters/AddProduct.adapter';
 import type { 
   ProductImage, 
-  ProductVariation, 
-  AddProductState 
+  ProductVariation,
+  AddProductState,
+  ProductTag,
+  ProductBrand
 } from '../types/AddProduct.types';
 import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock, StockType, Channel } from '@/types';
 
@@ -65,6 +67,12 @@ export const useAddProduct = () => {
   const [stockTypes, setStockTypes] = useState<StockType[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedChannels, setSelectedChannels] = useState<number[]>([]);
+  // Etiquetas y marcas: el backend las devuelve ya separadas por `type`,
+  // pero ambas se persisten en la misma tabla product_tags.
+  const [tags, setTags] = useState<ProductTag[]>([]);
+  const [brands, setBrands] = useState<ProductBrand[]>([]);
+  const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  const [selectedBrands, setSelectedBrands] = useState<number[]>([]);
   const [selectedStockType, setSelectedStockType] = useState<number | null>(null);
   
   // Loading state
@@ -125,7 +133,9 @@ export const useAddProduct = () => {
       setWarehouses(adapted.warehouses);
       setStockTypes(adapted.stockTypes);
       setChannels(adapted.channels as Channel[]);
-      
+      setTags(adapted.tags);
+      setBrands(adapted.brands);
+
       // Set default stock type to PRD (Production)
       const defaultType = adapted.stockTypes.find(t => t.code === 'PRD');
       if (defaultType) {
@@ -167,6 +177,8 @@ export const useAddProduct = () => {
       setOriginalIsVariable(adapted.product.isVariable);
       setSelectedCategories(adapted.categories);
       setSelectedChannels(adapted.channels);
+      setSelectedTags(adapted.tags);
+      setSelectedBrands(adapted.brands);
       setProductImages(adapted.images);
       setVariations(adapted.variations);
       setVariationSkus(adapted.variationSkus);
@@ -648,7 +660,9 @@ export const useAddProduct = () => {
           productImages,
           variations,
           attributesHaveChanged,
-          createdAt
+          createdAt,
+          selectedTags,
+          selectedBrands
         );
 
         const result = await AddProductService.updateProduct(request);
@@ -685,7 +699,9 @@ export const useAddProduct = () => {
           selectedChannels,
           productImages,
           variations,
-          createdAt
+          createdAt,
+          selectedTags,
+          selectedBrands
         );
 
         const result = await AddProductService.createProduct(request);
@@ -794,6 +810,10 @@ export const useAddProduct = () => {
     channels,
     selectedChannels,
     setSelectedChannels,
+    tags,
+    brands,
+    selectedTags,
+    selectedBrands,
     selectedStockType,
     setSelectedStockType,
     
@@ -809,6 +829,20 @@ export const useAddProduct = () => {
         prev.includes(channelId)
           ? prev.filter(id => id !== channelId)
           : [...prev, channelId]
+      );
+    },
+    toggleTagSelection: (tagId: number) => {
+      setSelectedTags(prev =>
+        prev.includes(tagId)
+          ? prev.filter(id => id !== tagId)
+          : [...prev, tagId]
+      );
+    },
+    toggleBrandsSelection: (brandId: number) => {
+      setSelectedBrands(prev =>
+        prev.includes(brandId)
+          ? prev.filter(id => id !== brandId)
+          : [...prev, brandId]
       );
     },
     clearTermGroup,

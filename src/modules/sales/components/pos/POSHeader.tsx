@@ -25,8 +25,8 @@ export default function POSHeader({ session, onExit }: POSHeaderProps) {
               {formatTime(session.openedAt)}
             </span>
 
-            <Badge variant="outline" className="text-green-600 border-green-600 text-[10px] px-1.5 py-0">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1" />
+            <Badge variant="outline" className="text-success border-success text-[10px] px-1.5 py-0">
+              <span className="w-1.5 h-1.5 bg-success rounded-full mr-1" />
               ACTIVA
             </Badge>
           </>

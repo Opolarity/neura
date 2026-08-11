@@ -1,7 +1,7 @@
 import { Branch, BusinessAccount, Class, PaymentMethod, Situation, Status, Type } from "@/types/index.ts";
 import { City, Country, Neighborhood, State } from "../../types/locations.ts";
 import { supabase } from "../api/supabase";
-import { TypesApiResponse } from "../types/type.ts";
+import { TagsResponse, TypesApiResponse } from "../types/type.ts";
 import { PriceList } from "@/types/price.ts";
 import { Warehouse } from "@/types/warehouse.ts";
 
@@ -367,4 +367,14 @@ export const getPosSaleTypesByBranch = async (branchId: number) => {
     name: item.sale_types.name,
     businessAccountId: item.sale_types.business_acount_id,
   }));
+};
+
+// Lee la tabla `tags` completa (etiquetas y marcas juntas). Quien la usa
+// filtra por `type`: 'tag' para etiquetas, 'brand' para marcas.
+export const getTags = async (): Promise<TagsResponse[]> => {
+  const { data, error } = await supabase.from("tags").select("id,name,code,type");
+
+  if (error) throw error;
+
+  return data || [];
 };

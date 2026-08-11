@@ -39,8 +39,8 @@ export function PriceRulesDashboard({ filters }: Props) {
     <div className="space-y-6 mt-4">
       {/* KPI cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={<CheckCircle2 className="w-5 h-5 text-green-500" />} label="Reglas activas"   value={kpis.active}    loading={loading} />
-        <StatCard icon={<XCircle      className="w-5 h-5 text-red-400"   />} label="Reglas inactivas" value={kpis.inactive}  loading={loading} />
+        <StatCard icon={<CheckCircle2 className="w-5 h-5 text-success" />} label="Reglas activas"   value={kpis.active}    loading={loading} />
+        <StatCard icon={<XCircle      className="w-5 h-5 text-destructive"   />} label="Reglas inactivas" value={kpis.inactive}  loading={loading} />
         <StatCard icon={<Zap          className="w-5 h-5 text-blue-500"  />} label="Automáticas"      value={kpis.automatic} loading={loading} />
         <StatCard icon={<Ticket       className="w-5 h-5 text-purple-500"/>} label="Cupones"           value={kpis.coupon}    loading={loading} />
       </div>
@@ -95,7 +95,7 @@ export function PriceRulesDashboard({ filters }: Props) {
                     <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full shrink-0 ${row.is_active ? 'bg-green-500' : 'bg-gray-300'}`} />
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${row.is_active ? 'bg-success' : 'bg-pending'}`} />
                           <span className="font-medium truncate max-w-[200px]">{row.name}</span>
                           {row.code && (
                             <Badge variant="outline" className="text-xs hidden sm:inline-flex">{row.code}</Badge>
@@ -122,7 +122,7 @@ export function PriceRulesDashboard({ filters }: Props) {
                       </td>
                       <td className="px-4 py-3">
                         {row.rendimiento > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-success bg-success/10 px-2 py-1 rounded-full">
                             ↗ {row.rendimiento}%
                           </span>
                         ) : (

@@ -93,7 +93,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                   className={
                     session.openingDifference !== null &&
                     session.openingDifference !== 0
-                      ? "text-red-600"
+                      ? "text-destructive"
                       : ""
                   }
                 >
@@ -102,7 +102,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                 <TableCell
                   className={
                     session.difference !== null && session.difference !== 0
-                      ? "text-red-600"
+                      ? "text-destructive"
                       : ""
                   }
                 >
@@ -119,7 +119,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                       </div>
                     </div>
                   ) : (
-                    <Badge className="bg-green-500 hover:bg-green-500">
+                    <Badge variant="success">
                       Abierto
                     </Badge>
                   )}

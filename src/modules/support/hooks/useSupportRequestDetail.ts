@@ -1,10 +1,14 @@
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import {
   SupportServiceError,
   type SupportErrorCode,
   type SupportRequestDetail,
 } from "../types/Support.types";
-import { getSupportRequest } from "../services/SupportRequests.service";
+import {
+  createSupportRequestMessage,
+  getSupportRequest,
+} from "../services/SupportRequests.service";
 import { adaptSupportRequestDetail } from "../adapters/supportRequest.adapter";
 
 interface SupportDetailErrorState {
@@ -21,6 +25,7 @@ export function useSupportRequestDetail() {
   const [detail, setDetail] = useState<SupportRequestDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorState, setErrorState] = useState<SupportDetailErrorState | null>(null);
+  const [sending, setSending] = useState(false);
 
   const load = useCallback(async (id: string) => {
     setLoading(true);
@@ -63,6 +68,33 @@ export function useSupportRequestDetail() {
     setErrorState(null);
   }, []);
 
+  /**
+   * Añade un mensaje al hilo. Devuelve true si se envió, para que la caja de
+   * respuesta sepa si puede limpiar el texto (en error se conserva lo escrito).
+   * Tras enviar se recarga el detalle: la API de creación no trae el hilo.
+   */
+  const sendMessage = useCallback(
+    async (content: string): Promise<boolean> => {
+      if (!selectedId) return false;
+
+      setSending(true);
+      try {
+        await createSupportRequestMessage(selectedId, content);
+        await load(selectedId);
+        return true;
+      } catch (error) {
+        console.error("Error sending support request message:", error);
+        const err = error as SupportServiceError;
+        // Escritura: sí lleva toast (igual que la creación de solicitudes)
+        toast.error(err?.message || "No se pudo enviar el mensaje");
+        return false;
+      } finally {
+        setSending(false);
+      }
+    },
+    [load, selectedId],
+  );
+
   const retry = useCallback(() => {
     if (selectedId) load(selectedId);
   }, [load, selectedId]);
@@ -72,8 +104,10 @@ export function useSupportRequestDetail() {
     detail,
     loading,
     errorState,
+    sending,
     open,
     close,
     retry,
+    sendMessage,
   };
 }
