@@ -10,7 +10,7 @@ const InvoiceSeriesPage = () => {
   const { series, loading } = useInvoiceSeries();
 
   return (
-    <div className="space-y-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -29,8 +29,8 @@ const InvoiceSeriesPage = () => {
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
+      <Card className="flex flex-col min-h-0 overflow-hidden">
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <InvoiceSeriesTable
             loading={loading}
             series={series}

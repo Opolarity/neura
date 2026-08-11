@@ -42,7 +42,7 @@ const ProductsTable = ({
 }: ProductsTableProps) => {
   const colSpan = 9 - (hideStock ? 1 : 0) - (hideStatus ? 1 : 0) - (hideActions ? 1 : 0);
   return (
-    <div className="relative">
+    <div className="relative h-full">
       {loading && products.length > 0 && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />

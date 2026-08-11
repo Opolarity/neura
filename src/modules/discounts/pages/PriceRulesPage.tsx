@@ -34,7 +34,7 @@ const PriceRulesPage = () => {
   } = usePriceRules();
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       <PriceRulesHeader
         onNewRule={() => navigate("/discounts/price-rules/create")}
         selectedCount={selectedIds.size}
@@ -44,7 +44,7 @@ const PriceRulesPage = () => {
         isApplying={isApplyingBulk}
       />
 
-      <Card>
+      <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader>
           <PriceRulesFilterBar
             filters={filters}
@@ -52,7 +52,7 @@ const PriceRulesPage = () => {
             onFilterChange={onFilterChange}
           />
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <PriceRulesTable
             rules={rules}
             loading={loading}

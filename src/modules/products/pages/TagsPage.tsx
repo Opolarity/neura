@@ -73,13 +73,15 @@ export default function TagsPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       <TagsHeader onOpen={() => setIsOpenForm(true)} />
 
-      <Card>
-        <CardContent className="p-0">
+      <Card className="flex flex-col min-h-0 overflow-hidden">
+        <CardContent className="p-0 flex flex-col flex-1 min-h-0 overflow-hidden">
           <TagsFilterBar search={search} onSearchChange={handleSearchChange} />
-          <TagsTable tags={tags} isLoading={isLoading} error={error} onEdit={handleOpenEdit} onDelete={handleOpenDelete} />
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <TagsTable tags={tags} isLoading={isLoading} error={error} onEdit={handleOpenEdit} onDelete={handleOpenDelete} />
+          </div>
         </CardContent>
         <CardFooter>
           <PaginationBar

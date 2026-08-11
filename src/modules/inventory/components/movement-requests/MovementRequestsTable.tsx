@@ -29,7 +29,7 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
   const navigate = useNavigate();
 
   return (
-    <div className="relative">
+    <div className="relative h-full">
       {loading && requests.length > 0 && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />

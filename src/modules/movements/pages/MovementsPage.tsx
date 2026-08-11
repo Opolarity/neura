@@ -48,13 +48,13 @@ const MovementsPage = () => {
 
 
   return (
-    <div className="space-y-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       <MovementsHeader
         onAddExpense={goToAddExpense}
         onAddIncome={goToAddIncome}
       />
 
-      <Card>
+      <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader>
           <MovementsFilterBar
             search={search}
@@ -67,7 +67,7 @@ const MovementsPage = () => {
           />
         </CardHeader>
 
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           {error ? (
             <div className="p-8 text-center text-destructive">{error}</div>
           ) : (

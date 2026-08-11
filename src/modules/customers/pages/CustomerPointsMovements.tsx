@@ -23,7 +23,7 @@ const CustomerPointsMovements = () => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   return (
-    <div className="p-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       <AddPointsDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
@@ -41,7 +41,7 @@ const CustomerPointsMovements = () => {
         </Button>
       </div>
 
-      <Card>
+      <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader>
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -53,7 +53,7 @@ const CustomerPointsMovements = () => {
             />
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <CustomerPointsMovementsTable data={data} loading={loading} />
           <PaginationBar
             pagination={pagination}
