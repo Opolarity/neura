@@ -13,20 +13,48 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, Image as ImageIcon, Loader2, Search } from "lucide-react";
+import { Check, Image as ImageIcon, Loader2, Search, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/shared/utils/utils";
-import { fetchProductVariations } from "./ProductVariationSelector.service";
-import { productVariationsFromApiAdapter } from "./ProductVariationSelector.adapter";
-import type { ProductVariationOption } from "./ProductVariationSelector.types";
+import {
+  fetchProductVariations,
+  fetchProducts,
+} from "./ProductVariationSelector.service";
+import {
+  productVariationsFromApiAdapter,
+  productsFromApiAdapter,
+} from "./ProductVariationSelector.adapter";
+import type {
+  ProductVariationOption,
+  ProductSelectorMode,
+} from "./ProductVariationSelector.types";
 
 interface ProductVariationSelectorProps {
-  selectedVariation: ProductVariationOption | null;
-  onSelect: (variation: ProductVariationOption) => void;
+  /** Selección simple (modo por defecto). En modo múltiple no se usan. */
+  selectedVariation?: ProductVariationOption | null;
+  onSelect?: (variation: ProductVariationOption) => void;
   stockTypeId?: number;
   warehouseId?: number;
   disabled?: boolean;
   placeholder?: string;
   showStock?: boolean;
+  /** Unidad a buscar: variaciones (default) o productos. */
+  mode?: ProductSelectorMode;
+  /**
+   * Selección múltiple: el estado pasa a `selectedItems` / `onChangeItems`
+   * (`selectedVariation` / `onSelect` se ignoran) y cada click hace toggle.
+   */
+  multiple?: boolean;
+  selectedItems?: ProductVariationOption[];
+  onChangeItems?: (items: ProductVariationOption[]) => void;
+  /**
+   * Mantener el popover abierto tras seleccionar. Por defecto `false`: se cierra
+   * al seleccionar, como espera el punto de venta (el Enter del lector de
+   * códigos de barras cierra la lista tras agregar el producto).
+   */
+  keepOpenOnSelect?: boolean;
+  /** Chips de los seleccionados encima del trigger (solo en modo múltiple). */
+  showSelectedChips?: boolean;
   /**
    * Escaneo por código de barras: se invoca con el texto tipeado al presionar
    * Enter (el lector HID emite Enter al final). Si devuelve `true` (producto
@@ -39,13 +67,19 @@ interface ProductVariationSelectorProps {
 const PAGE_SIZE = 10;
 
 export default function ProductVariationSelector({
-  selectedVariation,
+  selectedVariation = null,
   onSelect,
   stockTypeId,
   warehouseId,
   disabled = false,
   placeholder = "Buscar por nombre o SKU...",
   showStock = true,
+  mode = "variation",
+  multiple = false,
+  selectedItems,
+  onChangeItems,
+  keepOpenOnSelect = false,
+  showSelectedChips = true,
   onScan,
 }: ProductVariationSelectorProps) {
   const [open, setOpen] = useState(false);
@@ -58,18 +92,30 @@ export default function ProductVariationSelector({
   const hasLoadedRef = useRef(false);
 
   const totalPages = Math.ceil(pagination.total / pagination.size);
+  const selected = selectedItems ?? [];
+  const showStockColumn = showStock && mode === "variation";
 
   const loadData = async (p: number, q: string) => {
     try {
       setLoading(true);
-      const result = await fetchProductVariations({
-        page: p,
-        size: PAGE_SIZE,
-        search: q || undefined,
-        stockTypeId,
-        warehouseId,
-      });
-      const adapted = productVariationsFromApiAdapter(result);
+      const adapted =
+        mode === "product"
+          ? productsFromApiAdapter(
+              await fetchProducts({
+                page: p,
+                size: PAGE_SIZE,
+                search: q || undefined,
+              }),
+            )
+          : productVariationsFromApiAdapter(
+              await fetchProductVariations({
+                page: p,
+                size: PAGE_SIZE,
+                search: q || undefined,
+                stockTypeId,
+                warehouseId,
+              }),
+            );
       setVariations(adapted.data);
       setPagination(adapted.pagination);
     } catch (error) {
@@ -117,11 +163,40 @@ export default function ProductVariationSelector({
   };
 
   const handleSelect = (variation: ProductVariationOption) => {
-    onSelect(variation);
-    setOpen(false);
+    if (multiple) {
+      const exists = selected.some((item) => item.id === variation.id);
+      onChangeItems?.(
+        exists
+          ? selected.filter((item) => item.id !== variation.id)
+          : [...selected, variation],
+      );
+    } else {
+      onSelect?.(variation);
+    }
+    if (!keepOpenOnSelect) setOpen(false);
   };
 
-  return (
+  const isChecked = (variation: ProductVariationOption) =>
+    multiple
+      ? selected.some((item) => item.id === variation.id)
+      : selectedVariation?.id === variation.id;
+
+  const optionLabel = (option: ProductVariationOption) => {
+    const terms = option.terms.map((t) => t.name).join(" / ");
+    if (!terms) return option.sku ? `${option.productTitle} (${option.sku})` : option.productTitle;
+    return `${option.productTitle} - ${terms}`;
+  };
+
+  const triggerLabel = () => {
+    if (multiple) {
+      if (selected.length === 0) return placeholder;
+      return `${selected.length} seleccionado${selected.length === 1 ? "" : "s"}`;
+    }
+    if (!selectedVariation) return placeholder;
+    return `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`;
+  };
+
+  const selector = (
     <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
       <PopoverTrigger asChild>
         <Button
@@ -132,9 +207,7 @@ export default function ProductVariationSelector({
           className="w-full justify-start text-muted-foreground font-normal"
         >
           <Search className="w-4 h-4 mr-2" />
-          {selectedVariation
-            ? `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`
-            : placeholder}
+          {triggerLabel()}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0 bg-popover">
@@ -184,9 +257,7 @@ export default function ProductVariationSelector({
                         <Check
                           className={cn(
                             "h-4 w-4 shrink-0",
-                            selectedVariation?.id === variation.id
-                              ? "opacity-100"
-                              : "opacity-0",
+                            isChecked(variation) ? "opacity-100" : "opacity-0",
                           )}
                         />
 
@@ -209,12 +280,14 @@ export default function ProductVariationSelector({
                           <span className="font-medium truncate">
                             {variation.productTitle}
                           </span>
-                          <span className="text-sm text-muted-foreground truncate">
-                            {displayTerms}
-                          </span>
+                          {displayTerms && (
+                            <span className="text-sm text-muted-foreground truncate">
+                              {displayTerms}
+                            </span>
+                          )}
                         </div>
                         {/* Stock */}
-                        {showStock && (
+                        {showStockColumn && (
                           <span
                             className={cn(
                               "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
@@ -268,5 +341,37 @@ export default function ProductVariationSelector({
         </Command>
       </PopoverContent>
     </Popover>
+  );
+
+  if (!multiple || !showSelectedChips) return selector;
+
+  return (
+    <div className="space-y-2">
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {selected.map((item) => (
+            <Badge
+              key={item.id}
+              variant="secondary"
+              className="text-xs font-normal gap-1 pr-1"
+            >
+              <span className="truncate max-w-[220px]">{optionLabel(item)}</span>
+              <button
+                type="button"
+                disabled={disabled}
+                aria-label={`Quitar ${optionLabel(item)}`}
+                className="rounded-sm hover:bg-muted-foreground/20 disabled:opacity-50"
+                onClick={() =>
+                  onChangeItems?.(selected.filter((s) => s.id !== item.id))
+                }
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+      {selector}
+    </div>
   );
 }

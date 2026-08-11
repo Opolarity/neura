@@ -96,7 +96,23 @@ export interface PriceRule {
   created_by: string | null;
   discounts?: Discount[];
   price_list?: { id: number; name: string; code: string } | null;
+  references?: PriceRuleReferences;
 }
+
+// Nombres de lo referenciado por id dentro de conditions/actions/exclusions.
+// Solo de lectura: lo devuelve get-price-rule-details para que el formulario
+// muestre nombres en vez de ids; nunca se persiste.
+export interface PriceRuleReferences {
+  products: Array<{ id: number; name: string }>;
+  variations: Array<{ id: number; productId: number; sku: string | null; name: string }>;
+  categories: Array<{ id: number; name: string }>;
+}
+
+export const EMPTY_REFERENCES: PriceRuleReferences = {
+  products: [],
+  variations: [],
+  categories: [],
+};
 
 // --- Discount/Coupon ---
 export interface Discount {
