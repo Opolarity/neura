@@ -99,13 +99,13 @@ export default function CustomerDataStep({
 
             <div className="flex items-end">
               {clientFound === true && (
-                <div className="flex items-center gap-2 text-green-600 text-sm">
+                <div className="flex items-center gap-2 text-success text-sm">
                   <CheckCircle className="w-4 h-4" />
                   Cliente encontrado
                 </div>
               )}
               {clientFound === false && (
-                <div className="flex items-center gap-2 text-orange-600 text-sm">
+                <div className="flex items-center gap-2 text-warning-foreground text-sm">
                   <XCircle className="w-4 h-4" />
                   No encontrado
                 </div>

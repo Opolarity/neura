@@ -19,9 +19,9 @@ interface Props {
 }
 
 const getSituationBadgeColor = (name?: string) => {
-  if (name === 'Aprobado' || name === 'Recibido' || name === 'Enviado' || name === 'Completado') return 'bg-green-500 hover:bg-green-500 text-white border-transparent';
-  if (name === 'Negociación' || name === 'Solicitado') return 'bg-yellow-500 hover:bg-yellow-500 text-white border-transparent';
-  if (name === 'Cancelado') return 'bg-red-500 hover:bg-red-500 text-white border-transparent';
+  if (name === 'Aprobado' || name === 'Recibido' || name === 'Enviado' || name === 'Completado') return 'bg-success hover:bg-success/80 text-success-foreground border-transparent';
+  if (name === 'Negociación' || name === 'Solicitado') return 'bg-warning hover:bg-warning/80 text-warning-foreground border-transparent';
+  if (name === 'Cancelado') return 'bg-destructive hover:bg-destructive/80 text-destructive-foreground border-transparent';
   return 'bg-secondary text-secondary-foreground hover:bg-secondary';
 };
 
@@ -29,7 +29,7 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
   const navigate = useNavigate();
 
   return (
-    <div className="relative">
+    <div className="relative h-full">
       {loading && requests.length > 0 && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />

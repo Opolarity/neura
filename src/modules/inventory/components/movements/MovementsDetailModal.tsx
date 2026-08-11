@@ -55,10 +55,10 @@ const MovementsDetailModal = ({ movementId, onClose }: MovementsDetailModalProps
 
     const isEntrance = (detail?.quantity ?? 0) > 0;
     const units = Math.abs(detail?.quantity ?? 0) === 1 ? "unidad" : "unidades";
-    const accent = isEntrance ? "text-emerald-500" : "text-rose-400";
+    const accent = isEntrance ? "text-success" : "text-destructive";
     const accentBg = isEntrance
-        ? "bg-emerald-500/10 text-emerald-500"
-        : "bg-rose-500/10 text-rose-400";
+        ? "bg-success/15 text-success"
+        : "bg-destructive/15 text-destructive";
     const DirectionIcon = isEntrance ? ArrowUpRight : ArrowDownRight;
 
     const hasLinks =
@@ -87,7 +87,7 @@ const MovementsDetailModal = ({ movementId, onClose }: MovementsDetailModalProps
                     )}
 
                     {error && !loading && (
-                        <p className="py-10 text-sm text-center text-rose-500">{error}</p>
+                        <p className="py-10 text-sm text-center text-destructive">{error}</p>
                     )}
 
                     {!loading && !error && detail && (

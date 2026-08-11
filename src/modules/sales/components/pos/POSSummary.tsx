@@ -47,7 +47,7 @@ export default function POSSummary({
           </div>
 
           {discountAmount > 0 &&
-          <div className="flex justify-between text-green-600">
+          <div className="flex justify-between text-success">
               <span>Descuentos</span>
               <span>- S/ {formatCurrency(discountAmount)}</span>
             </div>

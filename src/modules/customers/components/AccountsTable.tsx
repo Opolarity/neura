@@ -65,12 +65,12 @@ export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
                             <TableCell>
                                 <div className="flex gap-2">
                                     {account.show === true && (
-                                        <Badge className="bg-green-500/20 text-green-600 hover:bg-green-500/20">
+                                        <Badge variant="success">
                                             Activo
                                         </Badge>
                                     )}
                                     {account.show === false && (
-                                        <Badge className="bg-red-500/20 text-red-600 hover:bg-red-500/20">
+                                        <Badge variant="destructive">
                                             Inactivo
                                         </Badge>
                                     )}

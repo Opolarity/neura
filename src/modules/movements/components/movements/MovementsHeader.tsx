@@ -35,11 +35,11 @@ const MovementsHeader = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onAddIncome} className="gap-2">
-              <TrendingUp className="w-4 h-4 text-green-600" />
+              <TrendingUp className="w-4 h-4 text-success" />
               Registrar Ingreso
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onAddExpense} className="gap-2">
-              <TrendingDown className="w-4 h-4 text-red-600" />
+              <TrendingDown className="w-4 h-4 text-destructive" />
               Registrar Gasto
             </DropdownMenuItem>
           </DropdownMenuContent>

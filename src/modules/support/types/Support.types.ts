@@ -97,6 +97,42 @@ export interface SupportTaskApiTracking {
   progress?: number | null;
 }
 
+/* ------------------------------------------------------------------ *
+ * Conversación de la solicitud (hilo con el equipo de soporte)
+ * ------------------------------------------------------------------ */
+
+/** Mensaje tal como lo devuelve la edge function (snake_case, crudo). */
+export interface SupportMessageApi {
+  id: string;
+  /** external | internal | system — conjunto ABIERTO, se trata como string. */
+  origin: string | null;
+  /** Nombre a mostrar; null en los mensajes de sistema. */
+  author_name: string | null;
+  /** Solo en los `system`: approved, rejected... En los demás, null. */
+  event: string | null;
+  /** TEXTO PLANO, nunca HTML: no se inserta como HTML (a diferencia de description). */
+  content: string | null;
+  created_at: string;
+  attachments: SupportAttachmentApiFile[] | null;
+}
+
+export type SupportMessageOrigin = "external" | "internal" | "system";
+
+/** Mensaje adaptado para la UI. */
+export interface SupportMessage {
+  id: string;
+  origin: SupportMessageOrigin;
+  authorName: string | null;
+  event: string | null;
+  /** Texto plano: se pinta con whitespace-pre-wrap, nunca con innerHTML. */
+  content: string;
+  createdAt: string;
+  attachments: SupportAttachmentFile[];
+}
+
+/** Máximo por mensaje según la API externa. */
+export const MAX_MESSAGE_LENGTH = 5000;
+
 /** Detalle tal como lo devuelve la edge function (snake_case, crudo). */
 export interface SupportRequestDetailApi extends SupportRequestApiItem {
   /** HTML (viene del WysiwygEditor del formulario): se sanea antes de pintarlo. */
@@ -106,6 +142,12 @@ export interface SupportRequestDetailApi extends SupportRequestApiItem {
   reviewed_at: string | null;
   /** null mientras la solicitud no se haya convertido en tarea. */
   task: SupportTaskApiTracking | null;
+  /** Hilo completo, del más antiguo al más reciente. [] si nadie escribió. */
+  messages: SupportMessageApi[] | null;
+  /** open | answered | closed — INDEPENDIENTE de `status` (que habla de la tarea). */
+  conversation_status: string | null;
+  /** null si no hay mensajes. */
+  last_message_at: string | null;
 }
 
 export interface SupportRequestDetailApiResponse {
@@ -139,6 +181,15 @@ export interface SupportRequestDetail extends SupportRequestListItem {
   attachments: SupportAttachmentFile[];
   reviewedAt: string | null;
   task: SupportTaskTracking | null;
+  messages: SupportMessage[];
+  /** open | answered | closed, o null/desconocido: la UI no asume la lista. */
+  conversationStatus: string | null;
+  lastMessageAt: string | null;
+}
+
+/** Respuesta de la edge function que añade un mensaje al hilo. */
+export interface SupportMessageApiResponse {
+  data: SupportMessageApi | null;
 }
 
 export interface SupportRequestsFilters {
@@ -156,6 +207,7 @@ export type SupportErrorCode =
   | "company_document"
   | "bad_request"
   | "not_found"
+  | "rate_limited"
   | "upstream_error"
   | "upstream_unreachable"
   | "server_config"

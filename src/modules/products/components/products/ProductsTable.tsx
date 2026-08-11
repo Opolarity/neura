@@ -42,7 +42,7 @@ const ProductsTable = ({
 }: ProductsTableProps) => {
   const colSpan = 9 - (hideStock ? 1 : 0) - (hideStatus ? 1 : 0) - (hideActions ? 1 : 0);
   return (
-    <div className="relative">
+    <div className="relative h-full">
       {loading && products.length > 0 && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -118,17 +118,17 @@ const ProductsTable = ({
                   <TableCell>
                     <div className="flex gap-2">
                       {product.estatus === true && (
-                        <Badge className="bg-green-400 hover:bg-green-400">
+                        <Badge variant="success">
                           Activo
                         </Badge>
                       )}
                       {product.estatus === false && (
-                        <Badge className="bg-red-400 hover:bg-red-400">
+                        <Badge variant="destructive">
                           Inactivo
                         </Badge>
                       )}
                       {product.web === true && (
-                        <Badge className="bg-green-400 hover:bg-green-400">
+                        <Badge variant="success">
                           Web
                         </Badge>
                       )}

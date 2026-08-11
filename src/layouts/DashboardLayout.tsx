@@ -2,25 +2,25 @@ import { Outlet } from "react-router-dom";
 import { AppSidebar } from "../components/layout/AppSidebar";
 import Header from "../components/layout/Header";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { useAuth } from "@/modules/auth";
+import { usePOSSessionStatus } from "@/modules/pos/hooks/usePOSSessionStatus";
 
 export default function DashboardLayout() {
-  const { signOut } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
+  // El hook abre un canal realtime por usuario: se consulta una sola vez aquí
+  // y se reparte al header (badge de caja) y al sidebar (aviso antes de salir).
+  const posSession = usePOSSessionStatus();
 
   // El estado abierto/colapsado lo gestiona SidebarProvider; el toggle vive en
   // el header del propio sidebar.
   return (
-    <SidebarProvider className="bg-gray-50">
-      <AppSidebar />
+    <SidebarProvider className="bg-muted h-dvh overflow-hidden">
+      <AppSidebar posSessionOpen={posSession.isOpen} />
 
-      <div className="flex-1 min-w-0">
-        <Header onSignOut={handleSignOut} />
+      <div className="flex-1 min-w-0 flex flex-col">
+        <Header posSession={posSession} />
 
-        <main className="p-6 min-w-0 overflow-hidden py-[20px] px-[20px]">
+        {/* El scroll vive aquí: las páginas de tabla ocupan el alto disponible
+            y solo desplazan sus filas. */}
+        <main className="flex-1 min-h-0 overflow-y-auto p-6 min-w-0 py-[20px] px-[20px]">
           <Outlet />
         </main>
       </div>

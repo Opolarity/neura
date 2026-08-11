@@ -32,10 +32,10 @@ export function NotificationPanel() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
-          <Bell className="w-5 h-5" />
+        <button className="h-9 w-9 flex items-center justify-center hover:bg-muted rounded-md transition-colors relative">
+          <Bell className="w-4 h-4" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold px-0.5">
+            <span className="absolute top-1 right-1 min-w-[15px] h-[15px] bg-red-500 rounded-full flex items-center justify-center text-[9px] text-white font-bold px-0.5">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
@@ -43,13 +43,13 @@ export function NotificationPanel() {
       </PopoverTrigger>
 
       <PopoverContent align="end" className="w-80 p-0 shadow-lg">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <span className="font-semibold text-sm">Notificaciones</span>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs text-blue-600 hover:text-blue-700 h-auto py-0.5 px-2"
+              className="text-xs text-primary hover:text-primary/80 h-auto py-0.5 px-2"
               onClick={markAllAsRead}
             >
               Marcar todas como leídas
@@ -58,7 +58,7 @@ export function NotificationPanel() {
         </div>
 
         {notifications.length === 0 ? (
-          <div className="py-10 text-center text-sm text-gray-400">
+          <div className="py-10 text-center text-sm text-muted-foreground">
             No tienes notificaciones
           </div>
         ) : (
@@ -79,7 +79,7 @@ export function NotificationPanel() {
 
             {loadingMore && (
               <div className="flex justify-center py-3">
-                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               </div>
             )}
           </ScrollArea>

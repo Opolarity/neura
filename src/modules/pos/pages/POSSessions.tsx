@@ -53,7 +53,7 @@ const POSSessions = () => {
   } = usePOSSessions();
 
   return (
-    <div className="space-y-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -73,7 +73,7 @@ const POSSessions = () => {
         onApply={onApplyFilters} />
 
 
-      <Card>
+      <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader>
           <div className="flex items-center gap-2 flex-wrap">
             <div className="relative">
@@ -119,7 +119,7 @@ const POSSessions = () => {
           </div>
         </CardHeader>
 
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -170,7 +170,7 @@ const POSSessions = () => {
                     session.openingDifference < 0 ?
                     "text-destructive" :
                     session.openingDifference > 0 ?
-                    "text-green-600" :
+                    "text-success" :
                     ""
                     }>
 
@@ -184,7 +184,7 @@ const POSSessions = () => {
                     session.difference < 0 ?
                     "text-destructive" :
                     session.difference > 0 ?
-                    "text-green-600" :
+                    "text-success" :
                     ""
                     }>
 

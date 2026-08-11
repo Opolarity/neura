@@ -129,10 +129,10 @@ export const useProductsLogic = () => {
 
   const getProductStatus = (stock: number) => {
     if (stock === 0)
-      return { text: "Sin Stock", class: "bg-red-100 text-red-800" };
+      return { text: "Sin Stock", class: "bg-destructive/15 text-destructive" };
     if (stock <= 10)
-      return { text: "Stock Bajo", class: "bg-yellow-100 text-yellow-800" };
-    return { text: "Activo", class: "bg-green-100 text-green-800" };
+      return { text: "Stock Bajo", class: "bg-warning/15 text-warning-foreground" };
+    return { text: "Activo", class: "bg-success/15 text-success" };
   };
 
   const handleDeleteClick = (productId: number) => {

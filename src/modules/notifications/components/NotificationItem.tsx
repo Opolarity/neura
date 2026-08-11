@@ -7,10 +7,10 @@ import type { Notification } from '../types/notification.types';
 import { getNotificationPath } from '../utils/notificationRoutes';
 
 const typeIcon = {
-  info: <Info className="w-4 h-4 text-blue-500 shrink-0" />,
-  warning: <AlertTriangle className="w-4 h-4 text-yellow-500 shrink-0" />,
-  error: <XCircle className="w-4 h-4 text-red-500 shrink-0" />,
-  success: <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />,
+  info: <Info className="w-4 h-4 text-info shrink-0" />,
+  warning: <AlertTriangle className="w-4 h-4 text-warning shrink-0" />,
+  error: <XCircle className="w-4 h-4 text-destructive shrink-0" />,
+  success: <CheckCircle className="w-4 h-4 text-success shrink-0" />,
 };
 
 interface NotificationItemProps {

@@ -234,7 +234,7 @@ const FranchiseProducts = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -286,7 +286,7 @@ const FranchiseProducts = () => {
         ))}
       </div>
 
-      <Card>
+      <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader>
           <div className="flex items-center gap-2">
             <div className="relative w-64">
@@ -320,7 +320,7 @@ const FranchiseProducts = () => {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>

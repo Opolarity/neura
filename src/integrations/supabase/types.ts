@@ -2563,16 +2563,19 @@ export type Database = {
       }
       product_tags: {
         Row: {
+          created_at: string
           id: number
           product_id: number
           tag_id: number
         }
         Insert: {
+          created_at?: string
           id?: number
           product_id: number
           tag_id: number
         }
         Update: {
+          created_at?: string
           id?: number
           product_id?: number
           tag_id?: number
@@ -4646,18 +4649,21 @@ export type Database = {
           created_at: string
           id: number
           name: string
+          type: string | null
         }
         Insert: {
           code: string
           created_at?: string
           id?: number
           name: string
+          type?: string | null
         }
         Update: {
           code?: string
           created_at?: string
           id?: number
           name?: string
+          type?: string | null
         }
         Relationships: []
       }

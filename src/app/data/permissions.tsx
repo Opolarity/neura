@@ -4,6 +4,8 @@ import AddProduct from "@/modules/products/pages/AddProduct";
 import ProductCosts from "@/modules/products/pages/ProductCostsPage";
 import Categories from "@/modules/products/pages/CategoriesPage";
 import Attributes from "@/modules/products/pages/AttributesPage";
+import TagsPage from "@/modules/products/pages/TagsPage";
+import BrandsPage from "@/modules/products/pages/BrandsPage";
 
 import Inventory from "@/modules/inventory/pages/Inventory";
 import InventoryMovements from "@/modules/inventory/pages/Movements";
@@ -116,6 +118,8 @@ export const APP_PERMISSIONS_CONFIG = [
           { name: "Ver producto", path: "/products/view/:id", code: "products.view", element: <AddProduct key="view" viewOnly />, showSidebar: false, node: [] },
           { name: "Categorías", path: "/products/categories", code: "product_categories.list", element: <Categories />, showSidebar: true, node: [] },
           { name: "Costos", path: "/products/costs", code: "product_costs.list", element: <ProductCosts />, showSidebar: true, node: [] },
+          { name: "Etiquetas", path: "/products/tags", code: "product_tags.list", element: <TagsPage />, showSidebar: true, node: [] },
+          { name: "Marcas", path: "/products/brands", code: "product_brands.list", element: <BrandsPage />, showSidebar: true, node: [] },
           { name: "Atributos", path: "/products/attributes", code: "product_attributes.list", element: <Attributes />, showSidebar: true, node: [] },
         ]
       },

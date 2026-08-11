@@ -20,7 +20,15 @@ import {
   updatePromotionalImageApi,
   updateOtherDescriptionMinApi,
   updateOtherDescriptionMayApi,
+  assignMassiveTagsApi,
+  unassignMassiveTagsApi,
+  assignMassiveBrandsApi,
+  type MassiveBrandsMode,
 } from "@/modules/products/services/products.service";
+import AssignTagsModal, {
+  type TagMassiveMode,
+} from "@/modules/ecommerce/components/AssignTagsModal";
+import AssignBrandsModal from "@/modules/ecommerce/components/AssignBrandsModal";
 import PromotionalTextModal from "@/modules/ecommerce/components/PromotionalTextModal";
 import SizeImagesModal from "@/modules/ecommerce/components/SizeImagesModal";
 import ShortDescriptionModal from "@/modules/ecommerce/components/DescriptionModal";
@@ -38,6 +46,8 @@ import {
   ChevronDown,
   Plus,
   Tag,
+  Tags,
+  Bookmark,
   Ruler,
   Image,
   AlignLeft,
@@ -59,11 +69,15 @@ const PromotionalTextPage = () => {
   const [isOtherDescMayModalOpen, setIsOtherDescMayModalOpen] = useState(false);
   const [isSalesChannelsModalOpen, setIsSalesChannelsModalOpen] =
     useState(false);
+  const [isAssignTagsOpen, setIsAssignTagsOpen] = useState(false);
+  const [isAssignBrandsOpen, setIsAssignBrandsOpen] = useState(false);
   const { toast } = useToast();
 
   const {
     products,
     categories,
+    tags,
+    brands,
     loading,
     search,
     pagination,
@@ -195,6 +209,115 @@ const PromotionalTextPage = () => {
   };
 
 
+  const handleSaveTags = async (tagIds: number[], mode: TagMassiveMode) => {
+    const isUnassign = mode === "unassign";
+
+    if (selectedProducts.length === 0) {
+      noSelectionToast(isUnassign ? "desasignar etiquetas" : "asignar etiquetas");
+      return;
+    }
+
+    try {
+      if (isUnassign) {
+        const result = await unassignMassiveTagsApi(selectedProducts, tagIds);
+
+        if (result.deleted === 0) {
+          toast({
+            title: "Sin cambios",
+            description: `${plural(selectedProducts.length)} no tenían esas etiquetas asignadas.`,
+          });
+        } else {
+          toast({
+            title: "Etiquetas desasignadas",
+            description:
+              `Se quitaron ${result.deleted} asignación${result.deleted === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.` +
+              (result.notFound > 0
+                ? ` ${result.notFound} no existían y se omitieron.`
+                : ""),
+          });
+        }
+      } else {
+        const result = await assignMassiveTagsApi(selectedProducts, tagIds);
+
+        if (result.created === 0) {
+          toast({
+            title: "Sin cambios",
+            description: `${plural(selectedProducts.length)} ya tenían esas etiquetas (${result.skipped} asignación${result.skipped === 1 ? "" : "es"} omitida${result.skipped === 1 ? "" : "s"}).`,
+          });
+        } else {
+          toast({
+            title: "Etiquetas asignadas",
+            description:
+              `Se agregaron ${result.created} asignación${result.created === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.` +
+              (result.skipped > 0
+                ? ` ${result.skipped} ya existían y se omitieron.`
+                : ""),
+          });
+        }
+      }
+    } catch (error) {
+      toast({
+        title: isUnassign
+          ? "Error al desasignar etiquetas"
+          : "Error al asignar etiquetas",
+        description: error instanceof Error ? error.message : "Error desconocido",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const handleSaveBrands = async (
+    brandIds: number[],
+    mode: MassiveBrandsMode,
+  ) => {
+    const isUnassign = mode === "unassign";
+
+    if (selectedProducts.length === 0) {
+      noSelectionToast(isUnassign ? "desasignar marcas" : "asignar marcas");
+      return;
+    }
+
+    try {
+      const result = await assignMassiveBrandsApi(selectedProducts, brandIds, mode);
+
+      if (isUnassign) {
+        if (result.removed === 0) {
+          toast({
+            title: "Sin cambios",
+            description: `${plural(selectedProducts.length)} no tenían esas marcas asignadas.`,
+          });
+        } else {
+          toast({
+            title: "Marcas desasignadas",
+            description: `Se quitaron ${result.removed} asignación${result.removed === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.`,
+          });
+        }
+      } else if (result.created === 0) {
+        toast({
+          title: "Sin cambios",
+          description: `${plural(selectedProducts.length)} ya tenían esas marcas (${result.skipped} asignación${result.skipped === 1 ? "" : "es"} omitida${result.skipped === 1 ? "" : "s"}).`,
+        });
+      } else {
+        toast({
+          title: "Marcas asignadas",
+          description:
+            `Se agregaron ${result.created} asignación${result.created === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.` +
+            (result.skipped > 0
+              ? ` ${result.skipped} ya existían y se omitieron.`
+              : ""),
+        });
+      }
+    } catch (error) {
+      toast({
+        title: isUnassign ? "Error al desasignar marcas" : "Error al asignar marcas",
+        description: error instanceof Error ? error.message : "Error desconocido",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const handleSaveSalesChannels = async (channelIds: number[]) => {
     //la funcion que se ejecuta al guardar
     if (selectedProducts.length === 0) {
@@ -209,7 +332,7 @@ const PromotionalTextPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       <div className="flex flex-wrap gap-4 justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Edición Masiva</h1>
@@ -285,12 +408,26 @@ const PromotionalTextPage = () => {
                 <Radio className="w-4 h-4 text-red-500" />
                 Canales de Venta
               </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setIsAssignTagsOpen(true)}
+              >
+                <Tags className="w-4 h-4 text-indigo-500" />
+                Etiquetas
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setIsAssignBrandsOpen(true)}
+              >
+                <Bookmark className="w-4 h-4 text-amber-500" />
+                Marcas
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
-      <Card>
+      <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <div className="flex items-center gap-2">
             <ProductsFilterBar
@@ -304,7 +441,7 @@ const PromotionalTextPage = () => {
           </div>
         </CardHeader>
 
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <ProductsTable
             search={search}
             products={products}
@@ -330,6 +467,8 @@ const PromotionalTextPage = () => {
       <ProductsFilterModal
         isOpen={isOpenFilterModal}
         categories={categories}
+        tags={tags}
+        brands={brands}
         filters={filters}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}
@@ -381,6 +520,18 @@ const PromotionalTextPage = () => {
         onClose={() => setIsSalesChannelsModalOpen(false)}
         selectedCount={selectedProducts.length}
         onSave={handleSaveSalesChannels}
+      />
+      <AssignTagsModal
+        isOpen={isAssignTagsOpen}
+        onClose={() => setIsAssignTagsOpen(false)}
+        selectedCount={selectedProducts.length}
+        onSave={handleSaveTags}
+      />
+      <AssignBrandsModal
+        isOpen={isAssignBrandsOpen}
+        onClose={() => setIsAssignBrandsOpen(false)}
+        selectedCount={selectedProducts.length}
+        onSave={handleSaveBrands}
       />
     </div>
   );

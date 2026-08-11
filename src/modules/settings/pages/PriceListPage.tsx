@@ -36,7 +36,7 @@ const PriceListPage = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       <PriceListHeader
         onOpenDialog={() => {
           handleEditItemChange(null);
@@ -44,15 +44,17 @@ const PriceListPage = () => {
         }}
       />
 
-      <Card>
-        <CardContent className="p-0">
-          <PriceListTable
-            loading={loading}
-            prices={priceLists}
-            onEditItem={handleEditItemChange}
-            onOpenChange={handleOpenChange}
-            onDeleteClick={setItemToDelete}
-          />
+      <Card className="flex flex-col min-h-0 overflow-hidden">
+        <CardContent className="p-0 flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <PriceListTable
+              loading={loading}
+              prices={priceLists}
+              onEditItem={handleEditItemChange}
+              onOpenChange={handleOpenChange}
+              onDeleteClick={setItemToDelete}
+            />
+          </div>
         </CardContent>
         <CardFooter>
           <PaginationBar

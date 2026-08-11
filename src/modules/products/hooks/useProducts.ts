@@ -15,6 +15,8 @@ import {
 } from "../services/products.service";
 import { categoryAdapter, productAdapter } from "../adapters/Product.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
+import { getTags } from "@/shared/services/service";
+import type { TagsResponse } from "@/shared/types/type";
 
 export const useProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -38,9 +40,15 @@ export const useProducts = () => {
     maxstock: null,
     order: null,
     search: null,
+    tag: null,
+    brand: null,
     page: 1,
     size: 20,
   });
+  // Catálogo de etiquetas y marcas para los selects del modal de filtros.
+  // Ambas salen de la tabla `tags` y se separan por `type`.
+  const [tags, setTags] = useState<TagsResponse[]>([]);
+  const [brands, setBrands] = useState<TagsResponse[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
 
   const navigate = useNavigate();
@@ -50,7 +58,14 @@ export const useProducts = () => {
     setError(null);
 
     try {
-      const dataProducts = await productsApi(filters);
+      // La edge function espera tag_id / brand_id; se renombran aquí y se
+      // quitan los originales para no enviarlos duplicados en la query.
+      const { tag, brand, ...rest } = filters ?? {};
+      const dataProducts = await productsApi({
+        ...rest,
+        tag_id: tag ?? null,
+        brand_id: brand ?? null,
+      });
       const { products, pagination } = productAdapter(dataProducts);
       setProducts(products);
       setPagination(pagination);
@@ -73,6 +88,19 @@ export const useProducts = () => {
       }
     };
     loadCategories();
+  }, []);
+
+  useEffect(() => {
+    const loadTags = async () => {
+      try {
+        const dataTags = await getTags();
+        setTags(dataTags.filter((t) => t.type === "tag"));
+        setBrands(dataTags.filter((t) => t.type === "brand"));
+      } catch (error) {
+        console.error("Error loading tags:", error);
+      }
+    };
+    loadTags();
   }, []);
 
   const deleteSelectedsProduct = async (productIds: number[]) => {
@@ -186,10 +214,14 @@ export const useProducts = () => {
     filters.status !== null ||
     filters.web !== null ||
     filters.minstock !== null ||
-    filters.maxstock !== null;
+    filters.maxstock !== null ||
+    filters.tag !== null ||
+    filters.brand !== null;
   return {
     products,
     categories,
+    tags,
+    brands,
     pagination,
     loading,
     error,

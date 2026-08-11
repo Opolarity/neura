@@ -423,11 +423,11 @@ export default function PaymentStep({
 
               {/* Pending amount */}
               {pendingAmount > 0 && totalPaid > 0 && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <div className="text-xs text-orange-600 font-medium mb-1">
+                <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
+                  <div className="text-xs text-warning-foreground font-medium mb-1">
                     MONTO PENDIENTE
                   </div>
-                  <div className="text-2xl font-bold text-orange-600">
+                  <div className="text-2xl font-bold text-warning-foreground">
                     S/ {formatCurrency(pendingAmount)}
                   </div>
                 </div>
@@ -435,7 +435,7 @@ export default function PaymentStep({
 
               {/* Ready indicator */}
               {canFinalize && (
-                <div className="flex items-center gap-2 text-green-600 justify-center p-2">
+                <div className="flex items-center gap-2 text-success justify-center p-2">
                   <CheckCircle className="w-5 h-5" />
                   <span className="font-medium">Listo para completar venta</span>
                 </div>

@@ -1542,7 +1542,7 @@ const CreateSale = () => {
                         className={cn(
                           "text-xs",
                           d.amount >= 0
-                            ? "text-emerald-600"
+                            ? "text-success"
                             : "text-destructive",
                         )}
                       >
@@ -1655,7 +1655,7 @@ const CreateSale = () => {
                 {appliedRules.length > 0 && (
                   <div className="flex flex-col gap-1">
                     {appliedRules.map((rule, i) => (
-                      <div key={i} className="text-xs text-green-600">
+                      <div key={i} className="text-xs text-success">
                         {hasHtmlTags(rule.message) ? (
                           <span dangerouslySetInnerHTML={{ __html: rule.message }} />
                         ) : (
@@ -1721,8 +1721,8 @@ const CreateSale = () => {
                           className={cn(
                             "flex items-center justify-between p-2 rounded-md ring-1",
                             isCompleted
-                              ? "bg-green-50 dark:bg-green-900/20 ring-green-400 dark:ring-green-600"
-                              : "bg-red-50 dark:bg-red-900/20 ring-red-400 dark:ring-red-600",
+                              ? "bg-success/10 ring-success"
+                              : "bg-destructive/10 ring-destructive",
                           )}
                         >
                           <div className="flex items-center gap-2">
@@ -1730,16 +1730,16 @@ const CreateSale = () => {
                               className={cn(
                                 "w-4 h-4",
                                 isCompleted
-                                  ? "text-green-600 dark:text-green-400"
-                                  : "text-red-600 dark:text-red-400",
+                                  ? "text-success"
+                                  : "text-destructive",
                               )}
                             />
                             <span
                               className={cn(
                                 "text-sm",
                                 isCompleted
-                                  ? "text-green-700 dark:text-green-300"
-                                  : "text-red-700 dark:text-red-300",
+                                  ? "text-success"
+                                  : "text-destructive",
                               )}
                             >
                               {method?.name || "Método"}
@@ -1748,8 +1748,8 @@ const CreateSale = () => {
                               className={cn(
                                 "text-sm font-medium",
                                 isCompleted
-                                  ? "text-green-700 dark:text-green-300"
-                                  : "text-red-700 dark:text-red-300",
+                                  ? "text-success"
+                                  : "text-destructive",
                               )}
                             >
                               {formatCurrency(parseFloat(p.amount) || 0)}
@@ -1782,8 +1782,8 @@ const CreateSale = () => {
                                   className={cn(
                                     "w-3 h-3",
                                     isCompleted
-                                      ? "text-green-600 dark:text-green-400"
-                                      : "text-red-600 dark:text-red-400",
+                                      ? "text-success"
+                                      : "text-destructive",
                                   )}
                                 />
                               </Button>
@@ -2590,21 +2590,21 @@ const CreateSale = () => {
                       className={cn(
                         "text-center",
                         (product.receivedByFranchise ?? 0) === product.quantity
-                          ? "text-green-500"
+                          ? "text-success"
                           : (product.receivedByFranchise ?? 0) > 0
-                            ? "text-yellow-500"
-                            : "text-red-700",
+                            ? "text-warning"
+                            : "text-destructive",
                       )}
                     >
                       {product.receivedByFranchise ?? 0}
                     </TableCell>
                     {/* <TableCell className="text-center">
                       {(product.receivedByFranchise ?? 0) > 0 ? (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success/15 text-success">
                           Completado
                         </span>
                       ) : (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-warning/15 text-warning-foreground">
                           Pendiente
                         </span>
                       )}

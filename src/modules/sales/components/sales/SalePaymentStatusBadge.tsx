@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { cn } from "@/shared/utils/utils";
 import {
   SALE_PAYMENT_STATUS_LABEL,
@@ -6,9 +6,9 @@ import {
   type SalePaymentStatus,
 } from "../../utils/salePaymentStatus";
 
-const STATUS_CLASS: Record<SalePaymentStatus, string> = {
-  paid: "bg-green-500 hover:bg-green-600 text-white",
-  pending: "bg-amber-400 hover:bg-amber-500 text-amber-950",
+const STATUS_VARIANT: Record<SalePaymentStatus, NonNullable<BadgeProps["variant"]>> = {
+  paid: "success",
+  pending: "warning",
 };
 
 interface SalePaymentStatusBadgeProps {
@@ -33,7 +33,7 @@ export const SalePaymentStatusBadge = ({
     : SALE_PAYMENT_STATUS_LABEL;
 
   return (
-    <Badge className={cn("w-fit", STATUS_CLASS[status], className)}>
+    <Badge variant={STATUS_VARIANT[status]} className={cn("w-fit", className)}>
       {labels[status]}
     </Badge>
   );

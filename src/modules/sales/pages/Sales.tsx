@@ -28,15 +28,15 @@ import { useNavigate } from "react-router-dom";
 const getStatusClassName = (statusCode: string): string => {
   switch (statusCode.toLowerCase()) {
     case "cfm":
-      return "bg-teal-400 hover:bg-teal-500 text-white";
+      return "bg-info hover:bg-info/80 text-info-foreground";
     case "com":
-      return "bg-green-500 hover:bg-green-600 text-white";
+      return "bg-success hover:bg-success/80 text-success-foreground";
     case "pen":
-      return "bg-yellow-400 hover:bg-yellow-500 text-white";
+      return "bg-warning hover:bg-warning/80 text-warning-foreground";
     case "drf":
-      return "bg-cyan-200 hover:bg-cyan-300 text-cyan-900";
+      return "bg-info/15 hover:bg-info/25 text-info";
     case "can":
-      return "bg-red-500 hover:bg-red-600 text-white";
+      return "bg-destructive hover:bg-destructive/80 text-destructive-foreground";
     default:
       return "bg-muted text-muted-foreground";
   }
@@ -70,10 +70,10 @@ const Sales = () => {
   } = useSales();
 
   return (
-    <div className="space-y-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       <SalesHeader selectedSales={selectedSales} handleNewSale={goToNewSale} />
 
-      <Card>
+      <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader>
           <SalesFilterBar
             search={search}
@@ -85,7 +85,7 @@ const Sales = () => {
           />
         </CardHeader>
 
-        <CardContent className="p-0 relative">
+        <CardContent className="p-0 relative flex-1 min-h-0 overflow-hidden">
           {loading && sales.length > 0 && (
             <div className="absolute inset-0 z-50 bg-background/80 flex items-center justify-center">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />

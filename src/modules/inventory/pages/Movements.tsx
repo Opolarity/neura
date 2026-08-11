@@ -32,7 +32,7 @@ const Movements = () => {
   } = useMovements();
 
   return (
-    <div className="space-y-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Movimientos de Inventario</h1>
@@ -42,7 +42,7 @@ const Movements = () => {
         </div>
       </div>
 
-      <Card>
+      <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader>
           <MovementsFilterBar
             search={search}
@@ -54,7 +54,7 @@ const Movements = () => {
           />
         </CardHeader>
 
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <MovementsTable
             movements={movements}
             loading={loading}

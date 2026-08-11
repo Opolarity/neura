@@ -3,7 +3,7 @@ import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useSupportRequests } from "../hooks/useSupportRequests";
 import { useSupportRequestDetail } from "../hooks/useSupportRequestDetail";
 import { SupportDialog } from "../components/SupportDialog";
-import { SupportRequestDetailModal } from "../components/support-requests/SupportRequestDetailModal";
+import { SupportRequestDetailSheet } from "../components/support-requests/SupportRequestDetailSheet";
 import { SupportRequestsHeader } from "../components/support-requests/SupportRequestsHeader";
 import { SupportRequestsFilterBar } from "../components/support-requests/SupportRequestsFilterBar";
 import { SupportRequestsTable } from "../components/support-requests/SupportRequestsTable";
@@ -28,14 +28,14 @@ const SupportRequestsPage = () => {
   const detail = useSupportRequestDetail();
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="h-full min-h-0 flex flex-col gap-6">
       <SupportRequestsHeader
         onNewRequest={openNewRequest}
         onRefresh={refresh}
         refreshing={loading}
       />
 
-      <Card>
+      <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader>
           <SupportRequestsFilterBar
             requestType={filters.requestType}
@@ -43,7 +43,7 @@ const SupportRequestsPage = () => {
             disabled={loading}
           />
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           {errorState ? (
             <SupportRequestsErrorState
               code={errorState.code}
@@ -75,13 +75,15 @@ const SupportRequestsPage = () => {
       {/* Se reutiliza el formulario que antes vivía en el Sidebar, sin cambios */}
       <SupportDialog open={dialogOpen} onOpenChange={onDialogOpenChange} />
 
-      <SupportRequestDetailModal
+      <SupportRequestDetailSheet
         open={detail.isOpen}
         detail={detail.detail}
         loading={detail.loading}
+        sending={detail.sending}
         errorState={detail.errorState}
         onClose={detail.close}
         onRetry={detail.retry}
+        onSendMessage={detail.sendMessage}
       />
     </div>
   );
