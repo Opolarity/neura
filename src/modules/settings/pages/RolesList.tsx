@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import useRoles from "../hooks/useRoles";
 import RolesFilterBar from "../components/roles/RolesFilterBar";
 import RolesTable from "../components/roles/RolesTable";
@@ -32,11 +32,11 @@ const RolesList = () => {
   } = useRoles();
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       <RolesHeader />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader>
+        <CardHeader className="!p-4">
           <RolesFilterBar
             search={search}
             onSearchChange={handleSearchChange}
@@ -51,12 +51,14 @@ const RolesList = () => {
             onDeleteClick={handleDeleteRole}
             handleEditRole={handleEditRole}
           />
+        </CardContent>
+        <CardFooter className="!p-0">
           <PaginationBar
             pagination={pagination}
             onPageChange={handlePageChange}
             onPageSizeChange={handleSizeChange}
           />
-        </CardContent>
+        </CardFooter>
       </Card>
 
       <RolesFilterModal

@@ -47,14 +47,14 @@ export default function ReclamacionesPage() {
   };
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Reclamaciones</h1>
         <p className="text-gray-600">Gestiona las quejas y reclamaciones de los clientes</p>
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader>
+        <CardHeader className="!p-4">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -120,7 +120,7 @@ export default function ReclamacionesPage() {
           </Table>
         </CardContent>
 
-        <CardFooter>
+        <CardFooter className="!p-0">
           <PaginationBar
             pagination={pagination}
             onPageChange={onPageChange}

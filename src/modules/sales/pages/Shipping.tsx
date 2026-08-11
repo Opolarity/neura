@@ -47,7 +47,7 @@ const Shipping = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Métodos de Envío</h1>
@@ -64,8 +64,8 @@ const Shipping = () => {
 
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="flex flex-col min-h-0 overflow-hidden">
+        <CardHeader className="!p-4">
           <ShippingFilterBar
             search={search}
             onSearchChange={onSearchChange}
@@ -75,7 +75,7 @@ const Shipping = () => {
             hasActiveFilters={hasActiveFilters}
           />
         </CardHeader>
-        <CardContent className="p-0">    <Table>
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">    <Table>
           <TableHeader>
             <TableRow>
               {/*
@@ -159,7 +159,7 @@ const Shipping = () => {
         </Table>
         </CardContent>
 
-        <CardFooter>
+        <CardFooter className="!p-0">
           <PaginationBar pagination={pagination}
             onPageChange={onPageChange}
             onPageSizeChange={handlePageSizeChange}

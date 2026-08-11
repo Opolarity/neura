@@ -37,7 +37,7 @@ All colors MUST be HSL.
     --success: 142.1 76.2% 36.3%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 37.7 92.1% 50.2%;
+    --warning: 32.1 94.6% 43.7%; /* #d97706 */
     --warning-foreground: 20.9 84.6% 4.9%;
 
     --info: 217.2 91.2% 59.8%;

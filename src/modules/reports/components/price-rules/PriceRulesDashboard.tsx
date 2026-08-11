@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Tags, Zap, Ticket, CheckCircle2, XCircle } from 'lucide-react';
 import { priceRulesReportService } from '../../services/reports.service';
+import { reportChartColors } from '../shared/reportChartUtils';
 import type { ReportsFilters } from '../../types/reports.types';
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -41,8 +42,8 @@ export function PriceRulesDashboard({ filters }: Props) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard icon={<CheckCircle2 className="w-5 h-5 text-success" />} label="Reglas activas"   value={kpis.active}    loading={loading} />
         <StatCard icon={<XCircle      className="w-5 h-5 text-destructive"   />} label="Reglas inactivas" value={kpis.inactive}  loading={loading} />
-        <StatCard icon={<Zap          className="w-5 h-5 text-blue-500"  />} label="Automáticas"      value={kpis.automatic} loading={loading} />
-        <StatCard icon={<Ticket       className="w-5 h-5 text-purple-500"/>} label="Cupones"           value={kpis.coupon}    loading={loading} />
+        <StatCard icon={<Zap          className="w-5 h-5" style={{ color: reportChartColors.blue }}   />} label="Automáticas"      value={kpis.automatic} loading={loading} />
+        <StatCard icon={<Ticket       className="w-5 h-5" style={{ color: reportChartColors.violet }}/>} label="Cupones"           value={kpis.coupon}    loading={loading} />
       </div>
 
       {/* Table */}

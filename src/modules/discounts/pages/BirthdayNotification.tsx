@@ -7,7 +7,7 @@ const BirthdayNotification = () => {
   const { profiles, loading } = useBirthdayNotifications();
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex items-center gap-3 mb-6">
         <Cake className="w-8 h-8 text-pink-500" />
         <div>
@@ -19,7 +19,7 @@ const BirthdayNotification = () => {
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader>
+        <CardHeader className="!p-4">
           <CardTitle className="text-base font-semibold">
             Clientes en rango de cumpleaños
           </CardTitle>
