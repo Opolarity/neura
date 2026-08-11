@@ -55,6 +55,7 @@ import ReportsClientsPage from "@/modules/reports/pages/ClientsPage";
 import PriceRulesReportPage from "@/modules/reports/pages/PriceRulesReportPage";
 
 import StockTypePage from "@/modules/settings/pages/StockTypePage";
+import BusinessParametersPage from "@/modules/settings/pages/BusinessParametersPage";
 import PriceListPage from "@/modules/settings/pages/PriceListPage";
 import PaymentMethodsList from "@/modules/settings/pages/PaymentMethodsList";
 import BusinessAccountPage from "@/modules/settings/pages/BusinessAccountPage";
@@ -252,6 +253,7 @@ export const APP_PERMISSIONS_CONFIG = [
         node: [
           {
             code: "settings.group", name: "Configuración", node: [
+              { name: "Negocio", path: "/settings/business", code: "business_parameters.list", element: <BusinessParametersPage />, showSidebar: true, node: [] },
               { name: "Tipos de inventario", path: "/settings/stock-types", code: "stock_types.list", element: <StockTypePage />, showSidebar: true, node: [] },
               { name: "Precios", path: "/settings/price-list", code: "price_lists.list", element: <PriceListPage />, showSidebar: true, node: [] },
               { name: "Métodos de pago", path: "/settings/payment-methods", code: "payment_methods.list", element: <PaymentMethodsList />, showSidebar: true, node: [] },
