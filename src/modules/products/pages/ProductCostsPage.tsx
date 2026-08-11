@@ -43,7 +43,7 @@ const ProductCosts = () => {
   } = useProductCosts();
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       {/* ProductCostsHeader */}
       <div className="flex justify-between items-center">
         <div>
@@ -84,7 +84,7 @@ const ProductCosts = () => {
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader>
+        <CardHeader className="!p-4">
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -175,7 +175,7 @@ const ProductCosts = () => {
             </TableBody>
           </Table>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="!p-0">
           <PaginationBar pagination={pagination}
             onPageChange={onPageChange}
             onPageSizeChange={handlePageSizeChange}

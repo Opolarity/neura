@@ -41,23 +41,23 @@ const MediaDropzone = ({ onUpload, uploading }: MediaDropzoneProps) => {
       onDrop={handleDrop}
       onClick={() => !uploading && inputRef.current?.click()}
       className={`
-        flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 cursor-pointer transition-colors
+        shrink-0 flex flex-row items-center justify-center gap-3 rounded-lg border-2 border-dashed p-3 cursor-pointer transition-colors
         ${dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/30 hover:border-muted-foreground/40"}
         ${uploading ? "pointer-events-none opacity-60" : ""}
       `}
     >
       {uploading ? (
-        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+        <Loader2 className="h-5 w-5 shrink-0 animate-spin text-muted-foreground" />
       ) : (
-        <Upload className="h-10 w-10 text-muted-foreground" />
+        <Upload className="h-5 w-5 shrink-0 text-muted-foreground" />
       )}
       <div className="text-center">
-        <p className="text-sm font-medium text-foreground">
+        <span className="text-sm font-medium text-foreground">
           {uploading ? "Subiendo archivos..." : "Arrastra y suelta archivos aquí"}
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
+        </span>
+        <span className="text-xs text-muted-foreground ml-2">
           o haz clic para seleccionar · Imágenes y videos
-        </p>
+        </span>
       </div>
       <input
         ref={inputRef}

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { usePriceRules } from "../hooks/usePriceRules";
 import { PriceRulesHeader } from "../components/price-rules/PriceRulesHeader";
 import { PriceRulesFilterBar } from "../components/price-rules/PriceRulesFilterBar";
@@ -34,7 +34,7 @@ const PriceRulesPage = () => {
   } = usePriceRules();
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       <PriceRulesHeader
         onNewRule={() => navigate("/discounts/price-rules/create")}
         selectedCount={selectedIds.size}
@@ -45,7 +45,7 @@ const PriceRulesPage = () => {
       />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader>
+        <CardHeader className="!p-4">
           <PriceRulesFilterBar
             filters={filters}
             onSearchChange={onSearchChange}
@@ -63,13 +63,14 @@ const PriceRulesPage = () => {
             onToggleRow={toggleSelectRow}
           />
         </CardContent>
+        <CardFooter className="!p-0">
+          <PaginationBar
+            pagination={pagination}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+          />
+        </CardFooter>
       </Card>
-
-      <PaginationBar
-        pagination={pagination}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
-      />
 
       <PriceRuleDeleteDialog
         open={deleteDialogOpen}

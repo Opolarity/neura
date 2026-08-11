@@ -36,7 +36,7 @@ const PriceListPage = () => {
   };
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       <PriceListHeader
         onOpenDialog={() => {
           handleEditItemChange(null);
@@ -56,7 +56,7 @@ const PriceListPage = () => {
             />
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="!p-0">
           <PaginationBar
             pagination={pagination}
             onPageChange={handlePageChange}

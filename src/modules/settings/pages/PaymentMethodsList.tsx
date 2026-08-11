@@ -22,7 +22,7 @@ const PaymentMethodsList = () => {
     } = usePaymentMethods();
 
     return (
-        <div className="h-full min-h-0 flex flex-col gap-6">
+        <div className="h-full min-h-0 flex flex-col gap-4">
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
@@ -51,7 +51,7 @@ const PaymentMethodsList = () => {
                         loading={loading}
                     />
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="!p-0">
                     <PaginationBar
                         pagination={pagination}
                         onPageChange={handlePageChange}

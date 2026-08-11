@@ -14,7 +14,7 @@ export default function PaginationBar({
   onPageSizeChange,
 }: PaginationBarProps) {
   return (
-    <div className="w-full flex flex-row justify-center gap-2 p-6">
+    <div className="w-full flex flex-row justify-center gap-2 p-4">
       <PageLimit size={pagination.p_size} onPageSizeChange={onPageSizeChange} />
 
       <Pagination pagination={pagination} onPageChange={onPageChange} />

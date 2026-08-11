@@ -73,7 +73,7 @@ export default function TagsPage() {
   }, []);
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       <TagsHeader onOpen={() => setIsOpenForm(true)} />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
@@ -83,7 +83,7 @@ export default function TagsPage() {
             <TagsTable tags={tags} isLoading={isLoading} error={error} onEdit={handleOpenEdit} onDelete={handleOpenDelete} />
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="!p-0">
           <PaginationBar
             pagination={{ p_page: pagination.page, p_size: pagination.size, total: pagination.total }}
             onPageChange={handlePageChange}

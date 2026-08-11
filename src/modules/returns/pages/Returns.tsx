@@ -9,8 +9,8 @@ const Returns = () => {
   const { returns, loading, formatDate, formatCurrency, search, handleSearchChange, pagination, handlePageChange, handlePageSizeChange } = useReturns();
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="h-full min-h-0 flex flex-col gap-4">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Devoluciones</h1>
           <p className="text-muted-foreground mt-1">
