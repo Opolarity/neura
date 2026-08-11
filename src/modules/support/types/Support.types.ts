@@ -11,6 +11,8 @@ export interface SupportRequestPayload {
   description?: string;
   requestType: SupportRequestType;
   reporterName: string;
+  /** Página del ERP desde donde se envía: alimenta el filtro por origen. */
+  originUrl?: string;
   attachments?: SupportAttachment[];
 }
 
@@ -36,17 +38,48 @@ export interface SupportRequestApiItem {
   status_source: string | null;
   /** todo | in_progress | done | blocked | cancelled | ... (ABIERTO) o null. */
   status_category: string | null;
+  /** URL de la página desde donde se creó; null en lo creado antes de registrarla. */
+  origin_url: string | null;
+  /** Host ya normalizado por la API externa; "" cuando no hay origen. */
+  origin_host: string | null;
   attachments_count: number | null;
+}
+
+/**
+ * Valores existentes entre TODAS las solicitudes de la empresa (la API los
+ * calcula sin aplicar los filtros activos). Con ellos se arman los selects:
+ * los estados son configurables en OPOLARITY y los orígenes dependen de desde
+ * dónde se creó cada solicitud, así que ninguna lista se codifica aquí.
+ */
+export interface SupportRequestsApiFacets {
+  reporter_names: string[] | null;
+  statuses: string[] | null;
+  /** Hosts; "" representa las solicitudes sin origen registrado. */
+  origin_hosts: string[] | null;
 }
 
 export interface SupportRequestsApiResponse {
   data: SupportRequestApiItem[];
+  /** null si la API externa todavía no lo devuelve (versión anterior). */
+  facets: SupportRequestsApiFacets | null;
   page: {
     current: number;
     size: number;
     total: number;
     total_pages: number;
   };
+}
+
+/** Opción de un select de filtro: `value` es lo que viaja a la API. */
+export interface SupportFilterOption {
+  value: string;
+  label: string;
+}
+
+export interface SupportRequestsFacets {
+  reporters: SupportFilterOption[];
+  statuses: SupportFilterOption[];
+  origins: SupportFilterOption[];
 }
 
 /** Item adaptado para la UI. `status` se muestra TAL CUAL (es configurable). */
@@ -59,6 +92,10 @@ export interface SupportRequestListItem {
   requestType: SupportRequestType;
   taskCode: string | null;
   reporterName: string | null;
+  /** Host de origen ("" si no se registró): es el valor que filtra. */
+  originHost: string;
+  /** Nombre legible del origen ("Sin origen" cuando no hay). */
+  originLabel: string;
   attachmentsCount: number;
   createdAt: string;
   updatedAt: string;
@@ -206,6 +243,12 @@ export interface SupportRequestsFilters {
   size: number;
   /** null = "Todos": no se envía request_type a la API. */
   requestType: SupportRequestType | null;
+  /** null = "Todos". "" es un valor válido: solicitudes sin ese dato. */
+  reporterName: string | null;
+  /** Nombre del estado tal cual lo devuelve la API (configurable). */
+  status: string | null;
+  /** Host de origen; "" = solicitudes sin origen registrado. */
+  originHost: string | null;
 }
 
 export type SupportErrorCode =

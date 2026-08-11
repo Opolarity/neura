@@ -52,6 +52,12 @@ export const getSupportRequests = async (
     body: {
       // omitido = todas (tickets y sugerencias)
       request_type: filters.requestType ?? undefined,
+      // Los tres filtros de la API externa son multi-valor; la vista maneja un
+      // valor por filtro y "" es válido (solicitudes sin ese dato), así que la
+      // condición mira el null y no el string vacío.
+      reporter_names: filters.reporterName === null ? undefined : [filters.reporterName],
+      statuses: filters.status === null ? undefined : [filters.status],
+      origin_hosts: filters.originHost === null ? undefined : [filters.originHost],
       page: filters.page,
       page_size: filters.size,
     },
