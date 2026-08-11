@@ -41,11 +41,9 @@ const Login = () => {
       <Card className="w-full max-w-md shadow-lg">
         <CardContent className="p-8">
           <div className="flex flex-col items-center text-center">
-            {/* El logo es blanco sobre transparente: va sin filtros porque el
-                panel es oscuro. */}
-            <div className="flex items-center justify-center rounded-lg bg-sidebar px-5 py-4">
-              <img src="/logo-neura.png" alt="Neura" className="h-7 w-auto" />
-            </div>
+            {/* Variante morada del logo: va directa sobre la card blanca, sin
+                recuadro oscuro de fondo. */}
+            <img src="/logo-neura-color.png" alt="Neura" className="h-8 w-auto" />
 
             <h1 className="mt-6 text-xl font-bold text-foreground">
               Ingresa a tu cuenta
