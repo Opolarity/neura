@@ -337,7 +337,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                         <TableBody>
                           {variations.map(variation => (
                             <TableRow key={variation.id}>
-                              <TableCell className="font-medium sticky left-0 bg-background">
+                              <TableCell className="font-medium sticky left-0 bg-inherit">
                                 <div className="flex flex-col">
                                   <span>{getVariationLabel(variation)}</span>
                                   {variationSkus[variation.id] && (
@@ -422,7 +422,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                         <TableBody>
                           {variations.map(variation => (
                             <TableRow key={variation.id}>
-                              <TableCell className="font-medium sticky left-0 bg-background">
+                              <TableCell className="font-medium sticky left-0 bg-inherit">
                                 <div className="flex flex-col">
                                   <span>{getVariationLabel(variation)}</span>
                                   {variationSkus[variation.id] && (
@@ -474,7 +474,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                           <TableBody>
                             {variations.map(variation => (
                               <TableRow key={variation.id}>
-                                <TableCell className="font-medium sticky left-0 bg-background">
+                                <TableCell className="font-medium sticky left-0 bg-inherit">
                                   <div className="flex flex-col">
                                     <span>{getVariationLabel(variation)}</span>
                                     {variationSkus[variation.id] && (
