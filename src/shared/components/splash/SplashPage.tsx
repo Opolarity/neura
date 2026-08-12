@@ -1,6 +1,8 @@
-import { Loader2 } from "lucide-react"
 import { useEffect } from "react"
+import LoaderContent from "@/shared/components/loader/LoaderContent"
 
+// Loader de arranque: es el único a pantalla completa, porque mientras se
+// resuelven sesión y permisos todavía no hay sidebar ni header que mostrar.
 export default function SplashPage() {
   useEffect(() => {
     const original = document.body.style.overflow
@@ -11,11 +13,8 @@ export default function SplashPage() {
   }, [])
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin" />
-        <p className="text-muted-foreground text-sm">Cargando...</p>
-      </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+      <LoaderContent />
     </div>
   )
 }

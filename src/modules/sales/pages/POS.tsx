@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { PageLoader } from "@/shared/components/page-loader";
 import { usePOS } from "../hooks/usePOS";
 import POSHeader from "../components/pos/POSHeader";
 import POSStepIndicator from "../components/pos/POSStepIndicator";
@@ -26,14 +26,7 @@ export default function POS() {
 
   // Loading state
   if (pos.loading || pos.sessionLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin" />
-          <p className="text-gray-500">Cargando punto de venta...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader message="Cargando punto de venta..." />;
   }
 
   // No active session - show open session modal

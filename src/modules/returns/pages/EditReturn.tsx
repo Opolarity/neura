@@ -30,6 +30,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { PageLoader } from "@/shared/components/page-loader";
 import { useEditReturn } from "../hooks/useEditReturn";
 import { formatCurrency } from "@/shared/utils/currency";
 import { ReturnSelectionCambio } from "../components/returns/ReturnSelectionCambio";
@@ -93,11 +94,7 @@ const EditReturn = () => {
   } = useEditReturn();
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
+    return <PageLoader message="Cargando devolución..." />;
   }
 
   return (
