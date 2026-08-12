@@ -22,14 +22,14 @@ All colors MUST be HSL.
     --primary: 257.8 49% 44.1%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 8% 96.5%; /* #f4f5f7 */
+    --secondary-foreground: 220 14% 13%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 8% 96.5%; /* #f4f5f7 */
+    --muted-foreground: 220 6% 47%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 8% 96.5%; /* #f4f5f7 */
+    --accent-foreground: 220 14% 13%;
 
     --destructive: 358.1 75.1% 59%; /* #e5484d */
     --destructive-foreground: 0 0% 100%;
@@ -49,11 +49,11 @@ All colors MUST be HSL.
     --info: 217.2 91.2% 59.8%;
     --info-foreground: 0 0% 100%;
 
-    --pending: 210 40% 96.1%;
-    --pending-foreground: 215.3 25% 26.7%;
+    --pending: 220 8% 96.5%; /* #f4f5f7 */
+    --pending-foreground: 220 12% 27%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 220 9% 91%; /* #e6e7ea */
+    --input: 220 9% 91%; /* #e6e7ea */
     --ring: 257.8 49% 60%;
 
     --radius: 0.5rem;

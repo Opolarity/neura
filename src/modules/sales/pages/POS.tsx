@@ -32,7 +32,7 @@ export default function POS() {
   // No active session - show open session modal
   if (!pos.hasActiveSession) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen flex items-center justify-center bg-muted">
         <POSSessionModal
           isOpen={true}
           isOpening={pos.openingSession}
@@ -46,7 +46,7 @@ export default function POS() {
   const canProceedNext = pos.canProceedToStep((pos.currentStep + 1) as POSStep);
 
   return (
-    <div className="h-[calc(100vh-73px)] flex flex-col bg-gray-50 -m-[15px]">
+    <div className="h-[calc(100vh-73px)] flex flex-col bg-muted -m-[15px]">
       {/* Header */}
       <POSHeader session={pos.session} onExit={pos.exitPOS} />
 
