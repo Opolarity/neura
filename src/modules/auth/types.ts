@@ -3,7 +3,6 @@ import { User, Session } from "@supabase/supabase-js";
 export interface AppUser {
   accountName: string;
   roleName: string;
-  branchName: string;
 }
 
 export interface AuthContextType {

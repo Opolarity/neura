@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { NotificationPanel } from "@/modules/notifications/components/NotificationPanel";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useAuth } from "@/modules/auth/hooks/useAuth";
 
 interface HeaderProps {
   posSession: { isOpen: boolean; loading: boolean };
@@ -14,7 +13,6 @@ const Header = ({ posSession }: HeaderProps) => {
   const navigate = useNavigate();
   const { isOpen, loading } = posSession;
   const isMobile = useIsMobile();
-  const { appUser } = useAuth();
 
   return (
     <header className="bg-white shadow-sm border-b border-border px-4 py-2">
@@ -27,12 +25,6 @@ const Header = ({ posSession }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-2">
-          {appUser?.branchName && (
-            <span className="text-sm font-medium text-muted-foreground">
-              {appUser.branchName}
-            </span>
-          )}
-
           {!loading && (
             <Button
               variant="outline"
