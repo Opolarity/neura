@@ -12,14 +12,20 @@ import { SupportRequestsErrorState } from "../components/support-requests/Suppor
 const SupportRequestsPage = () => {
   const {
     requests,
+    facets,
     loading,
     errorState,
     filters,
+    hasActiveFilters,
     pagination,
     dialogOpen,
     onPageChange,
     onPageSizeChange,
     onRequestTypeChange,
+    onReporterNameChange,
+    onStatusChange,
+    onOriginHostChange,
+    clearFilters,
     refresh,
     openNewRequest,
     onDialogOpenChange,
@@ -39,7 +45,16 @@ const SupportRequestsPage = () => {
         <CardHeader className="!p-4">
           <SupportRequestsFilterBar
             requestType={filters.requestType}
+            reporterName={filters.reporterName}
+            status={filters.status}
+            originHost={filters.originHost}
+            facets={facets}
+            hasActiveFilters={hasActiveFilters}
             onRequestTypeChange={onRequestTypeChange}
+            onReporterNameChange={onReporterNameChange}
+            onStatusChange={onStatusChange}
+            onOriginHostChange={onOriginHostChange}
+            onClearFilters={clearFilters}
             disabled={loading}
           />
         </CardHeader>
@@ -55,9 +70,9 @@ const SupportRequestsPage = () => {
             <SupportRequestsTable
               requests={requests}
               loading={loading}
-              filteredByType={filters.requestType !== null}
+              hasActiveFilters={hasActiveFilters}
               onNewRequest={openNewRequest}
-              onClearFilter={() => onRequestTypeChange(null)}
+              onClearFilters={clearFilters}
               onViewDetail={detail.open}
             />
           )}

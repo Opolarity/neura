@@ -9,6 +9,7 @@ import type {
   SupportTaskApiTracking,
   SupportTaskTracking,
 } from "../types/Support.types";
+import { originHostFromUrl, originLabelFromHost } from "../utils/originLabel";
 
 /** null cuando no es un número: distinto de 0, que sí es un valor válido. */
 const toNumberOrNull = (value: unknown): number | null => {
@@ -88,6 +89,10 @@ export const adaptSupportRequestDetail = (
   item: SupportRequestDetailApi,
 ): SupportRequestDetail => {
   const attachments: SupportAttachmentFile[] = adaptAttachments(item?.attachments);
+  // Mismo criterio que el listado: el host lo normaliza la API y, si no viene,
+  // se deriva de la URL.
+  const originHost =
+    item.origin_host?.trim().toLowerCase() || originHostFromUrl(item.origin_url);
 
   return {
     id: item.id,
@@ -98,6 +103,8 @@ export const adaptSupportRequestDetail = (
     requestType: item.request_type === "ticket" ? "ticket" : "suggestion",
     taskCode: item.task_code ?? null,
     reporterName: item.reporter_name ?? null,
+    originHost,
+    originLabel: originLabelFromHost(originHost),
     // El conteo del listado puede no venir en el detalle: se cae a los adjuntos reales
     attachmentsCount: item.attachments_count ?? attachments.length,
     createdAt: item.created_at,
