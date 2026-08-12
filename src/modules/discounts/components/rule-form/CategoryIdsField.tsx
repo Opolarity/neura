@@ -53,7 +53,11 @@ export const CategoryIdsField = ({
 
       if (cancelled) return;
       setSelected(
-        value.map((id) => ({ id, name: known.get(id) ?? `Categoría #${id}` })),
+        value.map((id) => ({
+          id,
+          name: known.get(id) ?? `Categoría #${id}`,
+          imageUrl: null,
+        })),
       );
     };
 

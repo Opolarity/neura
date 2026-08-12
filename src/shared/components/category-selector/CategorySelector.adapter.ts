@@ -9,6 +9,7 @@ export const categoriesFromApiAdapter = (
   data: (raw.data || []).map((c) => ({
     id: c.id,
     name: c.name,
+    imageUrl: c.imageUrl ?? null,
   })),
   pagination: raw.page,
 });

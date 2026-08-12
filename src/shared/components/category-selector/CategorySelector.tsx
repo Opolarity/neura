@@ -14,7 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, Loader2, Search, X } from "lucide-react";
+import { Check, Image as ImageIcon, Loader2, Search, X } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import { fetchCategories } from "./CategorySelector.service";
 import { categoriesFromApiAdapter } from "./CategorySelector.adapter";
@@ -171,7 +171,22 @@ export default function CategorySelector({
                               : "opacity-0",
                           )}
                         />
-                        <span className="truncate">{category.name}</span>
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
+                          {category.imageUrl ? (
+                            <img
+                              src={category.imageUrl}
+                              alt={category.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-1 flex-col min-w-0">
+                          <span className="truncate">{category.name}</span>
+                        </div>
                       </CommandItem>
                     ))}
                   </CommandGroup>

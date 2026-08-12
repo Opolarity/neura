@@ -1,6 +1,7 @@
 export interface CategoryOption {
   id: number;
   name: string;
+  imageUrl: string | null;
 }
 
 export interface FetchCategoriesParams {
@@ -15,6 +16,7 @@ export interface CategoriesApiResponse {
   data: Array<{
     id: number;
     name: string;
+    imageUrl: string | null;
   }>;
   page: {
     page: number;
