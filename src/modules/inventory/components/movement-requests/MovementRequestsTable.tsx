@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { MovementRequestListItem } from "../../types/MovementRequestList.types";
 import { formatDateTime } from "@/shared/utils/date";
+import MovementRequestStepsBar from "./MovementRequestStepsBar";
 
 interface Props {
   requests: MovementRequestListItem[];
@@ -76,6 +77,11 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
               <Badge className={getSituationBadgeColor(req.situationName)}>
                 {req.situationName}
               </Badge>
+              <MovementRequestStepsBar
+                type={req.requestType}
+                situationCode={req.situationCode}
+                progressSituationCode={req.progressSituationCode}
+              />
             </TableCell>
             <TableCell className="max-w-[300px]">
               {req.message ? (

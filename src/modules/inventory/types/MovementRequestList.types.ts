@@ -1,3 +1,5 @@
+export type MovementRequestType = "request" | "send";
+
 export interface MovementRequestListItem {
   id: number;
   createdBy: string;
@@ -6,6 +8,8 @@ export interface MovementRequestListItem {
   situationId: number | null;
   situationName: string;
   situationCode?: string | null;
+  requestType?: MovementRequestType;
+  progressSituationCode?: string | null;
   lastMessageWarehouseId: number | null;
   lastMessageWarehouseName: string | null;
   message: string | null;
@@ -36,6 +40,8 @@ export interface MovementRequestApiItem {
   situation_id_result: number | null;
   situation_name: string;
   situation_code?: string | null;
+  request_type?: MovementRequestType;
+  progress_situation_code?: string | null;
   last_message_warehouse_id: number | null;
   last_message_warehouse_name: string | null;
   message: string | null;
@@ -59,6 +65,8 @@ export function mapApiItemToListItem(item: MovementRequestApiItem): MovementRequ
     situationId: item.situation_id_result,
     situationName: item.situation_name,
     situationCode: item.situation_code,
+    requestType: item.request_type,
+    progressSituationCode: item.progress_situation_code,
     lastMessageWarehouseId: item.last_message_warehouse_id,
     lastMessageWarehouseName: item.last_message_warehouse_name,
     message: item.message,
