@@ -8,7 +8,7 @@ export const categoriesListApi = async (): Promise<SimpleCategory[]> => {
         .select("id, name, parent_category")
         .order("name");
     if (error) throw error;
-    return data ?? [];
+    return (data ?? []).filter((category) => category.name.trim() !== "");
 };
 
 export const categoryApi = async (
