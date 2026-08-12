@@ -72,7 +72,7 @@ export default function ConfigurationStep({
               <Label className="text-xs font-medium text-gray-500 uppercase">
                   Almacen de Despacho
                 </Label>
-              <div className="h-10 px-3 py-2 border rounded-md bg-gray-50 flex items-center text-gray-600">
+              <div className="h-10 px-3 py-2 border rounded-md bg-muted flex items-center text-gray-600">
                 {userWarehouseName || "Sin almacen asignado"}
               </div>
             </div>

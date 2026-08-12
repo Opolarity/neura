@@ -579,6 +579,19 @@ const CreateSale = () => {
                     }
                     warehouseId={userWarehouseId || undefined}
                     showStock={true}
+                    trigger={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-start text-muted-foreground font-normal"
+                      >
+                        <Search className="w-4 h-4 mr-2" />
+                        {selectedVariation
+                          ? `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`
+                          : "Buscar por nombre o SKU..."}
+                      </Button>
+                    }
                   />
                 </div>
                 <Button

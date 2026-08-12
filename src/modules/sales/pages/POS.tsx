@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { PageLoader } from "@/shared/components/page-loader";
 import { usePOS } from "../hooks/usePOS";
 import POSHeader from "../components/pos/POSHeader";
 import POSStepIndicator from "../components/pos/POSStepIndicator";
@@ -26,20 +26,13 @@ export default function POS() {
 
   // Loading state
   if (pos.loading || pos.sessionLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin" />
-          <p className="text-gray-500">Cargando punto de venta...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader message="Cargando punto de venta..." />;
   }
 
   // No active session - show open session modal
   if (!pos.hasActiveSession) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen flex items-center justify-center bg-muted">
         <POSSessionModal
           isOpen={true}
           isOpening={pos.openingSession}
@@ -53,7 +46,7 @@ export default function POS() {
   const canProceedNext = pos.canProceedToStep((pos.currentStep + 1) as POSStep);
 
   return (
-    <div className="h-[calc(100vh-73px)] flex flex-col bg-gray-50 -m-[15px]">
+    <div className="h-[calc(100vh-73px)] flex flex-col bg-muted -m-[15px]">
       {/* Header */}
       <POSHeader session={pos.session} onExit={pos.exitPOS} />
 

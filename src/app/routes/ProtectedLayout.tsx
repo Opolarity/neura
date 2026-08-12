@@ -7,7 +7,9 @@ export default function ProtectedLayout({ children }: PropsWithChildren) {
   const { user, loading, permissionsLoading, appUserLoading, companyShortNameLoading } = useAuth();
   const isLoading = permissionsLoading || appUserLoading || companyShortNameLoading;
 
-  if (loading) return null;
+  // Mientras se resuelve la sesión no se sabe aún si hay que ir al login: se
+  // muestra el splash en vez de un frame en blanco.
+  if (loading) return <SplashPage />;
 
   if (!user) {
     return <Navigate to="/login" replace />;

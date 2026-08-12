@@ -224,7 +224,7 @@ const POSSessionDetailDialog = ({
                 {/* Income Payments */}
                 {incomePayments.length > 0 && (
                   <div className="flex-1">
-                    <div className="bg-slate-50 rounded-lg p-3 space-y-1.5">
+                    <div className="bg-muted rounded-lg p-3 space-y-1.5">
                       <h4 className="text-sm font-semibold text-slate-600 mb-2">
                         INGRESOS POR MÉTODO DE PAGO
                       </h4>

@@ -27,7 +27,7 @@ export const AddProductAdapter = {
     brands: ProductBrand[];
   } {
     return {
-      categories: data.categories || [],
+      categories: (data.categories || []).filter((category) => category.name.trim() !== ''),
       termGroups: data.termGroups || [],
       terms: data.terms || [],
       priceLists: data.priceLists || [],

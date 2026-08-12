@@ -11,6 +11,9 @@ export const createSupportRequest = async (payload: SupportRequestPayload) => {
         description: payload.description || null,
         request_type: payload.requestType,
         reporter_name: payload.reporterName,
+        // Página desde la que se envía: la API externa la guarda y con ella se
+        // puede filtrar el listado por origen.
+        origin_url: payload.originUrl ?? window.location.href,
         attachments:
           payload.attachments && payload.attachments.length > 0
             ? payload.attachments.map((a) => ({
