@@ -4,7 +4,8 @@ export type BusinessFieldControl =
   | "number"
   | "textarea"
   | "select"
-  | "image";
+  | "image"
+  | "boolean";
 
 export interface BusinessField {
   /** Valor de la columna `name` en la tabla public.parameters */
@@ -66,6 +67,27 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
     title: "Facturación",
     description: "Branding y textos que se imprimen en comprobantes y tickets.",
     fields: [
+      {
+        key: "InvoiceEnabled",
+        label: "Activar uso de facturación",
+        control: "boolean",
+        help: "Habilita la emisión de comprobantes electrónicos en el sistema.",
+      },
+      {
+        key: "InvoiceShowDocumentTypeAndNumber",
+        label: "Mostrar tipo y número de documento en el comprobante",
+        control: "boolean",
+      },
+      {
+        key: "InvoiceShowEmail",
+        label: "Mostrar correo en el comprobante",
+        control: "boolean",
+      },
+      {
+        key: "InvoiceShowAddress",
+        label: "Mostrar dirección en el comprobante",
+        control: "boolean",
+      },
       {
         key: "InvoiceLogoUrl",
         label: "Logo del comprobante",

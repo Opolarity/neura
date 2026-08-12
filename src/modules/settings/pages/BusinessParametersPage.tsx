@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import useBusinessParameters from '../hooks/useBusinessParameters';
@@ -30,6 +31,17 @@ const BusinessParametersPage = () => {
 
     const renderField = (field: BusinessField) => {
         const value = formData[field.key] ?? '';
+
+        if (field.control === 'boolean') {
+            return (
+                <Switch
+                    id={field.key}
+                    disabled={field.readOnly}
+                    checked={value === 'true'}
+                    onCheckedChange={(checked) => handleChange(field.key, checked ? 'true' : 'false')}
+                />
+            );
+        }
 
         if (field.control === 'image') {
             return (
