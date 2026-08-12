@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,49 +27,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useActivePaymentMethods } from "@/modules/settings/hooks/usePaymentMethods";
-import { ProductIdsField, VariationIdsField } from "./EntityIdFields";
-import { CategoryIdsField } from "./CategoryIdsField";
 import type { Condition, ConditionType } from "../../types/priceRule.types";
 import { CONDITION_TYPE_LABELS } from "../../types/priceRule.types";
-
-/**
- * Condiciones "Producto/Variación en el carrito": se elige con el popover pero
- * se sigue persistiendo `product_ids` / `variation_ids` (ids, no nombres).
- */
-const EntityInCartField = ({
-  kind,
-  condition,
-  updateField,
-}: {
-  kind: "product" | "variation";
-  condition: Condition;
-  updateField: (key: string, value: unknown) => void;
-}) => {
-  const key = kind === "product" ? "product_ids" : "variation_ids";
-  const ids: number[] = (condition as any)[key] ?? [];
-  const Field = kind === "product" ? ProductIdsField : VariationIdsField;
-
-  return (
-    <div className="flex gap-2 items-end">
-      <div className="flex-1">
-        <Field
-          label={kind === "product" ? "Productos" : "Variaciones"}
-          value={ids}
-          onChange={(next) => updateField(key, next)}
-        />
-      </div>
-      <div className="space-y-1">
-        <Label className="text-xs">Cant. mín.</Label>
-        <Input
-          type="number"
-          className="w-[100px]"
-          value={(condition as any).min_quantity ?? 1}
-          onChange={(e) => updateField("min_quantity", parseInt(e.target.value) || 1)}
-        />
-      </div>
-    </div>
-  );
-};
 
 const PaymentMethodSelect = ({
   condition,
@@ -197,6 +157,38 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
     onChange({ ...condition, [key]: value } as Condition);
   };
 
+  const parseNumberArray = (value: string): number[] => {
+    return value
+      .split(",")
+      .map((s) => parseInt(s.trim()))
+      .filter((n) => !isNaN(n));
+  };
+
+  const IdsInput = ({
+    value,
+    onChangeIds,
+    placeholder,
+  }: {
+    value: number[];
+    onChangeIds: (ids: number[]) => void;
+    placeholder?: string;
+  }) => {
+    const [text, setText] = useState(value.join(", "));
+
+    useEffect(() => {
+      setText(value.join(", "));
+    }, [JSON.stringify(value)]);
+
+    return (
+      <Input
+        placeholder={placeholder}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => onChangeIds(parseNumberArray(text))}
+      />
+    );
+  };
+
   const renderFields = () => {
     switch (condition.type) {
       case "cart_subtotal":
@@ -243,30 +235,59 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
 
       case "product_in_cart":
         return (
-          <EntityInCartField
-            kind="product"
-            condition={condition}
-            updateField={updateField}
-          />
+          <div className="flex gap-2 items-end">
+            <div className="space-y-1 flex-1">
+              <Label className="text-xs">IDs de productos (separados por coma)</Label>
+              <IdsInput
+                placeholder="1, 2, 3"
+                value={(condition as any).product_ids ?? []}
+                onChangeIds={(ids) => updateField("product_ids", ids)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Cant. mín.</Label>
+              <Input
+                type="number"
+                className="w-[100px]"
+                value={(condition as any).min_quantity ?? 1}
+                onChange={(e) => updateField("min_quantity", parseInt(e.target.value) || 1)}
+              />
+            </div>
+          </div>
         );
 
       case "variation_in_cart":
         return (
-          <EntityInCartField
-            kind="variation"
-            condition={condition}
-            updateField={updateField}
-          />
+          <div className="flex gap-2 items-end">
+            <div className="space-y-1 flex-1">
+              <Label className="text-xs">IDs de variaciones (separados por coma)</Label>
+              <IdsInput
+                placeholder="10, 20, 30"
+                value={(condition as any).variation_ids ?? []}
+                onChangeIds={(ids) => updateField("variation_ids", ids)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Cant. mín.</Label>
+              <Input
+                type="number"
+                className="w-[100px]"
+                value={(condition as any).min_quantity ?? 1}
+                onChange={(e) => updateField("min_quantity", parseInt(e.target.value) || 1)}
+              />
+            </div>
+          </div>
         );
 
       case "category_in_cart":
         return (
           <div className="flex gap-2 items-end flex-wrap">
-            <div className="flex-1 min-w-[200px]">
-              <CategoryIdsField
-                label="Categorías"
+            <div className="space-y-1 flex-1 min-w-[200px]">
+              <Label className="text-xs">IDs de categorías (separados por coma)</Label>
+              <IdsInput
+                placeholder="147, 118"
                 value={(condition as any).category_ids ?? []}
-                onChange={(ids) => updateField("category_ids", ids)}
+                onChangeIds={(ids) => updateField("category_ids", ids)}
               />
             </div>
             <div className="space-y-1">
@@ -304,11 +325,12 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
       case "min_category_quantity":
         return (
           <div className="flex gap-2 items-end flex-wrap">
-            <div className="flex-1 min-w-[200px]">
-              <CategoryIdsField
-                label="Categorías"
+            <div className="space-y-1 flex-1 min-w-[200px]">
+              <Label className="text-xs">IDs de categorías</Label>
+              <IdsInput
+                placeholder="147, 118"
                 value={(condition as any).category_ids ?? []}
-                onChange={(ids) => updateField("category_ids", ids)}
+                onChangeIds={(ids) => updateField("category_ids", ids)}
               />
             </div>
             <div className="space-y-1">

@@ -8,9 +8,7 @@ import type {
   Condition,
   ActionConfig,
   ExclusionFilter,
-  PriceRuleReferences,
 } from "../types/priceRule.types";
-import { EMPTY_REFERENCES } from "../types/priceRule.types";
 import {
   createPriceRule,
   updatePriceRule,
@@ -31,8 +29,6 @@ export function usePriceRuleForm() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [references, setReferences] =
-    useState<PriceRuleReferences>(EMPTY_REFERENCES);
 
   // Load rule data in edit mode
   useEffect(() => {
@@ -43,10 +39,6 @@ export function usePriceRuleForm() {
         const response = await getPriceRuleDetails(parseInt(id));
         if (response?.data) {
           setFormData(adaptPriceRuleToForm(response.data));
-          setReferences({
-            ...EMPTY_REFERENCES,
-            ...(response.data.references ?? {}),
-          });
         }
       } catch (error) {
         console.error("Error loading price rule:", error);
@@ -236,7 +228,6 @@ export function usePriceRuleForm() {
 
   return {
     formData,
-    references,
     isEditMode,
     loading: loadingDetail,
     saving,

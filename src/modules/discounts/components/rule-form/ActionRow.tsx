@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +13,9 @@ import {
 } from "@/components/ui/select";
 import type { ActionConfig, ActionType, TargetFilter } from "../../types/priceRule.types";
 import { ACTION_TYPE_LABELS } from "../../types/priceRule.types";
-import {
-  ProductIdsField,
-  VariationIdsField,
-  VariationIdField,
-} from "./EntityIdFields";
-import { CategoryIdsField } from "./CategoryIdsField";
+import { ProductVariationSelector, type ProductVariationOption } from "@/shared/components/product-variation-selector";
+import { fetchProductVariations } from "@/shared/components/product-variation-selector/ProductVariationSelector.service";
+import { productVariationsFromApiAdapter } from "@/shared/components/product-variation-selector/ProductVariationSelector.adapter";
 
 interface ActionRowProps {
   action: ActionConfig;
@@ -27,6 +25,38 @@ interface ActionRowProps {
 
 const DEFAULT_TARGET: TargetFilter = {
   apply_to: "all",
+};
+
+const parseNumberArray = (value: string): number[] => {
+  return value
+    .split(",")
+    .map((s) => parseInt(s.trim()))
+    .filter((n) => !isNaN(n));
+};
+
+const IdsInput = ({
+  value,
+  onChangeIds,
+  placeholder,
+}: {
+  value: number[];
+  onChangeIds: (ids: number[]) => void;
+  placeholder?: string;
+}) => {
+  const [text, setText] = useState(value.join(", "));
+
+  useEffect(() => {
+    setText(value.join(", "));
+  }, [JSON.stringify(value)]);
+
+  return (
+    <Input
+      placeholder={placeholder}
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={() => onChangeIds(parseNumberArray(text))}
+    />
+  );
 };
 
 const TargetFilterEditor = ({
@@ -59,20 +89,26 @@ const TargetFilterEditor = ({
       </div>
 
       {target.apply_to === "specific_products" && (
-        <ProductIdsField
-          label="Productos"
-          value={target.product_ids ?? []}
-          onChange={(ids) => onChange({ ...target, product_ids: ids })}
-        />
+        <div className="space-y-1">
+          <Label className="text-xs">IDs de productos (separados por coma)</Label>
+          <IdsInput
+            placeholder="1, 2, 3"
+            value={target.product_ids ?? []}
+            onChangeIds={(ids) => onChange({ ...target, product_ids: ids })}
+          />
+        </div>
       )}
 
       {target.apply_to === "specific_categories" && (
         <>
-          <CategoryIdsField
-            label="Categorías"
-            value={target.category_ids ?? []}
-            onChange={(ids) => onChange({ ...target, category_ids: ids })}
-          />
+          <div className="space-y-1">
+            <Label className="text-xs">IDs de categorías (separados por coma)</Label>
+            <IdsInput
+              placeholder="147, 118"
+              value={target.category_ids ?? []}
+              onChangeIds={(ids) => onChange({ ...target, category_ids: ids })}
+            />
+          </div>
           <div className="flex items-center gap-2">
             <Switch
               checked={target.include_descendants ?? true}
@@ -86,17 +122,76 @@ const TargetFilterEditor = ({
       )}
 
       {target.apply_to === "specific_variations" && (
-        <VariationIdsField
-          label="Variaciones"
-          value={target.variation_ids ?? []}
-          onChange={(ids) => onChange({ ...target, variation_ids: ids })}
-        />
+        <div className="space-y-1">
+          <Label className="text-xs">IDs de variaciones (separados por coma)</Label>
+          <IdsInput
+            placeholder="10, 20, 30"
+            value={target.variation_ids ?? []}
+            onChangeIds={(ids) => onChange({ ...target, variation_ids: ids })}
+          />
+        </div>
       )}
     </div>
   );
 };
 
 export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
+  const [selectedGiftVariation, setSelectedGiftVariation] = useState<ProductVariationOption | null>(null);
+
+  
+  useEffect(() => {
+    const loadGiftProduct = async () => {
+      if (action.type === "free_gift" && action.variation_id && action.variation_id > 0) {
+        
+        if (!selectedGiftVariation || selectedGiftVariation.id !== action.variation_id) {
+          try {
+            // Buscar el producto por su ID para obtener el nombre real
+            const result = await fetchProductVariations({
+              page: 1,
+              size: 10,
+              search: String(action.variation_id),
+            });
+            const adapted = productVariationsFromApiAdapter(result);
+            const foundProduct = adapted.data.find(p => p.id === action.variation_id);
+            
+            if (foundProduct) {
+              setSelectedGiftVariation(foundProduct);
+            } else {
+              // Fallback si no se encuentra el producto
+              setSelectedGiftVariation({
+                id: action.variation_id,
+                sku: "",
+                productId: action.variation_id,
+                productTitle: `Producto #${action.variation_id}`,
+                imageUrl: null,
+                stock: 0,
+                terms: [],
+                prices: [],
+              });
+            }
+          } catch (error) {
+            console.error("Error loading gift product:", error);
+            // Fallback en caso de error
+            setSelectedGiftVariation({
+              id: action.variation_id,
+              sku: "",
+              productId: action.variation_id,
+              productTitle: `Producto #${action.variation_id}`,
+              imageUrl: null,
+              stock: 0,
+              terms: [],
+              prices: [],
+            });
+          }
+        }
+      } else if (action.type !== "free_gift") {
+        setSelectedGiftVariation(null);
+      }
+    };
+
+    loadGiftProduct();
+  }, [action.variation_id, action.type, selectedGiftVariation]);
+
   const handleTypeChange = (type: ActionType) => {
     const base: Record<string, unknown> = { type };
     switch (type) {
@@ -349,11 +444,15 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
       case "free_gift":
         return (
           <div className="flex gap-2 items-end">
-            <div className="w-[280px]">
-              <VariationIdField
-                label="Producto de regalo"
-                value={action.variation_id}
-                onChange={(id) => updateField("variation_id", id)}
+            <div className="space-y-1 w-[280px]">
+              <Label className="text-xs">Producto de regalo</Label>
+              <ProductVariationSelector
+                selectedVariation={selectedGiftVariation}
+                onSelect={(variation) => {
+                  setSelectedGiftVariation(variation);
+                  updateField("variation_id", variation.id);
+                }}
+                showStock={false}
               />
             </div>
             <div className="space-y-1">

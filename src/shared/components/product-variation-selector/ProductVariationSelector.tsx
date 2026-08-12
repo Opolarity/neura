@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -56,6 +56,12 @@ interface ProductVariationSelectorProps {
   /** Chips de los seleccionados encima del trigger (solo en modo múltiple). */
   showSelectedChips?: boolean;
   /**
+   * Trigger del popover. Si no se pasa, se usa el botón por defecto (mismo de
+   * siempre). Permite que el consumidor arme su propio botón en vez del que
+   * trae el componente.
+   */
+  trigger?: ReactNode;
+  /**
    * Escaneo por código de barras: se invoca con el texto tipeado al presionar
    * Enter (el lector HID emite Enter al final). Si devuelve `true` (producto
    * agregado), se limpia el input; si no, se conserva el texto para que la
@@ -80,6 +86,7 @@ export default function ProductVariationSelector({
   onChangeItems,
   keepOpenOnSelect = false,
   showSelectedChips = true,
+  trigger,
   onScan,
 }: ProductVariationSelectorProps) {
   const [open, setOpen] = useState(false);
@@ -199,16 +206,18 @@ export default function ProductVariationSelector({
   const selector = (
     <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          role="combobox"
-          disabled={disabled}
-          className="w-full justify-start text-muted-foreground font-normal"
-        >
-          <Search className="w-4 h-4 mr-2" />
-          {triggerLabel()}
-        </Button>
+        {trigger ?? (
+          <Button
+            type="button"
+            variant="outline"
+            role="combobox"
+            disabled={disabled}
+            className="w-full justify-start text-muted-foreground font-normal"
+          >
+            <Search className="w-4 h-4 mr-2" />
+            {triggerLabel()}
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0 bg-popover">
         <Command shouldFilter={false}>

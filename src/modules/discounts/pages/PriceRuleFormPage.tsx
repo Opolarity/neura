@@ -8,14 +8,12 @@ import { ConditionBuilder } from "../components/rule-form/ConditionBuilder";
 import { ActionBuilder } from "../components/rule-form/ActionBuilder";
 import { CouponSection } from "../components/rule-form/CouponSection";
 import { ExclusionSection } from "../components/rule-form/ExclusionSection";
-import { PriceRuleReferencesProvider } from "../context/PriceRuleReferencesContext";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 const PriceRuleFormPage = () => {
   const {
     formData,
-    references,
     isEditMode,
     loading,
     saving,
@@ -44,7 +42,6 @@ const PriceRuleFormPage = () => {
   }
 
   return (
-    <PriceRuleReferencesProvider value={references}>
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -161,7 +158,6 @@ const PriceRuleFormPage = () => {
         <CouponSection formData={formData} updateField={updateField} />
       )}
     </div>
-    </PriceRuleReferencesProvider>
   );
 };
 

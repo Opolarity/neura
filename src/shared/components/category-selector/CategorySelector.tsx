@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +25,12 @@ interface CategorySelectorProps {
   onChangeItems: (items: CategoryOption[]) => void;
   disabled?: boolean;
   placeholder?: string;
+  /**
+   * Trigger del popover. Si no se pasa, se usa el botón por defecto (mismo de
+   * siempre). Permite que el consumidor arme su propio botón en vez del que
+   * trae el componente.
+   */
+  trigger?: ReactNode;
 }
 
 const PAGE_SIZE = 10;
@@ -35,6 +41,7 @@ export default function CategorySelector({
   onChangeItems,
   disabled = false,
   placeholder = "Buscar categoría por nombre...",
+  trigger,
 }: CategorySelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -127,18 +134,20 @@ export default function CategorySelector({
 
       <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
         <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            role="combobox"
-            disabled={disabled}
-            className="w-full justify-start text-muted-foreground font-normal"
-          >
-            <Search className="w-4 h-4 mr-2" />
-            {selectedItems.length > 0
-              ? `${selectedItems.length} seleccionada${selectedItems.length === 1 ? "" : "s"}`
-              : placeholder}
-          </Button>
+          {trigger ?? (
+            <Button
+              type="button"
+              variant="outline"
+              role="combobox"
+              disabled={disabled}
+              className="w-full justify-start text-muted-foreground font-normal"
+            >
+              <Search className="w-4 h-4 mr-2" />
+              {selectedItems.length > 0
+                ? `${selectedItems.length} seleccionada${selectedItems.length === 1 ? "" : "s"}`
+                : placeholder}
+            </Button>
+          )}
         </PopoverTrigger>
         <PopoverContent className="w-[350px] p-0 bg-popover">
           <Command shouldFilter={false}>
