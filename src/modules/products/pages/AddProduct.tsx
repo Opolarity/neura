@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { useAddProduct } from '../hooks/useAddProduct';
 import PromotionalTextSection from '../components/products/PromotionalTextSection';
+import CategoryQuickAddForm from '../components/products/CategoryQuickAddForm';
 import { PageLoader } from '@/shared/components/page-loader';
 import { buildCategoryTree, flattenCategoryTree } from '../utils/categoryTree';
 
@@ -80,6 +81,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     handleDragOver,
     handleDrop,
     toggleCategorySelection,
+    createCategory,
     toggleChannelSelection,
     toggleTagSelection,
     toggleBrandsSelection,
@@ -681,6 +683,15 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                   </div>
                 ))}
               </div>
+
+              {!viewOnly && (
+                <div className="mt-3">
+                  <CategoryQuickAddForm
+                    categories={categories}
+                    onCreate={createCategory}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 

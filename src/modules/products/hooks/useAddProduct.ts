@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AddProductService } from '../services/AddProduct.service';
 import { AddProductAdapter } from '../adapters/AddProduct.adapter';
+import { createCategoryApi, categoriesListApi } from '../services/Categories.service';
 import type { 
   ProductImage, 
   ProductVariation,
@@ -420,11 +421,37 @@ export const useAddProduct = () => {
   // ================= Category Handlers =================
 
   const toggleCategorySelection = (categoryId: number) => {
-    setSelectedCategories(prev => 
+    setSelectedCategories(prev =>
       prev.includes(categoryId)
         ? prev.filter(id => id !== categoryId)
         : [...prev, categoryId]
     );
+  };
+
+  const createCategory = async (payload: { name: string; parent_category: number | null }): Promise<boolean> => {
+    try {
+      await createCategoryApi({
+        name: payload.name,
+        parent_category: payload.parent_category,
+        description: null,
+        image_url: null,
+      });
+      const list = await categoriesListApi();
+      setCategories(list);
+      toast({
+        title: "Categoría creada",
+        description: "La categoría se ha creado correctamente"
+      });
+      return true;
+    } catch (error) {
+      console.error('Error creating category:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo crear la categoría",
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   // ================= Term Handlers =================
@@ -824,6 +851,7 @@ export const useAddProduct = () => {
     
     // Handlers
     toggleCategorySelection,
+    createCategory,
     toggleChannelSelection: (channelId: number) => {
       setSelectedChannels(prev => 
         prev.includes(channelId)
