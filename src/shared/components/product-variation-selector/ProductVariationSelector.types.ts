@@ -13,12 +13,29 @@ export interface ProductVariationOption {
   }>;
 }
 
+/**
+ * Unidad que devuelve el selector:
+ * - "variation": cada item es una variación (`id` = variationId). Comportamiento
+ *   histórico, usado por el punto de venta y por el regalo de las reglas.
+ * - "product": cada item es un producto (`id` = productId). Usado donde se
+ *   persiste el id del producto, como las condiciones de reglas de precios.
+ */
+export type ProductSelectorMode = "variation" | "product";
+
 export interface FetchProductVariationsParams {
   page?: number;
   size?: number;
   search?: string;
   stockTypeId?: number;
   warehouseId?: number;
+}
+
+export interface FetchProductsParams {
+  page?: number;
+  size?: number;
+  search?: string;
+  /** Devuelve solo estos productos (ignora `search`). Para rehidratar nombres de ids guardados. */
+  ids?: number[];
 }
 
 export interface ProductVariationsApiResponse {
@@ -35,6 +52,21 @@ export interface ProductVariationsApiResponse {
       price: number;
       sale_price: number | null;
     }>;
+  }>;
+  page: {
+    page: number;
+    size: number;
+    total: number;
+  };
+}
+
+export interface ProductsApiResponse {
+  data: Array<{
+    productId: number;
+    productTitle: string;
+    sku: string | null;
+    imageUrl: string | null;
+    variationCount: number;
   }>;
   page: {
     page: number;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -15,18 +15,48 @@ import {
 } from "@/components/ui/popover";
 import { Check, Image as ImageIcon, Loader2, Search } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
-import { fetchProductVariations } from "./ProductVariationSelector.service";
-import { productVariationsFromApiAdapter } from "./ProductVariationSelector.adapter";
-import type { ProductVariationOption } from "./ProductVariationSelector.types";
+import {
+  fetchProductVariations,
+  fetchProducts,
+} from "./ProductVariationSelector.service";
+import {
+  productVariationsFromApiAdapter,
+  productsFromApiAdapter,
+} from "./ProductVariationSelector.adapter";
+import type {
+  ProductVariationOption,
+  ProductSelectorMode,
+} from "./ProductVariationSelector.types";
 
 interface ProductVariationSelectorProps {
-  selectedVariation: ProductVariationOption | null;
-  onSelect: (variation: ProductVariationOption) => void;
+  /** Selección simple (modo por defecto). En modo múltiple no se usan. */
+  selectedVariation?: ProductVariationOption | null;
+  onSelect?: (variation: ProductVariationOption) => void;
   stockTypeId?: number;
   warehouseId?: number;
   disabled?: boolean;
-  placeholder?: string;
   showStock?: boolean;
+  /** Unidad a buscar: variaciones (default) o productos. */
+  mode?: ProductSelectorMode;
+  /**
+   * Selección múltiple: el estado pasa a `selectedItems` / `onChangeItems`
+   * (`selectedVariation` / `onSelect` se ignoran) y cada click hace toggle.
+   */
+  multiple?: boolean;
+  selectedItems?: ProductVariationOption[];
+  onChangeItems?: (items: ProductVariationOption[]) => void;
+  /**
+   * Mantener el popover abierto tras seleccionar. Por defecto `false`: se cierra
+   * al seleccionar, como espera el punto de venta (el Enter del lector de
+   * códigos de barras cierra la lista tras agregar el producto).
+   */
+  keepOpenOnSelect?: boolean;
+  /**
+   * Trigger del popover: el componente es solo el popover (buscador + lista +
+   * selección), el botón lo arma quien lo consume — incluida la lógica de qué
+   * mostrar (nombre seleccionado, chips, lo que sea).
+   */
+  trigger: ReactNode;
   /**
    * Escaneo por código de barras: se invoca con el texto tipeado al presionar
    * Enter (el lector HID emite Enter al final). Si devuelve `true` (producto
@@ -39,13 +69,18 @@ interface ProductVariationSelectorProps {
 const PAGE_SIZE = 10;
 
 export default function ProductVariationSelector({
-  selectedVariation,
+  selectedVariation = null,
   onSelect,
   stockTypeId,
   warehouseId,
   disabled = false,
-  placeholder = "Buscar por nombre o SKU...",
   showStock = true,
+  mode = "variation",
+  multiple = false,
+  selectedItems,
+  onChangeItems,
+  keepOpenOnSelect = false,
+  trigger,
   onScan,
 }: ProductVariationSelectorProps) {
   const [open, setOpen] = useState(false);
@@ -58,18 +93,30 @@ export default function ProductVariationSelector({
   const hasLoadedRef = useRef(false);
 
   const totalPages = Math.ceil(pagination.total / pagination.size);
+  const selected = selectedItems ?? [];
+  const showStockColumn = showStock && mode === "variation";
 
   const loadData = async (p: number, q: string) => {
     try {
       setLoading(true);
-      const result = await fetchProductVariations({
-        page: p,
-        size: PAGE_SIZE,
-        search: q || undefined,
-        stockTypeId,
-        warehouseId,
-      });
-      const adapted = productVariationsFromApiAdapter(result);
+      const adapted =
+        mode === "product"
+          ? productsFromApiAdapter(
+              await fetchProducts({
+                page: p,
+                size: PAGE_SIZE,
+                search: q || undefined,
+              }),
+            )
+          : productVariationsFromApiAdapter(
+              await fetchProductVariations({
+                page: p,
+                size: PAGE_SIZE,
+                search: q || undefined,
+                stockTypeId,
+                warehouseId,
+              }),
+            );
       setVariations(adapted.data);
       setPagination(adapted.pagination);
     } catch (error) {
@@ -117,26 +164,27 @@ export default function ProductVariationSelector({
   };
 
   const handleSelect = (variation: ProductVariationOption) => {
-    onSelect(variation);
-    setOpen(false);
+    if (multiple) {
+      const exists = selected.some((item) => item.id === variation.id);
+      onChangeItems?.(
+        exists
+          ? selected.filter((item) => item.id !== variation.id)
+          : [...selected, variation],
+      );
+    } else {
+      onSelect?.(variation);
+    }
+    if (!keepOpenOnSelect) setOpen(false);
   };
+
+  const isChecked = (variation: ProductVariationOption) =>
+    multiple
+      ? selected.some((item) => item.id === variation.id)
+      : selectedVariation?.id === variation.id;
 
   return (
     <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          role="combobox"
-          disabled={disabled}
-          className="w-full justify-start text-muted-foreground font-normal"
-        >
-          <Search className="w-4 h-4 mr-2" />
-          {selectedVariation
-            ? `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`
-            : placeholder}
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent className="w-[400px] p-0 bg-popover">
         <Command shouldFilter={false}>
           <CommandInput
@@ -184,9 +232,7 @@ export default function ProductVariationSelector({
                         <Check
                           className={cn(
                             "h-4 w-4 shrink-0",
-                            selectedVariation?.id === variation.id
-                              ? "opacity-100"
-                              : "opacity-0",
+                            isChecked(variation) ? "opacity-100" : "opacity-0",
                           )}
                         />
 
@@ -209,12 +255,14 @@ export default function ProductVariationSelector({
                           <span className="font-medium truncate">
                             {variation.productTitle}
                           </span>
-                          <span className="text-sm text-muted-foreground truncate">
-                            {displayTerms}
-                          </span>
+                          {displayTerms && (
+                            <span className="text-sm text-muted-foreground truncate">
+                              {displayTerms}
+                            </span>
+                          )}
                         </div>
                         {/* Stock */}
-                        {showStock && (
+                        {showStockColumn && (
                           <span
                             className={cn(
                               "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",

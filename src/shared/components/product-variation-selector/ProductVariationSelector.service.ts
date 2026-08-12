@@ -1,7 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import type {
   FetchProductVariationsParams,
+  FetchProductsParams,
   ProductVariationsApiResponse,
+  ProductsApiResponse,
 } from "./ProductVariationSelector.types";
 
 export const fetchProductVariations = async (
@@ -19,6 +21,27 @@ export const fetchProductVariations = async (
   const endpoint = queryParams.toString()
     ? `get-sale-products?${queryParams.toString()}`
     : "get-sale-products";
+
+  const { data, error } = await supabase.functions.invoke(endpoint, {
+    method: "GET",
+  });
+
+  if (error) throw error;
+  return data;
+};
+
+export const fetchProducts = async (
+  params: FetchProductsParams,
+): Promise<ProductsApiResponse> => {
+  const queryParams = new URLSearchParams();
+  if (params.page) queryParams.set("p_page", String(params.page));
+  if (params.size) queryParams.set("p_size", String(params.size));
+  if (params.search) queryParams.set("p_search", params.search);
+  if (params.ids?.length) queryParams.set("p_ids", params.ids.join(","));
+
+  const endpoint = queryParams.toString()
+    ? `get-products-selector?${queryParams.toString()}`
+    : "get-products-selector";
 
   const { data, error } = await supabase.functions.invoke(endpoint, {
     method: "GET",

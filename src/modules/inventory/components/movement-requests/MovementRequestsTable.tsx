@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { MovementRequestListItem } from "../../types/MovementRequestList.types";
 import { formatDateTime } from "@/shared/utils/date";
+import MovementRequestStepsBar from "./MovementRequestStepsBar";
 
 interface Props {
   requests: MovementRequestListItem[];
@@ -42,7 +43,6 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
           <TableHead>Almacén Origen</TableHead>
           <TableHead>Almacén Destino</TableHead>
           <TableHead>Situación</TableHead>
-          <TableHead>Último Mensaje</TableHead>
           <TableHead>Fecha</TableHead>
           <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
@@ -50,7 +50,7 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
       <TableBody>
           {loading && requests.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8">
+              <TableCell colSpan={6} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Cargando solicitudes...
@@ -60,7 +60,7 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
           ) : requests.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={7}
+                colSpan={6}
                 className="text-center py-8 text-muted-foreground"
               >
                 No se encontraron solicitudes de traspaso.
@@ -68,7 +68,7 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
             </TableRow>
           ) : (
         requests.map((req) => (
-          <TableRow key={req.id} className={req.situationCode === 'CAN' || req.situationCode === 'REC' ? 'relative after:absolute after:inset-0 after:bg-[rgb(0,0,0,8%)] after:pointer-events-none [&>td]:relative [&>td]:z-10' : ''}>
+          <TableRow key={req.id}>
             <TableCell className="font-medium">#{req.id}</TableCell>
             <TableCell>{req.outWarehouseName}</TableCell>
             <TableCell>{req.inWarehouseName}</TableCell>
@@ -76,18 +76,11 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
               <Badge className={getSituationBadgeColor(req.situationName)}>
                 {req.situationName}
               </Badge>
-            </TableCell>
-            <TableCell className="max-w-[300px]">
-              {req.message ? (
-                <div className="space-y-0.5">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {req.lastMessageWarehouseName ?? "—"}
-                  </span>
-                  <p className="truncate text-sm">{req.message}</p>
-                </div>
-              ) : (
-                "—"
-              )}
+              <MovementRequestStepsBar
+                type={req.requestType}
+                situationCode={req.situationCode}
+                progressSituationCode={req.progressSituationCode}
+              />
             </TableCell>
             <TableCell>
               {formatDateTime(req.createdAt)}

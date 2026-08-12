@@ -12,7 +12,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { PageLoader } from '@/shared/components/page-loader';
 
 interface DocumentType {
   id: number;
@@ -117,11 +118,7 @@ const EditClient = () => {
   };
 
   if (fetching) {
-    return (
-      <div className="p-6 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <PageLoader message="Cargando datos del cliente..." />;
   }
 
   return (
