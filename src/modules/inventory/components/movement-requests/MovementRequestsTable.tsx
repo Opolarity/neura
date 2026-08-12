@@ -43,7 +43,6 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
           <TableHead>Almacén Origen</TableHead>
           <TableHead>Almacén Destino</TableHead>
           <TableHead>Situación</TableHead>
-          <TableHead>Último Mensaje</TableHead>
           <TableHead>Fecha</TableHead>
           <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
@@ -51,7 +50,7 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
       <TableBody>
           {loading && requests.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8">
+              <TableCell colSpan={6} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Cargando solicitudes...
@@ -61,7 +60,7 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
           ) : requests.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={7}
+                colSpan={6}
                 className="text-center py-8 text-muted-foreground"
               >
                 No se encontraron solicitudes de traspaso.
@@ -82,18 +81,6 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
                 situationCode={req.situationCode}
                 progressSituationCode={req.progressSituationCode}
               />
-            </TableCell>
-            <TableCell className="max-w-[300px]">
-              {req.message ? (
-                <div className="space-y-0.5">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {req.lastMessageWarehouseName ?? "—"}
-                  </span>
-                  <p className="truncate text-sm">{req.message}</p>
-                </div>
-              ) : (
-                "—"
-              )}
             </TableCell>
             <TableCell>
               {formatDateTime(req.createdAt)}
