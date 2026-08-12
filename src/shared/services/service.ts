@@ -155,6 +155,9 @@ export const getHeaderUserData = async (userUID: string) => {
       accounts!inner (
         name
       ),
+      branches (
+        name
+      ),
       user_roles (
         roles (
           name
@@ -172,7 +175,9 @@ export const getHeaderUserData = async (userUID: string) => {
   return {
     accountName: data.accounts?.name || "Sin Cuenta",
     // Mapeamos los roles: si no hay, devolvemos 'Sin Rol'
-    roleName: data.user_roles?.[0]?.roles?.name || "Sin Rol"
+    roleName: data.user_roles?.[0]?.roles?.name || "Sin Rol",
+    // La sucursal 0 existe con el nombre vacío: se trata igual que no tenerla
+    branchName: data.branches?.name?.trim() || ""
   };
 };
 
