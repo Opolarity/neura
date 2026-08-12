@@ -43,7 +43,7 @@ const CategoryQuickAddForm = ({ categories, onCreate }: CategoryQuickAddFormProp
     <Collapsible open={open} onOpenChange={setOpen} className="space-y-2">
       <CollapsibleTrigger asChild>
         <Button type="button" variant={open ? "default" : "outline"} className="w-full">
-          + Agregar
+          + Agregar categoría
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-2">

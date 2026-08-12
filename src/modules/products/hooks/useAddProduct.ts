@@ -6,7 +6,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { AddProductService } from '../services/AddProduct.service';
 import { AddProductAdapter } from '../adapters/AddProduct.adapter';
 import { createCategoryApi, categoriesListApi } from '../services/Categories.service';
-import type { 
+import { createTag } from '../services/Tags.service';
+import { createBrand } from '../services/Brands.service';
+import { slugify } from '@/shared/utils/slug';
+import type {
   ProductImage, 
   ProductVariation,
   AddProductState,
@@ -454,6 +457,64 @@ export const useAddProduct = () => {
     }
   };
 
+  const createTagInline = async (name: string): Promise<ProductTag | null> => {
+    try {
+      const result = await createTag({ name, code: slugify(name) });
+      const newTag: ProductTag = {
+        id: result.data.id,
+        name: result.data.name,
+        code: result.data.code,
+        type: result.data.type,
+      };
+      setTags(prev => [...prev, newTag]);
+      setSelectedTags(prev => [...prev, newTag.id]);
+      toast({ title: "Tag creado correctamente" });
+      return newTag;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo crear la etiqueta",
+        variant: "destructive"
+      });
+      try {
+        const data = await AddProductService.getFormData();
+        setTags(AddProductAdapter.adaptFormData(data).tags);
+      } catch {
+        // si falla el refresh, se mantiene el listado actual
+      }
+      return null;
+    }
+  };
+
+  const createBrandInline = async (name: string): Promise<ProductBrand | null> => {
+    try {
+      const result = await createBrand({ name, code: slugify(name) });
+      const newBrand: ProductBrand = {
+        id: result.data.id,
+        name: result.data.name,
+        code: result.data.code,
+        type: result.data.type,
+      };
+      setBrands(prev => [...prev, newBrand]);
+      setSelectedBrands(prev => [...prev, newBrand.id]);
+      toast({ title: "Marca creada correctamente" });
+      return newBrand;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo crear la marca",
+        variant: "destructive"
+      });
+      try {
+        const data = await AddProductService.getFormData();
+        setBrands(AddProductAdapter.adaptFormData(data).brands);
+      } catch {
+        // si falla el refresh, se mantiene el listado actual
+      }
+      return null;
+    }
+  };
+
   // ================= Term Handlers =================
 
   const clearTermGroup = (termGroupId: number) => {
@@ -852,6 +913,8 @@ export const useAddProduct = () => {
     // Handlers
     toggleCategorySelection,
     createCategory,
+    createTagInline,
+    createBrandInline,
     toggleChannelSelection: (channelId: number) => {
       setSelectedChannels(prev => 
         prev.includes(channelId)
