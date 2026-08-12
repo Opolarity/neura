@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -14,7 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, Image as ImageIcon, Loader2, Search, X } from "lucide-react";
+import { Check, Image as ImageIcon, Loader2, Search } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import { fetchCategories } from "./CategorySelector.service";
 import { categoriesFromApiAdapter } from "./CategorySelector.adapter";
@@ -24,13 +23,12 @@ interface CategorySelectorProps {
   selectedItems: CategoryOption[];
   onChangeItems: (items: CategoryOption[]) => void;
   disabled?: boolean;
-  placeholder?: string;
   /**
-   * Trigger del popover. Si no se pasa, se usa el botón por defecto (mismo de
-   * siempre). Permite que el consumidor arme su propio botón en vez del que
-   * trae el componente.
+   * Trigger del popover: el componente es solo el popover (buscador + lista +
+   * selección), el botón lo arma quien lo consume — incluida la lógica de qué
+   * mostrar (nombre seleccionado, chips, lo que sea).
    */
-  trigger?: ReactNode;
+  trigger: ReactNode;
 }
 
 const PAGE_SIZE = 10;
@@ -40,7 +38,6 @@ export default function CategorySelector({
   selectedItems,
   onChangeItems,
   disabled = false,
-  placeholder = "Buscar categoría por nombre...",
   trigger,
 }: CategorySelectorProps) {
   const [open, setOpen] = useState(false);
@@ -106,136 +103,94 @@ export default function CategorySelector({
   };
 
   return (
-    <div className="space-y-2">
-      {selectedItems.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {selectedItems.map((item) => (
-            <Badge
-              key={item.id}
-              variant="secondary"
-              className="text-xs font-normal gap-1 pr-1"
-            >
-              <span className="truncate max-w-[220px]">{item.name}</span>
-              <button
-                type="button"
-                disabled={disabled}
-                aria-label={`Quitar ${item.name}`}
-                className="rounded-sm hover:bg-muted-foreground/20 disabled:opacity-50"
-                onClick={() =>
-                  onChangeItems(selectedItems.filter((s) => s.id !== item.id))
-                }
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      )}
-
-      <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
-        <PopoverTrigger asChild>
-          {trigger ?? (
-            <Button
-              type="button"
-              variant="outline"
-              role="combobox"
-              disabled={disabled}
-              className="w-full justify-start text-muted-foreground font-normal"
-            >
-              <Search className="w-4 h-4 mr-2" />
-              {selectedItems.length > 0
-                ? `${selectedItems.length} seleccionada${selectedItems.length === 1 ? "" : "s"}`
-                : placeholder}
-            </Button>
-          )}
-        </PopoverTrigger>
-        <PopoverContent className="w-[350px] p-0 bg-popover">
-          <Command shouldFilter={false}>
-            <CommandInput
-              placeholder="Buscar categoría..."
-              value={search}
-              onValueChange={setSearch}
-            />
-            <CommandList>
-              {loading ? (
-                <div className="flex justify-center py-6">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <>
-                  <CommandEmpty>No se encontraron categorías.</CommandEmpty>
-                  <CommandGroup>
-                    {categories.map((category) => (
-                      <CommandItem
-                        key={category.id}
-                        value={category.name}
-                        onSelect={() => toggle(category)}
-                        className="flex items-center gap-2 py-2"
-                      >
-                        <Check
-                          className={cn(
-                            "h-4 w-4 shrink-0",
-                            selectedItems.some((item) => item.id === category.id)
-                              ? "opacity-100"
-                              : "opacity-0",
-                          )}
-                        />
-                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
-                          {category.imageUrl ? (
-                            <img
-                              src={category.imageUrl}
-                              alt={category.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center">
-                              <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex flex-1 flex-col min-w-0">
-                          <span className="truncate">{category.name}</span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </>
-              )}
-            </CommandList>
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
-                <span className="text-xs text-muted-foreground">
-                  {(page - 1) * pagination.size + 1}-
-                  {Math.min(page * pagination.size, pagination.total)}{" "}
-                  de {pagination.total}
-                </span>
-                <div className="flex gap-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => handlePageChange(page - 1)}
-                    disabled={page <= 1 || loading}
-                  >
-                    Anterior
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => handlePageChange(page + 1)}
-                    disabled={page >= totalPages || loading}
-                  >
-                    Siguiente
-                  </Button>
-                </div>
+    <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent className="w-[350px] p-0 bg-popover">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Buscar categoría..."
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            {loading ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
               </div>
+            ) : (
+              <>
+                <CommandEmpty>No se encontraron categorías.</CommandEmpty>
+                <CommandGroup>
+                  {categories.map((category) => (
+                    <CommandItem
+                      key={category.id}
+                      value={category.name}
+                      onSelect={() => toggle(category)}
+                      className="flex items-center gap-2 py-2"
+                    >
+                      <Check
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          selectedItems.some((item) => item.id === category.id)
+                            ? "opacity-100"
+                            : "opacity-0",
+                        )}
+                      />
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
+                        {category.imageUrl ? (
+                          <img
+                            src={category.imageUrl}
+                            alt={category.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-1 flex-col min-w-0">
+                        <span className="truncate">{category.name}</span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </>
             )}
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </div>
+          </CommandList>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
+              <span className="text-xs text-muted-foreground">
+                {(page - 1) * pagination.size + 1}-
+                {Math.min(page * pagination.size, pagination.total)}{" "}
+                de {pagination.total}
+              </span>
+              <div className="flex gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page <= 1 || loading}
+                >
+                  Anterior
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page >= totalPages || loading}
+                >
+                  Siguiente
+                </Button>
+              </div>
+            </div>
+          )}
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

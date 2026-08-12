@@ -13,8 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, Image as ImageIcon, Loader2, Search, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Check, Image as ImageIcon, Loader2, Search } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import {
   fetchProductVariations,
@@ -36,7 +35,6 @@ interface ProductVariationSelectorProps {
   stockTypeId?: number;
   warehouseId?: number;
   disabled?: boolean;
-  placeholder?: string;
   showStock?: boolean;
   /** Unidad a buscar: variaciones (default) o productos. */
   mode?: ProductSelectorMode;
@@ -53,14 +51,12 @@ interface ProductVariationSelectorProps {
    * códigos de barras cierra la lista tras agregar el producto).
    */
   keepOpenOnSelect?: boolean;
-  /** Chips de los seleccionados encima del trigger (solo en modo múltiple). */
-  showSelectedChips?: boolean;
   /**
-   * Trigger del popover. Si no se pasa, se usa el botón por defecto (mismo de
-   * siempre). Permite que el consumidor arme su propio botón en vez del que
-   * trae el componente.
+   * Trigger del popover: el componente es solo el popover (buscador + lista +
+   * selección), el botón lo arma quien lo consume — incluida la lógica de qué
+   * mostrar (nombre seleccionado, chips, lo que sea).
    */
-  trigger?: ReactNode;
+  trigger: ReactNode;
   /**
    * Escaneo por código de barras: se invoca con el texto tipeado al presionar
    * Enter (el lector HID emite Enter al final). Si devuelve `true` (producto
@@ -78,14 +74,12 @@ export default function ProductVariationSelector({
   stockTypeId,
   warehouseId,
   disabled = false,
-  placeholder = "Buscar por nombre o SKU...",
   showStock = true,
   mode = "variation",
   multiple = false,
   selectedItems,
   onChangeItems,
   keepOpenOnSelect = false,
-  showSelectedChips = true,
   trigger,
   onScan,
 }: ProductVariationSelectorProps) {
@@ -188,37 +182,9 @@ export default function ProductVariationSelector({
       ? selected.some((item) => item.id === variation.id)
       : selectedVariation?.id === variation.id;
 
-  const optionLabel = (option: ProductVariationOption) => {
-    const terms = option.terms.map((t) => t.name).join(" / ");
-    if (!terms) return option.sku ? `${option.productTitle} (${option.sku})` : option.productTitle;
-    return `${option.productTitle} - ${terms}`;
-  };
-
-  const triggerLabel = () => {
-    if (multiple) {
-      if (selected.length === 0) return placeholder;
-      return `${selected.length} seleccionado${selected.length === 1 ? "" : "s"}`;
-    }
-    if (!selectedVariation) return placeholder;
-    return `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`;
-  };
-
-  const selector = (
+  return (
     <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
-      <PopoverTrigger asChild>
-        {trigger ?? (
-          <Button
-            type="button"
-            variant="outline"
-            role="combobox"
-            disabled={disabled}
-            className="w-full justify-start text-muted-foreground font-normal"
-          >
-            <Search className="w-4 h-4 mr-2" />
-            {triggerLabel()}
-          </Button>
-        )}
-      </PopoverTrigger>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent className="w-[400px] p-0 bg-popover">
         <Command shouldFilter={false}>
           <CommandInput
@@ -350,37 +316,5 @@ export default function ProductVariationSelector({
         </Command>
       </PopoverContent>
     </Popover>
-  );
-
-  if (!multiple || !showSelectedChips) return selector;
-
-  return (
-    <div className="space-y-2">
-      {selected.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {selected.map((item) => (
-            <Badge
-              key={item.id}
-              variant="secondary"
-              className="text-xs font-normal gap-1 pr-1"
-            >
-              <span className="truncate max-w-[220px]">{optionLabel(item)}</span>
-              <button
-                type="button"
-                disabled={disabled}
-                aria-label={`Quitar ${optionLabel(item)}`}
-                className="rounded-sm hover:bg-muted-foreground/20 disabled:opacity-50"
-                onClick={() =>
-                  onChangeItems?.(selected.filter((s) => s.id !== item.id))
-                }
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      )}
-      {selector}
-    </div>
   );
 }
