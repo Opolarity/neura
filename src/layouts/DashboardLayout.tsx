@@ -19,8 +19,9 @@ export default function DashboardLayout() {
         <Header posSession={posSession} />
 
         {/* El scroll vive aquí: las páginas de tabla ocupan el alto disponible
-            y solo desplazan sus filas. */}
-        <main className="flex-1 min-h-0 overflow-y-auto min-w-0 p-4">
+            y solo desplazan sus filas. `relative` es lo que ancla el PageLoader
+            a esta área: así el loader no tapa el sidebar ni el header. */}
+        <main className="relative flex-1 min-h-0 overflow-y-auto min-w-0 p-4">
           <Outlet />
         </main>
       </div>

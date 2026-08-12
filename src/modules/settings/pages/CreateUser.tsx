@@ -24,6 +24,7 @@ import {
   CommandGroup,
   CommandItem,
 } from "@/components/ui/command";
+import { PageLoader } from "@/shared/components/page-loader";
 import useCreateUser from "../hooks/useCreateUser";
 
 const CreateUser = () => {
@@ -57,16 +58,7 @@ const CreateUser = () => {
   } = useCreateUser(uid, isEdit);
 
   if (fetchingUser || optionsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <p className="text-sm text-muted-foreground">
-            Cargando datos del usuario...
-          </p>
-        </div>
-      </div>
-    );
+    return <PageLoader message="Cargando datos del usuario..." />;
   }
 
   return (

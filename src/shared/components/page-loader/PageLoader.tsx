@@ -1,19 +1,17 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
-import { cn } from '@/shared/utils/utils';
+import LoaderContent from '@/shared/components/loader/LoaderContent';
 
 interface PageLoaderProps {
   message?: string;
-  className?: string;
 }
 
-const PageLoader: React.FC<PageLoaderProps> = ({ message = "Cargando...", className }) => {
+// Mismo aspecto que el splash de arranque, pero anclado al <main relative> del
+// DashboardLayout: cubre sólo el área de contenido y deja el sidebar y el
+// header visibles y usables.
+const PageLoader: React.FC<PageLoaderProps> = ({ message = "Cargando..." }) => {
   return (
-    <div className={cn("absolute inset-0 z-50 flex items-center justify-center bg-background/80", className)}>
-      <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin" />
-        {message && <p className="text-muted-foreground text-sm">{message}</p>}
-      </div>
+    <div className="absolute inset-0 z-30 flex items-center justify-center bg-background">
+      <LoaderContent message={message} />
     </div>
   );
 };
