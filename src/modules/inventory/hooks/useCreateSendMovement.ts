@@ -17,12 +17,6 @@ interface SimpleWarehouse {
   name: string;
 }
 
-interface SimpleSituation {
-  id: number;
-  name: string;
-  code: string;
-}
-
 export const useCreateSendMovement = () => {
   const navigate = useNavigate();
   const [loadingInitial, setLoadingInitial] = useState(true);
@@ -36,8 +30,8 @@ export const useCreateSendMovement = () => {
 
   const [reason, setReason] = useState("");
 
-  const [situations, setSituations] = useState<SimpleSituation[]>([]);
   const [selectedSituationCode, setSelectedSituationCode] = useState<string>("");
+  const [situationName, setSituationName] = useState("");
   const [statusName, setStatusName] = useState("");
 
   const [isOpen, setIsOpen] = useState(false);
@@ -99,16 +93,12 @@ export const useCreateSendMovement = () => {
           .order("id");
 
         if (sitData && sitData.length > 0) {
-          // Filter situations whose own code is "ENV"
-          const cfmSituations = sitData
-            .filter((s: any) => s.code === "ENV")
-            .map((s: any) => ({ id: s.id, name: s.name, code: s.code || "" }));
-          setSituations(cfmSituations);
-
-          // Set status name from the first ENV situation
-          if (cfmSituations.length > 0) {
-            const firstCfm = sitData.find((s: any) => s.code === "ENV");
-            if (firstCfm) setStatusName((firstCfm as any).statuses.name);
+          // El envío siempre se registra como "Enviado": se resuelve acá, no lo elige el usuario
+          const envSituation = sitData.find((s: any) => s.code === "ENV");
+          if (envSituation) {
+            setSelectedSituationCode("ENV");
+            setSituationName((envSituation as any).name);
+            setStatusName((envSituation as any).statuses.name);
           }
         }
       }
@@ -140,10 +130,6 @@ export const useCreateSendMovement = () => {
     setSelectedProducts([]);
     setSelectedIds(new Set());
     setSelectedProduct(null);
-  };
-
-  const handleSituationChange = (code: string) => {
-    setSelectedSituationCode(code);
   };
 
   const loadProducts = async (newFilters: ProductSalesFilter) => {
@@ -344,8 +330,7 @@ export const useCreateSendMovement = () => {
     selectedWarehouse,
     reason,
     setReason,
-    situations,
-    selectedSituationCode,
+    situationName,
     statusName,
     isOpen,
     setIsOpen,
@@ -356,7 +341,6 @@ export const useCreateSendMovement = () => {
     search,
     pagination,
     handleWarehouseChange,
-    handleSituationChange,
     onSelectProduct,
     addProduct,
     removeProduct,
