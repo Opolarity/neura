@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { formatDateTime } from "@/shared/utils/date";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -32,7 +33,7 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
   if (loading && invoices.length === 0) {
     return (
       <div className="flex justify-center items-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <Loader2 className="w-6 h-6 animate-spin" />
       </div>
     );
   }
@@ -46,7 +47,7 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
   }
 
   return (
-    <div className="relative">
+    <div className="relative h-full">
       {loading && (
         <div className="absolute top-0 left-0 right-0 h-0.5 z-10 bg-primary animate-pulse rounded-full" />
       )}
@@ -80,53 +81,49 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
               {formatDateTime(item.createdAt)}
             </TableCell>
             <TableCell>
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  item.declared
-                    ? "bg-success/15 text-success"
-                    : "bg-warning/15 text-warning-foreground"
-                }`}
-              >
+              <Badge variant={item.declared ? "success" : "warning"}>
                 {item.declared ? "Declarado" : "Pendiente"}
-              </span>
+              </Badge>
             </TableCell>
-            <TableCell className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(`/invoices/view/${item.id}`)}
-              >
-                <Eye className="w-4 h-4" />
-              </Button>
-              {!item.declared && (
+            <TableCell>
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate(`/invoices/edit/${item.id}`)}
+                  onClick={() => navigate(`/invoices/view/${item.id}`)}
                 >
-                  <Edit className="w-4 h-4" />
+                  <Eye className="w-4 h-4" />
                 </Button>
-              )}
-              {item.pdfUrl && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  title="Ver PDF"
-                  onClick={() => window.open(item.pdfUrl!, "_blank", "noopener,noreferrer")}
-                >
-                  <FileText className="w-4 h-4" />
-                </Button>
-              )}
-              {item.xmlUrl && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  title="Descargar XML"
-                  onClick={() => downloadXml(item)}
-                >
-                  <Code className="w-4 h-4" />
-                </Button>
-              )}
+                {!item.declared && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate(`/invoices/edit/${item.id}`)}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                )}
+                {item.pdfUrl && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    title="Ver PDF"
+                    onClick={() => window.open(item.pdfUrl!, "_blank", "noopener,noreferrer")}
+                  >
+                    <FileText className="w-4 h-4" />
+                  </Button>
+                )}
+                {item.xmlUrl && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    title="Descargar XML"
+                    onClick={() => downloadXml(item)}
+                  >
+                    <Code className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </TableCell>
           </TableRow>
         ))}
