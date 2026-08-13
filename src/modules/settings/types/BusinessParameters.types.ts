@@ -60,6 +60,9 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
       { key: "CompanyEmail", label: "Correo", control: "email", placeholder: "admin@empresa.com" },
       { key: "CompanyAddress", label: "Dirección fiscal", control: "text" },
       { key: "CompanyWebsite", label: "Sitio web", control: "text", placeholder: "https://..." },
+      { key: "CompanyInstagram", label: "Instagram", control: "text", placeholder: "https://instagram.com/..." },
+      { key: "CompanyFacebook", label: "Facebook", control: "text", placeholder: "https://facebook.com/..." },
+      { key: "CompanyTiktok", label: "TikTok", control: "text", placeholder: "https://tiktok.com/@..." },
     ],
   },
   {
