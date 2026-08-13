@@ -36,6 +36,7 @@ const BusinessParametersPage = () => {
             return (
                 <Switch
                     id={field.key}
+                    className="mt-0.5"
                     disabled={field.readOnly}
                     checked={value === 'true'}
                     onCheckedChange={(checked) => handleChange(field.key, checked ? 'true' : 'false')}
@@ -175,18 +176,35 @@ const BusinessParametersPage = () => {
                                 <CardDescription>{section.description}</CardDescription>
                             </CardHeader>
                             <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                {section.fields.map((field) => (
-                                    <div
-                                        key={field.key}
-                                        className={`space-y-2 ${field.control === 'textarea' || field.control === 'image' ? 'md:col-span-2' : ''}`}
-                                    >
-                                        <Label htmlFor={field.key}>{field.label}</Label>
-                                        {renderField(field)}
-                                        {field.help && (
-                                            <p className="text-xs text-muted-foreground">{field.help}</p>
-                                        )}
-                                    </div>
-                                ))}
+                                {section.fields.map((field) =>
+                                    field.control === 'boolean' ? (
+                                        <div
+                                            key={field.key}
+                                            className="flex items-start justify-between gap-6"
+                                        >
+                                            <div className="space-y-1">
+                                                <Label htmlFor={field.key} className="cursor-pointer">
+                                                    {field.label}
+                                                </Label>
+                                                {field.help && (
+                                                    <p className="text-xs text-muted-foreground">{field.help}</p>
+                                                )}
+                                            </div>
+                                            {renderField(field)}
+                                        </div>
+                                    ) : (
+                                        <div
+                                            key={field.key}
+                                            className={`space-y-2 ${field.control === 'textarea' || field.control === 'image' ? 'md:col-span-2' : ''}`}
+                                        >
+                                            <Label htmlFor={field.key}>{field.label}</Label>
+                                            {renderField(field)}
+                                            {field.help && (
+                                                <p className="text-xs text-muted-foreground">{field.help}</p>
+                                            )}
+                                        </div>
+                                    ),
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>
