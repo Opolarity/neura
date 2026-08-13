@@ -26,6 +26,8 @@ export interface InvoicesResponse {
       invoice_type_id: number;
       invoice_type_name: string;
       customer_document_number: string;
+      pdf_url: string | null;
+      xml_url: string | null;
     }[];
     page: {
       page: number;
@@ -124,6 +126,8 @@ export interface InvoiceItem {
   invoiceTypeId: number;
   invoiceTypeName: string;
   customerDocumentNumber: string;
+  pdfUrl: string | null;
+  xmlUrl: string | null;
 }
 
 export interface InvoicesAdapted {
