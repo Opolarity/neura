@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Card,
   CardContent,
@@ -224,6 +225,11 @@ const CreateSale = () => {
   const [showAddDiscount, setShowAddDiscount] = useState(false);
   const [newDiscountName, setNewDiscountName] = useState("");
   const [newDiscountAmount, setNewDiscountAmount] = useState("");
+  // El signo lo elige el usuario en el toggle, no lo escribe en el monto: negativo
+  // resta del total y positivo suma, igual que en el POS y que el recálculo del backend.
+  const [newDiscountSign, setNewDiscountSign] = useState<"negative" | "positive">(
+    "negative",
+  );
   const [productsTableSearchInput, setProductsTableSearchInput] = useState("");
   const [franchiseProductsPage, setFranchiseProductsPage] = useState(1);
   const [franchiseProductsPageSize, setFranchiseProductsPageSize] = useState(20);
@@ -1587,11 +1593,38 @@ const CreateSale = () => {
                         onChange={(e) => setNewDiscountName(e.target.value)}
                         className="h-7 text-xs"
                       />
+                      <ToggleGroup
+                        type="single"
+                        value={newDiscountSign}
+                        onValueChange={(value) => {
+                          // El toggle no permite deseleccionar: Radix emite "" al
+                          // volver a pulsar la opción activa.
+                          if (value !== "negative" && value !== "positive") return;
+                          setNewDiscountSign(value);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start"
+                      >
+                        <ToggleGroupItem
+                          value="negative"
+                          className="flex-1 h-7 text-xs"
+                        >
+                          Negativo
+                        </ToggleGroupItem>
+                        <ToggleGroupItem
+                          value="positive"
+                          className="flex-1 h-7 text-xs"
+                        >
+                          Positivo
+                        </ToggleGroupItem>
+                      </ToggleGroup>
                       <div className="flex gap-2">
                         <Input
                           type="number"
                           step="0.01"
-                          placeholder="Monto (+/-)"
+                          min="0"
+                          placeholder="Monto"
                           value={newDiscountAmount}
                           onChange={(e) => setNewDiscountAmount(e.target.value)}
                           className="h-7 text-xs flex-1"
@@ -1608,9 +1641,14 @@ const CreateSale = () => {
                               amt === 0
                             )
                               return;
-                            addOrderDiscount(newDiscountName.trim(), amt);
+                            const signed =
+                              newDiscountSign === "negative"
+                                ? -Math.abs(amt)
+                                : Math.abs(amt);
+                            addOrderDiscount(newDiscountName.trim(), signed);
                             setNewDiscountName("");
                             setNewDiscountAmount("");
+                            setNewDiscountSign("negative");
                             setShowAddDiscount(false);
                           }}
                         >
@@ -1622,7 +1660,10 @@ const CreateSale = () => {
                           variant="ghost"
                           size="sm"
                           className="h-7 text-xs"
-                          onClick={() => setShowAddDiscount(false)}
+                          onClick={() => {
+                            setNewDiscountSign("negative");
+                            setShowAddDiscount(false);
+                          }}
                         >
                           <X className="w-3 h-3" />
                         </Button>

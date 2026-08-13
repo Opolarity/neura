@@ -174,6 +174,7 @@ export default function POS() {
                 customer={pos.customer}
                 subtotal={pos.subtotal}
                 discountAmount={pos.discountAmount}
+                productDiscountAmount={pos.productDiscountAmount}
                 shippingCost={pos.customer.requiresShipping ? pos.shipping.shippingCost : 0}
                 total={pos.total}
 

@@ -8,9 +8,10 @@ interface POSSummaryProps {
   customer: POSCustomerData;
   subtotal: number;
   discountAmount: number;
+  productDiscountAmount: number;
   shippingCost: number;
   total: number;
-  
+
 }
 
 export default function POSSummary({
@@ -18,6 +19,7 @@ export default function POSSummary({
   customer,
   subtotal,
   discountAmount,
+  productDiscountAmount,
   shippingCost,
   total
 }: POSSummaryProps) {
@@ -46,10 +48,19 @@ export default function POSSummary({
             <span className="font-medium">S/ {formatCurrency(subtotal)}</span>
           </div>
 
-          {discountAmount > 0 &&
-          <div className="flex justify-between text-success">
-              <span>Descuentos</span>
-              <span>- S/ {formatCurrency(discountAmount)}</span>
+          {productDiscountAmount > 0 &&
+          <div className="flex justify-between">
+              <span className="text-muted-foreground">Dcto. productos</span>
+              <span className="font-medium">- S/ {formatCurrency(productDiscountAmount)}</span>
+            </div>
+          }
+
+          {discountAmount !== 0 &&
+          <div className="flex justify-between">
+              <span className="text-muted-foreground">Descuento Manual</span>
+              <span className="font-medium">
+                {discountAmount > 0 ? "+" : "-"} S/ {formatCurrency(Math.abs(discountAmount))}
+              </span>
             </div>
           }
 

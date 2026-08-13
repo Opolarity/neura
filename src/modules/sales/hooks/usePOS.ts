@@ -872,14 +872,12 @@ export const usePOS = () => {
     return cart.reduce((sum, item) => sum + item.quantity * item.price, 0);
   }, [cart]);
 
+  // Ajustes manuales de la orden, con signo: negativo resta del total y positivo
+  // suma. Misma convención que useCreateSale y que el recálculo del backend
+  // (total = Σ líneas + Σ order_discounts.discount_amount + envío).
   const discountAmount = useMemo(() => {
-    const itemDiscounts = cart.reduce(
-      (sum, item) => sum + item.discountAmount * item.quantity,
-      0
-    );
-    const extraDiscounts = orderDiscounts.reduce((sum, d) => sum + d.amount, 0);
-    return itemDiscounts + extraDiscounts;
-  }, [cart, orderDiscounts]);
+    return orderDiscounts.reduce((sum, d) => sum + d.amount, 0);
+  }, [orderDiscounts]);
 
   const productDiscountAmount = useMemo(() => {
     return cart.reduce(
@@ -890,9 +888,11 @@ export const usePOS = () => {
 
   const shippingCostValue = customer.requiresShipping ? shipping.shippingCost : 0;
 
+  // El descuento por producto siempre resta (se guarda en positivo); el ajuste
+  // manual se suma algebraicamente según el signo que eligió el usuario.
   const total = useMemo(() => {
-    return subtotal - discountAmount + shippingCostValue;
-  }, [subtotal, discountAmount, shippingCostValue]);
+    return subtotal - productDiscountAmount + discountAmount + shippingCostValue;
+  }, [subtotal, productDiscountAmount, discountAmount, shippingCostValue]);
 
   const totalPaid = useMemo(() => {
     return payments.reduce((sum, p) => sum + p.amount, 0);
