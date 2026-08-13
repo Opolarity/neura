@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { applyPriceRules, type GiftItem } from "../rules/applyPriceRules";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserProfile } from "@/modules/auth";
 import { useToast } from "@/hooks/use-toast";
 import { usePOSSession } from "./usePOSSession";
 import type {
@@ -79,6 +80,7 @@ export const usePOS = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const POSSessionHook = usePOSSession();
+  const { ensureProfile } = useUserProfile();
 
   // Step state
   const [currentStep, setCurrentStep] = useState<POSStep>(1);
@@ -271,24 +273,11 @@ export const usePOS = () => {
   };
 
   const loadUserWarehouse = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
+    const profile = await ensureProfile();
+    if (!profile?.warehouse_id) return;
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("warehouse_id, warehouses(id, name)")
-      .eq("UID", user.id)
-      .single();
-
-    if (profile?.warehouse_id) {
-      setUserWarehouseId(profile.warehouse_id);
-      const warehouse = Array.isArray(profile.warehouses)
-        ? profile.warehouses[0]
-        : profile.warehouses;
-      setUserWarehouseName((warehouse as { name?: string })?.name || "");
-    }
+    setUserWarehouseId(profile.warehouse_id);
+    setUserWarehouseName(profile.warehouses?.name ?? "");
   };
 
   // Load filtered payment methods based on session's sale_type_id
@@ -879,18 +868,21 @@ export const usePOS = () => {
   // COMPUTED VALUES (before change entries so changeAmount is available)
   // =============================================
 
+  // Subtotal neto: el descuento por unidad ya viene aplicado, igual que en
+  // calculateSubtotal de creación de venta.
   const subtotal = useMemo(() => {
-    return cart.reduce((sum, item) => sum + item.quantity * item.price, 0);
-  }, [cart]);
-
-  const discountAmount = useMemo(() => {
-    const itemDiscounts = cart.reduce(
-      (sum, item) => sum + item.discountAmount * item.quantity,
+    return cart.reduce(
+      (sum, item) => sum + item.quantity * (item.price - item.discountAmount),
       0
     );
-    const extraDiscounts = orderDiscounts.reduce((sum, d) => sum + d.amount, 0);
-    return itemDiscounts + extraDiscounts;
-  }, [cart, orderDiscounts]);
+  }, [cart]);
+
+  // Ajustes manuales de la orden, con signo: negativo resta del total y positivo
+  // suma. Misma convención que useCreateSale y que el recálculo del backend
+  // (total = Σ líneas + Σ order_discounts.discount_amount + envío).
+  const discountAmount = useMemo(() => {
+    return orderDiscounts.reduce((sum, d) => sum + d.amount, 0);
+  }, [orderDiscounts]);
 
   const productDiscountAmount = useMemo(() => {
     return cart.reduce(
@@ -902,7 +894,7 @@ export const usePOS = () => {
   const shippingCostValue = customer.requiresShipping ? shipping.shippingCost : 0;
 
   const total = useMemo(() => {
-    return subtotal - discountAmount + shippingCostValue;
+    return subtotal + discountAmount + shippingCostValue;
   }, [subtotal, discountAmount, shippingCostValue]);
 
   const totalPaid = useMemo(() => {
@@ -1097,7 +1089,9 @@ export const usePOS = () => {
         initialSituationId: situationId,
         saleType: saleTypeId,
         discounts: [
-          ...(productDiscountAmount > 0 ? [{ name: "Descuentos de productos", discount_amount: productDiscountAmount, code: "PRO" }] : []),
+          // Solo los ajustes manuales: el descuento por producto ya se guarda por
+          // unidad en order_products.product_discount. Registrarlo además como fila
+          // PRO lo sumaba de vuelta en el recálculo del backend y anulaba la resta.
           ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
         ],
       };

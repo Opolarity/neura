@@ -370,12 +370,18 @@ export const adaptSaleById = (data: any) => {
       ? { id: data.order.sale_type_id, name: data.order.sale_type_name || "" }
       : null,
     returns: (data.returns || []) as SaleReturn[],
-    pricerules: (data.pricerules || []).map((r: any) => ({
-      id: r.id as number,
-      code: r.code as string,
-      name: r.name as string,
-      discount_amount: r.discount_amount as number,
-    })),
+    // El backend manda en pricerules todo lo que no sea CUSTOM, así que ahí caen
+    // también las filas PRO de órdenes viejas. Se descartan igual que en
+    // orderDiscounts: su monto se sumaría al total, devolviendo el descuento por
+    // producto que ya está aplicado en el precio de cada línea.
+    pricerules: (data.pricerules || [])
+      .map((r: any) => ({
+        id: r.id as number,
+        code: r.code as string,
+        name: r.name as string,
+        discount_amount: r.discount_amount as number,
+      }))
+      .filter((r) => r.code !== "PRO"),
     customerPoints: (data.customer_points ?? null) as { lvl: string; points: number } | null,
   };
 };

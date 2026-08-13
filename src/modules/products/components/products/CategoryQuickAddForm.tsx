@@ -54,32 +54,33 @@ const CategoryQuickAddForm = ({ categories, onCreate }: CategoryQuickAddFormProp
           placeholder="Nombre de la categoría"
           disabled={creating}
         />
-        <Select
-          value={parentId !== null ? String(parentId) : "none"}
-          onValueChange={(value) => setParentId(value === "none" ? null : Number(value))}
-          disabled={creating}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Categoría padre" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Categoría padre</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={String(category.id)}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          type="button"
-          variant="default"
-          className="w-full"
-          disabled={name.trim() === "" || creating}
-          onClick={handleCreate}
-        >
-          Crear
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select
+            value={parentId !== null ? String(parentId) : "none"}
+            onValueChange={(value) => setParentId(value === "none" ? null : Number(value))}
+            disabled={creating}
+          >
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="Categoría padre" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Categoría padre</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={String(category.id)}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            variant="default"
+            disabled={name.trim() === "" || creating}
+            onClick={handleCreate}
+          >
+            Crear
+          </Button>
+        </div>
       </CollapsibleContent>
     </Collapsible>
   );

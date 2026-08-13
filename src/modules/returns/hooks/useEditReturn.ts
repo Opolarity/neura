@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserProfile } from '@/modules/auth';
 import { toast } from 'sonner';
 import { returnsService } from '../services/Returns.service';
 import {
@@ -19,6 +20,7 @@ const createEmptyPayment = (): ReturnPayment => ({
 export const useEditReturn = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const { ensureProfile } = useUserProfile();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [situations, setSituations] = useState<any[]>([]);
@@ -87,13 +89,8 @@ export const useEditReturn = () => {
             setOrderTotal(header.total || 0);
             const docTypesData = await returnsService.getDocumentTypes();
 
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('Usuario no autenticado');
-            const { data: profileData } = await supabase
-                .from('profiles')
-                .select('*, branches(*)')
-                .eq('UID', user.id)
-                .single();
+            const profileData = await ensureProfile();
+            if (!profileData) throw new Error('Usuario no autenticado');
             setUserProfile(profileData);
 
             const moduleData = await returnsService.getModuleInfo('RTU');
