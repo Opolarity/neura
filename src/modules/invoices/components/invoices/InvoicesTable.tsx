@@ -9,13 +9,22 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { Edit, Eye, Loader2 } from "lucide-react";
+import { Code, Edit, Eye, FileText, Loader2 } from "lucide-react";
 import type { InvoiceItem } from "../../types/Invoices.types";
 
 interface TableInvoicesProps {
   invoices: InvoiceItem[];
   loading: boolean;
 }
+
+const downloadXml = (item: InvoiceItem) => {
+  const link = document.createElement("a");
+  link.href = item.xmlUrl!;
+  link.download = `comprobante-${item.invoiceNumber || item.id}.xml`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+};
 
 export default function InvoicesTable({ invoices = [], loading }: TableInvoicesProps) {
   const navigate = useNavigate();
@@ -96,6 +105,26 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
                   onClick={() => navigate(`/invoices/edit/${item.id}`)}
                 >
                   <Edit className="w-4 h-4" />
+                </Button>
+              )}
+              {item.pdfUrl && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  title="Ver PDF"
+                  onClick={() => window.open(item.pdfUrl!, "_blank", "noopener,noreferrer")}
+                >
+                  <FileText className="w-4 h-4" />
+                </Button>
+              )}
+              {item.xmlUrl && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  title="Descargar XML"
+                  onClick={() => downloadXml(item)}
+                >
+                  <Code className="w-4 h-4" />
                 </Button>
               )}
             </TableCell>
