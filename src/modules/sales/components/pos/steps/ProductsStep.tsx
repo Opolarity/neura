@@ -23,6 +23,7 @@ import { formatCurrency } from "../../../adapters/POS.adapter";
 import { useState } from "react";
 import { cn } from "@/shared/utils/utils";
 import { Separator } from "@/components/ui/separator";
+import { Toggle } from "@/components/ui/toggle";
 
 interface ProductsStepProps {
   searchQuery: string;
@@ -433,26 +434,17 @@ export default function ProductsStep({
                         onChange={(e) => setNewDiscountName(e.target.value)}
                         className="h-6 text-xs"
                       />
-                      <ToggleGroup
-                        type="single"
-                        value={newDiscountSign}
-                        onValueChange={(value) => {
-                          // El toggle no permite deseleccionar: Radix emite "" al
-                          // volver a pulsar la opción activa.
-                          if (value !== "negative" && value !== "positive") return;
-                          setNewDiscountSign(value);
-                        }}
+                      <Toggle
                         variant="outline"
                         size="sm"
-                        className="w-full justify-start"
+                        pressed={newDiscountSign === "positive"}
+                        onPressedChange={(pressed) =>
+                          setNewDiscountSign(pressed ? "positive" : "negative")
+                        }
+                        className="w-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                       >
-                        <ToggleGroupItem value="negative" className="flex-1 h-6 text-xs">
-                          Negativo
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="positive" className="flex-1 h-6 text-xs">
-                          Positivo
-                        </ToggleGroupItem>
-                      </ToggleGroup>
+                        {newDiscountSign === "positive" ? "Positivo" : "Negativo"}
+                      </Toggle>
                       <div className="flex gap-1">
                         <Input
                           type="number"

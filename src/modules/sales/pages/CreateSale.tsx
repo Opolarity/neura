@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Toggle } from "@/components/ui/toggle";
 import {
   Card,
   CardContent,
@@ -1593,32 +1593,17 @@ const CreateSale = () => {
                         onChange={(e) => setNewDiscountName(e.target.value)}
                         className="h-7 text-xs"
                       />
-                      <ToggleGroup
-                        type="single"
-                        value={newDiscountSign}
-                        onValueChange={(value) => {
-                          // El toggle no permite deseleccionar: Radix emite "" al
-                          // volver a pulsar la opción activa.
-                          if (value !== "negative" && value !== "positive") return;
-                          setNewDiscountSign(value);
-                        }}
+                      <Toggle
                         variant="outline"
                         size="sm"
-                        className="w-full justify-start"
+                        pressed={newDiscountSign === "positive"}
+                        onPressedChange={(pressed) =>
+                          setNewDiscountSign(pressed ? "positive" : "negative")
+                        }
+                        className="w-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                       >
-                        <ToggleGroupItem
-                          value="negative"
-                          className="flex-1 h-7 text-xs"
-                        >
-                          Negativo
-                        </ToggleGroupItem>
-                        <ToggleGroupItem
-                          value="positive"
-                          className="flex-1 h-7 text-xs"
-                        >
-                          Positivo
-                        </ToggleGroupItem>
-                      </ToggleGroup>
+                        {newDiscountSign === "positive" ? "Positivo" : "Negativo"}
+                      </Toggle>
                       <div className="flex gap-2">
                         <Input
                           type="number"
