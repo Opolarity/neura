@@ -1086,7 +1086,9 @@ export const usePOS = () => {
         initialSituationId: situationId,
         saleType: saleTypeId,
         discounts: [
-          ...(productDiscountAmount > 0 ? [{ name: "Descuentos de productos", discount_amount: productDiscountAmount, code: "PRO" }] : []),
+          // Solo los ajustes manuales: el descuento por producto ya se guarda por
+          // unidad en order_products.product_discount. Registrarlo además como fila
+          // PRO lo sumaba de vuelta en el recálculo del backend y anulaba la resta.
           ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
         ],
       };
