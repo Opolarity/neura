@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { applyPriceRules, type GiftItem } from "../rules/applyPriceRules";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserProfile } from "@/modules/auth";
 import { useToast } from "@/hooks/use-toast";
 import { usePOSSession } from "./usePOSSession";
 import type {
@@ -79,6 +80,7 @@ export const usePOS = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const POSSessionHook = usePOSSession();
+  const { ensureProfile } = useUserProfile();
 
   // Step state
   const [currentStep, setCurrentStep] = useState<POSStep>(1);
@@ -271,24 +273,11 @@ export const usePOS = () => {
   };
 
   const loadUserWarehouse = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
+    const profile = await ensureProfile();
+    if (!profile?.warehouse_id) return;
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("warehouse_id, warehouses(id, name)")
-      .eq("UID", user.id)
-      .single();
-
-    if (profile?.warehouse_id) {
-      setUserWarehouseId(profile.warehouse_id);
-      const warehouse = Array.isArray(profile.warehouses)
-        ? profile.warehouses[0]
-        : profile.warehouses;
-      setUserWarehouseName((warehouse as { name?: string })?.name || "");
-    }
+    setUserWarehouseId(profile.warehouse_id);
+    setUserWarehouseName(profile.warehouses?.name ?? "");
   };
 
   // Load filtered payment methods based on session's sale_type_id
