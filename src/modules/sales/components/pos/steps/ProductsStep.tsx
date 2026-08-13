@@ -46,7 +46,6 @@ interface ProductsStepProps {
   orderDiscounts: OrderDiscount[];
   onAddOrderDiscount: (name: string, amount: number) => void;
   onRemoveOrderDiscount: (id: string) => void;
-  productDiscountAmount: number;
   customerName?: string;
   customerLastname?: string;
   customerDocumentNumber?: string;
@@ -74,7 +73,6 @@ export default function ProductsStep({
   orderDiscounts,
   onAddOrderDiscount,
   onRemoveOrderDiscount,
-  productDiscountAmount,
   customerName,
   customerLastname,
   customerDocumentNumber,
@@ -410,14 +408,6 @@ export default function ProductsStep({
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>S/ {formatCurrency(subtotal)}</span>
                   </div>
-
-                  {/* Product discounts (auto) */}
-                  {productDiscountAmount > 0 && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Dcto. productos</span>
-                      <span className="text-destructive">-S/ {formatCurrency(productDiscountAmount)}</span>
-                    </div>
-                  )}
 
                   {/* Custom order discounts */}
                   {orderDiscounts.map((d) => (

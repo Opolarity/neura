@@ -108,7 +108,6 @@ export default function POS() {
                 orderDiscounts={pos.orderDiscounts}
                 onAddOrderDiscount={pos.addOrderDiscount}
                 onRemoveOrderDiscount={pos.removeOrderDiscount}
-                productDiscountAmount={pos.productDiscountAmount}
                 customerName={pos.customer.customerName}
                 customerLastname={pos.customer.customerLastname}
                 customerDocumentNumber={pos.customer.documentNumber}
@@ -174,7 +173,6 @@ export default function POS() {
                 customer={pos.customer}
                 subtotal={pos.subtotal}
                 discountAmount={pos.discountAmount}
-                productDiscountAmount={pos.productDiscountAmount}
                 shippingCost={pos.customer.requiresShipping ? pos.shipping.shippingCost : 0}
                 total={pos.total}
 

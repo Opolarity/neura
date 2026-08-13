@@ -868,8 +868,13 @@ export const usePOS = () => {
   // COMPUTED VALUES (before change entries so changeAmount is available)
   // =============================================
 
+  // Subtotal neto: el descuento por unidad ya viene aplicado, igual que en
+  // calculateSubtotal de creación de venta.
   const subtotal = useMemo(() => {
-    return cart.reduce((sum, item) => sum + item.quantity * item.price, 0);
+    return cart.reduce(
+      (sum, item) => sum + item.quantity * (item.price - item.discountAmount),
+      0
+    );
   }, [cart]);
 
   // Ajustes manuales de la orden, con signo: negativo resta del total y positivo
@@ -888,11 +893,9 @@ export const usePOS = () => {
 
   const shippingCostValue = customer.requiresShipping ? shipping.shippingCost : 0;
 
-  // El descuento por producto siempre resta (se guarda en positivo); el ajuste
-  // manual se suma algebraicamente según el signo que eligió el usuario.
   const total = useMemo(() => {
-    return subtotal - productDiscountAmount + discountAmount + shippingCostValue;
-  }, [subtotal, productDiscountAmount, discountAmount, shippingCostValue]);
+    return subtotal + discountAmount + shippingCostValue;
+  }, [subtotal, discountAmount, shippingCostValue]);
 
   const totalPaid = useMemo(() => {
     return payments.reduce((sum, p) => sum + p.amount, 0);
