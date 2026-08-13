@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import AuthContext from "./AuthContext";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -155,7 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => subscription.unsubscribe();
   }, [maybeRefetchUserData]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -174,34 +174,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       };
     }
     return { error: null };
-  };
+  }, [validateErpAccess]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     setPermissionCodes([]);
     setPermissionsLoading(false);
     setAppUser(null);
     setAppUserLoading(false);
     await supabase.auth.signOut({scope: 'local'});
-  };
+  }, []);
 
   const refreshPermissions = useCallback(async () => {
     await fetchPermissions(user);
   }, [user, fetchPermissions]);
 
-  const value = {
-    user,
-    session,
-    loading,
-    permissionCodes,
-    permissionsLoading,
-    appUser,
-    appUserLoading,
-    companyShortName,
-    companyShortNameLoading,
-    signIn,
-    signOut,
-    refreshPermissions,
-  };
+  // React compara el value del Provider por identidad: un objeto literal aquí
+  // se recrea en cada render y re-renderiza a TODOS los consumidores del
+  // contexto aunque ningún valor haya cambiado. Este provider envuelve la app
+  // entera, así que cada TOKEN_REFRESHED o cambio de pestaña barría el árbol
+  // completo.
+  const value = useMemo(
+    () => ({
+      user,
+      session,
+      loading,
+      permissionCodes,
+      permissionsLoading,
+      appUser,
+      appUserLoading,
+      companyShortName,
+      companyShortNameLoading,
+      signIn,
+      signOut,
+      refreshPermissions,
+    }),
+    [
+      user,
+      session,
+      loading,
+      permissionCodes,
+      permissionsLoading,
+      appUser,
+      appUserLoading,
+      companyShortName,
+      companyShortNameLoading,
+      signIn,
+      signOut,
+      refreshPermissions,
+    ],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
