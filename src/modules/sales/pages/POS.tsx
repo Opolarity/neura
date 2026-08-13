@@ -108,7 +108,6 @@ export default function POS() {
                 orderDiscounts={pos.orderDiscounts}
                 onAddOrderDiscount={pos.addOrderDiscount}
                 onRemoveOrderDiscount={pos.removeOrderDiscount}
-                productDiscountAmount={pos.productDiscountAmount}
                 customerName={pos.customer.customerName}
                 customerLastname={pos.customer.customerLastname}
                 customerDocumentNumber={pos.customer.documentNumber}

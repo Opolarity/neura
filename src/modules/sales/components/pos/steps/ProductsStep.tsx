@@ -23,6 +23,7 @@ import { formatCurrency } from "../../../adapters/POS.adapter";
 import { useState } from "react";
 import { cn } from "@/shared/utils/utils";
 import { Separator } from "@/components/ui/separator";
+import { Toggle } from "@/components/ui/toggle";
 
 interface ProductsStepProps {
   searchQuery: string;
@@ -46,7 +47,6 @@ interface ProductsStepProps {
   orderDiscounts: OrderDiscount[];
   onAddOrderDiscount: (name: string, amount: number) => void;
   onRemoveOrderDiscount: (id: string) => void;
-  productDiscountAmount: number;
   customerName?: string;
   customerLastname?: string;
   customerDocumentNumber?: string;
@@ -74,7 +74,6 @@ export default function ProductsStep({
   orderDiscounts,
   onAddOrderDiscount,
   onRemoveOrderDiscount,
-  productDiscountAmount,
   customerName,
   customerLastname,
   customerDocumentNumber,
@@ -85,6 +84,11 @@ export default function ProductsStep({
   const [showAddDiscount, setShowAddDiscount] = useState(false);
   const [newDiscountName, setNewDiscountName] = useState("");
   const [newDiscountAmount, setNewDiscountAmount] = useState("");
+  // El signo lo elige el usuario en el toggle, no lo escribe en el monto: negativo
+  // resta del total y positivo suma, igual que en la creación de venta.
+  const [newDiscountSign, setNewDiscountSign] = useState<"negative" | "positive">(
+    "negative",
+  );
 
   const toggleDiscount = (index: number) => {
     setExpandedDiscounts(prev => {
@@ -406,14 +410,6 @@ export default function ProductsStep({
                     <span>S/ {formatCurrency(subtotal)}</span>
                   </div>
 
-                  {/* Product discounts (auto) */}
-                  {productDiscountAmount > 0 && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Dcto. productos</span>
-                      <span className="text-destructive">-S/ {formatCurrency(productDiscountAmount)}</span>
-                    </div>
-                  )}
-
                   {/* Custom order discounts */}
                   {orderDiscounts.map((d) => (
                     <div key={d.id} className="flex justify-between text-xs items-center">
@@ -439,10 +435,35 @@ export default function ProductsStep({
                         className="h-6 text-xs"
                       />
                       <div className="flex gap-1">
+                        <Toggle
+                          variant="outline"
+                          pressed={newDiscountSign === "positive"}
+                          onPressedChange={(pressed) =>
+                            setNewDiscountSign(pressed ? "positive" : "negative")
+                          }
+                          title={
+                            newDiscountSign === "positive"
+                              ? "Positivo: suma al total"
+                              : "Negativo: resta del total"
+                          }
+                          aria-label={
+                            newDiscountSign === "positive"
+                              ? "Positivo: suma al total"
+                              : "Negativo: resta del total"
+                          }
+                          className="h-6 w-6 shrink-0 p-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                        >
+                          {newDiscountSign === "positive" ? (
+                            <Plus className="w-3 h-3" />
+                          ) : (
+                            <Minus className="w-3 h-3" />
+                          )}
+                        </Toggle>
                         <Input
                           type="number"
                           step="0.01"
-                          placeholder="Monto (+/-)"
+                          min="0"
+                          placeholder="Monto"
                           value={newDiscountAmount}
                           onChange={(e) => setNewDiscountAmount(e.target.value)}
                           className="h-6 text-xs flex-1"
@@ -454,15 +475,27 @@ export default function ProductsStep({
                           onClick={() => {
                             const amt = parseFloat(newDiscountAmount);
                             if (!newDiscountName.trim() || isNaN(amt) || amt === 0) return;
-                            onAddOrderDiscount(newDiscountName.trim(), amt);
+                            const signed =
+                              newDiscountSign === "negative" ? -Math.abs(amt) : Math.abs(amt);
+                            onAddOrderDiscount(newDiscountName.trim(), signed);
                             setNewDiscountName("");
                             setNewDiscountAmount("");
+                            setNewDiscountSign("negative");
                             setShowAddDiscount(false);
                           }}
                         >
                           <Plus className="w-3 h-3" />
                         </Button>
-                        <Button type="button" variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => setShowAddDiscount(false)}>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs px-2"
+                          onClick={() => {
+                            setNewDiscountSign("negative");
+                            setShowAddDiscount(false);
+                          }}
+                        >
                           <X className="w-3 h-3" />
                         </Button>
                       </div>
@@ -481,7 +514,18 @@ export default function ProductsStep({
                   {/* Total discount */}
                   <div className="flex justify-between text-xs font-medium">
                     <span className="text-muted-foreground">Descuento Total</span>
-                    <span className="text-destructive">-S/ {formatCurrency(discountAmount)}</span>
+                    <span
+                      className={cn(
+                        discountAmount > 0
+                          ? "text-primary"
+                          : discountAmount < 0
+                            ? "text-destructive"
+                            : "text-muted-foreground",
+                      )}
+                    >
+                      {discountAmount > 0 ? "+" : discountAmount < 0 ? "-" : ""}S/{" "}
+                      {formatCurrency(Math.abs(discountAmount))}
+                    </span>
                   </div>
                 </div>
               </div>

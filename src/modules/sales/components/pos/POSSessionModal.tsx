@@ -21,6 +21,7 @@ import {
 import { Loader2, Store, AlertTriangle } from "lucide-react";
 import type { OpenPOSSessionRequest, POSSaleType } from "../../types/POS.types";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserProfile } from "@/modules/auth";
 import { formatCurrency } from "../../adapters/POS.adapter";
 
 interface POSSessionModalProps {
@@ -35,6 +36,7 @@ export default function POSSessionModal({
   onOpen,
 }: POSSessionModalProps) {
   const navigate = useNavigate();
+  const { ensureProfile } = useUserProfile();
   const [openingAmount, setOpeningAmount] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [selectedSaleTypeId, setSelectedSaleTypeId] = useState<string>("");
@@ -53,17 +55,9 @@ export default function POSSessionModal({
     try {
       setLoadingSaleTypes(true);
 
-      // Get user's branch_id from profile
-      const { data: { user } } = await supabase.auth.getUser();
-      let branchId: number | null = null;
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("branch_id")
-          .eq("UID", user.id)
-          .single();
-        branchId = profile?.branch_id ?? null;
-      }
+      // Sucursal del usuario, ya resuelta y cacheada para toda la sesión.
+      const profile = await ensureProfile();
+      const branchId: number | null = profile?.branch_id ?? null;
 
       let query = supabase
         .from("sale_types")

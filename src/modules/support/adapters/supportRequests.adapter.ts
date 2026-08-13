@@ -40,6 +40,7 @@ export const adaptSupportRequestsResponse = (
       statusCategory: item.status_category ?? null,
       requestType: item.request_type === "ticket" ? "ticket" : "suggestion",
       taskCode: item.task_code ?? null,
+      dueDate: item.due_date ?? null,
       reporterName: item.reporter_name ?? null,
       originHost,
       originLabel: originLabelFromHost(originHost),

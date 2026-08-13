@@ -30,6 +30,13 @@ export interface SupportRequestApiItem {
   /** "recibido" | "rechazado" | nombre del estado de la tarea (configurable). */
   status: string | null;
   task_code: string | null;
+  /**
+   * Fecha límite (YYYY-MM-DD) de la tarea. Opcional: las versiones anteriores
+   * de la API externa no la devolvían en el listado. Es null mientras la
+   * solicitud no sea tarea, cuando la tarea no tiene fecha, y cuando la tarea
+   * está marcada como interna en OPOLARITY.
+   */
+  due_date?: string | null;
   created_at: string;
   updated_at: string;
   request_type: string | null;
@@ -91,6 +98,8 @@ export interface SupportRequestListItem {
   statusCategory: string | null;
   requestType: SupportRequestType;
   taskCode: string | null;
+  /** Fecha límite estimada de la tarea (YYYY-MM-DD); null si todavía no hay. */
+  dueDate: string | null;
   reporterName: string | null;
   /** Host de origen ("" si no se registró): es el valor que filtra. */
   originHost: string;

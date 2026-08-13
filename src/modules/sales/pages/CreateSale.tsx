@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Toggle } from "@/components/ui/toggle";
 import {
   Card,
   CardContent,
@@ -38,6 +39,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Loader2,
   Plus,
+  Minus,
   Trash2,
   ArrowLeft,
   Package,
@@ -224,6 +226,11 @@ const CreateSale = () => {
   const [showAddDiscount, setShowAddDiscount] = useState(false);
   const [newDiscountName, setNewDiscountName] = useState("");
   const [newDiscountAmount, setNewDiscountAmount] = useState("");
+  // El signo lo elige el usuario en el toggle, no lo escribe en el monto: negativo
+  // resta del total y positivo suma, igual que en el POS y que el recálculo del backend.
+  const [newDiscountSign, setNewDiscountSign] = useState<"negative" | "positive">(
+    "negative",
+  );
   const [productsTableSearchInput, setProductsTableSearchInput] = useState("");
   const [franchiseProductsPage, setFranchiseProductsPage] = useState(1);
   const [franchiseProductsPageSize, setFranchiseProductsPageSize] = useState(20);
@@ -1588,10 +1595,35 @@ const CreateSale = () => {
                         className="h-7 text-xs"
                       />
                       <div className="flex gap-2">
+                        <Toggle
+                          variant="outline"
+                          pressed={newDiscountSign === "positive"}
+                          onPressedChange={(pressed) =>
+                            setNewDiscountSign(pressed ? "positive" : "negative")
+                          }
+                          title={
+                            newDiscountSign === "positive"
+                              ? "Positivo: suma al total"
+                              : "Negativo: resta del total"
+                          }
+                          aria-label={
+                            newDiscountSign === "positive"
+                              ? "Positivo: suma al total"
+                              : "Negativo: resta del total"
+                          }
+                          className="h-7 w-7 shrink-0 p-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                        >
+                          {newDiscountSign === "positive" ? (
+                            <Plus className="w-3.5 h-3.5" />
+                          ) : (
+                            <Minus className="w-3.5 h-3.5" />
+                          )}
+                        </Toggle>
                         <Input
                           type="number"
                           step="0.01"
-                          placeholder="Monto (+/-)"
+                          min="0"
+                          placeholder="Monto"
                           value={newDiscountAmount}
                           onChange={(e) => setNewDiscountAmount(e.target.value)}
                           className="h-7 text-xs flex-1"
@@ -1608,9 +1640,14 @@ const CreateSale = () => {
                               amt === 0
                             )
                               return;
-                            addOrderDiscount(newDiscountName.trim(), amt);
+                            const signed =
+                              newDiscountSign === "negative"
+                                ? -Math.abs(amt)
+                                : Math.abs(amt);
+                            addOrderDiscount(newDiscountName.trim(), signed);
                             setNewDiscountName("");
                             setNewDiscountAmount("");
+                            setNewDiscountSign("negative");
                             setShowAddDiscount(false);
                           }}
                         >
@@ -1622,7 +1659,10 @@ const CreateSale = () => {
                           variant="ghost"
                           size="sm"
                           className="h-7 text-xs"
-                          onClick={() => setShowAddDiscount(false)}
+                          onClick={() => {
+                            setNewDiscountSign("negative");
+                            setShowAddDiscount(false);
+                          }}
                         >
                           <X className="w-3 h-3" />
                         </Button>
