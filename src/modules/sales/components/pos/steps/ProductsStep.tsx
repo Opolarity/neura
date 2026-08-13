@@ -434,18 +434,31 @@ export default function ProductsStep({
                         onChange={(e) => setNewDiscountName(e.target.value)}
                         className="h-6 text-xs"
                       />
-                      <Toggle
-                        variant="outline"
-                        size="sm"
-                        pressed={newDiscountSign === "positive"}
-                        onPressedChange={(pressed) =>
-                          setNewDiscountSign(pressed ? "positive" : "negative")
-                        }
-                        className="w-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                      >
-                        {newDiscountSign === "positive" ? "Positivo" : "Negativo"}
-                      </Toggle>
                       <div className="flex gap-1">
+                        <Toggle
+                          variant="outline"
+                          pressed={newDiscountSign === "positive"}
+                          onPressedChange={(pressed) =>
+                            setNewDiscountSign(pressed ? "positive" : "negative")
+                          }
+                          title={
+                            newDiscountSign === "positive"
+                              ? "Positivo: suma al total"
+                              : "Negativo: resta del total"
+                          }
+                          aria-label={
+                            newDiscountSign === "positive"
+                              ? "Positivo: suma al total"
+                              : "Negativo: resta del total"
+                          }
+                          className="h-6 w-6 shrink-0 p-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                        >
+                          {newDiscountSign === "positive" ? (
+                            <Plus className="w-3 h-3" />
+                          ) : (
+                            <Minus className="w-3 h-3" />
+                          )}
+                        </Toggle>
                         <Input
                           type="number"
                           step="0.01"

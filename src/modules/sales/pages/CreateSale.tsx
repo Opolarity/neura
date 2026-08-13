@@ -39,6 +39,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Loader2,
   Plus,
+  Minus,
   Trash2,
   ArrowLeft,
   Package,
@@ -1593,18 +1594,31 @@ const CreateSale = () => {
                         onChange={(e) => setNewDiscountName(e.target.value)}
                         className="h-7 text-xs"
                       />
-                      <Toggle
-                        variant="outline"
-                        size="sm"
-                        pressed={newDiscountSign === "positive"}
-                        onPressedChange={(pressed) =>
-                          setNewDiscountSign(pressed ? "positive" : "negative")
-                        }
-                        className="w-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                      >
-                        {newDiscountSign === "positive" ? "Positivo" : "Negativo"}
-                      </Toggle>
                       <div className="flex gap-2">
+                        <Toggle
+                          variant="outline"
+                          pressed={newDiscountSign === "positive"}
+                          onPressedChange={(pressed) =>
+                            setNewDiscountSign(pressed ? "positive" : "negative")
+                          }
+                          title={
+                            newDiscountSign === "positive"
+                              ? "Positivo: suma al total"
+                              : "Negativo: resta del total"
+                          }
+                          aria-label={
+                            newDiscountSign === "positive"
+                              ? "Positivo: suma al total"
+                              : "Negativo: resta del total"
+                          }
+                          className="h-7 w-7 shrink-0 p-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                        >
+                          {newDiscountSign === "positive" ? (
+                            <Plus className="w-3.5 h-3.5" />
+                          ) : (
+                            <Minus className="w-3.5 h-3.5" />
+                          )}
+                        </Toggle>
                         <Input
                           type="number"
                           step="0.01"
