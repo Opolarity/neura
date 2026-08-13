@@ -460,7 +460,8 @@ export const useEditMovementRequest = () => {
     const isReceiver = userWh === inWarehouseId;
 
     if (s.code === "CAN") {
-      return isSender || isReceiver; // Ambos pueden cancelar
+      // Ambos pueden cancelar, pero ya no una vez enviada la mercaderia: ahi solo queda recibirla
+      return (isSender || isReceiver) && currentSituationCode !== "ENV";
     }
 
     if (s.code === "REC") {

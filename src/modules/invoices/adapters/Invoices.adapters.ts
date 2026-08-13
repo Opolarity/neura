@@ -14,6 +14,8 @@ export const invoicesAdapter = (response: InvoicesResponse): InvoicesAdapted => 
       invoiceTypeId: item.invoice_type_id,
       invoiceTypeName: item.invoice_type_name,
       customerDocumentNumber: item.customer_document_number,
+      pdfUrl: item.pdf_url ?? null,
+      xmlUrl: item.xml_url ?? null,
     })),
     page: response.invoicesData.page,
   };

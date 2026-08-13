@@ -16,6 +16,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { useAddProduct } from '../hooks/useAddProduct';
 import PromotionalTextSection from '../components/products/PromotionalTextSection';
+import CategoryQuickAddForm from '../components/products/CategoryQuickAddForm';
+import TagsComboboxInput from '../components/products/TagsComboboxInput';
+import BrandsComboboxInput from '../components/products/BrandsComboboxInput';
 import { PageLoader } from '@/shared/components/page-loader';
 import { buildCategoryTree, flattenCategoryTree } from '../utils/categoryTree';
 
@@ -80,6 +83,9 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     handleDragOver,
     handleDrop,
     toggleCategorySelection,
+    createCategory,
+    createTagInline,
+    createBrandInline,
     toggleChannelSelection,
     toggleTagSelection,
     toggleBrandsSelection,
@@ -681,6 +687,15 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                   </div>
                 ))}
               </div>
+
+              {!viewOnly && (
+                <div className="mt-3">
+                  <CategoryQuickAddForm
+                    categories={categories}
+                    onCreate={createCategory}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -690,25 +705,14 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
               <CardTitle>Etiquetas</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-1 max-h-[300px] overflow-y-auto">
-                {tags.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No hay etiquetas disponibles.</p>
-                ) : (
-                  tags.map(tag => (
-                    <div key={tag.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`tag-${tag.id}`}
-                        checked={selectedTags.includes(tag.id)}
-                        onCheckedChange={() => toggleTagSelection(tag.id)}
-                        disabled={viewOnly}
-                      />
-                      <Label htmlFor={`tag-${tag.id}`} className="text-sm cursor-pointer">
-                        {tag.name}
-                      </Label>
-                    </div>
-                  ))
-                )}
-              </div>
+              <TagsComboboxInput
+                tags={tags}
+                selectedTags={selectedTags}
+                onSelect={toggleTagSelection}
+                onRemove={toggleTagSelection}
+                onCreateTag={createTagInline}
+                disabled={viewOnly}
+              />
             </CardContent>
           </Card>
 
@@ -718,25 +722,14 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
               <CardTitle>Marcas</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-1 max-h-[300px] overflow-y-auto">
-                {brands.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No hay marcas disponibles.</p>
-                ) : (
-                  brands.map(brand => (
-                    <div key={brand.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`brand-${brand.id}`}
-                        checked={selectedBrands.includes(brand.id)}
-                        onCheckedChange={() => toggleBrandsSelection(brand.id)}
-                        disabled={viewOnly}
-                      />
-                      <Label htmlFor={`brand-${brand.id}`} className="text-sm cursor-pointer">
-                        {brand.name}
-                      </Label>
-                    </div>
-                  ))
-                )}
-              </div>
+              <BrandsComboboxInput
+                brands={brands}
+                selectedBrands={selectedBrands}
+                onSelect={toggleBrandsSelection}
+                onRemove={toggleBrandsSelection}
+                onCreateBrand={createBrandInline}
+                disabled={viewOnly}
+              />
             </CardContent>
           </Card>
 
