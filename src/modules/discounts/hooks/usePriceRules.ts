@@ -5,9 +5,14 @@ import type {
   PriceRule,
   PriceRuleFilters,
 } from "../types/priceRule.types";
-import { getPriceRules, deletePriceRule, updatePriceRule, updateBulkPriceRule } from "../services/PriceRule.services";
+import {
+  getPriceRules,
+  deletePriceRule,
+  deletePriceRulesBulk,
+  updatePriceRule,
+  updateBulkPriceRule,
+} from "../services/PriceRule.services";
 import { adaptPriceRulesListResponse } from "../adapters/priceRule.adapter";
-import { is } from "date-fns/locale";
 
 const DEFAULT_FILTERS: PriceRuleFilters = {
   page: 1,
@@ -30,6 +35,8 @@ export function usePriceRules() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<PriceRule | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkStatus, setBulkStatus] = useState<"true" | "false">("true");
   const [isApplyingBulk, setIsApplyingBulk] = useState(false);
@@ -73,6 +80,18 @@ export function usePriceRules() {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   };
 
+  // Tras eliminar, si la página actual se quedó sin filas hay que retroceder en
+  // vez de mostrar una tabla vacía. Cambiar `filters` ya dispara el useEffect
+  // que recarga, así que no hace falta llamar a loadRules a mano.
+  // Mismo criterio que modules/settings/hooks/usePriceList.ts.
+  const reloadAfterDelete = (deletedCount: number) => {
+    if (deletedCount >= rules.length && filters.page > 1) {
+      setFilters((prev) => ({ ...prev, page: prev.page - 1 }));
+      return;
+    }
+    loadRules(filters);
+  };
+
   const openDeleteDialog = (rule: PriceRule) => {
     setSelectedRule(rule);
     setDeleteDialogOpen(true);
@@ -80,18 +99,56 @@ export function usePriceRules() {
 
   const handleDelete = async () => {
     if (!selectedRule) return;
+    const deletedId = selectedRule.id;
     setIsDeleting(true);
     try {
-      await deletePriceRule(selectedRule.id);
-      toast.success("Regla de precios desactivada");
+      await deletePriceRule(deletedId);
+      toast.success("Regla de precios eliminada");
       setDeleteDialogOpen(false);
       setSelectedRule(null);
-      loadRules(filters);
+      // Si la fila estaba marcada, sacarla de la selección: si no, quedaría en
+      // selectedIds y acabaría en la siguiente acción masiva.
+      setSelectedIds((prev) => {
+        if (!prev.has(deletedId)) return prev;
+        const next = new Set(prev);
+        next.delete(deletedId);
+        return next;
+      });
+      reloadAfterDelete(1);
     } catch (error) {
       console.error("Error deleting price rule:", error);
-      toast.error("Error al desactivar la regla de precios");
+      toast.error("Error al eliminar la regla de precios");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const openBulkDeleteDialog = () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const ids = [...selectedIds];
+    setIsBulkDeleting(true);
+    try {
+      const result = await deletePriceRulesBulk(ids);
+      const deleted = result?.deleted ?? ids.length;
+
+      toast.success(
+        deleted === 1
+          ? "Regla de precios eliminada"
+          : `${deleted} reglas de precios eliminadas`
+      );
+      setBulkDeleteDialogOpen(false);
+      setSelectedIds(new Set());
+      reloadAfterDelete(ids.length);
+    } catch (error) {
+      console.error("Error bulk deleting price rules:", error);
+      toast.error("Error al eliminar las reglas de precios");
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -115,13 +172,23 @@ export function usePriceRules() {
     if (selectedIds.size === 0) return;
     setIsApplyingBulk(true);
     try {
-      await updateBulkPriceRule([...selectedIds], bulkStatus === "true");
+      const ids = [...selectedIds];
+      const result = await updateBulkPriceRule(ids, bulkStatus === "true");
 
-      toast.success(
-        bulkStatus === "true"
-          ? "Reglas activadas correctamente"
-          : "Reglas desactivadas correctamente"
-      );
+      // El backend ignora las reglas eliminadas, así que puede actualizar menos
+      // de las pedidas. Antes esto pasaba en silencio con un toast de éxito.
+      const updated = typeof result?.updated === "number" ? result.updated : ids.length;
+      if (updated < ids.length) {
+        toast.warning(
+          `Se actualizaron ${updated} de ${ids.length} reglas. El resto ya no existe o fue eliminado.`
+        );
+      } else {
+        toast.success(
+          bulkStatus === "true"
+            ? "Reglas activadas correctamente"
+            : "Reglas desactivadas correctamente"
+        );
+      }
       setSelectedIds(new Set());
       loadRules(filters);
     } catch (error) {
@@ -149,6 +216,11 @@ export function usePriceRules() {
     openDeleteDialog,
     setDeleteDialogOpen,
     handleDelete,
+    bulkDeleteDialogOpen,
+    setBulkDeleteDialogOpen,
+    openBulkDeleteDialog,
+    handleBulkDelete,
+    isBulkDeleting,
     refresh,
     selectedIds,
     bulkStatus,

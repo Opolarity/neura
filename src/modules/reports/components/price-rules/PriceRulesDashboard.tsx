@@ -25,9 +25,12 @@ export function PriceRulesDashboard({ filters }: Props) {
   const kpis = data?.kpis ?? { active: 0, inactive: 0, automatic: 0, coupon: 0 };
   const rows = data?.table ?? [];
 
+  // Las eliminadas llegan con is_active = false, pero el KPI "Reglas inactivas"
+  // ya no las cuenta: si se colaran en la pestaña "Inactivas", el contador y el
+  // número de filas se contradirían. Se quedan solo en "Todas", marcadas.
   const filteredRows = useMemo(() => {
     if (statusFilter === 'active')   return rows.filter((r) => r.is_active);
-    if (statusFilter === 'inactive') return rows.filter((r) => !r.is_active);
+    if (statusFilter === 'inactive') return rows.filter((r) => !r.is_active && !r.is_deleted);
     return rows;
   }, [rows, statusFilter]);
 
@@ -100,6 +103,10 @@ export function PriceRulesDashboard({ filters }: Props) {
                           <span className="font-medium truncate max-w-[200px]">{row.name}</span>
                           {row.code && (
                             <Badge variant="outline" className="text-xs hidden sm:inline-flex">{row.code}</Badge>
+                          )}
+                          {/* Aparece solo si la regla se eliminó pero tuvo ventas en el rango. */}
+                          {row.is_deleted && (
+                            <Badge variant="destructive-soft" className="text-xs">Eliminada</Badge>
                           )}
                         </div>
                       </td>

@@ -43,6 +43,10 @@ export function usePriceRuleForm() {
       } catch (error) {
         console.error("Error loading price rule:", error);
         toast.error("Error al cargar la regla de precios");
+        // Sin esto el usuario se queda en un formulario vacío que parece
+        // editable. Pasa, por ejemplo, al entrar por URL directa a una regla
+        // eliminada: el backend responde 404.
+        navigate("/discounts/price-rules");
       } finally {
         setLoadingDetail(false);
       }

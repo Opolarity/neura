@@ -1,4 +1,4 @@
-import { Tags, Plus } from "lucide-react";
+import { Tags, Plus, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -15,6 +15,8 @@ interface PriceRulesHeaderProps {
   onBulkStatusChange: (value: "true" | "false") => void;
   onApplyBulkStatus: () => void;
   isApplying: boolean;
+  onBulkDelete: () => void;
+  isBulkDeleting: boolean;
 }
 
 export const PriceRulesHeader = ({
@@ -24,6 +26,8 @@ export const PriceRulesHeader = ({
   onBulkStatusChange,
   onApplyBulkStatus,
   isApplying,
+  onBulkDelete,
+  isBulkDeleting,
 }: PriceRulesHeaderProps) => {
   return (
     <div className="flex items-center justify-between">
@@ -48,8 +52,21 @@ export const PriceRulesHeader = ({
                 <SelectItem value="false">Desactivar</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="default" onClick={onApplyBulkStatus} disabled={isApplying}>
+            <Button
+              variant="default"
+              onClick={onApplyBulkStatus}
+              disabled={isApplying || isBulkDeleting}
+            >
               Aplicar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={onBulkDelete}
+              disabled={isApplying || isBulkDeleting}
+              className="gap-2"
+            >
+              <Trash className="w-4 h-4" />
+              Eliminar {selectedCount} seleccionada{selectedCount === 1 ? "" : "s"}
             </Button>
           </>
         )}
