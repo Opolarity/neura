@@ -35,6 +35,7 @@ export const useMovements = () => {
         search: null,
         start_date: null,
         end_date: null,
+        completed: null,
         order: "desc",
     });
 
@@ -178,6 +179,7 @@ export const useMovements = () => {
             search: null,
             start_date: null,
             end_date: null,
+            completed: null,
             order: "desc",
         };
         setFilters(resetFilters);
@@ -190,7 +192,8 @@ export const useMovements = () => {
         filters.warehouse !== undefined && filters.warehouse !== null ||
         filters.origin !== undefined && filters.origin !== null ||
         filters.user !== undefined && filters.user !== null ||
-        filters.in_out !== undefined && filters.in_out !== null;
+        filters.in_out !== undefined && filters.in_out !== null ||
+        filters.completed !== undefined && filters.completed !== null;
 
     return {
         movements,

@@ -25,6 +25,7 @@ export const movementsAdapter = (response: MovementsApiResponse) => {
       vinc_warehouse: item.vinc_warehouse,
       vinc_stock_type: item.vinc_stock_type,
       product: item.product,
+      completed: item.completed ?? true,
     }),
   );
 

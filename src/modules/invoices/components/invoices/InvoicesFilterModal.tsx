@@ -20,6 +20,7 @@ import type { InvoiceType } from "@/modules/invoices/types/Invoices.types";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import { ListFilter } from "lucide-react";
 import { useEffect, useState } from "react";
+import { DateRangeFilter, DateRangeValue } from "@/shared/components/date-range";
 
 interface InvoicesFilterModalProps {
   activeFilters?: ActiveInvoiceFilters | null;
@@ -74,6 +75,14 @@ const InvoicesFilterModal = ({ activeFilters, onApply, onClear, invoiceTypes = [
     setLocalFilters(toModalFilters(activeFilters ?? {}));
   }, [open]);
 
+  const handleDateChange = ({ startDate, endDate }: DateRangeValue) => {
+    setLocalFilters((prev) => ({
+      ...prev,
+      start_date: startDate ?? "",
+      end_date: endDate ?? "",
+    }));
+  };
+
   const handleChange = (field: keyof ModalFilters, value: string) => {
     setLocalFilters((prev) => ({ ...prev, [field]: value }));
   };
@@ -96,7 +105,7 @@ const InvoicesFilterModal = ({ activeFilters, onApply, onClear, invoiceTypes = [
           Filtrar
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Filtrar Facturas</DialogTitle>
         </DialogHeader>
@@ -161,26 +170,13 @@ const InvoicesFilterModal = ({ activeFilters, onApply, onClear, invoiceTypes = [
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="start_date">Fecha inicio</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={localFilters.start_date}
-                onChange={(e) => handleChange("start_date", e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="end_date">Fecha fin</Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={localFilters.end_date}
-                onChange={(e) => handleChange("end_date", e.target.value)}
-              />
-            </div>
-          </div>
+          <DateRangeFilter
+            startDate={localFilters.start_date || null}
+            endDate={localFilters.end_date || null}
+            onChange={handleDateChange}
+            startLabel="Fecha inicio"
+            endLabel="Fecha fin"
+          />
         </div>
 
         <DialogFooter className="flex gap-2">

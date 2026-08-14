@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
+import { DateRangeFilter, DateRangeValue } from "@/shared/components/date-range";
 
 export interface POSSessionsFilterValues {
   dateFrom: string;
@@ -46,6 +47,14 @@ const POSSessionsFilterModal = ({
     }
   }, [isOpen, filters]);
 
+  const handleDateChange = ({ startDate, endDate }: DateRangeValue) => {
+    setInternal((prev) => ({
+      ...prev,
+      dateFrom: startDate ?? "",
+      dateTo: endDate ?? "",
+    }));
+  };
+
   const handleClear = () => {
     setInternal({
       dateFrom: "",
@@ -58,7 +67,7 @@ const POSSessionsFilterModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Filtrar Sesiones</DialogTitle>
         </DialogHeader>
@@ -67,24 +76,13 @@ const POSSessionsFilterModal = ({
           {/* Date Range */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Rango de Fecha</Label>
-            <div className="flex gap-2">
-              <Input
-                type="date"
-                value={internal.dateFrom}
-                onChange={(e) =>
-                  setInternal((prev) => ({ ...prev, dateFrom: e.target.value }))
-                }
-                placeholder="Desde"
-              />
-              <Input
-                type="date"
-                value={internal.dateTo}
-                onChange={(e) =>
-                  setInternal((prev) => ({ ...prev, dateTo: e.target.value }))
-                }
-                placeholder="Hasta"
-              />
-            </div>
+            <DateRangeFilter
+              startDate={internal.dateFrom || null}
+              endDate={internal.dateTo || null}
+              onChange={handleDateChange}
+              startLabel="Desde"
+              endLabel="Hasta"
+            />
           </div>
 
           {/* Difference Type */}

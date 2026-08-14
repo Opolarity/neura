@@ -16,6 +16,7 @@ export interface MovementsApiResponse {
             movement_type: string;
             vinc_warehouse: string | null;
             vinc_stock_type: string | null;
+            completed: boolean;
         }>;
         page: {
             page: number;
@@ -38,6 +39,8 @@ export interface Movements {
     stock_type: string;
     vinc_warehouse: string | null;
     vinc_stock_type: string | null;
+    /** false = pendiente (el SP solo devuelve movimientos con is_active = true). */
+    completed: boolean;
 }
 
 export interface MovementsFilters {
@@ -45,6 +48,8 @@ export interface MovementsFilters {
     user?: number | null;
     warehouse?: number | null;
     in_out?: boolean | null;
+    /** null = todos · true = culminados · false = pendientes. */
+    completed?: boolean | null;
     start_date?: string | null;
     end_date?: string | null;
     page?: number;

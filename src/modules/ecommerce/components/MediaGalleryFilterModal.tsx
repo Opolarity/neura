@@ -7,8 +7,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { DateRangeFilter, DateRangeValue } from "@/shared/components/date-range";
 import type { MediaGalleryFilters } from "../types/MediaGallery.types";
 
 interface MediaGalleryFilterModalProps {
@@ -35,6 +34,10 @@ const MediaGalleryFilterModal = ({
     onOpenChange(false);
   };
 
+  const handleDateChange = ({ startDate, endDate }: DateRangeValue) => {
+    setInternalFilters((prev) => ({ ...prev, startDate, endDate }));
+  };
+
   const handleClear = () => {
     setInternalFilters((prev) => ({
       ...prev,
@@ -45,40 +48,19 @@ const MediaGalleryFilterModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Filtros</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="startDate">Fecha de inicio</Label>
-            <Input
-              id="startDate"
-              type="date"
-              value={internalFilters.startDate ?? ""}
-              onChange={(e) =>
-                setInternalFilters((prev) => ({
-                  ...prev,
-                  startDate: e.target.value || null,
-                }))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="endDate">Fecha de fin</Label>
-            <Input
-              id="endDate"
-              type="date"
-              value={internalFilters.endDate ?? ""}
-              onChange={(e) =>
-                setInternalFilters((prev) => ({
-                  ...prev,
-                  endDate: e.target.value || null,
-                }))
-              }
-            />
-          </div>
+          <DateRangeFilter
+            startDate={internalFilters.startDate ?? null}
+            endDate={internalFilters.endDate ?? null}
+            onChange={handleDateChange}
+            startLabel="Fecha de inicio"
+            endLabel="Fecha de fin"
+          />
         </div>
 
         <DialogFooter className="gap-2">
