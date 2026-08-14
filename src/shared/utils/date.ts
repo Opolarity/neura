@@ -9,6 +9,41 @@ export const toLimaDateInput = (date: Date): string => {
   return date.toLocaleDateString("sv-SE", { timeZone: LIMA_TIME_ZONE });
 };
 
+/** Día 1 del mes en curso en Lima, como "YYYY-MM-DD". */
+export const getFirstDayOfMonth = (): string => `${getTodayDate().slice(0, 7)}-01`;
+
+/**
+ * "YYYY-MM-DD" → Date anclado a medianoche LOCAL (no UTC).
+ * `new Date("2026-07-29")` se parsea como medianoche UTC, que en Lima es el día
+ * anterior a las 19:00; reemplazar los guiones por barras fuerza el parseo local.
+ * Es lo que esperan react-day-picker y la aritmética de calendario.
+ */
+export const parseLocalDate = (dateString: string): Date => {
+  return new Date(dateString.replace(/-/g, "/"));
+};
+
+/**
+ * Inversa de parseLocalDate: Date de calendario → "YYYY-MM-DD" por componentes
+ * locales. Reemplaza a `format(d, "yyyy-MM-dd")` de date-fns.
+ */
+export const toDateInputValue = (date: Date): string => {
+  return date.toLocaleDateString("sv-SE");
+};
+
+/** Aritmética de calendario sobre "YYYY-MM-DD", agnóstica a la zona del navegador. */
+export const addCalendarDays = (dateString: string, days: number): string => {
+  const date = parseLocalDate(dateString);
+  date.setDate(date.getDate() + days);
+  return toDateInputValue(date);
+};
+
+/** Días de calendario entre dos "YYYY-MM-DD". Misma escala que addCalendarDays. */
+export const diffCalendarDays = (from: string, to: string): number => {
+  return Math.round(
+    (parseLocalDate(to).getTime() - parseLocalDate(from).getTime()) / 86_400_000
+  );
+};
+
 export const nowIso = (): string => new Date().toISOString();
 
 export const limaDateTimeLocalToIso = (local: string | null | undefined): string => {

@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { differenceInDays, format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { CalendarIcon, Download, Loader2 } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,10 +12,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/shared/utils/utils';
+import { DateRangeFilter, DateRangeValue } from '@/shared/components/date-range';
+import { diffCalendarDays } from '@/shared/utils/date';
 
 import {
   generateProductsReportExcel,
@@ -33,15 +29,20 @@ interface ProductsExportModalProps {
 const MAX_DAYS = 31;
 
 export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalProps) {
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const daysDiff = startDate && endDate ? differenceInDays(endDate, startDate) : null;
+  const handleDateChange = ({ startDate, endDate }: DateRangeValue) => {
+    setStartDate(startDate);
+    setEndDate(endDate);
+  };
+
+  const daysDiff = startDate && endDate ? diffCalendarDays(startDate, endDate) : null;
 
   const isValid =
-    startDate !== undefined &&
-    endDate !== undefined &&
+    startDate !== null &&
+    endDate !== null &&
     daysDiff !== null &&
     daysDiff >= 0 &&
     daysDiff <= MAX_DAYS;
@@ -60,8 +61,8 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
 
     setIsLoading(true);
     try {
-      const start = format(startDate, 'yyyy-MM-dd');
-      const end = format(endDate, 'yyyy-MM-dd');
+      const start = startDate;
+      const end = endDate;
 
       const [resProducts, resCategories] = await Promise.all([
         supabase.rpc('sp_rpt_export_products_by_product', {
@@ -98,8 +99,8 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
   function handleOpenChange(value: boolean) {
     if (!isLoading) {
       if (!value) {
-        setStartDate(undefined);
-        setEndDate(undefined);
+        setStartDate(null);
+        setEndDate(null);
       }
       onOpenChange(value);
     }
@@ -107,7 +108,7 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Descargar Reporte de Productos</DialogTitle>
           <DialogDescription>
@@ -117,61 +118,15 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          {/* Fecha inicio */}
-          <div className="grid gap-2">
-            <Label>Fecha inicio</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn('justify-start text-left font-normal', !startDate && 'text-muted-foreground')}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate ? format(startDate, 'dd/MM/yyyy', { locale: es }) : 'Seleccionar fecha'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={setStartDate}
-                  disabled={(date) => date > new Date()}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Fecha fin */}
-          <div className="grid gap-2">
-            <Label>Fecha fin</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn('justify-start text-left font-normal', !endDate && 'text-muted-foreground')}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {endDate ? format(endDate, 'dd/MM/yyyy', { locale: es }) : 'Seleccionar fecha'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={setEndDate}
-                  disabled={(date) =>
-                    date > new Date() ||
-                    (startDate !== undefined && date < startDate) ||
-                    (startDate !== undefined && differenceInDays(date, startDate) > MAX_DAYS)
-                  }
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          <DateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onChange={handleDateChange}
+            startLabel="Fecha inicio"
+            endLabel="Fecha fin"
+            maxRangeDays={MAX_DAYS}
+            disabled={isLoading}
+          />
 
           {validationError && (
             <p className="text-sm text-destructive">{validationError}</p>

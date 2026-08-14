@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { differenceInDays, format } from "date-fns";
-import { es } from "date-fns/locale";
-import { CalendarIcon, Download, Loader2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -13,19 +11,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/shared/utils/utils";
+import { DateRangeFilter, DateRangeValue } from "@/shared/components/date-range";
+import { diffCalendarDays } from "@/shared/utils/date";
 
 import { fetchSalesReport } from "../../services/reports.service";
 import type { SalesExtraFilters } from "../../services/reports.service";
 import { generateSalesReportExcel } from "../../utils/generateSalesReportExcel";
 import type { ReportsFilters } from "../../types/reports.types";
+
+// Tope del rango exportable, en días de calendario.
+const MAX_DAYS = 31;
 
 interface SalesExportModalProps {
   open: boolean;
@@ -35,26 +30,31 @@ interface SalesExportModalProps {
 }
 
 export function SalesExportModal({ open, onOpenChange, filters, extra }: SalesExportModalProps) {
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleDateChange = ({ startDate, endDate }: DateRangeValue) => {
+    setStartDate(startDate);
+    setEndDate(endDate);
+  };
+
   const daysDiff =
-    startDate && endDate ? differenceInDays(endDate, startDate) : null;
+    startDate && endDate ? diffCalendarDays(startDate, endDate) : null;
 
   const isValid =
-    startDate !== undefined &&
-    endDate !== undefined &&
+    startDate !== null &&
+    endDate !== null &&
     daysDiff !== null &&
     daysDiff >= 0 &&
-    daysDiff <= 31;
+    daysDiff <= MAX_DAYS;
 
   const validationError =
     startDate && endDate && daysDiff !== null
       ? daysDiff < 0
         ? "La fecha fin debe ser posterior a la fecha inicio"
-        : daysDiff > 31
-        ? "El rango máximo permitido es de 31 días"
+        : daysDiff > MAX_DAYS
+        ? `El rango máximo permitido es de ${MAX_DAYS} días`
         : null
       : null;
 
@@ -63,8 +63,8 @@ export function SalesExportModal({ open, onOpenChange, filters, extra }: SalesEx
 
     setIsLoading(true);
     try {
-      const start = format(startDate, "yyyy-MM-dd");
-      const end = format(endDate, "yyyy-MM-dd");
+      const start = startDate;
+      const end = endDate;
       const rows = await fetchSalesReport(start, end, filters, extra);
       generateSalesReportExcel(rows, start, end);
       toast.success(`${rows.length} ventas exportadas correctamente`);
@@ -79,8 +79,8 @@ export function SalesExportModal({ open, onOpenChange, filters, extra }: SalesEx
   function handleOpenChange(value: boolean) {
     if (!isLoading) {
       if (!value) {
-        setStartDate(undefined);
-        setEndDate(undefined);
+        setStartDate(null);
+        setEndDate(null);
       }
       onOpenChange(value);
     }
@@ -88,77 +88,25 @@ export function SalesExportModal({ open, onOpenChange, filters, extra }: SalesEx
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Descargar Reporte de Ventas</DialogTitle>
           <DialogDescription>
-            Selecciona un rango de fechas (máximo 31 días) para exportar las
+            Selecciona un rango de fechas (máximo {MAX_DAYS} días) para exportar las
             ventas a Excel.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          {/* Fecha inicio */}
-          <div className="grid gap-2">
-            <Label>Fecha inicio</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "justify-start text-left font-normal",
-                    !startDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate
-                    ? format(startDate, "dd/MM/yyyy", { locale: es })
-                    : "Seleccionar fecha"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={setStartDate}
-                  disabled={(date) => date > new Date()}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Fecha fin */}
-          <div className="grid gap-2">
-            <Label>Fecha fin</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "justify-start text-left font-normal",
-                    !endDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {endDate
-                    ? format(endDate, "dd/MM/yyyy", { locale: es })
-                    : "Seleccionar fecha"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={setEndDate}
-                  disabled={(date) => date > new Date()}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          <DateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onChange={handleDateChange}
+            startLabel="Fecha inicio"
+            endLabel="Fecha fin"
+            maxRangeDays={MAX_DAYS}
+            disabled={isLoading}
+          />
 
           {/* Validation error */}
           {validationError && (

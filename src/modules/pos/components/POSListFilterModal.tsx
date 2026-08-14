@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { DateField } from "@/shared/components/date-range";
 import type { POSSessionUser } from "../types/POSList.types";
 
 export interface ModalFilters {
@@ -94,19 +94,19 @@ export default function POSListFilterModal({
 
           <div className="space-y-1">
             <label className="text-sm font-medium">Fecha de apertura</label>
-            <Input
-              type="date"
-              value={draft.opened_date}
-              onChange={(e) => handleChange("opened_date", e.target.value)}
+            <DateField
+              value={draft.opened_date || null}
+              onChange={(value) => handleChange("opened_date", value ?? "")}
+              showClear
             />
           </div>
 
           <div className="space-y-1">
             <label className="text-sm font-medium">Fecha de cierre</label>
-            <Input
-              type="date"
-              value={draft.closed_date}
-              onChange={(e) => handleChange("closed_date", e.target.value)}
+            <DateField
+              value={draft.closed_date || null}
+              onChange={(value) => handleChange("closed_date", value ?? "")}
+              showClear
             />
           </div>
         </div>

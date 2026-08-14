@@ -5,19 +5,9 @@ import { refreshReportMviews } from '../../services/reports.service';
 import { useReportsFilters } from '../../context/ReportsFiltersContext';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { LIMA_TIME_ZONE } from '@/shared/utils/date';
+import { DateRangeFilter } from '@/shared/components/date-range';
 
 const MAX_RANGE_DAYS = 90;
-
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr.replace(/-/g, "/"));
-  d.setDate(d.getDate() + days);
-  return d.toLocaleDateString("sv-SE", { timeZone: LIMA_TIME_ZONE });
-}
-
-function diffDays(a: string, b: string): number {
-  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000);
-}
 
 interface ReportsFilterBarProps {
   /** Grid de campos de "Más filtros" (sin caja propia). Si se omite, no se muestra el toggle. */
@@ -53,33 +43,15 @@ export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExt
     <div className="rounded-lg border bg-card p-4 space-y-3 mb-6">
       <div className="flex flex-wrap items-end gap-3">
         {/* Date Range */}
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground font-medium">Desde</span>
-          <input
-            type="date"
-            value={draft.startDate ?? ''}
-            onChange={(e) => {
-              const start = e.target.value || null;
-              const updates: Partial<typeof draft> = { startDate: start };
-              if (start && draft.endDate && diffDays(start, draft.endDate) > MAX_RANGE_DAYS) {
-                updates.endDate = addDays(start, MAX_RANGE_DAYS);
-              }
-              setDraft(updates);
-            }}
-            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground font-medium">Hasta</span>
-          <input
-            type="date"
-            value={draft.endDate ?? ''}
-            min={draft.startDate ?? undefined}
-            max={draft.startDate ? addDays(draft.startDate, MAX_RANGE_DAYS) : undefined}
-            onChange={(e) => setDraft({ endDate: e.target.value || null })}
-            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-        </div>
+        <DateRangeFilter
+          startDate={draft.startDate ?? null}
+          endDate={draft.endDate ?? null}
+          onChange={setDraft}
+          startLabel="Desde"
+          endLabel="Hasta"
+          layout="inline"
+          maxRangeDays={MAX_RANGE_DAYS}
+        />
 
         {/* Más filtros */}
         {extraFields && (

@@ -15,16 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { cn } from "@/shared/utils/utils";
+import { DateRangeFilter, DateRangeValue } from "@/shared/components/date-range";
 import { SalesFilters, SaleType, SaleSituation } from "../../types/Sales.types";
 import type { SalePaymentStatus } from "../../utils/salePaymentStatus";
 
@@ -53,21 +44,24 @@ const SalesFilterModal = ({
   const [paymentStatus, setPaymentStatus] = useState<SalePaymentStatus | null>(
     filters.paymentStatus ?? null
   );
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    filters.startDate ? new Date(filters.startDate) : undefined
+  const [startDate, setStartDate] = useState<string | null>(
+    filters.startDate ?? null
   );
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    filters.endDate ? new Date(filters.endDate) : undefined
-  );
+  const [endDate, setEndDate] = useState<string | null>(filters.endDate ?? null);
 
   useEffect(() => {
     setSituationId(filters.situationId);
     setSaleType(filters.saleType);
     setConsignament(filters.consignament ?? null);
     setPaymentStatus(filters.paymentStatus ?? null);
-    setStartDate(filters.startDate ? new Date(filters.startDate) : undefined);
-    setEndDate(filters.endDate ? new Date(filters.endDate) : undefined);
+    setStartDate(filters.startDate ?? null);
+    setEndDate(filters.endDate ?? null);
   }, [filters, isOpen]);
+
+  const handleDateChange = ({ startDate, endDate }: DateRangeValue) => {
+    setStartDate(startDate);
+    setEndDate(endDate);
+  };
 
   const handleApply = () => {
     onApply({
@@ -75,8 +69,8 @@ const SalesFilterModal = ({
       saleType,
       consignament,
       paymentStatus,
-      startDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
-      endDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
+      startDate,
+      endDate,
     });
   };
 
@@ -85,14 +79,14 @@ const SalesFilterModal = ({
     setSaleType(null);
     setConsignament(null);
     setPaymentStatus(null);
-    setStartDate(undefined);
-    setEndDate(undefined);
+    setStartDate(null);
+    setEndDate(null);
     onClear();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Filtrar Ventas</DialogTitle>
         </DialogHeader>
@@ -185,63 +179,11 @@ const SalesFilterModal = ({
           </div>
 
           {/* Date Range */}
-          <div className="grid gap-2">
-            <Label>Fecha Desde</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "justify-start text-left font-normal",
-                    !startDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate
-                    ? format(startDate, "dd/MM/yyyy", { locale: es })
-                    : "Seleccionar fecha"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={setStartDate}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Fecha Hasta</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "justify-start text-left font-normal",
-                    !endDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {endDate
-                    ? format(endDate, "dd/MM/yyyy", { locale: es })
-                    : "Seleccionar fecha"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={setEndDate}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          <DateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onChange={handleDateChange}
+          />
         </div>
 
         <DialogFooter>
