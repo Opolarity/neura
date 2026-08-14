@@ -78,7 +78,7 @@ import {
   LayoutGrid,
   Tag,
   ShoppingCart,
-  ArrowUpDown,
+  Banknote,
   FileText,
   Calendar,
   Settings,
@@ -198,7 +198,7 @@ export const APP_PERMISSIONS_CONFIG = [
   },
 {
   name: "Movimientos",
-    icon: ArrowUpDown,
+    icon: Banknote,
       code: "movements",
         node: [
           {

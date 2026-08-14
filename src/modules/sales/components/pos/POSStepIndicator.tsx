@@ -38,9 +38,9 @@ export default function POSStepIndicator({
               <div
                 className={cn(
                   "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-colors shrink-0",
-                  isCompleted && "bg-blue-600 text-white",
-                  isActive && "bg-blue-600 text-white ring-2 ring-blue-100",
-                  !isCompleted && !isActive && "bg-gray-100 text-gray-500"
+                  isCompleted && "bg-primary text-white",
+                  isActive && "bg-primary text-white ring-2 ring-primary/20",
+                  !isCompleted && !isActive && "bg-muted text-muted-foreground"
                 )}
               >
                 {isCompleted ? <Check className="w-3.5 h-3.5" /> : step}
@@ -48,8 +48,8 @@ export default function POSStepIndicator({
               <span
                 className={cn(
                   "text-xs font-medium whitespace-nowrap",
-                  isActive && "text-blue-600",
-                  !isActive && "text-gray-500"
+                  isActive && "text-primary",
+                  !isActive && "text-muted-foreground"
                 )}
               >
                 {POS_STEP_NAMES[step]}
@@ -60,7 +60,7 @@ export default function POSStepIndicator({
               <div
                 className={cn(
                   "w-10 h-px",
-                  currentStep > step ? "bg-blue-600" : "bg-gray-200"
+                  currentStep > step ? "bg-primary" : "bg-muted"
                 )}
               />
             )}

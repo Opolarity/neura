@@ -48,7 +48,7 @@ export default function ShippingStep({
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-2">
-        <Truck className="w-5 h-5 text-gray-700" />
+        <Truck className="w-5 h-5" />
         <h2 className="text-lg font-semibold">Detalles de Despacho</h2>
       </div>
 

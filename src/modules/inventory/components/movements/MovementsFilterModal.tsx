@@ -1,14 +1,11 @@
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from 'lucide-react';
 import { MovementsFilters } from '../../types/Movements.types';
 import { useState } from 'react';
-import MovementsDateRange from './MovementsDateRange';
+import { DateRangeFilter, DateRangeValue } from '@/shared/components/date-range';
 import { SimpleWarehouses, MovementsTypes, SimpleUsers } from '../../types/Movements.types';
-import { toLimaDateInput } from '@/shared/utils/date';
 
 interface InventoryFilterModalProps {
     filters: MovementsFilters;
@@ -32,35 +29,15 @@ const MovementsFilterModal = ({
     const [internalFilters, setInternalFilters] =
         useState<MovementsFilters>(filters);
 
-    const calculateMinimumEndDate = (start_date: string) => {
-        const date = new Date(start_date);
-        date.setDate(date.getDate() - 180);
-        return toLimaDateInput(date);
-    };
+    // El rango de movimientos no puede abarcar más de 180 días.
+    const MAX_RANGE_DAYS = 180;
 
-    const handleStartDateChange = (value: string) => {
-        setInternalFilters((prev) => {
-            const startDate = value || null;
-            const endDate = prev.end_date;
-
-            const isEndDateInvalid =
-                endDate &&
-                (
-                    new Date(endDate) > new Date(value) ||
-                    new Date(endDate) < new Date(calculateMinimumEndDate(value))
-                );
-
-            return {
-                ...prev,
-                start_date: startDate,
-                end_date: isEndDateInvalid ? "" : endDate,
-            };
-        });
-    };
-
-    const handleEndDateChange = (value: string) => {
-        const dateValue = value || null;
-        setInternalFilters((prev) => ({ ...prev, end_date: dateValue }))
+    const handleDateChange = ({ startDate, endDate }: DateRangeValue) => {
+        setInternalFilters((prev) => ({
+            ...prev,
+            start_date: startDate,
+            end_date: endDate,
+        }));
     };
 
     const handleWarehouseChange = (value: string) => {
@@ -91,6 +68,14 @@ const MovementsFilterModal = ({
         }));
     };
 
+    // null = todos · true = culminados · false = pendientes
+    const handleCompletedChange = (value: string) => {
+        setInternalFilters((prev) => ({
+            ...prev,
+            completed: value === "true" ? true : value === "false" ? false : null,
+        }));
+    };
+
     const handleClear = () => {
         setInternalFilters((prev) => (
             {
@@ -100,6 +85,7 @@ const MovementsFilterModal = ({
                 start_date: null,
                 end_date: null,
                 in_out: null,
+                completed: null,
                 page: 1,
                 size: prev.size,
                 search: null,
@@ -111,16 +97,40 @@ const MovementsFilterModal = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-[560px]">
                 <DialogHeader>
                     <DialogTitle>Filtrar Movimientos</DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
-                    <MovementsDateRange
-                        filters={internalFilters}
-                        onStartDateChange={handleStartDateChange}
-                        onEndDateChange={handleEndDateChange}
+                    <div className="grid gap-2">
+                        <Label htmlFor="completed">Estado del movimiento</Label>
+                        <Select
+                            value={
+                                internalFilters.completed == null
+                                    ? "all"
+                                    : String(internalFilters.completed)
+                            }
+                            onValueChange={handleCompletedChange}
+                        >
+                            <SelectTrigger id="completed">
+                                <SelectValue placeholder="Todos" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos</SelectItem>
+                                <SelectItem value="true">Culminados</SelectItem>
+                                <SelectItem value="false">Pendientes</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <DateRangeFilter
+                        startDate={internalFilters.start_date ?? null}
+                        endDate={internalFilters.end_date ?? null}
+                        onChange={handleDateChange}
+                        startLabel="Fecha Inicio"
+                        endLabel="Fecha Fin"
+                        maxRangeDays={MAX_RANGE_DAYS}
                     />
 
                     <div className="grid gap-2">

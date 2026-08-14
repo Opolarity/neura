@@ -62,7 +62,7 @@ import {
   getTodayDate,
 } from "../utils";
 import { getParameter } from "@/modules/settings/services/Parameters.service";
-import { useAuth } from "@/modules/auth";
+import { useAuth, useUserProfile } from "@/modules/auth";
 
 const INITIAL_FORM_DATA: SaleFormData = {
   documentType: "",
@@ -114,6 +114,7 @@ const voucherCount = (p: SalePayment): number =>
 
 export const useCreateSale = () => {
   const {user, appUser} = useAuth();
+  const { ensureProfile } = useUserProfile();
   const navigate = useNavigate();
   const { id: orderId } = useParams();
   const { toast } = useToast();
@@ -617,40 +618,19 @@ export const useCreateSale = () => {
   const loadUserWarehouse = async () => {
     try {
       setLoadingWarehouse(true);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        console.error("No user logged in");
-        return;
-      }
+      const profile = await ensureProfile();
+      if (!profile) return;
 
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("warehouse_id, branch_id, warehouses(id, name, code), branches(id, address)")
-        .eq("UID", user.id)
-        .single();
-
-      if (error) {
-        console.error("Error fetching user profile:", error);
-        return;
-      }
-
-      if (profile?.warehouse_id) {
+      if (profile.warehouse_id) {
         setUserWarehouseId(profile.warehouse_id);
-        // Handle the warehouses relation (could be an object or array)
-        const warehouse = Array.isArray(profile.warehouses)
-          ? profile.warehouses[0]
-          : profile.warehouses;
-        setUserWarehouseName((warehouse as any)?.name || "");
-        setUserWarehouseCode((warehouse as any)?.code || "");
+        setUserWarehouseName(profile.warehouses?.name ?? "");
+        setUserWarehouseCode(profile.warehouses?.code ?? "");
       }
 
-      if (profile?.branch_id) {
-        const branch = Array.isArray(profile.branches)
-          ? profile.branches[0]
-          : profile.branches;
-        setUserBranchAddress((branch as { address?: string } | null)?.address || "");
+      if (profile.branch_id) {
+        setUserBranchAddress(
+          (profile.branches as { address?: string } | null)?.address ?? ""
+        );
       }
     } catch (error) {
       console.error("Error loading user warehouse:", error);
@@ -931,7 +911,8 @@ export const useCreateSale = () => {
     let currentUserId: string;
     try {
       // Get current logged-in user's document info
-      const { data: { user } } = await supabase.auth.getUser();
+      // El usuario sale del AuthProvider: auth.getUser() era un round-trip a
+      // /auth/v1/user para leer un id que ya está en memoria.
       if (!user) throw new Error("Usuario no autenticado");
       currentUserId = user.id;
 

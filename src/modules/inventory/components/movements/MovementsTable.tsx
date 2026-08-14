@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button';
 import { formatDateDisplay } from "@/shared/utils/date";
-import { Loader2, Eye } from "lucide-react";
+import { Loader2, Eye, LockOpen } from "lucide-react";
 import { Movements } from '../../types/Movements.types';
 
 
@@ -39,6 +39,9 @@ const MovementsTable = ({ movements, loading, onViewDetail }: MovementsTableProp
                     <TableHead>Producto</TableHead>
                     <TableHead>Variación</TableHead>
                     <TableHead>Cantidad</TableHead>
+                    {/* Columna estrecha solo para el candado de "pendiente": va aparte
+                        para que las filas culminadas no se descuadren. */}
+                    <TableHead className="w-6 px-0" />
                     <TableHead>Origen</TableHead>
                     <TableHead>Tipo Movimiento</TableHead>
                     <TableHead>Almacén</TableHead>
@@ -51,7 +54,7 @@ const MovementsTable = ({ movements, loading, onViewDetail }: MovementsTableProp
             <TableBody>
                 {loading && movements.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8">
+                        <TableCell colSpan={10} className="text-center py-8">
                             <div className="flex items-center justify-center gap-2">
                                 <Loader2 className="w-4 h-4 animate-spin" />
                                 Cargando movimientos...
@@ -61,7 +64,7 @@ const MovementsTable = ({ movements, loading, onViewDetail }: MovementsTableProp
                 ) : movements.length === 0 ? (
                     <TableRow>
                         <TableCell
-                            colSpan={9}
+                            colSpan={10}
                             className="text-center py-8 text-muted-foreground"
                         >
                             No se encontraron movimientos
@@ -96,6 +99,17 @@ const MovementsTable = ({ movements, loading, onViewDetail }: MovementsTableProp
                                     }`}>
                                         {movement.quantity > 0 ? "+" : ""}{movement.quantity}
                                     </span>
+                                </TableCell>
+                                <TableCell className="w-6 px-0">
+                                    {!movement.completed && (
+                                        <span
+                                            title="Movimiento pendiente"
+                                            aria-label="Movimiento pendiente"
+                                            className="inline-flex"
+                                        >
+                                            <LockOpen className="h-4 w-4 text-amber-500" />
+                                        </span>
+                                    )}
                                 </TableCell>
                                 <TableCell className="text-sm">
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-gray-50 text-gray-800 dark:bg-gray-800 dark:text-gray-200">

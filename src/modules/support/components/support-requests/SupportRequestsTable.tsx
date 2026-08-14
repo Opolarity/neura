@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateTime } from "@/shared/utils/date";
+import { formatDateDisplay, formatDateTime } from "@/shared/utils/date";
 import type { SupportRequestListItem } from "../../types/Support.types";
 import { SupportStatusBadge } from "./SupportStatusBadge";
 
@@ -77,6 +77,7 @@ export const SupportRequestsTable = ({
           <TableHead>Reportado por</TableHead>
           <TableHead>Origen</TableHead>
           <TableHead className="text-center">Adjuntos</TableHead>
+          <TableHead>Fecha límite</TableHead>
           <TableHead>Creada</TableHead>
           <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
@@ -116,6 +117,16 @@ export const SupportRequestsTable = ({
                   <Paperclip className="w-3.5 h-3.5 text-muted-foreground" />
                   {request.attachmentsCount}
                 </span>
+              ) : (
+                <span className="text-muted-foreground">-</span>
+              )}
+            </TableCell>
+            <TableCell>
+              {/* Estimación de OPOLARITY, no un compromiso. El guion cubre por
+                  igual "todavía no es tarea" y "aún sin planificar": no se
+                  rotula como "sin fecha límite" para no prometer lo contrario. */}
+              {request.dueDate ? (
+                <span className="text-sm">{formatDateDisplay(request.dueDate)}</span>
               ) : (
                 <span className="text-muted-foreground">-</span>
               )}

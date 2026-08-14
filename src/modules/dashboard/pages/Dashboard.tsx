@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Bell, BellOff, Clock, LogIn, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/modules/auth";
 import { useNotifications } from "@/modules/notifications/hooks/useNotifications";
 import { NotificationItem } from "@/modules/notifications/components/NotificationItem";
@@ -9,23 +8,16 @@ import { formatDistanceToNow, format } from "date-fns";
 import { es } from "date-fns/locale";
 
 const Dashboard = () => {
-  const { companyShortName, companyShortNameLoading } = useAuth();
+  // El último inicio de sesión ya viene en el usuario de la sesión: pedirlo con
+  // auth.getUser() era un round-trip a /auth/v1/user para un dato que el
+  // AuthProvider ya tiene en memoria.
+  const { user, loading, companyShortName, companyShortNameLoading } = useAuth();
   const {
     notifications,
     loading: notificationsLoading,
     markAsRead,
   } = useNotifications();
-  const [lastSignIn, setLastSignIn] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setLastSignIn(user?.last_sign_in_at ?? null);
-      setLoading(false);
-    };
-    init();
-  }, []);
+  const lastSignIn = user?.last_sign_in_at ?? null;
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);

@@ -48,7 +48,6 @@ type SidebarModuleItem = ReturnType<typeof getFilterSidebar>[number];
 // (popover/tooltip), que al montarse fuera del sidebar no heredan sus colores.
 const MENU_BUTTON_COLORS = [
   "data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground",
-  "data-[active=true]:shadow-lg data-[active=true]:shadow-sidebar-primary/20",
   "data-[state=open]:data-[active=false]:bg-white/5 data-[state=open]:data-[active=false]:text-white",
   // El estado del ícono se escribe como variante arbitraria completa: encadenar
   // `hover:` o `data-[...]:` con `[&>svg]` deja la condición sobre el <svg> y no
@@ -262,7 +261,7 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
             <button
               type="button"
               onClick={toggleSidebar}
-              className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/20"
+              className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"
             >
               <Store className="size-4" />
             </button>

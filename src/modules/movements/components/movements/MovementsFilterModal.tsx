@@ -7,7 +7,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DateRangeFilter, DateRangeValue } from "@/shared/components/date-range";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -64,13 +64,11 @@ const MovementsFilterModal = ({
     }));
   };
 
-  const handleDateChange = (
-    field: "start_date" | "end_date",
-    value: string,
-  ) => {
+  const handleDateChange = ({ startDate, endDate }: DateRangeValue) => {
     setInternalFilters((prev) => ({
       ...prev,
-      [field]: value || null,
+      start_date: startDate,
+      end_date: endDate,
     }));
   };
 
@@ -93,7 +91,7 @@ const MovementsFilterModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[70vh] flex flex-col">
+      <DialogContent className="sm:max-w-[560px] max-h-[70vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Filtrar Movimientos</DialogTitle>
         </DialogHeader>
@@ -207,26 +205,11 @@ const MovementsFilterModal = ({
 
           <div className="space-y-2">
             <Label className="text-sm font-medium">Rango de Fechas</Label>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Input
-                  type="date"
-                  value={internalFilters.start_date || ""}
-                  onChange={(e) =>
-                    handleDateChange("start_date", e.target.value)
-                  }
-                  placeholder="Fecha inicio"
-                />
-              </div>
-              <div className="flex-1">
-                <Input
-                  type="date"
-                  value={internalFilters.end_date || ""}
-                  onChange={(e) => handleDateChange("end_date", e.target.value)}
-                  placeholder="Fecha fin"
-                />
-              </div>
-            </div>
+            <DateRangeFilter
+              startDate={internalFilters.start_date ?? null}
+              endDate={internalFilters.end_date ?? null}
+              onChange={handleDateChange}
+            />
           </div>
         </div>
 
