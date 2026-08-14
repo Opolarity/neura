@@ -20,7 +20,7 @@ export default function POSHeader({ session, onExit }: POSHeaderProps) {
       <div className="flex items-center gap-3">
         {session &&
         <>
-            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Clock className="w-3.5 h-3.5" />
               {formatTime(session.openedAt)}
             </span>

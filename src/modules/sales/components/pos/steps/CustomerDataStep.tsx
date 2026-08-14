@@ -39,7 +39,7 @@ export default function CustomerDataStep({
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-2">
-        <User className="w-5 h-5 text-gray-700" />
+        <User className="w-5 h-5" />
         <h2 className="text-lg font-semibold">Datos del Cliente</h2>
       </div>
 
@@ -155,7 +155,7 @@ export default function CustomerDataStep({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>
-                Email <span className="text-gray-400">(opcional)</span>
+                Email <span className="text-muted-foreground">(opcional)</span>
               </Label>
               <Input
                 type="email"
@@ -167,7 +167,7 @@ export default function CustomerDataStep({
 
             <div className="space-y-2">
               <Label>
-                Telefono <span className="text-gray-400">(opcional)</span>
+                Telefono <span className="text-muted-foreground">(opcional)</span>
               </Label>
               <Input
                 value={customer.phone}
@@ -195,7 +195,7 @@ export default function CustomerDataStep({
                   <Truck className="w-4 h-4" />
                   Incluye envio a domicilio
                 </Label>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Marque esta opcion si el pedido requiere despacho a una direccion
                 </p>
               </div>

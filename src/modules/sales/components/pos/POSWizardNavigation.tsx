@@ -99,7 +99,7 @@ export default function POSWizardNavigation({
         </div>
 
         {/* Center - Status info */}
-        <div className="flex items-center gap-4 text-sm text-gray-500">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
           {/* Could add session info here */}
         </div>
 
@@ -144,7 +144,7 @@ export default function POSWizardNavigation({
           {isInvoicingStep ? (
             <Button
               onClick={onNewSale}
-              className="gap-2 bg-blue-600 hover:bg-blue-700"
+              className="gap-2 bg-primary hover:bg-primary/90"
             >
               <ShoppingCart className="w-4 h-4" />
               Nueva Venta
@@ -153,7 +153,7 @@ export default function POSWizardNavigation({
             <Button
               onClick={onFinalize}
               disabled={!canFinalize || saving}
-              className="gap-2 bg-blue-600 hover:bg-blue-700"
+              className="gap-2 bg-primary hover:bg-primary/90"
             >
               {saving ? (
                 <>
@@ -171,7 +171,7 @@ export default function POSWizardNavigation({
             <Button
               onClick={onNext}
               disabled={!canProceedNext || saving}
-              className="gap-2 bg-blue-600 hover:bg-blue-700"
+              className="gap-2 bg-primary hover:bg-primary/90"
             >
               {currentStep === 1 ? "Comenzar Venta" : "Continuar Venta"}
               <ArrowRight className="w-4 h-4" />

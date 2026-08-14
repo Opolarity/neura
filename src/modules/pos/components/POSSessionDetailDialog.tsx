@@ -225,7 +225,7 @@ const POSSessionDetailDialog = ({
                 {incomePayments.length > 0 && (
                   <div className="flex-1">
                     <div className="bg-muted rounded-lg p-3 space-y-1.5">
-                      <h4 className="text-sm font-semibold text-slate-600 mb-2">
+                      <h4 className="text-sm font-semibold text-muted-foreground mb-2">
                         INGRESOS POR MÉTODO DE PAGO
                       </h4>
                       {incomePayments.map((item) => (
@@ -241,7 +241,7 @@ const POSSessionDetailDialog = ({
                           </span>
                         </div>
                       ))}
-                      <div className="border-t border-slate-200 pt-1.5 flex items-center justify-between text-sm font-semibold">
+                      <div className="border-t border-border pt-1.5 flex items-center justify-between text-sm font-semibold">
                         <span>TOTAL INGRESOS</span>
                         <span>
                           S/ {formatCurrency(totalIngresos)}
@@ -254,7 +254,7 @@ const POSSessionDetailDialog = ({
                 {/* Change Payments */}
                 {changePayments.length > 0 && (
                   <div className="flex-1">
-                    <div className="bg-blue-50/50 rounded-lg p-3 space-y-1.5">
+                    <div className="bg-primary/5 rounded-lg p-3 space-y-1.5">
                       <h4 className="text-sm font-semibold mb-2">
                         CONTROL DE VUELTOS
                       </h4>
@@ -271,7 +271,7 @@ const POSSessionDetailDialog = ({
                           </span>
                         </div>
                       ))}
-                      <div className="border-t border-blue-200 pt-1.5 flex items-center justify-between text-sm font-semibold">
+                      <div className="border-t border-primary/20 pt-1.5 flex items-center justify-between text-sm font-semibold">
                         <span>TOTAL VUELTOS</span>
                         <span>
                           S/ {formatCurrency(totalVueltos)}

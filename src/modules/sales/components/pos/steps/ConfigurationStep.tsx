@@ -36,7 +36,7 @@ export default function ConfigurationStep({
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Nueva Venta</h1>
+        <h1 className="text-2xl font-bold text-foreground">Nueva Venta</h1>
       </div>
 
       <Card className="mb-6">
@@ -50,7 +50,7 @@ export default function ConfigurationStep({
           <div className="grid grid-cols-2 gap-6">
             {/* Price List */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-gray-500 uppercase">
+              <Label className="text-xs font-medium text-muted-foreground uppercase">
                   Lista de Precios
                 </Label>
               <Select value={selectedPriceList} onValueChange={setSelectedPriceList}>
@@ -69,10 +69,10 @@ export default function ConfigurationStep({
 
             {/* Warehouse (auto-assigned) */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-gray-500 uppercase">
+              <Label className="text-xs font-medium text-muted-foreground uppercase">
                   Almacen de Despacho
                 </Label>
-              <div className="h-10 px-3 py-2 border rounded-md bg-muted flex items-center text-gray-600">
+              <div className="h-10 px-3 py-2 border rounded-md bg-muted flex items-center text-muted-foreground">
                 {userWarehouseName || "Sin almacen asignado"}
               </div>
             </div>
@@ -86,7 +86,7 @@ export default function ConfigurationStep({
             <Button
               onClick={handleSubmit}
               disabled={!selectedPriceList}
-              className="gap-2 bg-blue-600 hover:bg-blue-700"
+              className="gap-2 bg-primary hover:bg-primary/90"
             >
               Comenzar Venta
               <ArrowRight className="w-4 h-4" />
