@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import WysiwygEditor from "@/components/ui/wysiwyg-editor";
@@ -17,11 +18,15 @@ interface RuleBasicInfoSectionProps {
     field: K,
     value: PriceRuleFormData[K]
   ) => void;
+  isConsignmentPromo: boolean;
+  toggleConsignmentPromo: (enabled: boolean) => void;
 }
 
 export const RuleBasicInfoSection = ({
   formData,
   updateField,
+  isConsignmentPromo,
+  toggleConsignmentPromo,
 }: RuleBasicInfoSectionProps) => {
   return (
     <Card>
@@ -88,6 +93,28 @@ export const RuleBasicInfoSection = ({
             />
             <p className="text-xs text-muted-foreground">
               Menor número = mayor prioridad
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3 rounded-md border p-4">
+          <Checkbox
+            id="consignment-promo"
+            checked={isConsignmentPromo}
+            onCheckedChange={(checked) =>
+              toggleConsignmentPromo(checked === true)
+            }
+          />
+          <div className="space-y-1">
+            <Label htmlFor="consignment-promo" className="cursor-pointer">
+              Promoción de consignación (franquiciados)
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              No aplica al ecommerce ni al POS: solo la ven los franquiciados
+              por la API de consignación, y el descuento se liquida sobre las
+              unidades que reporten como vendidas mientras la promoción esté
+              vigente. Acciones soportadas: precio fijo, descuento fijo o % por
+              producto.
             </p>
           </div>
         </div>

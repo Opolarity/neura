@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { ConditionsConfig, Condition } from "../../types/priceRule.types";
+import { isConsignmentMarkerGroup } from "../../adapters/priceRule.adapter";
 import { ConditionGroup } from "./ConditionGroup";
 
 interface ConditionBuilderProps {
@@ -25,10 +26,16 @@ export const ConditionBuilder = ({
   updateCondition,
   removeCondition,
 }: ConditionBuilderProps) => {
+  // El grupo marcador de "promoción de consignación" no se edita a mano:
+  // se gestiona con el checkbox de Información Básica y acá se esconde.
+  const visibleGroups = conditions.groups
+    .map((group, originalIndex) => ({ group, originalIndex }))
+    .filter(({ group }) => !isConsignmentMarkerGroup(group));
+
   return (
     <div className="space-y-4">
       {/* Operator between groups */}
-      {conditions.groups.length > 1 && (
+      {visibleGroups.length > 1 && (
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Operador entre grupos:</span>
           <div className="flex gap-1">
@@ -52,22 +59,24 @@ export const ConditionBuilder = ({
 
       {/* Groups */}
       <div className="space-y-3">
-        {conditions.groups.map((group, groupIdx) => (
-          <div key={groupIdx}>
-            {groupIdx > 0 && (
+        {visibleGroups.map(({ group, originalIndex }, visibleIdx) => (
+          <div key={originalIndex}>
+            {visibleIdx > 0 && (
               <div className="flex justify-center py-2">
                 <Badge variant="secondary">{conditions.operator}</Badge>
               </div>
             )}
             <ConditionGroup
               group={group}
-              groupIndex={groupIdx}
-              canRemove={conditions.groups.length > 1}
-              onUpdateOperator={(op) => updateGroupOperator(groupIdx, op)}
-              onAddCondition={(c) => addCondition(groupIdx, c)}
-              onUpdateCondition={(cIdx, c) => updateCondition(groupIdx, cIdx, c)}
-              onRemoveCondition={(cIdx) => removeCondition(groupIdx, cIdx)}
-              onRemoveGroup={() => removeGroup(groupIdx)}
+              groupIndex={originalIndex}
+              canRemove={visibleGroups.length > 1}
+              onUpdateOperator={(op) => updateGroupOperator(originalIndex, op)}
+              onAddCondition={(c) => addCondition(originalIndex, c)}
+              onUpdateCondition={(cIdx, c) =>
+                updateCondition(originalIndex, cIdx, c)
+              }
+              onRemoveCondition={(cIdx) => removeCondition(originalIndex, cIdx)}
+              onRemoveGroup={() => removeGroup(originalIndex)}
             />
           </div>
         ))}
@@ -78,7 +87,7 @@ export const ConditionBuilder = ({
         Agregar Grupo de Condiciones
       </Button>
 
-      {conditions.groups.length === 0 && (
+      {visibleGroups.length === 0 && (
         <p className="text-sm text-muted-foreground">
           Sin condiciones: la regla se aplicará siempre
         </p>

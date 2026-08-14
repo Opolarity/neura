@@ -10,6 +10,9 @@ export type FranchiseProductRow = {
   soldByFranchise: number | null;
   productPrice: number;
   paidByFranchise: number | null;
+  // Descuento acumulado por promociones de consignación (order_discounts
+  // FCH-PROMO-%) sobre las unidades ya vendidas de esta línea.
+  franchiseDiscount: number;
   total: number;
   franchiseName: string | null;
   isFranchisee: boolean;
@@ -31,9 +34,11 @@ export type FranchiseSalesStatus = "all" | "with_sales" | "without_sales";
 
 export type FranchiseSummary = {
   totalSent: number;
+  // Neto: el SP ya descuenta las promociones de consignación.
   totalSold: number;
   totalPaid: number;
   totalPending: number;
+  totalPromoDiscount: number;
 };
 
 export type FranchiseProductsResponse = {
@@ -50,6 +55,7 @@ type RawFranchiseProduct = {
   quantity: number | string | null;
   sold_by_franchise: number | string | null;
   paid_by_franchise: number | string | null;
+  franchise_discount: number | string | null;
   franchise_name: string | null;
   is_franchisee: boolean;
 };
@@ -102,6 +108,7 @@ export const fetchFranchiseProducts = async (
         soldByFranchise: toNullableNumber(item.sold_by_franchise),
         productPrice,
         paidByFranchise: toNullableNumber(item.paid_by_franchise),
+        franchiseDiscount: toNumber(item.franchise_discount),
         total: productPrice * quantity,
         franchiseName: item.franchise_name ?? null,
         isFranchisee: item.is_franchisee ?? false,
@@ -118,11 +125,13 @@ export const fetchFranchiseProducts = async (
   const totalSent = toNumber(data?.summary?.total_sent);
   const totalSold = toNumber(data?.summary?.total_sold);
   const totalPaid = toNumber(data?.summary?.total_paid);
+  const totalPromoDiscount = toNumber(data?.summary?.total_promo_discount);
   const summary: FranchiseSummary = {
     totalSent,
     totalSold,
     totalPaid,
     totalPending: totalSold - totalPaid,
+    totalPromoDiscount,
   };
 
   return { data: rows, pagination, summary };

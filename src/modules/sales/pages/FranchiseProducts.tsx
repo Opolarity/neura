@@ -223,12 +223,23 @@ const FranchiseProducts = () => {
         (acc, item) => {
           acc.quantity += item.quantity;
           acc.sold += item.soldByFranchise ?? 0;
-          acc.soldAmount += item.productPrice * (item.soldByFranchise ?? 0);
+          // Neto de promociones de consignación.
+          acc.soldAmount +=
+            item.productPrice * (item.soldByFranchise ?? 0) -
+            item.franchiseDiscount;
+          acc.promoDiscount += item.franchiseDiscount;
           acc.paid += item.paidByFranchise ?? 0;
           acc.total += item.total;
           return acc;
         },
-        { quantity: 0, sold: 0, soldAmount: 0, paid: 0, total: 0 },
+        {
+          quantity: 0,
+          sold: 0,
+          soldAmount: 0,
+          promoDiscount: 0,
+          paid: 0,
+          total: 0,
+        },
       ),
     [products],
   );
@@ -329,6 +340,7 @@ const FranchiseProducts = () => {
                   <TableHead>ID de la orden</TableHead>
                   <TableHead className="text-right">Cantidad</TableHead>
                   <TableHead className="text-right">Cantidad vendida</TableHead>
+                  <TableHead className="text-right">Dscto. promo</TableHead>
                   <TableHead className="text-right">Monto vendido</TableHead>
                   <TableHead className="text-right">Total pagado</TableHead>
                   <TableHead className="text-right">Total</TableHead>
@@ -338,7 +350,7 @@ const FranchiseProducts = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-8 text-center">
+                    <TableCell colSpan={9} className="py-8 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         Cargando productos...
@@ -348,7 +360,7 @@ const FranchiseProducts = () => {
                 ) : error ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="py-8 text-center text-destructive"
                     >
                       {error}
@@ -357,7 +369,7 @@ const FranchiseProducts = () => {
                 ) : products.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="py-8 text-center text-muted-foreground"
                     >
                       No hay productos recibidos por franquicia.
@@ -377,8 +389,14 @@ const FranchiseProducts = () => {
                         {formatNumber(item.soldByFranchise)}
                       </TableCell>
                       <TableCell className="text-right">
+                        {item.franchiseDiscount > 0
+                          ? formatCurrency(item.franchiseDiscount)
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
                         {formatCurrency(
-                          item.productPrice * (item.soldByFranchise ?? 0),
+                          item.productPrice * (item.soldByFranchise ?? 0) -
+                            item.franchiseDiscount,
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -406,6 +424,9 @@ const FranchiseProducts = () => {
                     </TableCell>
                     <TableCell className="text-right font-semibold">
                       {formatNumber(totals.sold)}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {formatCurrency(totals.promoDiscount)}
                     </TableCell>
                     <TableCell className="text-right font-semibold">
                       {formatCurrency(totals.soldAmount)}

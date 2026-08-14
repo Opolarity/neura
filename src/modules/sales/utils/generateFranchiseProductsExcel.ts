@@ -69,6 +69,7 @@ export function generateFranchiseProductsExcel({
     ["Total vendido", roundMoney(summary.totalSold)],
     ["Total pagado", roundMoney(summary.totalPaid)],
     ["Total por pagar", roundMoney(summary.totalPending)],
+    ["Dscto. promociones", roundMoney(summary.totalPromoDiscount)],
     [],
   ];
 
@@ -77,6 +78,7 @@ export function generateFranchiseProductsExcel({
     "ID de la orden",
     "Cantidad",
     "Cantidad vendida",
+    "Dscto. promo",
     "Monto vendido",
     "Total pagado",
     "Total",
@@ -88,7 +90,11 @@ export function generateFranchiseProductsExcel({
     item.orderId,
     item.quantity,
     item.soldByFranchise ?? 0,
-    roundMoney(item.productPrice * (item.soldByFranchise ?? 0)),
+    roundMoney(item.franchiseDiscount),
+    // Neto de promociones de consignación.
+    roundMoney(
+      item.productPrice * (item.soldByFranchise ?? 0) - item.franchiseDiscount,
+    ),
     item.paidByFranchise ?? 0,
     roundMoney(item.total),
     item.franchiseName ?? "-",
@@ -105,10 +111,11 @@ export function generateFranchiseProductsExcel({
     { wch: 16 },
     { wch: 16 },
     { wch: 16 },
+    { wch: 16 },
     { wch: 28 },
   ];
 
-  const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:H1");
+  const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:I1");
   for (let row = range.s.r; row <= range.e.r; row += 1) {
     for (let col = range.s.c; col <= range.e.c; col += 1) {
       const cell = ws[XLSX.utils.encode_cell({ r: row, c: col })];
@@ -118,12 +125,12 @@ export function generateFranchiseProductsExcel({
         cell.z = '"S/ "#,##0.00';
       }
 
-      if (row >= filterRows.length + 1 && row <= filterRows.length + 4 && col === 1) {
+      if (row >= filterRows.length + 1 && row <= filterRows.length + 5 && col === 1) {
         cell.z = '"S/ "#,##0.00';
       }
 
       if (row > filterRows.length + summaryRows.length) {
-        if ([4, 5, 6].includes(col)) cell.z = '"S/ "#,##0.00';
+        if ([4, 5, 6, 7].includes(col)) cell.z = '"S/ "#,##0.00';
         if ([2, 3].includes(col)) cell.z = "#,##0.##";
       }
     }
