@@ -79,3 +79,18 @@ export const deletePriceRule = async (id: number) => {
   if (error) await throwFunctionError(error);
   return data;
 };
+
+export const deletePriceRulesBulk = async (ruleIds: number[]) => {
+  const { data, error } = await supabase.functions.invoke("delete-massive-price-rules", {
+    body: { ruleIds },
+  });
+  if (error) await throwFunctionError(error);
+  return data as {
+    success: boolean;
+    requested: number;
+    deleted: number;
+    deletedIds: number[];
+    alreadyDeletedIds: number[];
+    notFoundIds: number[];
+  };
+};

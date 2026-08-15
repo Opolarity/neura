@@ -11,6 +11,11 @@ import {
 } from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Card,
   CardContent,
   CardFooter,
@@ -231,6 +236,17 @@ const CreateSale = () => {
   const [newDiscountSign, setNewDiscountSign] = useState<"negative" | "positive">(
     "negative",
   );
+  // El tooltip del toggle de signo se abre solo al desplegar el formulario, para
+  // avisar que ese botón cambia el símbolo; luego se comporta como cualquier tooltip.
+  const [signTooltipOpen, setSignTooltipOpen] = useState(false);
+  useEffect(() => {
+    if (!showAddDiscount) {
+      setSignTooltipOpen(false);
+      return;
+    }
+    const t = setTimeout(() => setSignTooltipOpen(false), 4000);
+    return () => clearTimeout(t);
+  }, [showAddDiscount]);
   const [productsTableSearchInput, setProductsTableSearchInput] = useState("");
   const [franchiseProductsPage, setFranchiseProductsPage] = useState(1);
   const [franchiseProductsPageSize, setFranchiseProductsPageSize] = useState(20);
@@ -1595,30 +1611,39 @@ const CreateSale = () => {
                         className="h-7 text-xs"
                       />
                       <div className="flex gap-2">
-                        <Toggle
-                          variant="outline"
-                          pressed={newDiscountSign === "positive"}
-                          onPressedChange={(pressed) =>
-                            setNewDiscountSign(pressed ? "positive" : "negative")
-                          }
-                          title={
-                            newDiscountSign === "positive"
-                              ? "Positivo: suma al total"
-                              : "Negativo: resta del total"
-                          }
-                          aria-label={
-                            newDiscountSign === "positive"
-                              ? "Positivo: suma al total"
-                              : "Negativo: resta del total"
-                          }
-                          className="h-7 w-7 shrink-0 p-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                        <Tooltip
+                          open={signTooltipOpen}
+                          onOpenChange={setSignTooltipOpen}
                         >
-                          {newDiscountSign === "positive" ? (
-                            <Plus className="w-3.5 h-3.5" />
-                          ) : (
-                            <Minus className="w-3.5 h-3.5" />
-                          )}
-                        </Toggle>
+                          <TooltipTrigger asChild>
+                            <Toggle
+                              variant="outline"
+                              pressed={newDiscountSign === "positive"}
+                              onPressedChange={(pressed) =>
+                                setNewDiscountSign(
+                                  pressed ? "positive" : "negative",
+                                )
+                              }
+                              aria-label={
+                                newDiscountSign === "positive"
+                                  ? "Positivo: suma al total"
+                                  : "Negativo: resta del total"
+                              }
+                              className="h-7 w-7 shrink-0 p-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                            >
+                              {newDiscountSign === "positive" ? (
+                                <Plus className="w-3.5 h-3.5" />
+                              ) : (
+                                <Minus className="w-3.5 h-3.5" />
+                              )}
+                            </Toggle>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            {newDiscountSign === "positive"
+                              ? "Positivo: suma al total. Click para cambiar el símbolo"
+                              : "Negativo: resta del total. Click para cambiar el símbolo"}
+                          </TooltipContent>
+                        </Tooltip>
                         <Input
                           type="number"
                           step="0.01"
@@ -1672,7 +1697,10 @@ const CreateSale = () => {
                     <button
                       type="button"
                       className="font-medium text-xs hover:underline flex items-center gap-1"
-                      onClick={() => setShowAddDiscount(true)}
+                      onClick={() => {
+                        setShowAddDiscount(true);
+                        setSignTooltipOpen(true);
+                      }}
                     >
                       <Plus className="w-3 h-3" />
                       Añadir descuento
@@ -1909,13 +1937,9 @@ const CreateSale = () => {
                 }}
               />
 
-              {/* Formulario para agregar nuevo pago */}
-              <div
-                className={cn(
-                  "space-y-3 p-3 border rounded-md bg-muted/30",
-                  isComSituation && "opacity-50 pointer-events-none",
-                )}
-              >
+              {/* Formulario para agregar nuevo pago — nunca se bloquea: un pago
+                  puede registrarse en cualquier situación de la orden. */}
+              <div className="space-y-3 p-3 border rounded-md bg-muted/30">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label>Método de Pago</Label>
@@ -2116,16 +2140,14 @@ const CreateSale = () => {
                                       </Button>
                                     )}
                                   </div>
-                                  {!isComSituation && (
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-6 w-6"
-                                      onClick={() => removeChangeEntry(e.id)}
-                                    >
-                                      <Trash2 className="w-3 h-3 text-destructive" />
-                                    </Button>
-                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => removeChangeEntry(e.id)}
+                                  >
+                                    <Trash2 className="w-3 h-3 text-destructive" />
+                                  </Button>
                                 </div>
                               );
                             })}
@@ -2142,12 +2164,7 @@ const CreateSale = () => {
                         changeAmount - existingChangeTotal;
                       if (remainingChange <= 0) return null;
                       return (
-                        <div
-                          className={cn(
-                            "space-y-3 p-3 border rounded-md bg-muted/30",
-                            isComSituation && "opacity-50 pointer-events-none",
-                          )}
-                        >
+                        <div className="space-y-3 p-3 border rounded-md bg-muted/30">
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <Label>Método de Pago</Label>

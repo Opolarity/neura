@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { 
+import { throwFunctionError } from '@/shared/utils/functionError';
+import type {
   ProductFormDataResponse, 
   ProductDetailsResponse,
   CreateProductRequest,
@@ -47,16 +48,8 @@ export const AddProductService = {
       body: productData
     });
     
-    if (error) {
-      const serverBody = (error as any)?.context?.body;
-      let errorMessage = error.message || 'Error al crear el producto';
-      try {
-        const parsed = typeof serverBody === 'string' ? JSON.parse(serverBody) : serverBody;
-        errorMessage = parsed?.error || parsed?.message || errorMessage;
-      } catch {}
-      throw new Error(errorMessage);
-    }
-    
+    if (error) await throwFunctionError(error);
+
     return data;
   },
 
@@ -68,16 +61,8 @@ export const AddProductService = {
       body: productData
     });
     
-    if (error) {
-      const serverBody = (error as any)?.context?.body;
-      let errorMessage = error.message || 'Error al actualizar el producto';
-      try {
-        const parsed = typeof serverBody === 'string' ? JSON.parse(serverBody) : serverBody;
-        errorMessage = parsed?.error || parsed?.message || errorMessage;
-      } catch {}
-      throw new Error(errorMessage);
-    }
-    
+    if (error) await throwFunctionError(error);
+
     return data;
   },
 

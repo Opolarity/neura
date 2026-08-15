@@ -24,6 +24,11 @@ const PriceRulesPage = () => {
     openDeleteDialog,
     setDeleteDialogOpen,
     handleDelete,
+    bulkDeleteDialogOpen,
+    setBulkDeleteDialogOpen,
+    openBulkDeleteDialog,
+    handleBulkDelete,
+    isBulkDeleting,
     selectedIds,
     bulkStatus,
     setBulkStatus,
@@ -42,6 +47,8 @@ const PriceRulesPage = () => {
         onBulkStatusChange={setBulkStatus}
         onApplyBulkStatus={applyBulkStatus}
         isApplying={isApplyingBulk}
+        onBulkDelete={openBulkDeleteDialog}
+        isBulkDeleting={isBulkDeleting}
       />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
@@ -78,6 +85,14 @@ const PriceRulesPage = () => {
         rule={selectedRule}
         onConfirm={handleDelete}
         isDeleting={isDeleting}
+      />
+
+      <PriceRuleDeleteDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        count={selectedIds.size}
+        onConfirm={handleBulkDelete}
+        isDeleting={isBulkDeleting}
       />
     </div>
   );
