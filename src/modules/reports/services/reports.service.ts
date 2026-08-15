@@ -442,6 +442,12 @@ export interface PriceRuleReportRow {
   code: string | null;
   rule_type: 'automatic' | 'coupon';
   is_active: boolean;
+  // Regla eliminada del ERP (price_rules.deleted_at). El SP ya la excluye de los
+  // KPIs, pero la sigue listando si tuvo aplicaciones en el rango, para no
+  // perder el historial de ventas. Por eso la fila necesita distinguirse: una
+  // eliminada llega con is_active = false y sin este campo se contaría como
+  // "inactiva" en la pestaña, contradiciendo al KPI.
+  is_deleted: boolean;
   applications: number;
   rendimiento: number;
 }

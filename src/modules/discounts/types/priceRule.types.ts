@@ -85,6 +85,11 @@ export interface PriceRule {
   is_stackable: boolean;
   stop_processing: boolean;
   is_active: boolean;
+  // Borrado lógico. NULL = la regla se lista con normalidad e `is_active` decide
+  // si está activa o pausada. Con fecha = eliminada: el backend ya no la
+  // devuelve en el listado ni en el detalle, así que en la práctica nunca llega
+  // con valor a la UI; está declarado por honestidad del tipo.
+  deleted_at?: string | null;
   valid_from: string | null;
   valid_to: string | null;
   price_list_id: number | null;
