@@ -1937,13 +1937,9 @@ const CreateSale = () => {
                 }}
               />
 
-              {/* Formulario para agregar nuevo pago */}
-              <div
-                className={cn(
-                  "space-y-3 p-3 border rounded-md bg-muted/30",
-                  isComSituation && "opacity-50 pointer-events-none",
-                )}
-              >
+              {/* Formulario para agregar nuevo pago — nunca se bloquea: un pago
+                  puede registrarse en cualquier situación de la orden. */}
+              <div className="space-y-3 p-3 border rounded-md bg-muted/30">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label>Método de Pago</Label>
@@ -2144,16 +2140,14 @@ const CreateSale = () => {
                                       </Button>
                                     )}
                                   </div>
-                                  {!isComSituation && (
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-6 w-6"
-                                      onClick={() => removeChangeEntry(e.id)}
-                                    >
-                                      <Trash2 className="w-3 h-3 text-destructive" />
-                                    </Button>
-                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => removeChangeEntry(e.id)}
+                                  >
+                                    <Trash2 className="w-3 h-3 text-destructive" />
+                                  </Button>
                                 </div>
                               );
                             })}
@@ -2170,12 +2164,7 @@ const CreateSale = () => {
                         changeAmount - existingChangeTotal;
                       if (remainingChange <= 0) return null;
                       return (
-                        <div
-                          className={cn(
-                            "space-y-3 p-3 border rounded-md bg-muted/30",
-                            isComSituation && "opacity-50 pointer-events-none",
-                          )}
-                        >
+                        <div className="space-y-3 p-3 border rounded-md bg-muted/30">
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <Label>Método de Pago</Label>
