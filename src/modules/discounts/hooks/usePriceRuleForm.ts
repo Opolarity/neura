@@ -10,6 +10,11 @@ import type {
   ExclusionFilter,
 } from "../types/priceRule.types";
 import {
+  CONSIGNMENT_ALLOWED_ACTION_TYPES,
+  CONSIGNMENT_CONDITION_TYPE,
+  ACTION_TYPE_LABELS,
+} from "../types/priceRule.types";
+import {
   createPriceRule,
   updatePriceRule,
   getPriceRuleDetails,
@@ -18,6 +23,8 @@ import {
   DEFAULT_FORM_DATA,
   adaptPriceRuleToForm,
   adaptFormToPayload,
+  hasConsignmentMarker,
+  isConsignmentMarkerGroup,
 } from "../adapters/priceRule.adapter";
 
 export function usePriceRuleForm() {
@@ -168,6 +175,56 @@ export function usePriceRuleForm() {
     setFormData((prev) => ({ ...prev, exclusions }));
   };
 
+  // --- Promoción de consignación (franquiciados) ---
+  // El marcador vive como un grupo propio { type: "consignment_channel" } y el
+  // operador entre grupos se fuerza a AND para que la regla jamás pueda
+  // evaluar verdadera en el ecommerce por un OR (defensa además del filtro
+  // del backend).
+  const isConsignmentPromo = hasConsignmentMarker(formData.conditions);
+
+  const toggleConsignmentPromo = (enabled: boolean) => {
+    setFormData((prev) => {
+      if (enabled) {
+        if (hasConsignmentMarker(prev.conditions)) return prev;
+        return {
+          ...prev,
+          rule_type: "automatic",
+          conditions: {
+            operator: "AND",
+            groups: [
+              ...prev.conditions.groups,
+              {
+                operator: "AND" as const,
+                conditions: [{ type: CONSIGNMENT_CONDITION_TYPE }],
+              },
+            ],
+          },
+        };
+      }
+
+      // Quitar el marcador: se eliminan los grupos-marcador y cualquier
+      // condición de consignación suelta; siempre queda al menos un grupo.
+      const groups = prev.conditions.groups
+        .filter((g) => !isConsignmentMarkerGroup(g))
+        .map((g) => ({
+          ...g,
+          conditions: g.conditions.filter(
+            (c) => c.type !== CONSIGNMENT_CONDITION_TYPE,
+          ),
+        }));
+
+      return {
+        ...prev,
+        conditions: {
+          ...prev.conditions,
+          groups: groups.length > 0
+            ? groups
+            : [{ operator: "AND" as const, conditions: [] }],
+        },
+      };
+    });
+  };
+
   // --- Action management ---
   const addAction = (action: ActionConfig) => {
     setFormData((prev) => ({
@@ -208,9 +265,47 @@ export function usePriceRuleForm() {
       return;
     }
 
+    let dataToSave = formData;
+
+    if (isConsignmentPromo) {
+      if (formData.rule_type !== "automatic") {
+        toast.error(
+          "Una promoción de consignación debe ser de tipo Automática (no cupón)",
+        );
+        return;
+      }
+
+      const invalidAction = formData.actions.find(
+        (a) => !CONSIGNMENT_ALLOWED_ACTION_TYPES.includes(a.type),
+      );
+      if (invalidAction) {
+        toast.error(
+          `La acción "${ACTION_TYPE_LABELS[invalidAction.type]}" no está soportada en promociones de consignación. Usa precio fijo, descuento fijo o % por producto.`,
+        );
+        return;
+      }
+
+      if (
+        formData.actions.some(
+          (a) => a.type === "set_fixed_price" && a.max_qty != null,
+        )
+      ) {
+        toast.error(
+          "El precio fijo con cantidad máxima (max_qty) no está soportado en promociones de consignación",
+        );
+        return;
+      }
+
+      // Refuerzo del invariante aunque la UI ya lo garantice.
+      dataToSave = {
+        ...formData,
+        conditions: { ...formData.conditions, operator: "AND" },
+      };
+    }
+
     setSaving(true);
     try {
-      const payload = adaptFormToPayload(formData);
+      const payload = adaptFormToPayload(dataToSave);
       if (isEditMode) {
         await updatePriceRule(parseInt(id!), payload);
         toast.success("Regla de precios actualizada");
@@ -248,6 +343,8 @@ export function usePriceRuleForm() {
     updateAction,
     removeAction,
     updateExclusions,
+    isConsignmentPromo,
+    toggleConsignmentPromo,
     handleSubmit,
     navigate,
   };

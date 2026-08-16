@@ -10,7 +10,24 @@ export type ConditionType =
   | "payment_method"
   | "new_customer"
   | "customer_birthday"
-  | "date_range";
+  | "date_range"
+  | "consignment_channel";
+
+// Marcador de "promoción de consignación (franquiciados)". Una regla que lo
+// lleva NUNCA aplica al ecommerce/ERP (el motor process-price-rules la
+// excluye y su evaluator es fail-closed ante este tipo); solo la consume la
+// API externa de franquiciados (fch-get-promotions /
+// fch-update-sales-products-status). Se gestiona con el checkbox del
+// formulario, no desde el builder de condiciones.
+export const CONSIGNMENT_CONDITION_TYPE: ConditionType = "consignment_channel";
+
+// Acciones soportadas por el canal consignación (el backend solo sabe
+// liquidar estas tres contra el precio de la orden de consignación).
+export const CONSIGNMENT_ALLOWED_ACTION_TYPES: ActionType[] = [
+  "set_fixed_price",
+  "fixed_discount_per_product",
+  "percent_discount_per_product",
+];
 
 export interface Condition {
   type: ConditionType;
@@ -169,6 +186,7 @@ export const CONDITION_TYPE_LABELS: Record<ConditionType, string> = {
   new_customer: "Cliente nuevo",
   customer_birthday: "Cumpleaños del cliente",
   date_range: "Rango de fechas",
+  consignment_channel: "Canal: consignación (franquiciados)",
 };
 
 export const ACTION_TYPE_LABELS: Record<ActionType, string> = {

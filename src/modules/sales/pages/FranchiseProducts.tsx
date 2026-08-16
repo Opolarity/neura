@@ -2,16 +2,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, Filter, Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { PagosConfirmarModal } from "../components/PagosConfirmarModal";
-import FranchiseFilterModal from "../components/FranchiseFilterModal";
+import FranchiseFilterModal, {
+  type FranchiseFilterValues,
+} from "../components/FranchiseFilterModal";
 import { generateFranchiseProductsExcel } from "../utils/generateFranchiseProductsExcel";
 import {
   fetchFranchiseProducts,
+  type FranchiseeOption,
   type FranchiseProductRow,
   type FranchiseProductsFilters,
   type FranchisePaymentStatus,
   type FranchiseSalesStatus,
+  type FranchiseStockStatus,
   type FranchiseSummary,
 } from "../services/FranchiseProducts.service";
+import type { CategoryOption } from "@/shared/components/category-selector";
 import {
   Card,
   CardContent,
@@ -48,6 +53,7 @@ const DEFAULT_PAYMENT_STATUSES: FranchisePaymentStatus[] = [
   "partial",
 ];
 const DEFAULT_SALES_STATUS: FranchiseSalesStatus = "with_sales";
+const DEFAULT_STOCK_STATUS: FranchiseStockStatus = "all";
 
 const DEFAULT_FILTERS: FranchiseProductsFilters = {
   page: 1,
@@ -58,6 +64,10 @@ const DEFAULT_FILTERS: FranchiseProductsFilters = {
   date_to: undefined,
   payment_statuses: DEFAULT_PAYMENT_STATUSES,
   sales_status: DEFAULT_SALES_STATUS,
+  account_ids: [],
+  stock_status: DEFAULT_STOCK_STATUS,
+  order_id: undefined,
+  category_ids: [],
 };
 
 const hasDefaultPaymentStatuses = (
@@ -82,6 +92,12 @@ const FranchiseProducts = () => {
   const [pagosModalOpen, setPagosModalOpen] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [summary, setSummary] = useState<FranchiseSummary | null>(null);
+  const [franchisees, setFranchisees] = useState<FranchiseeOption[]>([]);
+  // Los ids filtrados viven en `filters`; acá se guardan los objetos solo para
+  // conservar el nombre de cada categoría (el modal y el Excel lo necesitan).
+  const [selectedCategories, setSelectedCategories] = useState<CategoryOption[]>(
+    [],
+  );
 
   const [filters, setFilters] =
     useState<FranchiseProductsFilters>(DEFAULT_FILTERS);
@@ -96,6 +112,7 @@ const FranchiseProducts = () => {
       setProducts(result.data);
       setPagination(result.pagination);
       setSummary(result.summary);
+      setFranchisees(result.franchisees);
     } catch (err) {
       console.error("Error loading franchise products:", err);
       setError("No se pudo cargar el listado de productos de franquicia.");
@@ -164,10 +181,21 @@ const FranchiseProducts = () => {
         size: total,
       });
 
+      const selectedFranchiseeNames = franchisees
+        .filter((franchisee) => filters.account_ids?.includes(franchisee.id))
+        .map((franchisee) => franchisee.name)
+        .join(", ");
+
       generateFranchiseProductsExcel({
         rows: result.data,
         summary: result.summary ?? exportSummary,
         filters,
+        filterLabels: {
+          franchisees: selectedFranchiseeNames,
+          categories: selectedCategories
+            .map((category) => category.name)
+            .join(", "),
+        },
       });
 
       toast.success(`${result.data.length} registros exportados correctamente.`);
@@ -179,20 +207,20 @@ const FranchiseProducts = () => {
     }
   };
 
-  const handleApplyFilters = (
-    dateFrom: string | undefined,
-    dateTo: string | undefined,
-    paymentStatuses: FranchisePaymentStatus[],
-    salesStatus: FranchiseSalesStatus,
-  ) => {
+  const handleApplyFilters = (values: FranchiseFilterValues) => {
     const newFilters: FranchiseProductsFilters = {
       ...filters,
-      date_from: dateFrom,
-      date_to: dateTo,
-      payment_statuses: paymentStatuses,
-      sales_status: salesStatus,
+      date_from: values.dateFrom,
+      date_to: values.dateTo,
+      payment_statuses: values.paymentStatuses,
+      sales_status: values.salesStatus,
+      account_ids: values.accountIds,
+      stock_status: values.stockStatus,
+      order_id: values.orderId,
+      category_ids: values.categories.map((category) => category.id),
       page: 1,
     };
+    setSelectedCategories(values.categories);
     setFilters(newFilters);
     loadProducts(newFilters);
     setFilterModalOpen(false);
@@ -205,8 +233,13 @@ const FranchiseProducts = () => {
       date_to: undefined,
       payment_statuses: DEFAULT_PAYMENT_STATUSES,
       sales_status: DEFAULT_SALES_STATUS,
+      account_ids: [],
+      stock_status: DEFAULT_STOCK_STATUS,
+      order_id: undefined,
+      category_ids: [],
       page: 1,
     };
+    setSelectedCategories([]);
     setFilters(newFilters);
     loadProducts(newFilters);
     setFilterModalOpen(false);
@@ -215,7 +248,25 @@ const FranchiseProducts = () => {
   const hasActiveFilters =
     !!(filters.date_from || filters.date_to) ||
     !hasDefaultPaymentStatuses(filters.payment_statuses) ||
-    filters.sales_status !== DEFAULT_SALES_STATUS;
+    filters.sales_status !== DEFAULT_SALES_STATUS ||
+    !!filters.account_ids?.length ||
+    (filters.stock_status ?? DEFAULT_STOCK_STATUS) !== DEFAULT_STOCK_STATUS ||
+    !!filters.order_id ||
+    !!filters.category_ids?.length;
+
+  const filterValues: FranchiseFilterValues = useMemo(
+    () => ({
+      dateFrom: filters.date_from,
+      dateTo: filters.date_to,
+      paymentStatuses: filters.payment_statuses ?? DEFAULT_PAYMENT_STATUSES,
+      salesStatus: filters.sales_status ?? DEFAULT_SALES_STATUS,
+      accountIds: filters.account_ids ?? [],
+      stockStatus: filters.stock_status ?? DEFAULT_STOCK_STATUS,
+      orderId: filters.order_id,
+      categories: selectedCategories,
+    }),
+    [filters, selectedCategories],
+  );
 
   const totals = useMemo(
     () =>
@@ -223,12 +274,23 @@ const FranchiseProducts = () => {
         (acc, item) => {
           acc.quantity += item.quantity;
           acc.sold += item.soldByFranchise ?? 0;
-          acc.soldAmount += item.productPrice * (item.soldByFranchise ?? 0);
+          // Neto de promociones de consignación.
+          acc.soldAmount +=
+            item.productPrice * (item.soldByFranchise ?? 0) -
+            item.franchiseDiscount;
+          acc.promoDiscount += item.franchiseDiscount;
           acc.paid += item.paidByFranchise ?? 0;
           acc.total += item.total;
           return acc;
         },
-        { quantity: 0, sold: 0, soldAmount: 0, paid: 0, total: 0 },
+        {
+          quantity: 0,
+          sold: 0,
+          soldAmount: 0,
+          promoDiscount: 0,
+          paid: 0,
+          total: 0,
+        },
       ),
     [products],
   );
@@ -292,7 +354,7 @@ const FranchiseProducts = () => {
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar franquiciado..."
+                placeholder="Buscar producto o SKU..."
                 value={searchInput}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-9"
@@ -329,6 +391,7 @@ const FranchiseProducts = () => {
                   <TableHead>ID de la orden</TableHead>
                   <TableHead className="text-right">Cantidad</TableHead>
                   <TableHead className="text-right">Cantidad vendida</TableHead>
+                  <TableHead className="text-right">Dscto. promo</TableHead>
                   <TableHead className="text-right">Monto vendido</TableHead>
                   <TableHead className="text-right">Total pagado</TableHead>
                   <TableHead className="text-right">Total</TableHead>
@@ -338,7 +401,7 @@ const FranchiseProducts = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-8 text-center">
+                    <TableCell colSpan={9} className="py-8 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         Cargando productos...
@@ -348,7 +411,7 @@ const FranchiseProducts = () => {
                 ) : error ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="py-8 text-center text-destructive"
                     >
                       {error}
@@ -357,7 +420,7 @@ const FranchiseProducts = () => {
                 ) : products.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="py-8 text-center text-muted-foreground"
                     >
                       No hay productos recibidos por franquicia.
@@ -377,8 +440,14 @@ const FranchiseProducts = () => {
                         {formatNumber(item.soldByFranchise)}
                       </TableCell>
                       <TableCell className="text-right">
+                        {item.franchiseDiscount > 0
+                          ? formatCurrency(item.franchiseDiscount)
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
                         {formatCurrency(
-                          item.productPrice * (item.soldByFranchise ?? 0),
+                          item.productPrice * (item.soldByFranchise ?? 0) -
+                            item.franchiseDiscount,
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -406,6 +475,9 @@ const FranchiseProducts = () => {
                     </TableCell>
                     <TableCell className="text-right font-semibold">
                       {formatNumber(totals.sold)}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {formatCurrency(totals.promoDiscount)}
                     </TableCell>
                     <TableCell className="text-right font-semibold">
                       {formatCurrency(totals.soldAmount)}
@@ -440,10 +512,8 @@ const FranchiseProducts = () => {
 
       <FranchiseFilterModal
         isOpen={filterModalOpen}
-        dateFrom={filters.date_from}
-        dateTo={filters.date_to}
-        paymentStatuses={filters.payment_statuses ?? DEFAULT_PAYMENT_STATUSES}
-        salesStatus={filters.sales_status ?? DEFAULT_SALES_STATUS}
+        values={filterValues}
+        franchisees={franchisees}
         onClose={() => setFilterModalOpen(false)}
         onApply={handleApplyFilters}
         onClear={handleClearFilters}

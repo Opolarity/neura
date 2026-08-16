@@ -4,6 +4,7 @@ import type {
   FranchiseProductRow,
   FranchiseProductsFilters,
   FranchiseSalesStatus,
+  FranchiseStockStatus,
   FranchiseSummary,
 } from "../services/FranchiseProducts.service";
 
@@ -17,6 +18,12 @@ const SALES_STATUS_LABELS: Record<FranchiseSalesStatus, string> = {
   all: "Todos",
   with_sales: "Con ventas",
   without_sales: "Sin ventas",
+};
+
+const STOCK_STATUS_LABELS: Record<FranchiseStockStatus, string> = {
+  all: "Todos",
+  pending: "Con stock en tienda",
+  settled: "Vendido completo",
 };
 
 const formatFilterDate = (value: string | undefined): string =>
@@ -41,25 +48,45 @@ const getSalesStatusLabel = (
   return SALES_STATUS_LABELS[status];
 };
 
+const getStockStatusLabel = (
+  status: FranchiseStockStatus | undefined,
+): string => {
+  if (!status) return "Sin filtro";
+  return STOCK_STATUS_LABELS[status];
+};
+
 const roundMoney = (value: number): number => Number(value.toFixed(2));
 
 export interface FranchiseProductsExcelData {
   rows: FranchiseProductRow[];
   summary: FranchiseSummary;
   filters: FranchiseProductsFilters;
+  /**
+   * Nombres de lo que en `filters` viaja como ids, para rotular los filtros
+   * aplicados con algo legible.
+   */
+  filterLabels?: {
+    franchisees?: string;
+    categories?: string;
+  };
 }
 
 export function generateFranchiseProductsExcel({
   rows,
   summary,
   filters,
+  filterLabels,
 }: FranchiseProductsExcelData): void {
   const filterRows = [
     ["Filtros aplicados"],
+    ["Cliente / franquiciado", filterLabels?.franchisees || "Todos"],
     ["Fecha desde", formatFilterDate(filters.date_from)],
     ["Fecha hasta", formatFilterDate(filters.date_to)],
     ["Estado de pago", getPaymentStatusesLabel(filters.payment_statuses)],
     ["Estado de venta", getSalesStatusLabel(filters.sales_status)],
+    ["Stock en tienda", getStockStatusLabel(filters.stock_status)],
+    ["N° de orden", filters.order_id ? `#${filters.order_id}` : "Todas"],
+    ["Categoría", filterLabels?.categories || "Todas"],
     [],
   ];
 
@@ -69,6 +96,7 @@ export function generateFranchiseProductsExcel({
     ["Total vendido", roundMoney(summary.totalSold)],
     ["Total pagado", roundMoney(summary.totalPaid)],
     ["Total por pagar", roundMoney(summary.totalPending)],
+    ["Dscto. promociones", roundMoney(summary.totalPromoDiscount)],
     [],
   ];
 
@@ -77,6 +105,7 @@ export function generateFranchiseProductsExcel({
     "ID de la orden",
     "Cantidad",
     "Cantidad vendida",
+    "Dscto. promo",
     "Monto vendido",
     "Total pagado",
     "Total",
@@ -88,7 +117,11 @@ export function generateFranchiseProductsExcel({
     item.orderId,
     item.quantity,
     item.soldByFranchise ?? 0,
-    roundMoney(item.productPrice * (item.soldByFranchise ?? 0)),
+    roundMoney(item.franchiseDiscount),
+    // Neto de promociones de consignación.
+    roundMoney(
+      item.productPrice * (item.soldByFranchise ?? 0) - item.franchiseDiscount,
+    ),
     item.paidByFranchise ?? 0,
     roundMoney(item.total),
     item.franchiseName ?? "-",
@@ -105,25 +138,23 @@ export function generateFranchiseProductsExcel({
     { wch: 16 },
     { wch: 16 },
     { wch: 16 },
+    { wch: 16 },
     { wch: 28 },
   ];
 
-  const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:H1");
+  const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:I1");
   for (let row = range.s.r; row <= range.e.r; row += 1) {
     for (let col = range.s.c; col <= range.e.c; col += 1) {
       const cell = ws[XLSX.utils.encode_cell({ r: row, c: col })];
       if (!cell || typeof cell.v !== "number") continue;
 
-      if (row >= 1 && row <= 4 && col === 1) {
-        cell.z = '"S/ "#,##0.00';
-      }
-
-      if (row >= filterRows.length + 1 && row <= filterRows.length + 4 && col === 1) {
+      // Las filas de filtros son todas texto: solo se formatean los montos.
+      if (row >= filterRows.length + 1 && row <= filterRows.length + 5 && col === 1) {
         cell.z = '"S/ "#,##0.00';
       }
 
       if (row > filterRows.length + summaryRows.length) {
-        if ([4, 5, 6].includes(col)) cell.z = '"S/ "#,##0.00';
+        if ([4, 5, 6, 7].includes(col)) cell.z = '"S/ "#,##0.00';
         if ([2, 3].includes(col)) cell.z = "#,##0.##";
       }
     }

@@ -4,7 +4,40 @@ import type {
   PriceRulePagination,
   ConditionsConfig,
 } from "../types/priceRule.types";
+import { CONSIGNMENT_CONDITION_TYPE } from "../types/priceRule.types";
 import { limaDateTimeLocalToIso, LIMA_TIME_ZONE } from "@/shared/utils/date";
+
+// ¿La regla está marcada como promoción de consignación (franquiciados)?
+// Soporta el formato vigente ({ groups }) y el legacy (array plano).
+export function hasConsignmentMarker(
+  conditions: ConditionsConfig | unknown[] | null | undefined,
+): boolean {
+  if (!conditions) return false;
+
+  const hasMarker = (list: unknown): boolean =>
+    Array.isArray(list) &&
+    list.some(
+      (c) =>
+        !!c &&
+        typeof c === "object" &&
+        (c as { type?: unknown }).type === CONSIGNMENT_CONDITION_TYPE,
+    );
+
+  if (Array.isArray(conditions)) return hasMarker(conditions);
+  return (conditions.groups ?? []).some((g) => hasMarker(g?.conditions));
+}
+
+// ¿Este grupo es el grupo marcador (solo contiene la condición de consignación)?
+export function isConsignmentMarkerGroup(group: {
+  conditions?: Array<{ type?: string }>;
+}): boolean {
+  return (
+    (group.conditions?.length ?? 0) > 0 &&
+    (group.conditions ?? []).every(
+      (c) => c?.type === CONSIGNMENT_CONDITION_TYPE,
+    )
+  );
+}
 
 export const DEFAULT_CONDITIONS: ConditionsConfig = {
   operator: "AND",

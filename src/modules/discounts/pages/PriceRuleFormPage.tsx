@@ -29,6 +29,8 @@ const PriceRuleFormPage = () => {
     updateAction,
     removeAction,
     updateExclusions,
+    isConsignmentPromo,
+    toggleConsignmentPromo,
     handleSubmit,
     navigate,
   } = usePriceRuleForm();
@@ -68,7 +70,12 @@ const PriceRuleFormPage = () => {
       </div>
 
       {/* 1. Basic Info */}
-      <RuleBasicInfoSection formData={formData} updateField={updateField} />
+      <RuleBasicInfoSection
+        formData={formData}
+        updateField={updateField}
+        isConsignmentPromo={isConsignmentPromo}
+        toggleConsignmentPromo={toggleConsignmentPromo}
+      />
 
       {/* 2. Validity */}
       <RuleValiditySection formData={formData} updateField={updateField} />

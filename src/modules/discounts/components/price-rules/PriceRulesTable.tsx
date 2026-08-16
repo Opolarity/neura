@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { PriceRule } from "../../types/priceRule.types";
+import { hasConsignmentMarker } from "../../adapters/priceRule.adapter";
 import { formatDateDisplay } from "@/shared/utils/date";
 
 interface PriceRulesTableProps {
@@ -88,9 +89,14 @@ export const PriceRulesTable = ({
               </div>
             </TableCell>
             <TableCell>
-              <Badge variant={rule.rule_type === "automatic" ? "default" : "secondary"}>
-                {rule.rule_type === "automatic" ? "Automática" : "Cupón"}
-              </Badge>
+              <div className="flex flex-wrap items-center gap-1">
+                <Badge variant={rule.rule_type === "automatic" ? "default" : "secondary"}>
+                  {rule.rule_type === "automatic" ? "Automática" : "Cupón"}
+                </Badge>
+                {hasConsignmentMarker(rule.conditions) && (
+                  <Badge variant="outline">Franquicia</Badge>
+                )}
+              </div>
             </TableCell>
             <TableCell>{rule.priority}</TableCell>
             <TableCell>
