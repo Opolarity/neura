@@ -27,10 +27,23 @@ export type FranchiseProductsFilters = {
   date_to?: string;
   payment_statuses?: FranchisePaymentStatus[];
   sales_status?: FranchiseSalesStatus;
+  account_ids?: number[];
+  stock_status?: FranchiseStockStatus;
+  order_id?: number;
+  category_ids?: number[];
 };
 
 export type FranchisePaymentStatus = "paid" | "unpaid" | "partial";
 export type FranchiseSalesStatus = "all" | "with_sales" | "without_sales";
+/** pending = quedan unidades en la tienda del franquiciado; settled = ya vendió todo. */
+export type FranchiseStockStatus = "all" | "pending" | "settled";
+
+/** Cliente con consignaciones; alimenta el selector de franquiciado. */
+export type FranchiseeOption = {
+  id: number;
+  name: string;
+  isFranchisee: boolean;
+};
 
 export type FranchiseSummary = {
   totalSent: number;
@@ -45,6 +58,7 @@ export type FranchiseProductsResponse = {
   data: FranchiseProductRow[];
   pagination: PaginationState;
   summary: FranchiseSummary;
+  franchisees: FranchiseeOption[];
 };
 
 type RawFranchiseProduct = {
@@ -57,6 +71,12 @@ type RawFranchiseProduct = {
   paid_by_franchise: number | string | null;
   franchise_discount: number | string | null;
   franchise_name: string | null;
+  is_franchisee: boolean;
+};
+
+type RawFranchiseeOption = {
+  id: number;
+  name: string | null;
   is_franchisee: boolean;
 };
 
@@ -88,6 +108,14 @@ export const fetchFranchiseProducts = async (
       ? { payment_statuses: filters.payment_statuses.join(",") }
       : {}),
     ...(filters.sales_status ? { sales_status: filters.sales_status } : {}),
+    ...(filters.account_ids?.length
+      ? { account_ids: filters.account_ids.join(",") }
+      : {}),
+    ...(filters.stock_status ? { stock_status: filters.stock_status } : {}),
+    ...(filters.order_id ? { order_id: filters.order_id } : {}),
+    ...(filters.category_ids?.length
+      ? { category_ids: filters.category_ids.join(",") }
+      : {}),
   });
 
   const { data, error } = await supabase.functions.invoke(endpoint, {
@@ -134,5 +162,13 @@ export const fetchFranchiseProducts = async (
     totalPromoDiscount,
   };
 
-  return { data: rows, pagination, summary };
+  const franchisees: FranchiseeOption[] = (
+    (data?.filters?.franchisees ?? []) as RawFranchiseeOption[]
+  ).map((item) => ({
+    id: item.id,
+    name: item.name ?? "-",
+    isFranchisee: item.is_franchisee ?? false,
+  }));
+
+  return { data: rows, pagination, summary, franchisees };
 };

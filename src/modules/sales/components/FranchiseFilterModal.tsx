@@ -7,6 +7,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -21,14 +22,36 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Check, ChevronDown } from "lucide-react";
+import { CalendarIcon, Check, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/shared/utils/utils";
+import { MultiSelect } from "@/modules/movements/components/movements/MultiSelect";
+import {
+  CategorySelector,
+  type CategoryOption,
+} from "@/shared/components/category-selector";
 import type {
+  FranchiseeOption,
   FranchisePaymentStatus,
   FranchiseSalesStatus,
+  FranchiseStockStatus,
 } from "../services/FranchiseProducts.service";
+
+/**
+ * Lo que el modal edita. Las categorías viajan como objetos y no como ids para
+ * conservar el nombre entre aperturas y poder rotularlas en el Excel.
+ */
+export interface FranchiseFilterValues {
+  dateFrom: string | undefined;
+  dateTo: string | undefined;
+  paymentStatuses: FranchisePaymentStatus[];
+  salesStatus: FranchiseSalesStatus;
+  accountIds: number[];
+  stockStatus: FranchiseStockStatus;
+  orderId: number | undefined;
+  categories: CategoryOption[];
+}
 
 const PAYMENT_STATUS_OPTIONS: Array<{
   value: FranchisePaymentStatus;
@@ -48,6 +71,15 @@ const SALES_STATUS_OPTIONS: Array<{
   { value: "without_sales", label: "Sin ventas" },
 ];
 
+const STOCK_STATUS_OPTIONS: Array<{
+  value: FranchiseStockStatus;
+  label: string;
+}> = [
+  { value: "all", label: "Todos" },
+  { value: "pending", label: "Con stock en tienda" },
+  { value: "settled", label: "Vendido completo" },
+];
+
 const getPaymentStatusesLabel = (
   statuses: FranchisePaymentStatus[],
 ): string => {
@@ -61,6 +93,12 @@ const getPaymentStatusesLabel = (
     .join(", ");
 };
 
+const getCategoriesLabel = (categories: CategoryOption[]): string => {
+  if (categories.length === 0) return "Todas las categorías";
+  if (categories.length === 1) return categories[0].name;
+  return `${categories.length} categorías`;
+};
+
 const parseDateFilter = (value: string | undefined): Date | undefined => {
   if (!value) return undefined;
 
@@ -72,47 +110,57 @@ const parseDateFilter = (value: string | undefined): Date | undefined => {
 
 interface FranchiseFilterModalProps {
   isOpen: boolean;
-  dateFrom: string | undefined;
-  dateTo: string | undefined;
-  paymentStatuses: FranchisePaymentStatus[];
-  salesStatus: FranchiseSalesStatus;
+  values: FranchiseFilterValues;
+  /** Clientes con consignaciones; los trae el propio listado. */
+  franchisees: FranchiseeOption[];
   onClose: () => void;
-  onApply: (
-    dateFrom: string | undefined,
-    dateTo: string | undefined,
-    paymentStatuses: FranchisePaymentStatus[],
-    salesStatus: FranchiseSalesStatus,
-  ) => void;
+  onApply: (values: FranchiseFilterValues) => void;
   onClear: () => void;
 }
 
 const FranchiseFilterModal = ({
   isOpen,
-  dateFrom,
-  dateTo,
-  paymentStatuses,
-  salesStatus,
+  values,
+  franchisees,
   onClose,
   onApply,
   onClear,
 }: FranchiseFilterModalProps) => {
   const [startDate, setStartDate] = useState<Date | undefined>(
-    parseDateFilter(dateFrom),
+    parseDateFilter(values.dateFrom),
   );
   const [endDate, setEndDate] = useState<Date | undefined>(
-    parseDateFilter(dateTo),
+    parseDateFilter(values.dateTo),
   );
   const [selectedPaymentStatuses, setSelectedPaymentStatuses] =
-    useState<FranchisePaymentStatus[]>(paymentStatuses);
+    useState<FranchisePaymentStatus[]>(values.paymentStatuses);
   const [selectedSalesStatus, setSelectedSalesStatus] =
-    useState<FranchiseSalesStatus>(salesStatus);
+    useState<FranchiseSalesStatus>(values.salesStatus);
+  const [selectedAccountIds, setSelectedAccountIds] = useState<number[]>(
+    values.accountIds,
+  );
+  const [selectedStockStatus, setSelectedStockStatus] =
+    useState<FranchiseStockStatus>(values.stockStatus);
+  const [orderIdInput, setOrderIdInput] = useState<string>(
+    values.orderId ? String(values.orderId) : "",
+  );
+  const [selectedCategories, setSelectedCategories] = useState<CategoryOption[]>(
+    values.categories,
+  );
 
+  // Se sincroniza al abrir; mientras el modal está abierto la edición es local
+  // y no debe pisarse porque el padre vuelva a renderizar.
   useEffect(() => {
-    setStartDate(parseDateFilter(dateFrom));
-    setEndDate(parseDateFilter(dateTo));
-    setSelectedPaymentStatuses(paymentStatuses);
-    setSelectedSalesStatus(salesStatus);
-  }, [dateFrom, dateTo, paymentStatuses, salesStatus, isOpen]);
+    setStartDate(parseDateFilter(values.dateFrom));
+    setEndDate(parseDateFilter(values.dateTo));
+    setSelectedPaymentStatuses(values.paymentStatuses);
+    setSelectedSalesStatus(values.salesStatus);
+    setSelectedAccountIds(values.accountIds);
+    setSelectedStockStatus(values.stockStatus);
+    setOrderIdInput(values.orderId ? String(values.orderId) : "");
+    setSelectedCategories(values.categories);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const togglePaymentStatus = (status: FranchisePaymentStatus) => {
     setSelectedPaymentStatuses((current) =>
@@ -123,28 +171,58 @@ const FranchiseFilterModal = ({
   };
 
   const handleApply = () => {
-    onApply(
-      startDate ? format(startDate, "yyyy-MM-dd") : undefined,
-      endDate ? format(endDate, "yyyy-MM-dd") : undefined,
-      selectedPaymentStatuses,
-      selectedSalesStatus,
-    );
+    const parsedOrderId = parseInt(orderIdInput);
+
+    onApply({
+      dateFrom: startDate ? format(startDate, "yyyy-MM-dd") : undefined,
+      dateTo: endDate ? format(endDate, "yyyy-MM-dd") : undefined,
+      paymentStatuses: selectedPaymentStatuses,
+      salesStatus: selectedSalesStatus,
+      accountIds: selectedAccountIds,
+      stockStatus: selectedStockStatus,
+      orderId:
+        Number.isInteger(parsedOrderId) && parsedOrderId > 0
+          ? parsedOrderId
+          : undefined,
+      categories: selectedCategories,
+    });
   };
 
   const handleClear = () => {
     setStartDate(undefined);
     setEndDate(undefined);
+    setSelectedAccountIds([]);
+    setSelectedStockStatus("all");
+    setOrderIdInput("");
+    setSelectedCategories([]);
     onClear();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[360px]">
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>Filtrar</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-2">
+        <div className="grid gap-4 py-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:col-span-2">
+            <Label>Cliente / franquiciado</Label>
+            <MultiSelect
+              options={franchisees.map((franchisee) => ({
+                label: franchisee.name,
+                value: String(franchisee.id),
+              }))}
+              value={selectedAccountIds.map(String)}
+              onChange={(selected) =>
+                setSelectedAccountIds(selected.map(Number))
+              }
+              placeholder="Todos los franquiciados"
+              showSearch
+              showClear
+            />
+          </div>
+
           <div className="grid gap-2">
             <Label>Fecha desde</Label>
             <Popover>
@@ -264,6 +342,62 @@ const FranchiseFilterModal = ({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Stock en tienda</Label>
+            <Select
+              value={selectedStockStatus}
+              onValueChange={(value) =>
+                setSelectedStockStatus(value as FranchiseStockStatus)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STOCK_STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="franchise-order-id">N° de orden</Label>
+            <Input
+              id="franchise-order-id"
+              type="number"
+              min={1}
+              placeholder="Todas"
+              value={orderIdInput}
+              onChange={(e) => setOrderIdInput(e.target.value)}
+            />
+          </div>
+
+          <div className="grid gap-2 sm:col-span-2">
+            <Label>Categoría</Label>
+            <CategorySelector
+              selectedItems={selectedCategories}
+              onChangeItems={setSelectedCategories}
+              trigger={
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className={cn(
+                    "justify-between text-left font-normal",
+                    selectedCategories.length === 0 && "text-muted-foreground",
+                  )}
+                >
+                  <span className="truncate">
+                    {getCategoriesLabel(selectedCategories)}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              }
+            />
           </div>
         </div>
 
