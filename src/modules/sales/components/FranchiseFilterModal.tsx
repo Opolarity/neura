@@ -26,13 +26,11 @@ import { CalendarIcon, Check, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/shared/utils/utils";
-import { MultiSelect } from "@/modules/movements/components/movements/MultiSelect";
 import {
   CategorySelector,
   type CategoryOption,
 } from "@/shared/components/category-selector";
 import type {
-  FranchiseeOption,
   FranchisePaymentStatus,
   FranchiseSalesStatus,
   FranchiseStockStatus,
@@ -47,7 +45,6 @@ export interface FranchiseFilterValues {
   dateTo: string | undefined;
   paymentStatuses: FranchisePaymentStatus[];
   salesStatus: FranchiseSalesStatus;
-  accountIds: number[];
   stockStatus: FranchiseStockStatus;
   orderId: number | undefined;
   categories: CategoryOption[];
@@ -111,8 +108,6 @@ const parseDateFilter = (value: string | undefined): Date | undefined => {
 interface FranchiseFilterModalProps {
   isOpen: boolean;
   values: FranchiseFilterValues;
-  /** Clientes con consignaciones; los trae el propio listado. */
-  franchisees: FranchiseeOption[];
   onClose: () => void;
   onApply: (values: FranchiseFilterValues) => void;
   onClear: () => void;
@@ -121,7 +116,6 @@ interface FranchiseFilterModalProps {
 const FranchiseFilterModal = ({
   isOpen,
   values,
-  franchisees,
   onClose,
   onApply,
   onClear,
@@ -136,9 +130,6 @@ const FranchiseFilterModal = ({
     useState<FranchisePaymentStatus[]>(values.paymentStatuses);
   const [selectedSalesStatus, setSelectedSalesStatus] =
     useState<FranchiseSalesStatus>(values.salesStatus);
-  const [selectedAccountIds, setSelectedAccountIds] = useState<number[]>(
-    values.accountIds,
-  );
   const [selectedStockStatus, setSelectedStockStatus] =
     useState<FranchiseStockStatus>(values.stockStatus);
   const [orderIdInput, setOrderIdInput] = useState<string>(
@@ -155,7 +146,6 @@ const FranchiseFilterModal = ({
     setEndDate(parseDateFilter(values.dateTo));
     setSelectedPaymentStatuses(values.paymentStatuses);
     setSelectedSalesStatus(values.salesStatus);
-    setSelectedAccountIds(values.accountIds);
     setSelectedStockStatus(values.stockStatus);
     setOrderIdInput(values.orderId ? String(values.orderId) : "");
     setSelectedCategories(values.categories);
@@ -178,7 +168,6 @@ const FranchiseFilterModal = ({
       dateTo: endDate ? format(endDate, "yyyy-MM-dd") : undefined,
       paymentStatuses: selectedPaymentStatuses,
       salesStatus: selectedSalesStatus,
-      accountIds: selectedAccountIds,
       stockStatus: selectedStockStatus,
       orderId:
         Number.isInteger(parsedOrderId) && parsedOrderId > 0
@@ -191,7 +180,6 @@ const FranchiseFilterModal = ({
   const handleClear = () => {
     setStartDate(undefined);
     setEndDate(undefined);
-    setSelectedAccountIds([]);
     setSelectedStockStatus("all");
     setOrderIdInput("");
     setSelectedCategories([]);
@@ -206,23 +194,6 @@ const FranchiseFilterModal = ({
         </DialogHeader>
 
         <div className="grid gap-4 py-2 sm:grid-cols-2">
-          <div className="grid gap-2 sm:col-span-2">
-            <Label>Cliente / franquiciado</Label>
-            <MultiSelect
-              options={franchisees.map((franchisee) => ({
-                label: franchisee.name,
-                value: String(franchisee.id),
-              }))}
-              value={selectedAccountIds.map(String)}
-              onChange={(selected) =>
-                setSelectedAccountIds(selected.map(Number))
-              }
-              placeholder="Todos los franquiciados"
-              showSearch
-              showClear
-            />
-          </div>
-
           <div className="grid gap-2">
             <Label>Fecha desde</Label>
             <Popover>
