@@ -8,6 +8,7 @@ import FranchiseFilterModal, {
 import { generateFranchiseProductsExcel } from "../utils/generateFranchiseProductsExcel";
 import {
   fetchFranchiseProducts,
+  type FranchiseeOption,
   type FranchiseProductRow,
   type FranchiseProductsFilters,
   type FranchisePaymentStatus,
@@ -28,6 +29,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -63,6 +65,7 @@ const DEFAULT_FILTERS: FranchiseProductsFilters = {
   date_to: undefined,
   payment_statuses: DEFAULT_PAYMENT_STATUSES,
   sales_status: DEFAULT_SALES_STATUS,
+  account_ids: [],
   stock_status: DEFAULT_STOCK_STATUS,
   order_id: undefined,
   category_ids: [],
@@ -90,6 +93,7 @@ const FranchiseProducts = () => {
   const [pagosModalOpen, setPagosModalOpen] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [summary, setSummary] = useState<FranchiseSummary | null>(null);
+  const [franchisees, setFranchisees] = useState<FranchiseeOption[]>([]);
   // Los ids filtrados viven en `filters`; acá se guardan los objetos solo para
   // conservar el nombre de cada categoría (el modal y el Excel lo necesitan).
   const [selectedCategories, setSelectedCategories] = useState<CategoryOption[]>(
@@ -109,6 +113,7 @@ const FranchiseProducts = () => {
       setProducts(result.data);
       setPagination(result.pagination);
       setSummary(result.summary);
+      setFranchisees(result.franchisees);
     } catch (err) {
       console.error("Error loading franchise products:", err);
       setError("No se pudo cargar el listado de productos de franquicia.");
@@ -182,6 +187,7 @@ const FranchiseProducts = () => {
         summary: result.summary ?? exportSummary,
         filters,
         filterLabels: {
+          franchisees: selectedFranchiseeNames,
           categories: selectedCategories
             .map((category) => category.name)
             .join(", "),
@@ -204,6 +210,7 @@ const FranchiseProducts = () => {
       date_to: values.dateTo,
       payment_statuses: values.paymentStatuses,
       sales_status: values.salesStatus,
+      account_ids: values.accountIds,
       stock_status: values.stockStatus,
       order_id: values.orderId,
       category_ids: values.categories.map((category) => category.id),
@@ -222,6 +229,7 @@ const FranchiseProducts = () => {
       date_to: undefined,
       payment_statuses: DEFAULT_PAYMENT_STATUSES,
       sales_status: DEFAULT_SALES_STATUS,
+      account_ids: [],
       stock_status: DEFAULT_STOCK_STATUS,
       order_id: undefined,
       category_ids: [],
@@ -237,6 +245,7 @@ const FranchiseProducts = () => {
     !!(filters.date_from || filters.date_to) ||
     !hasDefaultPaymentStatuses(filters.payment_statuses) ||
     filters.sales_status !== DEFAULT_SALES_STATUS ||
+    !!filters.account_ids?.length ||
     (filters.stock_status ?? DEFAULT_STOCK_STATUS) !== DEFAULT_STOCK_STATUS ||
     !!filters.order_id ||
     !!filters.category_ids?.length;
@@ -247,11 +256,28 @@ const FranchiseProducts = () => {
       dateTo: filters.date_to,
       paymentStatuses: filters.payment_statuses ?? DEFAULT_PAYMENT_STATUSES,
       salesStatus: filters.sales_status ?? DEFAULT_SALES_STATUS,
+      accountIds: filters.account_ids ?? [],
       stockStatus: filters.stock_status ?? DEFAULT_STOCK_STATUS,
       orderId: filters.order_id,
       categories: selectedCategories,
     }),
     [filters, selectedCategories],
+  );
+
+  // El SP devuelve toda cuenta con consignaciones; el filtro solo lista las que
+  // son franquiciadas (las que tienen tenant_reference).
+  const franchiseeOptions = useMemo(
+    () => franchisees.filter((franchisee) => franchisee.isFranchisee),
+    [franchisees],
+  );
+
+  const selectedFranchiseeNames = useMemo(
+    () =>
+      franchiseeOptions
+        .filter((franchisee) => filters.account_ids?.includes(franchisee.id))
+        .map((franchisee) => franchisee.name)
+        .join(", "),
+    [franchiseeOptions, filters.account_ids],
   );
 
   const totals = useMemo(
@@ -318,14 +344,12 @@ const FranchiseProducts = () => {
           { label: "Total por pagar", value: summary?.totalPending ?? null },
         ].map(({ label, value }) => (
           <Card key={label}>
-            <CardHeader className="pb-2">
-              <p className="text-sm text-muted-foreground">{label}</p>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="!p-4">
+              <p className="text-xs text-muted-foreground">{label}</p>
               {loading && summary === null ? (
-                <div className="h-7 w-32 animate-pulse rounded bg-muted" />
+                <div className="mt-1 h-7 w-32 animate-pulse rounded bg-muted" />
               ) : (
-                <p className="text-2xl font-bold">
+                <p className="mt-1 text-2xl font-bold tabular-nums">
                   {value !== null ? formatCurrency(value) : "-"}
                 </p>
               )}
@@ -369,117 +393,115 @@ const FranchiseProducts = () => {
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nombre del producto</TableHead>
+                <TableHead>ID de la orden</TableHead>
+                <TableHead className="text-right">Cantidad</TableHead>
+                <TableHead className="text-right">Cantidad vendida</TableHead>
+                <TableHead className="text-right">Dscto. promo</TableHead>
+                <TableHead className="text-right">Monto vendido</TableHead>
+                <TableHead className="text-right">Total pagado</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead>Franquiciado</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
                 <TableRow>
-                  <TableHead>Nombre del producto</TableHead>
-                  <TableHead>ID de la orden</TableHead>
-                  <TableHead className="text-right">Cantidad</TableHead>
-                  <TableHead className="text-right">Cantidad vendida</TableHead>
-                  <TableHead className="text-right">Dscto. promo</TableHead>
-                  <TableHead className="text-right">Monto vendido</TableHead>
-                  <TableHead className="text-right">Total pagado</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead>Franquiciado</TableHead>
+                  <TableCell colSpan={9} className="py-8 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Cargando productos...
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="py-8 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Cargando productos...
-                      </div>
+              ) : error ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={9}
+                    className="py-8 text-center text-destructive"
+                  >
+                    {error}
+                  </TableCell>
+                </TableRow>
+              ) : products.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={9}
+                    className="py-8 text-center text-muted-foreground"
+                  >
+                    No hay productos recibidos por franquicia.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                products.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="min-w-[220px] font-medium">
+                      {item.productName}
+                    </TableCell>
+                    <TableCell>#{item.orderId}</TableCell>
+                    <TableCell className="text-right">
+                      {formatNumber(item.quantity)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatNumber(item.soldByFranchise)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {item.franchiseDiscount > 0
+                        ? formatCurrency(item.franchiseDiscount)
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(
+                        item.productPrice * (item.soldByFranchise ?? 0) -
+                          item.franchiseDiscount,
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.paidByFranchise)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.total)}
+                    </TableCell>
+                    <TableCell className="min-w-[180px]">
+                      {item.franchiseName ?? "-"}
                     </TableCell>
                   </TableRow>
-                ) : error ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={9}
-                      className="py-8 text-center text-destructive"
-                    >
-                      {error}
-                    </TableCell>
-                  </TableRow>
-                ) : products.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={9}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      No hay productos recibidos por franquicia.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  products.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="min-w-[220px] font-medium">
-                        {item.productName}
-                      </TableCell>
-                      <TableCell>#{item.orderId}</TableCell>
-                      <TableCell className="text-right">
-                        {formatNumber(item.quantity)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatNumber(item.soldByFranchise)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {item.franchiseDiscount > 0
-                          ? formatCurrency(item.franchiseDiscount)
-                          : "-"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(
-                          item.productPrice * (item.soldByFranchise ?? 0) -
-                            item.franchiseDiscount,
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(item.paidByFranchise)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(item.total)}
-                      </TableCell>
-                      <TableCell className="min-w-[180px]">
-                        {item.franchiseName ?? "-"}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-              {products.length > 0 && !loading && !error && (
-                <tfoot>
-                  <TableRow>
-                    <TableCell className="font-semibold">
-                      Totales (página)
-                    </TableCell>
-                    <TableCell />
-                    <TableCell className="text-right font-semibold">
-                      {formatNumber(totals.quantity)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatNumber(totals.sold)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatCurrency(totals.promoDiscount)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatCurrency(totals.soldAmount)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatCurrency(totals.paid)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatCurrency(totals.total)}
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-                </tfoot>
+                ))
               )}
-            </Table>
-          </div>
+            </TableBody>
+            {products.length > 0 && !loading && !error && (
+              <TableFooter>
+                <TableRow>
+                  <TableCell className="font-semibold">
+                    Totales (página)
+                  </TableCell>
+                  <TableCell />
+                  <TableCell className="text-right font-semibold">
+                    {formatNumber(totals.quantity)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatNumber(totals.sold)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(totals.promoDiscount)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(totals.soldAmount)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(totals.paid)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(totals.total)}
+                  </TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableFooter>
+            )}
+          </Table>
         </CardContent>
 
         <CardFooter className="!p-0">
@@ -499,6 +521,7 @@ const FranchiseProducts = () => {
       <FranchiseFilterModal
         isOpen={filterModalOpen}
         values={filterValues}
+        franchisees={franchiseeOptions}
         onClose={() => setFilterModalOpen(false)}
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
