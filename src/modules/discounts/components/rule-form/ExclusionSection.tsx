@@ -1,44 +1,13 @@
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { ExclusionFilter } from "../../types/priceRule.types";
+import { ProductReferenceField } from "./ProductReferenceField";
+import { CategoryReferenceField } from "./CategoryReferenceField";
 
 interface ExclusionSectionProps {
   exclusions: ExclusionFilter | null;
   onChange: (exclusions: ExclusionFilter | null) => void;
 }
-
-const parseNumberArray = (value: string): number[] =>
-  value
-    .split(",")
-    .map((s) => parseInt(s.trim()))
-    .filter((n) => !isNaN(n));
-
-const IdsInput = ({
-  value,
-  onChangeIds,
-  placeholder,
-}: {
-  value: number[];
-  onChangeIds: (ids: number[]) => void;
-  placeholder?: string;
-}) => {
-  const [text, setText] = useState(value.join(", "));
-
-  useEffect(() => {
-    setText(value.join(", "));
-  }, [JSON.stringify(value)]);
-
-  return (
-    <Input
-      placeholder={placeholder}
-      value={text}
-      onChange={(e) => setText(e.target.value)}
-      onBlur={() => onChangeIds(parseNumberArray(text))}
-    />
-  );
-};
 
 const EMPTY: ExclusionFilter = {
   product_ids: [],
@@ -72,37 +41,27 @@ export const ExclusionSection = ({ exclusions, onChange }: ExclusionSectionProps
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {/* IDs de productos */}
-        <div className="space-y-1">
-          <Label className="text-xs">IDs de productos excluidos (separados por coma)</Label>
-          <IdsInput
-            placeholder="Ej: 10, 25, 300"
-            value={current.product_ids ?? []}
-            onChangeIds={(ids) => update({ product_ids: ids })}
-          />
-        </div>
+        <ProductReferenceField
+          mode="product"
+          label="Productos excluidos"
+          ids={current.product_ids ?? []}
+          onChangeIds={(ids) => update({ product_ids: ids })}
+        />
 
-        {/* IDs de variaciones */}
-        <div className="space-y-1">
-          <Label className="text-xs">IDs de variaciones excluidas (separados por coma)</Label>
-          <IdsInput
-            placeholder="Ej: 4846, 5010"
-            value={current.variation_ids ?? []}
-            onChangeIds={(ids) => update({ variation_ids: ids })}
-          />
-        </div>
+        <ProductReferenceField
+          mode="variation"
+          label="Variaciones excluidas"
+          ids={current.variation_ids ?? []}
+          onChangeIds={(ids) => update({ variation_ids: ids })}
+        />
       </div>
 
-      {/* IDs de categorías */}
       <div className="space-y-2">
-        <div className="space-y-1">
-          <Label className="text-xs">IDs de categorías excluidas (separados por coma)</Label>
-          <IdsInput
-            placeholder="Ej: 147, 118"
-            value={current.category_ids ?? []}
-            onChangeIds={(ids) => update({ category_ids: ids })}
-          />
-        </div>
+        <CategoryReferenceField
+          label="Categorías excluidas"
+          ids={current.category_ids ?? []}
+          onChangeIds={(ids) => update({ category_ids: ids })}
+        />
         {!!current.category_ids?.length && (
           <div className="flex items-center gap-2">
             <Switch

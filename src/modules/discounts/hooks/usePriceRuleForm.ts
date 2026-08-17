@@ -8,7 +8,9 @@ import type {
   Condition,
   ActionConfig,
   ExclusionFilter,
+  PriceRuleReferences,
 } from "../types/priceRule.types";
+import { EMPTY_REFERENCES } from "../types/priceRule.types";
 import {
   createPriceRule,
   updatePriceRule,
@@ -19,6 +21,7 @@ import {
   adaptPriceRuleToForm,
   adaptFormToPayload,
 } from "../adapters/priceRule.adapter";
+import { getPriceRuleFormError } from "../utils/priceRuleValidation";
 
 export function usePriceRuleForm() {
   const navigate = useNavigate();
@@ -29,6 +32,8 @@ export function usePriceRuleForm() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [references, setReferences] =
+    useState<PriceRuleReferences>(EMPTY_REFERENCES);
 
   // Load rule data in edit mode
   useEffect(() => {
@@ -39,6 +44,10 @@ export function usePriceRuleForm() {
         const response = await getPriceRuleDetails(parseInt(id));
         if (response?.data) {
           setFormData(adaptPriceRuleToForm(response.data));
+          setReferences({
+            ...EMPTY_REFERENCES,
+            ...(response.data.references ?? {}),
+          });
         }
       } catch (error) {
         console.error("Error loading price rule:", error);
@@ -188,19 +197,9 @@ export function usePriceRuleForm() {
 
   // --- Submit ---
   const handleSubmit = async () => {
-    // Validation
-    if (!formData.name.trim()) {
-      toast.error("El nombre es requerido");
-      return;
-    }
-
-    if (formData.rule_type === "coupon" && !formData.coupon_code.trim()) {
-      toast.error("El código de cupón es requerido");
-      return;
-    }
-
-    if (formData.actions.length === 0) {
-      toast.error("Debe agregar al menos una acción");
+    const validationError = getPriceRuleFormError(formData);
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
 
@@ -228,6 +227,7 @@ export function usePriceRuleForm() {
 
   return {
     formData,
+    references,
     isEditMode,
     loading: loadingDetail,
     saving,
