@@ -31,6 +31,8 @@ const PriceRuleFormPage = () => {
     updateExclusions,
     isConsignmentPromo,
     toggleConsignmentPromo,
+    consignmentTenantReferences,
+    setConsignmentTenantReferences,
     handleSubmit,
     navigate,
   } = usePriceRuleForm();
@@ -75,6 +77,8 @@ const PriceRuleFormPage = () => {
         updateField={updateField}
         isConsignmentPromo={isConsignmentPromo}
         toggleConsignmentPromo={toggleConsignmentPromo}
+        consignmentTenantReferences={consignmentTenantReferences}
+        setConsignmentTenantReferences={setConsignmentTenantReferences}
       />
 
       {/* 2. Validity */}
