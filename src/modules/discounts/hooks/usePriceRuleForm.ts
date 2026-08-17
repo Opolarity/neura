@@ -23,6 +23,7 @@ import {
   DEFAULT_FORM_DATA,
   adaptPriceRuleToForm,
   adaptFormToPayload,
+  getConsignmentTenantReferences,
   hasConsignmentMarker,
   isConsignmentMarkerGroup,
 } from "../adapters/priceRule.adapter";
@@ -181,6 +182,39 @@ export function usePriceRuleForm() {
   // evaluar verdadera en el ecommerce por un OR (defensa además del filtro
   // del backend).
   const isConsignmentPromo = hasConsignmentMarker(formData.conditions);
+
+  // Franquiciados seleccionados para la promo (tenant_reference). Vacío =
+  // aplica a todos los franquiciados.
+  const consignmentTenantReferences = getConsignmentTenantReferences(
+    formData.conditions,
+  );
+
+  const setConsignmentTenantReferences = (refs: string[]) => {
+    const cleaned = [
+      ...new Set(refs.map((r) => r.trim()).filter((r) => r.length > 0)),
+    ];
+    setFormData((prev) => ({
+      ...prev,
+      conditions: {
+        ...prev.conditions,
+        groups: prev.conditions.groups.map((g) => ({
+          ...g,
+          conditions: g.conditions.map((c) =>
+            c.type === CONSIGNMENT_CONDITION_TYPE
+              ? {
+                  // Sin selección NO se persiste el campo: el formato canónico
+                  // de "todos los franquiciados" es el marcador pelado.
+                  type: CONSIGNMENT_CONDITION_TYPE,
+                  ...(cleaned.length > 0
+                    ? { tenant_references: cleaned }
+                    : {}),
+                }
+              : c,
+          ),
+        })),
+      },
+    }));
+  };
 
   const toggleConsignmentPromo = (enabled: boolean) => {
     setFormData((prev) => {
@@ -345,6 +379,8 @@ export function usePriceRuleForm() {
     updateExclusions,
     isConsignmentPromo,
     toggleConsignmentPromo,
+    consignmentTenantReferences,
+    setConsignmentTenantReferences,
     handleSubmit,
     navigate,
   };

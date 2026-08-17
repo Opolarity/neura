@@ -1,5 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { PriceRuleFormData, PriceRuleFilters } from "../types/priceRule.types";
+import type {
+  FranchiseeAccount,
+  PriceRuleFormData,
+  PriceRuleFilters,
+} from "../types/priceRule.types";
 
 const throwFunctionError = async (error: unknown): Promise<never> => {
   const functionError = error as { context?: unknown; message?: string };
@@ -78,6 +82,17 @@ export const deletePriceRule = async (id: number) => {
   });
   if (error) await throwFunctionError(error);
   return data;
+};
+
+// Cuentas franquiciadas activas (accounts con tenant_reference), para el
+// selector de franquiciados de las promociones de consignación.
+export const getFranchiseeAccounts = async (): Promise<FranchiseeAccount[]> => {
+  const { data, error } = await supabase.functions.invoke(
+    "get-franchisee-accounts",
+    { method: "GET" }
+  );
+  if (error) await throwFunctionError(error);
+  return (data?.data ?? []) as FranchiseeAccount[];
 };
 
 export const deletePriceRulesBulk = async (ruleIds: number[]) => {

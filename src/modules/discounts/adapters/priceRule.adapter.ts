@@ -27,6 +27,44 @@ export function hasConsignmentMarker(
   return (conditions.groups ?? []).some((g) => hasMarker(g?.conditions));
 }
 
+// tenant_reference de los franquiciados seleccionados en el marcador de
+// consignación. Vacío = la promo aplica a todos los franquiciados. Soporta el
+// formato vigente ({ groups }) y el legacy (array plano).
+export function getConsignmentTenantReferences(
+  conditions: ConditionsConfig | unknown[] | null | undefined,
+): string[] {
+  if (!conditions) return [];
+
+  const fromList = (list: unknown): string[] => {
+    if (!Array.isArray(list)) return [];
+    for (const c of list) {
+      if (
+        !!c &&
+        typeof c === "object" &&
+        (c as { type?: unknown }).type === CONSIGNMENT_CONDITION_TYPE
+      ) {
+        const refs = (c as { tenant_references?: unknown }).tenant_references;
+        if (!Array.isArray(refs)) return [];
+        return [
+          ...new Set(
+            refs
+              .map((r) => (typeof r === "string" ? r.trim() : ""))
+              .filter((r) => r.length > 0),
+          ),
+        ];
+      }
+    }
+    return [];
+  };
+
+  if (Array.isArray(conditions)) return fromList(conditions);
+  for (const g of conditions.groups ?? []) {
+    const refs = fromList(g?.conditions);
+    if (refs.length > 0) return refs;
+  }
+  return [];
+}
+
 // ¿Este grupo es el grupo marcador (solo contiene la condición de consignación)?
 export function isConsignmentMarkerGroup(group: {
   conditions?: Array<{ type?: string }>;

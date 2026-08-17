@@ -31,7 +31,19 @@ export const CONSIGNMENT_ALLOWED_ACTION_TYPES: ActionType[] = [
 
 export interface Condition {
   type: ConditionType;
+  // Solo en el marcador de consignación: tenant_reference de los franquiciados
+  // que participan en la promo. Ausente o vacío = todos los franquiciados.
+  tenant_references?: string[];
   [key: string]: unknown;
+}
+
+// Cuenta franquiciada (accounts con tenant_reference no nulo), tal como la
+// devuelve la edge function get-franchisee-accounts.
+export interface FranchiseeAccount {
+  id: number;
+  name: string;
+  last_name: string | null;
+  tenant_reference: string;
 }
 
 export interface ConditionGroup {

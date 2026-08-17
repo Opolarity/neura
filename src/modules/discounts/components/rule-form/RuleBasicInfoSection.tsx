@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { PriceRuleFormData } from "../../types/priceRule.types";
+import { useFranchiseeAccounts } from "../../hooks/useFranchiseeAccounts";
 
 interface RuleBasicInfoSectionProps {
   formData: PriceRuleFormData;
@@ -20,6 +21,8 @@ interface RuleBasicInfoSectionProps {
   ) => void;
   isConsignmentPromo: boolean;
   toggleConsignmentPromo: (enabled: boolean) => void;
+  consignmentTenantReferences: string[];
+  setConsignmentTenantReferences: (refs: string[]) => void;
 }
 
 export const RuleBasicInfoSection = ({
@@ -27,7 +30,20 @@ export const RuleBasicInfoSection = ({
   updateField,
   isConsignmentPromo,
   toggleConsignmentPromo,
+  consignmentTenantReferences,
+  setConsignmentTenantReferences,
 }: RuleBasicInfoSectionProps) => {
+  const { accounts: franchiseeAccounts, loading: loadingFranchisees } =
+    useFranchiseeAccounts(isConsignmentPromo);
+
+  const toggleTenantReference = (tenantReference: string, checked: boolean) => {
+    setConsignmentTenantReferences(
+      checked
+        ? [...consignmentTenantReferences, tenantReference]
+        : consignmentTenantReferences.filter((r) => r !== tenantReference),
+    );
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -116,6 +132,57 @@ export const RuleBasicInfoSection = ({
               vigente. Acciones soportadas: precio fijo, descuento fijo o % por
               producto.
             </p>
+
+            {isConsignmentPromo && (
+              <div className="space-y-2 pt-2">
+                <Label>Franquiciados participantes</Label>
+                <p className="text-xs text-muted-foreground">
+                  Sin selección = aplica a todos los franquiciados.
+                </p>
+                {loadingFranchisees ? (
+                  <p className="text-xs text-muted-foreground">
+                    Cargando franquiciados...
+                  </p>
+                ) : franchiseeAccounts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    No hay cuentas franquiciadas registradas.
+                  </p>
+                ) : (
+                  <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border p-3">
+                    {franchiseeAccounts.map((account) => (
+                      <div
+                        key={account.id}
+                        className="flex items-center gap-2"
+                      >
+                        <Checkbox
+                          id={`franchisee-${account.id}`}
+                          checked={consignmentTenantReferences.includes(
+                            account.tenant_reference,
+                          )}
+                          onCheckedChange={(checked) =>
+                            toggleTenantReference(
+                              account.tenant_reference,
+                              checked === true,
+                            )
+                          }
+                        />
+                        <Label
+                          htmlFor={`franchisee-${account.id}`}
+                          className="cursor-pointer font-normal"
+                        >
+                          {[account.name, account.last_name]
+                            .filter(Boolean)
+                            .join(" ")}
+                          <span className="ml-1 text-xs text-muted-foreground">
+                            ({account.tenant_reference})
+                          </span>
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
