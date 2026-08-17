@@ -51,11 +51,17 @@ export type FranchiseeOption = {
 
 export type FranchiseSummary = {
   totalSent: number;
-  // Neto: el SP ya descuenta las promociones de consignación.
+  // Neto: el SP ya descuenta las promociones de consignación. Cuando hay filtro
+  // de fecha activo es lo vendido DENTRO del rango; si no, el acumulado.
   totalSold: number;
   totalPaid: number;
   totalPending: number;
   totalPromoDiscount: number;
+  // El rango filtra por fecha de venta y recorta las cantidades de cada fila,
+  // pero los pagos no se pueden atribuir a una línea y una fecha
+  // (order_payment guarda order_id, no order_product_id). Con esto la pantalla
+  // sabe que debe rotular "pagado" y "por pagar" como acumulados.
+  dateFilterActive: boolean;
 };
 
 export type FranchiseProductsResponse = {
@@ -155,15 +161,26 @@ export const fetchFranchiseProducts = async (
   };
 
   const totalSent = toNumber(data?.summary?.total_sent);
+  // total_sold es SIEMPRE el acumulado de las líneas del resultado; el SP
+  // expone aparte lo vendido dentro del rango.
   const totalSold = toNumber(data?.summary?.total_sold);
+  const totalSoldRange = toNumber(data?.summary?.total_sold_range);
   const totalPaid = toNumber(data?.summary?.total_paid);
-  const totalPromoDiscount = toNumber(data?.summary?.total_promo_discount);
+  const dateFilterActive = Boolean(data?.summary?.date_filter_active);
+  const totalPromoDiscount = toNumber(
+    dateFilterActive
+      ? data?.summary?.total_promo_discount_range
+      : data?.summary?.total_promo_discount,
+  );
   const summary: FranchiseSummary = {
     totalSent,
-    totalSold,
+    totalSold: dateFilterActive ? totalSoldRange : totalSold,
     totalPaid,
+    // Siempre acumulado - pagado: con el vendido del rango daría negativo en
+    // cuanto el franquiciado ya hubiera pagado ventas de meses anteriores.
     totalPending: totalSold - totalPaid,
     totalPromoDiscount,
+    dateFilterActive,
   };
 
   const franchisees: FranchiseeOption[] = (

@@ -339,9 +339,28 @@ const FranchiseProducts = () => {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: "Total enviado", value: summary?.totalSent ?? null },
-          { label: "Total vendido", value: summary?.totalSold ?? null },
-          { label: "Total pagado", value: summary?.totalPaid ?? null },
-          { label: "Total por pagar", value: summary?.totalPending ?? null },
+          // Con filtro de fecha, "vendido" es lo del rango; "pagado" y "por
+          // pagar" siguen siendo acumulados de la línea (los pagos no se
+          // pueden atribuir a una fecha), así que se rotulan para que nadie
+          // los sume contra el vendido del rango.
+          {
+            label: summary?.dateFilterActive
+              ? "Total vendido (en el rango)"
+              : "Total vendido",
+            value: summary?.totalSold ?? null,
+          },
+          {
+            label: summary?.dateFilterActive
+              ? "Total pagado (acumulado)"
+              : "Total pagado",
+            value: summary?.totalPaid ?? null,
+          },
+          {
+            label: summary?.dateFilterActive
+              ? "Total por pagar (acumulado)"
+              : "Total por pagar",
+            value: summary?.totalPending ?? null,
+          },
         ].map(({ label, value }) => (
           <Card key={label}>
             <CardContent className="!p-4">
