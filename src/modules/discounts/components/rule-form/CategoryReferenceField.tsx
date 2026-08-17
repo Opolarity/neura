@@ -1,12 +1,12 @@
-import { useMemo, useState } from "react";
-import { X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/shared/utils/utils";
 import CategorySelector from "@/shared/components/category-selector/CategorySelector";
 import type { CategoryOption } from "@/shared/components/category-selector/CategorySelector.types";
 import { usePriceRuleReferences } from "../../context/PriceRuleReferencesContext";
+import { useReferenceSelection } from "../../hooks/useReferenceSelection";
+import { RemovableChip } from "./RemovableChip";
 
 interface CategoryReferenceFieldProps {
   label: string;
@@ -20,11 +20,6 @@ interface CategoryReferenceFieldProps {
  * Campo de categorías de las reglas de precios: chips de lo elegido + popover
  * de búsqueda. Gemelo de [ProductReferenceField] — misma forma de seleccionar
  * en condiciones y en acciones.
- *
- * Al crear la regla los chips salen de lo que el usuario elige. Al editarla
- * solo llegan los ids y el nombre sale de `references` (get-price-rule-details);
- * los ids que ese listado no traiga se conservan aunque no se pinten, para no
- * borrar lo guardado al tocar el campo.
  */
 export const CategoryReferenceField = ({
   label,
@@ -34,7 +29,6 @@ export const CategoryReferenceField = ({
   className,
 }: CategoryReferenceFieldProps) => {
   const references = usePriceRuleReferences();
-  const [picked, setPicked] = useState<Record<number, CategoryOption>>({});
 
   const referenceOptions = useMemo(
     () =>
@@ -52,24 +46,15 @@ export const CategoryReferenceField = ({
     [references],
   );
 
-  const resolve = (id: number) => picked[id] ?? referenceOptions[id];
-
-  const selected = useMemo(
-    () => ids.map(resolve).filter(Boolean) as CategoryOption[],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ids.join(","), picked, referenceOptions],
-  );
+  const { selected, remember } = useReferenceSelection(ids, referenceOptions, (id) => ({
+    id,
+    name: `Categoría #${id}`,
+    imageUrl: null,
+  }));
 
   const handleChangeItems = (items: CategoryOption[]) => {
-    setPicked((prev) => {
-      const next = { ...prev };
-      items.forEach((item) => {
-        next[item.id] = item;
-      });
-      return next;
-    });
-    const unresolved = ids.filter((id) => !resolve(id));
-    onChangeIds([...items.map((item) => item.id), ...unresolved]);
+    remember(items);
+    onChangeIds(items.map((item) => item.id));
   };
 
   const removeId = (id: number) => onChangeIds(ids.filter((current) => current !== id));
@@ -89,37 +74,11 @@ export const CategoryReferenceField = ({
             {selected.length > 0 ? (
               <span className="flex flex-wrap items-center gap-1">
                 {selected.map((category) => (
-                  <Badge
+                  <RemovableChip
                     key={category.id}
-                    variant="secondary"
-                    className="gap-1 pr-1 text-xs font-normal"
-                  >
-                    {category.name}
-                    {/* Va como <span> y no como <Button> porque el chip vive
-                        dentro del trigger del popover y un botón dentro de otro
-                        botón es HTML inválido. El click se corta acá para que
-                        quitar una categoría no abra la lista. */}
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Quitar ${category.name}`}
-                      className="rounded p-0.5 text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        removeId(category.id);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key !== "Enter" && e.key !== " ") return;
-                        e.preventDefault();
-                        e.stopPropagation();
-                        removeId(category.id);
-                      }}
-                    >
-                      <X className="w-3 h-3" />
-                    </span>
-                  </Badge>
+                    label={category.name}
+                    onRemove={() => removeId(category.id)}
+                  />
                 ))}
               </span>
             ) : (

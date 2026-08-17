@@ -1,6 +1,4 @@
-import { useMemo, useState } from "react";
-import { X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/shared/utils/utils";
@@ -10,6 +8,8 @@ import type {
   ProductVariationOption,
 } from "@/shared/components/product-variation-selector/ProductVariationSelector.types";
 import { usePriceRuleReferences } from "../../context/PriceRuleReferencesContext";
+import { useReferenceSelection } from "../../hooks/useReferenceSelection";
+import { RemovableChip } from "./RemovableChip";
 
 interface ProductReferenceFieldProps {
   /** "product" persiste ids de producto; "variation", ids de variación. */
@@ -26,16 +26,17 @@ interface ProductReferenceFieldProps {
   className?: string;
 }
 
-// Chip de algo ya guardado: de `references` solo llega el nombre, el resto de
-// campos de la variación no se usan para pintarlo.
-const optionFromReference = (
-  reference: { id: number; name: string },
+// De `references` solo llega el nombre; el resto de campos de la variación no
+// se usan para pintar el chip.
+const optionFromName = (
+  id: number,
+  name: string,
   mode: ProductSelectorMode,
 ): ProductVariationOption => ({
-  id: reference.id,
+  id,
   sku: "",
-  productId: mode === "product" ? reference.id : 0,
-  productTitle: reference.name,
+  productId: mode === "product" ? id : 0,
+  productTitle: name,
   imageUrl: null,
   stock: 0,
   terms: [],
@@ -53,11 +54,6 @@ const optionLabel = (option: ProductVariationOption, mode: ProductSelectorMode) 
  * Campo de productos/variaciones de las reglas de precios: chips de lo elegido
  * + popover de búsqueda. Lo usan tanto las acciones (target) como las
  * condiciones, para que en ambos sitios se seleccione igual.
- *
- * Al crear una regla los chips salen de lo que el usuario elige. Al editarla
- * solo llegan los ids, y el nombre de cada uno sale de `references`
- * (get-price-rule-details); los ids que ese listado no traiga se conservan tal
- * cual aunque no se pinten, para no borrar lo guardado al tocar el campo.
  */
 export const ProductReferenceField = ({
   mode,
@@ -69,39 +65,31 @@ export const ProductReferenceField = ({
   className,
 }: ProductReferenceFieldProps) => {
   const references = usePriceRuleReferences();
-  const [picked, setPicked] = useState<Record<number, ProductVariationOption>>({});
 
   const referenceOptions = useMemo(() => {
     const source = mode === "product" ? references.products : references.variations;
     return source.reduce<Record<number, ProductVariationOption>>((map, reference) => {
-      map[reference.id] = optionFromReference(reference, mode);
+      map[reference.id] = optionFromName(reference.id, reference.name, mode);
       return map;
     }, {});
   }, [mode, references]);
 
-  const resolve = (id: number) => picked[id] ?? referenceOptions[id];
-
-  const selected = useMemo(
-    () => ids.map(resolve).filter(Boolean) as ProductVariationOption[],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ids.join(","), picked, referenceOptions],
+  const { selected, remember } = useReferenceSelection(ids, referenceOptions, (id) =>
+    optionFromName(
+      id,
+      mode === "product" ? `Producto #${id}` : `Variación #${id}`,
+      mode,
+    ),
   );
 
   const handleChangeItems = (items: ProductVariationOption[]) => {
-    setPicked((prev) => {
-      const next = { ...prev };
-      items.forEach((item) => {
-        next[item.id] = item;
-      });
-      return next;
-    });
-    const unresolved = ids.filter((id) => !resolve(id));
-    onChangeIds([...items.map((item) => item.id), ...unresolved]);
+    remember(items);
+    onChangeIds(items.map((item) => item.id));
   };
 
   // Modo simple: lo elegido reemplaza a lo anterior.
   const handleSelectOne = (item: ProductVariationOption) => {
-    setPicked((prev) => ({ ...prev, [item.id]: item }));
+    remember([item]);
     onChangeIds([item.id]);
   };
 
@@ -115,7 +103,7 @@ export const ProductReferenceField = ({
         multiple={multiple}
         keepOpenOnSelect={multiple}
         selectedItems={selected}
-        selectedVariation={multiple ? null : selected[0] ?? null}
+        selectedVariation={multiple ? null : (selected[0] ?? null)}
         onSelect={handleSelectOne}
         trigger={
           <Button
@@ -127,37 +115,11 @@ export const ProductReferenceField = ({
             {selected.length > 0 ? (
               <span className="flex flex-wrap items-center gap-1">
                 {selected.map((option) => (
-                  <Badge
+                  <RemovableChip
                     key={option.id}
-                    variant="secondary"
-                    className="gap-1 pr-1 text-xs font-normal"
-                  >
-                    {optionLabel(option, mode)}
-                    {/* Va como <span> y no como <Button> porque el chip vive
-                        dentro del trigger del popover y un botón dentro de otro
-                        botón es HTML inválido. El click se corta acá para que
-                        quitar un elemento no abra la lista. */}
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Quitar ${optionLabel(option, mode)}`}
-                      className="rounded p-0.5 text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        removeId(option.id);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key !== "Enter" && e.key !== " ") return;
-                        e.preventDefault();
-                        e.stopPropagation();
-                        removeId(option.id);
-                      }}
-                    >
-                      <X className="w-3 h-3" />
-                    </span>
-                  </Badge>
+                    label={optionLabel(option, mode)}
+                    onRemove={() => removeId(option.id)}
+                  />
                 ))}
               </span>
             ) : (

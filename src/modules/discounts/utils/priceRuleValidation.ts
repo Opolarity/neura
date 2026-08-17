@@ -71,14 +71,14 @@ export function getPriceRuleFormError(
   }
 
   const groups = formData.conditions?.groups ?? [];
-  const numbersGroup = groups.length > 1;
+  const hasMultipleGroups = groups.length > 1;
 
   for (let g = 0; g < groups.length; g++) {
     const conditions = groups[g].conditions ?? [];
     for (let c = 0; c < conditions.length; c++) {
       const error = conditionError(conditions[c]);
       if (!error) continue;
-      const where = numbersGroup
+      const where = hasMultipleGroups
         ? `Condición ${c + 1} del grupo ${g + 1}`
         : `Condición ${c + 1}`;
       const label = CONDITION_TYPE_LABELS[conditions[c].type] ?? conditions[c].type;

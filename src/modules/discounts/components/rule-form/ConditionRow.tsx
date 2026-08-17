@@ -27,7 +27,10 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useActivePaymentMethods } from "@/modules/settings/hooks/usePaymentMethods";
 import type { Condition, ConditionType } from "../../types/priceRule.types";
-import { CONDITION_TYPE_LABELS } from "../../types/priceRule.types";
+import {
+  CONDITION_TYPE_LABELS,
+  DEFAULT_INCLUDE_DESCENDANTS,
+} from "../../types/priceRule.types";
 import { ProductReferenceField } from "./ProductReferenceField";
 import { CategoryReferenceField } from "./CategoryReferenceField";
 
@@ -132,13 +135,21 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
         Object.assign(base, { variation_ids: [], min_quantity: 1 });
         break;
       case "category_in_cart":
-        Object.assign(base, { category_ids: [], min_quantity: 1, include_descendants: true });
+        Object.assign(base, {
+          category_ids: [],
+          min_quantity: 1,
+          include_descendants: DEFAULT_INCLUDE_DESCENDANTS,
+        });
         break;
       case "min_total_quantity":
         Object.assign(base, { value: 1 });
         break;
       case "min_category_quantity":
-        Object.assign(base, { category_ids: [], value: 1, include_descendants: true });
+        Object.assign(base, {
+          category_ids: [],
+          value: 1,
+          include_descendants: DEFAULT_INCLUDE_DESCENDANTS,
+        });
         break;
       case "customer_level":
         Object.assign(base, { min_points: 0, max_points: undefined });
@@ -269,7 +280,10 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
             </div>
             <div className="flex items-center gap-2 pt-5">
               <Switch
-                checked={(condition as any).include_descendants ?? true}
+                checked={
+                  (condition as any).include_descendants ??
+                  DEFAULT_INCLUDE_DESCENDANTS
+                }
                 onCheckedChange={(val) => updateField("include_descendants", val)}
               />
               <Label className="text-xs">Incluir subcategorías</Label>
@@ -310,7 +324,10 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
             </div>
             <div className="flex items-center gap-2 pt-5">
               <Switch
-                checked={(condition as any).include_descendants ?? true}
+                checked={
+                  (condition as any).include_descendants ??
+                  DEFAULT_INCLUDE_DESCENDANTS
+                }
                 onCheckedChange={(val) => updateField("include_descendants", val)}
               />
               <Label className="text-xs">Incluir subcategorías</Label>

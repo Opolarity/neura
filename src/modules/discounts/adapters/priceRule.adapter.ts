@@ -1,10 +1,14 @@
 import type {
+  ActionConfig,
   PriceRule,
   PriceRuleFormData,
   PriceRulePagination,
   ConditionsConfig,
 } from "../types/priceRule.types";
-import { CONSIGNMENT_CONDITION_TYPE } from "../types/priceRule.types";
+import {
+  CONSIGNMENT_CONDITION_TYPE,
+  DEFAULT_INCLUDE_DESCENDANTS,
+} from "../types/priceRule.types";
 import { limaDateTimeLocalToIso, LIMA_TIME_ZONE } from "@/shared/utils/date";
 
 // ¿La regla está marcada como promoción de consignación (franquiciados)?
@@ -140,6 +144,47 @@ export function dateTimeLocalToISO(local: string | null | undefined): string {
   return limaDateTimeLocalToIso(local);
 }
 
+// El switch "Incluir subcategorías" se pinta encendido cuando la clave no
+// existe (reglas guardadas antes de que el campo existiera), así que al cargar
+// se rellena explícita: si no, lo que se ve marcado y lo que se guarda no
+// coinciden. Se normaliza al entrar y no al salir para que el estado del
+// formulario y el payload sean siempre lo mismo.
+const withDescendantsDefault = <
+  T extends { category_ids?: number[]; include_descendants?: boolean },
+>(
+  source: T,
+): T =>
+  source.category_ids?.length
+    ? {
+        ...source,
+        include_descendants:
+          source.include_descendants ?? DEFAULT_INCLUDE_DESCENDANTS,
+      }
+    : source;
+
+function normalizeConditions(conditions: ConditionsConfig): ConditionsConfig {
+  return {
+    ...conditions,
+    groups: (conditions.groups ?? []).map((group) => ({
+      ...group,
+      conditions: (group.conditions ?? []).map((condition) =>
+        condition.type === "category_in_cart" ||
+        condition.type === "min_category_quantity"
+          ? withDescendantsDefault(condition)
+          : condition,
+      ),
+    })),
+  };
+}
+
+function normalizeActions(actions: ActionConfig[]): ActionConfig[] {
+  return actions.map((action) =>
+    action.target?.apply_to === "specific_categories"
+      ? { ...action, target: withDescendantsDefault(action.target) }
+      : action,
+  );
+}
+
 export function adaptPriceRuleToForm(rule: PriceRule): PriceRuleFormData {
   const coupon = rule.discounts?.[0];
 
@@ -155,30 +200,14 @@ export function adaptPriceRuleToForm(rule: PriceRule): PriceRuleFormData {
     valid_from: isoToDateTimeLocal(rule.valid_from),
     valid_to: isoToDateTimeLocal(rule.valid_to),
     price_list_id: rule.price_list_id,
-    conditions: rule.conditions || DEFAULT_CONDITIONS,
-    actions: rule.actions || [],
+    conditions: normalizeConditions(rule.conditions || DEFAULT_CONDITIONS),
+    actions: normalizeActions(rule.actions || []),
     exclusions: rule.exclusions || null,
     coupon_code: coupon?.code || "",
     max_uses: coupon?.max_uses ?? null,
     max_uses_per_customer: coupon?.max_uses_per_customer ?? null,
   };
 }
-
-// El switch "Incluir subcategorías" se pinta encendido cuando la clave no
-// existe, así que se manda explícita: si no, lo que se ve marcado y lo que se
-// guarda no coinciden (pasa con reglas guardadas antes de que el campo
-// existiera).
-export const DEFAULT_INCLUDE_DESCENDANTS = true;
-
-const withDescendantsDefault = <T extends { category_ids?: number[]; include_descendants?: boolean }>(
-  source: T,
-): T =>
-  source.category_ids?.length
-    ? {
-        ...source,
-        include_descendants: source.include_descendants ?? DEFAULT_INCLUDE_DESCENDANTS,
-      }
-    : source;
 
 // Convierte el formData del formulario al payload que esperan las edge functions
 // (fechas en ISO con offset Lima en vez del formato datetime-local).
@@ -187,23 +216,6 @@ export function adaptFormToPayload(formData: PriceRuleFormData): PriceRuleFormDa
     ...formData,
     valid_from: dateTimeLocalToISO(formData.valid_from),
     valid_to: dateTimeLocalToISO(formData.valid_to),
-    conditions: {
-      ...formData.conditions,
-      groups: (formData.conditions?.groups ?? []).map((group) => ({
-        ...group,
-        conditions: group.conditions.map((condition) =>
-          condition.type === "category_in_cart" ||
-          condition.type === "min_category_quantity"
-            ? withDescendantsDefault(condition)
-            : condition,
-        ),
-      })),
-    },
-    actions: formData.actions.map((action) =>
-      action.target?.apply_to === "specific_categories"
-        ? { ...action, target: withDescendantsDefault(action.target) }
-        : action,
-    ),
   };
 }
 

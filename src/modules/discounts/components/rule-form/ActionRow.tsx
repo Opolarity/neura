@@ -11,7 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ActionConfig, ActionType, TargetFilter } from "../../types/priceRule.types";
-import { ACTION_TYPE_LABELS } from "../../types/priceRule.types";
+import {
+  ACTION_TYPE_LABELS,
+  DEFAULT_INCLUDE_DESCENDANTS,
+} from "../../types/priceRule.types";
 import { ProductReferenceField } from "./ProductReferenceField";
 import { CategoryReferenceField } from "./CategoryReferenceField";
 
@@ -45,7 +48,8 @@ const TargetFilterEditor = ({
         return onChange({
           apply_to: applyTo,
           category_ids: target.category_ids ?? [],
-          include_descendants: target.include_descendants ?? true,
+          include_descendants:
+            target.include_descendants ?? DEFAULT_INCLUDE_DESCENDANTS,
         });
       default:
         return onChange({ apply_to: applyTo });
@@ -92,7 +96,9 @@ const TargetFilterEditor = ({
           />
           <div className="flex items-center gap-2">
             <Switch
-              checked={target.include_descendants ?? true}
+              checked={
+                target.include_descendants ?? DEFAULT_INCLUDE_DESCENDANTS
+              }
               onCheckedChange={(val) =>
                 onChange({ ...target, include_descendants: val })
               }

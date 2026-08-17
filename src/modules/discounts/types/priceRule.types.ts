@@ -71,6 +71,9 @@ export type ActionType =
   | "shipping_discount_percent"
   | "payment_surcharge_percent";
 
+/** Valor por defecto del switch "Incluir subcategorías" cuando la clave no existe. */
+export const DEFAULT_INCLUDE_DESCENDANTS = true;
+
 export interface TargetFilter {
   apply_to: "all" | "specific_products" | "specific_categories" | "specific_variations";
   product_ids?: number[];
