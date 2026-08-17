@@ -9,7 +9,7 @@ import type {
   ProductBrand
 } from '../types/AddProduct.types';
 import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock, StockType } from '@/types';
-import { getTodayDate, toLimaDateInput } from "@/shared/utils/date";
+import { getTodayDate, toLimaDateInput, limaIsoToDateTimeLocal } from "@/shared/utils/date";
 
 export const AddProductAdapter = {
   /**
@@ -90,6 +90,10 @@ export const AddProductAdapter = {
       isVariable: boolean;
       isActive: boolean;
       isWeb: boolean;
+      createdAt: string;
+      // Formato datetime-local ("YYYY-MM-DDTHH:mm") en hora Lima, o "" si no hay.
+      exhibitionFrom: string;
+      exhibitionTo: string;
     };
     categories: number[];
     channels: number[];
@@ -115,6 +119,8 @@ export const AddProductAdapter = {
       createdAt: data.product.created_at
         ? toLimaDateInput(new Date(data.product.created_at))
         : getTodayDate(),
+      exhibitionFrom: limaIsoToDateTimeLocal(data.product.exhibition_start_date),
+      exhibitionTo: limaIsoToDateTimeLocal(data.product.exhibition_end_date),
     };
 
     const categories = data.categories || [];

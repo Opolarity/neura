@@ -184,6 +184,16 @@ export const useAddProduct = () => {
       setIsActive(adapted.product.isActive);
       setIsWeb(adapted.product.isWeb);
       if (adapted.product.createdAt) setCreatedAt(adapted.product.createdAt);
+
+      // Exhibición: el switch se deriva de si el producto trae el rango completo.
+      // Si no lo trae, se dejan los valores por defecto (inicio = ahora, fin vacío)
+      // para que activar el switch al editar se comporte igual que al crear.
+      const hasExhibition = !!(adapted.product.exhibitionFrom && adapted.product.exhibitionTo);
+      setIsExhibition(hasExhibition);
+      if (hasExhibition) {
+        setExhibitionFrom(adapted.product.exhibitionFrom);
+        setExhibitionTo(adapted.product.exhibitionTo);
+      }
       setOriginalIsVariable(adapted.product.isVariable);
       setSelectedCategories(adapted.categories);
       setSelectedChannels(adapted.channels);

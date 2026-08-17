@@ -84,6 +84,10 @@ export interface ProductDetailsResponse {
     is_variable: boolean;
     active: boolean;
     web: boolean;
+    created_at: string | null;
+    // Exhibición: o las dos con fecha (ISO), o las dos en null.
+    exhibition_start_date: string | null;
+    exhibition_end_date: string | null;
   };
   categories: number[];
   images: {
