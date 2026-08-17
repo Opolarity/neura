@@ -10,8 +10,12 @@ export function useFranchiseeAccounts(enabled: boolean) {
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
+  // `loading` NO va en las dependencias: setLoading(true) volvía a disparar el
+  // efecto, React ejecutaba el cleanup de la pasada anterior (cancelled = true)
+  // y la respuesta se descartaba sin apagar el loading — el selector se quedaba
+  // en "Cargando franquiciados..." para siempre.
   useEffect(() => {
-    if (!enabled || loaded || loading) return;
+    if (!enabled || loaded) return;
     let cancelled = false;
 
     const load = async () => {
@@ -33,7 +37,7 @@ export function useFranchiseeAccounts(enabled: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [enabled, loaded, loading]);
+  }, [enabled, loaded]);
 
   return { accounts, loading };
 }
