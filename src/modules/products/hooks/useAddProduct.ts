@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getTodayDate } from "@/shared/utils/date";
+import { getTodayDate, getLimaDateTimeNow, limaDateTimeLocalToIso } from "@/shared/utils/date";
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,6 +43,12 @@ export const useAddProduct = () => {
   const [isWeb, setIsWeb] = useState(false);
   const [createdAt, setCreatedAt] = useState<string>(getTodayDate());
   const [originalIsVariable, setOriginalIsVariable] = useState(false);
+
+  // Exhibición: el rango se conserva en el estado aunque se apague el switch;
+  // es `isExhibition` el que decide si se envía el rango o se manda en null.
+  const [isExhibition, setIsExhibition] = useState(false);
+  const [exhibitionFrom, setExhibitionFrom] = useState<string>(getLimaDateTimeNow());
+  const [exhibitionTo, setExhibitionTo] = useState<string>('');
   
   // Images state
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
@@ -668,6 +674,19 @@ export const useAddProduct = () => {
     }));
   };
 
+  // ================= Exhibición =================
+
+  /**
+   * Rango de exhibición listo para persistir: ISO con offset Lima, o null.
+   * Null si el switch está apagado o si el rango quedó incompleto.
+   */
+  const exhibitionRange: { from: string | null; to: string | null } = isExhibition
+    ? {
+        from: limaDateTimeLocalToIso(exhibitionFrom) || null,
+        to: limaDateTimeLocalToIso(exhibitionTo) || null,
+      }
+    : { from: null, to: null };
+
   // ================= Form Validation =================
 
   const validateForm = (): boolean => {
@@ -690,6 +709,26 @@ export const useAddProduct = () => {
     }
 
     // Las imágenes son opcionales - el backend usará placeholder si no hay ninguna
+
+    if (isExhibition) {
+      if (!exhibitionFrom || !exhibitionTo) {
+        toast({
+          title: "Error",
+          description: "Debe indicar la fecha de inicio y la fecha de fin de exhibición",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      if (exhibitionTo <= exhibitionFrom) {
+        toast({
+          title: "Error",
+          description: "La fecha de fin de exhibición debe ser posterior a la de inicio",
+          variant: "destructive"
+        });
+        return false;
+      }
+    }
 
     if (isVariable) {
       const groupsWithTerms = Object.keys(selectedTerms)
@@ -750,7 +789,9 @@ export const useAddProduct = () => {
           attributesHaveChanged,
           createdAt,
           selectedTags,
-          selectedBrands
+          selectedBrands,
+          exhibitionRange.from,
+          exhibitionRange.to
         );
 
         const result = await AddProductService.updateProduct(request);
@@ -789,7 +830,9 @@ export const useAddProduct = () => {
           variations,
           createdAt,
           selectedTags,
-          selectedBrands
+          selectedBrands,
+          exhibitionRange.from,
+          exhibitionRange.to
         );
 
         const result = await AddProductService.createProduct(request);
@@ -867,7 +910,16 @@ export const useAddProduct = () => {
     setIsActive,
     setIsWeb,
     setCreatedAt,
-    
+
+    // Exhibición
+    isExhibition,
+    setIsExhibition,
+    exhibitionFrom,
+    setExhibitionFrom,
+    exhibitionTo,
+    setExhibitionTo,
+    exhibitionRange,
+
     // Images
     productImages,
     handleImageUpload,

@@ -9,7 +9,7 @@ import {
   CONSIGNMENT_CONDITION_TYPE,
   DEFAULT_INCLUDE_DESCENDANTS,
 } from "../types/priceRule.types";
-import { limaDateTimeLocalToIso, LIMA_TIME_ZONE } from "@/shared/utils/date";
+import { limaDateTimeLocalToIso, limaIsoToDateTimeLocal } from "@/shared/utils/date";
 
 // ¿La regla está marcada como promoción de consignación (franquiciados)?
 // Soporta el formato vigente ({ groups }) y el legacy (array plano).
@@ -110,32 +110,9 @@ export const DEFAULT_FORM_DATA: PriceRuleFormData = {
   max_uses: null,
   max_uses_per_customer: null,
 };
-function pad(n: number): string {
-  return n.toString().padStart(2, "0");
-}
-
 // ISO (con o sin timezone) → "YYYY-MM-DDTHH:mm" en hora Lima, listo para <input type="datetime-local">.
 export function isoToDateTimeLocal(iso: string | null | undefined): string {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (isNaN(date.getTime())) return "";
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: LIMA_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(date);
-  const get = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((part) => part.type === type)?.value ?? "";
-  const y = get("year");
-  const m = get("month");
-  const d = get("day");
-  const hh = pad(Number(get("hour")));
-  const mm = pad(Number(get("minute")));
-  return `${y}-${m}-${d}T${hh}:${mm}`;
+  return limaIsoToDateTimeLocal(iso);
 }
 
 // "YYYY-MM-DDTHH:mm" (asumido en hora Lima) → ISO 8601 con offset -05:00, o "" si vacío.

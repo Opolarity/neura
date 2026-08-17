@@ -218,7 +218,9 @@ export const AddProductAdapter = {
     variations: ProductVariation[],
     createdAt?: string,
     selectedTags: number[] = [],
-    selectedBrands: number[] = []
+    selectedBrands: number[] = [],
+    exhibitionStartDate: string | null = null,
+    exhibitionEndDate: string | null = null
   ): CreateProductRequest {
     const sortedImages = [...productImages].sort((a, b) => a.order - b.order);
 
@@ -249,6 +251,8 @@ export const AddProductAdapter = {
       productImages: imageRefs,
       variations: sanitizedVariations,
       createdAt,
+      exhibitionStartDate,
+      exhibitionEndDate,
     };
   },
 
@@ -276,7 +280,9 @@ export const AddProductAdapter = {
     resetVariations: boolean = false,
     createdAt?: string,
     selectedTags: number[] = [],
-    selectedBrands: number[] = []
+    selectedBrands: number[] = [],
+    exhibitionStartDate: string | null = null,
+    exhibitionEndDate: string | null = null
   ): UpdateProductRequest {
     const imageRefs = productImages.map(img => ({
       id: img.id,
@@ -308,6 +314,8 @@ export const AddProductAdapter = {
       variations: sanitizedVariations,
       resetVariations,
       createdAt,
+      exhibitionStartDate,
+      exhibitionEndDate,
     };
   },
 

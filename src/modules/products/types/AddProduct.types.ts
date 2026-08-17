@@ -133,6 +133,9 @@ export interface CreateProductRequest {
   selectedTags: number[];
   selectedBrands: number[];
   createdAt?: string;
+  // Exhibición: o las dos con fecha (ISO con offset Lima), o las dos en null.
+  exhibitionStartDate: string | null;
+  exhibitionEndDate: string | null;
   productImages: {
     id: string;
     path: string;
