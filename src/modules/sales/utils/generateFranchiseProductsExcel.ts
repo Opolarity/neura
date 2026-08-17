@@ -66,6 +66,7 @@ export interface FranchiseProductsExcelData {
    * aplicados con algo legible.
    */
   filterLabels?: {
+    franchisees?: string;
     categories?: string;
   };
 }
@@ -78,6 +79,7 @@ export function generateFranchiseProductsExcel({
 }: FranchiseProductsExcelData): void {
   const filterRows = [
     ["Filtros aplicados"],
+    ["Franquiciado", filterLabels?.franchisees || "Todos"],
     ["Fecha desde", formatFilterDate(filters.date_from)],
     ["Fecha hasta", formatFilterDate(filters.date_to)],
     ["Estado de pago", getPaymentStatusesLabel(filters.payment_statuses)],
