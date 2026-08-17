@@ -8,7 +8,6 @@ import FranchiseFilterModal, {
 import { generateFranchiseProductsExcel } from "../utils/generateFranchiseProductsExcel";
 import {
   fetchFranchiseProducts,
-  type FranchiseeOption,
   type FranchiseProductRow,
   type FranchiseProductsFilters,
   type FranchisePaymentStatus,
@@ -64,7 +63,6 @@ const DEFAULT_FILTERS: FranchiseProductsFilters = {
   date_to: undefined,
   payment_statuses: DEFAULT_PAYMENT_STATUSES,
   sales_status: DEFAULT_SALES_STATUS,
-  account_ids: [],
   stock_status: DEFAULT_STOCK_STATUS,
   order_id: undefined,
   category_ids: [],
@@ -92,7 +90,6 @@ const FranchiseProducts = () => {
   const [pagosModalOpen, setPagosModalOpen] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [summary, setSummary] = useState<FranchiseSummary | null>(null);
-  const [franchisees, setFranchisees] = useState<FranchiseeOption[]>([]);
   // Los ids filtrados viven en `filters`; acá se guardan los objetos solo para
   // conservar el nombre de cada categoría (el modal y el Excel lo necesitan).
   const [selectedCategories, setSelectedCategories] = useState<CategoryOption[]>(
@@ -112,7 +109,6 @@ const FranchiseProducts = () => {
       setProducts(result.data);
       setPagination(result.pagination);
       setSummary(result.summary);
-      setFranchisees(result.franchisees);
     } catch (err) {
       console.error("Error loading franchise products:", err);
       setError("No se pudo cargar el listado de productos de franquicia.");
@@ -181,17 +177,11 @@ const FranchiseProducts = () => {
         size: total,
       });
 
-      const selectedFranchiseeNames = franchisees
-        .filter((franchisee) => filters.account_ids?.includes(franchisee.id))
-        .map((franchisee) => franchisee.name)
-        .join(", ");
-
       generateFranchiseProductsExcel({
         rows: result.data,
         summary: result.summary ?? exportSummary,
         filters,
         filterLabels: {
-          franchisees: selectedFranchiseeNames,
           categories: selectedCategories
             .map((category) => category.name)
             .join(", "),
@@ -214,7 +204,6 @@ const FranchiseProducts = () => {
       date_to: values.dateTo,
       payment_statuses: values.paymentStatuses,
       sales_status: values.salesStatus,
-      account_ids: values.accountIds,
       stock_status: values.stockStatus,
       order_id: values.orderId,
       category_ids: values.categories.map((category) => category.id),
@@ -233,7 +222,6 @@ const FranchiseProducts = () => {
       date_to: undefined,
       payment_statuses: DEFAULT_PAYMENT_STATUSES,
       sales_status: DEFAULT_SALES_STATUS,
-      account_ids: [],
       stock_status: DEFAULT_STOCK_STATUS,
       order_id: undefined,
       category_ids: [],
@@ -249,7 +237,6 @@ const FranchiseProducts = () => {
     !!(filters.date_from || filters.date_to) ||
     !hasDefaultPaymentStatuses(filters.payment_statuses) ||
     filters.sales_status !== DEFAULT_SALES_STATUS ||
-    !!filters.account_ids?.length ||
     (filters.stock_status ?? DEFAULT_STOCK_STATUS) !== DEFAULT_STOCK_STATUS ||
     !!filters.order_id ||
     !!filters.category_ids?.length;
@@ -260,7 +247,6 @@ const FranchiseProducts = () => {
       dateTo: filters.date_to,
       paymentStatuses: filters.payment_statuses ?? DEFAULT_PAYMENT_STATUSES,
       salesStatus: filters.sales_status ?? DEFAULT_SALES_STATUS,
-      accountIds: filters.account_ids ?? [],
       stockStatus: filters.stock_status ?? DEFAULT_STOCK_STATUS,
       orderId: filters.order_id,
       categories: selectedCategories,
@@ -513,7 +499,6 @@ const FranchiseProducts = () => {
       <FranchiseFilterModal
         isOpen={filterModalOpen}
         values={filterValues}
-        franchisees={franchisees}
         onClose={() => setFilterModalOpen(false)}
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
