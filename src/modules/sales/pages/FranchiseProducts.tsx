@@ -28,6 +28,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -318,14 +319,12 @@ const FranchiseProducts = () => {
           { label: "Total por pagar", value: summary?.totalPending ?? null },
         ].map(({ label, value }) => (
           <Card key={label}>
-            <CardHeader className="pb-2">
-              <p className="text-sm text-muted-foreground">{label}</p>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="!p-4">
+              <p className="text-xs text-muted-foreground">{label}</p>
               {loading && summary === null ? (
-                <div className="h-7 w-32 animate-pulse rounded bg-muted" />
+                <div className="mt-1 h-7 w-32 animate-pulse rounded bg-muted" />
               ) : (
-                <p className="text-2xl font-bold">
+                <p className="mt-1 text-2xl font-bold tabular-nums">
                   {value !== null ? formatCurrency(value) : "-"}
                 </p>
               )}
@@ -369,117 +368,115 @@ const FranchiseProducts = () => {
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nombre del producto</TableHead>
+                <TableHead>ID de la orden</TableHead>
+                <TableHead className="text-right">Cantidad</TableHead>
+                <TableHead className="text-right">Cantidad vendida</TableHead>
+                <TableHead className="text-right">Dscto. promo</TableHead>
+                <TableHead className="text-right">Monto vendido</TableHead>
+                <TableHead className="text-right">Total pagado</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead>Franquiciado</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
                 <TableRow>
-                  <TableHead>Nombre del producto</TableHead>
-                  <TableHead>ID de la orden</TableHead>
-                  <TableHead className="text-right">Cantidad</TableHead>
-                  <TableHead className="text-right">Cantidad vendida</TableHead>
-                  <TableHead className="text-right">Dscto. promo</TableHead>
-                  <TableHead className="text-right">Monto vendido</TableHead>
-                  <TableHead className="text-right">Total pagado</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead>Franquiciado</TableHead>
+                  <TableCell colSpan={9} className="py-8 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Cargando productos...
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="py-8 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Cargando productos...
-                      </div>
+              ) : error ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={9}
+                    className="py-8 text-center text-destructive"
+                  >
+                    {error}
+                  </TableCell>
+                </TableRow>
+              ) : products.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={9}
+                    className="py-8 text-center text-muted-foreground"
+                  >
+                    No hay productos recibidos por franquicia.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                products.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="min-w-[220px] font-medium">
+                      {item.productName}
+                    </TableCell>
+                    <TableCell>#{item.orderId}</TableCell>
+                    <TableCell className="text-right">
+                      {formatNumber(item.quantity)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatNumber(item.soldByFranchise)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {item.franchiseDiscount > 0
+                        ? formatCurrency(item.franchiseDiscount)
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(
+                        item.productPrice * (item.soldByFranchise ?? 0) -
+                          item.franchiseDiscount,
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.paidByFranchise)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.total)}
+                    </TableCell>
+                    <TableCell className="min-w-[180px]">
+                      {item.franchiseName ?? "-"}
                     </TableCell>
                   </TableRow>
-                ) : error ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={9}
-                      className="py-8 text-center text-destructive"
-                    >
-                      {error}
-                    </TableCell>
-                  </TableRow>
-                ) : products.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={9}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      No hay productos recibidos por franquicia.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  products.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="min-w-[220px] font-medium">
-                        {item.productName}
-                      </TableCell>
-                      <TableCell>#{item.orderId}</TableCell>
-                      <TableCell className="text-right">
-                        {formatNumber(item.quantity)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatNumber(item.soldByFranchise)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {item.franchiseDiscount > 0
-                          ? formatCurrency(item.franchiseDiscount)
-                          : "-"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(
-                          item.productPrice * (item.soldByFranchise ?? 0) -
-                            item.franchiseDiscount,
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(item.paidByFranchise)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(item.total)}
-                      </TableCell>
-                      <TableCell className="min-w-[180px]">
-                        {item.franchiseName ?? "-"}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-              {products.length > 0 && !loading && !error && (
-                <tfoot>
-                  <TableRow>
-                    <TableCell className="font-semibold">
-                      Totales (página)
-                    </TableCell>
-                    <TableCell />
-                    <TableCell className="text-right font-semibold">
-                      {formatNumber(totals.quantity)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatNumber(totals.sold)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatCurrency(totals.promoDiscount)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatCurrency(totals.soldAmount)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatCurrency(totals.paid)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatCurrency(totals.total)}
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-                </tfoot>
+                ))
               )}
-            </Table>
-          </div>
+            </TableBody>
+            {products.length > 0 && !loading && !error && (
+              <TableFooter>
+                <TableRow>
+                  <TableCell className="font-semibold">
+                    Totales (página)
+                  </TableCell>
+                  <TableCell />
+                  <TableCell className="text-right font-semibold">
+                    {formatNumber(totals.quantity)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatNumber(totals.sold)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(totals.promoDiscount)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(totals.soldAmount)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(totals.paid)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(totals.total)}
+                  </TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableFooter>
+            )}
+          </Table>
         </CardContent>
 
         <CardFooter className="!p-0">
