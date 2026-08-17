@@ -224,7 +224,7 @@ const FranchiseFilterModal = ({
           </div>
 
           <div className="grid gap-2">
-            <Label>Fecha desde</Label>
+            <Label>Fecha de venta desde</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -253,7 +253,7 @@ const FranchiseFilterModal = ({
           </div>
 
           <div className="grid gap-2">
-            <Label>Fecha hasta</Label>
+            <Label>Fecha de venta hasta</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button

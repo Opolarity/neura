@@ -80,8 +80,8 @@ export function generateFranchiseProductsExcel({
   const filterRows = [
     ["Filtros aplicados"],
     ["Franquiciado", filterLabels?.franchisees || "Todos"],
-    ["Fecha desde", formatFilterDate(filters.date_from)],
-    ["Fecha hasta", formatFilterDate(filters.date_to)],
+    ["Fecha de venta desde", formatFilterDate(filters.date_from)],
+    ["Fecha de venta hasta", formatFilterDate(filters.date_to)],
     ["Estado de pago", getPaymentStatusesLabel(filters.payment_statuses)],
     ["Estado de venta", getSalesStatusLabel(filters.sales_status)],
     ["Stock en tienda", getStockStatusLabel(filters.stock_status)],
@@ -90,12 +90,25 @@ export function generateFranchiseProductsExcel({
     [],
   ];
 
+  // Con filtro de fecha, "vendido" es lo del rango y "pagado"/"por pagar"
+  // siguen siendo acumulados de la línea: se rotula igual que en la pantalla.
   const summaryRows = [
     ["Montos"],
     ["Total enviado", roundMoney(summary.totalSent)],
-    ["Total vendido", roundMoney(summary.totalSold)],
-    ["Total pagado", roundMoney(summary.totalPaid)],
-    ["Total por pagar", roundMoney(summary.totalPending)],
+    [
+      summary.dateFilterActive ? "Total vendido (en el rango)" : "Total vendido",
+      roundMoney(summary.totalSold),
+    ],
+    [
+      summary.dateFilterActive ? "Total pagado (acumulado)" : "Total pagado",
+      roundMoney(summary.totalPaid),
+    ],
+    [
+      summary.dateFilterActive
+        ? "Total por pagar (acumulado)"
+        : "Total por pagar",
+      roundMoney(summary.totalPending),
+    ],
     ["Dscto. promociones", roundMoney(summary.totalPromoDiscount)],
     [],
   ];
