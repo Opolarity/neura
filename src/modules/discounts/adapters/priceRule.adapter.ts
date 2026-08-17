@@ -164,6 +164,22 @@ export function adaptPriceRuleToForm(rule: PriceRule): PriceRuleFormData {
   };
 }
 
+// El switch "Incluir subcategorías" se pinta encendido cuando la clave no
+// existe, así que se manda explícita: si no, lo que se ve marcado y lo que se
+// guarda no coinciden (pasa con reglas guardadas antes de que el campo
+// existiera).
+export const DEFAULT_INCLUDE_DESCENDANTS = true;
+
+const withDescendantsDefault = <T extends { category_ids?: number[]; include_descendants?: boolean }>(
+  source: T,
+): T =>
+  source.category_ids?.length
+    ? {
+        ...source,
+        include_descendants: source.include_descendants ?? DEFAULT_INCLUDE_DESCENDANTS,
+      }
+    : source;
+
 // Convierte el formData del formulario al payload que esperan las edge functions
 // (fechas en ISO con offset Lima en vez del formato datetime-local).
 export function adaptFormToPayload(formData: PriceRuleFormData): PriceRuleFormData {
@@ -171,6 +187,23 @@ export function adaptFormToPayload(formData: PriceRuleFormData): PriceRuleFormDa
     ...formData,
     valid_from: dateTimeLocalToISO(formData.valid_from),
     valid_to: dateTimeLocalToISO(formData.valid_to),
+    conditions: {
+      ...formData.conditions,
+      groups: (formData.conditions?.groups ?? []).map((group) => ({
+        ...group,
+        conditions: group.conditions.map((condition) =>
+          condition.type === "category_in_cart" ||
+          condition.type === "min_category_quantity"
+            ? withDescendantsDefault(condition)
+            : condition,
+        ),
+      })),
+    },
+    actions: formData.actions.map((action) =>
+      action.target?.apply_to === "specific_categories"
+        ? { ...action, target: withDescendantsDefault(action.target) }
+        : action,
+    ),
   };
 }
 
