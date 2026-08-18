@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { ProductCostsFilters } from "../../types/ProductCosts.types";
 import { useEffect, useState } from "react";
@@ -97,75 +98,83 @@ const ProdutCostsFilterModal = ({
           <DialogTitle>Filtrar Costos</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Categorías</Label>
-            <Select
-              value={
-                internalFilters?.category
-                  ? String(internalFilters.category)
-                  : "none"
-              }
-              onValueChange={handleCategoryChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todas las categorías" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Todas las categorías</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={String(c.id)}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Rango de Costo</Label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="Mínimo"
-                min={0}
-                value={internalFilters.mincost ?? ""}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={handleMinCostChange}
-              />
-              <Input
-                type="number"
-                placeholder="Máximo"
-                min={0}
-                value={internalFilters.maxcost ?? ""}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={handleMaxCostChange}
-              />
+        {/* Tope de altura + scroll interno, igual que ProductsFilterModal: el
+            max-h va en un contenedor propio, no en el ScrollArea. Al ser un
+            máximo la altura se adapta al contenido y el scroll solo aparece si
+            hay de sobra, así que sirve el mismo valor en todos los modales. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4 pl-1 pr-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Categorías</Label>
+                <Select
+                  value={
+                    internalFilters?.category
+                      ? String(internalFilters.category)
+                      : "none"
+                  }
+                  onValueChange={handleCategoryChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas las categorías" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Todas las categorías</SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+    
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Rango de Costo</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Mínimo"
+                    min={0}
+                    value={internalFilters.mincost ?? ""}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={handleMinCostChange}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Máximo"
+                    min={0}
+                    value={internalFilters.maxcost ?? ""}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={handleMaxCostChange}
+                  />
+                </div>
+              </div>
+    
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Costos</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={
+                      internalFilters.cost == null
+                        ? "none"
+                        : String(internalFilters.cost)
+                    }
+                    onValueChange={handleCostChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas los costos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Todos los costos</SelectItem>
+                      <SelectItem value="true">Con costo</SelectItem>
+                      <SelectItem value="false">Sin costo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Costos</Label>
-            <div className="flex gap-2">
-              <Select
-                value={
-                  internalFilters.cost == null
-                    ? "none"
-                    : String(internalFilters.cost)
-                }
-                onValueChange={handleCostChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas los costos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Todos los costos</SelectItem>
-                  <SelectItem value="true">Con costo</SelectItem>
-                  <SelectItem value="false">Sin costo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          </ScrollArea>
         </div>
         <DialogFooter className="flex gap-2">
           <Button variant="outline" onClick={handleClear}>

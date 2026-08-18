@@ -97,103 +97,105 @@ const CategoriesFilterModal = ({
                     <DialogTitle>Filtrar Categoría</DialogTitle>
                 </DialogHeader>
 
-                {/* Altura fija + scroll interno, igual que ProductsFilterModal:
-                    cabecera y footer quedan fuera del ScrollArea, así Limpiar
-                    y Aplicar siempre se ven. El pr-4 aparta los campos de la
-                    barra de scroll, que si no roza su borde derecho. 300px en
-                    vez de los 400 de Productos porque aquí son 4 grupos y no
-                    6: con 400 sobraba hueco vacío abajo. */}
-                <ScrollArea className="h-[300px]">
-                    <div className="space-y-4 py-4 pl-1 pr-4">
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium">Descripción</Label>
-                            <div className="flex gap-2">
-                                <Select
-                                    value={
-                                        internalFilters.description == null
-                                            ? "none"
-                                            : String(internalFilters.description)
-                                    }
-                                    onValueChange={handleDescriptionChange}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Sin especificar" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">Sin especificar</SelectItem>
-                                        <SelectItem value="true">Con descripción</SelectItem>
-                                        <SelectItem value="false">Sin descripción</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                {/* Tope de altura + scroll interno, igual que
+                    ProductsFilterModal: cabecera y footer quedan fuera del
+                    ScrollArea, así Limpiar y Aplicar siempre se ven. El max-h
+                    va en un contenedor propio, no en el ScrollArea, y al ser un
+                    máximo la altura se adapta al contenido: los 4 grupos de
+                    esta pantalla no dejan hueco vacío. */}
+                <div className="max-h-[50vh]">
+                    <ScrollArea className="h-full">
+                        <div className="space-y-4 py-4 pl-1 pr-4">
+                            <div className="space-y-2">
+                                <Label className="text-sm font-medium">Descripción</Label>
+                                <div className="flex gap-2">
+                                    <Select
+                                        value={
+                                            internalFilters.description == null
+                                                ? "none"
+                                                : String(internalFilters.description)
+                                        }
+                                        onValueChange={handleDescriptionChange}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Sin especificar" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Sin especificar</SelectItem>
+                                            <SelectItem value="true">Con descripción</SelectItem>
+                                            <SelectItem value="false">Sin descripción</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-sm font-medium">Productos</Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="number"
+                                        placeholder="Mínimo"
+                                        min={0}
+                                        value={internalFilters.minproducts ?? ""}
+                                        onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                                        onChange={handleMinProductsChange}
+                                    />
+                                    <Input
+                                        type="number"
+                                        placeholder="Máximo"
+                                        min={0}
+                                        value={internalFilters.maxproducts ?? ""}
+                                        onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                                        onChange={handleMaxProductsChange}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-sm font-medium">Categoría padre</Label>
+                                <div className="flex gap-2">
+                                    <Select
+                                        value={
+                                            internalFilters.parentcategory == null
+                                                ? "none"
+                                                : String(internalFilters.parentcategory)
+                                        }
+                                        onValueChange={handleParentCategoryChange}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Sin especificar" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Sin especificar</SelectItem>
+                                            <SelectItem value="true">Con Cat. Padre</SelectItem>
+                                            <SelectItem value="false">Sin Cat. Padre</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-sm font-medium">Imagen</Label>
+                                <div className="flex gap-2">
+                                    <Select
+                                        value={
+                                            internalFilters.image == null
+                                                ? "none"
+                                                : String(internalFilters.image)
+                                        }
+                                        onValueChange={handleImageChange}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Sin especificar" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Sin especificar</SelectItem>
+                                            <SelectItem value="true">Con imagen</SelectItem>
+                                            <SelectItem value="false">Sin imagen</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium">Productos</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    type="number"
-                                    placeholder="Mínimo"
-                                    min={0}
-                                    value={internalFilters.minproducts ?? ""}
-                                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                                    onChange={handleMinProductsChange}
-                                />
-                                <Input
-                                    type="number"
-                                    placeholder="Máximo"
-                                    min={0}
-                                    value={internalFilters.maxproducts ?? ""}
-                                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                                    onChange={handleMaxProductsChange}
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium">Categoría padre</Label>
-                            <div className="flex gap-2">
-                                <Select
-                                    value={
-                                        internalFilters.parentcategory == null
-                                            ? "none"
-                                            : String(internalFilters.parentcategory)
-                                    }
-                                    onValueChange={handleParentCategoryChange}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Sin especificar" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">Sin especificar</SelectItem>
-                                        <SelectItem value="true">Con Cat. Padre</SelectItem>
-                                        <SelectItem value="false">Sin Cat. Padre</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium">Imagen</Label>
-                            <div className="flex gap-2">
-                                <Select
-                                    value={
-                                        internalFilters.image == null
-                                            ? "none"
-                                            : String(internalFilters.image)
-                                    }
-                                    onValueChange={handleImageChange}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Sin especificar" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">Sin especificar</SelectItem>
-                                        <SelectItem value="true">Con imagen</SelectItem>
-                                        <SelectItem value="false">Sin imagen</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    </div>
-                </ScrollArea>
+                    </ScrollArea>
+                </div>
                 <DialogFooter className="flex gap-2">
                     <Button variant="outline" onClick={handleClear}>
                         Limpiar
