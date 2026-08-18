@@ -184,11 +184,14 @@ const AttributesPage = () => {
                 </TableRow>
               ) : (
                 attributes.map((group) => {
-                  // Sin product_terms.list no hay despliegue posible, así que
-                  // la fila nunca se da por expandida aunque el estado del
-                  // hook dijera lo contrario.
+                  // Dos condiciones distintas: poder listar términos (permiso)
+                  // y que este atributo tenga alguno. Un atributo sin términos
+                  // no tiene nada que desplegar, así que no ofrece el control.
+                  // Y sin product_terms.list la fila nunca se da por expandida
+                  // aunque el estado del hook dijera lo contrario.
+                  const canExpand = canListTerms && group.terms.length > 0;
                   const isExpanded =
-                    canListTerms && expandedGroups.has(group.group_id);
+                    canExpand && expandedGroups.has(group.group_id);
                   const totalProducts = group.terms.reduce((sum, t) => sum + t.products, 0);
 
                   return (
@@ -196,24 +199,31 @@ const AttributesPage = () => {
                       {/* Group row */}
                       <TableRow
                         className={`bg-muted/50 [&>td]:py-3 ${
-                          canListTerms ? "cursor-pointer hover:bg-muted/70" : ""
+                          canExpand ? "cursor-pointer hover:bg-muted/70" : ""
                         }`}
                         onClick={
-                          canListTerms
+                          canExpand
                             ? () => toggleGroup(group.group_id)
                             : undefined
                         }
                       >
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            {/* El chevron se va con el click: dejar la flecha
-                                sin poder desplegar haría creer que la fila
-                                está rota. */}
+                            {/* El chevron se va con el click: una flecha que
+                                no despliega nada haría creer que la fila está
+                                rota. Cuando el rol sí puede listar términos se
+                                deja el hueco en las filas sin ellos, para que
+                                los nombres no queden desalineados entre unas
+                                filas y otras. */}
                             {canListTerms &&
-                              (isExpanded ? (
-                                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                              (canExpand ? (
+                                isExpanded ? (
+                                  <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                                )
                               ) : (
-                                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                                <div className="w-4 shrink-0" />
                               ))}
                             <span className="font-semibold">{group.group_name}</span>
                             {group.group_description && (
