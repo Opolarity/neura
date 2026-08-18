@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Plus, Trash } from "lucide-react";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 interface ProductsHeaderProps {
   selectedProducts: number[];
@@ -21,15 +22,17 @@ const ProductHeader = ({
         <p className="text-gray-600">Administra tu catálogo de productos</p>
       </div>
       <div className="flex gap-2">
-        {selectedProducts.length > 1 && (
-          <Button
-            variant="destructive"
-            onClick={() => handleBulkDelete(selectedProducts)}
-            className="gap-2"
-          >
-            <Trash className="w-4 h-4" />
-            Eliminar {selectedProducts.length} seleccionados
-          </Button>
+        {selectedProducts.length > 0 && (
+          <ComponentPermission codeIn={["products.delete"]}>
+            <Button
+              variant="destructive"
+              onClick={() => handleBulkDelete(selectedProducts)}
+              className="gap-2"
+            >
+              <Trash className="w-4 h-4" />
+              Eliminar {selectedProducts.length} seleccionados
+            </Button>
+          </ComponentPermission>
         )}
         <Button onClick={handleNewProduct} className="gap-2">
           <Plus className="w-4 h-4" />
