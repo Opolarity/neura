@@ -6,6 +6,7 @@ import { MovementsFilters } from '../../types/Movements.types';
 import { useState } from 'react';
 import { DateRangeFilter, DateRangeValue } from '@/shared/components/date-range';
 import { SimpleWarehouses, MovementsTypes, SimpleUsers } from '../../types/Movements.types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface InventoryFilterModalProps {
     filters: MovementsFilters;
@@ -102,129 +103,140 @@ const MovementsFilterModal = ({
                     <DialogTitle>Filtrar Movimientos</DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-4 py-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="completed">Estado del movimiento</Label>
-                        <Select
-                            value={
-                                internalFilters.completed == null
-                                    ? "all"
-                                    : String(internalFilters.completed)
-                            }
-                            onValueChange={handleCompletedChange}
-                        >
-                            <SelectTrigger id="completed">
-                                <SelectValue placeholder="Todos" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todos</SelectItem>
-                                <SelectItem value="true">Culminados</SelectItem>
-                                <SelectItem value="false">Pendientes</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                {/* Tope de altura + scroll interno, mismo patrón que el resto de
+                    modales de filtros: el ScrollArea envuelve solo el cuerpo, así
+                    cabecera y footer quedan fuera del scroll y Limpiar/Aplicar
+                    siempre se ven. El max-h va en un contenedor propio y no en el
+                    ScrollArea (su Root lleva overflow-hidden), y al ser un máximo
+                    la altura sigue al contenido. El pr-4 aparta los campos de la
+                    barra de scroll. */}
+                <div className="max-h-[50vh]">
+                    <ScrollArea className="h-full">
+                        <div className="space-y-4 py-4 pl-1 pr-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="completed">Estado del movimiento</Label>
+                                <Select
+                                    value={
+                                        internalFilters.completed == null
+                                            ? "all"
+                                            : String(internalFilters.completed)
+                                    }
+                                    onValueChange={handleCompletedChange}
+                                >
+                                    <SelectTrigger id="completed">
+                                        <SelectValue placeholder="Todos" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos</SelectItem>
+                                        <SelectItem value="true">Culminados</SelectItem>
+                                        <SelectItem value="false">Pendientes</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                    <DateRangeFilter
-                        startDate={internalFilters.start_date ?? null}
-                        endDate={internalFilters.end_date ?? null}
-                        onChange={handleDateChange}
-                        startLabel="Fecha Inicio"
-                        endLabel="Fecha Fin"
-                        maxRangeDays={MAX_RANGE_DAYS}
-                    />
+                            <DateRangeFilter
+                                startDate={internalFilters.start_date ?? null}
+                                endDate={internalFilters.end_date ?? null}
+                                onChange={handleDateChange}
+                                startLabel="Fecha Inicio"
+                                endLabel="Fecha Fin"
+                                maxRangeDays={MAX_RANGE_DAYS}
+                            />
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="warehouse">Almacén</Label>
-                        <Select
-                            value={
-                                internalFilters.warehouse?.toString() == null
-                                    ? "none"
-                                    : String(internalFilters.warehouse.toString())
-                            }
-                            onValueChange={(value) => handleWarehouseChange(value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar almacén" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">Ninguno</SelectItem>
-                                {warehouses.map((warehouse) => (
-                                    <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
-                                        {warehouse.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="warehouse">Almacén</Label>
+                                <Select
+                                    value={
+                                        internalFilters.warehouse?.toString() == null
+                                            ? "none"
+                                            : String(internalFilters.warehouse.toString())
+                                    }
+                                    onValueChange={(value) => handleWarehouseChange(value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar almacén" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Ninguno</SelectItem>
+                                        {warehouses.map((warehouse) => (
+                                            <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                                                {warehouse.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="type">Origen</Label>
-                        <Select
-                            value={
-                                internalFilters.origin?.toString() == null
-                                    ? "none"
-                                    : String(internalFilters.origin.toString())
-                            }
-                            onValueChange={(value) => handleOriginChange(value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar origen" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">Ninguno</SelectItem>
-                                {movementsTypes.map((type) => (
-                                    <SelectItem key={type.id} value={type.id.toString()}>
-                                        {type.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="type">Origen</Label>
+                                <Select
+                                    value={
+                                        internalFilters.origin?.toString() == null
+                                            ? "none"
+                                            : String(internalFilters.origin.toString())
+                                    }
+                                    onValueChange={(value) => handleOriginChange(value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar origen" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Ninguno</SelectItem>
+                                        {movementsTypes.map((type) => (
+                                            <SelectItem key={type.id} value={type.id.toString()}>
+                                                {type.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="user">Usuario</Label>
-                        <Select
-                            value={
-                                internalFilters.user?.toString() == null
-                                    ? "none"
-                                    : String(internalFilters.user.toString())
-                            }
-                            onValueChange={(value) => handleUserChange(value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar usuario" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">Ninguno</SelectItem>
-                                {users.map((user) => (
-                                    <SelectItem key={user.id} value={user.id.toString()}>
-                                        {user.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="user">Usuario</Label>
+                                <Select
+                                    value={
+                                        internalFilters.user?.toString() == null
+                                            ? "none"
+                                            : String(internalFilters.user.toString())
+                                    }
+                                    onValueChange={(value) => handleUserChange(value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar usuario" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Ninguno</SelectItem>
+                                        {users.map((user) => (
+                                            <SelectItem key={user.id} value={user.id.toString()}>
+                                                {user.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                    <div className='flex flex-col gap-2'>
-                        <Label htmlFor="in_out">Movimiento</Label>
-                        <Select
-                            value={
-                                internalFilters.in_out?.toString() == null
-                                    ? "none"
-                                    : String(internalFilters.in_out.toString())
-                            }
-                            onValueChange={(value) => handleInOutChange(value)}
-                        >
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Seleccionar movimiento" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">Ambos</SelectItem>
-                                <SelectItem value="true">Ingreso</SelectItem>
-                                <SelectItem value="false">Egreso</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                            <div className='flex flex-col gap-2'>
+                                <Label htmlFor="in_out">Movimiento</Label>
+                                <Select
+                                    value={
+                                        internalFilters.in_out?.toString() == null
+                                            ? "none"
+                                            : String(internalFilters.in_out.toString())
+                                    }
+                                    onValueChange={(value) => handleInOutChange(value)}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Seleccionar movimiento" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Ambos</SelectItem>
+                                        <SelectItem value="true">Ingreso</SelectItem>
+                                        <SelectItem value="false">Egreso</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    </ScrollArea>
                 </div>
 
                 <DialogFooter className="flex gap-2">
