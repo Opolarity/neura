@@ -351,13 +351,13 @@ const FranchiseProducts = () => {
           },
           {
             label: summary?.dateFilterActive
-              ? "Total pagado (acumulado)"
+              ? "Total pagado (global)"
               : "Total pagado",
             value: summary?.totalPaid ?? null,
           },
           {
             label: summary?.dateFilterActive
-              ? "Total por pagar (acumulado)"
+              ? "Total por pagar (global)"
               : "Total por pagar",
             value: summary?.totalPending ?? null,
           },
