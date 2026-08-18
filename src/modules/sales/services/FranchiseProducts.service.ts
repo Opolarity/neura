@@ -13,6 +13,14 @@ export type FranchiseProductRow = {
   // Descuento acumulado por promociones de consignación (order_discounts
   // FCH-PROMO-%) sobre las unidades ya vendidas de esta línea.
   franchiseDiscount: number;
+  // Acumulados de la línea: nunca se recortan por fecha, porque los pagos se
+  // registran por orden (order_payment.order_id) y no se pueden atribuir a un
+  // rango. Son la base del "por pagar".
+  soldByFranchiseTotal: number;
+  franchiseDiscountTotal: number;
+  // Ids de las órdenes del sistema del franquiciado que cubren esta línea; con
+  // filtro de fecha activo, solo las del rango.
+  franchiseOrderIds: string[];
   total: number;
   franchiseName: string | null;
   isFranchisee: boolean;
@@ -78,8 +86,11 @@ type RawFranchiseProduct = {
   product_price: number | string | null;
   quantity: number | string | null;
   sold_by_franchise: number | string | null;
+  sold_by_franchise_total: number | string | null;
   paid_by_franchise: number | string | null;
   franchise_discount: number | string | null;
+  franchise_discount_total: number | string | null;
+  franchise_order_ids: string[] | null;
   franchise_name: string | null;
   is_franchisee: boolean;
 };
@@ -102,6 +113,18 @@ const toNullableNumber = (
     return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+};
+
+/**
+ * El SP devuelve un text[] en orden de inserción (p.ej. `{154,153}`): se limpia
+ * y se ordena numérico-aware para que el reporte salga estable.
+ */
+const toOrderIds = (value: string[] | null | undefined): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((id) => String(id).trim())
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 };
 
 export const fetchFranchiseProducts = async (
@@ -147,6 +170,9 @@ export const fetchFranchiseProducts = async (
         productPrice,
         paidByFranchise: toNullableNumber(item.paid_by_franchise),
         franchiseDiscount: toNumber(item.franchise_discount),
+        soldByFranchiseTotal: toNumber(item.sold_by_franchise_total),
+        franchiseDiscountTotal: toNumber(item.franchise_discount_total),
+        franchiseOrderIds: toOrderIds(item.franchise_order_ids),
         total: productPrice * quantity,
         franchiseName: item.franchise_name ?? null,
         isFranchisee: item.is_franchisee ?? false,
