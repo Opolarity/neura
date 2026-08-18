@@ -286,10 +286,9 @@ const FranchiseProducts = () => {
         (acc, item) => {
           acc.quantity += item.quantity;
           acc.sold += item.soldByFranchise ?? 0;
-          // Neto de promociones de consignación.
-          acc.soldAmount +=
-            item.productPrice * (item.soldByFranchise ?? 0) -
-            item.franchiseDiscount;
+          // Neto de promociones. Viene valorizado por evento desde el SP:
+          // cada venta a su precio, no precio vigente x cantidad.
+          acc.soldAmount += item.soldAmount;
           acc.promoDiscount += item.franchiseDiscount;
           acc.paid += item.paidByFranchise ?? 0;
           acc.total += item.total;
@@ -473,10 +472,7 @@ const FranchiseProducts = () => {
                         : "-"}
                     </TableCell>
                     <TableCell className="text-right">
-                      {formatCurrency(
-                        item.productPrice * (item.soldByFranchise ?? 0) -
-                          item.franchiseDiscount,
-                      )}
+                      {formatCurrency(item.soldAmount)}
                     </TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(item.paidByFranchise)}

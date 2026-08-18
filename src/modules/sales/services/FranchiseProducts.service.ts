@@ -13,6 +13,7 @@ export type FranchiseProductRow = {
   // Descuento acumulado por promociones de consignación (order_discounts
   // FCH-PROMO-%) sobre las unidades ya vendidas de esta línea.
   franchiseDiscount: number;
+  soldAmount: number;
   // Ids de las órdenes del sistema del franquiciado que cubren esta línea; con
   // filtro de fecha activo, solo las del rango.
   franchiseOrderIds: string[];
@@ -90,6 +91,7 @@ type RawFranchiseProduct = {
   sold_by_franchise: number | string | null;
   paid_by_franchise: number | string | null;
   franchise_discount: number | string | null;
+  sold_amount: number | string | null;
   franchise_order_ids: string[] | null;
   promo_names: string[] | null;
   franchise_name: string | null;
@@ -171,6 +173,10 @@ export const fetchFranchiseProducts = async (
         productPrice,
         paidByFranchise: toNullableNumber(item.paid_by_franchise),
         franchiseDiscount: toNumber(item.franchise_discount),
+        // Monto vendido valorizado por evento (cada venta a su precio). El SP
+        // lo calcula; el front NO debe rehacer precio x cantidad, que
+        // revalorizaria las ventas viejas al precio vigente de la linea.
+        soldAmount: toNumber(item.sold_amount),
         franchiseOrderIds: toSortedList(item.franchise_order_ids),
         promoNames: toSortedList(item.promo_names),
         total: productPrice * quantity,

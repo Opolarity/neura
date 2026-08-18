@@ -133,9 +133,9 @@ export function generateFranchiseProductsExcel({
 
   const dataRows: SheetCell[][] = rows.map((item) => {
     const sold = item.soldByFranchise ?? 0;
-    // Lo que el franquiciado debe por esta línea: lo vendido a precio de la
-    // orden de Overtake, neto de la promoción de consignación.
-    const due = item.productPrice * sold - item.franchiseDiscount;
+    // Lo que el franquiciado debe por esta línea, neto de promociones.
+    // Valorizado por evento desde el SP: cada venta conserva su precio.
+    const due = item.soldAmount;
     totalDiscount += item.franchiseDiscount;
     totalDue += due;
 
