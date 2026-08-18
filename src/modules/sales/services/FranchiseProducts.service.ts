@@ -59,6 +59,11 @@ export type FranchiseSummary = {
   // Neto: el SP ya descuenta las promociones de consignación. Cuando hay filtro
   // de fecha activo es lo vendido DENTRO del rango; si no, el acumulado.
   totalSold: number;
+  // Con filtro de fecha activo, `totalPaid` y `totalPending` son la deuda
+  // GLOBAL del franquiciado, no la del rango: los pagos no se pueden atribuir a
+  // una venta concreta (el payload de pago no dice qué venta paga), así que
+  // recortarlos por fecha daría un número sin significado. La pantalla los
+  // rotula como globales.
   totalPaid: number;
   totalPending: number;
   totalPromoDiscount: number;
@@ -188,6 +193,9 @@ export const fetchFranchiseProducts = async (
   const totalSoldRange = toNumber(data?.summary?.total_sold_range);
   const totalPaid = toNumber(data?.summary?.total_paid);
   const dateFilterActive = Boolean(data?.summary?.date_filter_active);
+  // Deuda global del franquiciado, sin recorte de fechas.
+  const totalSoldGlobal = toNumber(data?.summary?.total_sold_global);
+  const totalPaidGlobal = toNumber(data?.summary?.total_paid_global);
   const totalPromoDiscount = toNumber(
     dateFilterActive
       ? data?.summary?.total_promo_discount_range
@@ -196,10 +204,14 @@ export const fetchFranchiseProducts = async (
   const summary: FranchiseSummary = {
     totalSent,
     totalSold: dateFilterActive ? totalSoldRange : totalSold,
-    totalPaid,
-    // Siempre acumulado - pagado: con el vendido del rango daría negativo en
-    // cuanto el franquiciado ya hubiera pagado ventas de meses anteriores.
-    totalPending: totalSold - totalPaid,
+    // Con filtro activo se muestra la deuda global del franquiciado. Antes se
+    // hacía `totalSold - totalPaid` sobre las líneas recortadas por fecha, que
+    // era un híbrido sin significado: para ROOTS-AQP del 1 al 16 de agosto daba
+    // 6911.50, ni la deuda del rango (6401.00) ni la global (6802.00).
+    totalPaid: dateFilterActive ? totalPaidGlobal : totalPaid,
+    totalPending: dateFilterActive
+      ? totalSoldGlobal - totalPaidGlobal
+      : totalSold - totalPaid,
     totalPromoDiscount,
     dateFilterActive,
   };
