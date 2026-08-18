@@ -69,7 +69,10 @@ const PermissionTreeSelector = ({
   onSearchChange,
   searchPlaceholder = "Buscar permiso...",
 }: PermissionTreeSelectorProps) => {
-  const [collapsedNodes, setCollapsedNodes] = useState<Set<number>>(new Set());
+  // Se guardan los EXPANDIDOS, no los colapsados: así el estado inicial vacío
+  // ya deja todo plegado sin depender de `nodes`, que llega de forma asíncrona
+  // (con el set inverso habría que resembrarlo al cargar el catálogo).
+  const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set());
 
   const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
 
@@ -79,8 +82,8 @@ const PermissionTreeSelector = ({
     [nodes, term]
   );
 
-  const toggleCollapse = (nodeId: number) => {
-    setCollapsedNodes((prev) => {
+  const toggleExpand = (nodeId: number) => {
+    setExpandedNodes((prev) => {
       const next = new Set(prev);
       if (next.has(nodeId)) {
         next.delete(nodeId);
@@ -93,9 +96,14 @@ const PermissionTreeSelector = ({
 
   const renderNode = (node: PermissionNode, level = 0) => {
     const hasChildren = node.children.length > 0;
-    // Durante una búsqueda se ignora el colapso: si un hijo coincide, tiene
-    // que verse aunque el padre estuviera colapsado.
-    const isExpanded = term ? true : !collapsedNodes.has(node.id);
+    // Los nodos con hijos arrancan plegados: el árbol completo son ~77
+    // permisos y de un vistazo solo interesan las cabeceras. El contador
+    // (seleccionados/total) de al lado evita tener que abrirlos para saber
+    // qué hay marcado dentro.
+    //
+    // Durante una búsqueda se ignora el plegado: si un hijo coincide, tiene
+    // que verse aunque su padre estuviera colapsado.
+    const isExpanded = term ? true : expandedNodes.has(node.id);
     const totalDescendants = hasChildren ? countDescendants(node) : 0;
     const selectedDescendants = hasChildren
       ? countSelectedDescendants(node, selected)
@@ -113,7 +121,7 @@ const PermissionTreeSelector = ({
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0"
-              onClick={() => toggleCollapse(node.id)}
+              onClick={() => toggleExpand(node.id)}
             >
               {isExpanded ? (
                 <ChevronDown className="w-3 h-3" />
