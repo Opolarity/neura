@@ -57,6 +57,9 @@ const getStockStatusLabel = (
 
 const roundMoney = (value: number): number => Number(value.toFixed(2));
 
+/** Celda de la hoja; `null` deja el hueco sin celda (fila de totales). */
+type SheetCell = string | number | null;
+
 export interface FranchiseProductsExcelData {
   rows: FranchiseProductRow[];
   summary: FranchiseSummary;
@@ -90,15 +93,14 @@ export function generateFranchiseProductsExcel({
     [],
   ];
 
-  // Con filtro de fecha, "vendido" es lo del rango y "pagado"/"por pagar"
-  // siguen siendo acumulados de la línea: se rotula igual que en la pantalla.
+  // "Total de venta (inicial)" es todo lo enviado en consignación valorizado al
+  // precio de la orden de Overtake, antes de descuentos. Pagado y por pagar son
+  // acumulados de la línea aunque haya filtro de fecha: los pagos se registran
+  // por orden (order_payment.order_id) y no se pueden recortar a un rango.
   const summaryRows = [
     ["Montos"],
-    ["Total enviado", roundMoney(summary.totalSent)],
-    [
-      summary.dateFilterActive ? "Total vendido (en el rango)" : "Total vendido",
-      roundMoney(summary.totalSold),
-    ],
+    ["Total de venta (inicial)", roundMoney(summary.totalSent)],
+    ["Dscto. promociones", roundMoney(summary.totalPromoDiscount)],
     [
       summary.dateFilterActive ? "Total pagado (acumulado)" : "Total pagado",
       roundMoney(summary.totalPaid),
@@ -109,40 +111,32 @@ export function generateFranchiseProductsExcel({
         : "Total por pagar",
       roundMoney(summary.totalPending),
     ],
-    ["Dscto. promociones", roundMoney(summary.totalPromoDiscount)],
+    [],
     [],
   ];
 
-  // Mismo criterio que el bloque de montos: lo vendido se recorta al rango y
-  // lo pagado/por pagar no, así que se rotula para que no se lean como pares.
   const headerRow = [
     "Nombre del producto",
     "Id orden (overtake)",
     "ID orden (franquiciado)",
-    summary.dateFilterActive
-      ? "Vendido por franquiciado (en el rango)"
-      : "Vendido por franquiciado",
-    "Precio de venta",
-    summary.dateFilterActive ? "Descuento (en el rango)" : "Descuento",
-    summary.dateFilterActive ? "Total (en el rango)" : "Total",
-    summary.dateFilterActive ? "Pagado (acumulado)" : "Pagado",
-    summary.dateFilterActive ? "Por pagar (acumulado)" : "Por pagar",
+    "Vendido por franquiciado",
+    "Precio unitario",
+    "Descuento",
+    "Monto Desc.",
+    "Total (por pagar)",
     "Franquiciado",
   ];
 
-  const dataRows = rows.map((item) => {
+  let totalDiscount = 0;
+  let totalDue = 0;
+
+  const dataRows: SheetCell[][] = rows.map((item) => {
     const sold = item.soldByFranchise ?? 0;
-    const paid = item.paidByFranchise ?? 0;
-    // Neto de promociones de consignación, sobre lo vendido del rango (o el
-    // acumulado si no hay filtro de fecha).
-    const total = item.productPrice * sold - item.franchiseDiscount;
-    // Los pagos se registran por orden, no por línea ni por fecha: el pendiente
-    // es siempre el acumulado de la línea. Así la columna suma exactamente el
-    // "Total por pagar" del bloque de montos.
-    const pending =
-      item.productPrice * item.soldByFranchiseTotal -
-      item.franchiseDiscountTotal -
-      paid;
+    // Lo que el franquiciado debe por esta línea: lo vendido a precio de la
+    // orden de Overtake, neto de la promoción de consignación.
+    const due = item.productPrice * sold - item.franchiseDiscount;
+    totalDiscount += item.franchiseDiscount;
+    totalDue += due;
 
     return [
       item.productName,
@@ -151,44 +145,62 @@ export function generateFranchiseProductsExcel({
       item.franchiseOrderIds.join(", ") || "-",
       sold,
       roundMoney(item.productPrice),
+      item.promoNames.join(", ") || null,
       roundMoney(item.franchiseDiscount),
-      roundMoney(total),
-      roundMoney(paid),
-      roundMoney(pending),
+      roundMoney(due),
       item.franchiseName ?? "-",
     ];
   });
 
-  const wsData = [...filterRows, ...summaryRows, headerRow, ...dataRows];
+  // El export pide todas las páginas de una, así que estos totales son los del
+  // reporte completo y cuadran con el bloque de montos.
+  const totalRow: SheetCell[] = [
+    "TOTAL",
+    null,
+    null,
+    null,
+    null,
+    null,
+    roundMoney(totalDiscount),
+    roundMoney(totalDue),
+    null,
+  ];
+
+  const wsData: SheetCell[][] = [
+    ...filterRows,
+    ...summaryRows,
+    headerRow,
+    ...dataRows,
+    totalRow,
+  ];
   const ws = XLSX.utils.aoa_to_sheet(wsData);
 
   ws["!cols"] = [
     { wch: 36 },
     { wch: 18 },
     { wch: 22 },
-    { wch: 26 },
+    { wch: 22.5 },
     { wch: 14 },
     { wch: 14 },
-    { wch: 16 },
-    { wch: 16 },
+    { wch: 14 },
     { wch: 16 },
     { wch: 28 },
   ];
 
-  const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:J1");
+  const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:I1");
   for (let row = range.s.r; row <= range.e.r; row += 1) {
     for (let col = range.s.c; col <= range.e.c; col += 1) {
       const cell = ws[XLSX.utils.encode_cell({ r: row, c: col })];
       if (!cell || typeof cell.v !== "number") continue;
 
       // Las filas de filtros son todas texto: solo se formatean los montos.
-      if (row >= filterRows.length + 1 && row <= filterRows.length + 5 && col === 1) {
+      if (row >= filterRows.length + 1 && row <= filterRows.length + 4 && col === 1) {
         cell.z = '"S/ "#,##0.00';
       }
 
       if (row > filterRows.length + summaryRows.length) {
-        // Precio de venta, Descuento, Total, Pagado y Por pagar.
-        if ([4, 5, 6, 7, 8].includes(col)) cell.z = '"S/ "#,##0.00';
+        // Precio unitario, Monto Desc. y Total (por pagar).
+        if ([4, 6, 7].includes(col)) cell.z = '"S/ "#,##0.00';
         // Vendido por franquiciado.
         if (col === 3) cell.z = "#,##0.##";
       }
