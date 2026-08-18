@@ -8,7 +8,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Edit, Loader2, Trash } from "lucide-react";
+import { ComponentPermission } from "@/shared/components/component-permission";
 import type { Tag, EditTagPayload } from "@/modules/products/types/Tags.types";
+
+// Codes de la columna Acciones. En una constante para que la cabecera y las
+// celdas no puedan quedar con listas distintas y aparezca un th sin td.
+const ACTION_CODES = ["product_tags.edit", "product_tags.delete"];
 
 interface TagsTableProps {
   tags: Tag[];
@@ -59,16 +64,22 @@ export default function TagsTable({ tags, isLoading, error, onEdit, onDelete }: 
         <TableCell>{tag.name}</TableCell>
         <TableCell>{tag.code}</TableCell>
         <TableCell>{tag.products_count}</TableCell>
-        <TableCell>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => onEdit({ id: tag.id, name: tag.name, code: tag.code })}>
-              <Edit className="w-4 h-4" />
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => onDelete(tag)}>
-              <Trash className="w-4 h-4" />
-            </Button>
-          </div>
-        </TableCell>
+        <ComponentPermission codeIn={ACTION_CODES}>
+          <TableCell>
+            <div className="flex gap-2">
+              <ComponentPermission codeIn={["product_tags.edit"]}>
+                <Button variant="outline" size="sm" onClick={() => onEdit({ id: tag.id, name: tag.name, code: tag.code })}>
+                  <Edit className="w-4 h-4" />
+                </Button>
+              </ComponentPermission>
+              <ComponentPermission codeIn={["product_tags.delete"]}>
+                <Button variant="destructive" size="sm" onClick={() => onDelete(tag)}>
+                  <Trash className="w-4 h-4" />
+                </Button>
+              </ComponentPermission>
+            </div>
+          </TableCell>
+        </ComponentPermission>
       </TableRow>
     ));
   };
@@ -81,7 +92,12 @@ export default function TagsTable({ tags, isLoading, error, onEdit, onDelete }: 
           <TableHead>Nombre</TableHead>
           <TableHead>Código</TableHead>
           <TableHead>Productos</TableHead>
-          <TableHead>Acciones</TableHead>
+          {/* Se envuelve la celda entera, no su contenido: un th/td vacío
+              sigue ocupando ancho. Basta con tener UNA de las dos acciones
+              para que la columna tenga sentido. */}
+          <ComponentPermission codeIn={ACTION_CODES}>
+            <TableHead>Acciones</TableHead>
+          </ComponentPermission>
         </TableRow>
       </TableHeader>
       <TableBody>{renderBody()}</TableBody>
