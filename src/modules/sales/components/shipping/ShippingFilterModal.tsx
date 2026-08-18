@@ -13,13 +13,14 @@ import { useEffect, useState } from "react";
 import { CountriesApi, getCitiesByStateIdApi, getNeighborhoodsByCityIdApi, getStatesByCountryIdApi } from "@/shared/services/service";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 
 
 
 interface ShippingFilterModalProps {
-    
+
   filters: ShippingFilters;
   isOpen: boolean;
   onClose?: () => void;
@@ -137,128 +138,138 @@ const ShippingFilterModal = ({
           <DialogTitle>Filtrar</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">País</Label>
-            <div className="flex gap-2">
-              <Select
-                value={
-                  internalFilters?.countrie
-                    ? String(internalFilters.countrie)
-                    : "none"
-                }
-                onValueChange={handleCountryChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos los países" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Todos los países</SelectItem>
-                  {countries.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* Tope de altura + scroll interno, mismo patrón que el resto de
+            modales de filtros: el ScrollArea envuelve solo el cuerpo, así
+            cabecera y footer quedan fuera del scroll y Limpiar/Aplicar siempre
+            se ven. El max-h va en un contenedor propio y no en el ScrollArea
+            (su Root lleva overflow-hidden), y al ser un máximo la altura sigue
+            al contenido. El pr-4 aparta los campos de la barra de scroll. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4 pl-1 pr-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">País</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={
+                      internalFilters?.countrie
+                        ? String(internalFilters.countrie)
+                        : "none"
+                    }
+                    onValueChange={handleCountryChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos los países" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Todos los países</SelectItem>
+                      {countries.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Departamento</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={
+                      internalFilters?.state
+                        ? String(internalFilters.state)
+                        : "none"
+                    }
+                    onValueChange={handleStateChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos los departamentos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Todos los departamentos</SelectItem>
+                      {states.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Provincia</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={
+                      internalFilters?.city
+                        ? String(internalFilters.city)
+                        : "none"
+                    }
+                    onValueChange={handleCityChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos las provincias" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Todas las provincias</SelectItem>
+                      {cities.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Distrito</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={
+                      internalFilters?.neighborhood
+                        ? String(internalFilters.neighborhood)
+                        : "none"
+                    }
+                    onValueChange={handleNeighborhoodChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos los distritos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Todos los distritos</SelectItem>
+                      {neighborhoods.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Precio</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Mínimo"
+                    min={0}
+                    value={internalFilters.mincost ?? ""}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={handleMinCostChange}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Máximo"
+                    min={0}
+                    value={internalFilters.maxcost ?? ""}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={handleMaxCostChange}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Departamento</Label>
-            <div className="flex gap-2">
-              <Select
-                value={
-                  internalFilters?.state
-                    ? String(internalFilters.state)
-                    : "none"
-                }
-                onValueChange={handleStateChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos los departamentos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Todos los departamentos</SelectItem>
-                  {states.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Provincia</Label>
-            <div className="flex gap-2">
-              <Select
-                value={
-                  internalFilters?.city
-                    ? String(internalFilters.city)
-                    : "none"
-                }
-                onValueChange={handleCityChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos las provincias" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Todas las provincias</SelectItem>
-                  {cities.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Distrito</Label>
-            <div className="flex gap-2">
-              <Select
-                value={
-                  internalFilters?.neighborhood
-                    ? String(internalFilters.neighborhood)
-                    : "none"
-                }
-                onValueChange={handleNeighborhoodChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos los distritos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Todos los distritos</SelectItem>
-                  {neighborhoods.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Precio</Label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="Mínimo"
-                min={0}
-                value={internalFilters.mincost ?? ""}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={handleMinCostChange}
-              />
-              <Input
-                type="number"
-                placeholder="Máximo"
-                min={0}
-                value={internalFilters.maxcost ?? ""}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={handleMaxCostChange}
-              />
-            </div>
-          </div>
+          </ScrollArea>
         </div>
         <DialogFooter className="flex gap-2">
           <Button variant="outline" onClick={handleClear}>
