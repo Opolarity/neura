@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, Edit, Trash, Loader2 } from "lucide-react";
 import placeholderImage from "@/assets/product-placeholder.png";
+import { ComponentPermission } from "@/shared/components/component-permission";
 import { Product } from "../../types/Products.types";
 
 interface ProductsTableProps {
@@ -138,29 +139,35 @@ const ProductsTable = ({
                 {!hideActions && (
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onViewProduct(product.id)}
-                        title="Ver producto"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <a
-                        href={`/products/edit/${product.id}`}
-                        title="Editar producto"
-                        className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </a>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => onDeleteClick(product)}
-                        title="Eliminar producto"
-                      >
-                        <Trash className="w-4 h-4" />
-                      </Button>
+                      <ComponentPermission codeIn={["products.view"]}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onViewProduct(product.id)}
+                          title="Ver producto"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </ComponentPermission>
+                      <ComponentPermission codeIn={["products.edit"]}>
+                        <a
+                          href={`/products/edit/${product.id}`}
+                          title="Editar producto"
+                          className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </a>
+                      </ComponentPermission>
+                      <ComponentPermission codeIn={["products.delete"]}>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => onDeleteClick(product)}
+                          title="Eliminar producto"
+                        >
+                          <Trash className="w-4 h-4" />
+                        </Button>
+                      </ComponentPermission>
                     </div>
                   </TableCell>
                 )}
