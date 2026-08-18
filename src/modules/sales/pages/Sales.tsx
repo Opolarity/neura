@@ -24,6 +24,7 @@ import { Loader2, SquarePen, Eye } from "lucide-react";
 import { formatDateDisplay } from "@/shared/utils/date";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useNavigate } from "react-router-dom";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 const getStatusClassName = (statusCode: string): string => {
   switch (statusCode.toLowerCase()) {
@@ -41,6 +42,18 @@ const getStatusClassName = (statusCode: string): string => {
       return "bg-muted text-muted-foreground";
   }
 };
+
+// Checkbox, ID, Fecha, Documento, Cliente, Canal, Estado, Estado de pago,
+// Total, Acciones. Si el rol no puede editar, la columna de Acciones no se
+// pinta y este número queda uno largo: solo afecta a las filas de "cargando" y
+// "no hay ventas", y la columna sobrante colapsa a 0px porque ninguna otra
+// fila la ocupa.
+const COL_SPAN = 10;
+
+// Code de la columna Acciones, en una constante para que la cabecera y la
+// celda no puedan quedar con listas distintas y aparezca un th sin td o al
+// revés.
+const ACTION_CODES = ["sales.edit"];
 
 const Sales = () => {
   const navigate = useNavigate();
@@ -110,13 +123,17 @@ const Sales = () => {
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-center">Estado de pago</TableHead>
                 <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-center">Acciones</TableHead>
+                {/* Se envuelve el th entero y no su texto: una celda vacía
+                    sigue ocupando su ancho y deja un hueco muerto. */}
+                <ComponentPermission codeIn={ACTION_CODES}>
+                  <TableHead className="text-center">Acciones</TableHead>
+                </ComponentPermission>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && sales.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8">
+                  <TableCell colSpan={COL_SPAN} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Cargando ventas...
@@ -126,7 +143,7 @@ const Sales = () => {
               ) : sales.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={10}
+                    colSpan={COL_SPAN}
                     className="text-center py-8 text-muted-foreground"
                   >
                     {search
@@ -169,24 +186,26 @@ const Sales = () => {
                     <TableCell className="text-right">
                       S/ {Number(sale.total).toFixed(2)}
                     </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex gap-2 justify-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => goToSaleDetail(sale.id)}
-                        >
-                          <SquarePen className="w-4 h-4" />
-                        </Button>
-                        {/*<Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/sales/${sale.id}`)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>*/}
-                      </div>
-                    </TableCell>
+                    <ComponentPermission codeIn={ACTION_CODES}>
+                      <TableCell className="text-center">
+                        <div className="flex gap-2 justify-center">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => goToSaleDetail(sale.id)}
+                          >
+                            <SquarePen className="w-4 h-4" />
+                          </Button>
+                          {/*<Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/sales/${sale.id}`)}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>*/}
+                        </div>
+                      </TableCell>
+                    </ComponentPermission>
                   </TableRow>
                 ))
               )}
