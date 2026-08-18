@@ -95,20 +95,20 @@ export function generateFranchiseProductsExcel({
 
   // "Total de venta (inicial)" es todo lo enviado en consignación valorizado al
   // precio de la orden de Overtake, antes de descuentos. Con filtro de fecha,
-  // pagado y por pagar son la deuda GLOBAL del franquiciado: los pagos no se
-  // pueden atribuir a una venta concreta (el payload de pago no dice qué venta
-  // paga), así que recortarlos por fecha daría un número sin significado.
+  // pagado y por pagar son DEL RANGO: el pagado de cada línea se atribuye a
+  // sus ventas más antiguas primero (FIFO en el SP), igual que liquida el
+  // sistema del franquiciado.
   const summaryRows = [
     ["Montos"],
     ["Total de venta (inicial)", roundMoney(summary.totalSent)],
     ["Dscto. promociones", roundMoney(summary.totalPromoDiscount)],
     [
-      summary.dateFilterActive ? "Total pagado (global)" : "Total pagado",
+      summary.dateFilterActive ? "Total pagado (del rango)" : "Total pagado",
       roundMoney(summary.totalPaid),
     ],
     [
       summary.dateFilterActive
-        ? "Total por pagar (global)"
+        ? "Total por pagar (del rango)"
         : "Total por pagar",
       roundMoney(summary.totalPending),
     ],
