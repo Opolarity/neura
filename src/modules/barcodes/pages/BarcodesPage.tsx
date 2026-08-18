@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { useBarcodes } from "../hooks/useBarcodes";
 import BarcodeConfigModal from "../components/BarcodeConfigModal";
 import BarcodeListTable from "../components/BarcodeListTable";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 const BarcodesPage = () => {
   const {
@@ -43,10 +44,12 @@ const BarcodesPage = () => {
             Genera e imprime etiquetas de código de barras para tus productos
           </p>
         </div>
-        <Button onClick={handleNewBarcode}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Código
-        </Button>
+        <ComponentPermission codeIn={["barcodes.create"]}>
+          <Button onClick={handleNewBarcode}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Código
+          </Button>
+        </ComponentPermission>
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
