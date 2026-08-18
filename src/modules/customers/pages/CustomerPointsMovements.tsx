@@ -7,6 +7,7 @@ import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useCustomerPointsMovements } from "../hooks/useCustomerPointsMovements";
 import { CustomerPointsMovementsTable } from "../components/CustomerPointsMovementsTable";
 import { AddPointsDialog } from "../components/AddPointsDialog";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 const CustomerPointsMovements = () => {
   const {
@@ -35,10 +36,15 @@ const CustomerPointsMovements = () => {
           <h1 className="text-3xl font-bold">Movimientos de Puntos</h1>
           <p className="text-muted-foreground">Historial de movimientos de puntos por cliente</p>
         </div>
-        <Button onClick={() => setAddDialogOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Sumar Puntos
-        </Button>
+        {/* Sumar puntos es acreditar saldo al cliente, así que se concede
+            aparte de poder consultar el historial. El diálogo no se envuelve
+            por separado: solo se abre desde este botón. */}
+        <ComponentPermission codeIn={["customer_points_movements.create"]}>
+          <Button onClick={() => setAddDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Sumar Puntos
+          </Button>
+        </ComponentPermission>
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
