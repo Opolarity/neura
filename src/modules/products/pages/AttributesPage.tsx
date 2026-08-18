@@ -24,6 +24,8 @@ import AttributeFormDialog from "../components/attributes/AttributeFormDialog";
 import TermFormDialog from "../components/attributes/TermFormDialog";
 import { AttributeDeleteDialog } from "../components/attributes/AttributeDeleteDialog";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
+import { ComponentPermission } from "@/shared/components/component-permission";
+import { useAuth } from "@/modules/auth";
 
 interface DeleteConfirmation {
   id: number;
@@ -31,8 +33,36 @@ interface DeleteConfirmation {
   name: string;
 }
 
+// Nombre, Términos, Cantidad de Productos, Acciones. Si el rol no tiene
+// ninguna acción, la columna de Acciones no se pinta y este número queda uno
+// largo: solo afecta a las filas de "cargando" y "no se encontraron", y la
+// columna sobrante colapsa a 0px porque ninguna otra fila la ocupa.
+const COL_SPAN = 4;
+
+// Codes de la columna Acciones. La columna es UNA SOLA para las filas de
+// atributo y las de término, así que la cabecera y las dos celdas miran los
+// cuatro codes: si cada una mirara solo los suyos, un rol con permisos de
+// atributo pero no de término dejaría las filas de término sin td y la tabla
+// se desalinearía. Dentro de cada celda, cada botón lleva el suyo.
+const ACTION_CODES = [
+  "product_attributes.edit",
+  "product_attributes.delete",
+  "product_terms.edit",
+  "product_terms.delete",
+];
+
 const AttributesPage = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState<DeleteConfirmation | null>(null);
+  const { permissionCodes, permissionsLoading, isAdmin } = useAuth();
+
+  // Misma regla que ComponentPermission, pero aquí hace falta como booleano y
+  // no como envoltorio: no basta con ocultar el chevron, hay que quitar
+  // también el onClick de la fila y no pintar las filas de términos. Mientras
+  // cargan los codes va en false, igual que ComponentPermission no renderiza
+  // nada hasta saber qué tiene concedido el rol.
+  const canListTerms =
+    !permissionsLoading &&
+    (isAdmin || permissionCodes.includes("product_terms.list"));
 
   const {
     attributes,
@@ -126,13 +156,17 @@ const AttributesPage = () => {
                 <TableHead>Nombre</TableHead>
                 <TableHead>Términos</TableHead>
                 <TableHead>Cantidad de Productos</TableHead>
-                <TableHead className="w-[100px]">Acciones</TableHead>
+                {/* Se envuelve el th entero y no su texto: una celda vacía
+                    sigue ocupando su ancho y deja un hueco muerto. */}
+                <ComponentPermission codeIn={ACTION_CODES}>
+                  <TableHead className="w-[100px]">Acciones</TableHead>
+                </ComponentPermission>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8">
+                  <TableCell colSpan={COL_SPAN} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Cargando atributos...
@@ -142,7 +176,7 @@ const AttributesPage = () => {
               ) : attributes.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={COL_SPAN}
                     className="text-center text-muted-foreground py-8"
                   >
                     No se encontraron atributos
@@ -150,23 +184,37 @@ const AttributesPage = () => {
                 </TableRow>
               ) : (
                 attributes.map((group) => {
-                  const isExpanded = expandedGroups.has(group.group_id);
+                  // Sin product_terms.list no hay despliegue posible, así que
+                  // la fila nunca se da por expandida aunque el estado del
+                  // hook dijera lo contrario.
+                  const isExpanded =
+                    canListTerms && expandedGroups.has(group.group_id);
                   const totalProducts = group.terms.reduce((sum, t) => sum + t.products, 0);
 
                   return (
                     <Fragment key={`group-${group.group_id}`}>
                       {/* Group row */}
                       <TableRow
-                        className="bg-muted/50 cursor-pointer hover:bg-muted/70 [&>td]:py-3"
-                        onClick={() => toggleGroup(group.group_id)}
+                        className={`bg-muted/50 [&>td]:py-3 ${
+                          canListTerms ? "cursor-pointer hover:bg-muted/70" : ""
+                        }`}
+                        onClick={
+                          canListTerms
+                            ? () => toggleGroup(group.group_id)
+                            : undefined
+                        }
                       >
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            {isExpanded ? (
-                              <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                            )}
+                            {/* El chevron se va con el click: dejar la flecha
+                                sin poder desplegar haría creer que la fila
+                                está rota. */}
+                            {canListTerms &&
+                              (isExpanded ? (
+                                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                              ))}
                             <span className="font-semibold">{group.group_name}</span>
                             {group.group_description && (
                               <span className="text-xs text-muted-foreground font-normal">
@@ -179,26 +227,36 @@ const AttributesPage = () => {
                           {group.terms.length} {group.terms.length === 1 ? "término" : "términos"}
                         </TableCell>
                         <TableCell className="text-sm">{totalProducts} productos</TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              disabled={loadingEdit}
-                              onClick={() => handleEdit(group.group_id, "group")}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              disabled={deleting}
-                              onClick={() => handleDeleteClick(group.group_id, "group", group.group_name)}
-                            >
-                              <Trash className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                        <ComponentPermission codeIn={ACTION_CODES}>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <div className="flex gap-2">
+                              <ComponentPermission
+                                codeIn={["product_attributes.edit"]}
+                              >
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={loadingEdit}
+                                  onClick={() => handleEdit(group.group_id, "group")}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </ComponentPermission>
+                              <ComponentPermission
+                                codeIn={["product_attributes.delete"]}
+                              >
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={deleting}
+                                  onClick={() => handleDeleteClick(group.group_id, "group", group.group_name)}
+                                >
+                                  <Trash className="w-4 h-4" />
+                                </Button>
+                              </ComponentPermission>
+                            </div>
+                          </TableCell>
+                        </ComponentPermission>
                       </TableRow>
 
                       {/* Term rows (only when expanded) */}
@@ -218,26 +276,36 @@ const AttributesPage = () => {
                               —
                             </TableCell>
                             <TableCell className="text-sm">{term.products} productos</TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={loadingEdit}
-                                  onClick={() => handleEdit(term.id, "term")}
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  disabled={deleting}
-                                  onClick={() => handleDeleteClick(term.id, "term", term.name)}
-                                >
-                                  <Trash className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
+                            <ComponentPermission codeIn={ACTION_CODES}>
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  <ComponentPermission
+                                    codeIn={["product_terms.edit"]}
+                                  >
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={loadingEdit}
+                                      onClick={() => handleEdit(term.id, "term")}
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                  </ComponentPermission>
+                                  <ComponentPermission
+                                    codeIn={["product_terms.delete"]}
+                                  >
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      disabled={deleting}
+                                      onClick={() => handleDeleteClick(term.id, "term", term.name)}
+                                    >
+                                      <Trash className="w-4 h-4" />
+                                    </Button>
+                                  </ComponentPermission>
+                                </div>
+                              </TableCell>
+                            </ComponentPermission>
                           </TableRow>
                         ))}
                     </Fragment>
