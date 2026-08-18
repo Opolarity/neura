@@ -9,6 +9,7 @@ import MovementRequestsTable from "../components/movement-requests/MovementReque
 import MovementRequestsFilterModal from "../components/movement-requests/MovementRequestsFilterModal";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { MovementRequestView } from "../types/MovementRequestList.types";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 const MovementRequests = () => {
   const navigate = useNavigate();
@@ -36,15 +37,23 @@ const MovementRequests = () => {
             Listado de solicitudes de movimiento de inventario entre almacenes
           </p>
         </div>
+        {/* Cada botón con el code de la ruta a la que lleva: son dos flujos
+            distintos y se conceden por separado. Los codes ya existían para
+            proteger sus rutas con ProtectedRoute; esto solo evita ofrecer un
+            botón que llevaría a una pantalla bloqueada. */}
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate("/inventory/movement-requests/send")}>
-            <Plus className="mr-2 h-4 w-4" />
-            Enviar Inventario
-          </Button>
-          <Button onClick={() => navigate("/inventory/movement-requests/create")}>
-            <Plus className="mr-2 h-4 w-4" />
-            Solicitar Inventario
-          </Button>
+          <ComponentPermission codeIn={["inventory_movement_requests.send"]}>
+            <Button variant="outline" onClick={() => navigate("/inventory/movement-requests/send")}>
+              <Plus className="mr-2 h-4 w-4" />
+              Enviar Inventario
+            </Button>
+          </ComponentPermission>
+          <ComponentPermission codeIn={["inventory_movement_requests.create"]}>
+            <Button onClick={() => navigate("/inventory/movement-requests/create")}>
+              <Plus className="mr-2 h-4 w-4" />
+              Solicitar Inventario
+            </Button>
+          </ComponentPermission>
         </div>
       </div>
 
