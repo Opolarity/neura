@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useAttributes } from "../hooks/useAttributes";
 import {
   Card,
@@ -154,10 +154,9 @@ const AttributesPage = () => {
                   const totalProducts = group.terms.reduce((sum, t) => sum + t.products, 0);
 
                   return (
-                    <>
+                    <Fragment key={`group-${group.group_id}`}>
                       {/* Group row */}
                       <TableRow
-                        key={`group-${group.group_id}`}
                         className="bg-muted/50 cursor-pointer hover:bg-muted/70 [&>td]:py-3"
                         onClick={() => toggleGroup(group.group_id)}
                       >
@@ -241,7 +240,7 @@ const AttributesPage = () => {
                             </TableCell>
                           </TableRow>
                         ))}
-                    </>
+                    </Fragment>
                   );
                 })
               )}
