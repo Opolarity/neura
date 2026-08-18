@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { formatDateDisplay } from "@/shared/utils/date";
 import { Loader2, Eye, LockOpen } from "lucide-react";
 import { Movements } from '../../types/Movements.types';
+import { ComponentPermission } from '@/shared/components/component-permission';
 
 
 interface MovementsTableProps {
@@ -16,6 +17,18 @@ type WarehouseDirectionUI = {
     to: string;
 };
 
+
+// Producto, Variación, Cantidad, candado, Origen, Tipo Movimiento, Almacén,
+// Fecha, Usuario, Acciones. Si el rol no puede ver el detalle, la columna de
+// Acciones no se pinta y este número queda uno largo: solo afecta a las filas
+// de "cargando" y "no se encontraron", y la columna sobrante colapsa a 0px
+// porque ninguna otra fila la ocupa.
+const COL_SPAN = 10;
+
+// Code de la columna Acciones, en una constante para que la cabecera y la
+// celda no puedan quedar con listas distintas y aparezca un th sin td o al
+// revés.
+const ACTION_CODES = ["inventory_movements.view"];
 
 const MovementsTable = ({ movements, loading, onViewDetail }: MovementsTableProps) => {
     function getDirectionUI(
@@ -47,14 +60,18 @@ const MovementsTable = ({ movements, loading, onViewDetail }: MovementsTableProp
                     <TableHead>Almacén</TableHead>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Usuario</TableHead>
-                    <TableHead>Acciones</TableHead>
+                    {/* Se envuelve el th entero y no su texto: una celda vacía
+                        sigue ocupando su ancho y deja un hueco muerto. */}
+                    <ComponentPermission codeIn={ACTION_CODES}>
+                        <TableHead>Acciones</TableHead>
+                    </ComponentPermission>
 
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {loading && movements.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8">
+                        <TableCell colSpan={COL_SPAN} className="text-center py-8">
                             <div className="flex items-center justify-center gap-2">
                                 <Loader2 className="w-4 h-4 animate-spin" />
                                 Cargando movimientos...
@@ -64,7 +81,7 @@ const MovementsTable = ({ movements, loading, onViewDetail }: MovementsTableProp
                 ) : movements.length === 0 ? (
                     <TableRow>
                         <TableCell
-                            colSpan={10}
+                            colSpan={COL_SPAN}
                             className="text-center py-8 text-muted-foreground"
                         >
                             No se encontraron movimientos
@@ -183,15 +200,17 @@ const MovementsTable = ({ movements, loading, onViewDetail }: MovementsTableProp
                                     {formatDateDisplay(movement.date)}
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">{movement.user}</TableCell>
-                                <TableCell>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => onViewDetail(movement.movements_id)}
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                    </Button>
-                                </TableCell>
+                                <ComponentPermission codeIn={ACTION_CODES}>
+                                    <TableCell>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => onViewDetail(movement.movements_id)}
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                        </Button>
+                                    </TableCell>
+                                </ComponentPermission>
                             </TableRow>
                         )
                     })
