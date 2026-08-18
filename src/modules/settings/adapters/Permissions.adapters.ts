@@ -60,8 +60,10 @@ const buildForest = (items: PermissionCatalogItem[]) => {
     ])
   );
 
-  // El orden de `items` viene de la RPC (ORDER BY code), así que raíces
-  // e hijos quedan alfabéticos por `code` sin ordenar de nuevo.
+  // El orden lo decide la RPC (sp_get_permissions ordena por id, que es el
+  // orden en que se sembró el catálogo y por tanto el de los módulos). Aquí
+  // NO se reordena a propósito: raíces e hijos se apilan tal como llegan, así
+  // que cambiar el orden del listado es cambiar el ORDER BY del SP.
   const roots: PermissionNode[] = [];
   items.forEach((item) => {
     const node = nodes.get(item.id)!;

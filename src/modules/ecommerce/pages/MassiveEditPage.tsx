@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import ProductsTable from "@/modules/products/components/products/ProductsTable";
+import MassiveEditProductsTable from "@/modules/ecommerce/components/MassiveEditProductsTable";
 import ProductsFilterModal from "@/modules/products/components/products/ProductsFilterModal";
 import { useProducts } from "@/modules/products/hooks/useProducts";
 import {
@@ -442,16 +442,13 @@ const PromotionalTextPage = () => {
         </CardHeader>
 
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
-          <ProductsTable
+          <MassiveEditProductsTable
             search={search}
             products={products}
             loading={loading}
             selectedProducts={selectedProducts}
             onToggleAllProductsSelection={toggleSelectAll}
             onToggleProductSelection={toggleProductSelection}
-            hideStock
-            hideStatus
-            hideActions
           />
         </CardContent>
 

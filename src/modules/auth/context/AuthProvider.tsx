@@ -25,6 +25,13 @@ function toPermissionCodes(data: unknown): string[] {
   return toCodes(raw);
 }
 
+// La RPC devuelve { isAdmin, permissions }. Se compara contra true para que
+// las formas legacy (array plano, sin la clave) caigan en false: ante la duda,
+// el usuario NO es admin y se evalúan sus codes uno por uno.
+function toIsAdmin(data: unknown): boolean {
+  return (data as { isAdmin?: unknown })?.isAdmin === true;
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -32,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [permissionCodes, setPermissionCodes] = useState<string[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [permissionsLoading, setPermissionsLoading] = useState(true);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [appUserLoading, setAppUserLoading] = useState(true);
@@ -43,6 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchPermissions = useCallback(async (currentUser: User | null) => {
     if (!currentUser) {
       setPermissionCodes([]);
+      setIsAdmin(false);
       setPermissionsLoading(false);
       return;
     }
@@ -56,12 +65,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (error || !data) {
         console.error('[AuthProvider] sp_get_user_permissions falló:', error);
         setPermissionCodes([]);
+        setIsAdmin(false);
         return;
       }
       setPermissionCodes(toPermissionCodes(data));
+      setIsAdmin(toIsAdmin(data));
     } catch (error) {
       console.error('[AuthProvider] sp_get_user_permissions lanzó:', error);
       setPermissionCodes([]);
+      setIsAdmin(false);
     } finally {
       setPermissionsLoading(false);
     }
@@ -178,6 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signOut = useCallback(async () => {
     setPermissionCodes([]);
+    setIsAdmin(false);
     setPermissionsLoading(false);
     setAppUser(null);
     setAppUserLoading(false);
@@ -199,6 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       session,
       loading,
       permissionCodes,
+      isAdmin,
       permissionsLoading,
       appUser,
       appUserLoading,
@@ -213,6 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       session,
       loading,
       permissionCodes,
+      isAdmin,
       permissionsLoading,
       appUser,
       appUserLoading,

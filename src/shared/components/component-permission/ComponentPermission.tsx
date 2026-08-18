@@ -13,12 +13,19 @@ export function ComponentPermission({
   codeEqual,
   children,
 }: ComponentPermissionProps) {
-  const { permissionCodes, permissionsLoading } = useAuth();
+  const { permissionCodes, permissionsLoading, isAdmin } = useAuth();
 
   // Los códigos llegan por RPC: sin esto la acción se vería antes de saber si
   // el usuario la tiene concedida.
   if (permissionsLoading) {
     return null;
+  }
+
+  // Un rol admin ya recibe TODOS los codes activos desde la RPC, así que
+  // recorrerlos daría siempre true: se corta antes y se ahorra el includes por
+  // cada acción renderizada (una tabla tiene una por fila).
+  if (isAdmin) {
+    return children;
   }
 
   // codeIn manda si se envían los dos. Sin ninguno de los dos no se muestra

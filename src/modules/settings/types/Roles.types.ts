@@ -6,7 +6,6 @@ export interface RolesApiResponse {
       users: number;
       is_admin: boolean;
       permissions: number;
-      capabilities: number;
       /**
        * Alias transitorio que sp_get_roles mantiene con el mismo valor que
        * `permissions`, para cubrir la ventana entre aplicar la migración y

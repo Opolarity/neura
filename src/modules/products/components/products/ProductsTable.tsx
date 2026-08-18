@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, Edit, Trash, Loader2 } from "lucide-react";
 import placeholderImage from "@/assets/product-placeholder.png";
+import { ComponentPermission } from "@/shared/components/component-permission";
 import { Product } from "../../types/Products.types";
 
 interface ProductsTableProps {
@@ -20,12 +21,20 @@ interface ProductsTableProps {
   selectedProducts: number[];
   onToggleProductSelection: (productId: number) => void;
   onToggleAllProductsSelection: () => void;
-  onViewProduct?: (id: number) => void;
-  onDeleteClick?: (product: Product) => void;
-  hideStock?: boolean;
-  hideStatus?: boolean;
-  hideActions?: boolean;
+  onViewProduct: (id: number) => void;
+  onDeleteClick: (product: Product) => void;
 }
+
+// Checkbox, ID, Imagen, Producto, Categoría, Precio, Stock, Estado, Acciones.
+// Si el rol no puede borrar, la columna de selección no se pinta y este número
+// queda uno largo: solo afecta a la fila de "no hay productos", y la columna
+// sobrante colapsa a 0px porque ninguna otra fila la ocupa.
+const COL_SPAN = 9;
+
+// Codes de la columna Acciones. En una constante para que la cabecera y las
+// celdas no puedan quedar con listas distintas y aparezca un th sin td o al
+// revés.
+const ACTION_CODES = ["products.view", "products.edit", "products.delete"];
 
 const ProductsTable = ({
   products,
@@ -36,11 +45,7 @@ const ProductsTable = ({
   onToggleProductSelection,
   onViewProduct,
   onDeleteClick,
-  hideStock = false,
-  hideStatus = false,
-  hideActions = false,
 }: ProductsTableProps) => {
-  const colSpan = 9 - (hideStock ? 1 : 0) - (hideStatus ? 1 : 0) - (hideActions ? 1 : 0);
   return (
     <div className="relative h-full">
       {loading && products.length > 0 && (
@@ -51,29 +56,39 @@ const ProductsTable = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-12">
-              <Checkbox
-                checked={
-                  selectedProducts.length === products.length &&
-                  products.length > 0
-                }
-                onCheckedChange={() => onToggleAllProductsSelection()}
-              />
-            </TableHead>
+            {/* Se envuelve la celda entera y no solo el Checkbox: un th/td
+                vacío sigue ocupando su ancho y deja un hueco muerto. La
+                selección solo alimenta el borrado masivo, de ahí el code. */}
+            <ComponentPermission codeIn={["products.delete"]}>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={
+                    selectedProducts.length === products.length &&
+                    products.length > 0
+                  }
+                  onCheckedChange={() => onToggleAllProductsSelection()}
+                />
+              </TableHead>
+            </ComponentPermission>
             <TableHead className="w-16">ID</TableHead>
             <TableHead className="w-20">Imagen</TableHead>
             <TableHead>Producto</TableHead>
             <TableHead>Categoría</TableHead>
             <TableHead>Precio</TableHead>
-            {!hideStock && <TableHead>Stock</TableHead>}
-            {!hideStatus && <TableHead>Estado</TableHead>}
-            {!hideActions && <TableHead>Acciones</TableHead>}
+            <TableHead>Stock</TableHead>
+            <TableHead>Estado</TableHead>
+            {/* Basta con tener UNA de las tres acciones para que la columna
+                tenga sentido; cada botón de dentro lleva su propio code. Sin
+                ninguna, se omite la celda entera para no dejar el hueco. */}
+            <ComponentPermission codeIn={ACTION_CODES}>
+              <TableHead>Acciones</TableHead>
+            </ComponentPermission>
           </TableRow>
         </TableHeader>
         <TableBody>
           {loading && products.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={colSpan} className="text-center py-8">
+              <TableCell colSpan={COL_SPAN} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Cargando productos...
@@ -83,7 +98,7 @@ const ProductsTable = ({
           ) : products.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={colSpan}
+                colSpan={COL_SPAN}
                 className="text-center py-8 text-muted-foreground"
               >
                 {search
@@ -94,12 +109,16 @@ const ProductsTable = ({
           ) : (
             products.map((product) => (
               <TableRow key={product.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedProducts.includes(product.id)}
-                    onCheckedChange={() => onToggleProductSelection(product.id)}
-                  />
-                </TableCell>
+                <ComponentPermission codeIn={["products.delete"]}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedProducts.includes(product.id)}
+                      onCheckedChange={() =>
+                        onToggleProductSelection(product.id)
+                      }
+                    />
+                  </TableCell>
+                </ComponentPermission>
                 <TableCell className="font-mono text-muted-foreground">
                   {product.id}
                 </TableCell>
@@ -113,57 +132,61 @@ const ProductsTable = ({
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.categories}</TableCell>
                 <TableCell>S/ {product.price}</TableCell>
-                {!hideStock && <TableCell>{product.stock}</TableCell>}
-                {!hideStatus && (
+                <TableCell>{product.stock}</TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    {product.estatus === true && (
+                      <Badge variant="success">
+                        Activo
+                      </Badge>
+                    )}
+                    {product.estatus === false && (
+                      <Badge variant="destructive">
+                        Inactivo
+                      </Badge>
+                    )}
+                    {product.web === true && (
+                      <Badge variant="success">
+                        Web
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
+                <ComponentPermission codeIn={ACTION_CODES}>
                   <TableCell>
                     <div className="flex gap-2">
-                      {product.estatus === true && (
-                        <Badge variant="success">
-                          Activo
-                        </Badge>
-                      )}
-                      {product.estatus === false && (
-                        <Badge variant="destructive">
-                          Inactivo
-                        </Badge>
-                      )}
-                      {product.web === true && (
-                        <Badge variant="success">
-                          Web
-                        </Badge>
-                      )}
+                      <ComponentPermission codeIn={["products.view"]}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onViewProduct(product.id)}
+                          title="Ver producto"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </ComponentPermission>
+                      <ComponentPermission codeIn={["products.edit"]}>
+                        <a
+                          href={`/products/edit/${product.id}`}
+                          title="Editar producto"
+                          className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </a>
+                      </ComponentPermission>
+                      <ComponentPermission codeIn={["products.delete"]}>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => onDeleteClick(product)}
+                          title="Eliminar producto"
+                        >
+                          <Trash className="w-4 h-4" />
+                        </Button>
+                      </ComponentPermission>
                     </div>
                   </TableCell>
-                )}
-                {!hideActions && (
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onViewProduct(product.id)}
-                        title="Ver producto"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <a
-                        href={`/products/edit/${product.id}`}
-                        title="Editar producto"
-                        className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </a>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => onDeleteClick(product)}
-                        title="Eliminar producto"
-                      >
-                        <Trash className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                )}
+                </ComponentPermission>
               </TableRow>
             ))
           )}

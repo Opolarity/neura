@@ -10,6 +10,8 @@ export interface AuthContextType {
   session: Session | null;
   loading: boolean;
   permissionCodes: string[];
+  /** `isAdmin` de sp_get_user_permissions: el rol ve todo sin mirar los codes. */
+  isAdmin: boolean;
   permissionsLoading: boolean;
   appUser: AppUser | null;
   appUserLoading: boolean;

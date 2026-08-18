@@ -14,6 +14,7 @@ import { useProductCosts } from "../hooks/useProductCosts";
 import ProdutCostsFilterModal from "../components/product-costs/ProdutCostsFilterModal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 const ProductCosts = () => {
   const {
@@ -54,33 +55,39 @@ const ProductCosts = () => {
             Gestiona el costo de cada variación de producto
           </p>
         </div>
-        <div className="flex gap-2">
-          {!isEditing ? (
-            <Button onClick={handleEdit}>
-              <Edit className="w-4 h-4 mr-2" />
-              Editar
-            </Button>
-          ) : (
-            <>
-              <Button variant="outline" onClick={handleCancel}>
-                Cancelar
+        {/* Un solo envoltorio para los tres botones: son el mismo flujo de
+            edición, y Cancelar/Actualizar ni siquiera existen hasta entrar en
+            modo edición. Sin el code no se puede entrar, y los inputs de costo
+            ya están deshabilitados fuera de ese modo. */}
+        <ComponentPermission codeIn={["product_costs.edit"]}>
+          <div className="flex gap-2">
+            {!isEditing ? (
+              <Button onClick={handleEdit}>
+                <Edit className="w-4 h-4 mr-2" />
+                Editar
               </Button>
-              <Button onClick={handleSave} disabled={!hasChanges || isSaving}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Guardando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Actualizar
-                  </>
-                )}
-              </Button>
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                <Button variant="outline" onClick={handleCancel}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSave} disabled={!hasChanges || isSaving}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Actualizar
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
+          </div>
+        </ComponentPermission>
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">

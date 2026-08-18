@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -125,142 +126,152 @@ const ProductsFilterModal = ({
           <DialogTitle>Filtrar Productos</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Categorías</Label>
-            <div className="flex gap-2">
-              <Select
-                value={
-                  internalFilters?.category
-                    ? String(internalFilters.category)
-                    : "none"
-                }
-                onValueChange={handleCategoryChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas las categorías" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Todas las categorías</SelectItem>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* Tope de altura + scroll interno: los filtros crecen (categorías,
+            marcas, etiquetas) y sin esto el modal se estiraba hasta salirse de
+            la pantalla, dejando el footer fuera de alcance. El max-h va en un
+            contenedor propio, no en el ScrollArea. El pr-4 aparta el contenido
+            de la barra de scroll, que si no roza el borde derecho de inputs y
+            selects. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4 pl-1 pr-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Categorías</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={
+                      internalFilters?.category
+                        ? String(internalFilters.category)
+                        : "none"
+                    }
+                    onValueChange={handleCategoryChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas las categorías" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Todas las categorías</SelectItem>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Marcas</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={
+                      internalFilters?.brand ? String(internalFilters.brand) : "none"
+                    }
+                    onValueChange={handleBrandChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas las marcas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Todas las marcas</SelectItem>
+                      {brands.map((b) => (
+                        <SelectItem key={b.id} value={String(b.id)}>
+                          {b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Etiquetas</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={
+                      internalFilters?.tag ? String(internalFilters.tag) : "none"
+                    }
+                    onValueChange={handleTagChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas las etiquetas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Todas las etiquetas</SelectItem>
+                      {tags.map((t) => (
+                        <SelectItem key={t.id} value={String(t.id)}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Precio</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Mínimo"
+                    min={0}
+                    value={internalFilters.minprice ?? ""}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={handleMinPriceChange}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Máximo"
+                    min={0}
+                    value={internalFilters.maxprice ?? ""}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={handleMaxPriceChange}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Inventario</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Mínimo"
+                    min={0}
+                    value={internalFilters.minstock ?? ""}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={handleMinStockChange}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Máximo"
+                    min={0}
+                    value={internalFilters.maxstock ?? ""}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={handleMaxStockChange}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Estado</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={
+                      internalFilters.status == null
+                        ? "none"
+                        : String(internalFilters.status)
+                    }
+                    onValueChange={handleStatusChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas los estados" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Todos los estados</SelectItem>
+                      <SelectItem value="true">Activo</SelectItem>
+                      <SelectItem value="false">Inactivo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Marcas</Label>
-            <div className="flex gap-2">
-              <Select
-                value={
-                  internalFilters?.brand ? String(internalFilters.brand) : "none"
-                }
-                onValueChange={handleBrandChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas las marcas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Todas las marcas</SelectItem>
-                  {brands.map((b) => (
-                    <SelectItem key={b.id} value={String(b.id)}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Etiquetas</Label>
-            <div className="flex gap-2">
-              <Select
-                value={
-                  internalFilters?.tag ? String(internalFilters.tag) : "none"
-                }
-                onValueChange={handleTagChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas las etiquetas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Todas las etiquetas</SelectItem>
-                  {tags.map((t) => (
-                    <SelectItem key={t.id} value={String(t.id)}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Precio</Label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="Mínimo"
-                min={0}
-                value={internalFilters.minprice ?? ""}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={handleMinPriceChange}
-              />
-              <Input
-                type="number"
-                placeholder="Máximo"
-                min={0}
-                value={internalFilters.maxprice ?? ""}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={handleMaxPriceChange}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Inventario</Label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="Mínimo"
-                min={0}
-                value={internalFilters.minstock ?? ""}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={handleMinStockChange}
-              />
-              <Input
-                type="number"
-                placeholder="Máximo"
-                min={0}
-                value={internalFilters.maxstock ?? ""}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={handleMaxStockChange}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Estado</Label>
-            <div className="flex gap-2">
-              <Select
-                value={
-                  internalFilters.status == null
-                    ? "none"
-                    : String(internalFilters.status)
-                }
-                onValueChange={handleStatusChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas los estados" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Todos los estados</SelectItem>
-                  <SelectItem value="true">Activo</SelectItem>
-                  <SelectItem value="false">Inactivo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          </ScrollArea>
         </div>
         <DialogFooter className="flex gap-2">
           <Button variant="outline" onClick={handleClear}>
