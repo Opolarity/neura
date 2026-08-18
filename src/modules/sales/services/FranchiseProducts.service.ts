@@ -202,6 +202,10 @@ export const fetchFranchiseProducts = async (
   // Deuda global del franquiciado, sin recorte de fechas.
   const totalSoldGlobal = toNumber(data?.summary?.total_sold_global);
   const totalPaidGlobal = toNumber(data?.summary?.total_paid_global);
+  // Pagado atribuido a las ventas del rango (FIFO por línea en el SP): con
+  // filtro activo, "por pagar" = vendido del rango - esto, el mismo número
+  // que ve el franquiciado en su sistema.
+  const totalPaidRange = toNumber(data?.summary?.total_paid_range);
   const totalPromoDiscount = toNumber(
     dateFilterActive
       ? data?.summary?.total_promo_discount_range
@@ -210,13 +214,14 @@ export const fetchFranchiseProducts = async (
   const summary: FranchiseSummary = {
     totalSent,
     totalSold: dateFilterActive ? totalSoldRange : totalSold,
-    // Con filtro activo se muestra la deuda global del franquiciado. Antes se
-    // hacía `totalSold - totalPaid` sobre las líneas recortadas por fecha, que
-    // era un híbrido sin significado: para ROOTS-AQP del 1 al 16 de agosto daba
-    // 6911.50, ni la deuda del rango (6401.00) ni la global (6802.00).
-    totalPaid: dateFilterActive ? totalPaidGlobal : totalPaid,
+    // Con filtro activo, pagado y por pagar son DEL RANGO: lo vendido en el
+    // rango menos el pagado atribuido a esas ventas. Es lo que el usuario
+    // espera al filtrar y coincide con la pantalla del franquiciado. (Antes
+    // se mostró la deuda global rotulada, y antes de eso un híbrido sin
+    // significado; ambos confundían.)
+    totalPaid: dateFilterActive ? totalPaidRange : totalPaid,
     totalPending: dateFilterActive
-      ? totalSoldGlobal - totalPaidGlobal
+      ? totalSoldRange - totalPaidRange
       : totalSold - totalPaid,
     totalPromoDiscount,
     dateFilterActive,

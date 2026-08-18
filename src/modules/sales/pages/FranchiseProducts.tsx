@@ -350,13 +350,13 @@ const FranchiseProducts = () => {
           },
           {
             label: summary?.dateFilterActive
-              ? "Total pagado (global)"
+              ? "Total pagado (del rango)"
               : "Total pagado",
             value: summary?.totalPaid ?? null,
           },
           {
             label: summary?.dateFilterActive
-              ? "Total por pagar (global)"
+              ? "Total por pagar (del rango)"
               : "Total por pagar",
             value: summary?.totalPending ?? null,
           },
