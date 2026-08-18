@@ -19,6 +19,7 @@ import PromotionalTextSection from '../components/products/PromotionalTextSectio
 import CategoryQuickAddForm from '../components/products/CategoryQuickAddForm';
 import TagsComboboxInput from '../components/products/TagsComboboxInput';
 import BrandsComboboxInput from '../components/products/BrandsComboboxInput';
+import ExhibitionSection from '../components/products/ExhibitionSection';
 import { PageLoader } from '@/shared/components/page-loader';
 import { buildCategoryTree, flattenCategoryTree } from '../utils/categoryTree';
 
@@ -51,6 +52,12 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     setIsActive,
     setIsWeb,
     setCreatedAt,
+    isExhibition,
+    setIsExhibition,
+    exhibitionFrom,
+    setExhibitionFrom,
+    exhibitionTo,
+    setExhibitionTo,
     productImages,
     variations,
     variationSkus,
@@ -832,6 +839,17 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Exhibition Card */}
+          <ExhibitionSection
+            isExhibition={isExhibition}
+            setIsExhibition={setIsExhibition}
+            exhibitionFrom={exhibitionFrom}
+            setExhibitionFrom={setExhibitionFrom}
+            exhibitionTo={exhibitionTo}
+            setExhibitionTo={setExhibitionTo}
+            disabled={viewOnly}
+          />
         </div>
       </div>
 

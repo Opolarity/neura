@@ -84,6 +84,10 @@ export interface ProductDetailsResponse {
     is_variable: boolean;
     active: boolean;
     web: boolean;
+    created_at: string | null;
+    // Exhibición: o las dos con fecha (ISO), o las dos en null.
+    exhibition_start_date: string | null;
+    exhibition_end_date: string | null;
   };
   categories: number[];
   images: {
@@ -133,6 +137,9 @@ export interface CreateProductRequest {
   selectedTags: number[];
   selectedBrands: number[];
   createdAt?: string;
+  // Exhibición: o las dos con fecha (ISO con offset Lima), o las dos en null.
+  exhibitionStartDate: string | null;
+  exhibitionEndDate: string | null;
   productImages: {
     id: string;
     path: string;

@@ -53,6 +53,33 @@ export const limaDateTimeLocalToIso = (local: string | null | undefined): string
   return `${local}${hasSeconds ? "" : ":00"}${LIMA_OFFSET}`;
 };
 
+/**
+ * Inversa de limaDateTimeLocalToIso: ISO (con o sin timezone) → "YYYY-MM-DDTHH:mm"
+ * en hora Lima, listo para un <input type="datetime-local">.
+ */
+export const limaIsoToDateTimeLocal = (iso: string | null | undefined): string => {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: LIMA_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  const hh = get("hour").padStart(2, "0");
+  const mm = get("minute").padStart(2, "0");
+  return `${get("year")}-${get("month")}-${get("day")}T${hh}:${mm}`;
+};
+
+/** Fecha y hora actual de Lima en formato datetime-local ("YYYY-MM-DDTHH:mm"). */
+export const getLimaDateTimeNow = (): string => limaIsoToDateTimeLocal(nowIso());
+
 export const limaDateRangeToIsoBounds = (
   date: string | null | undefined
 ): { start: string | null; end: string | null } => {

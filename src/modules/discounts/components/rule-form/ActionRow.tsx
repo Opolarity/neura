@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +11,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ActionConfig, ActionType, TargetFilter } from "../../types/priceRule.types";
-import { ACTION_TYPE_LABELS } from "../../types/priceRule.types";
+import {
+  ACTION_TYPE_LABELS,
+  DEFAULT_INCLUDE_DESCENDANTS,
+} from "../../types/priceRule.types";
+import { ProductReferenceField } from "./ProductReferenceField";
+import { CategoryReferenceField } from "./CategoryReferenceField";
 
 interface ActionRowProps {
   action: ActionConfig;
@@ -24,38 +28,6 @@ const DEFAULT_TARGET: TargetFilter = {
   apply_to: "all",
 };
 
-const parseNumberArray = (value: string): number[] => {
-  return value
-    .split(",")
-    .map((s) => parseInt(s.trim()))
-    .filter((n) => !isNaN(n));
-};
-
-const IdsInput = ({
-  value,
-  onChangeIds,
-  placeholder,
-}: {
-  value: number[];
-  onChangeIds: (ids: number[]) => void;
-  placeholder?: string;
-}) => {
-  const [text, setText] = useState(value.join(", "));
-
-  useEffect(() => {
-    setText(value.join(", "));
-  }, [JSON.stringify(value)]);
-
-  return (
-    <Input
-      placeholder={placeholder}
-      value={text}
-      onChange={(e) => setText(e.target.value)}
-      onBlur={() => onChangeIds(parseNumberArray(text))}
-    />
-  );
-};
-
 const TargetFilterEditor = ({
   target,
   onChange,
@@ -63,6 +35,27 @@ const TargetFilterEditor = ({
   target: TargetFilter;
   onChange: (target: TargetFilter) => void;
 }) => {
+  // Al cambiar de destino se reconstruye el target con las claves de ese
+  // destino y sus valores por defecto: así lo que se ve marcado es lo que se
+  // guarda, y no quedan ids del destino anterior colgando en el JSON.
+  const handleApplyToChange = (applyTo: TargetFilter["apply_to"]) => {
+    switch (applyTo) {
+      case "specific_products":
+        return onChange({ apply_to: applyTo, product_ids: target.product_ids ?? [] });
+      case "specific_variations":
+        return onChange({ apply_to: applyTo, variation_ids: target.variation_ids ?? [] });
+      case "specific_categories":
+        return onChange({
+          apply_to: applyTo,
+          category_ids: target.category_ids ?? [],
+          include_descendants:
+            target.include_descendants ?? DEFAULT_INCLUDE_DESCENDANTS,
+        });
+      default:
+        return onChange({ apply_to: applyTo });
+    }
+  };
+
   return (
     <div className="space-y-2 pl-4 border-l-2 border-muted">
       <div className="space-y-1">
@@ -70,7 +63,7 @@ const TargetFilterEditor = ({
         <Select
           value={target.apply_to}
           onValueChange={(val) =>
-            onChange({ ...target, apply_to: val as TargetFilter["apply_to"] })
+            handleApplyToChange(val as TargetFilter["apply_to"])
           }
         >
           <SelectTrigger className="w-[200px]">
@@ -86,29 +79,26 @@ const TargetFilterEditor = ({
       </div>
 
       {target.apply_to === "specific_products" && (
-        <div className="space-y-1">
-          <Label className="text-xs">IDs de productos (separados por coma)</Label>
-          <IdsInput
-            placeholder="1, 2, 3"
-            value={target.product_ids ?? []}
-            onChangeIds={(ids) => onChange({ ...target, product_ids: ids })}
-          />
-        </div>
+        <ProductReferenceField
+          mode="product"
+          label="Productos"
+          ids={target.product_ids ?? []}
+          onChangeIds={(ids) => onChange({ ...target, product_ids: ids })}
+        />
       )}
 
       {target.apply_to === "specific_categories" && (
         <>
-          <div className="space-y-1">
-            <Label className="text-xs">IDs de categorías (separados por coma)</Label>
-            <IdsInput
-              placeholder="147, 118"
-              value={target.category_ids ?? []}
-              onChangeIds={(ids) => onChange({ ...target, category_ids: ids })}
-            />
-          </div>
+          <CategoryReferenceField
+            label="Categorías"
+            ids={target.category_ids ?? []}
+            onChangeIds={(ids) => onChange({ ...target, category_ids: ids })}
+          />
           <div className="flex items-center gap-2">
             <Switch
-              checked={target.include_descendants ?? true}
+              checked={
+                target.include_descendants ?? DEFAULT_INCLUDE_DESCENDANTS
+              }
               onCheckedChange={(val) =>
                 onChange({ ...target, include_descendants: val })
               }
@@ -119,14 +109,12 @@ const TargetFilterEditor = ({
       )}
 
       {target.apply_to === "specific_variations" && (
-        <div className="space-y-1">
-          <Label className="text-xs">IDs de variaciones (separados por coma)</Label>
-          <IdsInput
-            placeholder="10, 20, 30"
-            value={target.variation_ids ?? []}
-            onChangeIds={(ids) => onChange({ ...target, variation_ids: ids })}
-          />
-        </div>
+        <ProductReferenceField
+          mode="variation"
+          label="Variaciones"
+          ids={target.variation_ids ?? []}
+          onChangeIds={(ids) => onChange({ ...target, variation_ids: ids })}
+        />
       )}
     </div>
   );
@@ -205,8 +193,8 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
                 {action.type === "set_fixed_price"
                   ? "Precio fijo (S/)"
                   : action.type === "percent_discount_per_product"
-                  ? "Porcentaje (%)"
-                  : "Descuento (S/)"}
+                    ? "Porcentaje (%)"
+                    : "Descuento (S/)"}
               </Label>
               <Input
                 type="number"
@@ -385,14 +373,14 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
       case "free_gift":
         return (
           <div className="flex gap-2 items-end">
-            <div className="space-y-1 w-[280px]">
-              <Label className="text-xs">ID de variación de regalo</Label>
-              <Input
-                type="number"
-                value={action.variation_id ?? 0}
-                onChange={(e) => updateField("variation_id", parseInt(e.target.value) || 0)}
-              />
-            </div>
+            <ProductReferenceField
+              className="w-[280px]"
+              mode="variation"
+              multiple={false}
+              label="Variación de regalo"
+              ids={action.variation_id ? [action.variation_id] : []}
+              onChangeIds={(ids) => updateField("variation_id", ids[0] ?? 0)}
+            />
             <div className="space-y-1">
               <Label className="text-xs">Cantidad</Label>
               <Input

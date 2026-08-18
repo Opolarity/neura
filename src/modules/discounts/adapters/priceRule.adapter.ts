@@ -1,11 +1,15 @@
 import type {
+  ActionConfig,
   PriceRule,
   PriceRuleFormData,
   PriceRulePagination,
   ConditionsConfig,
 } from "../types/priceRule.types";
-import { CONSIGNMENT_CONDITION_TYPE } from "../types/priceRule.types";
-import { limaDateTimeLocalToIso, LIMA_TIME_ZONE } from "@/shared/utils/date";
+import {
+  CONSIGNMENT_CONDITION_TYPE,
+  DEFAULT_INCLUDE_DESCENDANTS,
+} from "../types/priceRule.types";
+import { limaDateTimeLocalToIso, limaIsoToDateTimeLocal } from "@/shared/utils/date";
 
 // ¿La regla está marcada como promoción de consignación (franquiciados)?
 // Soporta el formato vigente ({ groups }) y el legacy (array plano).
@@ -106,38 +110,56 @@ export const DEFAULT_FORM_DATA: PriceRuleFormData = {
   max_uses: null,
   max_uses_per_customer: null,
 };
-function pad(n: number): string {
-  return n.toString().padStart(2, "0");
-}
-
 // ISO (con o sin timezone) → "YYYY-MM-DDTHH:mm" en hora Lima, listo para <input type="datetime-local">.
 export function isoToDateTimeLocal(iso: string | null | undefined): string {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (isNaN(date.getTime())) return "";
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: LIMA_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(date);
-  const get = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((part) => part.type === type)?.value ?? "";
-  const y = get("year");
-  const m = get("month");
-  const d = get("day");
-  const hh = pad(Number(get("hour")));
-  const mm = pad(Number(get("minute")));
-  return `${y}-${m}-${d}T${hh}:${mm}`;
+  return limaIsoToDateTimeLocal(iso);
 }
 
 // "YYYY-MM-DDTHH:mm" (asumido en hora Lima) → ISO 8601 con offset -05:00, o "" si vacío.
 // El backend interpreta "" como NULL, así que conservamos string para mantener la forma del tipo PriceRuleFormData.
 export function dateTimeLocalToISO(local: string | null | undefined): string {
   return limaDateTimeLocalToIso(local);
+}
+
+// El switch "Incluir subcategorías" se pinta encendido cuando la clave no
+// existe (reglas guardadas antes de que el campo existiera), así que al cargar
+// se rellena explícita: si no, lo que se ve marcado y lo que se guarda no
+// coinciden. Se normaliza al entrar y no al salir para que el estado del
+// formulario y el payload sean siempre lo mismo.
+const withDescendantsDefault = <
+  T extends { category_ids?: number[]; include_descendants?: boolean },
+>(
+  source: T,
+): T =>
+  source.category_ids?.length
+    ? {
+        ...source,
+        include_descendants:
+          source.include_descendants ?? DEFAULT_INCLUDE_DESCENDANTS,
+      }
+    : source;
+
+function normalizeConditions(conditions: ConditionsConfig): ConditionsConfig {
+  return {
+    ...conditions,
+    groups: (conditions.groups ?? []).map((group) => ({
+      ...group,
+      conditions: (group.conditions ?? []).map((condition) =>
+        condition.type === "category_in_cart" ||
+        condition.type === "min_category_quantity"
+          ? withDescendantsDefault(condition)
+          : condition,
+      ),
+    })),
+  };
+}
+
+function normalizeActions(actions: ActionConfig[]): ActionConfig[] {
+  return actions.map((action) =>
+    action.target?.apply_to === "specific_categories"
+      ? { ...action, target: withDescendantsDefault(action.target) }
+      : action,
+  );
 }
 
 export function adaptPriceRuleToForm(rule: PriceRule): PriceRuleFormData {
@@ -155,8 +177,8 @@ export function adaptPriceRuleToForm(rule: PriceRule): PriceRuleFormData {
     valid_from: isoToDateTimeLocal(rule.valid_from),
     valid_to: isoToDateTimeLocal(rule.valid_to),
     price_list_id: rule.price_list_id,
-    conditions: rule.conditions || DEFAULT_CONDITIONS,
-    actions: rule.actions || [],
+    conditions: normalizeConditions(rule.conditions || DEFAULT_CONDITIONS),
+    actions: normalizeActions(rule.actions || []),
     exclusions: rule.exclusions || null,
     coupon_code: coupon?.code || "",
     max_uses: coupon?.max_uses ?? null,

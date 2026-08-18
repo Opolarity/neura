@@ -71,6 +71,9 @@ export type ActionType =
   | "shipping_discount_percent"
   | "payment_surcharge_percent";
 
+/** Valor por defecto del switch "Incluir subcategorías" cuando la clave no existe. */
+export const DEFAULT_INCLUDE_DESCENDANTS = true;
+
 export interface TargetFilter {
   apply_to: "all" | "specific_products" | "specific_categories" | "specific_variations";
   product_ids?: number[];
@@ -130,7 +133,23 @@ export interface PriceRule {
   created_by: string | null;
   discounts?: Discount[];
   price_list?: { id: number; name: string; code: string } | null;
+  references?: PriceRuleReferences;
 }
+
+// Nombres de lo que conditions/actions/exclusions referencian por id. Solo de
+// lectura: lo devuelve get-price-rule-details para que el formulario muestre
+// nombres en vez de ids; nunca se persiste.
+export interface PriceRuleReferences {
+  products: Array<{ id: number; name: string }>;
+  variations: Array<{ id: number; name: string }>;
+  categories: Array<{ id: number; name: string }>;
+}
+
+export const EMPTY_REFERENCES: PriceRuleReferences = {
+  products: [],
+  variations: [],
+  categories: [],
+};
 
 // --- Discount/Coupon ---
 export interface Discount {
