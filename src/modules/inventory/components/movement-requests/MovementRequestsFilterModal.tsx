@@ -19,6 +19,7 @@ import {
   MovementRequestSituationOption,
   MovementRequestFilters,
 } from "../../types/MovementRequestList.types";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Props {
   situations: MovementRequestSituationOption[];
@@ -62,32 +63,42 @@ const MovementRequestsFilterModal = ({
           <DialogTitle>Filtrar Solicitudes</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Situación</Label>
-            <div className="flex gap-2">
-              <Select
-                value={
-                  internalFilters.situation_id !== null
-                    ? String(internalFilters.situation_id)
-                    : "none"
-                }
-                onValueChange={handleSituationChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas las situaciones" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Todas las situaciones</SelectItem>
-                  {situations.map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* Tope de altura + scroll interno, mismo patrón que el resto de
+            modales de filtros: el ScrollArea envuelve solo el cuerpo, así
+            cabecera y footer quedan fuera del scroll y Limpiar/Aplicar siempre
+            se ven. El max-h va en un contenedor propio y no en el ScrollArea
+            (su Root lleva overflow-hidden), y al ser un máximo la altura sigue
+            al contenido. El pr-4 aparta los campos de la barra de scroll. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4 pl-1 pr-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Situación</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={
+                      internalFilters.situation_id !== null
+                        ? String(internalFilters.situation_id)
+                        : "none"
+                    }
+                    onValueChange={handleSituationChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas las situaciones" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Todas las situaciones</SelectItem>
+                      {situations.map((s) => (
+                        <SelectItem key={s.id} value={String(s.id)}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
-          </div>
+          </ScrollArea>
         </div>
 
         <DialogFooter className="flex gap-2">
