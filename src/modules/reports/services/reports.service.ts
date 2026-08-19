@@ -153,7 +153,7 @@ export const productsService = {
       p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 
-  getPareto: (f: ReportsFilters, limit: ParetoLimit = 20) =>
+  getPareto: (f: ReportsFilters, limit: ParetoLimit = 10) =>
     rpc<ProductsParetoItem[]>('sp_rpt_products_pareto', {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
