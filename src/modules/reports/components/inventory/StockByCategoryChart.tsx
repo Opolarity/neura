@@ -5,35 +5,44 @@ import {
   EmptyReportState,
   ReportCard,
 } from '../shared/ReportScaffold';
-import { chartQualitativeSeries, formatCurrencyAxis } from '../shared/reportChartUtils';
-import type { FinancialByPaymentItem } from '../../types/reports.types';
+import { chartQualitativeSeries, formatNumber } from '../shared/reportChartUtils';
+import type { StockByCategoryItem } from '../../types/reports.types';
 
 interface Props {
-  data: FinancialByPaymentItem[];
+  data: StockByCategoryItem[];
   loading: boolean;
 }
 
-export function FinancialByPaymentChart({ data, loading }: Props) {
-  const chartData = data.map((d) => ({
-    name: d.payment_method_name,
-    value: d.income,
-  }));
+export function StockByCategoryChart({ data, loading }: Props) {
+  const chartData = data.map((d) => ({ name: d.category, value: d.units, skus: d.skus }));
+  const totalUnits = chartData.reduce((acc, d) => acc + d.value, 0);
   const colors = chartQualitativeSeries;
 
   return (
-    <ReportCard title="Ingresos por método de pago">
+    <ReportCard title="Stock por categoría">
       {loading ? (
         <ChartLoading />
       ) : chartData.length === 0 ? (
-        <EmptyReportState>Sin datos en el periodo</EmptyReportState>
+        <EmptyReportState>Sin stock registrado</EmptyReportState>
       ) : (
         <>
           <ChartContainer
-            config={{ value: { label: 'Ingresos', color: 'hsl(var(--success))' } }}
+            config={{ value: { label: 'Unidades', color: 'hsl(var(--primary))' } }}
             className="h-52 w-full aspect-auto"
           >
             <PieChart>
-              <ChartTooltip content={<ChartTooltipContent hideLabel formatter={(value) => formatCurrencyAxis(value as number)} />} />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    hideLabel
+                    formatter={(value, _name, item) => {
+                      const units = Number(value);
+                      const pct = totalUnits > 0 ? ((100 * units) / totalUnits).toFixed(1) : '0';
+                      return `${item?.payload?.name}: ${formatNumber(units)} uds (${pct}%)`;
+                    }}
+                  />
+                }
+              />
               <Pie data={chartData} dataKey="value" nameKey="name" innerRadius={52} outerRadius={78} paddingAngle={2}>
                 {chartData.map((entry, index) => (
                   <Cell key={entry.name} fill={colors[index % colors.length]} />
@@ -45,7 +54,7 @@ export function FinancialByPaymentChart({ data, loading }: Props) {
             {chartData.map((entry, index) => (
               <span key={entry.name} className="inline-flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
-                {entry.name}
+                {entry.name}: {formatNumber(entry.value)}
               </span>
             ))}
           </div>

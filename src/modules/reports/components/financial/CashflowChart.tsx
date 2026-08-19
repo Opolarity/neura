@@ -1,5 +1,5 @@
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
   ReportCard,
@@ -59,6 +59,7 @@ export function CashflowChart({ data, loading, granularity, onGranularityChange 
             <XAxis dataKey="fecha" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
             <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={formatCurrencyAxis} className={chartAxis} />
             <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrencyAxis(value as number)} />} />
+            <ChartLegend content={<ChartLegendContent />} />
             <Area dataKey="ingresos" type="monotone" fill="var(--color-ingresos)" fillOpacity={0.16} stroke="var(--color-ingresos)" strokeWidth={2} />
             <Area dataKey="egresos" type="monotone" fill="var(--color-egresos)" fillOpacity={0.12} stroke="var(--color-egresos)" strokeWidth={2} />
           </AreaChart>

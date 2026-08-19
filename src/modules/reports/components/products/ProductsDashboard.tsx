@@ -1,5 +1,9 @@
 import { ProductsByCategoryChart } from './ProductsByCategoryChart';
 import { TopProductsChart } from './TopProductsChart';
+import { ProductsParetoChart } from './ProductsParetoChart';
+import { MarginVolumeScatter } from './MarginVolumeScatter';
+import { CategoryOverTimeChart } from './CategoryOverTimeChart';
+import { SizeCategoryHeatmap } from './SizeCategoryHeatmap';
 import { ProductDetailSearch } from './ProductDetailSearch';
 import type { ProductsDashboardState } from '../../hooks/useProductsDashboard';
 
@@ -23,6 +27,32 @@ export function ProductsDashboard({ dash }: ProductsDashboardProps) {
           categoryId={dash.selectedCategoryId}
           categories={dash.byCategory.data ?? []}
           onCategoryChange={dash.setSelectedCategoryId}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <ProductsParetoChart
+          data={dash.pareto.data ?? []}
+          loading={dash.pareto.isLoading}
+          limit={dash.paretoLimit}
+          onLimitChange={dash.setParetoLimit}
+        />
+        <MarginVolumeScatter
+          data={dash.marginScatter.data ?? []}
+          loading={dash.marginScatter.isLoading}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <CategoryOverTimeChart
+          data={dash.categoryOverTime.data ?? []}
+          loading={dash.categoryOverTime.isLoading}
+          granularity={dash.categoryGranularity}
+          onGranularityChange={dash.setCategoryGranularity}
+        />
+        <SizeCategoryHeatmap
+          data={dash.salesBySize.data ?? []}
+          loading={dash.salesBySize.isLoading}
         />
       </div>
 

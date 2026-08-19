@@ -12,10 +12,19 @@ import type {
   ProductsByCategoryItem,
   ProductSearchResult,
   ProductDetailData,
+  ProductsParetoItem,
+  ParetoLimit,
+  SizeByCategoryItem,
+  CategoryOverTimeItem,
   InventorySummary,
   PaginatedLowStock,
   StockRotationItem,
   StockMovementTypeItem,
+  InventoryValuation,
+  StockByCategoryItem,
+  StockByTermGroup,
+  StockFlowItem,
+  DeadStockReport,
   ReturnsKpis,
   ReturnsOverTimeItem,
   TopReturnedProduct,
@@ -32,6 +41,11 @@ import type {
   GeoDistributionData,
   CustomersByLoyaltyItem,
   PurchaseFrequencyItem,
+  NewVsReturningData,
+  CustomersRecencyItem,
+  CustomersParetoItem,
+  CustomersBySaleTypeItem,
+  UpcomingBirthdayItem,
 } from '../types/reports.types';
 
 // -------------------------------------------------------
@@ -138,6 +152,42 @@ export const productsService = {
       p_branch_id: f.branchId ?? undefined,
       p_sale_type_id: f.saleTypeId ?? undefined,
     }),
+
+  getPareto: (f: ReportsFilters, limit: ParetoLimit = 20) =>
+    rpc<ProductsParetoItem[]>('sp_rpt_products_pareto', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+      p_sale_type_id: f.saleTypeId ?? undefined,
+      p_limit: limit,
+    }),
+
+  getSalesBySize: (f: ReportsFilters) =>
+    rpc<SizeByCategoryItem[]>('sp_rpt_products_sales_by_size', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+      p_sale_type_id: f.saleTypeId ?? undefined,
+    }),
+
+  getCategoryOverTime: (f: ReportsFilters, granularity: Granularity = 'week') =>
+    rpc<CategoryOverTimeItem[]>('sp_rpt_products_category_over_time', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_granularity: granularity,
+      p_branch_id: f.branchId ?? undefined,
+      p_sale_type_id: f.saleTypeId ?? undefined,
+    }),
+
+  // Reutiliza el RPC del tab financiero: devuelve unidades, ingresos y margen
+  // por producto — acá alimenta el scatter margen vs volumen.
+  getMarginScatter: (f: ReportsFilters, limit = 100) =>
+    rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+      p_limit: limit,
+    }),
 };
 
 // ============================================================
@@ -171,6 +221,38 @@ export const inventoryService = {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
       p_warehouse_id: warehouseId ?? undefined,
+    }),
+
+  getValuation: (warehouseId?: number) =>
+    rpc<InventoryValuation>('sp_rpt_inventory_valuation', {
+      p_warehouse_id: warehouseId ?? undefined,
+    }),
+
+  getStockByCategory: (warehouseId?: number) =>
+    rpc<StockByCategoryItem[]>('sp_rpt_stock_by_category', {
+      p_warehouse_id: warehouseId ?? undefined,
+    }),
+
+  getStockByTermGroup: (termGroupId?: number, warehouseId?: number) =>
+    rpc<StockByTermGroup>('sp_rpt_stock_by_term_group', {
+      p_term_group_id: termGroupId ?? undefined,
+      p_warehouse_id: warehouseId ?? undefined,
+    }),
+
+  getStockFlow: (f: ReportsFilters, granularity: Granularity = 'day', warehouseId?: number) =>
+    rpc<StockFlowItem[]>('sp_rpt_stock_flow_over_time', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_granularity: granularity,
+      p_warehouse_id: warehouseId ?? undefined,
+    }),
+
+  getDeadStock: (days: number, warehouseId?: number, page = 1, size = 10) =>
+    rpc<DeadStockReport>('sp_rpt_dead_stock', {
+      p_days: days,
+      p_warehouse_id: warehouseId ?? undefined,
+      p_page: page,
+      p_size: size,
     }),
 };
 
@@ -293,6 +375,38 @@ export const customersService = {
     rpc<PurchaseFrequencyItem[]>('sp_rpt_customers_purchase_frequency', {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
+    }),
+
+  getNewVsReturning: (f: ReportsFilters) =>
+    rpc<NewVsReturningData>('sp_rpt_customers_new_vs_returning', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+    }),
+
+  getRecency: (f: ReportsFilters) =>
+    rpc<CustomersRecencyItem[]>('sp_rpt_customers_recency', {
+      p_branch_id: f.branchId ?? undefined,
+    }),
+
+  getPareto: (f: ReportsFilters) =>
+    rpc<CustomersParetoItem[]>('sp_rpt_customers_pareto', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+    }),
+
+  getBySaleType: (f: ReportsFilters) =>
+    rpc<CustomersBySaleTypeItem[]>('sp_rpt_customers_by_sale_type', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+    }),
+
+  getUpcomingBirthdays: (days: number, limit = 15) =>
+    rpc<UpcomingBirthdayItem[]>('sp_rpt_customers_upcoming_birthdays', {
+      p_days: days,
+      p_limit: limit,
     }),
 };
 

@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import { productsService } from '../services/reports.service';
-import type { ProductSearchResult, ReportsFilters, TopLimit } from '../types/reports.types';
+import type { Granularity, ParetoLimit, ProductSearchResult, ReportsFilters, TopLimit } from '../types/reports.types';
 
 export function useProductsDashboard(filters: ReportsFilters, applyVersion?: number) {
   const [topLimit, setTopLimit] = useState<TopLimit>(10);
+  const [paretoLimit, setParetoLimit] = useState<ParetoLimit>(20);
+  const [categoryGranularity, setCategoryGranularity] = useState<Granularity>('week');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [productSearch, setProductSearch] = useState('');
   // selectedProductId/Title: lo que el combobox muestra elegido (borrador).
@@ -35,6 +37,30 @@ export function useProductsDashboard(filters: ReportsFilters, applyVersion?: num
   const topByCategory = useQuery({
     queryKey: ['rpt_top_products_by_category', ...queryKey, selectedCategoryId, topLimit],
     queryFn: () => productsService.getTopByCategory(filters, selectedCategoryId, topLimit),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const pareto = useQuery({
+    queryKey: ['rpt_products_pareto', ...queryKey, paretoLimit],
+    queryFn: () => productsService.getPareto(filters, paretoLimit),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const salesBySize = useQuery({
+    queryKey: ['rpt_products_sales_by_size', ...queryKey],
+    queryFn: () => productsService.getSalesBySize(filters),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const categoryOverTime = useQuery({
+    queryKey: ['rpt_products_category_over_time', ...queryKey, categoryGranularity],
+    queryFn: () => productsService.getCategoryOverTime(filters, categoryGranularity),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const marginScatter = useQuery({
+    queryKey: ['rpt_products_margin_scatter', ...queryKey],
+    queryFn: () => productsService.getMarginScatter(filters),
     staleTime: 1000 * 60 * 5,
   });
 
@@ -68,10 +94,18 @@ export function useProductsDashboard(filters: ReportsFilters, applyVersion?: num
   return {
     byCategory,
     topByCategory,
+    pareto,
+    salesBySize,
+    categoryOverTime,
+    marginScatter,
     searchResults,
     productDetail,
     topLimit,
     setTopLimit,
+    paretoLimit,
+    setParetoLimit,
+    categoryGranularity,
+    setCategoryGranularity,
     selectedCategoryId,
     setSelectedCategoryId,
     productSearch,

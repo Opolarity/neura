@@ -1,4 +1,4 @@
-import { Line, LineChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart, XAxis, YAxis } from 'recharts';
 import { PackageSearch } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -11,6 +11,8 @@ import { KpiCard } from '../shared/KpiCard';
 import {
   chartAxis,
   chartGrid,
+  chartQualitativeSeries,
+  formatCurrencyAxis,
   formatNumber,
   reportChartColors,
 } from '../shared/reportChartUtils';
@@ -24,6 +26,63 @@ interface Props {
   detailLoading: boolean;
 }
 
+interface DonutSlice {
+  name: string;
+  value: number;
+  ingresos: number;
+}
+
+// Mini-donut de participación (por sede / por canal) con leyenda de puntos,
+// mismo patrón del donut de métodos de pago del tab financiero.
+function BreakdownDonut({ title, slices }: { title: string; slices: DonutSlice[] }) {
+  return (
+    <div>
+      <p className="mb-2 text-sm font-medium">{title}</p>
+      <ChartContainer config={{}} className="h-44 w-full aspect-auto">
+        <PieChart>
+          <ChartTooltip
+            content={({ active, payload }) => {
+              if (!active || !payload?.length) return null;
+              const p = payload[0].payload as DonutSlice;
+              return (
+                <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                  <p className="mb-1 font-medium">{p.name}</p>
+                  <div className="grid gap-1">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-muted-foreground">Unidades</span>
+                      <span className="font-mono tabular-nums">{formatNumber(p.value)}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-muted-foreground">Ingresos</span>
+                      <span className="font-mono tabular-nums">{formatCurrencyAxis(p.ingresos)}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            }}
+          />
+          <Pie data={slices} dataKey="value" nameKey="name" innerRadius={42} outerRadius={64} paddingAngle={2}>
+            {slices.map((entry, index) => (
+              <Cell key={entry.name} fill={chartQualitativeSeries[index % chartQualitativeSeries.length]} />
+            ))}
+          </Pie>
+        </PieChart>
+      </ChartContainer>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {slices.map((entry, index) => (
+          <span key={entry.name} className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+            <span
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: chartQualitativeSeries[index % chartQualitativeSeries.length] }}
+            />
+            {entry.name}: {formatNumber(entry.value)} uds
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ProductDetailSearch({
   selectedProductId,
   selectedProductTitle,
@@ -35,6 +94,23 @@ export function ProductDetailSearch({
     ventas: d.total_revenue,
     unidades: d.total_quantity,
   })) ?? [];
+
+  const branchSlices: DonutSlice[] =
+    detail?.by_branch
+      .filter((b) => b.total_quantity > 0)
+      .map((b) => ({ name: b.branch_name, value: b.total_quantity, ingresos: b.total_revenue })) ?? [];
+
+  const saleTypeSlices: DonutSlice[] =
+    detail?.by_sale_type
+      .filter((st) => st.total_quantity > 0)
+      .map((st) => ({ name: st.sale_type_name, value: st.total_quantity, ingresos: st.total_revenue })) ?? [];
+
+  const variationData =
+    detail?.top_variations.map((v) => ({
+      sku: v.sku,
+      unidades: v.total_quantity,
+      ingresos: v.total_revenue,
+    })) ?? [];
 
   return (
     <ReportCard title="Análisis de producto individual">
@@ -82,33 +158,11 @@ export function ProductDetailSearch({
           </div>
 
           {/* Desglose por sede / canal */}
-          {(detail.by_branch.length > 0 || detail.by_sale_type.length > 0) && (
+          {(branchSlices.length > 0 || saleTypeSlices.length > 0) && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {detail.by_branch.length > 0 && (
-                <div>
-                  <p className="mb-2 text-sm font-medium">Por sede</p>
-                  <div className="space-y-1">
-                    {detail.by_branch.map((b) => (
-                      <div key={b.branch_id ?? 'none'} className="flex justify-between text-sm py-1 border-b">
-                        <span className="text-muted-foreground">{b.branch_name}</span>
-                        <span>{b.total_quantity} uds · {formatCurrency(b.total_revenue)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {detail.by_sale_type.length > 0 && (
-                <div>
-                  <p className="mb-2 text-sm font-medium">Por canal de venta</p>
-                  <div className="space-y-1">
-                    {detail.by_sale_type.map((st) => (
-                      <div key={st.sale_type_id ?? 'none'} className="flex justify-between text-sm py-1 border-b">
-                        <span className="text-muted-foreground">{st.sale_type_name}</span>
-                        <span>{st.total_quantity} uds · {formatCurrency(st.total_revenue)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              {branchSlices.length > 0 && <BreakdownDonut title="Por sede" slices={branchSlices} />}
+              {saleTypeSlices.length > 0 && (
+                <BreakdownDonut title="Por canal de venta" slices={saleTypeSlices} />
               )}
             </div>
           )}
@@ -122,14 +176,36 @@ export function ProductDetailSearch({
               }}
               className="h-56 w-full aspect-auto"
             >
-              <LineChart data={chartData} margin={{ left: 12, right: 12 }}>
+              <AreaChart data={chartData} margin={{ left: 12, right: 12 }}>
+                <defs>
+                  <linearGradient id="fill-detail-ventas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-ventas)" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="var(--color-ventas)" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="fill-detail-unidades" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-unidades)" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="var(--color-unidades)" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid vertical={false} className={chartGrid} />
                 <XAxis dataKey="fecha" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
                 <YAxis tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
                 <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatNumber(value as number)} />} />
-                <Line dataKey="ventas" type="monotone" stroke="var(--color-ventas)" strokeWidth={2} dot={false} />
-                <Line dataKey="unidades" type="monotone" stroke="var(--color-unidades)" strokeWidth={2} dot={false} />
-              </LineChart>
+                <Area
+                  dataKey="ventas"
+                  type="monotone"
+                  fill="url(#fill-detail-ventas)"
+                  stroke="var(--color-ventas)"
+                  strokeWidth={2}
+                />
+                <Area
+                  dataKey="unidades"
+                  type="monotone"
+                  fill="url(#fill-detail-unidades)"
+                  stroke="var(--color-unidades)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
             </ChartContainer>
           ) : (
             <EmptyReportState>
@@ -138,17 +214,57 @@ export function ProductDetailSearch({
           )}
 
           {/* Top variations */}
-          {detail.top_variations.length > 0 && (
+          {variationData.length > 0 && (
             <div>
               <p className="mb-2 text-sm font-medium">Variaciones más vendidas</p>
-              <div className="space-y-1">
-                {detail.top_variations.map((v) => (
-                  <div key={v.variation_id} className="flex justify-between text-sm py-1 border-b">
-                    <span className="text-muted-foreground">{v.sku}</span>
-                    <span>{v.total_quantity} uds · {formatCurrency(v.total_revenue)}</span>
-                  </div>
-                ))}
-              </div>
+              <ChartContainer
+                config={{ unidades: { label: 'Unidades', color: reportChartColors.teal } }}
+                className="w-full aspect-auto"
+                style={{ height: Math.max(112, variationData.length * 36) }}
+              >
+                <BarChart data={variationData} layout="vertical" margin={{ left: 8, right: 56 }}>
+                  <CartesianGrid horizontal={false} className={chartGrid} />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    type="category"
+                    dataKey="sku"
+                    tickLine={false}
+                    axisLine={false}
+                    width={132}
+                    className={chartAxis}
+                  />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, _name, _item, _index, payload) => (
+                          <div className="flex w-full flex-col gap-1">
+                            <div className="flex flex-1 items-center justify-between leading-none">
+                              <span className="text-muted-foreground">Unidades</span>
+                              <span className="font-mono font-medium tabular-nums text-foreground">
+                                {formatNumber(value as number)}
+                              </span>
+                            </div>
+                            <div className="flex flex-1 items-center justify-between leading-none">
+                              <span className="text-muted-foreground">Ingresos</span>
+                              <span className="font-mono font-medium tabular-nums text-foreground">
+                                {formatCurrencyAxis((payload as unknown as { ingresos: number }).ingresos)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      />
+                    }
+                  />
+                  <Bar dataKey="unidades" fill="var(--color-unidades)" radius={[0, 4, 4, 0]}>
+                    <LabelList
+                      dataKey="unidades"
+                      position="right"
+                      formatter={(value: number) => formatNumber(value)}
+                      className="fill-muted-foreground text-[11px] tabular-nums"
+                    />
+                  </Bar>
+                </BarChart>
+              </ChartContainer>
             </div>
           )}
         </div>

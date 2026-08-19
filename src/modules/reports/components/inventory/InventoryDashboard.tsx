@@ -1,21 +1,24 @@
 import { KpiCard } from '../shared/KpiCard';
+import { DeadStockTable } from './DeadStockTable';
+import { InventoryValuationKpis } from './InventoryValuationKpis';
 import { LowStockTable } from './LowStockTable';
+import { StockByCategoryChart } from './StockByCategoryChart';
+import { StockByTermChart } from './StockByTermChart';
+import { StockFlowChart } from './StockFlowChart';
 import { StockMovementTypesChart } from './StockMovementTypesChart';
 import { StockRotationTable } from './StockRotationTable';
-import { useInventoryDashboard } from '../../hooks/useInventoryDashboard';
-import type { ReportsFilters } from '../../types/reports.types';
+import type { InventoryDashboardState } from '../../hooks/useInventoryDashboard';
 
 interface InventoryDashboardProps {
-  filters: ReportsFilters;
+  dash: InventoryDashboardState;
 }
 
-export function InventoryDashboard({ filters }: InventoryDashboardProps) {
-  const dash = useInventoryDashboard(filters);
+export function InventoryDashboard({ dash }: InventoryDashboardProps) {
   const summary = dash.summary.data;
 
   return (
     <div className="space-y-6">
-      {/* KPIs */}
+      {/* KPIs de conteo */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           title="Total SKUs"
@@ -28,7 +31,7 @@ export function InventoryDashboard({ filters }: InventoryDashboardProps) {
           loading={dash.summary.isLoading}
         />
         <KpiCard
-          title="Stock bajo (≤10 uds)"
+          title={`Stock bajo (≤${dash.threshold} uds)`}
           value={summary?.low_stock_count ?? '—'}
           loading={dash.summary.isLoading}
           subtitle="requieren reposición"
@@ -37,6 +40,36 @@ export function InventoryDashboard({ filters }: InventoryDashboardProps) {
           title="Sin stock"
           value={summary?.zero_stock_count ?? '—'}
           loading={dash.summary.isLoading}
+        />
+      </div>
+
+      {/* KPIs de valorización */}
+      <InventoryValuationKpis
+        valuation={dash.valuation.data}
+        valuationLoading={dash.valuation.isLoading}
+        deadStock={dash.deadStock.data}
+        deadStockLoading={dash.deadStock.isLoading}
+        deadStockDays={dash.deadStockDays}
+      />
+
+      {/* Flujo de inventario en el tiempo */}
+      <StockFlowChart
+        data={dash.stockFlow.data ?? []}
+        loading={dash.stockFlow.isLoading}
+        granularity={dash.flowGranularity}
+        onGranularityChange={dash.setFlowGranularity}
+      />
+
+      {/* Distribución: categoría + talla */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <StockByCategoryChart
+          data={dash.byCategory.data ?? []}
+          loading={dash.byCategory.isLoading}
+        />
+        <StockByTermChart
+          data={dash.byTermGroup.data}
+          loading={dash.byTermGroup.isLoading}
+          onGroupChange={dash.setTermGroupId}
         />
       </div>
 
@@ -55,6 +88,17 @@ export function InventoryDashboard({ filters }: InventoryDashboardProps) {
           onPageChange={dash.setPage}
         />
       </div>
+
+      {/* Stock muerto */}
+      <DeadStockTable
+        report={dash.deadStock.data}
+        loading={dash.deadStock.isLoading}
+        days={dash.deadStockDays}
+        onDaysChange={dash.setDeadStockDays}
+        page={dash.deadStockPage}
+        pageSize={dash.deadStockPageSize}
+        onPageChange={dash.setDeadStockPage}
+      />
 
       {/* Rotation */}
       <StockRotationTable
