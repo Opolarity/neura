@@ -15,12 +15,12 @@ export default function StockPage() {
 
   const extraActiveCount = [
     dash.warehouseId,
-    dash.threshold !== 10 ? dash.threshold : undefined,
+    dash.thresholdOverride,
   ].filter((v) => v !== null && v !== undefined).length;
 
   function handleClearExtra() {
     dash.setWarehouseId(undefined);
-    dash.setThreshold(10);
+    dash.setThresholdOverride(undefined);
   }
 
   return (

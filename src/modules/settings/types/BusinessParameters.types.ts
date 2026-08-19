@@ -117,6 +117,12 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
         help: "Tiempo tras el cual una orden pendiente de pago libera su reserva de stock.",
       },
       {
+        key: "LowStockThreshold",
+        label: "Umbral de stock bajo (unidades)",
+        control: "number",
+        help: "Un SKU se considera con stock bajo cuando tiene stock mayor a 0 y menor o igual a este valor. Se usa en los reportes de inventario (Reportes → Stock).",
+      },
+      {
         key: "CompanyDireccionPartida",
         label: "Dirección de partida",
         control: "text",

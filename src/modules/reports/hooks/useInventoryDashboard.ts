@@ -1,12 +1,19 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { inventoryService } from '../services/reports.service';
+import { getParameter } from '@/modules/settings/services/Parameters.service';
 import { getWarehousesIsActiveTrue } from '@/shared/services/service';
 import type { Granularity, ReportsFilters } from '../types/reports.types';
 
+/** Valor usado si el parámetro LowStockThreshold no existe o no es válido. */
+const FALLBACK_LOW_STOCK_THRESHOLD = 10;
+
 export function useInventoryDashboard(filters: ReportsFilters) {
   const [warehouseId, setWarehouseId] = useState<number | undefined>(undefined);
-  const [threshold, setThreshold] = useState(10);
+  // Umbral de stock bajo: el valor de referencia es el parámetro global
+  // (Configuración > Negocio > Operación). El selector del reporte solo
+  // define un override de sesión, que no se persiste.
+  const [thresholdOverride, setThresholdOverride] = useState<number | undefined>(undefined);
   const [flowGranularity, setFlowGranularity] = useState<Granularity>('day');
   const [termGroupId, setTermGroupId] = useState<number | undefined>(undefined);
   const [deadStockDays, setDeadStockDays] = useState(60);
@@ -19,9 +26,24 @@ export function useInventoryDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 30,
   });
 
+  const lowStockParam = useQuery({
+    queryKey: ['parameter', 'LowStockThreshold'],
+    queryFn: () => getParameter('LowStockThreshold'),
+    staleTime: 1000 * 60 * 30,
+  });
+
+  const parsedGlobal = Number.parseInt(lowStockParam.data ?? '', 10);
+  const globalThreshold =
+    Number.isFinite(parsedGlobal) && parsedGlobal > 0 ? parsedGlobal : FALLBACK_LOW_STOCK_THRESHOLD;
+  const threshold = thresholdOverride ?? globalThreshold;
+  // Hasta que se resuelva el parámetro no se consulta, para no pedir dos veces
+  // los mismos datos (una con el fallback y otra con el valor real).
+  const thresholdReady = thresholdOverride !== undefined || !lowStockParam.isLoading;
+
   const summary = useQuery({
     queryKey: ['rpt_inventory_summary', warehouseId, threshold],
     queryFn: () => inventoryService.getSummary(warehouseId, threshold),
+    enabled: thresholdReady,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -34,6 +56,7 @@ export function useInventoryDashboard(filters: ReportsFilters) {
   const lowStockDistribution = useQuery({
     queryKey: ['rpt_low_stock_distribution', warehouseId, threshold],
     queryFn: () => inventoryService.getLowStockDistribution(warehouseId, threshold),
+    enabled: thresholdReady,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -91,7 +114,9 @@ export function useInventoryDashboard(filters: ReportsFilters) {
       setDeadStockPage(1);
     },
     threshold,
-    setThreshold,
+    globalThreshold,
+    thresholdOverride,
+    setThresholdOverride,
     flowGranularity,
     setFlowGranularity,
     termGroupId,

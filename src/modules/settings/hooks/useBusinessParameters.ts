@@ -130,6 +130,11 @@ const useBusinessParameters = () => {
       return "Las horas para cancelar órdenes pendientes deben ser un número entero mayor o igual a 0";
     }
 
+    const lowStock = formData.LowStockThreshold?.trim();
+    if (lowStock && (!/^\d+$/.test(lowStock) || Number(lowStock) < 1)) {
+      return "El umbral de stock bajo debe ser un número entero mayor o igual a 1";
+    }
+
     const names = advancedRows
       .map((row) => row.name.trim())
       .filter((name) => name.length > 0);

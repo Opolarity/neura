@@ -8,12 +8,18 @@ import {
 import type { InventoryDashboardState } from '../../hooks/useInventoryDashboard';
 
 const ALL_VALUE = '__all__';
-const THRESHOLD_OPTIONS = [5, 10, 20, 50];
+const BASE_THRESHOLD_OPTIONS = [5, 10, 20, 50];
 
 /** Solo devuelve los campos de "Más filtros" de Stock — el contenedor
  * (caja, toggle, Limpiar, Aplicar) vive en ReportsFilterBar. */
 export function InventoryOptionsPanel({ dash }: { dash: InventoryDashboardState }) {
   const warehouses = dash.warehouses.data ?? [];
+
+  // El umbral configurado en Configuración > Negocio siempre está disponible
+  // en la lista, aunque no sea uno de los valores sugeridos.
+  const thresholdOptions = Array.from(
+    new Set([...BASE_THRESHOLD_OPTIONS, dash.globalThreshold]),
+  ).sort((a, b) => a - b);
 
   return (
     <>
@@ -41,15 +47,17 @@ export function InventoryOptionsPanel({ dash }: { dash: InventoryDashboardState 
         <span className="text-xs text-muted-foreground font-medium">Umbral stock bajo</span>
         <Select
           value={String(dash.threshold)}
-          onValueChange={(v) => dash.setThreshold(Number(v))}
+          onValueChange={(v) =>
+            dash.setThresholdOverride(Number(v) === dash.globalThreshold ? undefined : Number(v))
+          }
         >
           <SelectTrigger className="h-9 w-[160px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {THRESHOLD_OPTIONS.map((t) => (
+            {thresholdOptions.map((t) => (
               <SelectItem key={t} value={String(t)}>
-                ≤ {t} unidades
+                ≤ {t} unidades{t === dash.globalThreshold ? ' (global)' : ''}
               </SelectItem>
             ))}
           </SelectContent>
