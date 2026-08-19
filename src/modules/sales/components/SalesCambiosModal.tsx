@@ -64,6 +64,11 @@ export const SalesCambiosModal = ({
                     <Badge variant="outline" className="text-xs">
                       {ret.situation_name}
                     </Badge>
+                    {ret.order_situation_name && (
+                      <Badge variant="info" className="text-xs">
+                        Orden: {ret.order_situation_name}
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-muted-foreground">
