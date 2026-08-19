@@ -6,6 +6,7 @@ import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useStockType } from "../hooks/useStockType";
 import { StockTypeFormDialog } from "../components/stock-type/StockTypeFormDialog";
 import StockTypeTable from "../components/stock-type/StockTypeTable";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 const StockTypePage = () => {
   const {
@@ -32,16 +33,20 @@ const StockTypePage = () => {
             Administra los tipos de stock del sistema
           </p>
         </div>
-        <Button
-          className="gap-2"
-          onClick={() => {
-            handleEditItemChange(null);
-            handleOpenChange(true);
-          }}
-        >
-          <Plus className="w-4 h-4" />
-          Crear Tipo de Stock
-        </Button>
+        {/* Aquí no hay ruta de creación que reutilizar: el alta se hace en el
+            mismo listado, abriendo StockTypeFormDialog en blanco. */}
+        <ComponentPermission codeIn={["stock_types.create"]}>
+          <Button
+            className="gap-2"
+            onClick={() => {
+              handleEditItemChange(null);
+              handleOpenChange(true);
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            Crear Tipo de Stock
+          </Button>
+        </ComponentPermission>
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
