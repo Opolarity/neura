@@ -25,7 +25,7 @@ export function FinancialByClassChart({ data, loading }: Props) {
   }));
 
   return (
-    <ReportCard title="Por clase de movimiento">
+    <ReportCard title="Por clase de movimiento" className="flex flex-col" contentClassName="flex-1 min-h-0">
       {loading ? (
         <ChartLoading />
       ) : (
@@ -34,7 +34,7 @@ export function FinancialByClassChart({ data, loading }: Props) {
             ingresos: { label: 'Ingresos', color: reportChartColors.emerald },
             egresos: { label: 'Egresos', color: reportChartColors.rose },
           }}
-          className="h-56 w-full aspect-auto"
+          className="h-full min-h-56 w-full aspect-auto"
         >
           <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} className={chartGrid} />
