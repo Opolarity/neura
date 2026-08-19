@@ -15,6 +15,18 @@ import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { Loader2, Search, Eye } from "lucide-react";
 import { useReclamaciones } from "../hooks/useReclamaciones";
 import { formatDateDisplay } from "@/shared/utils/date";
+import { ComponentPermission } from "@/shared/components/component-permission";
+
+// # Orden, Correo, Fecha de Incidente, Monto, Detalle, Acción. Si el rol no
+// puede ver el detalle, la columna de Acción no se pinta y este número queda uno
+// largo: solo afecta a las filas de "cargando" y "no se encontraron
+// reclamaciones", y la columna sobrante colapsa a 0px porque ninguna otra fila
+// la ocupa.
+const COL_SPAN = 6;
+
+// Code de la columna Acción, en una constante para que la cabecera y la celda no
+// puedan quedar con listas distintas y aparezca un th sin td o al revés.
+const ACTION_CODES = ["ecommerce_claims.view"];
 
 const formatDate = (date: string) => formatDateDisplay(date);
 
@@ -75,13 +87,17 @@ export default function ReclamacionesPage() {
                 <TableHead>Fecha de Incidente</TableHead>
                 <TableHead>Monto</TableHead>
                 <TableHead>Detalle</TableHead>
-                <TableHead>Acción</TableHead>
+                {/* Se envuelve el th entero y no su texto: una celda vacía
+                    sigue ocupando su ancho y deja un hueco muerto. */}
+                <ComponentPermission codeIn={ACTION_CODES}>
+                  <TableHead>Acción</TableHead>
+                </ComponentPermission>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={COL_SPAN} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Cargando reclamaciones...
@@ -90,7 +106,7 @@ export default function ReclamacionesPage() {
                 </TableRow>
               ) : reclamaciones.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={COL_SPAN} className="text-center text-muted-foreground py-8">
                     No se encontraron reclamaciones
                   </TableCell>
                 </TableRow>
@@ -104,15 +120,20 @@ export default function ReclamacionesPage() {
                     <TableCell>{formatDate(r.incident_date)}</TableCell>
                     <TableCell>{formatCurrency(r.amount_claim)}</TableCell>
                     <TableCell>{renderClaimType(r.claim_type)}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/ecommerce/reclamaciones/view/${r.id}`)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+                    <ComponentPermission codeIn={ACTION_CODES}>
+                      <TableCell>
+                        {/* El botón lleva a /ecommerce/reclamaciones/view/:id, ya
+                            protegida con ecommerce_claims.view: se reutiliza ese
+                            code. */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/ecommerce/reclamaciones/view/${r.id}`)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </ComponentPermission>
                   </TableRow>
                 ))
               )}
