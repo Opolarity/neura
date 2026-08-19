@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import React from "react";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 interface PriceListHeaderProps {
   onOpenDialog: () => void;
@@ -18,10 +19,14 @@ const PriceListHeader = ({ onOpenDialog }: PriceListHeaderProps) => {
         </p>
       </div>
 
-      <Button onClick={onOpenDialog} className="gap-2">
-        <Plus className="w-4 h-4" />
-        Nueva Lista de Precios
-      </Button>
+      {/* Aquí no hay ruta de creación que reutilizar: el alta se hace en el
+          mismo listado, abriendo PriceListFormDialog en blanco. */}
+      <ComponentPermission codeIn={["price_lists.create"]}>
+        <Button onClick={onOpenDialog} className="gap-2">
+          <Plus className="w-4 h-4" />
+          Nueva Lista de Precios
+        </Button>
+      </ComponentPermission>
     </div>
   );
 };
