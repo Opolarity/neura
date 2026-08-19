@@ -17,7 +17,7 @@ import type {
   SizeByCategoryItem,
   CategoryOverTimeItem,
   InventorySummary,
-  PaginatedLowStock,
+  LowStockDistributionItem,
   StockRotationItem,
   StockMovementTypeItem,
   InventoryValuation,
@@ -200,12 +200,10 @@ export const inventoryService = {
       p_low_stock_threshold: threshold,
     }),
 
-  getLowStock: (warehouseId?: number, threshold = 10, page = 1, size = 20) =>
-    rpc<PaginatedLowStock>('sp_rpt_low_stock_products', {
+  getLowStockDistribution: (warehouseId?: number, threshold = 10) =>
+    rpc<LowStockDistributionItem[]>('sp_rpt_low_stock_distribution', {
       p_warehouse_id: warehouseId ?? undefined,
       p_threshold: threshold,
-      p_page: page,
-      p_size: size,
     }),
 
   getRotation: (f: ReportsFilters, warehouseId?: number, limit = 20) =>

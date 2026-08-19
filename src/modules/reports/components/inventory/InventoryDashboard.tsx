@@ -1,7 +1,7 @@
 import { KpiCard } from '../shared/KpiCard';
 import { DeadStockTable } from './DeadStockTable';
 import { InventoryValuationKpis } from './InventoryValuationKpis';
-import { LowStockTable } from './LowStockTable';
+import { LowStockDistributionChart } from './LowStockDistributionChart';
 import { StockByCategoryChart } from './StockByCategoryChart';
 import { StockByTermChart } from './StockByTermChart';
 import { StockFlowChart } from './StockFlowChart';
@@ -79,13 +79,10 @@ export function InventoryDashboard({ dash }: InventoryDashboardProps) {
           data={dash.movementTypes.data ?? []}
           loading={dash.movementTypes.isLoading}
         />
-        <LowStockTable
-          data={dash.lowStock.data?.data ?? []}
-          loading={dash.lowStock.isLoading}
-          total={dash.lowStock.data?.page.total ?? 0}
-          page={dash.page}
-          pageSize={dash.pageSize}
-          onPageChange={dash.setPage}
+        <LowStockDistributionChart
+          data={dash.lowStockDistribution.data ?? []}
+          loading={dash.lowStockDistribution.isLoading}
+          threshold={dash.threshold}
         />
       </div>
 

@@ -7,12 +7,10 @@ import type { Granularity, ReportsFilters } from '../types/reports.types';
 export function useInventoryDashboard(filters: ReportsFilters) {
   const [warehouseId, setWarehouseId] = useState<number | undefined>(undefined);
   const [threshold, setThreshold] = useState(10);
-  const [page, setPage] = useState(1);
   const [flowGranularity, setFlowGranularity] = useState<Granularity>('day');
   const [termGroupId, setTermGroupId] = useState<number | undefined>(undefined);
   const [deadStockDays, setDeadStockDays] = useState(60);
   const [deadStockPage, setDeadStockPage] = useState(1);
-  const pageSize = 20;
   const deadStockPageSize = 10;
 
   const warehouses = useQuery({
@@ -33,9 +31,9 @@ export function useInventoryDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const lowStock = useQuery({
-    queryKey: ['rpt_low_stock', warehouseId, threshold, page],
-    queryFn: () => inventoryService.getLowStock(warehouseId, threshold, page, pageSize),
+  const lowStockDistribution = useQuery({
+    queryKey: ['rpt_low_stock_distribution', warehouseId, threshold],
+    queryFn: () => inventoryService.getLowStockDistribution(warehouseId, threshold),
     staleTime: 1000 * 60 * 5,
   });
 
@@ -79,7 +77,7 @@ export function useInventoryDashboard(filters: ReportsFilters) {
   return {
     summary,
     valuation,
-    lowStock,
+    lowStockDistribution,
     rotation,
     movementTypes,
     stockFlow,
@@ -90,17 +88,10 @@ export function useInventoryDashboard(filters: ReportsFilters) {
     warehouseId,
     setWarehouseId: (id: number | undefined) => {
       setWarehouseId(id);
-      setPage(1);
       setDeadStockPage(1);
     },
     threshold,
-    setThreshold: (t: number) => {
-      setThreshold(t);
-      setPage(1);
-    },
-    page,
-    setPage,
-    pageSize,
+    setThreshold,
     flowGranularity,
     setFlowGranularity,
     termGroupId,
