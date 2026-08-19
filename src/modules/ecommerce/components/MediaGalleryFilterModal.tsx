@@ -7,6 +7,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { DateRangeFilter, DateRangeValue } from "@/shared/components/date-range";
 import type { MediaGalleryFilters } from "../types/MediaGallery.types";
 
@@ -53,14 +54,23 @@ const MediaGalleryFilterModal = ({
           <DialogTitle>Filtros</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          <DateRangeFilter
-            startDate={internalFilters.startDate ?? null}
-            endDate={internalFilters.endDate ?? null}
-            onChange={handleDateChange}
-            startLabel="Fecha de inicio"
-            endLabel="Fecha de fin"
-          />
+        {/* Tope de altura + scroll interno, el mismo patrón que el resto de
+            filtros del sistema: hoy solo hay un rango de fechas, pero el modal
+            no debe poder empujar el footer fuera de la pantalla cuando se le
+            agreguen filtros. El max-h va en un contenedor propio, no en el
+            ScrollArea ni en el DialogContent. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4 pl-1 pr-4">
+              <DateRangeFilter
+                startDate={internalFilters.startDate ?? null}
+                endDate={internalFilters.endDate ?? null}
+                onChange={handleDateChange}
+                startLabel="Fecha de inicio"
+                endLabel="Fecha de fin"
+              />
+            </div>
+          </ScrollArea>
         </div>
 
         <DialogFooter className="gap-2">
