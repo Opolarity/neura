@@ -29,7 +29,7 @@ const Header = ({ posSession }: HeaderProps) => {
           {isMobile && <SidebarTrigger className="h-9 w-9" />}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <NotificationPanel />
 
           {!loading && (
