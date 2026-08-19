@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   ChartLoading,
   EmptyReportState,
@@ -35,7 +35,21 @@ interface HeatmapCell {
   revenue: number;
 }
 
+interface HoveredCell {
+  category: string;
+  size: string;
+  cell: HeatmapCell | null;
+  /** Posición del anclaje, relativa al wrapper del gráfico. */
+  x: number;
+  y: number;
+  /** true cuando la celda está muy arriba y el tooltip debe abrir hacia abajo
+   *  para no cortarse con el overflow-hidden de la Card. */
+  below: boolean;
+}
+
 export function SizeCategoryHeatmap({ data, loading }: Props) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [hovered, setHovered] = useState<HoveredCell | null>(null);
   const { sizes, rows, maxQuantity } = useMemo(() => {
     const sizeSet = new Set<string>();
     const byCategory = new Map<string, { total: number; cells: Map<string, HeatmapCell> }>();
@@ -62,13 +76,40 @@ export function SizeCategoryHeatmap({ data, loading }: Props) {
   }, [data]);
 
   return (
-    <ReportCard title="Unidades por talla y categoría">
+    <ReportCard title="Unidades vendidas por talla y categoría">
       {loading ? (
         <ChartLoading className="h-80" />
       ) : rows.length === 0 ? (
         <EmptyReportState>Sin ventas con talla asignada en el periodo</EmptyReportState>
       ) : (
-        <div className="max-h-80 overflow-auto">
+        <div ref={wrapperRef} className="relative">
+          {hovered && (
+            <div
+              className={`pointer-events-none absolute z-20 -translate-x-1/2 rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl ${
+                hovered.below ? '' : '-translate-y-full'
+              }`}
+              style={{ left: hovered.x, top: hovered.below ? hovered.y + 6 : hovered.y - 6 }}
+            >
+              <p className="mb-1 whitespace-nowrap font-medium">
+                {hovered.category} · Talla {hovered.size}
+              </p>
+              {hovered.cell ? (
+                <div className="grid gap-1">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">Unidades vendidas</span>
+                    <span className="font-mono tabular-nums">{formatNumber(hovered.cell.quantity)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">Ingresos por venta</span>
+                    <span className="font-mono tabular-nums">{formatCurrencyAxis(hovered.cell.revenue)}</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">Sin ventas en el periodo</p>
+              )}
+            </div>
+          )}
+          <div className="max-h-80 overflow-auto">
           <table className="w-full border-separate border-spacing-1 text-xs">
             <thead>
               <tr>
@@ -104,11 +145,24 @@ export function SizeCategoryHeatmap({ data, loading }: Props) {
                       <td
                         key={s}
                         className="rounded-md p-0 text-center align-middle tabular-nums"
-                        title={
-                          cell
-                            ? `${category} · Talla ${s}\n${formatNumber(cell.quantity)} uds · ${formatCurrencyAxis(cell.revenue)}`
-                            : `${category} · Talla ${s}\nSin ventas`
-                        }
+                        onMouseEnter={(e) => {
+                          const wrapper = wrapperRef.current;
+                          if (!wrapper) return;
+                          const cellRect = e.currentTarget.getBoundingClientRect();
+                          const wrapperRect = wrapper.getBoundingClientRect();
+                          const rawX = cellRect.left + cellRect.width / 2 - wrapperRect.left;
+                          const top = cellRect.top - wrapperRect.top;
+                          const below = top < 96;
+                          setHovered({
+                            category,
+                            size: s,
+                            cell: cell ?? null,
+                            x: Math.min(Math.max(rawX, 110), wrapperRect.width - 110),
+                            y: below ? cellRect.bottom - wrapperRect.top : top,
+                            below,
+                          });
+                        }}
+                        onMouseLeave={() => setHovered(null)}
                         style={{
                           // Tinte del indigo de la paleta con alfa proporcional a
                           // las unidades vendidas; celdas sin ventas quedan en el
@@ -136,6 +190,7 @@ export function SizeCategoryHeatmap({ data, loading }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </ReportCard>
