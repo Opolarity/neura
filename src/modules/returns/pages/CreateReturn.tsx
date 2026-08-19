@@ -195,7 +195,7 @@ const CreateReturn = () => {
                     <Label>
                       Estado de orden al momento de retorno
                     </Label>
-                    <Input value={orderSituationName} disabled />
+                    <Input value={orderSituationName || "—"} disabled />
                   </div>
                 </div>
 

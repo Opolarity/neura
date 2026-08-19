@@ -18,12 +18,28 @@ import {
 } from "@/modules/sales/adapters/POS.adapter";
 
 import POSSessionDetailDialog from "./POSSessionDetailDialog";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 interface POSListTableProps {
   sessions: POSSessionListItem[];
   loading: boolean;
   search: string;
 }
+
+// ID, Usuario, Fecha de Apertura, Monto de Apertura, Monto de Cierre, Fecha
+// de Cierre, Sucursal, Acciones. Si el rol no puede ver el detalle, la columna
+// de Acciones no se pinta y este número queda uno largo: solo afecta a las
+// filas de "cargando" y "no hay sesiones", y la columna sobrante colapsa a 0px
+// porque ninguna otra fila la ocupa.
+//
+// Antes ponía 7, uno MENOS que las columnas reales, así que la fila de vacío
+// se quedaba sin cubrir la última columna.
+const COL_SPAN = 8;
+
+// Code de la columna Acciones, en una constante para que la cabecera y la
+// celda no puedan quedar con listas distintas y aparezca un th sin td o al
+// revés.
+const ACTION_CODES = ["pos.view"];
 
 const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
@@ -50,13 +66,17 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
             <TableHead>Monto de Cierre</TableHead>
             <TableHead>Fecha de Cierre</TableHead>
             <TableHead>Sucursal</TableHead>
-            <TableHead>Acciones</TableHead>
+            {/* Se envuelve el th entero y no su texto: una celda vacía sigue
+                ocupando su ancho y deja un hueco muerto. */}
+            <ComponentPermission codeIn={ACTION_CODES}>
+              <TableHead>Acciones</TableHead>
+            </ComponentPermission>
           </TableRow>
         </TableHeader>
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8">
+              <TableCell colSpan={COL_SPAN} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Cargando sesiones...
@@ -66,7 +86,7 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
           ) : sessions.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={7}
+                colSpan={COL_SPAN}
                 className="text-center py-8 text-muted-foreground"
               >
                 {search
@@ -125,16 +145,18 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                   )}
                 </TableCell>
                 <TableCell>{session.branchName}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleViewDetail(session.id)}
-                    title="Ver detalles"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                </TableCell>
+                <ComponentPermission codeIn={ACTION_CODES}>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleViewDetail(session.id)}
+                      title="Ver detalles"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </ComponentPermission>
               </TableRow>
             ))
           )}

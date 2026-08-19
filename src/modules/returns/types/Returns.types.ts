@@ -153,8 +153,8 @@ export interface DocumentHeader {
     customer_name: string;
     document_type: number;
     shipping_cost: number;
-    order_situation: DocumentOrderSituation;
-    order_situation_id: number;
+    order_situation: DocumentOrderSituation | null;
+    order_situation_id: number | null;
     order_situation_name: string | null,
     customer_document_number: string;
 }

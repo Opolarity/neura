@@ -19,7 +19,7 @@ const App = () => {
     <QueryProvider>
       <TooltipProvider>
         <Toaster />
-        <Sonner />
+        <Sonner richColors />
         <AuthProvider>
           <NotificationsProvider>
             <RouterProvider router={router} />

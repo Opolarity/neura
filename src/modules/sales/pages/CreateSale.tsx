@@ -222,8 +222,15 @@ const CreateSale = () => {
   const [franchiseProductsModalOpen, setFranchiseProductsModalOpen] =
     useState(false);
 
-  const phyReturns = orderReturns.filter((r) =>
-    r.order_situation_code?.includes("PHY"),
+  // REB-HDN (Reembolsado) cuenta como retorno fisico: sp_create_return solo
+  // mueve la orden a ese estado cuando venia de la rama PHY, asi que un retorno
+  // creado sobre una orden ya reembolsada es la continuacion de ese mismo flujo.
+  // Sin este caso el retorno no entraba ni en phyReturns ni en cambiosReturns y
+  // quedaba invisible en los dos pop-ups.
+  const phyReturns = orderReturns.filter(
+    (r) =>
+      r.order_situation_code?.includes("PHY") ||
+      r.order_situation_code === "REB-HDN",
   );
   const cambiosReturns = orderReturns.filter((r) =>
     r.order_situation_code?.includes("VIR"),

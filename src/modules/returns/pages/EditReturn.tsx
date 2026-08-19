@@ -147,7 +147,7 @@ const EditReturn = () => {
                   <Label>
                     Estado de orden al momento de retorno
                   </Label>
-                  <Input value={orderSituationName} disabled />
+                  <Input value={orderSituationName || "—"} disabled />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

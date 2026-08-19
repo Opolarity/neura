@@ -236,7 +236,10 @@ export const useCreateReturn = () => {
             setOrderTotal(header.total || orderTotal);
 
             const situationCode = (header as any).order_situation?.code || '';
-            const situationName = (header as any).order_situation_name || '';
+            const situationName =
+                (header as any).order_situation?.name ||
+                (header as any).order_situation_name ||
+                '';
             setOrderSituationCode(situationCode);
             setOrderSituationName(situationName);
             if (situationCode.includes('VIR')) {

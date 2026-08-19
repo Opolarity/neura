@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { AttributeFilters } from "../../types/Attributes.types";
 
 interface AttributesFilterModalProps {
@@ -50,33 +51,48 @@ export default function AttributesFilterModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Filtrar Atributos</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label>Cantidad de Productos</Label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="Mínimo"
-                min={0}
-                value={minProducts}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={(e) => setMinProducts(parsePositive(e.target.value))}
-              />
-              <Input
-                type="number"
-                placeholder="Máximo"
-                min={0}
-                value={maxProducts}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={(e) => setMaxProducts(parsePositive(e.target.value))}
-              />
+        {/* Tope de altura + scroll interno, mismo patrón que el resto de
+            modales de filtros. Hoy hay un solo grupo y no se acerca al tope,
+            pero al ser un MÁXIMO la altura sigue al contenido: el modal no
+            arrastra hueco vacío y el scroll solo aparecería si se añaden
+            filtros. El max-h va en un contenedor propio, no en el ScrollArea
+            (su Root lleva overflow-hidden). El pr-4 aparta el contenido de la
+            barra de scroll, que si no roza el borde derecho de los inputs. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4 pl-1 pr-4">
+              <div className="grid gap-2">
+                <Label>Cantidad de Productos</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Mínimo"
+                    min={0}
+                    value={minProducts}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={(e) =>
+                      setMinProducts(parsePositive(e.target.value))
+                    }
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Máximo"
+                    min={0}
+                    value={maxProducts}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={(e) =>
+                      setMaxProducts(parsePositive(e.target.value))
+                    }
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          </ScrollArea>
         </div>
 
         <DialogFooter className="gap-2">

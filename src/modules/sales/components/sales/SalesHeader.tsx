@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 interface SalesHeaderProps {
   selectedSales: number[];
@@ -21,6 +22,12 @@ const SalesHeader = ({
         </p>
       </div>
       <div className="flex gap-2">
+        {/* El borrado masivo se queda SIN envolver a propósito: handleBulkDelete
+            es opcional y hoy no lo pasa nadie, así que este botón no llega a
+            renderizarse nunca. No existe un code sales.delete en el catálogo y
+            crear uno para una acción que no funciona sería añadir una casilla
+            muerta en Roles. Cuando se cablee el borrado habrá que crear el code
+            y envolverlo aquí. */}
         {selectedSales.length > 0 && handleBulkDelete && (
           <Button
             variant="destructive"
@@ -30,10 +37,12 @@ const SalesHeader = ({
             Eliminar ({selectedSales.length})
           </Button>
         )}
-        <Button onClick={handleNewSale}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nueva Venta
-        </Button>
+        <ComponentPermission codeIn={["sales.create"]}>
+          <Button onClick={handleNewSale}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nueva Venta
+          </Button>
+        </ComponentPermission>
       </div>
     </div>
   );

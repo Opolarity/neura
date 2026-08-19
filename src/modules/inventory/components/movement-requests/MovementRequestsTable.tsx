@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { MovementRequestListItem } from "../../types/MovementRequestList.types";
 import { formatDateTime } from "@/shared/utils/date";
 import MovementRequestStepsBar from "./MovementRequestStepsBar";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 interface Props {
   requests: MovementRequestListItem[];
@@ -25,6 +26,17 @@ const getSituationBadgeColor = (name?: string) => {
   if (name === 'Cancelado') return 'bg-destructive hover:bg-destructive/80 text-destructive-foreground border-transparent';
   return 'bg-secondary text-secondary-foreground hover:bg-secondary';
 };
+
+// ID, Almacén Origen, Almacén Destino, Situación, Fecha, Acciones. Si el rol
+// no puede editar, la columna de Acciones no se pinta y este número queda uno
+// largo: solo afecta a las filas de "cargando" y "no se encontraron", y la
+// columna sobrante colapsa a 0px porque ninguna otra fila la ocupa.
+const COL_SPAN = 6;
+
+// Code de la columna Acciones, en una constante para que la cabecera y la
+// celda no puedan quedar con listas distintas y aparezca un th sin td o al
+// revés.
+const ACTION_CODES = ["inventory_movement_requests.edit"];
 
 export default function MovementRequestsTable({ requests, loading }: Props) {
   const navigate = useNavigate();
@@ -44,13 +56,17 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
           <TableHead>Almacén Destino</TableHead>
           <TableHead>Situación</TableHead>
           <TableHead>Fecha</TableHead>
-          <TableHead className="text-right">Acciones</TableHead>
+          {/* Se envuelve el th entero y no su texto: una celda vacía sigue
+              ocupando su ancho y deja un hueco muerto. */}
+          <ComponentPermission codeIn={ACTION_CODES}>
+            <TableHead className="text-right">Acciones</TableHead>
+          </ComponentPermission>
         </TableRow>
       </TableHeader>
       <TableBody>
           {loading && requests.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={COL_SPAN} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Cargando solicitudes...
@@ -60,7 +76,7 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
           ) : requests.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={6}
+                colSpan={COL_SPAN}
                 className="text-center py-8 text-muted-foreground"
               >
                 No se encontraron solicitudes de traspaso.
@@ -85,15 +101,17 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
             <TableCell>
               {formatDateTime(req.createdAt)}
             </TableCell>
-            <TableCell className="text-right">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate(`/inventory/movement-requests/edit/${req.id}`)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            </TableCell>
+            <ComponentPermission codeIn={ACTION_CODES}>
+              <TableCell className="text-right">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate(`/inventory/movement-requests/edit/${req.id}`)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TableCell>
+            </ComponentPermission>
           </TableRow>
         )))}
       </TableBody>

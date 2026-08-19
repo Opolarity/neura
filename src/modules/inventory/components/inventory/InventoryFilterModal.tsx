@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface InventoryFilterModalProps {
   typeId: number;
@@ -85,48 +86,58 @@ const InventoryFilterModal = ({
           <DialogTitle>Filtrar Inventario</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Tipo de Stock</Label>
-            <div className="flex gap-2">
-              <Select
-                value={String(internalFilters.types)}
-                onValueChange={handleTypeChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sin especificar" />
-                </SelectTrigger>
-                <SelectContent>
-                  {types.map((t) => (
-                    <SelectItem key={t.id} value={String(t.id)}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* Tope de altura + scroll interno, mismo patrón que el resto de
+            modales de filtros: el ScrollArea envuelve solo el cuerpo, así el
+            footer con Limpiar/Aplicar queda siempre visible. El max-h va en un
+            contenedor propio y no en el ScrollArea (su Root lleva
+            overflow-hidden), y al ser un máximo la altura sigue al contenido.
+            El pr-4 aparta los campos de la barra de scroll. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4 pl-1 pr-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tipo de Stock</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={String(internalFilters.types)}
+                    onValueChange={handleTypeChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sin especificar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {types.map((t) => (
+                        <SelectItem key={t.id} value={String(t.id)}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Stock</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Mínimo"
+                    min={0}
+                    value={internalFilters.minstock ?? ""}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={handleMinStockChange}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Máximo"
+                    min={0}
+                    value={internalFilters.maxstock ?? ""}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={handleMaxStockChange}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Stock</Label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="Mínimo"
-                min={0}
-                value={internalFilters.minstock ?? ""}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={handleMinStockChange}
-              />
-              <Input
-                type="number"
-                placeholder="Máximo"
-                min={0}
-                value={internalFilters.maxstock ?? ""}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={handleMaxStockChange}
-              />
-            </div>
-          </div>
+          </ScrollArea>
         </div>
         <DialogFooter className="flex gap-2">
           <Button variant="outline" onClick={handleClear}>
