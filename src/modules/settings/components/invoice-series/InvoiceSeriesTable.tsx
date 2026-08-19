@@ -11,6 +11,18 @@ import { Badge } from "@/components/ui/badge";
 import { Pencil, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { InvoiceSerie } from "../../hooks/useInvoiceSeries";
+import { ComponentPermission } from "@/shared/components/component-permission";
+
+// ID, Cuenta, Tipo de Comprobante, Serie, Siguiente #, Estado, acciones. Si el
+// rol no puede editar, la última columna no se pinta y este número queda uno
+// largo: solo afecta a la fila de "no hay series", y la columna sobrante
+// colapsa a 0px porque ninguna otra fila la ocupa.
+const COL_SPAN = 7;
+
+// Code de la columna de acciones, en una constante para que la cabecera y la
+// celda no puedan quedar con listas distintas y aparezca un th sin td o al
+// revés.
+const ACTION_CODES = ["invoice_series.edit"];
 
 interface InvoiceSeriesTableProps {
   loading: boolean;
@@ -38,13 +50,17 @@ const InvoiceSeriesTable = ({ loading, series }: InvoiceSeriesTableProps) => {
           <TableHead>Serie</TableHead>
           <TableHead>Siguiente #</TableHead>
           <TableHead>Estado</TableHead>
-          <TableHead className="w-[60px]"></TableHead>
+          {/* Se envuelve el th entero: aunque no lleve texto, la celda sigue
+              ocupando sus 60px y dejaría un hueco muerto al final. */}
+          <ComponentPermission codeIn={ACTION_CODES}>
+            <TableHead className="w-[60px]"></TableHead>
+          </ComponentPermission>
         </TableRow>
       </TableHeader>
       <TableBody>
         {series.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={COL_SPAN} className="text-center text-muted-foreground py-8">
               No hay series registradas
             </TableCell>
           </TableRow>
@@ -61,15 +77,19 @@ const InvoiceSeriesTable = ({ loading, series }: InvoiceSeriesTableProps) => {
                   {item.is_active ? "Activo" : "Inactivo"}
                 </Badge>
               </TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigate(`/invoices/series/edit/${item.id}`)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              </TableCell>
+              <ComponentPermission codeIn={ACTION_CODES}>
+                <TableCell>
+                  {/* El botón lleva a /invoices/series/edit/:serieId, ya
+                      protegida con invoice_series.edit: se reutiliza ese code. */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate(`/invoices/series/edit/${item.id}`)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </ComponentPermission>
             </TableRow>
           ))
         )}
