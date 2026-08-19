@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -110,73 +111,83 @@ const InvoicesFilterModal = ({ activeFilters, onApply, onClear, invoiceTypes = [
           <DialogTitle>Filtrar Facturas</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="declared">Declarado</Label>
-            <Select
-              value={localFilters.declared}
-              onValueChange={(v) => handleChange("declared", v)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="true">Declarado</SelectItem>
-                <SelectItem value="false">No declarado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Tope de altura + scroll interno: los filtros crecen (tipos de
+            comprobante) y sin esto el modal se estira hasta dejar el footer
+            fuera de la pantalla. El max-h va en un contenedor propio, no en
+            el ScrollArea ni en el DialogContent. El pr-4 aparta el contenido
+            de la barra de scroll, que si no roza el borde derecho de inputs
+            y selects. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4 pl-1 pr-4">
+              <div className="grid gap-2">
+                <Label htmlFor="declared">Declarado</Label>
+                <Select
+                  value={localFilters.declared}
+                  onValueChange={(v) => handleChange("declared", v)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="true">Declarado</SelectItem>
+                    <SelectItem value="false">No declarado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="type">Tipo de factura</Label>
-            <Select
-              value={localFilters.type}
-              onValueChange={(v) => handleChange("type", v)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                {invoiceTypes.map((t) => (
-                  <SelectItem key={t.id} value={String(t.id)}>
-                    {t.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="grid gap-2">
+                <Label htmlFor="type">Tipo de factura</Label>
+                <Select
+                  value={localFilters.type}
+                  onValueChange={(v) => handleChange("type", v)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {invoiceTypes.map((t) => (
+                      <SelectItem key={t.id} value={String(t.id)}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="min_mount">Monto mínimo</Label>
-              <Input
-                id="min_mount"
-                type="number"
-                placeholder="0.00"
-                value={localFilters.min_mount}
-                onChange={(e) => handleChange("min_mount", e.target.value)}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="min_mount">Monto mínimo</Label>
+                  <Input
+                    id="min_mount"
+                    type="number"
+                    placeholder="0.00"
+                    value={localFilters.min_mount}
+                    onChange={(e) => handleChange("min_mount", e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="max_mount">Monto máximo</Label>
+                  <Input
+                    id="max_mount"
+                    type="number"
+                    placeholder="9999.99"
+                    value={localFilters.max_mount}
+                    onChange={(e) => handleChange("max_mount", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <DateRangeFilter
+                startDate={localFilters.start_date || null}
+                endDate={localFilters.end_date || null}
+                onChange={handleDateChange}
+                startLabel="Fecha inicio"
+                endLabel="Fecha fin"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="max_mount">Monto máximo</Label>
-              <Input
-                id="max_mount"
-                type="number"
-                placeholder="9999.99"
-                value={localFilters.max_mount}
-                onChange={(e) => handleChange("max_mount", e.target.value)}
-              />
-            </div>
-          </div>
-
-          <DateRangeFilter
-            startDate={localFilters.start_date || null}
-            endDate={localFilters.end_date || null}
-            onChange={handleDateChange}
-            startLabel="Fecha inicio"
-            endLabel="Fecha fin"
-          />
+          </ScrollArea>
         </div>
 
         <DialogFooter className="flex gap-2">

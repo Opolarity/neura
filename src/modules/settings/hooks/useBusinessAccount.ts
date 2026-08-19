@@ -13,7 +13,7 @@ import {
 import { getBusinessAccountsAdapter } from "../adapters/BusinessAccount.adapter";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 
 export const useBusinessAccount = () => {
   const [businessAccounts, setBusinessAccounts] = useState<BusinessAccount[]>([]);
@@ -98,14 +98,15 @@ export const useBusinessAccount = () => {
         await createBusinessAccountApi(safePayload);
       }
       if (accountId) await load(accountId);
-      toast.success(
-        isUpdate
+      toast({
+        title: isUpdate
           ? "Cuenta de negocio actualizada correctamente"
-          : "Cuenta de negocio creada correctamente"
-      );
+          : "Cuenta de negocio creada correctamente",
+        variant: "success",
+      });
     } catch (error) {
       console.error(error);
-      toast.error("Error al guardar la cuenta de negocio");
+      toast({ title: "Error al guardar la cuenta de negocio", variant: "destructive" });
     } finally {
       setSaving(false);
       setOpenFormModal(false);
@@ -117,10 +118,10 @@ export const useBusinessAccount = () => {
     try {
       await deleteBusinessAccountApi(id);
       if (accountId) await load(accountId);
-      toast.success("Cuenta de negocio eliminada correctamente");
+      toast({ title: "Cuenta de negocio eliminada correctamente", variant: "success" });
     } catch (error) {
       console.error(error);
-      toast.error("Error al eliminar la cuenta de negocio");
+      toast({ title: "Error al eliminar la cuenta de negocio", variant: "destructive" });
     } finally {
       setIsDeleting(false);
       setItemToDelete(null);

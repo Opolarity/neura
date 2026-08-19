@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import {
   deleteParameter,
   getAllParameters,
@@ -56,7 +56,7 @@ const useBusinessParameters = () => {
       hydrate(await getAllParameters());
     } catch (error) {
       console.error(error);
-      toast.error("No se pudieron cargar los parámetros del negocio");
+      toast({ title: "No se pudieron cargar los parámetros del negocio", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -75,10 +75,10 @@ const useBusinessParameters = () => {
     try {
       const url = await uploadInvoiceLogo(file);
       handleChange("InvoiceLogoUrl", url);
-      toast.success("Logo subido. Recuerda guardar los cambios.");
+      toast({ title: "Logo subido. Recuerda guardar los cambios.", variant: "success" });
     } catch (error) {
       console.error(error);
-      toast.error("No se pudo subir el logo");
+      toast({ title: "No se pudo subir el logo", variant: "destructive" });
     } finally {
       setUploading(false);
     }
@@ -105,7 +105,7 @@ const useBusinessParameters = () => {
   const removeAdvancedRow = async (index: number) => {
     const row = advancedRows[index];
     if (row.readOnly) {
-      toast.error(`El parámetro "${row.name}" no se puede eliminar`);
+      toast({ title: `El parámetro "${row.name}" no se puede eliminar`, variant: "destructive" });
       return;
     }
     if (row.id === null) {
@@ -116,11 +116,11 @@ const useBusinessParameters = () => {
 
     try {
       await deleteParameter(row.id);
-      toast.success("Parámetro eliminado");
+      toast({ title: "Parámetro eliminado", variant: "success" });
       await load();
     } catch (error) {
       console.error(error);
-      toast.error("No se pudo eliminar el parámetro");
+      toast({ title: "No se pudo eliminar el parámetro", variant: "destructive" });
     }
   };
 
@@ -128,6 +128,11 @@ const useBusinessParameters = () => {
     const hours = formData.TimeToCancelPendingOrder?.trim();
     if (hours && !/^\d+$/.test(hours)) {
       return "Las horas para cancelar órdenes pendientes deben ser un número entero mayor o igual a 0";
+    }
+
+    const lowStock = formData.LowStockThreshold?.trim();
+    if (lowStock && (!/^\d+$/.test(lowStock) || Number(lowStock) < 1)) {
+      return "El umbral de stock bajo debe ser un número entero mayor o igual a 1";
     }
 
     const names = advancedRows
@@ -153,7 +158,7 @@ const useBusinessParameters = () => {
 
     const error = validate();
     if (error) {
-      toast.error(error);
+      toast({ title: error, variant: "destructive" });
       return;
     }
 
@@ -177,18 +182,18 @@ const useBusinessParameters = () => {
     }
 
     if (Object.keys(entries).length === 0) {
-      toast.info("No hay cambios por guardar");
+      toast({ title: "No hay cambios por guardar", variant: "info" });
       return;
     }
 
     setSaving(true);
     try {
       await saveParameters(entries);
-      toast.success("Configuración del negocio actualizada");
+      toast({ title: "Configuración del negocio actualizada", variant: "success" });
       await load();
     } catch (err) {
       console.error(err);
-      toast.error("No se pudieron guardar los cambios");
+      toast({ title: "No se pudieron guardar los cambios", variant: "destructive" });
     } finally {
       setSaving(false);
     }

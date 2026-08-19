@@ -118,13 +118,13 @@ const useCreatePaymentMethod = (paymentMethodId?: number | null, isEdit?: boolea
                     ...formData,
                     business_account_id: formData.business_account_id // Type assertion if needed, but it's number
                 });
-                toast({ title: "Éxito", description: "Método de pago actualizado" });
+                toast({ title: "Éxito", description: "Método de pago actualizado", variant: "success" });
             } else {
                 await CreatePaymentMethod({
                     ...formData,
                     business_account_id: formData.business_account_id
                 });
-                toast({ title: "Éxito", description: "Método de pago creado" });
+                toast({ title: "Éxito", description: "Método de pago creado", variant: "success" });
             }
             navigate('/settings/payment-methods');
         } catch (error: any) {

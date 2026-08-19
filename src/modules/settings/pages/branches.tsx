@@ -9,6 +9,9 @@ import BranchesTable from '../components/branches/BranchesTable';
 import useBranches from '../hooks/useBranches';
 import BranchesFilterBar from '../components/branches/BranchesFilterBar';
 import BranchesFilterModal from '../components/branches/BranchesFilterModal';
+import { BranchDeleteDialog } from '../components/branches/BranchDeleteDialog';
+import type { BranchView } from '../types/Branches.types';
+import { ComponentPermission } from '@/shared/components/component-permission';
 
 const BranchesList = () => {
     const {
@@ -26,9 +29,22 @@ const BranchesList = () => {
     } = useBranches(); // Ensure useBranches exposes these
 
     const [isOpenFilterModal, setIsOpenFilterModal] = React.useState(false);
+    const [branchToDelete, setBranchToDelete] = React.useState<BranchView | null>(null);
+    const [isDeleting, setIsDeleting] = React.useState(false);
 
     const handleOpenFilterModal = () => setIsOpenFilterModal(true);
     const handleCloseFilterModal = () => setIsOpenFilterModal(false);
+
+    // El botón de la fila abría el borrado directo: un clic accidental se
+    // llevaba la sucursal sin vuelta atrás. Ahora pasa por BranchDeleteDialog,
+    // que ya existía en el módulo.
+    const handleConfirmDelete = async () => {
+        if (!branchToDelete) return;
+        setIsDeleting(true);
+        await handleDeleteBranch(branchToDelete.id);
+        setIsDeleting(false);
+        setBranchToDelete(null);
+    };
 
     return (
         <div className="h-full min-h-0 flex flex-col gap-4">
@@ -40,12 +56,17 @@ const BranchesList = () => {
                         Administra las sucursales del sistema
                     </p>
                 </div>
-                <Button asChild className="gap-2">
-                    <Link to="/settings/branches/create">
-                        <Plus className="w-4 h-4" />
-                        Crear Sucursal
-                    </Link>
-                </Button>
+                {/* El botón lleva a /settings/branches/create, ya protegida con
+                    branches.create: se reutiliza ese code para no ofrecer un
+                    botón que acaba en una pantalla bloqueada. */}
+                <ComponentPermission codeIn={["branches.create"]}>
+                    <Button asChild className="gap-2">
+                        <Link to="/settings/branches/create">
+                            <Plus className="w-4 h-4" />
+                            Crear Sucursal
+                        </Link>
+                    </Button>
+                </ComponentPermission>
             </div>
 
             {/* Branches Table */}
@@ -62,7 +83,7 @@ const BranchesList = () => {
                     <BranchesTable
                         branches={branches}
                         loading={loading}
-                        onDeleteClick={(branch) => handleDeleteBranch(branch.id)}
+                        onDeleteClick={setBranchToDelete}
                     />
                 </CardContent>
                 <CardFooter className="!p-0">
@@ -79,6 +100,14 @@ const BranchesList = () => {
                 onClose={handleCloseFilterModal}
                 onApply={handleApplyFilter}
                 filters={filters}
+            />
+
+            <BranchDeleteDialog
+                open={!!branchToDelete}
+                onOpenChange={(open) => !open && setBranchToDelete(null)}
+                branch={branchToDelete}
+                onConfirm={handleConfirmDelete}
+                isDeleting={isDeleting}
             />
         </div>
     );

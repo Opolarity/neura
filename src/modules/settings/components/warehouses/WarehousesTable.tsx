@@ -4,6 +4,22 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { WarehouseView } from '../../types/Warehouses.types';
+import { ComponentPermission } from '@/shared/components/component-permission';
+
+// ID, Nombre, Locales, Pais, Ciudad, Provincia, Distrito, Web, Acciones. Si el
+// rol no puede editar ni eliminar, la columna de Acciones no se pinta y este
+// número queda uno largo: solo afecta a las filas de "cargando" y "no se
+// encontraron almacenes", y la columna sobrante colapsa a 0px porque ninguna
+// otra fila la ocupa.
+//
+// Antes ponía 8, uno MENOS que las columnas reales, así que esas dos filas no
+// llegaban a cubrir la última columna.
+const COL_SPAN = 9;
+
+// Codes de la columna Acciones, en una constante para que la cabecera y la
+// celda no puedan quedar con listas distintas y aparezca un th sin td o al
+// revés.
+const ACTION_CODES = ["warehouses.edit", "warehouses.delete"];
 
 interface WarehousesTableProps {
     warehouses: WarehouseView[];
@@ -24,14 +40,18 @@ const WarehousesTable = ({ warehouses, loading, onDeleteClick }: WarehousesTable
                     <TableHead>Provincia</TableHead>
                     <TableHead>Distrito</TableHead>
                     <TableHead>Web</TableHead>
-                    <TableHead>Acciones</TableHead>
+                    {/* Se envuelve el th entero y no su texto: una celda vacía
+                        sigue ocupando su ancho y deja un hueco muerto. */}
+                    <ComponentPermission codeIn={ACTION_CODES}>
+                        <TableHead>Acciones</TableHead>
+                    </ComponentPermission>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {
                     loading && warehouses.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center py-8">
+                            <TableCell colSpan={COL_SPAN} className="text-center py-8">
                                 <div className="flex items-center justify-center gap-2">
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                     Cargando almacenes...
@@ -40,7 +60,7 @@ const WarehousesTable = ({ warehouses, loading, onDeleteClick }: WarehousesTable
                         </TableRow>
                     ) : warehouses.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center text-muted-foreground">
+                            <TableCell colSpan={COL_SPAN} className="text-center text-muted-foreground">
                                 No se encontraron almacenes
                             </TableCell>
                         </TableRow>
@@ -71,23 +91,32 @@ const WarehousesTable = ({ warehouses, loading, onDeleteClick }: WarehousesTable
                                         <Badge variant="destructive">Inactivo</Badge>
                                     )}
                                 </TableCell>
-                                <TableCell>
-                                    <div className="flex gap-1">
-                                        <Button variant="outline" size="sm" asChild>
-                                            <Link to={`/settings/warehouses/edit/${w.id}`}>
-                                                <Edit className="w-4 h-4" />
-                                            </Link>
-                                        </Button>
+                                <ComponentPermission codeIn={ACTION_CODES}>
+                                    <TableCell>
+                                        <div className="flex gap-1">
+                                            {/* El botón lleva a /settings/warehouses/edit/:id,
+                                                ya protegida con warehouses.edit: se reutiliza
+                                                ese code. */}
+                                            <ComponentPermission codeIn={["warehouses.edit"]}>
+                                                <Button variant="outline" size="sm" asChild>
+                                                    <Link to={`/settings/warehouses/edit/${w.id}`}>
+                                                        <Edit className="w-4 h-4" />
+                                                    </Link>
+                                                </Button>
+                                            </ComponentPermission>
 
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            onClick={() => onDeleteClick(w)}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                </TableCell>
+                                            <ComponentPermission codeIn={["warehouses.delete"]}>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    onClick={() => onDeleteClick(w)}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </ComponentPermission>
+                                        </div>
+                                    </TableCell>
+                                </ComponentPermission>
                             </TableRow>
                         ))
                     )

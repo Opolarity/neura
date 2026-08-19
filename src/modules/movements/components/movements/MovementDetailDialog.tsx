@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { getMovementDetails, sendFranchiseePayment } from "../../services/movements.service";
 import { movementDetailAdapter } from "../../adapters/Movement.adapter";
 import { MovementDetail, MovementDetailApiResponse } from "../../types/Movements.types";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 interface MovementDetailDialogProps {
   movementId: number | null;
@@ -174,24 +175,28 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
             {/* Pedido vinculado */}
             {detail.links?.link_order && detail.links.link_order.length > 0 && (
               <div className="border-t pt-3 space-y-2">
+                {/* El botón lleva a /sales/edit/:id, ya protegida con sales.edit:
+                    se reutiliza ese code para no ofrecer un atajo que acaba en
+                    una pantalla bloqueada. */}
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   Pedido vinculado
                 </h3>
                 {detail.links.link_order.map((item) => (
-                  <Button
-                    key={item.order_payment_id}
-                    variant="outline"
-                    className="w-full h-auto py-3 px-4 flex items-center justify-between text-left"
-                    onClick={() => handleNavigate(`/sales/edit/${item.order_id}`)}
-                  >
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-semibold">Pedido #{item.order_id}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {`${item.customer_name} ${item.customer_lastname}`.trim() || "-"} · {formatCurrency(item.order_total)}
-                      </p>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
-                  </Button>
+                  <ComponentPermission key={item.order_payment_id} codeIn={["sales.edit"]}>
+                    <Button
+                      variant="outline"
+                      className="w-full h-auto py-3 px-4 flex items-center justify-between text-left"
+                      onClick={() => handleNavigate(`/sales/edit/${item.order_id}`)}
+                    >
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-semibold">Pedido #{item.order_id}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {`${item.customer_name} ${item.customer_lastname}`.trim() || "-"} · {formatCurrency(item.order_total)}
+                        </p>
+                      </div>
+                      <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
+                    </Button>
+                  </ComponentPermission>
                 ))}
               </div>
             )}
@@ -250,20 +255,21 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
                   Devoluciones vinculadas
                 </h3>
                 {detail.links.link_returns.map((item) => (
-                  <Button
-                    key={item.order_payment_id}
-                    variant="outline"
-                    className="w-full h-auto py-3 px-4 flex items-center justify-between text-left"
-                    onClick={() => handleNavigate(`/sales/edit/${item.order_id}`)}
-                  >
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-semibold">Devolución #{item.order_id}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {`${item.customer_name} ${item.customer_lastname}`.trim() || "-"} · {formatCurrency(item.order_total)}
-                      </p>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
-                  </Button>
+                  <ComponentPermission key={item.order_payment_id} codeIn={["sales.edit"]}>
+                    <Button
+                      variant="outline"
+                      className="w-full h-auto py-3 px-4 flex items-center justify-between text-left"
+                      onClick={() => handleNavigate(`/sales/edit/${item.order_id}`)}
+                    >
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-semibold">Devolución #{item.order_id}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {`${item.customer_name} ${item.customer_lastname}`.trim() || "-"} · {formatCurrency(item.order_total)}
+                        </p>
+                      </div>
+                      <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
+                    </Button>
+                  </ComponentPermission>
                 ))}
               </div>
             )}

@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ChevronsUpDown, Check, Loader2, Search } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 
 type AccountOption = {
   id: number;
@@ -79,9 +79,12 @@ export const AddPointsDialog = ({ open, onOpenChange, onSuccess }: AddPointsDial
   }, [accountSearch]);
 
   const handleSubmit = async () => {
-    if (!selectedAccount) { toast.error("Selecciona un cliente"); return; }
+    if (!selectedAccount) { toast({ title: "Selecciona un cliente", variant: "destructive" }); return; }
     const qty = Number(points);
-    if (!qty || isNaN(qty)) { toast.error("Ingresa una cantidad válida de puntos"); return; }
+    if (!qty || isNaN(qty)) { toast({
+                                title: "Ingresa una cantidad válida de puntos",
+                                variant: "destructive",
+                              }); return; }
 
     setSaving(true);
     try {
@@ -91,11 +94,14 @@ export const AddPointsDialog = ({ open, onOpenChange, onSuccess }: AddPointsDial
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success(`${qty > 0 ? "+" : ""}${qty} puntos aplicados a ${buildLabel(selectedAccount)}`);
+      toast({
+        title: `${qty > 0 ? "+" : ""}${qty} puntos aplicados a ${buildLabel(selectedAccount)}`,
+        variant: "success",
+      });
       onSuccess();
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.message ?? "Error al guardar puntos");
+      toast({ title: err?.message ?? "Error al guardar puntos", variant: "destructive" });
     } finally {
       setSaving(false);
     }

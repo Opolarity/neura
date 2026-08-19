@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, Filter, Loader2, RefreshCw, Search } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import { PagosConfirmarModal } from "../components/PagosConfirmarModal";
 import FranchiseFilterModal, {
   type FranchiseFilterValues,
@@ -172,7 +172,7 @@ const FranchiseProducts = () => {
       }
 
       if (!total) {
-        toast.info("No hay registros para exportar con los filtros aplicados.");
+        toast({ title: "No hay registros para exportar con los filtros aplicados.", variant: "info" });
         return;
       }
 
@@ -194,10 +194,10 @@ const FranchiseProducts = () => {
         },
       });
 
-      toast.success(`${result.data.length} registros exportados correctamente.`);
+      toast({ title: `${result.data.length} registros exportados correctamente.`, variant: "success" });
     } catch (err) {
       console.error("Error exporting franchise products:", err);
-      toast.error("No se pudo generar el Excel. Inténtalo de nuevo.");
+      toast({ title: "No se pudo generar el Excel. Inténtalo de nuevo.", variant: "destructive" });
     } finally {
       setExporting(false);
     }

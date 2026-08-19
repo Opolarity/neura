@@ -4,12 +4,17 @@ import { useAuth } from "@/modules/auth";
 import SplashPage from "@/shared/components/splash/SplashPage";
 
 export default function ProtectedLayout({ children }: PropsWithChildren) {
-  const { user, loading, permissionsLoading, appUserLoading, companyShortNameLoading } = useAuth();
+  const { user, loading, permissionsLoading, appUserLoading, companyShortNameLoading, signingOut } = useAuth();
   const isLoading = permissionsLoading || appUserLoading || companyShortNameLoading;
+
+  // Va antes que nada y desmontando el árbol (no como overlay): durante el
+  // cierre el usuario sigue existiendo, y así ProtectedRoute no vuelve a
+  // evaluar permisos con la sesión a medio cerrar.
+  if (signingOut) return <SplashPage message="Cerrando sesión..." />;
 
   // Mientras se resuelve la sesión no se sabe aún si hay que ir al login: se
   // muestra el splash en vez de un frame en blanco.
-  if (loading) return <SplashPage />;
+  if (loading) return <SplashPage message="Iniciando sesión..." />;
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -21,7 +26,7 @@ export default function ProtectedLayout({ children }: PropsWithChildren) {
   return (
     <div className="relative min-h-screen">
       {children}
-      {isLoading && <SplashPage />}
+      {isLoading && <SplashPage message="Iniciando sesión..." />}
     </div>
   );
 }

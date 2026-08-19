@@ -89,6 +89,7 @@ export const useProductCostsLogic = () => {
       toast({
         title: "Éxito",
         description: "Costos actualizados correctamente",
+        variant: "success",
       });
 
       setIsEditing(false);

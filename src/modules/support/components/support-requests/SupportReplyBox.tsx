@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { FileText, ImageIcon, Loader2, Paperclip, Send, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -45,17 +45,18 @@ export const SupportReplyBox = ({ sending, onSend }: SupportReplyBoxProps) => {
 
     for (const file of Array.from(incoming)) {
       if (next.length >= MAX_MESSAGE_ATTACHMENTS) {
-        toast.error(`Máximo ${MAX_MESSAGE_ATTACHMENTS} archivos por mensaje`);
+        toast({ title: `Máximo ${MAX_MESSAGE_ATTACHMENTS} archivos por mensaje`, variant: "destructive" });
         break;
       }
       if (file.size > MAX_MESSAGE_ATTACHMENT_BYTES) {
-        toast.error(`"${file.name}" supera el límite de 4 MB`);
+        toast({ title: `"${file.name}" supera el límite de 4 MB`, variant: "destructive" });
         continue;
       }
       if (totalBytes + file.size > MAX_MESSAGE_ATTACHMENTS_TOTAL_BYTES) {
-        toast.error(
-          "Los adjuntos superan los 10 MB en total. Envíalos en varios mensajes.",
-        );
+        toast({
+          title: "Los adjuntos superan los 10 MB en total. Envíalos en varios mensajes.",
+          variant: "destructive",
+        });
         break;
       }
       totalBytes += file.size;
@@ -85,9 +86,10 @@ export const SupportReplyBox = ({ sending, onSend }: SupportReplyBoxProps) => {
           })),
         );
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "No se pudieron leer los archivos",
-        );
+        toast({
+          title: error instanceof Error ? error.message : "No se pudieron leer los archivos",
+          variant: "destructive",
+        });
         return;
       } finally {
         setPreparing(false);

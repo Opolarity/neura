@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { toast } from 'sonner';
+import { toast } from "@/shared/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import type { Notification } from '../types/notification.types';
@@ -66,7 +66,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       if (notifyNew) {
         page.items
           .filter((n) => !knownIds.current.has(n.id) && !n.isRead)
-          .forEach((n) => toast(n.title, { description: n.message ?? undefined }));
+          .forEach((n) => toast({ title: n.title, description: n.message ?? undefined, variant: "info" }));
       }
 
       const prev = itemsRef.current;

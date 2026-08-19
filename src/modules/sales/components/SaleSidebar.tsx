@@ -155,6 +155,7 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
       toast({
         title: 'Información',
         description: 'Las notas se guardarán al crear la venta',
+        variant: "info",
       });
       return;
     }
@@ -205,6 +206,7 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
       toast({
         title: 'Nota guardada',
         description: 'La nota se ha guardado correctamente',
+        variant: "success",
       });
     } catch (error) {
       console.error('Error saving note:', error);

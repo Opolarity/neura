@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { getReclamaciones, Reclamacion } from "../services/reclamaciones.service";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks/useDebounce";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 
 export const useReclamaciones = () => {
   const [reclamaciones, setReclamaciones] = useState<Reclamacion[]>([]);
@@ -31,7 +31,7 @@ export const useReclamaciones = () => {
       setPagination((prev) => ({ ...prev, p_page: page, p_size: size, total }));
     } catch (error) {
       console.error("Error al cargar reclamaciones:", error);
-      toast.error("Error al cargar las reclamaciones");
+      toast({ title: "Error al cargar las reclamaciones", variant: "destructive" });
     } finally {
       setLoading(false);
     }

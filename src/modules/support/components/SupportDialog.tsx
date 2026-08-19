@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import WysiwygEditor from "@/components/ui/wysiwyg-editor";
 import { Loader2, Paperclip, X, FileText, ImageIcon } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import { useAuth } from "@/modules/auth";
 import { useSupportRequest } from "../hooks/useSupportRequest";
 import {
@@ -79,11 +79,11 @@ export const SupportDialog = ({ open, onOpenChange }: SupportDialogProps) => {
 
     for (const file of incoming) {
       if (next.length >= MAX_ATTACHMENTS) {
-        toast.error(`Máximo ${MAX_ATTACHMENTS} archivos por solicitud`);
+        toast({ title: `Máximo ${MAX_ATTACHMENTS} archivos por solicitud`, variant: "destructive" });
         break;
       }
       if (file.size > MAX_ATTACHMENT_BYTES) {
-        toast.error(`"${file.name}" supera el límite de 5 MB`);
+        toast({ title: `"${file.name}" supera el límite de 5 MB`, variant: "destructive" });
         continue;
       }
       next.push({ file });
@@ -97,7 +97,7 @@ export const SupportDialog = ({ open, onOpenChange }: SupportDialogProps) => {
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      toast.error("Ingresa un título para tu solicitud");
+      toast({ title: "Ingresa un título para tu solicitud", variant: "destructive" });
       return;
     }
 
@@ -117,10 +117,10 @@ export const SupportDialog = ({ open, onOpenChange }: SupportDialogProps) => {
         reporterName,
         attachments: attachments.length > 0 ? attachments : undefined,
       });
-      toast.success("Solicitud enviada al equipo de soporte");
+      toast({ title: "Solicitud enviada al equipo de soporte", variant: "success" });
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.message ?? "No se pudo enviar la solicitud de soporte");
+      toast({ title: err?.message ?? "No se pudo enviar la solicitud de soporte", variant: "destructive" });
     }
   };
 

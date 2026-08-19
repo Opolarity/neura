@@ -194,6 +194,7 @@ export const useProductsLogic = () => {
       toast({
         title: "Productos eliminados",
         description: `Se eliminaron ${data.deletedCount} producto(s) correctamente`,
+        variant: "success",
       });
 
       setSelectedProducts([]);

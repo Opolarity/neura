@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -79,83 +80,93 @@ const UsersFilterModal = ({
           <DialogTitle>Filtrar Usuarios</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="person_type">Tipo de Persona</Label>
-            <Select
-              value={internalFilters.person_type?.toString() || "none"}
-              onValueChange={(val) => handleIdChange("person_type", val)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Todos</SelectItem>
-                <SelectItem value="1">Natural</SelectItem>
-                <SelectItem value="2">Jurídica</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Tope de altura + scroll interno: los filtros crecen (roles,
+            almacenes, sucursales) y sin esto el modal se estira hasta dejar el
+            footer fuera de la pantalla. El max-h va en un contenedor propio, no
+            en el ScrollArea ni en el DialogContent. El pr-4 aparta el contenido
+            de la barra de scroll, que si no roza el borde derecho de los
+            selects. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4 pl-1 pr-4">
+              <div className="grid gap-2">
+                <Label htmlFor="person_type">Tipo de Persona</Label>
+                <Select
+                  value={internalFilters.person_type?.toString() || "none"}
+                  onValueChange={(val) => handleIdChange("person_type", val)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Todos</SelectItem>
+                    <SelectItem value="1">Natural</SelectItem>
+                    <SelectItem value="2">Jurídica</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="role">Rol</Label>
-            <Select
-              value={internalFilters.role?.toString() || "none"}
-              onValueChange={(val) => handleIdChange("role", val)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar rol" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Todos los roles</SelectItem>
-                {rolesOptions.map((opt) => (
-                  <SelectItem key={opt.id} value={opt.id.toString()}>
-                    {opt.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="grid gap-2">
+                <Label htmlFor="role">Rol</Label>
+                <Select
+                  value={internalFilters.role?.toString() || "none"}
+                  onValueChange={(val) => handleIdChange("role", val)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Todos los roles</SelectItem>
+                    {rolesOptions.map((opt) => (
+                      <SelectItem key={opt.id} value={opt.id.toString()}>
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="warehouses">Almacén</Label>
-            <Select
-              value={internalFilters.warehouses?.toString() || "none"}
-              onValueChange={(val) => handleIdChange("warehouses", val)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar almacén" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Todos los almacenes</SelectItem>
-                {warehousesOptions.map((opt) => (
-                  <SelectItem key={opt.id} value={opt.id.toString()}>
-                    {opt.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="grid gap-2">
+                <Label htmlFor="warehouses">Almacén</Label>
+                <Select
+                  value={internalFilters.warehouses?.toString() || "none"}
+                  onValueChange={(val) => handleIdChange("warehouses", val)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar almacén" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Todos los almacenes</SelectItem>
+                    {warehousesOptions.map((opt) => (
+                      <SelectItem key={opt.id} value={opt.id.toString()}>
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="branches">Sucursal</Label>
-            <Select
-              value={internalFilters.branches?.toString() || "none"}
-              onValueChange={(val) => handleIdChange("branches", val)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar sucursal" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Todas las sucursales</SelectItem>
-                {branchesOptions.map((opt) => (
-                  <SelectItem key={opt.id} value={opt.id.toString()}>
-                    {opt.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="grid gap-2">
+                <Label htmlFor="branches">Sucursal</Label>
+                <Select
+                  value={internalFilters.branches?.toString() || "none"}
+                  onValueChange={(val) => handleIdChange("branches", val)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar sucursal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Todas las sucursales</SelectItem>
+                    {branchesOptions.map((opt) => (
+                      <SelectItem key={opt.id} value={opt.id.toString()}>
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </ScrollArea>
         </div>
 
         <DialogFooter className="flex gap-2">

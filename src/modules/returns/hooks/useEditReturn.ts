@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/modules/auth';
-import { toast } from 'sonner';
+import { toast } from "@/shared/hooks/use-toast";
 import { returnsService } from '../services/Returns.service';
 import {
     OrderProduct,
@@ -181,7 +181,7 @@ export const useEditReturn = () => {
 
         } catch (error: any) {
             console.error('Error loading return:', error);
-            toast.error('Error al cargar la devolución');
+            toast({ title: 'Error al cargar la devolución', variant: "destructive" });
             navigate('/returns');
         } finally {
             setLoading(false);
@@ -190,12 +190,12 @@ export const useEditReturn = () => {
 
     const addPayment = useCallback(() => {
         if (!currentPayment.paymentMethodId || !currentPayment.amount) {
-            toast.error('Seleccione un método de pago y monto');
+            toast({ title: 'Seleccione un método de pago y monto', variant: "destructive" });
             return;
         }
         const amount = parseFloat(currentPayment.amount);
         if (isNaN(amount) || amount <= 0) {
-            toast.error('El monto debe ser mayor a cero');
+            toast({ title: 'El monto debe ser mayor a cero', variant: "destructive" });
             return;
         }
         setPayments((prev) => [...prev, { ...currentPayment, id: crypto.randomUUID() }]);
@@ -232,7 +232,7 @@ export const useEditReturn = () => {
         );
 
         if (existingProduct) {
-            toast.error('Este producto ya fue agregado');
+            toast({ title: 'Este producto ya fue agregado', variant: "destructive" });
             return;
         }
 
@@ -259,7 +259,7 @@ export const useEditReturn = () => {
         );
 
         if (orderProduct && quantity > orderProduct.quantity) {
-            toast.error(`La cantidad no puede exceder ${orderProduct.quantity}`);
+            toast({ title: `La cantidad no puede exceder ${orderProduct.quantity}`, variant: "destructive" });
             return;
         }
 
@@ -275,7 +275,7 @@ export const useEditReturn = () => {
         );
 
         if (existingProduct) {
-            toast.error('Este producto ya fue agregado');
+            toast({ title: 'Este producto ya fue agregado', variant: "destructive" });
             return;
         }
 
@@ -336,22 +336,22 @@ export const useEditReturn = () => {
 
     const handleSave = async () => {
         if (returnTypeCode === 'DVP' && returnProducts.length === 0) {
-            toast.error('Debe agregar al menos un producto a devolver');
+            toast({ title: 'Debe agregar al menos un producto a devolver', variant: "destructive" });
             return;
         }
 
         if (!situationId) {
-            toast.error('Debe seleccionar una situación');
+            toast({ title: 'Debe seleccionar una situación', variant: "destructive" });
             return;
         }
 
         if (returnTypeCode === 'CAM') {
             if (returnProducts.length === 0) {
-                toast.error('Debe seleccionar productos a devolver');
+                toast({ title: 'Debe seleccionar productos a devolver', variant: "destructive" });
                 return;
             }
             if (exchangeProducts.length === 0) {
-                toast.error('Debe agregar productos de cambio');
+                toast({ title: 'Debe agregar productos de cambio', variant: "destructive" });
                 return;
             }
         }
@@ -438,11 +438,11 @@ export const useEditReturn = () => {
 
             await returnsService.updateReturnFull(payload);
 
-            toast.success('Devolución actualizada exitosamente');
+            toast({ title: 'Devolución actualizada exitosamente', variant: "success" });
             navigate('/returns');
         } catch (error: any) {
             console.error('Error updating return:', error);
-            toast.error('Error al actualizar la devolución');
+            toast({ title: 'Error al actualizar la devolución', variant: "destructive" });
         } finally {
             setSaving(false);
         }

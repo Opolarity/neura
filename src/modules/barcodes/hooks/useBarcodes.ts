@@ -235,6 +235,7 @@ export const useBarcodes = () => {
       toast({
         title: "Éxito",
         description: `Se generaron ${quantities} etiquetas de código de barras`,
+        variant: "success",
       });
 
       setModalOpen(false);

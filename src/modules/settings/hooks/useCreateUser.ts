@@ -472,12 +472,14 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
                 toast({
                     title: "Éxito",
                     description: "Usuario actualizado correctamente",
+                    variant: "success",
                 });
             } else {
                 await createUserApi(payload);
                 toast({
                     title: "Éxito",
                     description: "Usuario creado correctamente",
+                    variant: "success",
                 });
             }
             navigate('/settings/users');

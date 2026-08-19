@@ -111,7 +111,8 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
 
                         toast({
                             title: "Sucursal cargada",
-                            description: "Los datos de la sucursal se han cargado correctamente"
+                            description: "Los datos de la sucursal se han cargado correctamente",
+                            variant: "success",
                         });
                     }
                 } catch (error) {
@@ -218,10 +219,10 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
 
             if (isEdit) {
                 await UpdateBranch(payload);
-                toast({ title: "Éxito", description: "Sucursal actualizada correctamente" });
+                toast({ title: "Éxito", description: "Sucursal actualizada correctamente", variant: "success" });
             } else {
                 await CreateBranch(payload);
-                toast({ title: "Éxito", description: "Sucursal creada correctamente" });
+                toast({ title: "Éxito", description: "Sucursal creada correctamente", variant: "success" });
             }
             navigate('/settings/branches');
         } catch (error: any) {

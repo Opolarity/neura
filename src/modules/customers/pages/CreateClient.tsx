@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { toast } from "@/shared/hooks/use-toast";
 import { ArrowLeft } from 'lucide-react';
 
 interface DocumentType {
@@ -47,7 +47,7 @@ const CreateClient = () => {
       if (error) throw error;
       setDocumentTypes(data || []);
     } catch (error: any) {
-      toast.error('Error al cargar tipos de documento: ' + error.message);
+      toast({ title: 'Error al cargar tipos de documento: ' + error.message, variant: "destructive" });
     }
   };
 
@@ -55,7 +55,7 @@ const CreateClient = () => {
     e.preventDefault();
     
     if (!formData.name || !formData.last_name || !formData.document_type_id || !formData.document_number) {
-      toast.error('Por favor complete los campos obligatorios');
+      toast({ title: 'Por favor complete los campos obligatorios', variant: "destructive" });
       return;
     }
 
@@ -74,10 +74,10 @@ const CreateClient = () => {
 
       if (error) throw error;
 
-      toast.success('Cliente creado exitosamente');
+      toast({ title: 'Cliente creado exitosamente', variant: "success" });
       navigate('/customers/list');
     } catch (error: any) {
-      toast.error('Error al crear cliente: ' + error.message);
+      toast({ title: 'Error al crear cliente: ' + error.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }

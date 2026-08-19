@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useInvoiceSeries } from "../hooks/useInvoiceSeries";
 import InvoiceSeriesTable from "../components/invoice-series/InvoiceSeriesTable";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 const InvoiceSeriesPage = () => {
   const navigate = useNavigate();
@@ -20,13 +21,18 @@ const InvoiceSeriesPage = () => {
             Administra las series de comprobantes electrónicos
           </p>
         </div>
-        <Button
-          className="gap-2"
-          onClick={() => navigate("/invoices/series/add")}
-        >
-          <Plus className="w-4 h-4" />
-          Nueva Serie
-        </Button>
+        {/* El botón lleva a /invoices/series/add, ya protegida con
+            invoice_series.create: se reutiliza ese code para no ofrecer un
+            botón que acaba en una pantalla bloqueada. */}
+        <ComponentPermission codeIn={["invoice_series.create"]}>
+          <Button
+            className="gap-2"
+            onClick={() => navigate("/invoices/series/add")}
+          >
+            <Plus className="w-4 h-4" />
+            Nueva Serie
+          </Button>
+        </ComponentPermission>
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">

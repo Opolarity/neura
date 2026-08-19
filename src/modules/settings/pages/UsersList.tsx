@@ -11,6 +11,7 @@ import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import { CardFooter } from '@/components/ui/card';
 import { UsersDeleteDialog } from '../components/users/UsersDeleteDialog';
 import type { Users } from '../types/Users.types';
+import { ComponentPermission } from '@/shared/components/component-permission';
 
 
 const UsersList = () => {
@@ -56,12 +57,17 @@ const UsersList = () => {
             Administra los usuarios del sistema
           </p>
         </div>
-        <Button asChild className="gap-2">
-          <Link to="/settings/users/create">
-            <Plus className="w-4 h-4" />
-            Crear Usuario
-          </Link>
-        </Button>
+        {/* El botón lleva a /settings/users/create, ya protegida con
+            users.create: se reutiliza ese code para no ofrecer un botón que
+            acaba en una pantalla bloqueada. */}
+        <ComponentPermission codeIn={["users.create"]}>
+          <Button asChild className="gap-2">
+            <Link to="/settings/users/create">
+              <Plus className="w-4 h-4" />
+              Crear Usuario
+            </Link>
+          </Button>
+        </ComponentPermission>
       </div>
 
       {/* Users Table */}

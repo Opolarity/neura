@@ -52,6 +52,7 @@ export const usePOSSession = () => {
         toast({
           title: "Sesion iniciada",
           description: `Caja abierta con S/ ${request.openingAmount.toFixed(2)}`,
+          variant: "success",
         });
         return adapted;
       } catch (error: unknown) {
@@ -81,6 +82,7 @@ export const usePOSSession = () => {
         toast({
           title: "Sesion cerrada",
           description: `Caja cerrada. Diferencia: S/ ${result.difference?.toFixed(2) || "0.00"}`,
+          variant: "success",
         });
         return result;
       } catch (error: unknown) {

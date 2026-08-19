@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Label } from '@/components/ui/label'
 import { WarehousesFilters, IdModalResponse } from '../../types/Warehouses.types'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -140,106 +141,116 @@ const WarehousesFilterModal = ({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Filtrar Almcenes</DialogTitle>
+                    <DialogTitle>Filtrar Sucursales</DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-4 py-4">
-                    <div className="grid gap-2">
-                        <Label>Almacenes</Label>
-                        <Select
-                            value={internalFilters.branches?.toString()}
-                            onValueChange={(value) => handleChange('branches', value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar almacenes" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {branches.map((branch) => (
-                                    <SelectItem key={branch.id} value={branch.id.toString()}>
-                                        {branch.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                {/* Tope de altura + scroll interno: los filtros son cascada de
+                    almacén, país, provincia, ciudad y distrito, y sin esto el modal
+                    se estira hasta dejar el footer fuera de la pantalla. El max-h va
+                    en un contenedor propio, no en el ScrollArea ni en el
+                    DialogContent. El pr-4 aparta el contenido de la barra de scroll,
+                    que si no roza el borde derecho de los selects. */}
+                <div className="max-h-[50vh]">
+                    <ScrollArea className="h-full">
+                        <div className="space-y-4 py-4 pl-1 pr-4">
+                            <div className="grid gap-2">
+                                <Label>Almacenes</Label>
+                                <Select
+                                    value={internalFilters.branches?.toString()}
+                                    onValueChange={(value) => handleChange('branches', value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar almacenes" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {branches.map((branch) => (
+                                            <SelectItem key={branch.id} value={branch.id.toString()}>
+                                                {branch.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label>País</Label>
-                            <Select
-                                value={internalFilters.country?.toString()}
-                                onValueChange={(value) => handleChange('country', value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar país" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {countries.map((country) => (
-                                        <SelectItem key={country.id} value={country.id.toString()}>
-                                            {country.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label>Estado</Label>
-                            <Select
-                                value={internalFilters.state?.toString()}
-                                onValueChange={(value) => handleChange('state', value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar estado" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {states.map((state) => (
-                                        <SelectItem key={state.id} value={state.id.toString()}>
-                                            {state.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label>País</Label>
+                                    <Select
+                                        value={internalFilters.country?.toString()}
+                                        onValueChange={(value) => handleChange('country', value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccionar país" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {countries.map((country) => (
+                                                <SelectItem key={country.id} value={country.id.toString()}>
+                                                    {country.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label>Estado</Label>
+                                    <Select
+                                        value={internalFilters.state?.toString()}
+                                        onValueChange={(value) => handleChange('state', value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccionar estado" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {states.map((state) => (
+                                                <SelectItem key={state.id} value={state.id.toString()}>
+                                                    {state.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label>Ciudad</Label>
-                            <Select
-                                value={internalFilters.city?.toString()}
-                                onValueChange={(value) => handleChange('city', value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar ciudad" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {cities.map((city) => (
-                                        <SelectItem key={city.id} value={city.id.toString()}>
-                                            {city.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label>Ciudad</Label>
+                                    <Select
+                                        value={internalFilters.city?.toString()}
+                                        onValueChange={(value) => handleChange('city', value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccionar ciudad" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {cities.map((city) => (
+                                                <SelectItem key={city.id} value={city.id.toString()}>
+                                                    {city.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label>Distrito</Label>
+                                    <Select
+                                        value={internalFilters.neighborhoods?.toString()}
+                                        onValueChange={(value) => handleChange('neighborhoods', value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccionar barrio" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {neighborhoods.map((neighborhood) => (
+                                                <SelectItem key={neighborhood.id} value={neighborhood.id.toString()}>
+                                                    {neighborhood.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
                         </div>
-                        <div className="grid gap-2">
-                            <Label>Distrito</Label>
-                            <Select
-                                value={internalFilters.neighborhoods?.toString()}
-                                onValueChange={(value) => handleChange('neighborhoods', value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar barrio" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {neighborhoods.map((neighborhood) => (
-                                        <SelectItem key={neighborhood.id} value={neighborhood.id.toString()}>
-                                            {neighborhood.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
+                    </ScrollArea>
                 </div>
 
                 <DialogFooter className="flex gap-2">

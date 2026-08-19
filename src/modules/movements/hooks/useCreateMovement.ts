@@ -226,7 +226,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
       setSelectedClassName(created.name);
       setNewCategoryDialogOpen(false);
       setNewCategoryName("");
-      toast({ title: "Categoría creada", description: `"${created.name}" fue agregada.` });
+      toast({ title: "Categoría creada", description: `"${created.name}" fue agregada.`, variant: "success" });
     } catch (error: any) {
       toast({ title: "Error", description: error.message || "No se pudo crear la categoría", variant: "destructive" });
     } finally {
@@ -309,6 +309,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
       toast({
         title: "Éxito",
         description: messages.success,
+        variant: "success",
       });
 
       navigate("/movements");

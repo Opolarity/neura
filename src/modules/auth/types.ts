@@ -17,6 +17,8 @@ export interface AuthContextType {
   appUserLoading: boolean;
   companyShortName: string;
   companyShortNameLoading: boolean;
+  /** Cierre de sesión en vuelo: ProtectedLayout tapa con el splash mientras dura. */
+  signingOut: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshPermissions: () => Promise<void>;

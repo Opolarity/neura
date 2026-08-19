@@ -258,6 +258,7 @@ export const useCreateMovements = () => {
             toast({
                 title: "Movimiento creado",
                 description: "El movimiento de inventario se creó exitosamente.",
+                variant: "success",
             });
             navigate("/inventory/movements");
         } catch (error) {

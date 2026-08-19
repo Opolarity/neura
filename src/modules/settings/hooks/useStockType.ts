@@ -3,7 +3,7 @@ import { StockType, StockTypeFilters, StockTypePayload } from "../types/StockTyp
 import { createStockTypeApi, getStockTypesApi, updateStockTypeApi } from "../services/StockType.services";
 import { getStockTypesAdapter } from "../adapters/StockType.adapter";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 
 export const useStockType = () => {
   const [stockTypes, setStockTypes] = useState<StockType[]>([]);
@@ -38,14 +38,15 @@ export const useStockType = () => {
         : await createStockTypeApi(payload);
 
       await load();
-      toast.success(
-        isUpdate
+      toast({
+        title: isUpdate
           ? "Tipo de stock actualizado correctamente"
-          : "Tipo de stock creado correctamente"
-      );
+          : "Tipo de stock creado correctamente",
+        variant: "success",
+      });
     } catch (error) {
       console.error(error);
-      toast.error("Error al guardar el tipo de stock");
+      toast({ title: "Error al guardar el tipo de stock", variant: "destructive" });
     } finally {
       setSaving(false);
       setOpenFormModal(false);
