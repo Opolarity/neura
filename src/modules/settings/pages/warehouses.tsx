@@ -11,6 +11,7 @@ import WarehousesFilterBar from '../components/warehouses/WrehousesFilterBar';
 import WarehouserFilterModal from '../components/warehouses/WarehousesFilterModal';
 import { WarehouseDeleteDialog } from '../components/warehouses/WarehouseDeleteDialog';
 import type { WarehouseView } from '../types/Warehouses.types';
+import { ComponentPermission } from '@/shared/components/component-permission';
 
 
 
@@ -38,12 +39,17 @@ const WarehousesList = () => {
                         Administra los almacenes del sistema
                     </p>
                 </div>
-                <Button asChild className="gap-2">
-                    <Link to="/settings/warehouses/create">
-                        <Plus className="w-4 h-4" />
-                        Crear Almacén
-                    </Link>
-                </Button>
+                {/* El botón lleva a /settings/warehouses/create, ya protegida con
+                    warehouses.create: se reutiliza ese code para no ofrecer un
+                    botón que acaba en una pantalla bloqueada. */}
+                <ComponentPermission codeIn={["warehouses.create"]}>
+                    <Button asChild className="gap-2">
+                        <Link to="/settings/warehouses/create">
+                            <Plus className="w-4 h-4" />
+                            Crear Almacén
+                        </Link>
+                    </Button>
+                </ComponentPermission>
             </div>
 
 
