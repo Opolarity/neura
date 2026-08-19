@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { NotificationPanel } from "@/modules/notifications/components/NotificationPanel";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUserProfile } from "@/modules/auth/hooks/useUserProfile";
 
 interface HeaderProps {
   posSession: { isOpen: boolean; loading: boolean };
@@ -13,6 +14,10 @@ const Header = ({ posSession }: HeaderProps) => {
   const navigate = useNavigate();
   const { isOpen, loading } = posSession;
   const isMobile = useIsMobile();
+  const { profile } = useUserProfile();
+
+  const branchName = (profile?.branches?.name as string | undefined) ?? null;
+  const warehouseName = profile?.warehouses?.name ?? null;
 
   return (
     <header className="bg-white shadow-sm border-b border-border px-4 py-2">
@@ -25,6 +30,8 @@ const Header = ({ posSession }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-2">
+          <NotificationPanel />
+
           {!loading && (
             <Button
               variant="outline"
@@ -41,7 +48,16 @@ const Header = ({ posSession }: HeaderProps) => {
             </Button>
           )}
 
-          <NotificationPanel />
+          {branchName && (
+            <div className="flex flex-col text-left leading-tight max-w-40">
+              <span className="text-xs font-medium truncate">{branchName}</span>
+              {warehouseName && (
+                <span className="text-[10px] text-muted-foreground truncate">
+                  {warehouseName}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </header>
