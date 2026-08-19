@@ -7,6 +7,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ComponentPermission } from "@/shared/components/component-permission";
 import { Loader2 } from "lucide-react";
 import placeholderImage from "@/assets/product-placeholder.png";
 import { Product } from "@/modules/products/types/Products.types";
@@ -30,8 +31,15 @@ interface MassiveEditProductsTableProps {
   onToggleAllProductsSelection: () => void;
 }
 
-// Checkbox, ID, Imagen, Producto, Categoría, Precio.
+// Checkbox, ID, Imagen, Producto, Categoría, Precio. Si el rol no puede editar
+// productos, la columna de selección no se pinta y este número queda uno largo:
+// solo afecta a las filas de "cargando" y "no hay productos", y la columna
+// sobrante colapsa a 0px porque ninguna otra fila la ocupa.
 const COL_SPAN = 6;
+
+// La selección solo alimenta el menú de edición masiva, que escribe propiedades
+// del producto: sin products.edit no hay nada que hacer con lo seleccionado.
+const SELECTION_CODES = ["products.edit"];
 
 const MassiveEditProductsTable = ({
   products,
@@ -51,15 +59,19 @@ const MassiveEditProductsTable = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-12">
-              <Checkbox
-                checked={
-                  selectedProducts.length === products.length &&
-                  products.length > 0
-                }
-                onCheckedChange={() => onToggleAllProductsSelection()}
-              />
-            </TableHead>
+            {/* Se envuelve la celda entera y no solo el Checkbox: un th/td
+                vacío sigue ocupando su ancho y deja un hueco muerto. */}
+            <ComponentPermission codeIn={SELECTION_CODES}>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={
+                    selectedProducts.length === products.length &&
+                    products.length > 0
+                  }
+                  onCheckedChange={() => onToggleAllProductsSelection()}
+                />
+              </TableHead>
+            </ComponentPermission>
             <TableHead className="w-16">ID</TableHead>
             <TableHead className="w-20">Imagen</TableHead>
             <TableHead>Producto</TableHead>
@@ -91,12 +103,14 @@ const MassiveEditProductsTable = ({
           ) : (
             products.map((product) => (
               <TableRow key={product.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedProducts.includes(product.id)}
-                    onCheckedChange={() => onToggleProductSelection(product.id)}
-                  />
-                </TableCell>
+                <ComponentPermission codeIn={SELECTION_CODES}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedProducts.includes(product.id)}
+                      onCheckedChange={() => onToggleProductSelection(product.id)}
+                    />
+                  </TableCell>
+                </ComponentPermission>
                 <TableCell className="font-mono text-muted-foreground">
                   {product.id}
                 </TableCell>
