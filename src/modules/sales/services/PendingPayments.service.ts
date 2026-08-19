@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { throwFunctionError } from "@/shared/utils/functionError";
 
 export type PendingPaymentRow = {
   id: number;
@@ -67,7 +68,7 @@ export const confirmPendingPayment = async (
     },
   );
 
-  if (error) throw error;
+  if (error) await throwFunctionError(error);
   if (data && !data.success) {
     throw new Error(data.error ?? "Error al confirmar el pago");
   }
