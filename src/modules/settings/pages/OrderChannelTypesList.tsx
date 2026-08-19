@@ -7,6 +7,7 @@ import OrderChannelTypesTable from '../components/orderChannelTypes/OrderChannel
 import useOrderChannelTypes from '../hooks/useOrderChannelTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ComponentPermission } from '@/shared/components/component-permission';
 
 const OrderChannelTypesList = () => {
     const { toast } = useToast();
@@ -43,12 +44,14 @@ const OrderChannelTypesList = () => {
                         Administra los tipos de canales de pedido del sistema
                     </p>
                 </div>
-                <Button asChild className="gap-2">
-                    <Link to="/settings/order-channel-types/create">
-                        <Plus className="w-4 h-4" />
-                        Crear Tipo de Canal
-                    </Link>
-                </Button>
+                <ComponentPermission codeIn={["sales_channels.create"]}>
+                    <Button asChild className="gap-2">
+                        <Link to="/settings/order-channel-types/create">
+                            <Plus className="w-4 h-4" />
+                            Crear Tipo de Canal
+                        </Link>
+                    </Button>
+                </ComponentPermission>
             </div>
 
             {/* Table */}
