@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { ReturnType } from "../../types/Returns.types";
 import { OrderSelectionTable } from "./OrderSelectionTable";
@@ -69,86 +70,95 @@ export const OrderSelectionDialog = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>Seleccionar Orden y Tipo de Devolución</DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-4">
-                    {/* Return type selector */}
-                    <div>
-                        <Label htmlFor="returnType">Tipo de Devolución/Cambio *</Label>
-                        <Select value={selectedReturnType} onValueChange={onReturnTypeChange}>
-                            <SelectTrigger id="returnType">
-                                <SelectValue placeholder="Seleccione el tipo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {returnTypes.map((type) => (
-                                    <SelectItem key={type.id} value={type.id.toString()}>
-                                        {type.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Search row: CAM shows source toggle, all modes show search input */}
-                    {selectedReturnType && (
-                        <div className="space-y-3">
-                            <div className={`grid gap-4 ${isCAM ? "grid-cols-2" : "grid-cols-1"}`}>
-                                {isCAM && (
-                                    <div>
-                                        <Label>Buscar en</Label>
-                                        <Select
-                                            value={orderSourceType}
-                                            onValueChange={(v) =>
-                                                onOrderSourceTypeChange(v as "orders" | "returns")
-                                            }
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="orders">Órdenes</SelectItem>
-                                                <SelectItem value="returns">Retornos</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
-                                <div>
-                                    <Label htmlFor="edgeSearch">Buscar</Label>
-                                    <Input
-                                        id="edgeSearch"
-                                        placeholder="Buscar por número o cliente..."
-                                        value={edgeSearch}
-                                        onChange={(e) => onEdgeSearchChange(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
+                {/* Tope de altura + scroll interno: la tabla de órdenes crece con
+                    los resultados y sin esto el diálogo se estiraba hasta dejar el
+                    footer fuera de la pantalla. El max-h va en un contenedor propio,
+                    no en el ScrollArea ni en el DialogContent, para que la cabecera y
+                    los botones no scrollen con el contenido. */}
+                <div className="max-h-[50vh]">
+                    <ScrollArea className="h-full">
+                        <div className="space-y-4 py-4 pl-1 pr-4">
+                            {/* Return type selector */}
                             <div>
-                                <Label>
-                                    {isCAM
-                                        ? orderSourceType === "orders"
-                                            ? "Órdenes Disponibles"
-                                            : "Retornos Disponibles"
-                                        : "Órdenes Disponibles"}
-                                </Label>
-                                <div className="mt-2">
-                                    <OrderSelectionTable
-                                        items={edgeItems}
-                                        pagination={edgePagination}
-                                        loading={edgeLoading}
-                                        selectedId={selectedEdgeItemId}
-                                        sourceType={isCAM ? orderSourceType : "orders"}
-                                        onSelect={onEdgeItemSelect}
-                                        onPageChange={onEdgePageChange}
-                                        formatCurrency={formatCurrency}
-                                    />
-                                </div>
+                                <Label htmlFor="returnType">Tipo de Devolución/Cambio *</Label>
+                                <Select value={selectedReturnType} onValueChange={onReturnTypeChange}>
+                                    <SelectTrigger id="returnType">
+                                        <SelectValue placeholder="Seleccione el tipo" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {returnTypes.map((type) => (
+                                            <SelectItem key={type.id} value={type.id.toString()}>
+                                                {type.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
+
+                            {/* Search row: CAM shows source toggle, all modes show search input */}
+                            {selectedReturnType && (
+                                <div className="space-y-3">
+                                    <div className={`grid gap-4 ${isCAM ? "grid-cols-2" : "grid-cols-1"}`}>
+                                        {isCAM && (
+                                            <div>
+                                                <Label>Buscar en</Label>
+                                                <Select
+                                                    value={orderSourceType}
+                                                    onValueChange={(v) =>
+                                                        onOrderSourceTypeChange(v as "orders" | "returns")
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="orders">Órdenes</SelectItem>
+                                                        <SelectItem value="returns">Retornos</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <Label htmlFor="edgeSearch">Buscar</Label>
+                                            <Input
+                                                id="edgeSearch"
+                                                placeholder="Buscar por número o cliente..."
+                                                value={edgeSearch}
+                                                onChange={(e) => onEdgeSearchChange(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <Label>
+                                            {isCAM
+                                                ? orderSourceType === "orders"
+                                                    ? "Órdenes Disponibles"
+                                                    : "Retornos Disponibles"
+                                                : "Órdenes Disponibles"}
+                                        </Label>
+                                        <div className="mt-2">
+                                            <OrderSelectionTable
+                                                items={edgeItems}
+                                                pagination={edgePagination}
+                                                loading={edgeLoading}
+                                                selectedId={selectedEdgeItemId}
+                                                sourceType={isCAM ? orderSourceType : "orders"}
+                                                onSelect={onEdgeItemSelect}
+                                                onPageChange={onEdgePageChange}
+                                                formatCurrency={formatCurrency}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </ScrollArea>
                 </div>
 
                 <DialogFooter>
