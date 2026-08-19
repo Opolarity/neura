@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 
 import {
   Dialog,
@@ -67,10 +67,10 @@ export function SalesExportModal({ open, onOpenChange, filters, extra }: SalesEx
       const end = endDate;
       const rows = await fetchSalesReport(start, end, filters, extra);
       generateSalesReportExcel(rows, start, end);
-      toast.success(`${rows.length} ventas exportadas correctamente`);
+      toast({ title: `${rows.length} ventas exportadas correctamente`, variant: "success" });
       onOpenChange(false);
     } catch {
-      toast.error("Error al generar el reporte. Inténtalo de nuevo.");
+      toast({ title: "Error al generar el reporte. Inténtalo de nuevo.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }

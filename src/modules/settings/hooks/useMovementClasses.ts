@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import { MovementClass, MovementClassFilters, MovementClassPayload } from "../types/MovementClasses.types";
 import {
   createMovementClassApi,
@@ -52,14 +52,15 @@ export const useMovementClasses = () => {
         : await createMovementClassApi(payload);
 
       await load();
-      toast.success(
-        isUpdate
+      toast({
+        title: isUpdate
           ? "Clase actualizada correctamente"
-          : "Clase creada correctamente"
-      );
+          : "Clase creada correctamente",
+        variant: "success",
+      });
     } catch (error) {
       console.error(error);
-      toast.error("Error al guardar la clase");
+      toast({ title: "Error al guardar la clase", variant: "destructive" });
     } finally {
       setSaving(false);
       setOpenFormModal(false);
@@ -70,10 +71,10 @@ export const useMovementClasses = () => {
     try {
       await deactivateMovementClassApi(id);
       await load();
-      toast.success("Clase eliminada correctamente");
+      toast({ title: "Clase eliminada correctamente", variant: "success" });
     } catch (error) {
       console.error(error);
-      toast.error("Error al eliminar la clase");
+      toast({ title: "Error al eliminar la clase", variant: "destructive" });
     }
   };
 

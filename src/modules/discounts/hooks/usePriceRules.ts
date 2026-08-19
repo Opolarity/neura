@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import type { PaginationState } from "@/shared/components/pagination/Pagination";
 import type {
   PriceRule,
@@ -54,7 +54,7 @@ export function usePriceRules() {
       });
     } catch (error) {
       console.error("Error loading price rules:", error);
-      toast.error("Error al cargar las reglas de precios");
+      toast({ title: "Error al cargar las reglas de precios", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -103,7 +103,7 @@ export function usePriceRules() {
     setIsDeleting(true);
     try {
       await deletePriceRule(deletedId);
-      toast.success("Regla de precios eliminada");
+      toast({ title: "Regla de precios eliminada", variant: "success" });
       setDeleteDialogOpen(false);
       setSelectedRule(null);
       // Si la fila estaba marcada, sacarla de la selección: si no, quedaría en
@@ -117,7 +117,7 @@ export function usePriceRules() {
       reloadAfterDelete(1);
     } catch (error) {
       console.error("Error deleting price rule:", error);
-      toast.error("Error al eliminar la regla de precios");
+      toast({ title: "Error al eliminar la regla de precios", variant: "destructive" });
     } finally {
       setIsDeleting(false);
     }
@@ -136,17 +136,18 @@ export function usePriceRules() {
       const result = await deletePriceRulesBulk(ids);
       const deleted = result?.deleted ?? ids.length;
 
-      toast.success(
-        deleted === 1
+      toast({
+        title: deleted === 1
           ? "Regla de precios eliminada"
-          : `${deleted} reglas de precios eliminadas`
-      );
+          : `${deleted} reglas de precios eliminadas`,
+        variant: "success",
+      });
       setBulkDeleteDialogOpen(false);
       setSelectedIds(new Set());
       reloadAfterDelete(ids.length);
     } catch (error) {
       console.error("Error bulk deleting price rules:", error);
-      toast.error("Error al eliminar las reglas de precios");
+      toast({ title: "Error al eliminar las reglas de precios", variant: "destructive" });
     } finally {
       setIsBulkDeleting(false);
     }
@@ -179,21 +180,23 @@ export function usePriceRules() {
       // de las pedidas. Antes esto pasaba en silencio con un toast de éxito.
       const updated = typeof result?.updated === "number" ? result.updated : ids.length;
       if (updated < ids.length) {
-        toast.warning(
-          `Se actualizaron ${updated} de ${ids.length} reglas. El resto ya no existe o fue eliminado.`
-        );
+        toast({
+          title: `Se actualizaron ${updated} de ${ids.length} reglas. El resto ya no existe o fue eliminado.`,
+          variant: "warning",
+        });
       } else {
-        toast.success(
-          bulkStatus === "true"
+        toast({
+          title: bulkStatus === "true"
             ? "Reglas activadas correctamente"
-            : "Reglas desactivadas correctamente"
-        );
+            : "Reglas desactivadas correctamente",
+          variant: "success",
+        });
       }
       setSelectedIds(new Set());
       loadRules(filters);
     } catch (error) {
       console.error("Error applying bulk status:", error);
-      toast.error("Error al actualizar el estado de las reglas");
+      toast({ title: "Error al actualizar el estado de las reglas", variant: "destructive" });
     } finally {
       setIsApplyingBulk(false);
     }

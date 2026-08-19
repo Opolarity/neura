@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
+import { toast } from "@/shared/hooks/use-toast";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { Account, AccountsFilters, AccountType } from '../types/accounts.types';
 import { accountsAdapter } from '../adapters/accounts.adapter';
@@ -41,7 +41,7 @@ export const useAccounts = () => {
             setPagination(list.pagination);
         } catch (error: any) {
             console.error(error);
-            toast.error('Error al cargar cuentas');
+            toast({ title: 'Error al cargar cuentas', variant: "destructive" });
         } finally {
             setLoading(false);
         }

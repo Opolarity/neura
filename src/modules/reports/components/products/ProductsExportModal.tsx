@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from "@/shared/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 
 import {
@@ -82,15 +82,15 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
       const byCategory: CategoryExportRow[] = resCategories.data ?? [];
 
       if (byProduct.length === 0 && byCategory.length === 0) {
-        toast.warning('No hay datos para el rango seleccionado');
+        toast({ title: 'No hay datos para el rango seleccionado', variant: "warning" });
         return;
       }
 
       generateProductsReportExcel(byProduct, byCategory, start, end);
-      toast.success(`Reporte exportado: ${byProduct.length} productos`);
+      toast({ title: `Reporte exportado: ${byProduct.length} productos`, variant: "success" });
       onOpenChange(false);
     } catch {
-      toast.error('Error al generar el reporte. Inténtalo de nuevo.');
+      toast({ title: 'Error al generar el reporte. Inténtalo de nuevo.', variant: "destructive" });
     } finally {
       setIsLoading(false);
     }

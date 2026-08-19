@@ -13,7 +13,7 @@ import {
 } from "../types/PriceList.types";
 import { getPriceListsAdapter } from "../adapters/PriceList.adapter";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 
 export const usePriceList = () => {
   const [priceLists, setPriceLists] = useState<PriceList[]>([]);
@@ -45,14 +45,15 @@ export const usePriceList = () => {
         : await createPriceListApi(newPriceList);
 
       await load();
-      toast.success(
-        isUpdate
+      toast({
+        title: isUpdate
           ? "Precio de Lista actualizado correctamente"
           : "Precio de Lista creado correctamente",
-      );
+        variant: "success",
+      });
     } catch (error) {
       console.error(error);
-      toast.error("Precio de Lista no creado");
+      toast({ title: "Precio de Lista no creado", variant: "destructive" });
     } finally {
       setSaving(false);
       setOpenFormModal(false);
@@ -74,7 +75,7 @@ export const usePriceList = () => {
       } else {
         await load();
       }
-      toast.success("Precio de Lista eliminado correctamente");
+      toast({ title: "Precio de Lista eliminado correctamente", variant: "success" });
     } catch (error) {
       console.error(error);
     }

@@ -169,10 +169,10 @@ const useCreateRole = (roleId?: number) => {
 
       if (isEdit && roleId) {
         await updateRoleApi({ ...payload, id: roleId });
-        toast({ title: "Éxito", description: "Rol actualizado correctamente" });
+        toast({ title: "Éxito", description: "Rol actualizado correctamente", variant: "success" });
       } else {
         await createRoleApi(payload);
-        toast({ title: "Éxito", description: "Rol creado correctamente" });
+        toast({ title: "Éxito", description: "Rol creado correctamente", variant: "success" });
       }
 
       navigate("/settings/roles");

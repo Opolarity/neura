@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import { CustomerPoint } from "../types/customerPoints.types";
 import { getCustomerPointsApi } from "../services/customerPoints.service";
 import { customerPointsAdapter } from "../adapters/customerPoints.adapter";
@@ -27,7 +27,7 @@ export const useCustomerPoints = () => {
       setPagination(pag);
     } catch (error) {
       console.error(error);
-      toast.error("Error al cargar puntos de clientes");
+      toast({ title: "Error al cargar puntos de clientes", variant: "destructive" });
     } finally {
       setLoading(false);
     }

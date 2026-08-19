@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserProfile } from "@/modules/auth";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import { returnsService } from "../services/Returns.service";
 import { typesByModuleCode } from "@/shared/services/service";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
@@ -120,7 +120,7 @@ export const useCreateReturn = () => {
             setPaymentMethods(paymentMethodsData);
         } catch (error: any) {
             console.error("Error loading data:", error);
-            toast.error("Error al cargar los datos");
+            toast({ title: "Error al cargar los datos", variant: "destructive" });
         } finally {
             setLoading(false);
         }
@@ -155,7 +155,7 @@ export const useCreateReturn = () => {
             setEdgePagination({ p_page: page, p_size: size, total });
         } catch (err: any) {
             console.error("Error fetching edge data:", err);
-            toast.error("Error al cargar los datos");
+            toast({ title: "Error al cargar los datos", variant: "destructive" });
         } finally {
             setEdgeLoading(false);
         }
@@ -202,7 +202,7 @@ export const useCreateReturn = () => {
 
     const handleOrderSelect = async () => {
         if (!selectedOrder || !selectedReturnType) {
-            toast.error("Debe seleccionar una orden y un tipo de devolución");
+            toast({ title: "Debe seleccionar una orden y un tipo de devolución", variant: "destructive" });
             return;
         }
 
@@ -263,19 +263,19 @@ export const useCreateReturn = () => {
             setShowOrderModal(false);
         } catch (error) {
             console.error("Error loading order products:", error);
-            toast.error("Error al cargar los productos de la orden");
+            toast({ title: "Error al cargar los productos de la orden", variant: "destructive" });
         }
     };
 
     // ── Payment methods ────────────────────────────────────────────────────────
     const addPayment = useCallback(() => {
         if (!currentPayment.paymentMethodId || !currentPayment.amount) {
-            toast.error("Seleccione un método de pago y monto");
+            toast({ title: "Seleccione un método de pago y monto", variant: "destructive" });
             return;
         }
         const amount = parseFloat(currentPayment.amount);
         if (isNaN(amount) || amount <= 0) {
-            toast.error("El monto debe ser mayor a cero");
+            toast({ title: "El monto debe ser mayor a cero", variant: "destructive" });
             return;
         }
         setPayments((prev) => [...prev, { ...currentPayment, id: crypto.randomUUID() }]);
@@ -407,23 +407,23 @@ export const useCreateReturn = () => {
         e.preventDefault();
 
         if (!selectedOrder || !selectedReturnType || !situationId) {
-            toast.error("Complete todos los campos requeridos");
+            toast({ title: "Complete todos los campos requeridos", variant: "destructive" });
             return;
         }
 
         if (!reason.trim()) {
-            toast.error("El motivo de la devolución/cambio es obligatorio");
+            toast({ title: "El motivo de la devolución/cambio es obligatorio", variant: "destructive" });
             return;
         }
 
         const validPayments = payments.filter((p) => p.paymentMethodId && p.amount);
         //if (validPayments.length === 0) {
-        //    toast.error("Agregue al menos un método de pago");
+        //    toast({ title: "Agregue al menos un método de pago", variant: "destructive" });
         //    return;
         //}
 
         if (returnProducts.length === 0) {
-            toast.error("Debe seleccionar al menos un producto a devolver");
+            toast({ title: "Debe seleccionar al menos un producto a devolver", variant: "destructive" });
             return;
         }
 
@@ -515,7 +515,7 @@ export const useCreateReturn = () => {
                 throw new Error(fullMsg);
             }
 
-            toast.success("Devolución/Cambio creado exitosamente");
+            toast({ title: "Devolución/Cambio creado exitosamente", variant: "success" });
             navigate("/returns");
         } catch (error: any) {
             // Extract all available info from the error
@@ -545,7 +545,7 @@ export const useCreateReturn = () => {
             console.error("Error completo:", error);
             console.groupEnd();
 
-            toast.error(displayMsg, { duration: 8000 });
+            toast({ title: displayMsg, variant: "destructive", duration: 8000 });
         } finally {
             setSaving(false);
         }

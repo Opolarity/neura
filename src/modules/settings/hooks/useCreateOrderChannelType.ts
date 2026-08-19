@@ -188,10 +188,10 @@ const useCreateOrderChannelType = () => {
 
             if (isEdit && channelTypeId) {
                 await UpdateSaleType({ ...payload, id: parseInt(channelTypeId) });
-                toast({ title: "Éxito", description: "Canal de venta actualizado correctamente" });
+                toast({ title: "Éxito", description: "Canal de venta actualizado correctamente", variant: "success" });
             } else {
                 await CreateSaleType(payload);
-                toast({ title: "Éxito", description: "Canal de venta creado correctamente" });
+                toast({ title: "Éxito", description: "Canal de venta creado correctamente", variant: "success" });
             }
             navigate('/settings/order-channel-types');
         } catch (error: any) {

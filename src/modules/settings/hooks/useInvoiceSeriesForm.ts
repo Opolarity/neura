@@ -83,7 +83,7 @@ export const useInvoiceSeriesForm = () => {
           .update(payload)
           .eq("id", parseInt(serieId!));
         if (error) throw error;
-        toast({ title: "Serie actualizada correctamente" });
+        toast({ title: "Serie actualizada correctamente", variant: "success" });
       } else {
         const { error } = await supabase
           .from("invoice_series")
@@ -91,7 +91,7 @@ export const useInvoiceSeriesForm = () => {
           .select("id")
           .single();
         if (error) throw error;
-        toast({ title: "Serie creada correctamente" });
+        toast({ title: "Serie creada correctamente", variant: "success" });
       }
 
       navigate("/invoices/series");

@@ -124,6 +124,7 @@ const PromotionalTextPage = () => {
     toast({
       title: "Guardado exitoso",
       description: `Texto promocional aplicado a ${plural(selectedProducts.length)}.`,
+      variant: "success",
     });
   };
 
@@ -143,6 +144,7 @@ const PromotionalTextPage = () => {
     toast({
       title: "Guardado exitoso",
       description: `Imágenes de tallas actualizadas en ${plural(selectedProducts.length)}.`,
+      variant: "success",
     });
   };
 
@@ -157,6 +159,7 @@ const PromotionalTextPage = () => {
     toast({
       title: "Guardado exitoso",
       description: `Imagen promocional actualizada en ${plural(selectedProducts.length)}.`,
+      variant: "success",
     });
   };
 
@@ -169,6 +172,7 @@ const PromotionalTextPage = () => {
     toast({
       title: "Guardado exitoso", //7
       description: `Descripción corta actualizada en ${plural(selectedProducts.length)}.`,
+      variant: "success",
     });
   };
   const handleSaveShortDescriptionMay = async (shortDescription: string) => {
@@ -181,6 +185,7 @@ const PromotionalTextPage = () => {
     toast({
       title: "Guardado exitoso", //7
       description: `Descripción corta actualizada en ${plural(selectedProducts.length)}.`,
+      variant: "success",
     });
   };
 
@@ -193,6 +198,7 @@ const PromotionalTextPage = () => {
     toast({
       title: "Guardado exitoso",
       description: `Otra descripción min. actualizada en ${plural(selectedProducts.length)}.`,
+      variant: "success",
     });
   };
 
@@ -205,6 +211,7 @@ const PromotionalTextPage = () => {
     toast({
       title: "Guardado exitoso",
       description: `Otra descripción may. actualizada en ${plural(selectedProducts.length)}.`,
+      variant: "success",
     });
   };
 
@@ -225,6 +232,7 @@ const PromotionalTextPage = () => {
           toast({
             title: "Sin cambios",
             description: `${plural(selectedProducts.length)} no tenían esas etiquetas asignadas.`,
+            variant: "info",
           });
         } else {
           toast({
@@ -234,6 +242,7 @@ const PromotionalTextPage = () => {
               (result.notFound > 0
                 ? ` ${result.notFound} no existían y se omitieron.`
                 : ""),
+            variant: "success",
           });
         }
       } else {
@@ -243,6 +252,7 @@ const PromotionalTextPage = () => {
           toast({
             title: "Sin cambios",
             description: `${plural(selectedProducts.length)} ya tenían esas etiquetas (${result.skipped} asignación${result.skipped === 1 ? "" : "es"} omitida${result.skipped === 1 ? "" : "s"}).`,
+            variant: "info",
           });
         } else {
           toast({
@@ -252,6 +262,7 @@ const PromotionalTextPage = () => {
               (result.skipped > 0
                 ? ` ${result.skipped} ya existían y se omitieron.`
                 : ""),
+            variant: "success",
           });
         }
       }
@@ -286,17 +297,20 @@ const PromotionalTextPage = () => {
           toast({
             title: "Sin cambios",
             description: `${plural(selectedProducts.length)} no tenían esas marcas asignadas.`,
+            variant: "info",
           });
         } else {
           toast({
             title: "Marcas desasignadas",
             description: `Se quitaron ${result.removed} asignación${result.removed === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.`,
+            variant: "success",
           });
         }
       } else if (result.created === 0) {
         toast({
           title: "Sin cambios",
           description: `${plural(selectedProducts.length)} ya tenían esas marcas (${result.skipped} asignación${result.skipped === 1 ? "" : "es"} omitida${result.skipped === 1 ? "" : "s"}).`,
+          variant: "info",
         });
       } else {
         toast({
@@ -306,6 +320,7 @@ const PromotionalTextPage = () => {
             (result.skipped > 0
               ? ` ${result.skipped} ya existían y se omitieron.`
               : ""),
+          variant: "success",
         });
       }
     } catch (error) {
@@ -328,6 +343,7 @@ const PromotionalTextPage = () => {
     toast({
       title: "Guardado exitoso",
       description: `Canales de venta actualizados en ${plural(selectedProducts.length)}.`,
+      variant: "success",
     });
   };
 

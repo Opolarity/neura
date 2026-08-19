@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import type {
   PriceRuleFormData,
   ConditionsConfig,
@@ -59,7 +59,7 @@ export function usePriceRuleForm() {
         }
       } catch (error) {
         console.error("Error loading price rule:", error);
-        toast.error("Error al cargar la regla de precios");
+        toast({ title: "Error al cargar la regla de precios", variant: "destructive" });
         // Sin esto el usuario se queda en un formulario vacío que parece
         // editable. Pasa, por ejemplo, al entrar por URL directa a una regla
         // eliminada: el backend responde 404.
@@ -294,7 +294,7 @@ export function usePriceRuleForm() {
   const handleSubmit = async () => {
     const validationError = getPriceRuleFormError(formData);
     if (validationError) {
-      toast.error(validationError);
+      toast({ title: validationError, variant: "destructive" });
       return;
     }
 
@@ -302,9 +302,10 @@ export function usePriceRuleForm() {
 
     if (isConsignmentPromo) {
       if (formData.rule_type !== "automatic") {
-        toast.error(
-          "Una promoción de consignación debe ser de tipo Automática (no cupón)",
-        );
+        toast({
+          title: "Una promoción de consignación debe ser de tipo Automática (no cupón)",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -312,9 +313,10 @@ export function usePriceRuleForm() {
         (a) => !CONSIGNMENT_ALLOWED_ACTION_TYPES.includes(a.type),
       );
       if (invalidAction) {
-        toast.error(
-          `La acción "${ACTION_TYPE_LABELS[invalidAction.type]}" no está soportada en promociones de consignación. Usa precio fijo, descuento fijo o % por producto.`,
-        );
+        toast({
+          title: `La acción "${ACTION_TYPE_LABELS[invalidAction.type]}" no está soportada en promociones de consignación. Usa precio fijo, descuento fijo o % por producto.`,
+          variant: "destructive",
+        });
         return;
       }
 
@@ -323,9 +325,10 @@ export function usePriceRuleForm() {
           (a) => a.type === "set_fixed_price" && a.max_qty != null,
         )
       ) {
-        toast.error(
-          "El precio fijo con cantidad máxima (max_qty) no está soportado en promociones de consignación",
-        );
+        toast({
+          title: "El precio fijo con cantidad máxima (max_qty) no está soportado en promociones de consignación",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -341,10 +344,10 @@ export function usePriceRuleForm() {
       const payload = adaptFormToPayload(dataToSave);
       if (isEditMode) {
         await updatePriceRule(parseInt(id!), payload);
-        toast.success("Regla de precios actualizada");
+        toast({ title: "Regla de precios actualizada", variant: "success" });
       } else {
         await createPriceRule(payload);
-        toast.success("Regla de precios creada");
+        toast({ title: "Regla de precios creada", variant: "success" });
       }
       navigate("/discounts/price-rules");
     } catch (error) {
@@ -352,7 +355,10 @@ export function usePriceRuleForm() {
       const fallbackMessage = isEditMode
         ? "Error al actualizar la regla de precios"
         : "Error al crear la regla de precios";
-      toast.error(error instanceof Error && error.message ? error.message : fallbackMessage);
+      toast({
+        title: error instanceof Error && error.message ? error.message : fallbackMessage,
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }

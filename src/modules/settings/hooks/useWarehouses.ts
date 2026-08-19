@@ -85,6 +85,7 @@ const useWarehouses = () => {
             toast({
                 title: "Éxito",
                 description: "Almacén eliminado correctamente",
+                variant: "success",
             });
 
             await loadWarehouses(filters);

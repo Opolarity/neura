@@ -4,7 +4,6 @@ import { AuthProvider } from "@/modules/auth";
 import { NotificationsProvider } from "@/modules/notifications/context/NotificationsProvider";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryProvider } from "./providers/QueryProvider";
 import MaintenancePage from "@/components/MaintenancePage";
 
@@ -19,7 +18,6 @@ const App = () => {
     <QueryProvider>
       <TooltipProvider>
         <Toaster />
-        <Sonner richColors />
         <AuthProvider>
           <NotificationsProvider>
             <RouterProvider router={router} />

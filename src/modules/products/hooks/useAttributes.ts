@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import {
   AttributeGroup,
   AttributeFilters,
@@ -190,7 +190,7 @@ export const useAttributes = () => {
       setIsOpenFormModal(true);
     } catch (err) {
       console.error(err);
-      toast.error("Error al cargar el atributo");
+      toast({ title: "Error al cargar el atributo", variant: "destructive" });
     } finally {
       setLoadingEdit(false);
     }
@@ -201,14 +201,14 @@ export const useAttributes = () => {
     try {
       if (data.id) {
         await updateTermGroup(data);
-        toast.success("Atributo actualizado correctamente");
+        toast({ title: "Atributo actualizado correctamente", variant: "success" });
       } else {
         await createTermGroup({
           code: data.code,
           name: data.name,
           description: data.description,
         });
-        toast.success("Atributo creado correctamente");
+        toast({ title: "Atributo creado correctamente", variant: "success" });
       }
       setIsOpenFormModal(false);
       setEditingAttribute(null);
@@ -216,7 +216,10 @@ export const useAttributes = () => {
       loadTermGroups();
     } catch (err) {
       console.error(err);
-      toast.error(data.id ? "Error al actualizar el atributo" : "Error al crear el atributo");
+      toast({
+        title: data.id ? "Error al actualizar el atributo" : "Error al crear el atributo",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
@@ -240,7 +243,7 @@ export const useAttributes = () => {
       setIsOpenTermModal(true);
     } catch (err) {
       console.error(err);
-      toast.error("Error al cargar el término");
+      toast({ title: "Error al cargar el término", variant: "destructive" });
     } finally {
       setLoadingEdit(false);
     }
@@ -251,20 +254,23 @@ export const useAttributes = () => {
     try {
       if (data.id) {
         await updateTerm(data);
-        toast.success("Término actualizado correctamente");
+        toast({ title: "Término actualizado correctamente", variant: "success" });
       } else {
         await createTerm({
           name: data.name,
           term_group_id: data.term_group_id,
         });
-        toast.success("Término creado correctamente");
+        toast({ title: "Término creado correctamente", variant: "success" });
       }
       setIsOpenTermModal(false);
       setEditingTerm(null);
       loadData();
     } catch (err) {
       console.error(err);
-      toast.error(data.id ? "Error al actualizar el término" : "Error al crear el término");
+      toast({
+        title: data.id ? "Error al actualizar el término" : "Error al crear el término",
+        variant: "destructive",
+      });
     } finally {
       setSavingTerm(false);
     }
@@ -274,12 +280,12 @@ export const useAttributes = () => {
     setDeleting(true);
     try {
       await deleteTermGroup(id);
-      toast.success("Atributo y sus términos eliminados correctamente");
+      toast({ title: "Atributo y sus términos eliminados correctamente", variant: "success" });
       loadData();
       loadTermGroups();
     } catch (err) {
       console.error(err);
-      toast.error("Error al eliminar el atributo");
+      toast({ title: "Error al eliminar el atributo", variant: "destructive" });
     } finally {
       setDeleting(false);
     }
@@ -289,11 +295,11 @@ export const useAttributes = () => {
     setDeleting(true);
     try {
       await deleteTerm(id);
-      toast.success("Término eliminado correctamente");
+      toast({ title: "Término eliminado correctamente", variant: "success" });
       loadData();
     } catch (err) {
       console.error(err);
-      toast.error("Error al eliminar el término");
+      toast({ title: "Error al eliminar el término", variant: "destructive" });
     } finally {
       setDeleting(false);
     }

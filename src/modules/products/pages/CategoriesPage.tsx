@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import {
   Card,
   CardContent,
@@ -129,7 +129,7 @@ const Categories = () => {
           parent_category: data.parent_category || null,
           image_url: imageUrl || null,
         });
-        toast.success("Categoría actualizada exitosamente");
+        toast({ title: "Categoría actualizada exitosamente", variant: "success" });
       } else {
         await createCategory({
           name: data.name,
@@ -137,14 +137,15 @@ const Categories = () => {
           parent_category: data.parent_category || null,
           image_url: imageUrl || null,
         });
-        toast.success("Categoría creada exitosamente");
+        toast({ title: "Categoría creada exitosamente", variant: "success" });
       }
       setIsFormOpen(false);
       setEditingCategory(null);
     } catch (error: any) {
-      toast.error(
-        "Error al guardar categoría: " + (error.message || "Error desconocido"),
-      );
+      toast({
+        title: "Error al guardar categoría: " + (error.message || "Error desconocido"),
+        variant: "destructive",
+      });
       console.error(error);
     } finally {
       setSaving(false);
@@ -203,13 +204,14 @@ const Categories = () => {
       }
 
       await deleteCategory(categoryToDelete.id);
-      toast.success("Categoría eliminada exitosamente");
+      toast({ title: "Categoría eliminada exitosamente", variant: "success" });
       setIsDeleteOpen(false);
     } catch (error: any) {
-      toast.error(
-        "Error al eliminar categoría: " +
+      toast({
+        title: "Error al eliminar categoría: " +
         (error.message || "Error desconocido"),
-      );
+        variant: "destructive",
+      });
     } finally {
       setDeleting(false);
     }

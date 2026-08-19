@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { formatDateDisplay } from "@/shared/utils/date";
 import { returnsService } from '../services/Returns.service';
 import { ReturnItem } from '../types/Returns.types';
-import { toast } from 'sonner';
+import { toast } from "@/shared/hooks/use-toast";
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
 
@@ -31,7 +31,7 @@ export const useReturns = () => {
             setPagination((prev) => ({ ...prev, p_page: currentPage, p_size: currentSize, total }));
         } catch (error: any) {
             console.error('Error loading returns:', error);
-            toast.error('Error al cargar las devoluciones');
+            toast({ title: 'Error al cargar las devoluciones', variant: "destructive" });
         } finally {
             setLoading(false);
         }

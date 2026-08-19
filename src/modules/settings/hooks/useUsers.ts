@@ -101,7 +101,7 @@ const useUsers = () => {
     const handleCreateUser = async (userData: any) => {
         try {
             await createUserApi(userData);
-            toast({ title: "Éxito", description: "Usuario creado correctamente" });
+            toast({ title: "Éxito", description: "Usuario creado correctamente", variant: "success" });
             loadUsers(filters);
         } catch (error) {
             toast({ title: "Error", description: "No se pudo crear el usuario", variant: "destructive" });
@@ -111,7 +111,7 @@ const useUsers = () => {
     const handleUpdateUser = async (userId: number, uid: string, userData: any) => {
         try {
             await updateUserApi(userId, uid, userData);
-            toast({ title: "Éxito", description: "Usuario actualizado correctamente" });
+            toast({ title: "Éxito", description: "Usuario actualizado correctamente", variant: "success" });
             loadUsers(filters);
         } catch (error) {
             toast({ title: "Error", description: "No se pudo actualizar el usuario", variant: "destructive" });
@@ -121,7 +121,7 @@ const useUsers = () => {
     const handleDeleteUser = async (userId: string) => {
         try {
             await deleteUserApi(userId);
-            toast({ title: "Éxito", description: "Usuario eliminado correctamente" });
+            toast({ title: "Éxito", description: "Usuario eliminado correctamente", variant: "success" });
             loadUsers(filters);
         } catch (error) {
             toast({ title: "Error", description: "No se pudo eliminar el usuario", variant: "destructive" });

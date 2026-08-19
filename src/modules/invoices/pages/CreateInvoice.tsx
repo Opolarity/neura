@@ -476,7 +476,7 @@ const CreateInvoice = ({ viewOnly = false }: { viewOnly?: boolean }) => {
         currentInvoiceId={invoiceId ? parseInt(invoiceId) : undefined}
         onSelect={(orderId) => {
           handleFormChange("orderId", orderId.toString());
-          toast({ title: "Pedido vinculado correctamente" });
+          toast({ title: "Pedido vinculado correctamente", variant: "success" });
         }}
       />
       <MovementSelectionModal 
@@ -485,7 +485,7 @@ const CreateInvoice = ({ viewOnly = false }: { viewOnly?: boolean }) => {
         currentInvoiceId={invoiceId ? parseInt(invoiceId) : undefined}
         onSelect={(movementId) => {
           handleFormChange("movementId", movementId.toString());
-          toast({ title: "Movimiento vinculado correctamente" });
+          toast({ title: "Movimiento vinculado correctamente", variant: "success" });
         }}
       />
     </div>

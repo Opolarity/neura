@@ -310,6 +310,7 @@ export const useCreateMovementRequest = () => {
       toast({
         title: "Solicitud creada",
         description: `La solicitud #${adapted.requestId} fue creada exitosamente.`,
+        variant: "success",
       });
       navigate("/inventory/movement-requests");
     } catch (error) {

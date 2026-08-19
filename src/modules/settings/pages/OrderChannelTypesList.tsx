@@ -27,7 +27,7 @@ const OrderChannelTypesList = () => {
                 .update({ is_active: false })
                 .eq('id', id);
             if (error) throw error;
-            toast({ title: "Canal de venta eliminado correctamente" });
+            toast({ title: "Canal de venta eliminado correctamente", variant: "success" });
             refresh();
         } catch (err: any) {
             toast({ title: "Error", description: err.message, variant: "destructive" });

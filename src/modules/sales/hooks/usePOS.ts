@@ -549,6 +549,7 @@ export const usePOS = () => {
             toast({
               title: "Producto agregado",
               description: match.productTitle,
+              variant: "success",
             });
           }
         }
@@ -1118,6 +1119,7 @@ export const usePOS = () => {
       toast({
         title: "Venta completada",
         description: `Pedido #${result.order.id} creado exitosamente`,
+        variant: "success",
       });
 
       // Move to invoicing step instead of resetting

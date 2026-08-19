@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import type { CreateTagPayload, EditTagPayload } from "@/modules/products/types/Tags.types";
 import { slugify } from "@/shared/utils/slug";
 
@@ -88,7 +88,10 @@ export const useTagsForm = ({ open, editTag, onCreateTag, onEditTag, onSuccess }
             }
             onSuccess();
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Error al guardar la etiqueta");
+            toast({
+              title: err instanceof Error ? err.message : "Error al guardar la etiqueta",
+              variant: "destructive",
+            });
         }
     };
 

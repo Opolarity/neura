@@ -73,6 +73,7 @@ const usePaymentMethods = () => {
             toast({
                 title: "Éxito",
                 description: isUpdate ? "Método de pago actualizado" : "Método de pago creado",
+                variant: "success",
             });
         } catch (error: any) {
             console.error("Error saving payment method:", error);

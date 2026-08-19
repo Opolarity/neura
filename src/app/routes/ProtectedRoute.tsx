@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 
 import { useAuth } from "@/modules/auth";
 
@@ -19,7 +19,7 @@ export function ProtectedRoute({
 
   useEffect(() => {
     if (!permissionsLoading && !hasPermission) {
-      toast.error("No tienes acceso");
+      toast({ title: "No tienes acceso", variant: "destructive" });
     }
   }, [permissionsLoading, hasPermission]);
 

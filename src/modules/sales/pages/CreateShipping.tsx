@@ -213,6 +213,7 @@ const CreateShipping = () => {
         toast({
           title: "Éxito",
           description: "Método de envío actualizado correctamente",
+          variant: "success",
         });
       } else {
         await createShippingMethodApi({
@@ -230,6 +231,7 @@ const CreateShipping = () => {
         toast({
           title: "Éxito",
           description: "Método de envío creado correctamente",
+          variant: "success",
         });
       }
 
