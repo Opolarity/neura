@@ -5,6 +5,7 @@ import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import PaymentMethodsTable from '../components/paymentMethods/PaymentMethodsTable';
 import usePaymentMethods from '../hooks/usePaymentMethods';
 import { PaymentMethodFormDialog } from '../components/paymentMethods/PaymentMethodFormDialog';
+import { ComponentPermission } from '@/shared/components/component-permission';
 
 const PaymentMethodsList = () => {
     const {
@@ -31,16 +32,21 @@ const PaymentMethodsList = () => {
                         Administra los métodos de pago del sistema
                     </p>
                 </div>
-                <Button
-                    className="gap-2"
-                    onClick={() => {
-                        handleEditItemChange(null);
-                        handleOpenChange(true);
-                    }}
-                >
-                    <Plus className="w-4 h-4" />
-                    Crear Método de Pago
-                </Button>
+                {/* Aquí no hay ruta de creación que reutilizar: el alta se hace
+                    en el mismo listado, abriendo PaymentMethodFormDialog en
+                    blanco. */}
+                <ComponentPermission codeIn={["payment_methods.create"]}>
+                    <Button
+                        className="gap-2"
+                        onClick={() => {
+                            handleEditItemChange(null);
+                            handleOpenChange(true);
+                        }}
+                    >
+                        <Plus className="w-4 h-4" />
+                        Crear Método de Pago
+                    </Button>
+                </ComponentPermission>
             </div>
 
             {/* Payment Methods Table */}
