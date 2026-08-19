@@ -41,6 +41,11 @@ import type {
   GeoDistributionData,
   CustomersByLoyaltyItem,
   PurchaseFrequencyItem,
+  NewVsReturningData,
+  CustomersRecencyItem,
+  CustomersParetoItem,
+  CustomersBySaleTypeItem,
+  UpcomingBirthdayItem,
 } from '../types/reports.types';
 
 // -------------------------------------------------------
@@ -370,6 +375,38 @@ export const customersService = {
     rpc<PurchaseFrequencyItem[]>('sp_rpt_customers_purchase_frequency', {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
+    }),
+
+  getNewVsReturning: (f: ReportsFilters) =>
+    rpc<NewVsReturningData>('sp_rpt_customers_new_vs_returning', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+    }),
+
+  getRecency: (f: ReportsFilters) =>
+    rpc<CustomersRecencyItem[]>('sp_rpt_customers_recency', {
+      p_branch_id: f.branchId ?? undefined,
+    }),
+
+  getPareto: (f: ReportsFilters) =>
+    rpc<CustomersParetoItem[]>('sp_rpt_customers_pareto', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+    }),
+
+  getBySaleType: (f: ReportsFilters) =>
+    rpc<CustomersBySaleTypeItem[]>('sp_rpt_customers_by_sale_type', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+    }),
+
+  getUpcomingBirthdays: (days: number, limit = 15) =>
+    rpc<UpcomingBirthdayItem[]>('sp_rpt_customers_upcoming_birthdays', {
+      p_days: days,
+      p_limit: limit,
     }),
 };
 

@@ -454,3 +454,46 @@ export interface PurchaseFrequencyItem {
   customer_count: number;
   avg_revenue: number;
 }
+
+export interface NewVsReturningData {
+  granularity: 'day' | 'month';
+  series: Array<{
+    period: string;
+    new_customers: number;
+    returning_customers: number;
+  }>;
+}
+
+export type RecencyBucket = 'active' | 'at_risk' | 'inactive' | 'dormant';
+
+export interface CustomersRecencyItem {
+  bucket: RecencyBucket;
+  customer_count: number;
+  total_revenue: number;
+}
+
+export interface CustomersParetoItem {
+  decile: number;
+  customer_count: number;
+  revenue: number;
+  revenue_pct: number;
+  cumulative_pct: number;
+}
+
+export interface CustomersBySaleTypeItem {
+  sale_type_id: number;
+  sale_type_name: string;
+  unique_buyers: number;
+  order_count: number;
+  revenue: number;
+}
+
+export interface UpcomingBirthdayItem {
+  user_name: string;
+  next_birthday: string;
+  days_until: number;
+  order_count: number;
+  total_spent: number;
+  last_order: string | null;
+  loyalty_level: LoyaltyLevel;
+}
