@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDateDisplay } from "@/shared/utils/date";
 import type { Medio } from "../types/medios.types";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 interface MediaDetailDialogProps {
   medio: Medio | null;
@@ -77,10 +78,14 @@ const MediaDetailDialog = ({ medio, open, onClose, onDelete }: MediaDetailDialog
               <span>Tipo: {medio.mimetype ?? "Desconocido"}</span>
               <span>Fecha: {formatDateDisplay(medio.created_at)}</span>
             </div>
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
-              <Trash2 className="h-3.5 w-3.5 mr-1" />
-              Eliminar
-            </Button>
+            {/* Mismo borrado que el de la tarjeta del grid, solo que desde el
+                detalle: comparte code. */}
+            <ComponentPermission codeIn={["ecommerce_media.delete"]}>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                Eliminar
+              </Button>
+            </ComponentPermission>
           </div>
         </div>
       </DialogContent>
