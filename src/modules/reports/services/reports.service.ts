@@ -20,6 +20,11 @@ import type {
   PaginatedLowStock,
   StockRotationItem,
   StockMovementTypeItem,
+  InventoryValuation,
+  StockByCategoryItem,
+  StockByTermGroup,
+  StockFlowItem,
+  DeadStockReport,
   ReturnsKpis,
   ReturnsOverTimeItem,
   TopReturnedProduct,
@@ -211,6 +216,38 @@ export const inventoryService = {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
       p_warehouse_id: warehouseId ?? undefined,
+    }),
+
+  getValuation: (warehouseId?: number) =>
+    rpc<InventoryValuation>('sp_rpt_inventory_valuation', {
+      p_warehouse_id: warehouseId ?? undefined,
+    }),
+
+  getStockByCategory: (warehouseId?: number) =>
+    rpc<StockByCategoryItem[]>('sp_rpt_stock_by_category', {
+      p_warehouse_id: warehouseId ?? undefined,
+    }),
+
+  getStockByTermGroup: (termGroupId?: number, warehouseId?: number) =>
+    rpc<StockByTermGroup>('sp_rpt_stock_by_term_group', {
+      p_term_group_id: termGroupId ?? undefined,
+      p_warehouse_id: warehouseId ?? undefined,
+    }),
+
+  getStockFlow: (f: ReportsFilters, granularity: Granularity = 'day', warehouseId?: number) =>
+    rpc<StockFlowItem[]>('sp_rpt_stock_flow_over_time', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_granularity: granularity,
+      p_warehouse_id: warehouseId ?? undefined,
+    }),
+
+  getDeadStock: (days: number, warehouseId?: number, page = 1, size = 10) =>
+    rpc<DeadStockReport>('sp_rpt_dead_stock', {
+      p_days: days,
+      p_warehouse_id: warehouseId ?? undefined,
+      p_page: page,
+      p_size: size,
     }),
 };
 

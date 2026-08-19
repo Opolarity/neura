@@ -248,6 +248,57 @@ export interface StockMovementTypeItem {
   avg_quantity: number;
 }
 
+export interface InventoryValuation {
+  price_list_id: number | null;
+  cost_value: number;
+  retail_value: number;
+  potential_margin: number;
+  margin_pct: number | null;
+  warehouses: Array<{
+    warehouse_id: number;
+    warehouse_name: string;
+    units: number;
+    cost_value: number;
+    retail_value: number;
+  }>;
+}
+
+export interface StockByCategoryItem {
+  category: string;
+  units: number;
+  skus: number;
+  cost_value: number;
+}
+
+export interface StockByTermGroup {
+  group_id: number | null;
+  groups: Array<{ id: number; code: string; name: string }>;
+  data: Array<{ term: string; units: number; skus: number }>;
+}
+
+export interface StockFlowItem {
+  period: string;
+  inflow: number;
+  outflow: number;
+  net: number;
+}
+
+export interface DeadStockItem {
+  product_variation_id: number;
+  product_title: string;
+  sku: string;
+  stock: number;
+  cost_value: number;
+  last_out_date: string | null;
+  days_without_movement: number | null;
+}
+
+export interface DeadStockReport {
+  summary: { count: number; total_units: number; total_cost_value: number };
+  page: { page: number; size: number; total: number };
+  data: DeadStockItem[];
+}
+
 // -------------------------------------------------------
 // Returns Dashboard
 // -------------------------------------------------------
