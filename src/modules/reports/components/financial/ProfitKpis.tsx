@@ -1,4 +1,5 @@
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Info } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { KpiCard } from '../shared/KpiCard';
 import type { FinancialProfitKpis as FinancialProfitKpisData } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
@@ -27,6 +28,28 @@ export function ProfitKpis({ data, loading }: Props) {
             Cobertura de costo: <strong>{coverage}%</strong> de las unidades vendidas
             {' '}({data?.units_with_known_cost ?? 0} de {data?.units_sold_total ?? 0}).
             {isLowCoverage && ' Las cifras de ganancia/margen solo reflejan los productos con costo cargado — no representan el total del negocio.'}
+            {' '}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button type="button" aria-label="Qué significa la cobertura de costo" className="inline-flex align-middle">
+                  <Info className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 text-sm text-foreground space-y-2">
+                <p>
+                  De las <strong>{data?.units_sold_total ?? 0}</strong> unidades vendidas en el periodo,{' '}
+                  <strong>{data?.units_with_known_cost ?? 0}</strong> corresponden a productos que tienen su costo
+                  registrado en el catálogo.
+                </p>
+                <p>
+                  Ganancia Neta, Margen y Costo Total se calculan solo sobre esas unidades: si la cobertura es baja,
+                  esas cifras no reflejan el total del negocio.
+                </p>
+                <p className="text-muted-foreground">
+                  Para mejorar la cobertura, registra el costo en los productos que aún no lo tienen.
+                </p>
+              </PopoverContent>
+            </Popover>
           </span>
         </div>
       )}
