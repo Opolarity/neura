@@ -436,7 +436,7 @@ export const useEditMovementRequest = () => {
       setStatusName("");
       setSituationName(selectedSit.name);
 
-      toast({ title: "Actualización enviada", description: "El historial ha sido actualizado." });
+      toast({ title: "Actualización enviada", description: "El historial ha sido actualizado.", variant: "success" });
 
       navigate("/inventory/movement-requests");
     } catch (error: any) {

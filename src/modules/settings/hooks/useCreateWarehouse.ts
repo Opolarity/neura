@@ -151,7 +151,8 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
 
                         toast({
                             title: "Almacén cargado",
-                            description: "Los datos del almacén se han cargado correctamente"
+                            description: "Los datos del almacén se han cargado correctamente",
+                            variant: "success",
                         });
                     }
                 } catch (error) {
@@ -289,12 +290,14 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
                 toast({
                     title: "Éxito",
                     description: "Almacén actualizado correctamente",
+                    variant: "success",
                 });
             } else {
                 await CreateWarehouses(payload);
                 toast({
                     title: "Éxito",
                     description: "Almacén creado correctamente",
+                    variant: "success",
                 });
             }
             navigate('/settings/warehouses');

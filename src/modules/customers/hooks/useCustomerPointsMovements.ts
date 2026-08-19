@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import { CustomerPointsMovement } from "../types/customerPoints.types";
 import { getCustomerPointsMovementsApi } from "../services/customerPoints.service";
 import { customerPointsMovementsAdapter } from "../adapters/customerPoints.adapter";
@@ -30,7 +30,7 @@ export const useCustomerPointsMovements = () => {
       setPagination((prev) => ({ ...prev, total: count }));
     } catch (error) {
       console.error(error);
-      toast.error("Error al cargar movimientos de puntos");
+      toast({ title: "Error al cargar movimientos de puntos", variant: "destructive" });
     } finally {
       setLoading(false);
     }

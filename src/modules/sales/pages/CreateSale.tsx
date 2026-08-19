@@ -1938,6 +1938,7 @@ const CreateSale = () => {
                     );
                     toast({
                       description: "Actualizar la orden para guardar comprobante",
+                      variant: "info",
                     });
                   }
                   e.target.value = "";

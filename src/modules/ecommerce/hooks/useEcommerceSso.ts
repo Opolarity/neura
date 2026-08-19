@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import { generateSSOToken } from "../services/sso.service";
 
 //const ECOMMERCE_SSO_URL = "http://localhost:3000/editor";
@@ -18,7 +18,7 @@ export const useEcommerceSso = () => {
         error instanceof Error
           ? error.message
           : "Error al redirigir al ecommerce";
-      toast.error(message);
+      toast({ title: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }

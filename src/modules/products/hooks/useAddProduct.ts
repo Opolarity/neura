@@ -213,7 +213,8 @@ export const useAddProduct = () => {
 
       toast({
         title: "Producto cargado",
-        description: "Los datos del producto se han cargado correctamente"
+        description: "Los datos del producto se han cargado correctamente",
+        variant: "success",
       });
     } catch (error) {
       console.error('Error loading product:', error);
@@ -313,7 +314,8 @@ export const useAddProduct = () => {
       
       toast({
         title: "Imágenes subidas",
-        description: `${newImages.length} imagen${newImages.length > 1 ? 'es' : ''} subida${newImages.length > 1 ? 's' : ''} correctamente`
+        description: `${newImages.length} imagen${newImages.length > 1 ? 'es' : ''} subida${newImages.length > 1 ? 's' : ''} correctamente`,
+        variant: "success",
       });
     } catch (error) {
       console.error('Error uploading images:', error);
@@ -388,7 +390,8 @@ export const useAddProduct = () => {
 
       toast({
         title: "Imagen subida",
-        description: "Imagen subida correctamente"
+        description: "Imagen subida correctamente",
+        variant: "success",
       });
     } catch (error) {
       console.error('Error uploading size image:', error);
@@ -459,7 +462,8 @@ export const useAddProduct = () => {
       setCategories(list);
       toast({
         title: "Categoría creada",
-        description: "La categoría se ha creado correctamente"
+        description: "La categoría se ha creado correctamente",
+        variant: "success",
       });
       return true;
     } catch (error) {
@@ -484,7 +488,7 @@ export const useAddProduct = () => {
       };
       setTags(prev => [...prev, newTag]);
       setSelectedTags(prev => [...prev, newTag.id]);
-      toast({ title: "Tag creado correctamente" });
+      toast({ title: "Tag creado correctamente", variant: "success" });
       return newTag;
     } catch (error) {
       toast({
@@ -513,7 +517,7 @@ export const useAddProduct = () => {
       };
       setBrands(prev => [...prev, newBrand]);
       setSelectedBrands(prev => [...prev, newBrand.id]);
-      toast({ title: "Marca creada correctamente" });
+      toast({ title: "Marca creada correctamente", variant: "success" });
       return newBrand;
     } catch (error) {
       toast({
@@ -818,7 +822,8 @@ export const useAddProduct = () => {
 
         toast({
           title: "Éxito",
-          description: "Producto actualizado correctamente"
+          description: "Producto actualizado correctamente",
+          variant: "success",
         });
       } else {
         // Las imágenes de tallas ya se subieron al seleccionarlas; solo falta asociarlas al nuevo producto
@@ -861,7 +866,8 @@ export const useAddProduct = () => {
 
         toast({
           title: "Éxito",
-          description: result.message || "Producto creado correctamente"
+          description: result.message || "Producto creado correctamente",
+          variant: "success",
         });
       }
 

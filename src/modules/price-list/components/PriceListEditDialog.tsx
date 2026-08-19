@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { PriceListItem } from "../types/PriceList.types";
 
@@ -45,7 +45,7 @@ export const PriceListEditDialog = ({
   const handleSave = async () => {
     if (!item) return;
     if (!name.trim()) {
-      toast.error("El nombre es obligatorio");
+      toast({ title: "El nombre es obligatorio", variant: "destructive" });
       return;
     }
 
@@ -63,10 +63,10 @@ export const PriceListEditDialog = ({
 
       if (error) throw error;
 
-      toast.success("Lista de precios actualizada");
+      toast({ title: "Lista de precios actualizada", variant: "success" });
       onSaved();
     } catch (err: any) {
-      toast.error("Error al actualizar: " + (err.message || "Error desconocido"));
+      toast({ title: "Error al actualizar: " + (err.message || "Error desconocido"), variant: "destructive" });
     } finally {
       setSaving(false);
     }

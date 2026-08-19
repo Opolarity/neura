@@ -384,7 +384,7 @@ export default function InvoicingStep({
         return;
       }
 
-      toast({ title: "Éxito", description: "Guía de remisión creada correctamente" });
+      toast({ title: "Éxito", description: "Guía de remisión creada correctamente", variant: "success" });
       setGuiaModalOpen(false);
       setPendingGuiaInvoiceType(null);
       fetchInvoices();
@@ -499,7 +499,7 @@ export default function InvoicingStep({
         return;
       }
 
-      toast({ title: "Éxito", description: `${invoiceType.name} creado correctamente` });
+      toast({ title: "Éxito", description: `${invoiceType.name} creado correctamente`, variant: "success" });
       fetchInvoices();
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
@@ -537,7 +537,7 @@ export default function InvoicingStep({
         return;
       }
 
-      toast({ title: "Éxito", description: "Comprobante emitido correctamente a SUNAT" });
+      toast({ title: "Éxito", description: "Comprobante emitido correctamente a SUNAT", variant: "success" });
       fetchInvoices();
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
@@ -683,11 +683,11 @@ export default function InvoicingStep({
         if (emitError || emitData?.error) {
           toast({ title: "Error de emisión", description: emitData?.error || "Error al emitir a SUNAT", variant: "destructive" });
         } else {
-          toast({ title: "Éxito", description: `${invoiceType.name} emitido a SUNAT correctamente` });
+          toast({ title: "Éxito", description: `${invoiceType.name} emitido a SUNAT correctamente`, variant: "success" });
           printInvoice(newInvoice.id);
         }
       } else if (newInvoice) {
-        toast({ title: "Éxito", description: `${invoiceType.name} creado correctamente` });
+        toast({ title: "Éxito", description: `${invoiceType.name} creado correctamente`, variant: "success" });
         printInvoice(newInvoice.id);
       }
 

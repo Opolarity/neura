@@ -1071,6 +1071,7 @@ export const useCreateSale = () => {
         toast({
           title: "Consignación enviada",
           description: "El envío al franquiciado se realizó correctamente",
+          variant: "success",
         });
       } else {
         throw new Error("La respuesta no fue exitosa");
@@ -1441,6 +1442,7 @@ export const useCreateSale = () => {
                     docTypeCode === "RUC"
                       ? "Se encontraron datos de la empresa en SUNAT"
                       : "Se encontraron datos del documento en RENIEC",
+                  variant: "success",
                 });
               } else {
                 // DNI/RUC not found in external API
@@ -1774,6 +1776,7 @@ export const useCreateSale = () => {
         toast({
           title: "Nota guardada",
           description: "La nota se ha guardado correctamente",
+          variant: "success",
         });
       } catch (error) {
         console.error("Error saving note:", error);
@@ -1837,6 +1840,7 @@ export const useCreateSale = () => {
       toast({
         title: "Pago confirmado",
         description: "El pago ha sido confirmado correctamente",
+        variant: "success",
       });
     } catch (err) {
       console.error("Error confirming payment:", err);
@@ -2195,6 +2199,7 @@ export const useCreateSale = () => {
           description: orderId
             ? "Venta actualizada correctamente"
             : "Venta creada correctamente",
+          variant: "success",
         });
 
         if (orderId) {
@@ -2280,6 +2285,7 @@ export const useCreateSale = () => {
           description: result?.refunded_amount
             ? `Se registró la devolución de ${result.refunded_amount}`
             : "El stock reservado fue liberado",
+          variant: "success",
         });
         navigate("/sales");
       } catch (error: any) {

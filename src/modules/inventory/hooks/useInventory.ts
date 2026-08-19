@@ -237,6 +237,7 @@ export const useInventory = () => {
       toast({
         title: "Éxito",
         description: "Inventario actualizado correctamente",
+        variant: "success",
       });
 
       setIsEditing(false);

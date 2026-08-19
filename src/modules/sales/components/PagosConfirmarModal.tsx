@@ -67,6 +67,7 @@ export const PagosConfirmarModal = ({
       toast({
         title: "Pago confirmado",
         description: `El pago de ${payment.franchiseName} por S/ ${payment.totalAmount.toFixed(2)} fue registrado correctamente.`,
+        variant: "success",
       });
       setPayments((prev) => prev.filter((p) => p.id !== payment.id));
     } catch (err) {

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import {
   SupportServiceError,
   type SupportAttachment,
@@ -88,7 +88,7 @@ export function useSupportRequestDetail() {
         console.error("Error sending support request message:", error);
         const err = error as SupportServiceError;
         // Escritura: sí lleva toast (igual que la creación de solicitudes)
-        toast.error(err?.message || "No se pudo enviar el mensaje");
+        toast({ title: err?.message || "No se pudo enviar el mensaje", variant: "destructive" });
         return false;
       } finally {
         setSending(false);

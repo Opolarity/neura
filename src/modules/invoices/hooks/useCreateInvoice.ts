@@ -243,7 +243,7 @@ export const useCreateInvoice = () => {
           if (shippingItem) orderItems.push(shippingItem);
 
           if (orderItems.length > 0) setItems(orderItems);
-          toast({ title: "Datos del pedido cargados correctamente" });
+          toast({ title: "Datos del pedido cargados correctamente", variant: "success" });
         }
 
         // 3.3. Set Movement Data (Creation from Movement)
@@ -269,7 +269,7 @@ export const useCreateInvoice = () => {
             total: +((movement.amount || 0) * 1.18).toFixed(2),
           }]);
           
-          toast({ title: "Datos del movimiento cargados correctamente" });
+          toast({ title: "Datos del movimiento cargados correctamente", variant: "success" });
         }
       } catch (error) {
         console.error("Error loading record data:", error);
@@ -390,7 +390,7 @@ export const useCreateInvoice = () => {
 
       if (orderItems.length > 0) setItems(orderItems);
 
-      toast({ title: "Datos del pedido cargados correctamente" });
+      toast({ title: "Datos del pedido cargados correctamente", variant: "success" });
     } catch (error: any) {
       console.error("Error loading order data:", error);
       toast({ title: "Error al cargar datos del pedido", variant: "destructive" });
@@ -443,7 +443,7 @@ export const useCreateInvoice = () => {
             clientName: name || "No encontrado",
           }));
           if (name) {
-            toast({ title: "Cliente encontrado vía consulta externa (no registrado en sistema)" });
+            toast({ title: "Cliente encontrado vía consulta externa (no registrado en sistema)", variant: "warning" });
           }
           return;
         }
@@ -506,7 +506,7 @@ export const useCreateInvoice = () => {
           movement_id: formData.movementId ? parseInt(formData.movementId) : undefined,
         });
 
-        toast({ title: "Comprobante actualizado exitosamente" });
+        toast({ title: "Comprobante actualizado exitosamente", variant: "success" });
       } else {
         await createInvoiceApi({
           invoice_type_id: parseInt(formData.invoiceTypeId),
@@ -530,7 +530,7 @@ export const useCreateInvoice = () => {
           order_id: formData.orderId ? parseInt(formData.orderId) : undefined,
           movement_id: formData.movementId ? parseInt(formData.movementId) : undefined,
         });
-        toast({ title: "Comprobante creado exitosamente" });
+        toast({ title: "Comprobante creado exitosamente", variant: "success" });
       }
       navigate("/invoices");
     } catch (error) {
@@ -563,6 +563,7 @@ export const useCreateInvoice = () => {
       toast({
         title: "Comprobante emitido en SUNAT",
         description: data?.sunat_description || "Emitido correctamente",
+        variant: "success",
       });
     } catch (error: any) {
       console.error("Error emitting invoice:", error);

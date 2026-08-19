@@ -422,7 +422,7 @@ export const SalesInvoicesModal = ({
         return;
       }
 
-      toast({ title: "Éxito", description: "Guía de remisión creada correctamente" });
+      toast({ title: "Éxito", description: "Guía de remisión creada correctamente", variant: "success" });
       setGuiaModalOpen(false);
       setPendingGuiaInvoiceType(null);
       fetchInvoices();
@@ -537,7 +537,7 @@ export const SalesInvoicesModal = ({
         return;
       }
 
-      toast({ title: "Éxito", description: `${invoiceType.name} creado correctamente` });
+      toast({ title: "Éxito", description: `${invoiceType.name} creado correctamente`, variant: "success" });
       fetchInvoices();
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
@@ -575,7 +575,7 @@ export const SalesInvoicesModal = ({
         return;
       }
 
-      toast({ title: "Éxito", description: "Comprobante emitido correctamente a SUNAT" });
+      toast({ title: "Éxito", description: "Comprobante emitido correctamente a SUNAT", variant: "success" });
       fetchInvoices();
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });

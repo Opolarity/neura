@@ -307,6 +307,7 @@ export const useCreateSendMovement = () => {
       toast({
         title: "Envío creado",
         description: `El envío #${adapted.requestId} fue creado exitosamente.`,
+        variant: "success",
       });
       navigate("/inventory/movement-requests");
     } catch (error) {

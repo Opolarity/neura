@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/hooks/use-toast";
 import type { CreateBrandPayload, EditBrandPayload } from "@/modules/products/types/Brands.types";
 import { slugify } from "@/shared/utils/slug";
 
@@ -88,7 +88,10 @@ export const useBrandsForm = ({ open, editBrand, onCreateBrand, onEditBrand, onS
             }
             onSuccess();
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Error al guardar la marca");
+            toast({
+              title: err instanceof Error ? err.message : "Error al guardar la marca",
+              variant: "destructive",
+            });
         }
     };
 

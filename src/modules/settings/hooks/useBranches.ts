@@ -85,6 +85,7 @@ const useBranches = () => {
             toast({
                 title: "Éxito",
                 description: "Sucursal eliminada correctamente",
+                variant: "success",
             });
 
             await loadBranches(filters);

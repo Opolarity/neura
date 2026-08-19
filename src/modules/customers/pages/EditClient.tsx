@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { toast } from "@/shared/hooks/use-toast";
 import { ArrowLeft } from 'lucide-react';
 import { PageLoader } from '@/shared/components/page-loader';
 
@@ -51,7 +51,7 @@ const EditClient = () => {
       if (error) throw error;
       setDocumentTypes(data || []);
     } catch (error: any) {
-      toast.error('Error al cargar tipos de documento: ' + error.message);
+      toast({ title: 'Error al cargar tipos de documento: ' + error.message, variant: "destructive" });
     }
   };
 
@@ -77,7 +77,7 @@ const EditClient = () => {
         });
       }
     } catch (error: any) {
-      toast.error('Error al cargar cliente: ' + error.message);
+      toast({ title: 'Error al cargar cliente: ' + error.message, variant: "destructive" });
       navigate('/customers/list');
     } finally {
       setFetching(false);
@@ -88,7 +88,7 @@ const EditClient = () => {
     e.preventDefault();
     
     if (!formData.name || !formData.last_name || !formData.document_type_id || !formData.document_number) {
-      toast.error('Por favor complete los campos obligatorios');
+      toast({ title: 'Por favor complete los campos obligatorios', variant: "destructive" });
       return;
     }
 
@@ -108,10 +108,10 @@ const EditClient = () => {
 
       if (error) throw error;
 
-      toast.success('Cliente actualizado exitosamente');
+      toast({ title: 'Cliente actualizado exitosamente', variant: "success" });
       navigate('/customers/list');
     } catch (error: any) {
-      toast.error('Error al actualizar cliente: ' + error.message);
+      toast({ title: 'Error al actualizar cliente: ' + error.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }

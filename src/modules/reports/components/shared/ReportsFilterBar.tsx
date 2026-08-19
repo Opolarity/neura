@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { refreshReportMviews } from '../../services/reports.service';
 import { useReportsFilters } from '../../context/ReportsFiltersContext';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from "@/shared/hooks/use-toast";
 import { DateRangeFilter } from '@/shared/components/date-range';
 
 const MAX_RANGE_DAYS = 90;
@@ -31,9 +31,9 @@ export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExt
     setRefreshing(true);
     try {
       await refreshReportMviews();
-      toast.success('Datos actualizados correctamente');
+      toast({ title: 'Datos actualizados correctamente', variant: "success" });
     } catch {
-      toast.error('Error al actualizar los datos');
+      toast({ title: 'Error al actualizar los datos', variant: "destructive" });
     } finally {
       setRefreshing(false);
     }
