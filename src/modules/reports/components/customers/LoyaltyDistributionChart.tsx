@@ -50,7 +50,24 @@ export function LoyaltyDistributionChart({ data, loading, byLoyalty }: Props) {
             className="h-52 w-full aspect-auto"
           >
             <PieChart>
-              <ChartTooltip content={<ChartTooltipContent hideLabel formatter={(value) => formatNumber(value as number)} />} />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    hideLabel
+                    formatter={(value, _name, item) => {
+                      const row = item?.payload as { name?: string } | undefined;
+                      return (
+                        <div className="flex w-full items-center justify-between gap-4 leading-none">
+                          <span className="text-muted-foreground">{row?.name}</span>
+                          <span className="font-mono font-medium tabular-nums text-foreground">
+                            {formatNumber(value as number)} clientes
+                          </span>
+                        </div>
+                      );
+                    }}
+                  />
+                }
+              />
               <Pie data={chartData} dataKey="value" nameKey="name" innerRadius={56} outerRadius={82} paddingAngle={2}>
                 {chartData.map((entry) => (
                   <Cell key={entry.level} fill={loyaltyBadgeColors[entry.level]} />
