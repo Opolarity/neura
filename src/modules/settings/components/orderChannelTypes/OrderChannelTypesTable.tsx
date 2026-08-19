@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ComponentPermission } from "@/shared/components/component-permission";
 import { OrderChannelType } from "../../types/OrderChannelTypes.types";
 
 interface OrderChannelTypesTableProps {
@@ -28,6 +29,17 @@ interface OrderChannelTypesTableProps {
   loading: boolean;
   onDelete?: (id: number) => void;
 }
+
+// Codes de la columna Acciones. En una constante para que la cabecera y las
+// celdas no puedan quedar con listas distintas y aparezca un th sin td o al
+// revés.
+const ACTION_CODES = ["sales_channels.edit", "sales_channels.delete"];
+
+// ID, Nombre, Código, POS, Acciones. Si el rol no tiene ninguna acción, la
+// columna no se pinta y este número queda uno largo: solo afecta a las filas de
+// carga y de "no hay canales", y la columna sobrante colapsa a 0px porque
+// ninguna otra fila la ocupa.
+const COL_SPAN = 5;
 
 const OrderChannelTypesTable = ({
   orderChannelTypes,
@@ -48,13 +60,18 @@ const OrderChannelTypesTable = ({
           <TableHead>Nombre</TableHead>
           <TableHead>Código</TableHead>
           <TableHead>POS</TableHead>
-          <TableHead>Acciones</TableHead>
+          {/* Basta con tener UNA de las dos acciones para que la columna tenga
+              sentido; cada botón de dentro lleva su propio code. Sin ninguna, se
+              omite la celda entera para no dejar el hueco. */}
+          <ComponentPermission codeIn={ACTION_CODES}>
+            <TableHead>Acciones</TableHead>
+          </ComponentPermission>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-8">
+            <TableCell colSpan={COL_SPAN} className="text-center py-8">
               <div className="flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Cargando canales de venta...
@@ -63,7 +80,7 @@ const OrderChannelTypesTable = ({
           </TableRow>
         ) : orderChannelTypes.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center text-muted-foreground">
+            <TableCell colSpan={COL_SPAN} className="text-center text-muted-foreground">
               No hay canales de venta registrados.
             </TableCell>
           </TableRow>
@@ -82,37 +99,46 @@ const OrderChannelTypesTable = ({
                   <Badge variant="secondary">No</Badge>
                 )}
               </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(type.id)}>
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                        <Trash2 className="w-4 h-4" />
+              <ComponentPermission codeIn={ACTION_CODES}>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <ComponentPermission codeIn={["sales_channels.edit"]}>
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(type.id)}>
+                        <Edit className="w-4 h-4" />
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar canal de venta?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Se desactivará el canal "{type.name}". Podrás reactivarlo editándolo posteriormente.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => onDelete?.(type.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Eliminar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </TableCell>
+                    </ComponentPermission>
+                    {/* El AlertDialog entero va dentro: si solo se envolviera el
+                        trigger, el diálogo de confirmación quedaría montado sin
+                        forma de abrirlo. */}
+                    <ComponentPermission codeIn={["sales_channels.delete"]}>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar canal de venta?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Se desactivará el canal "{type.name}". Podrás reactivarlo editándolo posteriormente.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => onDelete?.(type.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </ComponentPermission>
+                  </div>
+                </TableCell>
+              </ComponentPermission>
             </TableRow>
           ))
         )}
