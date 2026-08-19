@@ -115,7 +115,7 @@ export const useEditReturn = () => {
             setSelectedReturnType(details.return_type_id.toString());
             setReturnTypeCode(details.return_type_code || '');
             setOrderSituationCode(orderSituationCodeValue);
-            setOrderSituationName(details.order_situation?.name || '');
+            setOrderSituationName(details.order_situation?.name || details.order_situation_name || '');
             setOrderProducts(orderProductsData || []);
             setDocumentTypes(docTypesData || []);
             setSituations(filteredSituations);
