@@ -216,18 +216,9 @@ export interface InventorySummary {
   }>;
 }
 
-export interface LowStockProduct {
-  product_variation_id: number;
-  product_title: string;
-  sku: string;
-  warehouse_id: number;
-  warehouse_name: string;
+export interface LowStockDistributionItem {
   stock: number;
-}
-
-export interface PaginatedLowStock {
-  page: { page: number; size: number; total: number };
-  data: LowStockProduct[];
+  skus: number;
 }
 
 export interface StockRotationItem {

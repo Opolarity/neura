@@ -17,7 +17,7 @@ import type {
   SizeByCategoryItem,
   CategoryOverTimeItem,
   InventorySummary,
-  PaginatedLowStock,
+  LowStockDistributionItem,
   StockRotationItem,
   StockMovementTypeItem,
   InventoryValuation,
@@ -153,7 +153,7 @@ export const productsService = {
       p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 
-  getPareto: (f: ReportsFilters, limit: ParetoLimit = 20) =>
+  getPareto: (f: ReportsFilters, limit: ParetoLimit = 10) =>
     rpc<ProductsParetoItem[]>('sp_rpt_products_pareto', {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
@@ -200,12 +200,10 @@ export const inventoryService = {
       p_low_stock_threshold: threshold,
     }),
 
-  getLowStock: (warehouseId?: number, threshold = 10, page = 1, size = 20) =>
-    rpc<PaginatedLowStock>('sp_rpt_low_stock_products', {
+  getLowStockDistribution: (warehouseId?: number, threshold = 10) =>
+    rpc<LowStockDistributionItem[]>('sp_rpt_low_stock_distribution', {
       p_warehouse_id: warehouseId ?? undefined,
       p_threshold: threshold,
-      p_page: page,
-      p_size: size,
     }),
 
   getRotation: (f: ReportsFilters, warehouseId?: number, limit = 20) =>

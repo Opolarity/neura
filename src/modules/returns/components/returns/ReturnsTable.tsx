@@ -15,6 +15,7 @@ import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
 import ReturnsFilterBar from './ReturnsFilterBar';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
+import { ComponentPermission } from '@/shared/components/component-permission';
 
 interface ReturnsTableProps {
     returns: ReturnItem[];
@@ -27,6 +28,17 @@ interface ReturnsTableProps {
     onPageChange: (page: number) => void;
     onPageSizeChange: (size: number) => void;
 }
+
+// ID, Pedido, Cliente, Tipo, Estado, Reembolso, Total de orden, Fecha,
+// Usuario, Acciones. Si el rol no puede editar, la columna de Acciones no se
+// pinta y este número queda uno largo: solo afecta a las filas de "cargando" y
+// "no se encontraron devoluciones", y la columna sobrante colapsa a 0px porque
+// ninguna otra fila la ocupa.
+const COL_SPAN = 10;
+
+// Code de la columna Acciones, en una constante para que la cabecera y la celda
+// no puedan quedar con listas distintas y aparezca un th sin td o al revés.
+const ACTION_CODES = ["returns.edit"];
 
 const getSituationClassName = (code: string): string => {
     switch (code.toLowerCase()) {
@@ -62,13 +74,17 @@ export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, sea
                             <TableHead>Total de orden</TableHead>
                             <TableHead>Fecha</TableHead>
                             <TableHead>Usuario</TableHead>
-                            <TableHead className="text-right">Acciones</TableHead>
+                            {/* Se envuelve el th entero y no su texto: una celda vacía
+                                sigue ocupando su ancho y deja un hueco muerto. */}
+                            <ComponentPermission codeIn={ACTION_CODES}>
+                                <TableHead className="text-right">Acciones</TableHead>
+                            </ComponentPermission>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading && returns.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={10} className="text-center py-8">
+                                <TableCell colSpan={COL_SPAN} className="text-center py-8">
                                     <div className="flex items-center justify-center gap-2">
                                         <Loader2 className="w-4 h-4 animate-spin" />
                                         Cargando devoluciones...
@@ -77,7 +93,7 @@ export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, sea
                             </TableRow>
                         ) : returns.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                                <TableCell colSpan={COL_SPAN} className="text-center text-muted-foreground py-8">
                                     No se encontraron devoluciones
                                 </TableCell>
                             </TableRow>
@@ -108,17 +124,23 @@ export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, sea
                                 <TableCell>
                                     {returnItem.customer_name} {returnItem.customer_lastname}
                                 </TableCell>
-                                <TableCell className="text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => navigate(`/returns/edit/${returnItem.id}`)}
-                                        >
-                                            <SquarePen className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                </TableCell>
+                                <ComponentPermission codeIn={ACTION_CODES}>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                            {/* El botón lleva a /returns/edit/:id, ya protegida
+                                                con returns.edit: se reutiliza ese code. */}
+                                            <ComponentPermission codeIn={["returns.edit"]}>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => navigate(`/returns/edit/${returnItem.id}`)}
+                                                >
+                                                    <SquarePen className="w-4 h-4" />
+                                                </Button>
+                                            </ComponentPermission>
+                                        </div>
+                                    </TableCell>
+                                </ComponentPermission>
                             </TableRow>
                         ))}
                     </TableBody>

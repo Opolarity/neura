@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 interface PriceRulesHeaderProps {
   onNewRule: () => void;
@@ -43,37 +44,49 @@ export const PriceRulesHeader = ({
       <div className="flex items-center gap-2">
         {selectedCount > 0 && (
           <>
-            <Select value={bulkStatus} onValueChange={onBulkStatusChange}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">Activar</SelectItem>
-                <SelectItem value="false">Desactivar</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="default"
-              onClick={onApplyBulkStatus}
-              disabled={isApplying || isBulkDeleting}
-            >
-              Aplicar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={onBulkDelete}
-              disabled={isApplying || isBulkDeleting}
-              className="gap-2"
-            >
-              <Trash className="w-4 h-4" />
-              Eliminar {selectedCount} seleccionada{selectedCount === 1 ? "" : "s"}
-            </Button>
+            {/* Activar/desactivar en masa cambia is_active de las reglas
+                seleccionadas: es editar, solo que sin pasar por el formulario,
+                de ahí que reutilice price_rules.edit. */}
+            <ComponentPermission codeIn={["price_rules.edit"]}>
+              <Select value={bulkStatus} onValueChange={onBulkStatusChange}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Activar</SelectItem>
+                  <SelectItem value="false">Desactivar</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="default"
+                onClick={onApplyBulkStatus}
+                disabled={isApplying || isBulkDeleting}
+              >
+                Aplicar
+              </Button>
+            </ComponentPermission>
+            <ComponentPermission codeIn={["price_rules.delete"]}>
+              <Button
+                variant="destructive"
+                onClick={onBulkDelete}
+                disabled={isApplying || isBulkDeleting}
+                className="gap-2"
+              >
+                <Trash className="w-4 h-4" />
+                Eliminar {selectedCount} seleccionada{selectedCount === 1 ? "" : "s"}
+              </Button>
+            </ComponentPermission>
           </>
         )}
-        <Button onClick={onNewRule} className={selectedCount > 0 ? "hidden" : ""}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nueva Regla
-        </Button>
+        {/* El botón lleva a /discounts/price-rules/create, ya protegida con
+            price_rules.create: se reutiliza ese code para no ofrecer un botón
+            que acaba en una pantalla bloqueada. */}
+        <ComponentPermission codeIn={["price_rules.create"]}>
+          <Button onClick={onNewRule} className={selectedCount > 0 ? "hidden" : ""}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nueva Regla
+          </Button>
+        </ComponentPermission>
       </div>
     </div>
   );

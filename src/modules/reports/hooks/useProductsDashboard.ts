@@ -6,7 +6,7 @@ import type { Granularity, ParetoLimit, ProductSearchResult, ReportsFilters, Top
 
 export function useProductsDashboard(filters: ReportsFilters, applyVersion?: number) {
   const [topLimit, setTopLimit] = useState<TopLimit>(10);
-  const [paretoLimit, setParetoLimit] = useState<ParetoLimit>(20);
+  const [paretoLimit, setParetoLimit] = useState<ParetoLimit>(10);
   const [categoryGranularity, setCategoryGranularity] = useState<Granularity>('week');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [productSearch, setProductSearch] = useState('');

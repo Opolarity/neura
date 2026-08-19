@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { BirthdayProfile } from '../types/birthdayNotification.types';
+import { ComponentPermission } from '@/shared/components/component-permission';
 
 interface BirthdayNotificationTableProps {
   profiles: BirthdayProfile[];
@@ -17,6 +18,16 @@ interface BirthdayNotificationTableProps {
 }
 
 const STORE_NAME = 'Overtake';
+
+// Nombre, Teléfono, Cumpleaños, Estado, Acción. Si el rol no puede enviar el
+// saludo, la columna de Acción no se pinta y este número queda uno largo: solo
+// afecta a las filas de "cargando" y "no hay clientes", y la columna sobrante
+// colapsa a 0px porque ninguna otra fila la ocupa.
+const COL_SPAN = 5;
+
+// Code de la columna Acción, en una constante para que la cabecera y la celda
+// no puedan quedar con listas distintas y aparezca un th sin td o al revés.
+const ACTION_CODES = ['birthday_notifications.send'];
 
 function getBirthdayStatusBadge(daysOffset: number) {
   if (daysOffset === 0)
@@ -55,13 +66,17 @@ export const BirthdayNotificationTable = ({
           <TableHead>Teléfono</TableHead>
           <TableHead>Cumpleaños</TableHead>
           <TableHead>Estado</TableHead>
-          <TableHead className="text-right">Acción</TableHead>
+          {/* Se envuelve el th entero y no su texto: una celda vacía sigue
+              ocupando su ancho y deja un hueco muerto. */}
+          <ComponentPermission codeIn={ACTION_CODES}>
+            <TableHead className="text-right">Acción</TableHead>
+          </ComponentPermission>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-8">
+            <TableCell colSpan={COL_SPAN} className="text-center py-8">
               <div className="flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Cargando cumpleaños...
@@ -70,7 +85,7 @@ export const BirthdayNotificationTable = ({
           </TableRow>
         ) : profiles.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center text-muted-foreground p-10">
+            <TableCell colSpan={COL_SPAN} className="text-center text-muted-foreground p-10">
               No hay clientes con cumpleaños en este rango de fechas
             </TableCell>
           </TableRow>
@@ -81,16 +96,18 @@ export const BirthdayNotificationTable = ({
               <TableCell>{profile.phone}</TableCell>
               <TableCell>{formatBirthday(profile.birthdayDay)}</TableCell>
               <TableCell>{getBirthdayStatusBadge(profile.daysOffset)}</TableCell>
-              <TableCell className="text-right">
-                <Button
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 text-white gap-2"
-                  onClick={() => openWhatsApp(profile.phone)}
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  Enviar WhatsApp
-                </Button>
-              </TableCell>
+              <ComponentPermission codeIn={ACTION_CODES}>
+                <TableCell className="text-right">
+                  <Button
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                    onClick={() => openWhatsApp(profile.phone)}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Enviar WhatsApp
+                  </Button>
+                </TableCell>
+              </ComponentPermission>
             </TableRow>
           ))
         )}
