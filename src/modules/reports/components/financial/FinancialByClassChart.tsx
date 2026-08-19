@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
   ReportCard,
@@ -41,6 +41,7 @@ export function FinancialByClassChart({ data, loading }: Props) {
             <XAxis dataKey="clase" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
             <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={formatCurrencyAxis} className={chartAxis} />
             <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrencyAxis(value as number)} />} />
+            <ChartLegend content={<ChartLegendContent />} />
             <Bar dataKey="ingresos" fill="var(--color-ingresos)" radius={[4, 4, 0, 0]} />
             <Bar dataKey="egresos" fill="var(--color-egresos)" radius={[4, 4, 0, 0]} />
           </BarChart>
