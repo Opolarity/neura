@@ -48,9 +48,40 @@ function fitProjection(
   return { center: [centerLon, centerLat], scale };
 }
 
+// Normaliza nombres geográficos para matchear BD ↔ TopoJSON:
+// quita tildes/Ñ→N y todo lo no alfanumérico (espacios incluidos).
+// Ej: "CAÑETE" → "CANETE", "SAN JUAN DE LURIGANCHO" → "SANJUANDELURIGANCHO".
+function normGeo(s: string | null | undefined): string {
+  return (s ?? '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .toUpperCase();
+}
+
+// Casos que la normalización no cubre (clave = nombre normalizado del TopoJSON,
+// valor = geo_map normalizado de la BD).
+const PROV_ALIASES: Record<string, string> = { LIMA: 'LIMAMETROPOLITANA' };
+const DIST_ALIASES: Record<string, string> = { MAGDALENAVIEJA: 'PUEBLOLIBRE' };
+
+// Clave de datos para una provincia del TopoJSON. El alias LIMA → LIMA METROPOLITANA
+// solo aplica a la provincia Lima del departamento Lima (no a otras "Lima" posibles).
+function provDataKey(nombProv: string, firstNomb: string): string {
+  const key = normGeo(nombProv);
+  if (key === 'LIMA' && normGeo(firstNomb) === 'LIMA') return PROV_ALIASES['LIMA'];
+  return key;
+}
+
+function distDataKey(nombDist: string): string {
+  const key = normGeo(nombDist);
+  return DIST_ALIASES[key] ?? key;
+}
+
 function getColor(value: number, max: number): string {
   if (max === 0 || value === 0) return 'hsl(221,30%,93%)';
-  const t = Math.min(value / max, 1);
+  // Escala raíz cuadrada con piso perceptible: evita que zonas con pocas ventas
+  // queden casi blancas cuando una zona domina el máximo.
+  const t = Math.max(Math.sqrt(Math.min(value / max, 1)), 0.12);
   return `hsl(221,83%,${Math.round(92 - t * 50)}%)`;
 }
 
@@ -110,23 +141,27 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
 
   const dataMap = useMemo(() => {
     const map = new Map<string, SalesGeoHeatmapItem>();
-    for (const item of activeData) { if (item.geo_map) map.set(item.geo_map, item); }
+    for (const item of activeData) { if (item.geo_map) map.set(normGeo(item.geo_map), item); }
     return map;
   }, [activeData]);
 
-  const maxValue = useMemo(
-    () => activeData.length === 0 ? 0 : Math.max(...activeData.map((d) => d[metric] as number)),
-    [activeData, metric],
-  );
+  // Máximo solo sobre filas pintables (con geo_map): la fila "Sin departamento"
+  // nunca se pinta y lavaba toda la escala de color.
+  const maxValue = useMemo(() => {
+    const paintable = activeData.filter((d) => d.geo_map);
+    return paintable.length === 0 ? 0 : Math.max(...paintable.map((d) => d[metric] as number));
+  }, [activeData, metric]);
 
-  // Proyección dinámica según nivel
+  // Proyección dinámica según nivel. `geoMap` de los DrillLevel guarda la clave
+  // normalizada, por eso ambos lados se comparan con normGeo/provDataKey.
   const projectionConfig = useMemo(() => {
     if (selectedProv) {
-      const features = distFeatures.filter((f) => f.properties['NOMBPROV'] === selectedProv.geoMap);
+      // El TopoJSON de distritos sí usa "LIMA METROPOLITANA", basta normalizar.
+      const features = distFeatures.filter((f) => normGeo(f.properties['NOMBPROV']) === selectedProv.geoMap);
       return fitProjection(features);
     }
     if (selectedDept) {
-      const features = PROV_FEATURES.filter((f) => f.properties['FIRST_NOMB'] === selectedDept.geoMap);
+      const features = PROV_FEATURES.filter((f) => normGeo(f.properties['FIRST_NOMB']) === selectedDept.geoMap);
       return fitProjection(features);
     }
     return { center: [-75.0, -9.5] as [number, number], scale: 1700 };
@@ -138,9 +173,9 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
     ? `prov-${selectedDept.geoMap}`
     : 'national';
 
-  // Handlers de click
+  // Handlers de click — DrillLevel.geoMap guarda la clave normalizada
   const handleDeptClick = useCallback((props: Record<string, string>) => {
-    const geoMap = props['NOMBDEP'];
+    const geoMap = normGeo(props['NOMBDEP']);
     const item = dataMap.get(geoMap);
     if (!item?.state_id) return;
     setSelectedDept({ geoMap, label: item.label, id: item.state_id });
@@ -148,7 +183,7 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
   }, [dataMap]);
 
   const handleProvClick = useCallback((props: Record<string, string>) => {
-    const geoMap = props['NOMBPROV'];
+    const geoMap = provDataKey(props['NOMBPROV'], props['FIRST_NOMB']);
     const item = dataMap.get(geoMap);
     if (!item?.city_id) return;
     setSelectedProv({ geoMap, label: item.label, id: item.city_id });
@@ -219,10 +254,10 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
               <Geographies geography={distTopo}>
                 {({ geographies }) =>
                   geographies
-                    .filter((geo) => geo.properties['NOMBPROV'] === selectedProv!.geoMap)
+                    .filter((geo) => normGeo(geo.properties['NOMBPROV']) === selectedProv!.geoMap)
                     .map((geo) => {
                       const geoMap = geo.properties['NOMBDIST'] as string;
-                      const item   = dataMap.get(geoMap);
+                      const item   = dataMap.get(distDataKey(geoMap));
                       const value  = item ? (item[metric] as number) : 0;
                       return (
                         <Geography
@@ -247,10 +282,10 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
               <Geographies geography={provTopo}>
                 {({ geographies }) =>
                   geographies
-                    .filter((geo) => geo.properties['FIRST_NOMB'] === selectedDept!.geoMap)
+                    .filter((geo) => normGeo(geo.properties['FIRST_NOMB']) === selectedDept!.geoMap)
                     .map((geo) => {
                       const geoMap = geo.properties['NOMBPROV'] as string;
-                      const item   = dataMap.get(geoMap);
+                      const item   = dataMap.get(provDataKey(geoMap, geo.properties['FIRST_NOMB'] as string));
                       const value  = item ? (item[metric] as number) : 0;
                       return (
                         <Geography
@@ -277,7 +312,7 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
                 {({ geographies }) =>
                   geographies.map((geo) => {
                     const geoMap = geo.properties['NOMBDEP'] as string;
-                    const item   = dataMap.get(geoMap);
+                    const item   = dataMap.get(normGeo(geoMap));
                     const value  = item ? (item[metric] as number) : 0;
                     return (
                       <Geography
