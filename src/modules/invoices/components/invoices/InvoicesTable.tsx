@@ -12,6 +12,17 @@ import {
 } from "@/components/ui/table";
 import { Code, Edit, Eye, FileText, Loader2 } from "lucide-react";
 import type { InvoiceItem } from "../../types/Invoices.types";
+import { ComponentPermission } from "@/shared/components/component-permission";
+
+// Codes de la columna ACCIONES, en una constante para que la cabecera y la
+// celda no puedan quedar con listas distintas y aparezca un th sin td o al
+// revés.
+const ACTION_CODES = [
+  "invoices.view",
+  "invoices.edit",
+  "invoices.print",
+  "invoices.download",
+];
 
 interface TableInvoicesProps {
   invoices: InvoiceItem[];
@@ -63,7 +74,11 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
           <TableHead>TOTAL</TableHead>
           <TableHead>FECHA</TableHead>
           <TableHead>ESTADO</TableHead>
-          <TableHead>ACCIONES</TableHead>
+          {/* Se envuelve el th entero y no su texto: una celda vacía sigue
+              ocupando su ancho y deja un hueco muerto. */}
+          <ComponentPermission codeIn={ACTION_CODES}>
+            <TableHead>ACCIONES</TableHead>
+          </ComponentPermission>
         </TableRow>
       </TableHeader>
 
@@ -85,46 +100,56 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
                 {item.declared ? "Declarado" : "Pendiente"}
               </Badge>
             </TableCell>
-            <TableCell>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate(`/invoices/view/${item.id}`)}
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
-                {!item.declared && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate(`/invoices/edit/${item.id}`)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                )}
-                {item.pdfUrl && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    title="Ver PDF"
-                    onClick={() => window.open(item.pdfUrl!, "_blank", "noopener,noreferrer")}
-                  >
-                    <FileText className="w-4 h-4" />
-                  </Button>
-                )}
-                {item.xmlUrl && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    title="Descargar XML"
-                    onClick={() => downloadXml(item)}
-                  >
-                    <Code className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            </TableCell>
+            <ComponentPermission codeIn={ACTION_CODES}>
+              <TableCell>
+                <div className="flex items-center gap-1">
+                  <ComponentPermission codeIn={["invoices.view"]}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/invoices/view/${item.id}`)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </ComponentPermission>
+                  {!item.declared && (
+                    <ComponentPermission codeIn={["invoices.edit"]}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/invoices/edit/${item.id}`)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    </ComponentPermission>
+                  )}
+                  {item.pdfUrl && (
+                    <ComponentPermission codeIn={["invoices.print"]}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Ver PDF"
+                        onClick={() => window.open(item.pdfUrl!, "_blank", "noopener,noreferrer")}
+                      >
+                        <FileText className="w-4 h-4" />
+                      </Button>
+                    </ComponentPermission>
+                  )}
+                  {item.xmlUrl && (
+                    <ComponentPermission codeIn={["invoices.download"]}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Descargar XML"
+                        onClick={() => downloadXml(item)}
+                      >
+                        <Code className="w-4 h-4" />
+                      </Button>
+                    </ComponentPermission>
+                  )}
+                </div>
+              </TableCell>
+            </ComponentPermission>
           </TableRow>
         ))}
       </TableBody>

@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 function InvoicesHeader({ onOpenOrder }: { onOpenOrder: () => void }) {
   const navigate = useNavigate();
@@ -21,23 +22,28 @@ function InvoicesHeader({ onOpenOrder }: { onOpenOrder: () => void }) {
       </div>
 
       <div className="flex gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="flex gap-2">
-              <Plus className="h-4 w-4" />
-              Nueva Factura
-              <ChevronDown className="h-4 w-4 ml-1" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => navigate("/invoices/add")}>
-              Factura Vacía
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onOpenOrder}>
-              A partir de un pedido
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Las dos opciones del menú acaban emitiendo un comprobante —una en
+            blanco y la otra a partir de un pedido—, así que el menú entero
+            cuelga de invoices.create, el code de /invoices/add. */}
+        <ComponentPermission codeIn={["invoices.create"]}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="flex gap-2">
+                <Plus className="h-4 w-4" />
+                Nueva Factura
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate("/invoices/add")}>
+                Factura Vacía
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onOpenOrder}>
+                A partir de un pedido
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </ComponentPermission>
       </div>
     </div>
   );
