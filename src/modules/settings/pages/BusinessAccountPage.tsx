@@ -6,6 +6,7 @@ import { useBusinessAccount } from "../hooks/useBusinessAccount";
 import { BusinessAccountFormDialog } from "../components/business-account/BusinessAccountFormDialog";
 import { BusinessAccountDeleteDialog } from "../components/business-account/BusinessAccountDeleteDialog";
 import BusinessAccountTable from "../components/business-account/BusinessAccountTable";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 const BusinessAccountPage = () => {
   const {
@@ -38,16 +39,20 @@ const BusinessAccountPage = () => {
             Administra las cuentas de negocio del sistema
           </p>
         </div>
-        <Button
-          className="gap-2"
-          onClick={() => {
-            handleEditItemChange(null);
-            handleOpenChange(true);
-          }}
-        >
-          <Plus className="w-4 h-4" />
-          Crear Cuenta de Negocio
-        </Button>
+        {/* Aquí no hay ruta de creación que reutilizar: el alta se hace en el
+            mismo listado, abriendo BusinessAccountFormDialog en blanco. */}
+        <ComponentPermission codeIn={["business_accounts.create"]}>
+          <Button
+            className="gap-2"
+            onClick={() => {
+              handleEditItemChange(null);
+              handleOpenChange(true);
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            Crear Cuenta de Negocio
+          </Button>
+        </ComponentPermission>
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
