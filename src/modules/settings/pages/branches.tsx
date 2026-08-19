@@ -9,6 +9,7 @@ import BranchesTable from '../components/branches/BranchesTable';
 import useBranches from '../hooks/useBranches';
 import BranchesFilterBar from '../components/branches/BranchesFilterBar';
 import BranchesFilterModal from '../components/branches/BranchesFilterModal';
+import { ComponentPermission } from '@/shared/components/component-permission';
 
 const BranchesList = () => {
     const {
@@ -40,12 +41,17 @@ const BranchesList = () => {
                         Administra las sucursales del sistema
                     </p>
                 </div>
-                <Button asChild className="gap-2">
-                    <Link to="/settings/branches/create">
-                        <Plus className="w-4 h-4" />
-                        Crear Sucursal
-                    </Link>
-                </Button>
+                {/* El botón lleva a /settings/branches/create, ya protegida con
+                    branches.create: se reutiliza ese code para no ofrecer un
+                    botón que acaba en una pantalla bloqueada. */}
+                <ComponentPermission codeIn={["branches.create"]}>
+                    <Button asChild className="gap-2">
+                        <Link to="/settings/branches/create">
+                            <Plus className="w-4 h-4" />
+                            Crear Sucursal
+                        </Link>
+                    </Button>
+                </ComponentPermission>
             </div>
 
             {/* Branches Table */}
