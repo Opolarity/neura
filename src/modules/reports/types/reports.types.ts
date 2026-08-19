@@ -123,6 +123,34 @@ export interface ProductsByCategoryItem {
   product_count: number;
 }
 
+export interface ProductsParetoItem {
+  product_id: number;
+  product_title: string;
+  total_quantity: number;
+  total_revenue: number;
+  revenue_pct: number;
+  cumulative_pct: number;
+  abc_class: 'A' | 'B' | 'C';
+}
+
+export interface SizeByCategoryItem {
+  category_id: number | null;
+  category_name: string;
+  size_name: string;
+  total_quantity: number;
+  total_revenue: number;
+}
+
+export interface CategoryOverTimeItem {
+  period: string;
+  category_id: number | null;
+  category_name: string;
+  total_quantity: number;
+  total_revenue: number;
+}
+
+export type ParetoLimit = 10 | 20 | 30;
+
 export interface ProductSearchResult {
   id: number;
   title: string;

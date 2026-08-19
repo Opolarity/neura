@@ -5,7 +5,7 @@ import {
   EmptyReportState,
   ReportCard,
 } from '../shared/ReportScaffold';
-import { formatCurrencyAxis } from '../shared/reportChartUtils';
+import { chartQualitativeSeries, formatCurrencyAxis } from '../shared/reportChartUtils';
 import type { FinancialByPaymentItem } from '../../types/reports.types';
 
 interface Props {
@@ -18,26 +18,7 @@ export function FinancialByPaymentChart({ data, loading }: Props) {
     name: d.payment_method_name,
     value: d.income,
   }));
-  // Serie cualitativa armada con los tokens de color de `index.css`, alternando
-  // familias de tono para que dos porciones contiguas nunca queden en el mismo
-  // color. Al ser tokens, en `.dark` se aclaran solos (los `-soft-foreground`
-  // invierten su luminosidad) sin declarar nada aparte.
-  // Ojo al reordenar: en `.dark` los pares primary/ring y
-  // muted-foreground/pending-foreground colapsan al mismo valor, por eso van
-  // separados varias posiciones y no contiguos.
-  const colors = [
-    'hsl(var(--success))', // verde
-    'hsl(var(--primary))', // morado
-    'hsl(var(--warning))', // ámbar
-    'hsl(var(--info))', // azul
-    'hsl(var(--destructive))', // rojo
-    'hsl(var(--pending-foreground))', // gris oscuro
-    'hsl(var(--success-soft-foreground))', // verde oscuro
-    'hsl(var(--ring))', // morado claro
-    'hsl(var(--warning-soft-foreground))', // ámbar oscuro
-    'hsl(var(--muted-foreground))', // gris medio
-    'hsl(var(--destructive-soft-foreground))', // rojo oscuro
-  ];
+  const colors = chartQualitativeSeries;
 
   return (
     <ReportCard title="Ingresos por método de pago">

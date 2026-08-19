@@ -12,6 +12,10 @@ import type {
   ProductsByCategoryItem,
   ProductSearchResult,
   ProductDetailData,
+  ProductsParetoItem,
+  ParetoLimit,
+  SizeByCategoryItem,
+  CategoryOverTimeItem,
   InventorySummary,
   PaginatedLowStock,
   StockRotationItem,
@@ -137,6 +141,42 @@ export const productsService = {
       p_end_date: f.endDate ?? undefined,
       p_branch_id: f.branchId ?? undefined,
       p_sale_type_id: f.saleTypeId ?? undefined,
+    }),
+
+  getPareto: (f: ReportsFilters, limit: ParetoLimit = 20) =>
+    rpc<ProductsParetoItem[]>('sp_rpt_products_pareto', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+      p_sale_type_id: f.saleTypeId ?? undefined,
+      p_limit: limit,
+    }),
+
+  getSalesBySize: (f: ReportsFilters) =>
+    rpc<SizeByCategoryItem[]>('sp_rpt_products_sales_by_size', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+      p_sale_type_id: f.saleTypeId ?? undefined,
+    }),
+
+  getCategoryOverTime: (f: ReportsFilters, granularity: Granularity = 'week') =>
+    rpc<CategoryOverTimeItem[]>('sp_rpt_products_category_over_time', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_granularity: granularity,
+      p_branch_id: f.branchId ?? undefined,
+      p_sale_type_id: f.saleTypeId ?? undefined,
+    }),
+
+  // Reutiliza el RPC del tab financiero: devuelve unidades, ingresos y margen
+  // por producto — acá alimenta el scatter margen vs volumen.
+  getMarginScatter: (f: ReportsFilters, limit = 100) =>
+    rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+      p_limit: limit,
     }),
 };
 
