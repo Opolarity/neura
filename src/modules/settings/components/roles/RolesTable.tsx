@@ -3,6 +3,18 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Role } from '../../types/Roles.types';
+import { ComponentPermission } from '@/shared/components/component-permission';
+
+// Rol, Tipo, Usuarios, Permisos, Acciones. Si el rol no puede editar ni
+// eliminar, la columna de Acciones no se pinta y este número queda uno largo:
+// solo afecta a las filas de "cargando" y "no se encontraron roles", y la
+// columna sobrante colapsa a 0px porque ninguna otra fila la ocupa.
+const COL_SPAN = 5;
+
+// Codes de la columna Acciones, en una constante para que la cabecera y la
+// celda no puedan quedar con listas distintas y aparezca un th sin td o al
+// revés.
+const ACTION_CODES = ["roles.edit", "roles.delete"];
 
 interface RolesTableProps {
     roles: Role[];
@@ -20,14 +32,18 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                     <TableHead>Tipo</TableHead>
                     <TableHead>Usuarios</TableHead>
                     <TableHead>Permisos</TableHead>
-                    <TableHead>Acciones</TableHead>
+                    {/* Se envuelve el th entero y no su texto: una celda vacía
+                        sigue ocupando su ancho y deja un hueco muerto. */}
+                    <ComponentPermission codeIn={ACTION_CODES}>
+                        <TableHead>Acciones</TableHead>
+                    </ComponentPermission>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {
                     loading && roles.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8">
+                            <TableCell colSpan={COL_SPAN} className="text-center py-8">
                                 <div className="flex items-center justify-center gap-2">
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                     Cargando roles...
@@ -36,7 +52,7 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                         </TableRow>
                     ) : roles.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground">
+                            <TableCell colSpan={COL_SPAN} className="text-center text-muted-foreground">
                                 No se encontraron roles
                             </TableCell>
                         </TableRow>
@@ -69,20 +85,29 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                                         {r.permissionCount || 0} {r.permissionCount === 1 ? 'permiso' : 'permisos'}
                                     </Badge>
                                 </TableCell>
-                                <TableCell>
-                                    <div className="flex gap-1">
-                                        <Button variant="outline" size="sm" onClick={() => handleEditRole(r.id)}>
-                                            <Edit className="w-4 h-4" />
-                                        </Button>
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            onClick={() => onDeleteClick(r)}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                </TableCell>
+                                <ComponentPermission codeIn={ACTION_CODES}>
+                                    <TableCell>
+                                        <div className="flex gap-1">
+                                            {/* Editar lleva a /settings/roles/edit/:id, ya
+                                                protegida con roles.edit: se reutiliza ese
+                                                code. */}
+                                            <ComponentPermission codeIn={["roles.edit"]}>
+                                                <Button variant="outline" size="sm" onClick={() => handleEditRole(r.id)}>
+                                                    <Edit className="w-4 h-4" />
+                                                </Button>
+                                            </ComponentPermission>
+                                            <ComponentPermission codeIn={["roles.delete"]}>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    onClick={() => onDeleteClick(r)}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </ComponentPermission>
+                                        </div>
+                                    </TableCell>
+                                </ComponentPermission>
                             </TableRow>
                         ))
                     )

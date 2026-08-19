@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { ComponentPermission } from '@/shared/components/component-permission'
 
 export default function RolesHeader() {
     return (
@@ -12,12 +13,17 @@ export default function RolesHeader() {
                 </p>
             </div>
 
-            <Button asChild className="gap-2">
-                <Link to="/settings/roles/create">
-                    <Plus className="w-4 h-4" />
-                    Nuevo Rol
-                </Link>
-            </Button>
+            {/* El botón lleva a /settings/roles/create, ya protegida con
+                roles.create: se reutiliza ese code para no ofrecer un botón que
+                acaba en una pantalla bloqueada. */}
+            <ComponentPermission codeIn={["roles.create"]}>
+                <Button asChild className="gap-2">
+                    <Link to="/settings/roles/create">
+                        <Plus className="w-4 h-4" />
+                        Nuevo Rol
+                    </Link>
+                </Button>
+            </ComponentPermission>
         </div>
     )
 }
