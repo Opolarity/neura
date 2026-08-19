@@ -1,5 +1,5 @@
 import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
   EmptyReportState,
@@ -64,6 +64,7 @@ export function StockFlowChart({ data, loading, granularity, onGranularityChange
             <XAxis dataKey="fecha" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
             <YAxis tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
             <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatNumber(value as number)} />} />
+            <ChartLegend content={<ChartLegendContent />} />
             <Bar dataKey="entradas" fill="var(--color-entradas)" radius={[4, 4, 0, 0]} />
             <Bar dataKey="salidas" fill="var(--color-salidas)" radius={[4, 4, 0, 0]} />
             <Line dataKey="neto" type="monotone" stroke="var(--color-neto)" strokeWidth={2} dot={false} />

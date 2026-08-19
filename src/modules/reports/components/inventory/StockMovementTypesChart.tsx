@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
   ReportCard,
@@ -41,6 +41,7 @@ export function StockMovementTypesChart({ data, loading }: Props) {
             <XAxis dataKey="tipo" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
             <YAxis tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
             <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatNumber(value as number)} />} />
+            <ChartLegend content={<ChartLegendContent />} />
             <Bar dataKey="movimientos" fill="var(--color-movimientos)" radius={[4, 4, 0, 0]} />
             <Bar dataKey="unidades" fill="var(--color-unidades)" radius={[4, 4, 0, 0]} />
           </BarChart>
