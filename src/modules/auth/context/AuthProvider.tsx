@@ -45,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [appUserLoading, setAppUserLoading] = useState(true);
   const [companyShortName, setCompanyShortName] = useState("");
   const [companyShortNameLoading, setCompanyShortNameLoading] = useState(true);
+  const [signingOut, setSigningOut] = useState(false);
   // Evita recargar permisos cuando cambia el token (tab switch) sin cambio de usuario
   const lastFetchedUserId = useRef<string | null>('__unset__');
 
@@ -116,9 +117,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (currentUser) {
       const allowed = await validateErpAccess();
       if (!allowed) {
-        // Sesión de un usuario sin tipo COL (ej: cliente del ecommerce):
-        // se expulsa. signOut deja los estados de carga en false, así que
-        // no queda splash colgado.
+        // Sesión de un usuario sin tipo COL (ej: cliente del ecommerce): se
+        // expulsa. Al poner lastFetchedUserId en null, el SIGNED_OUT posterior
+        // entra aquí con userId null y sale por el early-return, así que
+        // permissionsLoading y appUserLoading se quedan en true. No cuelga
+        // nada: se acaba en /login, donde PublicRoute solo mira `loading`, y el
+        // siguiente login válido los vuelve a resolver.
         lastFetchedUserId.current = null;
         await signOut();
         return;
@@ -148,6 +152,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return prev?.id === next?.id ? prev : next;
       });
       setLoading(false);
+      // Aquí es donde muere el splash de "Cerrando sesión...": cuando ya no hay
+      // sesión, ProtectedLayout redirige al login y el splash sobra.
+      if (!session) setSigningOut(false);
       maybeRefetchUserData(session?.user ?? null);
     });
 
@@ -188,13 +195,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return { error: null };
   }, [validateErpAccess]);
 
+  // Aquí NO se limpian permisos ni appUser: hacerlo antes del signOut dejaba un
+  // render con el usuario todavía dentro pero con permissionCodes vacío y
+  // permissionsLoading en false, y ProtectedRoute lo leía como "no tienes
+  // acceso" (toast rojo + redirección a /) antes de que llegara el SIGNED_OUT.
+  // El propio onAuthStateChange ya limpia todo vía maybeRefetchUserData(null),
+  // y lo hace en el mismo lote que setUser(null), así que ProtectedLayout se va
+  // al login sin que ProtectedRoute llegue a renderizarse.
   const signOut = useCallback(async () => {
-    setPermissionCodes([]);
-    setIsAdmin(false);
-    setPermissionsLoading(false);
-    setAppUser(null);
-    setAppUserLoading(false);
-    await supabase.auth.signOut({scope: 'local'});
+    setSigningOut(true);
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (error) {
+      console.error('[AuthProvider] signOut falló:', error);
+      // Sin esto el splash se quedaría pegado: el SIGNED_OUT que lo apaga no va
+      // a llegar nunca.
+      setSigningOut(false);
+    }
   }, []);
 
   const refreshPermissions = useCallback(async () => {
@@ -218,6 +235,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       appUserLoading,
       companyShortName,
       companyShortNameLoading,
+      signingOut,
       signIn,
       signOut,
       refreshPermissions,
@@ -233,6 +251,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       appUserLoading,
       companyShortName,
       companyShortNameLoading,
+      signingOut,
       signIn,
       signOut,
       refreshPermissions,
