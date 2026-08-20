@@ -240,6 +240,7 @@ export interface CreateOrderRequest {
     stockTypeId: number;
   }>;
   payments: Array<{
+    dbId?: number | null; // id real de order_payment: permite a update-order emparejar por id en vez de adivinar
     paymentMethodId: number;
     amount: number;
     date: string;
