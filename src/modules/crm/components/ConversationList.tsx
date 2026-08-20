@@ -93,7 +93,7 @@ export const ConversationList = ({
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   selected
                     ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
+                    : "hover:bg-primary/10"
                 )}
               >
                 <div className="flex min-w-0 items-baseline gap-2">

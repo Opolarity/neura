@@ -175,7 +175,7 @@ const InboxPage = () => {
       <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-card">
         {loading && <PageLoader message="Cargando conversaciones…" />}
 
-        <aside className="flex w-[360px] shrink-0 flex-col border-r border-border bg-muted/30">
+        <aside className="flex w-[360px] shrink-0 flex-col border-r border-primary/15 bg-primary/[0.05]">
           <ConversationList
             conversations={data}
             selectedIdentity={selectedIdentity}
