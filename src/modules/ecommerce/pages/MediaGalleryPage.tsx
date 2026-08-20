@@ -10,6 +10,7 @@ import type { Medio } from "../types/medios.types";
 import type { MediaGalleryItem } from "../types/MediaGallery.types";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 const toMedio = (item: MediaGalleryItem): Medio => ({
   id: item.id,
@@ -52,7 +53,11 @@ const MediaGalleryPage = () => {
         hasActiveFilters={hasActiveFilters}
       />
 
-      <MediaDropzone onUpload={handleUpload} uploading={uploading} />
+      {/* La dropzone entera es el control de subida —el área completa es
+          clicable y acepta drag&drop—, así que se oculta como un bloque. */}
+      <ComponentPermission codeIn={["ecommerce_media.create"]}>
+        <MediaDropzone onUpload={handleUpload} uploading={uploading} />
+      </ComponentPermission>
 
       {/* Sin CardHeader: la galería no tiene barra de filtros dentro de la Card.
           Solo el grid scrollea; la paginación queda fija en el footer. */}

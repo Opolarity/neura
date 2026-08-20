@@ -57,6 +57,7 @@ import {
 import ShortDescriptionMayModal from "../components/DescriptionMaYModal";
 import PromotionalImageModal from "../components/PromotionalImage";
 import EcommerceEditorButton from "@/shared/components/EcommerceEditorButton";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 
 const PromotionalTextPage = () => {
@@ -355,91 +356,101 @@ const PromotionalTextPage = () => {
           <p className="text-gray-600">Gestiona y actualiza los productos del ecommerce</p>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
-          <EcommerceEditorButton variant="outline" />
-<DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                className="gap-2"
-                disabled={selectedProducts.length === 0}
-              >
-                <Plus className="w-4 h-4" />
-                Edicion masiva
-                <ChevronDown className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setIsModalOpen(true)}
-              >
-                <Tag className="w-4 h-4" />
-                Texto Promocional
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setIsSizeImagesModalOpen(true)}
-              >
-                <Ruler className="w-4 h-4" />
-                Imágenes de Tallas
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setIsPromotionalImageModal(true)}
-              >
-                <Image className="w-4 h-4" />
-                Imágenes Promocionales
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setIsShortDesMayModalOpen(true)}
-              >
-                <AlignLeft className="w-4 h-4" />
-                Descripción Mayorista
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setIsShortDescModalOpen(true)}
-              >
-                <AlignRight className="w-4 h-4" />
-                Descripción Minorista
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setIsOtherDescMinModalOpen(true)}
-              >
-                <AlignRight className="w-4 h-4" />
-                Otra descripción min.
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setIsOtherDescMayModalOpen(true)}
-              >
-                <AlignLeft className="w-4 h-4" />
-                Otra descripción may.
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setIsSalesChannelsModalOpen(true)}
-              >
-                <Radio className="w-4 h-4" />
-                Canales de Venta
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setIsAssignTagsOpen(true)}
-              >
-                <Tags className="w-4 h-4" />
-                Etiquetas
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setIsAssignBrandsOpen(true)}
-              >
-                <Bookmark className="w-4 h-4" />
-                Marcas
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Abre el editor de la tienda pública vía SSO, en otra pestaña: es
+              otra herramienta, no una edición de productos, de ahí su propio
+              code. */}
+          <ComponentPermission codeIn={["ecommerce_editor.open"]}>
+            <EcommerceEditorButton variant="outline" />
+          </ComponentPermission>
+          {/* Las diez opciones del menú escriben propiedades del producto
+              (descripciones, imágenes, canales, etiquetas, marcas), solo que en
+              lote: cuelgan del mismo products.edit que la ficha individual. */}
+          <ComponentPermission codeIn={["products.edit"]}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className="gap-2"
+                  disabled={selectedProducts.length === 0}
+                >
+                  <Plus className="w-4 h-4" />
+                  Edicion masiva
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setIsModalOpen(true)}
+                >
+                  <Tag className="w-4 h-4" />
+                  Texto Promocional
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setIsSizeImagesModalOpen(true)}
+                >
+                  <Ruler className="w-4 h-4" />
+                  Imágenes de Tallas
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setIsPromotionalImageModal(true)}
+                >
+                  <Image className="w-4 h-4" />
+                  Imágenes Promocionales
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setIsShortDesMayModalOpen(true)}
+                >
+                  <AlignLeft className="w-4 h-4" />
+                  Descripción Mayorista
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setIsShortDescModalOpen(true)}
+                >
+                  <AlignRight className="w-4 h-4" />
+                  Descripción Minorista
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setIsOtherDescMinModalOpen(true)}
+                >
+                  <AlignRight className="w-4 h-4" />
+                  Otra descripción min.
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setIsOtherDescMayModalOpen(true)}
+                >
+                  <AlignLeft className="w-4 h-4" />
+                  Otra descripción may.
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setIsSalesChannelsModalOpen(true)}
+                >
+                  <Radio className="w-4 h-4" />
+                  Canales de Venta
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setIsAssignTagsOpen(true)}
+                >
+                  <Tags className="w-4 h-4" />
+                  Etiquetas
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setIsAssignBrandsOpen(true)}
+                >
+                  <Bookmark className="w-4 h-4" />
+                  Marcas
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </ComponentPermission>
         </div>
       </div>
 

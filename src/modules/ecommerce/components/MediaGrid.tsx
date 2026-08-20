@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateDisplay } from "@/shared/utils/date";
 import type { Medio } from "../types/medios.types";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 interface MediaGridProps {
   medios: Medio[];
@@ -61,17 +62,19 @@ const MediaGrid = ({ medios, loading, onSelect, onDelete }: MediaGridProps) => {
             <p className="text-xs font-medium truncate text-foreground">{medio.name}</p>
             <p className="text-[10px] text-muted-foreground">{formatDateDisplay(medio.created_at)}</p>
           </div>
-          <Button
-            variant="destructive"
-            size="icon"
-            className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(medio);
-            }}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+          <ComponentPermission codeIn={["ecommerce_media.delete"]}>
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(medio);
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </ComponentPermission>
         </Card>
       ))}
     </div>

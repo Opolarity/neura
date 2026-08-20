@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,54 +62,63 @@ const RolesFilterModal = ({
           <DialogTitle>Filtrar Roles</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="is_admin">Tipo de Rol</Label>
-            <Select
-              value={
-                internalFilters.is_admin?.toString() == null
-                  ? "none"
-                  : String(internalFilters.is_admin.toString())
-              }
-              onValueChange={handleIsAdminChange}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Todos</SelectItem>
-                <SelectItem value="true">Administrador</SelectItem>
-                <SelectItem value="false">Regular</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Tope de altura + scroll interno: sin esto el modal se estira hasta
+            dejar el footer fuera de la pantalla. El max-h va en un contenedor
+            propio, no en el ScrollArea ni en el DialogContent. El pr-4 aparta el
+            contenido de la barra de scroll, que si no roza el borde derecho de
+            inputs y selects. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4 pl-1 pr-4">
+              <div className="grid gap-2">
+                <Label htmlFor="is_admin">Tipo de Rol</Label>
+                <Select
+                  value={
+                    internalFilters.is_admin?.toString() == null
+                      ? "none"
+                      : String(internalFilters.is_admin.toString())
+                  }
+                  onValueChange={handleIsAdminChange}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Todos</SelectItem>
+                    <SelectItem value="true">Administrador</SelectItem>
+                    <SelectItem value="false">Regular</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="minuser">Min. Usuarios</Label>
-              <Input
-                id="minuser"
-                type="number"
-                placeholder="0"
-                min={0}
-                value={internalFilters.minuser || ""}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={(e) => handleMinUserChange(e.target.value)}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="minuser">Min. Usuarios</Label>
+                  <Input
+                    id="minuser"
+                    type="number"
+                    placeholder="0"
+                    min={0}
+                    value={internalFilters.minuser || ""}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={(e) => handleMinUserChange(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="maxuser">Max. Usuarios</Label>
+                  <Input
+                    id="maxuser"
+                    type="number"
+                    placeholder="100"
+                    min={0}
+                    value={internalFilters.maxuser || ""}
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                    onChange={(e) => handleMaxUserChange(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="maxuser">Max. Usuarios</Label>
-              <Input
-                id="maxuser"
-                type="number"
-                placeholder="100"
-                min={0}
-                value={internalFilters.maxuser || ""}
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                onChange={(e) => handleMaxUserChange(e.target.value)}
-              />
-            </div>
-          </div>
+          </ScrollArea>
         </div>
 
                 <DialogFooter className="flex gap-2">
