@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowUp, CheckCircle2, ChevronDown, Code, Eye, FileText, Loader2, Printer, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchOrderPaidAmount } from "../../../services";
+import { getSalePaymentStatusFromAmounts } from "../../../utils/salePaymentStatus";
 import { buildVariantTitle } from "../../../utils/buildVariantTitle";
 import {
   SHIPPING_ITEM_DESCRIPTION,
@@ -142,18 +144,8 @@ export default function InvoicingStep({
 
   const checkPaymentStatus = async () => {
     try {
-      const { data, error } = await supabase
-        .from("order_payment")
-        .select("amount")
-        .eq("order_id", orderId);
-
-      if (error || !data) {
-        setIsFullyPaid(false);
-        return;
-      }
-
-      const totalPaid = data.reduce((sum, p) => sum + Number(p.amount), 0);
-      setIsFullyPaid(Math.round(totalPaid * 100) === Math.round(orderTotal * 100));
+      const totalPaid = await fetchOrderPaidAmount(orderId);
+      setIsFullyPaid(getSalePaymentStatusFromAmounts(totalPaid, orderTotal) === "paid");
     } catch {
       setIsFullyPaid(false);
     }
@@ -224,13 +216,10 @@ export default function InvoicingStep({
       }
     }
 
-    const { data: payments } = await supabase
-      .from("order_payment")
-      .select("amount")
-      .eq("order_id", orderId);
-
-    const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
-    if (Math.round(totalPaid * 100) !== Math.round(orderTotal * 100)) {
+    // Solo cuentan los pagos confirmados (completed = true) con importe positivo: un pago
+    // pendiente no cancela la orden, y basta con que los confirmados cubran el total.
+    const totalPaid = await fetchOrderPaidAmount(orderId);
+    if (getSalePaymentStatusFromAmounts(totalPaid, orderTotal) !== "paid") {
       return { valid: false, error: "La suma de pagos no coincide con el total de la orden." };
     }
 
