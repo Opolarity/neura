@@ -24,8 +24,8 @@ export function useAssistant() {
       const replyId = newId();
       setMessages((prev) => [
         ...prev,
-        { id: newId(), role: "user", text: clean, createdAt: new Date().toISOString() },
-        { id: replyId, role: "assistant", text: "", createdAt: new Date().toISOString(), streaming: true },
+        { id: newId(), role: "user", blocks: [clean], steps: [], createdAt: new Date().toISOString() },
+        { id: replyId, role: "assistant", blocks: [], steps: [], createdAt: new Date().toISOString(), streaming: true },
       ]);
 
       const controller = new AbortController();
@@ -34,9 +34,38 @@ export function useAssistant() {
       try {
         await streamChat(
           clean,
-          (delta) => {
+          (delta, newBlock) => {
             setMessages((prev) =>
-              prev.map((m) => (m.id === replyId ? { ...m, text: m.text + delta } : m)),
+              prev.map((m) => {
+                if (m.id !== replyId) return m;
+                // Bloque nuevo => se abre otro parrafo. Si no, el texto se
+                // acumula en el ultimo (Claude llega token a token).
+                if (newBlock || m.blocks.length === 0) {
+                  return { ...m, blocks: [...m.blocks, delta] };
+                }
+                const blocks = [...m.blocks];
+                blocks[blocks.length - 1] += delta;
+                return { ...m, blocks };
+              }),
+            );
+          },
+          (tool, state) => {
+            setMessages((prev) =>
+              prev.map((m) => {
+                if (m.id !== replyId) return m;
+                if (state === "end") {
+                  // Se cierra el ultimo paso abierto de esa herramienta.
+                  const steps = [...m.steps];
+                  for (let i = steps.length - 1; i >= 0; i--) {
+                    if (steps[i].tool === tool && !steps[i].done) {
+                      steps[i] = { ...steps[i], done: true };
+                      break;
+                    }
+                  }
+                  return { ...m, steps };
+                }
+                return { ...m, steps: [...m.steps, { tool, done: false }] };
+              }),
             );
           },
           controller.signal,

@@ -24,10 +24,34 @@ export interface AssistantConnection {
 
 export type AssistantRole = "user" | "assistant";
 
+/**
+ * Etiqueta legible de cada herramienta. La linea de estado dice QUE esta
+ * haciendo el asistente; es mas util que volcar su prosa intermedia
+ * ("voy a consultar el esquema y despues...").
+ */
+export const TOOL_LABEL: Record<string, string> = {
+  get_erp_schema: "Revisando la estructura del ERP",
+  run_erp_query: "Consultando la base de datos",
+};
+
+export interface AssistantStep {
+  tool: string;
+  /** false mientras corre: la UI pinta el spinner. */
+  done: boolean;
+}
+
 export interface AssistantMessage {
   id: string;
   role: AssistantRole;
-  text: string;
+  /**
+   * Un mensaje del asistente llega en VARIOS bloques: los intermedios son
+   * razonamiento ("voy a consultar el esquema...") y el ultimo es la respuesta.
+   * Se guardan separados porque concatenarlos produce un parrafo ilegible con
+   * frases pegadas sin espacio.
+   */
+  blocks: string[];
+  /** Herramientas usadas en este turno, en orden. */
+  steps: AssistantStep[];
   createdAt: string;
   /** Solo en curso: el mensaje se esta transmitiendo por SSE. */
   streaming?: boolean;
