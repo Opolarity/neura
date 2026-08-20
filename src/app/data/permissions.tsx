@@ -75,6 +75,7 @@ import MassiveEditPage from "@/modules/ecommerce/pages/MassiveEditPage";
 import ReclamacionesPage from "@/modules/ecommerce/pages/ReclamacionesPage";
 import ReclamacionViewPage from "@/modules/ecommerce/pages/ReclamacionViewPage";
 import AssistantPage from "@/modules/assistant/pages/AssistantPage";
+import CrmInboxPage from "@/modules/crm/pages/InboxPage";
 import {
   LayoutGrid,
   Tag,
@@ -85,6 +86,7 @@ import {
   Settings,
   Contact,
   Bot,
+  MessagesSquare,
   type LucideIcon,
 } from "lucide-react";
 
@@ -317,6 +319,22 @@ export const APP_PERMISSIONS_CONFIG = [
 
         ],
   },
+{
+  name: "CRM",
+    icon: MessagesSquare,
+      code: "crm",
+        node: [
+          {
+            code: "crm.group", name: "Chats", node: [
+              // La bandeja lee chat_conversations del canal CHBOTW: hoy el ERP
+              // comparte numero con el chatbot, asi que los mensajes que el bot
+              // ya registra son los mismos que ve el equipo.
+              { name: "Chats", path: "/crm/conversations", code: "crm_conversations.list", element: <CrmInboxPage />, showSidebar: true, node: [] },
+            ]
+          },
+
+        ],
+},
 ] as const satisfies ModulePermission[];
 
 //#region TYPED FOR CAPABILITIES
