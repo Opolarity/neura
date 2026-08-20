@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Send } from "lucide-react";
+import { Database, Loader2, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { AssistantMessage } from "../types";
+import { TOOL_LABEL, type AssistantMessage } from "../types";
 
 interface Props {
   messages: AssistantMessage[];
@@ -14,48 +14,51 @@ interface Props {
 }
 
 /**
- * Un turno del asistente. Codex emite varios mensajes por turno: los primeros
- * son razonamiento ("voy a consultar el esquema...") y el ultimo es la
- * respuesta. Antes se concatenaban y salia un parrafo con las frases pegadas
- * sin espacio; aqui el razonamiento va aparte, atenuado, y la respuesta destaca.
+ * Un turno del asistente: avatar, lo que esta haciendo, y lo que responde.
+ *
+ * La linea de estado sale de las herramientas que llamo, no de su prosa
+ * intermedia: "Consultando la base de datos" dice mas que "voy a revisar el
+ * esquema y despues calcularlo". Los mensajes intermedios se descartan; solo
+ * se pinta el ultimo bloque, que es la respuesta.
  */
 function AssistantTurn({ message }: { message: AssistantMessage }) {
   const bloques = message.blocks.filter((b) => b.trim());
-  const pensando = bloques.slice(0, -1);
-  const respuesta = bloques.length ? bloques[bloques.length - 1] : "";
+  const respuesta = bloques.length ? bloques[bloques.length - 1].trim() : "";
+  // Mientras no haya respuesta, el ultimo mensaje intermedio hace de avance
+  // (suele ser una repregunta: "¿de que periodo?").
+  const enCurso = message.streaming && !respuesta && bloques.length > 0;
 
   return (
-    <div className="flex flex-col gap-2 items-start">
-      {pensando.length > 0 && (
-        <div className="max-w-[80%] flex flex-col gap-1">
-          {pensando.map((paso, i) => (
-            <p
-              key={i}
-              className="text-xs text-muted-foreground whitespace-pre-wrap break-words"
-            >
-              {paso.trim()}
-            </p>
-          ))}
-        </div>
-      )}
+    <div className="flex gap-3">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted mt-0.5">
+        <Sparkles className="h-4 w-4" />
+      </span>
 
-      {/* Mientras se transmite, el ultimo bloque puede seguir creciendo: se
-          pinta igual, y el spinner solo aparece si aun no llego nada. */}
-      {respuesta ? (
-        <div className="max-w-[80%] rounded-lg bg-muted px-4 py-2">
-          <p className="whitespace-pre-wrap break-words text-sm">{respuesta.trim()}</p>
-        </div>
-      ) : (
-        message.streaming && (
-          <div className="max-w-[80%] rounded-lg bg-muted px-4 py-2">
-            <Loader2 className="w-4 h-4 animate-spin" />
+      <div className="flex flex-1 flex-col gap-2 min-w-0">
+        {message.steps.map((paso, i) => (
+          <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+            {paso.done ? (
+              <Database className="h-4 w-4 shrink-0" />
+            ) : (
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+            )}
+            <span className="truncate">{TOOL_LABEL[paso.tool] ?? paso.tool}</span>
           </div>
-        )
-      )}
+        ))}
 
-      {message.streaming && respuesta && (
-        <span className="text-xs text-muted-foreground">Pensando...</span>
-      )}
+        {message.streaming && message.steps.length === 0 && !respuesta && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+            <span>Pensando...</span>
+          </div>
+        )}
+
+        {(respuesta || enCurso) && (
+          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+            {respuesta || bloques[bloques.length - 1].trim()}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -83,11 +86,11 @@ export function ChatThread({ messages, sending, error, onSend, onStop }: Props) 
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <p className="text-sm text-muted-foreground">
-              Escribe abajo para empezar la conversación.
+              Pregunta por tus ventas, tu stock o tus clientes.
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
             {messages.map((m) =>
               m.role === "user" ? (
                 <div key={m.id} className="flex justify-end">
@@ -135,7 +138,7 @@ export function ChatThread({ messages, sending, error, onSend, onStop }: Props) 
           </Button>
         ) : (
           <Button onClick={submit} disabled={!draft.trim()} title="Enviar mensaje">
-            <Send className="w-4 h-4" />
+            <Send className="h-4 w-4" />
           </Button>
         )}
       </div>
