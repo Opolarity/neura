@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TOOL_LABEL, type AssistantMessage } from "../types";
+import { RichText } from "./RichText";
 
 interface Props {
   messages: AssistantMessage[];
@@ -54,9 +55,9 @@ function AssistantTurn({ message }: { message: AssistantMessage }) {
         )}
 
         {(respuesta || enCurso) && (
-          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-            {respuesta || bloques[bloques.length - 1].trim()}
-          </p>
+          <div className="text-sm leading-relaxed">
+            <RichText text={respuesta || bloques[bloques.length - 1].trim()} />
+          </div>
         )}
       </div>
     </div>
