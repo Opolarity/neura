@@ -1,9 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import { throwFunctionError } from "@/shared/utils/functionError";
 
+export type PendingPaymentStatus = "pending" | "approved";
+
+export type PendingPaymentFilter = "all" | PendingPaymentStatus;
+
 export type PendingPaymentRow = {
   id: number;
   createdAt: string;
+  processedAt: string | null;
+  status: PendingPaymentStatus;
   franchiseName: string;
   totalAmount: number;
   files: string[];
@@ -20,6 +26,8 @@ export type PendingPaymentRow = {
 type RawPendingRequest = {
   id: number;
   created_at: string;
+  processed_at: string | null;
+  status: PendingPaymentStatus;
   payload: {
     franchise_name: string;
     total_amount: number;
@@ -35,27 +43,59 @@ type RawPendingRequest = {
   };
 };
 
-export const fetchPendingPayments = async (): Promise<PendingPaymentRow[]> => {
-  const { data, error } = await (supabase as any)
+export type FetchPendingPaymentsParams = {
+  status?: PendingPaymentFilter;
+  page?: number;
+  size?: number;
+};
+
+export type FetchPendingPaymentsResult = {
+  rows: PendingPaymentRow[];
+  total: number;
+};
+
+export const fetchPendingPayments = async ({
+  status = "pending",
+  page = 1,
+  size = 20,
+}: FetchPendingPaymentsParams = {}): Promise<FetchPendingPaymentsResult> => {
+  const from = (page - 1) * size;
+  const to = from + size - 1;
+
+  let query = (supabase as any)
     .from("pending_requests")
-    .select("id, created_at, payload")
-    .eq("from_fn", "fch-update-order-payments")
-    .eq("status", "pending")
-    .order("created_at", { ascending: false });
+    .select("id, created_at, processed_at, status, payload", {
+      count: "exact",
+    })
+    .eq("from_fn", "fch-update-order-payments");
+
+  query =
+    status === "all"
+      ? query.in("status", ["pending", "approved"])
+      : query.eq("status", status);
+
+  const { data, error, count } = await query
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) throw error;
 
-  return ((data ?? []) as RawPendingRequest[]).map((row) => ({
-    id: row.id,
-    createdAt: row.created_at,
-    franchiseName: row.payload.franchise_name,
-    totalAmount: row.payload.total_amount,
-    files: row.payload.files ?? [],
-    movementCode: row.payload.movement_code,
-    businessAccountId: row.payload.business_account_id,
-    paymentMethodId: row.payload.payment_method_id,
-    orderProducts: row.payload.order_products ?? [],
-  }));
+  return {
+    rows: ((data ?? []) as RawPendingRequest[]).map((row) => ({
+      id: row.id,
+      createdAt: row.created_at,
+      processedAt: row.processed_at,
+      status: row.status,
+      franchiseName: row.payload.franchise_name,
+      totalAmount: row.payload.total_amount,
+      files: row.payload.files ?? [],
+      movementCode: row.payload.movement_code,
+      businessAccountId: row.payload.business_account_id,
+      paymentMethodId: row.payload.payment_method_id,
+      orderProducts: row.payload.order_products ?? [],
+    })),
+    total: count ?? 0,
+  };
 };
 
 export const confirmPendingPayment = async (
