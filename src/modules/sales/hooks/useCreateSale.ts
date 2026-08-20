@@ -2070,6 +2070,9 @@ export const useCreateSale = () => {
           payments: payments
             .filter((p) => p.paymentMethodId && p.amount)
             .map((p) => ({
+              // dbId viaja al backend para que update-order actualice la fila exacta:
+              // sin él todos los pagos llegan sin id y se emparejan por heurística.
+              dbId: p.dbId ?? null,
               paymentMethodId: parseInt(p.paymentMethodId),
               amount: parseFloat(p.amount) || 0,
               date: new Date().toISOString(),
