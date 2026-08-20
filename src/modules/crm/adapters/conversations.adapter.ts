@@ -1,5 +1,9 @@
 import type { PaginationState } from "@/shared/components/pagination/Pagination";
 import type {
+  BoardApiResponse,
+  BoardCard,
+  BoardCardApi,
+  BoardColumn,
   Conversation,
   ConversationApiRow,
   ConversationMessage,
@@ -107,3 +111,37 @@ const messageAdapter = (row: MessageApiRow): ConversationMessage => ({
 
 export const threadAdapter = (response: ThreadApiResponse): ConversationMessage[] =>
   (response.messages ?? []).map(messageAdapter);
+
+// ---------------------------------------------------------------------------
+// Tablero
+// ---------------------------------------------------------------------------
+
+/**
+ * La tarjeta reusa las MISMAS reglas de título y subtítulo que la bandeja.
+ * Si se duplicaran, un chat podría llamarse distinto en cada pantalla — que es
+ * exactamente lo que confunde a quien lo está buscando.
+ */
+const boardCardAdapter = (row: BoardCardApi): BoardCard => {
+  const asRow = row as unknown as ConversationApiRow;
+
+  return {
+    identity: row.identity,
+    phoneNumber: row.phone_number,
+    whatsappUserId: row.whatsapp_user_id,
+    displayName: displayName(asRow),
+    subtitle: subtitle(asRow),
+    lastMessage: (row.last_message ?? "").replace(/\s+/g, " ").trim(),
+    lastMessageAt: row.last_message_at,
+    assignedToName: row.assigned_to_name,
+    taken: !!row.taken_by,
+  };
+};
+
+export const boardAdapter = (response: BoardApiResponse): BoardColumn[] =>
+  (response.columns ?? []).map((col) => ({
+    situationId: col.situation_id,
+    name: col.name,
+    statusCode: col.status_code,
+    total: col.total,
+    cards: (col.cards ?? []).map(boardCardAdapter),
+  }));
