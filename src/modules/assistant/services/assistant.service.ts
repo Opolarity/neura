@@ -121,7 +121,7 @@ export async function disconnect(): Promise<void> {
  */
 export async function streamChat(
   text: string,
-  onChunk: (delta: string) => void,
+  onChunk: (delta: string, newBlock: boolean) => void,
   signal?: AbortSignal,
 ): Promise<void> {
   const base = assertConfigured();
@@ -171,7 +171,9 @@ export async function streamChat(
         try {
           const parsed = JSON.parse(payload);
           if (parsed?.error) throw new Error(String(parsed.error));
-          if (typeof parsed?.delta === "string") onChunk(parsed.delta);
+          if (typeof parsed?.delta === "string") {
+            onChunk(parsed.delta, parsed.new_block === true);
+          }
         } catch (err) {
           if (err instanceof Error && err.message) throw err;
         }

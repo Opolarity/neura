@@ -27,7 +27,13 @@ export type AssistantRole = "user" | "assistant";
 export interface AssistantMessage {
   id: string;
   role: AssistantRole;
-  text: string;
+  /**
+   * Un mensaje del asistente llega en VARIOS bloques: los intermedios son
+   * razonamiento ("voy a consultar el esquema...") y el ultimo es la respuesta.
+   * Se guardan separados porque concatenarlos produce un parrafo ilegible con
+   * frases pegadas sin espacio.
+   */
+  blocks: string[];
   createdAt: string;
   /** Solo en curso: el mensaje se esta transmitiendo por SSE. */
   streaming?: boolean;
