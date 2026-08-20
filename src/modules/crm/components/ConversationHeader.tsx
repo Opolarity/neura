@@ -77,11 +77,9 @@ export const ConversationHeader = ({
             {conversation.displayName}
           </h2>
           <p className="truncate text-[10.5px] leading-tight text-muted-foreground">
-            {conversation.phoneNumber
-              ? `+${conversation.phoneNumber}`
-              : conversation.identity}
-            {conversation.documentNumber ? ` · ${conversation.documentNumber}` : ""}
-            {conversation.assignedToName ? ` · ${conversation.assignedToName}` : ""}
+            {[conversation.subtitle, conversation.assignedToName]
+              .filter(Boolean)
+              .join(" · ") || " "}
           </p>
         </div>
 

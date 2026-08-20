@@ -94,8 +94,10 @@ export interface Conversation {
   identity: string;
   phoneNumber: number | null;
   whatsappUserId: string | null;
-  /** Lo que se muestra en la lista: nombre del cliente, username o identidad. */
+  /** Título: nombre, si no celular, si no username, si no la identidad cruda. */
   displayName: string;
+  /** Los identificadores que el título NO muestra ya. Puede quedar vacío. */
+  subtitle: string;
   lastMessage: string;
   lastMessageAt: string;
   lastMessageFrom: MessageAuthor;
