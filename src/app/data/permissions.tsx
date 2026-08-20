@@ -74,6 +74,7 @@ import MediaGalleryPage from "@/modules/ecommerce/pages/MediaGalleryPage";
 import MassiveEditPage from "@/modules/ecommerce/pages/MassiveEditPage";
 import ReclamacionesPage from "@/modules/ecommerce/pages/ReclamacionesPage";
 import ReclamacionViewPage from "@/modules/ecommerce/pages/ReclamacionViewPage";
+import AssistantPage from "@/modules/assistant/pages/AssistantPage";
 import {
   LayoutGrid,
   Tag,
@@ -83,6 +84,7 @@ import {
   Calendar,
   Settings,
   Contact,
+  Bot,
   type LucideIcon,
 } from "lucide-react";
 
@@ -294,6 +296,22 @@ export const APP_PERMISSIONS_CONFIG = [
               { name: "Edición masiva", path: "/ecommerce/edit", code: "ecommerce_bulk_edit.view", element: <MassiveEditPage />, showSidebar: true, node: [] },
               { name: "Reclamaciones", path: "/ecommerce/reclamaciones", code: "ecommerce_claims.list", element: <ReclamacionesPage />, showSidebar: true, node: [] },
               { name: "Ver reclamación", path: "/ecommerce/reclamaciones/view/:id", code: "ecommerce_claims.view", element: <ReclamacionViewPage />, showSidebar: false, node: [] },
+            ]
+          },
+
+        ],
+  },
+{
+  name: "Asistente IA",
+    icon: Bot,
+      code: "assistant",
+        node: [
+          {
+            code: "assistant.group", name: "Asistente IA", node: [
+              // El chat corre contra el gateway externo (VITE_ASSISTANT_GATEWAY_URL),
+              // no contra Supabase. Si esa variable falta o el servicio no valida el
+              // JWT de este proyecto, la pantalla carga pero no responde.
+              { name: "Asistente IA", path: "/assistant", code: "assistant.use", element: <AssistantPage />, showSidebar: true, node: [] },
             ]
           },
 
