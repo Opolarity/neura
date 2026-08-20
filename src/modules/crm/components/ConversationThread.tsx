@@ -58,7 +58,7 @@ export const ConversationThread = ({ messages, loading }: Props) => {
 
   return (
     <ScrollArea className="h-full">
-      <div className="flex flex-col gap-3 px-6 py-4">
+      <div className="flex flex-col gap-4 px-6 py-6">
         {messages.map((m) => {
           const mine = m.author === "business";
           const isBot = m.author === "bot";
@@ -69,9 +69,9 @@ export const ConversationThread = ({ messages, loading }: Props) => {
           const imageUrl = extractImageUrl(m.message);
 
           return (
-            <div key={m.id} className="flex flex-col gap-3">
+            <div key={m.id} className="flex flex-col gap-4">
               {showDay && (
-                <div className="flex items-center gap-3 py-1">
+                <div className="flex items-center gap-3 py-2">
                   <div className="h-px flex-1 bg-border" />
                   <span className="text-xs text-muted-foreground">{day}</span>
                   <div className="h-px flex-1 bg-border" />
@@ -86,7 +86,7 @@ export const ConversationThread = ({ messages, loading }: Props) => {
               >
                 <div
                   className={cn(
-                    "max-w-[75%] rounded-lg px-3 py-2 text-sm",
+                    "max-w-[68%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm",
                     // El asesor y el bot van del mismo lado —los dos son "el
                     // negocio"— pero con distinto color: al revisar un hilo hay
                     // que poder distinguir de un vistazo qué contestó una

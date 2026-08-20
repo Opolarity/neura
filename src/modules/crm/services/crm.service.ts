@@ -188,3 +188,43 @@ export const getCrmSituationsApi = async () => {
   if (error) throw error;
   return data ?? [];
 };
+
+export interface ErpUser {
+  id: string;
+  name: string;
+  role: string;
+}
+
+/**
+ * Colaboradores del ERP, para el selector de "asignar a otro asesor".
+ *
+ * Se usa sp_get_users y no una consulta a `accounts`: ese SP ya filtra por
+ * colaborador activo y —lo que importa acá— devuelve `profiles_id`, que es el
+ * uuid de auth. Consultar `accounts` directo mezcla clientes con colaboradores
+ * y devuelve el id de la cuenta, que no sirve como responsable.
+ */
+export const getErpUsersApi = async (search?: string): Promise<ErpUser[]> => {
+  const { data, error } = await db.rpc("sp_get_users", {
+    p_person_type: null,
+    p_show: null,
+    p_role: null,
+    p_warehouses: null,
+    p_branches: null,
+    p_order: null,
+    p_search: search?.trim() || null,
+    p_page: 1,
+    p_size: 100,
+  });
+
+  if (error) throw new Error(error.message);
+
+  const rows = (data as { data?: Array<Record<string, unknown>> } | null)?.data ?? [];
+
+  return rows
+    .filter((r) => !!r.profiles_id)
+    .map((r) => ({
+      id: String(r.profiles_id),
+      name: [r.name, r.last_name].filter(Boolean).join(" ").trim() || String(r.user_name ?? ""),
+      role: String(r.role ?? ""),
+    }));
+};

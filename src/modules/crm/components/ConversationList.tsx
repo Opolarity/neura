@@ -1,11 +1,9 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
 import { Bot, Clock, MessageSquare, User } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/shared/utils/utils";
 import type { Conversation } from "../types/crm.types";
-import { stageBadgeVariant } from "./stageBadge";
 
 interface Props {
   conversations: Conversation[];
@@ -29,6 +27,34 @@ const authorPrefix = (from: Conversation["lastMessageFrom"]) => {
   return "";
 };
 
+/**
+ * Etiqueta chica de la fila. No usa el componente Badge: sobre la fila
+ * seleccionada —que es morada— los colores de Badge no contrastan, así que
+ * cada etiqueta necesita una versión "sobre morado".
+ */
+const Chip = ({
+  children,
+  selected,
+  tone = "neutral",
+}: {
+  children: React.ReactNode;
+  selected: boolean;
+  tone?: "neutral" | "warn" | "info" | "stage";
+}) => (
+  <span
+    className={cn(
+      "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium leading-none",
+      selected && "bg-primary-foreground/20 text-primary-foreground",
+      !selected && tone === "neutral" && "bg-muted text-muted-foreground",
+      !selected && tone === "info" && "bg-info/15 text-info",
+      !selected && tone === "warn" && "bg-destructive-soft text-destructive-soft-foreground",
+      !selected && tone === "stage" && "bg-secondary text-secondary-foreground"
+    )}
+  >
+    {children}
+  </span>
+);
+
 export const ConversationList = ({
   conversations,
   selectedIdentity,
@@ -49,7 +75,7 @@ export const ConversationList = ({
 
   return (
     <ScrollArea className="h-full">
-      <ul className="divide-y divide-border">
+      <ul className="flex flex-col gap-1 p-2">
         {conversations.map((c) => {
           const selected = c.identity === selectedIdentity;
 
@@ -59,60 +85,84 @@ export const ConversationList = ({
                 type="button"
                 onClick={() => onSelect(c)}
                 aria-current={selected}
+                // min-w-0 en el botón y en cada hijo que trunca: sin eso el
+                // ancho se calcula contra el contenido y no contra la columna,
+                // y el texto se corta a ras del borde en vez de elipsar.
                 className={cn(
-                  "flex w-full flex-col gap-1.5 px-4 py-3 text-left transition-colors",
-                  "hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-                  selected && "bg-muted"
+                  "flex w-full min-w-0 flex-col gap-2 rounded-lg px-3 py-2.5 text-left transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  selected
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
                 )}
               >
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-sm font-medium">{c.displayName}</span>
-                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                <div className="flex min-w-0 items-baseline gap-2">
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                    {c.displayName}
+                  </span>
+                  <span
+                    className={cn(
+                      "shrink-0 text-[11px] tabular-nums",
+                      selected ? "text-primary-foreground/70" : "text-muted-foreground"
+                    )}
+                  >
                     {relative(c.lastMessageAt)}
                   </span>
                 </div>
 
-                <p className="line-clamp-1 text-xs text-muted-foreground">
+                {/* truncate y no line-clamp: una sola línea con puntos
+                    suspensivos reales. pr-1 para que el texto no llegue a
+                    tocar el borde de la tarjeta. */}
+                <p
+                  className={cn(
+                    "min-w-0 truncate pr-1 text-xs",
+                    selected ? "text-primary-foreground/80" : "text-muted-foreground"
+                  )}
+                >
                   {authorPrefix(c.lastMessageFrom)}
                   {c.lastMessage || "—"}
                 </p>
 
-                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <div className="flex min-w-0 flex-wrap items-center gap-1">
                   {c.situation && (
-                    <Badge variant={stageBadgeVariant(c.situation.statusCode)}>
+                    <Chip selected={selected} tone="stage">
                       {c.situation.name}
-                    </Badge>
+                    </Chip>
                   )}
 
-                  {/* Quién la tiene ahora pesa más que de quién es, así que va primero. */}
+                  {/* Quién la tiene ahora pesa más que de quién es. */}
                   {c.takenBy && (
-                    <Badge variant="info" className="gap-1">
+                    <Chip selected={selected} tone="info">
                       <User className="h-3 w-3" />
-                      {c.takenByName || "Tomada"}
-                    </Badge>
+                      <span className="max-w-[110px] truncate">
+                        {c.takenByName || "Tomada"}
+                      </span>
+                    </Chip>
                   )}
 
                   {!c.takenBy && c.assignedTo && (
-                    <Badge variant="secondary" className="gap-1">
+                    <Chip selected={selected}>
                       <User className="h-3 w-3" />
-                      {c.assignedToName || "Asignada"}
-                    </Badge>
+                      <span className="max-w-[110px] truncate">
+                        {c.assignedToName || "Asignada"}
+                      </span>
+                    </Chip>
                   )}
 
                   {c.botAnswers && (
-                    <Badge variant="outline" className="gap-1">
+                    <Chip selected={selected}>
                       <Bot className="h-3 w-3" />
                       Bot
-                    </Badge>
+                    </Chip>
                   )}
 
-                  {/* La ventana de Meta solo se avisa cuando está cerrada: es
-                      cuando cambia lo que se puede hacer. */}
+                  {/* La ventana solo se avisa cuando está cerrada: es cuando
+                      cambia lo que se puede hacer. */}
                   {!c.windowOpen && (
-                    <Badge variant="destructive-soft" className="gap-1">
+                    <Chip selected={selected} tone="warn">
                       <Clock className="h-3 w-3" />
-                      Ventana vencida
-                    </Badge>
+                      Vencida
+                    </Chip>
                   )}
                 </div>
               </button>

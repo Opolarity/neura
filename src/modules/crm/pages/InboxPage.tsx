@@ -71,10 +71,10 @@ const InboxPage = () => {
     filters.taken !== null;
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4 md:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex h-full flex-col gap-3 p-3 md:p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl font-semibold">Conversaciones</h1>
+          <h1 className="text-lg font-semibold leading-tight">Conversaciones</h1>
           <p className="text-sm text-muted-foreground">
             Los chats de WhatsApp del negocio, con su etapa y su responsable.
           </p>
@@ -175,7 +175,7 @@ const InboxPage = () => {
       <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-card">
         {loading && <PageLoader message="Cargando conversaciones…" />}
 
-        <aside className="flex w-[340px] shrink-0 flex-col border-r border-border">
+        <aside className="flex w-[360px] shrink-0 flex-col border-r border-border bg-muted/30">
           <ConversationList
             conversations={data}
             selectedIdentity={selectedIdentity}
@@ -192,8 +192,7 @@ const InboxPage = () => {
                 situations={situations}
                 busy={acting}
                 onSituationChange={(id) => runAndRefresh(setSituation(selected, id))}
-                onAssignToMe={() => runAndRefresh(assign(selected, user?.id ?? null))}
-                onUnassign={() => runAndRefresh(assign(selected, null))}
+                onAssign={(userId) => runAndRefresh(assign(selected, userId))}
                 onTake={() => runAndRefresh(takeControl(selected, false))}
                 onRelease={() => runAndRefresh(takeControl(selected, true))}
               />
@@ -205,7 +204,7 @@ const InboxPage = () => {
               {/* La caja de respuesta llega cuando exista crm-send-message. Se
                   deja el aviso en vez de un input inerte: un campo que acepta
                   texto y no envía nada es peor que no tenerlo. */}
-              <footer className="border-t border-border bg-muted/40 px-6 py-3">
+              <footer className="border-t border-border bg-muted/40 px-6 py-2.5">
                 <p className="text-xs text-muted-foreground">
                   Responder desde el ERP todavía no está habilitado. Por ahora la bandeja
                   es de lectura: podés cambiar la etapa, asignar y tomar el control.
