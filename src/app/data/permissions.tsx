@@ -325,11 +325,11 @@ export const APP_PERMISSIONS_CONFIG = [
       code: "crm",
         node: [
           {
-            code: "crm.group", name: "Conversaciones", node: [
+            code: "crm.group", name: "Chats", node: [
               // La bandeja lee chat_conversations del canal CHBOTW: hoy el ERP
               // comparte numero con el chatbot, asi que los mensajes que el bot
               // ya registra son los mismos que ve el equipo.
-              { name: "Conversaciones", path: "/crm/conversations", code: "crm_conversations.list", element: <CrmInboxPage />, showSidebar: true, node: [] },
+              { name: "Chats", path: "/crm/conversations", code: "crm_conversations.list", element: <CrmInboxPage />, showSidebar: true, node: [] },
             ]
           },
 

@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
 import PageLoader from "@/shared/components/page-loader/PageLoader";
 import { useAuth } from "@/modules/auth";
 import { ConversationHeader } from "../components/ConversationHeader";
@@ -71,10 +72,10 @@ const InboxPage = () => {
     filters.taken !== null;
 
   return (
-    <div className="flex h-full flex-col gap-3 p-3 md:p-4">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-lg font-semibold leading-tight">Conversaciones</h1>
+          <h1 className="text-lg font-semibold leading-tight">Chats</h1>
           <p className="text-sm text-muted-foreground">
             Los chats de WhatsApp del negocio, con su etapa y su responsable.
           </p>
@@ -172,10 +173,10 @@ const InboxPage = () => {
 
       {/* Bandeja: lista fija a la izquierda, hilo a la derecha. Alto fijo con
           scroll interno en cada panel, para que la página no scrollee entera. */}
-      <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-lg border border-border/60 bg-card">
-        {loading && <PageLoader message="Cargando conversaciones…" />}
+      <Card className="relative flex min-h-0 flex-1 flex-row overflow-hidden">
+        {loading && <PageLoader message="Cargando chats…" />}
 
-        <aside className="flex w-[360px] shrink-0 flex-col border-r border-primary/10 bg-primary/[0.05]">
+        <aside className="flex w-[340px] shrink-0 flex-col border-r bg-primary/[0.05]">
           <ConversationList
             conversations={data}
             selectedIdentity={selectedIdentity}
@@ -204,7 +205,7 @@ const InboxPage = () => {
               {/* La caja de respuesta llega cuando exista crm-send-message. Se
                   deja el aviso en vez de un input inerte: un campo que acepta
                   texto y no envía nada es peor que no tenerlo. */}
-              <footer className="border-t border-border/60 bg-muted/40 px-6 py-2.5">
+              <footer className="border-t bg-muted/40 px-5 py-2">
                 <p className="text-xs text-muted-foreground">
                   Responder desde el ERP todavía no está habilitado. Por ahora la bandeja
                   es de lectura: podés cambiar la etapa, asignar y tomar el control.
@@ -222,7 +223,7 @@ const InboxPage = () => {
             )
           )}
         </section>
-      </div>
+      </Card>
     </div>
   );
 };
