@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { throwEdgeFunctionError } from "@/shared/services/edgeFunctionError";
 import {
   SupportServiceError,
   type SupportAttachment,
@@ -10,39 +11,14 @@ import {
 } from "../types/Support.types";
 
 /**
- * La edge function devuelve los errores de negocio como 200 + {error, error_code}
- * y los de infraestructura con status != 2xx (el body viaja en error.context).
+ * Se apoya en el normalizador compartido (mismo contrato de las edge functions
+ * puente con OPOLARITY Tasks) y solo aporta el mensaje de "no se llegó".
  */
-const throwSupportFunctionError = async (error: unknown): Promise<never> => {
-  const functionError = error as { context?: unknown; message?: string };
-
-  if (functionError.context instanceof Response) {
-    let body: { error?: unknown; error_code?: unknown } | null = null;
-    try {
-      body = await functionError.context.json();
-    } catch {
-      body = null;
-    }
-
-    if (body?.error) {
-      throw new SupportServiceError(
-        String(body.error),
-        (body.error_code as SupportErrorCode) ?? "unknown",
-      );
-    }
-
-    throw new SupportServiceError(
-      "El servicio de soporte respondió con un error inesperado.",
-      "unknown",
-    );
-  }
-
-  // Sin Response = nunca se llegó a la function (offline, CORS, DNS, timeout).
-  throw new SupportServiceError(
+const throwSupportFunctionError = (error: unknown): Promise<never> =>
+  throwEdgeFunctionError(
+    error,
     "No se pudo conectar con el servicio de soporte. Revisa tu conexión e intenta nuevamente.",
-    "network_error",
   );
-};
 
 export const getSupportRequests = async (
   filters: SupportRequestsFilters,

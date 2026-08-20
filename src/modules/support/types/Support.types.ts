@@ -1,3 +1,5 @@
+import type { EdgeFunctionErrorCode } from "@/shared/services/edgeFunctionError";
+
 export type SupportRequestType = "ticket" | "suggestion";
 
 export interface SupportAttachment {
@@ -260,28 +262,10 @@ export interface SupportRequestsFilters {
   originHost: string | null;
 }
 
-export type SupportErrorCode =
-  | "not_configured"
-  | "unauthorized"
-  | "invalid_api_key"
-  | "client_not_found"
-  | "company_document"
-  | "bad_request"
-  | "not_found"
-  | "rate_limited"
-  | "upstream_error"
-  | "upstream_unreachable"
-  | "server_config"
-  | "network_error"
-  | "unknown";
-
-/** Error con código, para poder mostrar mensajes distintos dentro de la vista. */
-export class SupportServiceError extends Error {
-  code: SupportErrorCode;
-
-  constructor(message: string, code: SupportErrorCode = "unknown") {
-    super(message);
-    this.name = "SupportServiceError";
-    this.code = code;
-  }
-}
+/**
+ * Los códigos y la clase de error viven en shared: capacitaciones consume el
+ * mismo contrato de las edge functions puente. Se reexportan con el nombre de
+ * siempre para no tocar los imports del módulo.
+ */
+export type SupportErrorCode = EdgeFunctionErrorCode;
+export { EdgeFunctionError as SupportServiceError } from "@/shared/services/edgeFunctionError";

@@ -1,4 +1,4 @@
-import { LifeBuoy, Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SupportRequestsHeaderProps {
@@ -15,9 +15,11 @@ export const SupportRequestsHeader = ({
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <LifeBuoy className="w-8 h-8" />
+        <Ticket className="w-8 h-8" />
         <div>
-          <h1 className="text-3xl font-bold">Soporte</h1>
+          {/* "Soporte" es ahora el grupo del menú; esta pantalla es una de sus
+              tres opciones, así que el título es el de la opción. */}
+          <h1 className="text-3xl font-bold">Tickets</h1>
           <p className="text-muted-foreground">
             Tickets y sugerencias enviados al equipo de OPOLARITY
           </p>

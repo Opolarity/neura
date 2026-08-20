@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, EllipsisVertical, LayoutDashboard, LifeBuoy, LogOut, Store, User } from "lucide-react";
+import { BookOpen, ChevronDown, EllipsisVertical, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Store, Ticket, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { APP_PERMISSIONS_CONFIG, getFilterSidebar } from "@/app/data/permissions";
@@ -66,6 +66,14 @@ const SUB_LABEL_COLORS = "text-sidebar-foreground/70";
 const TOOLTIP_COLORS = "border-0 bg-sidebar-primary text-sidebar-primary-foreground";
 
 const USER_POPOVER_CODE = "__user__";
+
+// Las opciones de Soporte. Viven aquí y no en APP_PERMISSIONS_CONFIG a
+// propósito: Soporte está fuera del sistema de permisos (ver routes/index.tsx),
+// así que meterlas ahí les exigiría códigos que hoy nadie tiene asignados.
+const SUPPORT_LINKS = [
+  { to: "/support", label: "Tickets", icon: Ticket },
+  { to: "/support/capacitaciones", label: "Capacitaciones", icon: GraduationCap },
+] as const;
 
 function SidebarModule({
   item,
@@ -373,15 +381,38 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
 
                 <div className="my-1 h-px bg-white/10" />
 
-                <Link
-                  to="/support"
-                  onClick={() => setOpenPopoverCode(null)}
-                  data-active={pathname === "/support"}
-                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white ${SUB_BUTTON_COLORS}`}
-                >
-                  <LifeBuoy className="size-4" />
+                {/* Soporte dejó de ser una pantalla y pasó a ser un grupo. El
+                    título usa el mismo estilo que las etiquetas de grupo del
+                    submenú del sidebar, para que no parezca un enlace muerto. */}
+                <div className={`flex items-center gap-2 px-2 py-1 text-xs font-medium ${SUB_LABEL_COLORS}`}>
+                  <LifeBuoy className="size-3.5" />
                   <span>Soporte</span>
-                </Link>
+                </div>
+
+                {SUPPORT_LINKS.map(({ to, label, icon: Icon }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    onClick={() => setOpenPopoverCode(null)}
+                    data-active={pathname === to}
+                    className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 pl-4 text-sm text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white ${SUB_BUTTON_COLORS}`}
+                  >
+                    <Icon className="size-4" />
+                    <span>{label}</span>
+                  </Link>
+                ))}
+
+                {/* Aprender todavía no tiene contenido. Se muestra igualmente
+                    para que se sepa que viene, pero no navega a ninguna parte:
+                    un enlace a una pantalla vacía se lee como algo roto. */}
+                <div
+                  aria-disabled="true"
+                  className="flex w-full cursor-not-allowed items-center gap-2 rounded-md px-2 py-1.5 pl-4 text-sm text-sidebar-foreground/50"
+                >
+                  <BookOpen className="size-4" />
+                  <span>Aprender</span>
+                  <span className="ml-auto text-[10px] uppercase tracking-wide">Pronto</span>
+                </div>
 
                 <button
                   type="button"
