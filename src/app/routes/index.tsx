@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import ProtectedLayout from "./ProtectedLayout";
 import { APP_PERMISSIONS_CONFIG, getRoutes } from "@/app/data/permissions";
 import { supportRoutes } from "@/modules/support";
+import { trainingRoutes } from "@/modules/training";
 import ReportsLayout from "@/modules/reports/pages/ReportsLayout";
 
 // Único archivo de rutas. La navegación del sidebar es data aparte
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
       { element: <ReportsLayout />, children: reportRoutes },
       // Soporte queda fuera del sistema de permisos, pero sigue requiriendo sesión.
       ...supportRoutes,
+      ...trainingRoutes,
       { path: "*", element: <NotFound /> },
     ],
   },
