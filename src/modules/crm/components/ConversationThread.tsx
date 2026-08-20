@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { AlertCircle, Bot, MessageSquare } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/shared/utils/utils";
 import type { ConversationMessage } from "../types/crm.types";
 
@@ -57,7 +56,7 @@ export const ConversationThread = ({ messages, loading }: Props) => {
   let lastDay = "";
 
   return (
-    <ScrollArea className="h-full">
+    <div className="h-full overflow-y-auto overflow-x-hidden">
       <div className="flex flex-col gap-4 px-6 py-6">
         {messages.map((m) => {
           const mine = m.author === "business";
@@ -72,21 +71,21 @@ export const ConversationThread = ({ messages, loading }: Props) => {
             <div key={m.id} className="flex flex-col gap-4">
               {showDay && (
                 <div className="flex items-center gap-3 py-2">
-                  <div className="h-px flex-1 bg-border" />
+                  <div className="h-px flex-1 bg-border/60" />
                   <span className="text-xs text-muted-foreground">{day}</span>
-                  <div className="h-px flex-1 bg-border" />
+                  <div className="h-px flex-1 bg-border/60" />
                 </div>
               )}
 
               <div
                 className={cn(
-                  "flex w-full",
+                  "flex w-full min-w-0",
                   mine || isBot ? "justify-end" : "justify-start"
                 )}
               >
                 <div
                   className={cn(
-                    "max-w-[68%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm",
+                    "min-w-0 max-w-[68%] rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed",
                     // El asesor y el bot van del mismo lado —los dos son "el
                     // negocio"— pero con distinto color: al revisar un hilo hay
                     // que poder distinguir de un vistazo qué contestó una
@@ -97,7 +96,7 @@ export const ConversationThread = ({ messages, loading }: Props) => {
                   )}
                 >
                   {isBot && (
-                    <span className="mb-1 flex items-center gap-1 text-xs opacity-70">
+                    <span className="mb-1 flex items-center gap-1 text-[10.5px] opacity-70">
                       <Bot className="h-3 w-3" />
                       Bot
                     </span>
@@ -116,7 +115,7 @@ export const ConversationThread = ({ messages, loading }: Props) => {
                     </a>
                   )}
 
-                  <div className="mt-1 flex items-center gap-2 text-[11px] opacity-70">
+                  <div className="mt-1 flex items-center gap-2 text-[10px] opacity-70">
                     <span className="tabular-nums">{timeLabel(m.createdAt)}</span>
 
                     {m.deliveryStatus === "failed" && (
@@ -135,6 +134,6 @@ export const ConversationThread = ({ messages, loading }: Props) => {
 
         <div ref={bottomRef} />
       </div>
-    </ScrollArea>
+    </div>
   );
 };

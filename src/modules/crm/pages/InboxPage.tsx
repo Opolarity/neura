@@ -172,10 +172,10 @@ const InboxPage = () => {
 
       {/* Bandeja: lista fija a la izquierda, hilo a la derecha. Alto fijo con
           scroll interno en cada panel, para que la página no scrollee entera. */}
-      <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-card">
+      <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-lg border border-border/60 bg-card">
         {loading && <PageLoader message="Cargando conversaciones…" />}
 
-        <aside className="flex w-[360px] shrink-0 flex-col border-r border-primary/15 bg-primary/[0.05]">
+        <aside className="flex w-[360px] shrink-0 flex-col border-r border-primary/10 bg-primary/[0.05]">
           <ConversationList
             conversations={data}
             selectedIdentity={selectedIdentity}
@@ -204,7 +204,7 @@ const InboxPage = () => {
               {/* La caja de respuesta llega cuando exista crm-send-message. Se
                   deja el aviso en vez de un input inerte: un campo que acepta
                   texto y no envía nada es peor que no tenerlo. */}
-              <footer className="border-t border-border bg-muted/40 px-6 py-2.5">
+              <footer className="border-t border-border/60 bg-muted/40 px-6 py-2.5">
                 <p className="text-xs text-muted-foreground">
                   Responder desde el ERP todavía no está habilitado. Por ahora la bandeja
                   es de lectura: podés cambiar la etapa, asignar y tomar el control.

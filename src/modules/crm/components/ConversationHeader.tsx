@@ -48,10 +48,10 @@ export const ConversationHeader = ({
     : null;
 
   return (
-    <header className="flex flex-col gap-3 border-b border-border bg-card px-5 py-3.5">
+    <header className="flex flex-col gap-3 border-b border-border/60 bg-card px-5 py-3.5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="truncate text-base font-semibold leading-tight">
+          <h2 className="truncate text-[15px] font-semibold leading-tight">
             {conversation.displayName}
           </h2>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">

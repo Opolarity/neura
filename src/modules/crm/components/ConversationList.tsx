@@ -1,7 +1,6 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
 import { Bot, Clock, MessageSquare, User } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/shared/utils/utils";
 import type { Conversation } from "../types/crm.types";
 
@@ -43,7 +42,7 @@ const Chip = ({
 }) => (
   <span
     className={cn(
-      "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium leading-none",
+      "inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[10.5px] font-medium leading-none",
       selected && "bg-primary-foreground/20 text-primary-foreground",
       !selected && tone === "neutral" && "bg-muted text-muted-foreground",
       !selected && tone === "info" && "bg-info/15 text-info",
@@ -65,7 +64,7 @@ export const ConversationList = ({
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
         <MessageSquare className="h-8 w-8 text-muted-foreground" />
-        <p className="text-sm font-medium">No hay conversaciones</p>
+        <p className="text-[13px] font-medium">No hay conversaciones</p>
         <p className="text-xs text-muted-foreground">
           Aparecerán acá en cuanto un cliente escriba, o al ajustar los filtros.
         </p>
@@ -74,7 +73,7 @@ export const ConversationList = ({
   }
 
   return (
-    <ScrollArea className="h-full">
+    <div className="h-full overflow-y-auto overflow-x-hidden">
       <ul className="flex flex-col gap-1 p-2">
         {conversations.map((c) => {
           const selected = c.identity === selectedIdentity;
@@ -97,7 +96,7 @@ export const ConversationList = ({
                 )}
               >
                 <div className="flex min-w-0 items-baseline gap-2">
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
                     {c.displayName}
                   </span>
                   <span
@@ -115,7 +114,7 @@ export const ConversationList = ({
                     tocar el borde de la tarjeta. */}
                 <p
                   className={cn(
-                    "min-w-0 truncate pr-1 text-xs",
+                    "min-w-0 truncate pr-1 text-[11.5px]",
                     selected ? "text-primary-foreground/80" : "text-muted-foreground"
                   )}
                 >
@@ -170,6 +169,6 @@ export const ConversationList = ({
           );
         })}
       </ul>
-    </ScrollArea>
+    </div>
   );
 };
