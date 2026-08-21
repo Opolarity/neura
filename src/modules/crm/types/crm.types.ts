@@ -192,3 +192,84 @@ export interface BoardColumn {
   total: number;
   cards: BoardCard[];
 }
+
+// ---------------------------------------------------------------------------
+// Rendimiento por canal
+// ---------------------------------------------------------------------------
+
+/**
+ * Las DOS cifras del canal, deliberadamente separadas.
+ *
+ * `sold` es lo facturado (orders.total) y `collected` lo efectivamente cobrado
+ * (order_payment), que es como el ERP mide sus reportes de ventas. En la
+ * mayoria de los canales casi coinciden; en WhatsApp no, y esa brecha es el
+ * dato mas importante de la pantalla.
+ *
+ * Nunca se dividen entre si ni se suman: miden cosas distintas.
+ */
+export interface ChannelMetricsApi {
+  code: string;
+  name: string;
+  orden: number;
+  sale_type_ids: number[];
+  orders: number;
+  orders_paid: number;
+  customers: number;
+  units: number;
+  sold: number;
+  collected: number;
+  gap: number;
+  /** Que porcentaje de lo vendido esta cobrado. null si no vendio nada. */
+  coverage_pct: number | null;
+  avg_ticket: number | null;
+  median_ticket: number | null;
+  share_pct: number | null;
+  previous: { orders: number; sold: number; collected: number };
+  /** null cuando el periodo anterior fue cero: no hay variacion contra cero. */
+  delta_sold_pct: number | null;
+  delta_orders_pct: number | null;
+}
+
+export interface ChannelMetricsResponse {
+  success: boolean;
+  error?: string;
+  range: {
+    start: string;
+    end: string;
+    days: number;
+    previous_start: string;
+    previous_end: string;
+  };
+  company: { sold: number; collected: number };
+  channels: ChannelMetricsApi[];
+}
+
+export interface ChannelPointApi {
+  period: string;
+  code: string;
+  name: string;
+  orders: number;
+  sold: number;
+  collected: number;
+}
+
+export interface ChannelOverTimeResponse {
+  success: boolean;
+  error?: string;
+  granularity: "day" | "week" | "month";
+  points: ChannelPointApi[];
+}
+
+export interface ChannelProductApi {
+  code: string;
+  product_id: number | null;
+  name: string | null;
+  units: number;
+  sold: number;
+}
+
+export interface ChannelProductsResponse {
+  success: boolean;
+  error?: string;
+  products: ChannelProductApi[];
+}

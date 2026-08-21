@@ -4,6 +4,9 @@ import type {
   ConversationsApiResponse,
   ThreadApiResponse,
   CrmWriteResponse,
+  ChannelMetricsResponse,
+  ChannelOverTimeResponse,
+  ChannelProductsResponse,
 } from "../types/crm.types";
 
 // Canal por defecto. Hoy la bandeja comparte número con el chatbot, así que lee
@@ -321,4 +324,65 @@ export const sendMessageApi = async (
   }
 
   return (data ?? { success: false, error: "No se pudo enviar el mensaje." }) as SendMessageResult;
+};
+
+// ---------------------------------------------------------------------------
+// Rendimiento por canal
+// ---------------------------------------------------------------------------
+
+/** KPIs de los tres canales, con su comparativa contra el periodo anterior. */
+export const getChannelMetricsApi = async (
+  startDate: string,
+  endDate: string
+): Promise<ChannelMetricsResponse> => {
+  const { data, error } = await db.rpc("sp_crm_channel_metrics", {
+    p_start_date: startDate,
+    p_end_date: endDate,
+  });
+
+  return unwrap(
+    data as ChannelMetricsResponse | null,
+    error,
+    "No se pudieron cargar las metricas por canal."
+  );
+};
+
+/** Serie para el grafico de evolucion. */
+export const getChannelOverTimeApi = async (
+  startDate: string,
+  endDate: string,
+  granularity: "day" | "week" | "month"
+): Promise<ChannelOverTimeResponse> => {
+  const { data, error } = await db.rpc("sp_crm_channel_over_time", {
+    p_start_date: startDate,
+    p_end_date: endDate,
+    p_granularity: granularity,
+  });
+
+  return unwrap(
+    data as ChannelOverTimeResponse | null,
+    error,
+    "No se pudo cargar la evolucion por canal."
+  );
+};
+
+/** Top de productos. Sin code, trae el top de cada canal. */
+export const getChannelTopProductsApi = async (
+  startDate: string,
+  endDate: string,
+  code: string | null,
+  limit = 8
+): Promise<ChannelProductsResponse> => {
+  const { data, error } = await db.rpc("sp_crm_channel_top_products", {
+    p_start_date: startDate,
+    p_end_date: endDate,
+    p_code: code,
+    p_limit: limit,
+  });
+
+  return unwrap(
+    data as ChannelProductsResponse | null,
+    error,
+    "No se pudieron cargar los productos del canal."
+  );
 };

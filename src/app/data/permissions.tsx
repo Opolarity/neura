@@ -77,6 +77,7 @@ import ReclamacionViewPage from "@/modules/ecommerce/pages/ReclamacionViewPage";
 import AssistantPage from "@/modules/assistant/pages/AssistantPage";
 import CrmInboxPage from "@/modules/crm/pages/InboxPage";
 import CrmBoardPage from "@/modules/crm/pages/BoardPage";
+import CrmChannelsPage from "@/modules/crm/pages/ChannelsPage";
 import {
   LayoutGrid,
   Tag,
@@ -332,6 +333,9 @@ export const APP_PERMISSIONS_CONFIG = [
               // ya registra son los mismos que ve el equipo.
               { name: "Chats", path: "/crm/conversations", code: "crm_conversations.list", element: <CrmInboxPage />, showSidebar: true, node: [] },
               { name: "Chats Status", path: "/crm/board", code: "crm_board.list", element: <CrmBoardPage />, showSidebar: true, node: [] },
+              // Mide ventas por sale_type, no conversaciones: es el unico del
+              // CRM que funciona en produccion sin depender del chat.
+              { name: "Rendimiento por canal", path: "/crm/channels", code: "crm_channels.list", element: <CrmChannelsPage />, showSidebar: true, node: [] },
             ]
           },
 
