@@ -221,8 +221,10 @@ const InboxPage = () => {
                   </p>
                 ) : !selected.takenBy ? (
                   <p className="text-xs text-muted-foreground">
-                    Tomá el control para responder. Mientras nadie lo tenga, el
-                    bot sigue atendiendo esta conversación.
+                    Tomá el control para responder.{" "}
+                    {selected.assignedTo
+                      ? "Está asignada, así que el bot no la atiende."
+                      : "Mientras nadie lo tenga, el bot sigue atendiendo."}
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">

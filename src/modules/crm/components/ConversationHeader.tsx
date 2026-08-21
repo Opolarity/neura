@@ -57,6 +57,11 @@ export const ConversationHeader = ({
 
   const takenByMe = !!conversation.takenBy && conversation.takenBy === user?.id;
   const takenBySomeoneElse = !!conversation.takenBy && !takenByMe;
+  const assignedToMe = !!conversation.assignedTo && conversation.assignedTo === user?.id;
+  // Soltar el control se lo devuelve al asignado. Si el asignado soy yo, eso
+  // no haria nada: para devolver mi propio cliente al bot hay que quitar la
+  // asignacion, que ya suelta el control.
+  const canRelease = takenByMe && !assignedToMe;
 
   const windowLabel = conversation.windowExpiresAt
     ? formatDistanceToNowStrict(new Date(conversation.windowExpiresAt), {
@@ -123,7 +128,7 @@ export const ConversationHeader = ({
           </ComponentPermission>
 
           <ComponentPermission codeIn={["crm_conversations.take"]}>
-            {takenByMe ? (
+            {canRelease ? (
               <Button
                 variant="secondary"
                 size="sm"
@@ -132,9 +137,11 @@ export const ConversationHeader = ({
                 disabled={busy}
               >
                 <RotateCcw className="mr-1 h-3.5 w-3.5" />
-                Devolver al bot
+                {conversation.assignedTo
+                  ? `Devolver a ${conversation.assignedToName || "su asesor"}`
+                  : "Devolver al bot"}
               </Button>
-            ) : (
+            ) : takenByMe ? null : (
               <Button
                 size="sm"
                 className="h-7 px-2 text-xs"
