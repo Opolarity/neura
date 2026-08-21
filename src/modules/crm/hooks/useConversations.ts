@@ -181,7 +181,9 @@ export const useConversations = () => {
             conversation.whatsappUserId,
             release
           ),
-        release ? "Control devuelto: el bot vuelve a responder" : "Tomaste el control"
+        // Soltar devuelve el control al asesor asignado, y solo al bot si no hay
+        // nadie asignado: el mensaje no puede prometer una de las dos cosas.
+        release ? "Soltaste el control" : "Tomaste el control"
       );
     },
     [channelId, runAction]
@@ -195,6 +197,8 @@ export const useConversations = () => {
   return {
     data,
     situations,
+    // Lo necesita el compositor: la edge function de envío pide el canal por id.
+    channelId,
     loading,
     acting,
     filters,

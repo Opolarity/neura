@@ -15,6 +15,7 @@ import { useAuth } from "@/modules/auth";
 import { ConversationHeader } from "../components/ConversationHeader";
 import { ConversationList } from "../components/ConversationList";
 import { ConversationThread } from "../components/ConversationThread";
+import { MessageComposer } from "../components/MessageComposer";
 import { useConversationThread } from "../hooks/useConversationThread";
 import { useConversations } from "../hooks/useConversations";
 import type { Conversation } from "../types/crm.types";
@@ -27,6 +28,7 @@ const InboxPage = () => {
   const {
     data,
     situations,
+    channelId,
     loading,
     acting,
     filters,
@@ -206,33 +208,13 @@ const InboxPage = () => {
                 <ConversationThread messages={messages} loading={threadLoading} />
               </div>
 
-              {/* La caja de respuesta llega cuando exista crm-send-message. El pie ya
-                  aplica la regla acordada: solo escribe quien tiene el control.
-                  Se deja el aviso en vez de un input inerte — un campo que
-                  acepta texto y no envia nada es peor que no tenerlo. */}
-              <footer className="border-t bg-muted/40 px-5 py-2">
-                {selected.takenBy && selected.takenBy !== user?.id ? (
-                  <p className="text-xs text-destructive-soft-foreground">
-                    <strong className="font-medium">
-                      {selected.takenByName || "Otro asesor"}
-                    </strong>{" "}
-                    tiene el control de esta conversación. Para responder,
-                    tenés que quitárselo.
-                  </p>
-                ) : !selected.takenBy ? (
-                  <p className="text-xs text-muted-foreground">
-                    Tomá el control para responder.{" "}
-                    {selected.assignedTo
-                      ? "Está asignada, así que el bot no la atiende."
-                      : "Mientras nadie lo tenga, el bot sigue atendiendo."}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Tenés el control: el bot está callado en este chat. Responder
-                    desde el ERP todavía no está habilitado.
-                  </p>
-                )}
-              </footer>
+              {/* El compositor decide solo si se puede escribir o no: cuando no
+                  se puede, muestra el motivo en lugar de la caja. */}
+              <MessageComposer
+                conversation={selected}
+                channelId={channelId}
+                onSent={reloadThread}
+              />
             </>
           ) : (
             !loading && (
