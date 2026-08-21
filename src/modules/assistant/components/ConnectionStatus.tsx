@@ -43,9 +43,21 @@ export function ConnectionStatus({ connection, onDisconnect, disconnecting }: Pr
       </div>
 
       <ComponentPermission codeIn={["assistant.admin"]}>
+        {/* Rojo suave, no solido: desconectar es destructivo pero no es la
+            accion principal de la pantalla, y un boton rojo lleno en la
+            cabecera se lleva toda la atencion.
+
+            Se usa la misma combinacion que la variante "destructive-soft" del
+            Badge (ui/badge.tsx) en vez de inventar clases. Va inline y no como
+            variante nueva del Button a proposito: anadirla tocaria un
+            primitivo compartido y contradice la regla de neura-styles de que
+            los botones usan el color solido. Si se quiere este estilo en mas
+            sitios, se promueve a variante y se actualiza el skill. */}
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
+          className="bg-destructive-soft text-destructive-soft-foreground
+                     hover:bg-destructive-soft/70 hover:text-destructive-soft-foreground"
           onClick={onDisconnect}
           disabled={disconnecting}
         >
