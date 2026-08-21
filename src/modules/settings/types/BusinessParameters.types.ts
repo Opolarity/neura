@@ -114,7 +114,7 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
         key: "TimeToCancelPendingOrder",
         label: "Horas para cancelar órdenes pendientes",
         control: "number",
-        help: "Tiempo tras el cual una orden pendiente de pago libera su reserva de stock.",
+        help: "Tiempo tras el cual una orden En proceso sin pagos libera su reserva de stock.",
       },
       {
         key: "LowStockThreshold",
