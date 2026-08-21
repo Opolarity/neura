@@ -15,6 +15,7 @@ import { useAuth } from "@/modules/auth";
 import { ConversationHeader } from "../components/ConversationHeader";
 import { ConversationList } from "../components/ConversationList";
 import { ConversationThread } from "../components/ConversationThread";
+import { MessageComposer } from "../components/MessageComposer";
 import { useConversationThread } from "../hooks/useConversationThread";
 import { useConversations } from "../hooks/useConversations";
 import type { Conversation } from "../types/crm.types";
@@ -27,6 +28,7 @@ const InboxPage = () => {
   const {
     data,
     situations,
+    channelId,
     loading,
     acting,
     filters,
@@ -206,15 +208,13 @@ const InboxPage = () => {
                 <ConversationThread messages={messages} loading={threadLoading} />
               </div>
 
-              {/* La caja de respuesta llega cuando exista crm-send-message. Se
-                  deja el aviso en vez de un input inerte: un campo que acepta
-                  texto y no envía nada es peor que no tenerlo. */}
-              <footer className="border-t bg-muted/40 px-5 py-2">
-                <p className="text-xs text-muted-foreground">
-                  Responder desde el ERP todavía no está habilitado. Por ahora la bandeja
-                  es de lectura: podés cambiar la etapa, asignar y tomar el control.
-                </p>
-              </footer>
+              {/* El compositor decide solo si se puede escribir o no: cuando no
+                  se puede, muestra el motivo en lugar de la caja. */}
+              <MessageComposer
+                conversation={selected}
+                channelId={channelId}
+                onSent={reloadThread}
+              />
             </>
           ) : (
             !loading && (

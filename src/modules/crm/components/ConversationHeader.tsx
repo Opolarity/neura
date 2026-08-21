@@ -1,6 +1,6 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
-import { Bot, Clock, Hand, RotateCcw, UserPlus } from "lucide-react";
+import { Bot, Clock, Hand, Lock, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -57,7 +57,11 @@ export const ConversationHeader = ({
 
   const takenByMe = !!conversation.takenBy && conversation.takenBy === user?.id;
   const takenBySomeoneElse = !!conversation.takenBy && !takenByMe;
-  const assignedToMe = conversation.assignedTo === user?.id;
+  const assignedToMe = !!conversation.assignedTo && conversation.assignedTo === user?.id;
+  // Soltar el control se lo devuelve al asignado. Si el asignado soy yo, eso
+  // no haria nada: para devolver mi propio cliente al bot hay que quitar la
+  // asignacion, que ya suelta el control.
+  const canRelease = takenByMe && !assignedToMe;
 
   const windowLabel = conversation.windowExpiresAt
     ? formatDistanceToNowStrict(new Date(conversation.windowExpiresAt), {
@@ -115,22 +119,7 @@ export const ConversationHeader = ({
         </ComponentPermission>
 
         <div className="ml-auto flex flex-wrap items-center gap-1.5">
-          <ComponentPermission codeIn={["crm_conversations.assign"]}>
-            {!assignedToMe && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => onAssign(user?.id ?? null)}
-                disabled={busy}
-              >
-                <UserPlus className="mr-1 h-3.5 w-3.5" />
-                Asignármela
-              </Button>
-            )}
-          </ComponentPermission>
-
-          <ComponentPermission codeIn={["crm_conversations.assign_any"]}>
+          <ComponentPermission codeIn={["crm_conversations.assign", "crm_conversations.assign_any"]}>
             <AssignMenu
               assignedTo={conversation.assignedTo}
               disabled={busy}
@@ -139,7 +128,7 @@ export const ConversationHeader = ({
           </ComponentPermission>
 
           <ComponentPermission codeIn={["crm_conversations.take"]}>
-            {takenByMe ? (
+            {canRelease ? (
               <Button
                 variant="secondary"
                 size="sm"
@@ -148,24 +137,24 @@ export const ConversationHeader = ({
                 disabled={busy}
               >
                 <RotateCcw className="mr-1 h-3.5 w-3.5" />
-                Devolver al bot
+                {conversation.assignedTo
+                  ? `Devolver a ${conversation.assignedToName || "su asesor"}`
+                  : "Devolver al bot"}
               </Button>
-            ) : (
+            ) : takenByMe ? null : (
               <Button
                 size="sm"
                 className="h-7 px-2 text-xs"
                 onClick={onTake}
-                // Tomar un chat que otro asesor ya tiene lo rechaza el backend;
-                // se desactiva acá para no ofrecer una acción que va a fallar.
-                disabled={busy || takenBySomeoneElse}
+                disabled={busy}
                 title={
                   takenBySomeoneElse
-                    ? `${conversation.takenByName || "Otro asesor"} tiene el control`
+                    ? `Le vas a quitar el control a ${conversation.takenByName || "otro asesor"}`
                     : undefined
                 }
               >
                 <Hand className="mr-1 h-3.5 w-3.5" />
-                Tomar el control
+                {takenBySomeoneElse ? "Quitarle el control" : "Tomar el control"}
               </Button>
             )}
           </ComponentPermission>
@@ -173,8 +162,13 @@ export const ConversationHeader = ({
       </div>
 
       {takenBySomeoneElse && (
-        <p className="text-[11px] text-muted-foreground">
-          {conversation.takenByName || "Otro asesor"} tiene el control.
+        <p className="flex items-center gap-1 text-[11px] text-destructive-soft-foreground">
+          <Lock className="h-3 w-3" />
+          <strong className="font-medium">
+            {conversation.takenByName || "Otro asesor"}
+          </strong>
+          tomó el control de esta conversación. No podés escribir hasta que lo
+          tomes vos.
         </p>
       )}
     </header>

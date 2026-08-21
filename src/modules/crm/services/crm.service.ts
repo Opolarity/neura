@@ -249,3 +249,76 @@ export const getConversationsBoardApi = async (
     "No se pudo cargar el tablero."
   );
 };
+
+// ---------------------------------------------------------------------------
+// Enviar
+// ---------------------------------------------------------------------------
+
+/**
+ * Motivos por los que un envío puede rechazarse. Se distinguen porque cada uno
+ * se resuelve de una manera distinta: tomar el control, esperar al cliente, o
+ * avisarle a sistemas.
+ */
+export type SendRejectReason =
+  | "no_control"
+  | "taken_by_other"
+  | "window_closed"
+  | "not_configured"
+  | "meta_error"
+  | "not_found"
+  | "no_auth"
+  | "no_identity"
+  | "not_allowed";
+
+export interface SendMessageResult {
+  success: boolean;
+  reason?: SendRejectReason;
+  error?: string;
+  takenByName?: string | null;
+  /** El mensaje salió pero no se pudo guardar en el historial. No reenviar. */
+  warning?: string;
+  wamid?: string | null;
+}
+
+/**
+ * El envío pasa SIEMPRE por la edge function: el token de Meta vive en el
+ * backend y no puede llegar al navegador. La function valida el control del
+ * lado del servidor, así que este llamado no es la defensa — la pantalla
+ * bloquea antes solo para no hacer perder el tiempo.
+ */
+export const sendMessageApi = async (
+  channelId: number,
+  phoneNumber: number | null,
+  whatsappUserId: string | null,
+  message: string
+): Promise<SendMessageResult> => {
+  const { data, error } = await supabase.functions.invoke("crm-send-message", {
+    body: {
+      channelId,
+      phoneNumber,
+      whatsappUserId,
+      message,
+    },
+  });
+
+  // Con un status fuera de 2xx, invoke deja data en null y mete la respuesta
+  // dentro del error. Los rechazos de negocio viajan así (409/502/503), y sin
+  // leer ese cuerpo se perdería el motivo y solo quedaría un "Edge Function
+  // returned a non-2xx status code" que no le dice nada a nadie.
+  if (error) {
+    const context = (error as { context?: Response }).context;
+
+    if (context && typeof context.json === "function") {
+      try {
+        const body = (await context.json()) as SendMessageResult;
+        if (body?.error) return { ...body, success: false };
+      } catch {
+        // Cuerpo no-JSON: cae al mensaje genérico de abajo.
+      }
+    }
+
+    return { success: false, error: error.message || "No se pudo enviar el mensaje." };
+  }
+
+  return (data ?? { success: false, error: "No se pudo enviar el mensaje." }) as SendMessageResult;
+};

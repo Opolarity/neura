@@ -1,5 +1,6 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
+import WalkingBear from "@/shared/components/walking-bear/WalkingBear";
 import { useSupportRequests } from "../hooks/useSupportRequests";
 import { useSupportRequestDetail } from "../hooks/useSupportRequestDetail";
 import { SupportDialog } from "../components/SupportDialog";
@@ -102,6 +103,8 @@ const SupportRequestsPage = () => {
         onRetry={detail.retry}
         onSendMessage={detail.sendMessage}
       />
+
+      <WalkingBear className="w-full mt-auto" />
     </div>
   );
 };
