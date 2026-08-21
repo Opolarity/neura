@@ -78,6 +78,7 @@ import AssistantPage from "@/modules/assistant/pages/AssistantPage";
 import CrmInboxPage from "@/modules/crm/pages/InboxPage";
 import CrmBoardPage from "@/modules/crm/pages/BoardPage";
 import CrmChannelsPage from "@/modules/crm/pages/ChannelsPage";
+import CrmCostsPage from "@/modules/crm/pages/CostsPage";
 import {
   LayoutGrid,
   Tag,
@@ -336,6 +337,9 @@ export const APP_PERMISSIONS_CONFIG = [
               // Mide ventas por sale_type, no conversaciones: es el unico del
               // CRM que funciona en produccion sin depender del chat.
               { name: "Rendimiento por canal", path: "/crm/channels", code: "crm_channels.list", element: <CrmChannelsPage />, showSidebar: true, node: [] },
+              // Los costos son egresos normales en movements: esta pantalla los
+              // lee y cruza, y el alta manda al formulario de gastos que ya existe.
+              { name: "Costos por canal", path: "/crm/costs", code: "crm_costs.list", element: <CrmCostsPage />, showSidebar: true, node: [] },
             ]
           },
 

@@ -7,6 +7,7 @@ import type {
   ChannelMetricsResponse,
   ChannelOverTimeResponse,
   ChannelProductsResponse,
+  ChannelCostsResponse,
 } from "../types/crm.types";
 
 // Canal por defecto. Hoy la bandeja comparte número con el chatbot, así que lee
@@ -384,5 +385,22 @@ export const getChannelTopProductsApi = async (
     data as ChannelProductsResponse | null,
     error,
     "No se pudieron cargar los productos del canal."
+  );
+};
+
+/** Costos por canal cruzados con los ingresos del mismo periodo. */
+export const getChannelCostsApi = async (
+  startDate: string,
+  endDate: string
+): Promise<ChannelCostsResponse> => {
+  const { data, error } = await db.rpc("sp_crm_channel_costs", {
+    p_start_date: startDate,
+    p_end_date: endDate,
+  });
+
+  return unwrap(
+    data as ChannelCostsResponse | null,
+    error,
+    "No se pudieron cargar los costos por canal."
   );
 };

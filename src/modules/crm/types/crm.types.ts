@@ -273,3 +273,50 @@ export interface ChannelProductsResponse {
   error?: string;
   products: ChannelProductApi[];
 }
+
+// ---------------------------------------------------------------------------
+// Costos por canal
+// ---------------------------------------------------------------------------
+
+export interface ChannelCostApi {
+  code: string;
+  name: string;
+  class_code: string;
+  orders: number;
+  sold: number;
+  collected: number;
+  direct_cost: number;
+  /** Cuantos movimientos hay cargados. En 0, la contribucion no significa nada. */
+  cost_entries: number;
+  contribution: number;
+  cost_per_order: number | null;
+  cost_ratio_pct: number | null;
+}
+
+export interface SharedCostApi {
+  class_code: string;
+  name: string;
+  amount: number;
+  entries: number;
+}
+
+export interface ChannelCostsResponse {
+  success: boolean;
+  error?: string;
+  range: { start: string; end: string };
+  /**
+   * Por que la pantalla no muestra margen: margen exigiria el costo de la
+   * mercaderia, y el ERP lo tiene cargado en una fraccion minima del catalogo.
+   */
+  product_cost: {
+    variations: number;
+    with_cost: number;
+    coverage_pct: number | null;
+    margin_available: boolean;
+  };
+  channels: ChannelCostApi[];
+  /** Infra, IA y asesores: sostienen los tres canales y NO se prorratean. */
+  shared: SharedCostApi[];
+  shared_total: number;
+  direct_total: number;
+}
