@@ -1,6 +1,6 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
-import { Bot, Clock, Hand, RotateCcw, UserPlus } from "lucide-react";
+import { Bot, Clock, Hand, Lock, RotateCcw, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -155,17 +155,15 @@ export const ConversationHeader = ({
                 size="sm"
                 className="h-7 px-2 text-xs"
                 onClick={onTake}
-                // Tomar un chat que otro asesor ya tiene lo rechaza el backend;
-                // se desactiva acá para no ofrecer una acción que va a fallar.
-                disabled={busy || takenBySomeoneElse}
+                disabled={busy}
                 title={
                   takenBySomeoneElse
-                    ? `${conversation.takenByName || "Otro asesor"} tiene el control`
+                    ? `Le vas a quitar el control a ${conversation.takenByName || "otro asesor"}`
                     : undefined
                 }
               >
                 <Hand className="mr-1 h-3.5 w-3.5" />
-                Tomar el control
+                {takenBySomeoneElse ? "Quitarle el control" : "Tomar el control"}
               </Button>
             )}
           </ComponentPermission>
@@ -173,8 +171,13 @@ export const ConversationHeader = ({
       </div>
 
       {takenBySomeoneElse && (
-        <p className="text-[11px] text-muted-foreground">
-          {conversation.takenByName || "Otro asesor"} tiene el control.
+        <p className="flex items-center gap-1 text-[11px] text-destructive-soft-foreground">
+          <Lock className="h-3 w-3" />
+          <strong className="font-medium">
+            {conversation.takenByName || "Otro asesor"}
+          </strong>
+          tomó el control de esta conversación. No podés escribir hasta que lo
+          tomes vos.
         </p>
       )}
     </header>

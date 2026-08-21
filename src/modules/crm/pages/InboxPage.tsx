@@ -206,14 +206,30 @@ const InboxPage = () => {
                 <ConversationThread messages={messages} loading={threadLoading} />
               </div>
 
-              {/* La caja de respuesta llega cuando exista crm-send-message. Se
-                  deja el aviso en vez de un input inerte: un campo que acepta
-                  texto y no envía nada es peor que no tenerlo. */}
+              {/* La caja de respuesta llega cuando exista crm-send-message. El pie ya
+                  aplica la regla acordada: solo escribe quien tiene el control.
+                  Se deja el aviso en vez de un input inerte — un campo que
+                  acepta texto y no envia nada es peor que no tenerlo. */}
               <footer className="border-t bg-muted/40 px-5 py-2">
-                <p className="text-xs text-muted-foreground">
-                  Responder desde el ERP todavía no está habilitado. Por ahora la bandeja
-                  es de lectura: podés cambiar la etapa, asignar y tomar el control.
-                </p>
+                {selected.takenBy && selected.takenBy !== user?.id ? (
+                  <p className="text-xs text-destructive-soft-foreground">
+                    <strong className="font-medium">
+                      {selected.takenByName || "Otro asesor"}
+                    </strong>{" "}
+                    tiene el control de esta conversación. Para responder,
+                    tenés que quitárselo.
+                  </p>
+                ) : !selected.takenBy ? (
+                  <p className="text-xs text-muted-foreground">
+                    Tomá el control para responder. Mientras nadie lo tenga, el
+                    bot sigue atendiendo esta conversación.
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Tenés el control: el bot está callado en este chat. Responder
+                    desde el ERP todavía no está habilitado.
+                  </p>
+                )}
               </footer>
             </>
           ) : (
