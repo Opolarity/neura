@@ -34,8 +34,6 @@ const getStatusClassName = (statusCode: string): string => {
       return "bg-success hover:bg-success/80 text-success-foreground";
     case "pen":
       return "bg-warning hover:bg-warning/80 text-warning-foreground";
-    case "drf":
-      return "bg-info/15 hover:bg-info/25 text-info";
     case "can":
       return "bg-destructive hover:bg-destructive/80 text-destructive-foreground";
     default:
