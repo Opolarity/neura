@@ -21,11 +21,15 @@ const createEmptyItem = (): InvoiceItemForm => ({
   total: 0,
 });
 
+// El precio unitario que se captura ya incluye IGV, igual que en POS, Ventas y el item de
+// envio: el impuesto se extrae del total (total - total/1.18), no se suma encima. Sumarlo
+// inflaba el comprobante un 18% frente al total del pedido y frente a lo que emit-invoice
+// desglosa para SUNAT.
 const recalcItem = (item: InvoiceItemForm): InvoiceItemForm => {
   const base = item.quantity * item.unitPrice;
   const baseWithDiscount = base - (item.discount || 0);
-  const igv = +(baseWithDiscount * 0.18).toFixed(2);
-  const total = +(baseWithDiscount + igv).toFixed(2);
+  const total = +baseWithDiscount.toFixed(2);
+  const igv = +(total - total / 1.18).toFixed(2);
   return { ...item, igv, total };
 };
 
@@ -224,8 +228,8 @@ export const useCreateInvoice = () => {
             const discount = parseFloat(p.product_discount) || 0;
             const base = quantity * unitPrice;
             const baseWithDiscount = base - discount;
-            const igv = +(baseWithDiscount * 0.18).toFixed(2);
-            const total = +(baseWithDiscount + igv).toFixed(2);
+            const total = +baseWithDiscount.toFixed(2);
+            const igv = +(total - total / 1.18).toFixed(2);
 
             return {
               id: crypto.randomUUID(),
@@ -258,15 +262,17 @@ export const useCreateInvoice = () => {
             movementId: movement.id.toString(),
           }));
           
+          const movementTotal = +(movement.amount || 0).toFixed(2);
+
           setItems([{
             id: crypto.randomUUID(),
             description: movement.description || "Movimiento",
             quantity: 1,
             measurementUnit: "ZZ",
-            unitPrice: movement.amount || 0,
+            unitPrice: movementTotal,
             discount: 0,
-            igv: +((movement.amount || 0) * 0.18).toFixed(2),
-            total: +((movement.amount || 0) * 1.18).toFixed(2),
+            igv: +(movementTotal - movementTotal / 1.18).toFixed(2),
+            total: movementTotal,
           }]);
           
           toast({ title: "Datos del movimiento cargados correctamente", variant: "success" });
@@ -370,8 +376,8 @@ export const useCreateInvoice = () => {
         const discount = p.discount_amount || 0;
         const base = quantity * unitPrice;
         const baseWithDiscount = base - discount;
-        const igv = +(baseWithDiscount * 0.18).toFixed(2);
-        const total = +(baseWithDiscount + igv).toFixed(2);
+        const total = +baseWithDiscount.toFixed(2);
+        const igv = +(total - total / 1.18).toFixed(2);
 
         return {
           id: crypto.randomUUID(),
