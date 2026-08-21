@@ -88,7 +88,9 @@ export default function WalkingBear({ height = 64, className }: WalkingBearProps
     <div
       ref={hostRef}
       className={className}
-      style={{ position: "relative", height, overflow: "hidden" }}
+      // flexShrink 0: dentro de un flex-col con alto acotado (paginas con tabla
+      // llena) el contenedor se comprimia y recortaba al oso por arriba.
+      style={{ position: "relative", height, flexShrink: 0, overflow: "hidden" }}
       aria-hidden="true"
     >
       <img
