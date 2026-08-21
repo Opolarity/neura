@@ -1,6 +1,6 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
-import { Bot, Clock, Hand, Lock, RotateCcw, UserPlus } from "lucide-react";
+import { Bot, Clock, Hand, Lock, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -57,7 +57,6 @@ export const ConversationHeader = ({
 
   const takenByMe = !!conversation.takenBy && conversation.takenBy === user?.id;
   const takenBySomeoneElse = !!conversation.takenBy && !takenByMe;
-  const assignedToMe = conversation.assignedTo === user?.id;
 
   const windowLabel = conversation.windowExpiresAt
     ? formatDistanceToNowStrict(new Date(conversation.windowExpiresAt), {
@@ -115,22 +114,7 @@ export const ConversationHeader = ({
         </ComponentPermission>
 
         <div className="ml-auto flex flex-wrap items-center gap-1.5">
-          <ComponentPermission codeIn={["crm_conversations.assign"]}>
-            {!assignedToMe && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => onAssign(user?.id ?? null)}
-                disabled={busy}
-              >
-                <UserPlus className="mr-1 h-3.5 w-3.5" />
-                Asignármela
-              </Button>
-            )}
-          </ComponentPermission>
-
-          <ComponentPermission codeIn={["crm_conversations.assign_any"]}>
+          <ComponentPermission codeIn={["crm_conversations.assign", "crm_conversations.assign_any"]}>
             <AssignMenu
               assignedTo={conversation.assignedTo}
               disabled={busy}
