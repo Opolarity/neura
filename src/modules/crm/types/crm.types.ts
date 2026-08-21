@@ -94,8 +94,10 @@ export interface Conversation {
   identity: string;
   phoneNumber: number | null;
   whatsappUserId: string | null;
-  /** Lo que se muestra en la lista: nombre del cliente, username o identidad. */
+  /** Título: nombre, si no celular, si no username, si no la identidad cruda. */
   displayName: string;
+  /** Los identificadores que el título NO muestra ya. Puede quedar vacío. */
+  subtitle: string;
   lastMessage: string;
   lastMessageAt: string;
   lastMessageFrom: MessageAuthor;
@@ -128,4 +130,65 @@ export interface ConversationFilters {
   assignedTo: string | null;
   unassigned: boolean;
   taken: boolean | null;
+}
+
+// ---------------------------------------------------------------------------
+// Tablero por etapa
+// ---------------------------------------------------------------------------
+
+export interface BoardCardApi {
+  identity: string;
+  phone_number: number | null;
+  whatsapp_user_id: string | null;
+  whatsapp_username: string | null;
+  last_message: string | null;
+  last_message_at: string;
+  last_message_from: MessageAuthor;
+  assigned_to: string | null;
+  assigned_to_name: string | null;
+  taken_by: string | null;
+  customer: {
+    name: string | null;
+    last_name: string | null;
+    document_number: string | null;
+  } | null;
+}
+
+export interface BoardColumnApi {
+  situation_id: number | null;
+  name: string;
+  code: string | null;
+  status_code: string | null;
+  order: number | null;
+  total: number;
+  cards: BoardCardApi[];
+}
+
+export interface BoardApiResponse {
+  success: boolean;
+  error?: string;
+  columns: BoardColumnApi[];
+}
+
+export interface BoardCard {
+  identity: string;
+  phoneNumber: number | null;
+  whatsappUserId: string | null;
+  displayName: string;
+  subtitle: string;
+  lastMessage: string;
+  lastMessageAt: string;
+  assignedToName: string | null;
+  /** Alguien la está atendiendo ahora: el bot está callado en ese chat. */
+  taken: boolean;
+}
+
+export interface BoardColumn {
+  /** null es la columna "Sin etapa": los chats que nadie clasificó todavía. */
+  situationId: number | null;
+  name: string;
+  statusCode: string | null;
+  /** Total real en esa etapa, que puede ser mayor que las tarjetas traídas. */
+  total: number;
+  cards: BoardCard[];
 }

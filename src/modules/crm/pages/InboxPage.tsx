@@ -81,8 +81,8 @@ const InboxPage = () => {
           </p>
         </div>
 
-        <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
-          <RefreshCw className="mr-1.5 h-4 w-4" />
+        <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs" onClick={reload} disabled={loading}>
+          <RefreshCw className="mr-1 h-3.5 w-3.5" />
           Actualizar
         </Button>
       </div>
@@ -96,12 +96,12 @@ const InboxPage = () => {
             updateFilters({ search: searchDraft });
           }}
         >
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchDraft}
             onChange={(e) => setSearchDraft(e.target.value)}
             placeholder="Buscar cliente, teléfono o texto…"
-            className="h-9 w-[260px] pl-8"
+            className="h-8 w-[230px] pl-8 text-xs"
           />
         </form>
 
@@ -111,7 +111,7 @@ const InboxPage = () => {
             updateFilters({ situationId: v === ALL ? null : Number(v) })
           }
         >
-          <SelectTrigger className="h-9 w-[190px]">
+          <SelectTrigger className="h-8 w-[170px] text-xs">
             <SelectValue placeholder="Todas las etapas" />
           </SelectTrigger>
           <SelectContent>
@@ -127,6 +127,7 @@ const InboxPage = () => {
         <Button
           variant={filters.assignedTo ? "default" : "outline"}
           size="sm"
+          className="h-8 px-2.5 text-xs"
           onClick={() =>
             updateFilters({
               assignedTo: filters.assignedTo ? null : user?.id ?? null,
@@ -140,6 +141,7 @@ const InboxPage = () => {
         <Button
           variant={filters.unassigned ? "default" : "outline"}
           size="sm"
+          className="h-8 px-2.5 text-xs"
           onClick={() =>
             updateFilters({ unassigned: !filters.unassigned, assignedTo: null })
           }
@@ -150,9 +152,10 @@ const InboxPage = () => {
         <Button
           variant={filters.taken === true ? "default" : "outline"}
           size="sm"
+          className="h-8 px-2.5 text-xs"
           onClick={() => updateFilters({ taken: filters.taken === true ? null : true })}
         >
-          <Filter className="mr-1.5 h-4 w-4" />
+          <Filter className="mr-1 h-3.5 w-3.5" />
           Tomadas
         </Button>
 
@@ -160,12 +163,13 @@ const InboxPage = () => {
           <Button
             variant="ghost"
             size="sm"
+          className="h-8 px-2.5 text-xs"
             onClick={() => {
               setSearchDraft("");
               clearFilters();
             }}
           >
-            <X className="mr-1.5 h-4 w-4" />
+            <X className="mr-1 h-3.5 w-3.5" />
             Limpiar
           </Button>
         )}

@@ -76,6 +76,7 @@ import ReclamacionesPage from "@/modules/ecommerce/pages/ReclamacionesPage";
 import ReclamacionViewPage from "@/modules/ecommerce/pages/ReclamacionViewPage";
 import AssistantPage from "@/modules/assistant/pages/AssistantPage";
 import CrmInboxPage from "@/modules/crm/pages/InboxPage";
+import CrmBoardPage from "@/modules/crm/pages/BoardPage";
 import {
   LayoutGrid,
   Tag,
@@ -330,6 +331,7 @@ export const APP_PERMISSIONS_CONFIG = [
               // comparte numero con el chatbot, asi que los mensajes que el bot
               // ya registra son los mismos que ve el equipo.
               { name: "Chats", path: "/crm/conversations", code: "crm_conversations.list", element: <CrmInboxPage />, showSidebar: true, node: [] },
+              { name: "Chats Status", path: "/crm/board", code: "crm_board.list", element: <CrmBoardPage />, showSidebar: true, node: [] },
             ]
           },
 

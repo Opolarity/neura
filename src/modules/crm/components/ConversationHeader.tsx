@@ -69,18 +69,19 @@ export const ConversationHeader = ({
   return (
     <header className="flex flex-col gap-2 border-b px-4 py-2">
       <div className="flex min-w-0 items-center gap-2">
-        {/* Nombre y datos en UNA línea: el encabezado le roba alto al chat,
-            que es lo que de verdad hay que leer. */}
-        <h2 className="min-w-0 flex-1 truncate text-[13px] font-semibold leading-tight">
-          {conversation.displayName}
-          <span className="ml-2 font-normal text-muted-foreground">
-            {conversation.phoneNumber
-              ? `+${conversation.phoneNumber}`
-              : conversation.identity}
-            {conversation.documentNumber ? ` · ${conversation.documentNumber}` : ""}
-            {conversation.assignedToName ? ` · ${conversation.assignedToName}` : ""}
-          </span>
-        </h2>
+        {/* Dos renglones y no uno: en una sola línea el nombre y los datos
+            competían por el mismo ancho contra las pastillas, y el documento
+            terminaba cortado. Con leading-tight ocupa casi lo mismo. */}
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-[13px] font-semibold leading-tight">
+            {conversation.displayName}
+          </h2>
+          <p className="truncate text-[10.5px] leading-tight text-muted-foreground">
+            {[conversation.subtitle, conversation.assignedToName]
+              .filter(Boolean)
+              .join(" · ") || " "}
+          </p>
+        </div>
 
         <Pill>
           <Bot className="h-3 w-3" />

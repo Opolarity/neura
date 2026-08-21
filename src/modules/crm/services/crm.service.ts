@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type {
+  BoardApiResponse,
   ConversationsApiResponse,
   ThreadApiResponse,
   CrmWriteResponse,
@@ -227,4 +228,24 @@ export const getErpUsersApi = async (search?: string): Promise<ErpUser[]> => {
       name: [r.name, r.last_name].filter(Boolean).join(" ").trim() || String(r.user_name ?? ""),
       role: String(r.role ?? ""),
     }));
+};
+
+/** Columnas del tablero, cada una con sus tarjetas y su total real. */
+export const getConversationsBoardApi = async (
+  search?: string,
+  assignedTo?: string | null,
+  channelCode: string = DEFAULT_CHANNEL_CODE
+): Promise<BoardApiResponse> => {
+  const { data, error } = await db.rpc("sp_crm_conversations_board", {
+    p_channel_code: channelCode,
+    p_search: search?.trim() || null,
+    p_assigned_to: assignedTo ?? null,
+    p_limit_column: 40,
+  });
+
+  return unwrap(
+    data as BoardApiResponse | null,
+    error,
+    "No se pudo cargar el tablero."
+  );
 };

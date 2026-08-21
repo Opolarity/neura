@@ -1,5 +1,9 @@
 import type { PaginationState } from "@/shared/components/pagination/Pagination";
 import type {
+  BoardApiResponse,
+  BoardCard,
+  BoardCardApi,
+  BoardColumn,
   Conversation,
   ConversationApiRow,
   ConversationMessage,
@@ -16,10 +20,20 @@ const situationAdapter = (s: SituationApi | null): Situation | null =>
     : null;
 
 /**
- * Nombre visible de la conversación, en orden de preferencia:
- * el nombre que el cliente dio, su username de WhatsApp, y como último recurso
- * la identidad cruda. Nunca queda vacío — una fila sin título en la bandeja es
- * inservible.
+ * Título de la conversación. El orden lo define qué tan identificable es el
+ * dato para quien atiende:
+ *
+ *   1. El nombre, si el bot llegó a pedirle los datos para un pedido.
+ *   2. El celular, si no dio sus datos pero su número es visible.
+ *   3. El username de WhatsApp, para los clientes que ocultan su número.
+ *   4. La identidad cruda (el BSUID), solo si no hay nada de lo anterior.
+ *
+ * El celular va ANTES que el username a propósito: un número sirve para buscar
+ * al cliente en el ERP o llamarlo, un handle de WhatsApp no.
+ *
+ * El caso 4 no debería darse: con la identidad resuelta sobre todo el hilo,
+ * ninguna de las 243 conversaciones actuales cae ahí. Se deja igual porque una
+ * fila sin título en la bandeja sería inservible.
  */
 const displayName = (row: ConversationApiRow): string => {
   const full = [row.customer?.name, row.customer?.last_name]
@@ -27,10 +41,30 @@ const displayName = (row: ConversationApiRow): string => {
     .join(" ")
     .trim();
 
-  if (full) return full;
-  if (row.whatsapp_username) return `@${row.whatsapp_username}`;
+  // Los nombres los escribe el cliente por WhatsApp, así que llegan en
+  // cualquier combinación de mayúsculas y minúsculas. Se normalizan para que
+  // la lista no mezcle "MANUEL JOAQUIN" con "Danitza Milena".
+  if (full) return full.toUpperCase();
   if (row.phone_number) return `+${row.phone_number}`;
+  if (row.whatsapp_username) return `@${row.whatsapp_username}`;
   return row.identity;
+};
+
+/**
+ * Lo que va debajo del título: los identificadores que el título NO usó.
+ * Repetir el celular abajo cuando el título YA es el celular no aporta nada y
+ * ocupa la línea que podría llevar el documento.
+ */
+const subtitle = (row: ConversationApiRow): string => {
+  const hasName = !!(row.customer?.name || row.customer?.last_name);
+  const parts: string[] = [];
+
+  if (hasName && row.phone_number) parts.push(`+${row.phone_number}`);
+  if (row.customer?.document_number) parts.push(row.customer.document_number);
+  if (!hasName && row.phone_number && row.whatsapp_username)
+    parts.push(`@${row.whatsapp_username}`);
+
+  return parts.join(" · ");
 };
 
 const conversationAdapter = (row: ConversationApiRow): Conversation => ({
@@ -38,6 +72,7 @@ const conversationAdapter = (row: ConversationApiRow): Conversation => ({
   phoneNumber: row.phone_number,
   whatsappUserId: row.whatsapp_user_id,
   displayName: displayName(row),
+  subtitle: subtitle(row),
   // Un mensaje de imagen llega como texto con la URL adentro; se recorta acá
   // para que la lista no muestre una URL larguísima como último mensaje.
   lastMessage: (row.last_message ?? "").replace(/\s+/g, " ").trim(),
@@ -76,3 +111,37 @@ const messageAdapter = (row: MessageApiRow): ConversationMessage => ({
 
 export const threadAdapter = (response: ThreadApiResponse): ConversationMessage[] =>
   (response.messages ?? []).map(messageAdapter);
+
+// ---------------------------------------------------------------------------
+// Tablero
+// ---------------------------------------------------------------------------
+
+/**
+ * La tarjeta reusa las MISMAS reglas de título y subtítulo que la bandeja.
+ * Si se duplicaran, un chat podría llamarse distinto en cada pantalla — que es
+ * exactamente lo que confunde a quien lo está buscando.
+ */
+const boardCardAdapter = (row: BoardCardApi): BoardCard => {
+  const asRow = row as unknown as ConversationApiRow;
+
+  return {
+    identity: row.identity,
+    phoneNumber: row.phone_number,
+    whatsappUserId: row.whatsapp_user_id,
+    displayName: displayName(asRow),
+    subtitle: subtitle(asRow),
+    lastMessage: (row.last_message ?? "").replace(/\s+/g, " ").trim(),
+    lastMessageAt: row.last_message_at,
+    assignedToName: row.assigned_to_name,
+    taken: !!row.taken_by,
+  };
+};
+
+export const boardAdapter = (response: BoardApiResponse): BoardColumn[] =>
+  (response.columns ?? []).map((col) => ({
+    situationId: col.situation_id,
+    name: col.name,
+    statusCode: col.status_code,
+    total: col.total,
+    cards: (col.cards ?? []).map(boardCardAdapter),
+  }));
