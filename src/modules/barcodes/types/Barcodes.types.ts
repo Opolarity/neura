@@ -50,6 +50,7 @@ export interface BarcodeTicketData {
   variationTerms: string;
   sku: string | null;
   price: number;
+  sequence: number; // lote, solo para la etiqueta visible
   barcodeValue: string; // value to encode in barcode
 }
 

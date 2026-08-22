@@ -227,6 +227,7 @@ export const useBarcodes = () => {
         variationTerms: selectedVariation.terms,
         sku: selectedVariation.sku,
         price: price,
+        sequence,
         barcodeValue: `${selectedVariation.variationId}-${sequence}`,
       };
 
@@ -283,6 +284,7 @@ export const useBarcodes = () => {
         variationTerms: item.variationTerms,
         sku: item.sku,
         price: priceData.price,
+        sequence: item.sequence,
         barcodeValue: item.barcodeValue,
       };
       generateBarcodePdf(ticketData, item.quantities ?? 1, labelLayout);
