@@ -22,6 +22,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarIcon, Check, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -205,202 +206,210 @@ const FranchiseFilterModal = ({
           <DialogTitle>Filtrar</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-2 sm:grid-cols-2">
-          <div className="grid gap-2 sm:col-span-2">
-            <Label>Franquiciado</Label>
-            <MultiSelect
-              options={franchisees.map((franchisee) => ({
-                label: franchisee.name,
-                value: String(franchisee.id),
-              }))}
-              value={selectedAccountIds.map(String)}
-              onChange={(selected) =>
-                setSelectedAccountIds(selected.map(Number))
-              }
-              placeholder="Todos los franquiciados"
-              showSearch
-              showClear
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Fecha de venta desde</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "justify-start text-left font-normal",
-                    !startDate && "text-muted-foreground",
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate
-                    ? format(startDate, "dd/MM/yyyy", { locale: es })
-                    : "Seleccionar fecha"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={setStartDate}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
+        {/* Tope de altura + scroll interno, igual que ProductsFilterModal: el
+            max-h va en un contenedor propio, no en el ScrollArea. Al ser un
+            máximo la altura se adapta al contenido y el scroll solo aparece si
+            hay de sobra, así que sirve el mismo valor en todos los modales. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <div className="grid gap-4 py-4 pl-1 pr-4 sm:grid-cols-2">
+              <div className="grid gap-2 sm:col-span-2">
+                <Label>Franquiciado</Label>
+                <MultiSelect
+                  options={franchisees.map((franchisee) => ({
+                    label: franchisee.name,
+                    value: String(franchisee.id),
+                  }))}
+                  value={selectedAccountIds.map(String)}
+                  onChange={(selected) =>
+                    setSelectedAccountIds(selected.map(Number))
+                  }
+                  placeholder="Todos los franquiciados"
+                  showSearch
+                  showClear
                 />
-              </PopoverContent>
-            </Popover>
-          </div>
+              </div>
 
-          <div className="grid gap-2">
-            <Label>Fecha de venta hasta</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "justify-start text-left font-normal",
-                    !endDate && "text-muted-foreground",
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {endDate
-                    ? format(endDate, "dd/MM/yyyy", { locale: es })
-                    : "Seleccionar fecha"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={setEndDate}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Estado de pago</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    // w-full + min-w-0 son lo que deja que el span trunque: sin
-                    // ellos el texto no encoge y el boton se sale de su columna.
-                    "w-full min-w-0 justify-between text-left font-normal",
-                    selectedPaymentStatuses.length === 0 &&
-                      "text-muted-foreground",
-                  )}
-                >
-                  <span className="min-w-0 flex-1 truncate">
-                    {getPaymentStatusesLabel(selectedPaymentStatuses)}
-                  </span>
-                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-1">
-                {PAYMENT_STATUS_OPTIONS.map((option) => {
-                  const checked = selectedPaymentStatuses.includes(
-                    option.value,
-                  );
-
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
-                      onClick={() => togglePaymentStatus(option.value)}
+              <div className="grid gap-2">
+                <Label>Fecha de venta desde</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground",
+                      )}
                     >
-                      <span className="flex h-4 w-4 items-center justify-center">
-                        {checked && <Check className="h-4 w-4" />}
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate
+                        ? format(startDate, "dd/MM/yyyy", { locale: es })
+                        : "Seleccionar fecha"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Fecha de venta hasta</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate
+                        ? format(endDate, "dd/MM/yyyy", { locale: es })
+                        : "Seleccionar fecha"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Estado de pago</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        // w-full + min-w-0 son lo que deja que el span trunque: sin
+                        // ellos el texto no encoge y el boton se sale de su columna.
+                        "w-full min-w-0 justify-between text-left font-normal",
+                        selectedPaymentStatuses.length === 0 &&
+                          "text-muted-foreground",
+                      )}
+                    >
+                      <span className="min-w-0 flex-1 truncate">
+                        {getPaymentStatusesLabel(selectedPaymentStatuses)}
                       </span>
-                      <span>{option.label}</span>
-                    </button>
-                  );
-                })}
-              </PopoverContent>
-            </Popover>
-          </div>
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-1">
+                    {PAYMENT_STATUS_OPTIONS.map((option) => {
+                      const checked = selectedPaymentStatuses.includes(
+                        option.value,
+                      );
 
-          <div className="grid gap-2">
-            <Label>Estado de venta</Label>
-            <Select
-              value={selectedSalesStatus}
-              onValueChange={(value) =>
-                setSelectedSalesStatus(value as FranchiseSalesStatus)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SALES_STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                          onClick={() => togglePaymentStatus(option.value)}
+                        >
+                          <span className="flex h-4 w-4 items-center justify-center">
+                            {checked && <Check className="h-4 w-4" />}
+                          </span>
+                          <span>{option.label}</span>
+                        </button>
+                      );
+                    })}
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-          <div className="grid gap-2">
-            <Label>Stock en tienda</Label>
-            <Select
-              value={selectedStockStatus}
-              onValueChange={(value) =>
-                setSelectedStockStatus(value as FranchiseStockStatus)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STOCK_STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="franchise-order-id">N° de orden</Label>
-            <Input
-              id="franchise-order-id"
-              type="number"
-              min={1}
-              placeholder="Todas"
-              value={orderIdInput}
-              onChange={(e) => setOrderIdInput(e.target.value)}
-            />
-          </div>
-
-          <div className="grid gap-2 sm:col-span-2">
-            <Label>Categoría</Label>
-            <CategorySelector
-              selectedItems={selectedCategories}
-              onChangeItems={setSelectedCategories}
-              trigger={
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className={cn(
-                    "justify-between text-left font-normal",
-                    selectedCategories.length === 0 && "text-muted-foreground",
-                  )}
+              <div className="grid gap-2">
+                <Label>Estado de venta</Label>
+                <Select
+                  value={selectedSalesStatus}
+                  onValueChange={(value) =>
+                    setSelectedSalesStatus(value as FranchiseSalesStatus)
+                  }
                 >
-                  <span className="truncate">
-                    {getCategoriesLabel(selectedCategories)}
-                  </span>
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              }
-            />
-          </div>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SALES_STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Stock en tienda</Label>
+                <Select
+                  value={selectedStockStatus}
+                  onValueChange={(value) =>
+                    setSelectedStockStatus(value as FranchiseStockStatus)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STOCK_STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="franchise-order-id">N° de orden</Label>
+                <Input
+                  id="franchise-order-id"
+                  type="number"
+                  min={1}
+                  placeholder="Todas"
+                  value={orderIdInput}
+                  onChange={(e) => setOrderIdInput(e.target.value)}
+                />
+              </div>
+
+              <div className="grid gap-2 sm:col-span-2">
+                <Label>Categoría</Label>
+                <CategorySelector
+                  selectedItems={selectedCategories}
+                  onChangeItems={setSelectedCategories}
+                  trigger={
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className={cn(
+                        "justify-between text-left font-normal",
+                        selectedCategories.length === 0 && "text-muted-foreground",
+                      )}
+                    >
+                      <span className="truncate">
+                        {getCategoriesLabel(selectedCategories)}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
+          </ScrollArea>
         </div>
 
         <DialogFooter>

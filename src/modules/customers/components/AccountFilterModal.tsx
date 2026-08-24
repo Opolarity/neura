@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
     Select,
     SelectContent,
@@ -57,28 +58,36 @@ export const AccountFilterModal = ({
                     <DialogTitle>Filtrar Cuentas</DialogTitle>
                 </DialogHeader>
 
-                <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="show">Estado</Label>
-                        <Select
-                            value={localFilters.show === null ? 'all' : localFilters.show ? 'active' : 'inactive'}
-                            onValueChange={(value) =>
-                                setLocalFilters({
-                                    ...localFilters,
-                                    show: value === 'all' ? null : value === 'active',
-                                })
-                            }
-                        >
-                            <SelectTrigger id="show">
-                                <SelectValue placeholder="Seleccione estado" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todos</SelectItem>
-                                <SelectItem value="active">Activo</SelectItem>
-                                <SelectItem value="inactive">Inactivo</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                {/* Tope de altura + scroll interno, igual que ProductsFilterModal: el
+                    max-h va en un contenedor propio, no en el ScrollArea. Al ser un
+                    máximo la altura se adapta al contenido y el scroll solo aparece si
+                    hay de sobra, así que sirve el mismo valor en todos los modales. */}
+                <div className="max-h-[50vh]">
+                    <ScrollArea className="h-full">
+                        <div className="grid gap-4 py-4 pl-1 pr-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="show">Estado</Label>
+                                <Select
+                                    value={localFilters.show === null ? 'all' : localFilters.show ? 'active' : 'inactive'}
+                                    onValueChange={(value) =>
+                                        setLocalFilters({
+                                            ...localFilters,
+                                            show: value === 'all' ? null : value === 'active',
+                                        })
+                                    }
+                                >
+                                    <SelectTrigger id="show">
+                                        <SelectValue placeholder="Seleccione estado" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos</SelectItem>
+                                        <SelectItem value="active">Activo</SelectItem>
+                                        <SelectItem value="inactive">Inactivo</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    </ScrollArea>
                 </div>
 
                 <DialogFooter className="flex gap-2 sm:justify-end">
