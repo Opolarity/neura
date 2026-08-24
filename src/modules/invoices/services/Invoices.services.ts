@@ -133,11 +133,12 @@ export const getInvoiceTypesApi = async () => {
   return data || [];
 };
 
-export const getInvoiceFormDataApi = async (params: { invoiceId?: number; orderId?: number; movementId?: number }) => {
+export const getInvoiceFormDataApi = async (params: { invoiceId?: number; orderId?: number; movementId?: number; paymentId?: number }) => {
   const urlParams = new URLSearchParams();
   if (params.invoiceId) urlParams.append("invoice_id", params.invoiceId.toString());
   if (params.orderId) urlParams.append("order_id", params.orderId.toString());
   if (params.movementId) urlParams.append("movement_id", params.movementId.toString());
+  if (params.paymentId) urlParams.append("payment_id", params.paymentId.toString());
 
   const { data, error } = await supabase.functions.invoke(`get-form-data-invoice?${urlParams.toString()}`, {
     method: "GET",
