@@ -435,6 +435,7 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
         open={showPOSWarning}
         onOpenChange={setShowPOSWarning}
         onGoToPOS={() => { setShowPOSWarning(false); navigate("/pos/open"); }}
+        onSignOutAnyway={() => { setShowPOSWarning(false); signOut(); }}
       />
     </Sidebar>
   );
