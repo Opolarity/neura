@@ -327,13 +327,33 @@ export const useCreateInvoice = () => {
             invoiceTypeId: typeIdFromUrl || prev.invoiceTypeId,
           }));
 
+          // Cada linea refleja lo que el pago cubrio: la cantidad se deriva del monto
+          // pagado sobre el precio unitario efectivo (con descuento), no de la orden.
+          // Sin item de envio: el comprobante del pago es solo por los productos pagados.
           const orderItems: InvoiceItemForm[] = orderProducts.map((p: any) => {
             const unitPrice = parseFloat(p.product_price) || 0;
-            const quantity = p.quantity || 1;
-            const discount = parseFloat(p.product_discount) || 0;
-            const base = quantity * unitPrice;
-            const baseWithDiscount = base - discount;
-            const total = +baseWithDiscount.toFixed(2);
+            const orderQuantity = p.quantity || 1;
+            const orderDiscount = parseFloat(p.product_discount) || 0;
+            const paidAmount = parseFloat(p.paid_amount) || 0;
+            const lineTotal = +(orderQuantity * unitPrice - orderDiscount).toFixed(2);
+            const effectiveUnit = orderQuantity > 0 ? lineTotal / orderQuantity : unitPrice;
+
+            let quantity: number;
+            let discount: number;
+            if (paidAmount >= lineTotal - 0.01 || effectiveUnit <= 0) {
+              // Pago cubre la linea completa: usar los valores reales de la orden
+              quantity = orderQuantity;
+              discount = orderDiscount;
+            } else {
+              const rawQty = paidAmount / effectiveUnit;
+              quantity = Math.abs(rawQty - Math.round(rawQty)) < 0.001
+                ? Math.round(rawQty)
+                : +rawQty.toFixed(2);
+              // Descuento tal que qty * precio - descuento = monto pagado
+              discount = Math.max(0, +(quantity * unitPrice - paidAmount).toFixed(2));
+            }
+
+            const total = +(quantity * unitPrice - discount).toFixed(2);
             const igv = +(total - total / 1.18).toFixed(2);
 
             return {
@@ -347,12 +367,6 @@ export const useCreateInvoice = () => {
               total,
             };
           });
-
-          const totalShipping = (data.orders || []).reduce(
-            (sum: number, o: any) => sum + (Number(o.shipping_cost) || 0), 0
-          );
-          const shippingItem = buildShippingFormItem(totalShipping);
-          if (shippingItem) orderItems.push(shippingItem);
 
           if (orderItems.length > 0) setItems(orderItems);
           toast({
