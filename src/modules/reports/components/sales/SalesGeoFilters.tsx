@@ -1,45 +1,17 @@
-import { useState } from 'react';
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import { cn } from '@/shared/utils/utils';
-import { filterOptionsService, productsService } from '../../services/reports.service';
-import type { SalesExtraFilters } from '../../services/reports.service';
+import { MultiSelect } from '@/shared/components/MultiSelect';
+import { filterOptionsService } from '../../services/reports.service';
 import { useReportsFilters } from '../../context/ReportsFiltersContext';
-import { useDebounce } from '@/hooks/useDebounce';
-
-interface Props {
-  extraDraft: SalesExtraFilters;
-  onExtraDraftChange: (partial: Partial<SalesExtraFilters>) => void;
-}
+import { defaultSituationIds } from '../../types/reports.types';
 
 const ALL_VALUE = '__all__';
 
 /** Solo devuelve los campos de "Más filtros" de Ventas — el contenedor (caja,
  * toggle, Limpiar, Descargar, Aplicar) vive en ReportsFilterBar. */
-export function SalesGeoFilters({ extraDraft, onExtraDraftChange }: Props) {
+export function SalesGeoFilters() {
   const { draft, setDraft } = useReportsFilters();
-  const [comboOpen, setComboOpen] = useState(false);
-  const [productSearch, setProductSearch] = useState('');
-  const debouncedSearch = useDebounce(productSearch, 400);
-
-  const productResults = useQuery({
-    queryKey: ['rpt_product_search', debouncedSearch],
-    queryFn: () => productsService.search(debouncedSearch),
-    enabled: debouncedSearch.length >= 2,
-    staleTime: 1000 * 60 * 2,
-  });
 
   const countries = useQuery({
     queryKey: ['filter_countries'],
@@ -86,8 +58,38 @@ export function SalesGeoFilters({ extraDraft, onExtraDraftChange }: Props) {
     staleTime: 1000 * 60 * 60,
   });
 
+  const situations = useQuery({
+    queryKey: ['filter_order_situations'],
+    queryFn: filterOptionsService.getOrderSituations,
+    staleTime: 1000 * 60 * 60,
+  });
+
+  // `situationIds` en null significa "el default del backend": se muestra
+  // marcado todo menos Cancelado y Reembolsado, sin escribir nada en el draft
+  // hasta que el usuario toque el filtro.
+  const situationOptions = situations.data ?? [];
+  const selectedSituations = useMemo(
+    () => draft.situationIds ?? defaultSituationIds(situationOptions),
+    [draft.situationIds, situationOptions],
+  );
+
   return (
     <>
+      {/* Estado de pedido */}
+      <div className="flex flex-col gap-1 w-[200px]">
+        <span className="text-xs text-muted-foreground font-medium">Estado de pedido</span>
+        <MultiSelect
+          className="h-9"
+          options={situationOptions.map((s) => ({ label: s.name, value: s.id.toString() }))}
+          value={selectedSituations.map((id) => id.toString())}
+          onChange={(vals) => setDraft({ situationIds: vals.map(Number) })}
+          placeholder="Ninguno"
+          showSelectAll
+          selectAllLabel="Todos"
+          maxVisible={1}
+        />
+      </div>
+
       {/* Sucursal */}
       <div className="flex flex-col gap-1">
         <span className="text-xs text-muted-foreground font-medium">Sucursal</span>
@@ -143,93 +145,6 @@ export function SalesGeoFilters({ extraDraft, onExtraDraftChange }: Props) {
             ))}
           </SelectContent>
         </Select>
-      </div>
-
-      {/* Producto específico */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium">Producto</span>
-        <Popover open={comboOpen} onOpenChange={setComboOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={comboOpen}
-              className="h-9 w-[220px] justify-between font-normal"
-            >
-              <span className="truncate">
-                {extraDraft.productId ? extraDraft.productTitle : 'Todos'}
-              </span>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[320px] p-0" align="start">
-            <Command shouldFilter={false}>
-              <CommandInput
-                placeholder="Nombre o SKU…"
-                value={productSearch}
-                onValueChange={setProductSearch}
-              />
-              <CommandList>
-                {productSearch.length < 2 ? (
-                  <CommandEmpty>Escribe al menos 2 caracteres…</CommandEmpty>
-                ) : productResults.isFetching ? (
-                  <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Buscando…
-                  </div>
-                ) : (productResults.data ?? []).length === 0 ? (
-                  <CommandEmpty>Sin resultados.</CommandEmpty>
-                ) : (
-                  <CommandGroup>
-                    {(productResults.data ?? []).map((r) => (
-                      <CommandItem
-                        key={r.id}
-                        value={`${r.id}`}
-                        onSelect={() => {
-                          onExtraDraftChange({ productId: r.id, productTitle: r.title });
-                          setComboOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            'mr-2 h-4 w-4',
-                            extraDraft.productId === r.id ? 'opacity-100' : 'opacity-0',
-                          )}
-                        />
-                        <div className="flex flex-col min-w-0">
-                          <span className="truncate text-sm">{r.title}</span>
-                          <span className="truncate text-xs text-muted-foreground">{r.sku}</span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      {/* Monto de compra */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium">Monto mín. (S/.)</span>
-        <Input
-          type="number"
-          min={0}
-          className="h-9 w-[110px]"
-          value={extraDraft.minTotal ?? ''}
-          onChange={(e) => onExtraDraftChange({ minTotal: e.target.value === '' ? null : Number(e.target.value) })}
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium">Monto máx. (S/.)</span>
-        <Input
-          type="number"
-          min={0}
-          className="h-9 w-[110px]"
-          value={extraDraft.maxTotal ?? ''}
-          onChange={(e) => onExtraDraftChange({ maxTotal: e.target.value === '' ? null : Number(e.target.value) })}
-        />
       </div>
 
       {/* País */}

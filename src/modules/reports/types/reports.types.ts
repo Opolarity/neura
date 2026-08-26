@@ -1,7 +1,7 @@
 // ============================================================
 // REPORTS MODULE — TYPE DEFINITIONS
 // ============================================================
-import { LIMA_TIME_ZONE } from "@/shared/utils/date";
+import { getFirstDayOfMonth, getTodayDate } from "@/shared/utils/date";
 
 // -------------------------------------------------------
 // Shared Filter State
@@ -16,18 +16,23 @@ export interface ReportsFilters {
   neighborhoodId: number | null;
   saleTypeId: number | null;
   paymentMethodId: number | null;
+  /**
+   * null = el default del backend, que excluye Cancelado y Reembolsado;
+   * un array = exactamente esas situaciones.
+   */
+  situationIds: number[] | null;
 }
 
-function toISODate(date: Date): string {
-  return date.toLocaleDateString("sv-SE", { timeZone: LIMA_TIME_ZONE });
-}
-
-const _today = new Date();
-const _firstOfMonth = new Date(_today.getFullYear(), _today.getMonth(), 1);
-
-export const DEFAULT_REPORTS_FILTERS: ReportsFilters = {
-  startDate: toISODate(_firstOfMonth),
-  endDate: toISODate(_today),
+/**
+ * Rango por defecto: del día 1 del mes en curso a hoy, en calendario de Lima.
+ *
+ * Es una factory, no una constante: como constante de módulo se evaluaba una
+ * sola vez al importar, así que una pestaña abierta cruzando medianoche o
+ * cambio de mes arrastraba un rango obsoleto.
+ */
+export const createDefaultReportsFilters = (): ReportsFilters => ({
+  startDate: getFirstDayOfMonth(),
+  endDate: getTodayDate(),
   branchId: null,
   countryId: null,
   stateId: null,
@@ -35,7 +40,30 @@ export const DEFAULT_REPORTS_FILTERS: ReportsFilters = {
   neighborhoodId: null,
   saleTypeId: null,
   paymentMethodId: null,
-};
+  situationIds: null,
+});
+
+// -------------------------------------------------------
+// Situación de pedido (catálogo global del módulo ORD)
+// -------------------------------------------------------
+export interface OrderSituationOption {
+  id: number;
+  name: string;
+  code: string | null;
+  statuses: { code: string };
+}
+
+/**
+ * Situaciones que arrancan desmarcadas en el filtro. Mismo criterio que aplica
+ * el backend cuando `p_situation_ids` viaja en NULL: estado Cancelado o la
+ * situación de reembolso.
+ */
+export const isDefaultExcludedSituation = (s: OrderSituationOption): boolean =>
+  s.statuses.code === 'CAN' || s.code === 'REB-HDN';
+
+/** Ids marcados por defecto: todas las situaciones menos las excluidas. */
+export const defaultSituationIds = (options: OrderSituationOption[]): number[] =>
+  options.filter((s) => !isDefaultExcludedSituation(s)).map((s) => s.id);
 
 // -------------------------------------------------------
 // Branch / Location lookup
@@ -100,17 +128,6 @@ export type SalesDimension =
 export type Granularity = 'day' | 'week' | 'month';
 export type TopMetric = 'revenue' | 'quantity';
 export type TopLimit = 5 | 10 | 20;
-export type HeatmapMetric = 'total_revenue' | 'order_count';
-
-export interface SalesGeoHeatmapItem {
-  state_id?: number;
-  city_id?: number;
-  geo_map: string | null;
-  label: string;
-  state_geo_map?: string | null;
-  order_count: number;
-  total_revenue: number;
-}
 
 // -------------------------------------------------------
 // Products Dashboard
