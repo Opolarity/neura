@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { ReportsFilters } from '../types/reports.types';
-import { DEFAULT_REPORTS_FILTERS } from '../types/reports.types';
+import { createDefaultReportsFilters } from '../types/reports.types';
 
 interface ReportsFiltersContextValue {
   /** Filtros aplicados — lo que usan las queries de cada pestaña. */
@@ -19,8 +19,8 @@ interface ReportsFiltersContextValue {
 }
 
 export const ReportsFiltersContext = createContext<ReportsFiltersContextValue>({
-  filters: DEFAULT_REPORTS_FILTERS,
-  draft: DEFAULT_REPORTS_FILTERS,
+  filters: createDefaultReportsFilters(),
+  draft: createDefaultReportsFilters(),
   setDraft: () => {},
   apply: () => {},
   applyImmediate: () => {},
