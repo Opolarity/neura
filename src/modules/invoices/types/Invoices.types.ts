@@ -61,6 +61,7 @@ export interface CreateInvoicePayload {
   total_free?: number;
   total_others?: number;
   order_id?: number;
+  order_ids?: number[];
   movement_id?: number;
   items: {
     description: string;
@@ -112,6 +113,8 @@ export interface InvoiceFormData {
   clientAddress: string;
   orderId?: string;
   movementId?: string;
+  paymentId?: string;
+  orderIds?: number[];
 }
 
 export interface InvoiceItem {

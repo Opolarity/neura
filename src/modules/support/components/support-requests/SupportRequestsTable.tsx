@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { formatDateDisplay, formatDateTime } from "@/shared/utils/date";
 import type { SupportRequestListItem } from "../../types/Support.types";
+import { formatSupportCodes } from "../../utils/requestCodes";
 import { SupportStatusBadge } from "./SupportStatusBadge";
 
 interface SupportRequestsTableProps {
@@ -88,8 +89,14 @@ export const SupportRequestsTable = ({
             <TableCell>
               <div>
                 <p className="font-medium">{request.title}</p>
-                {request.taskCode && (
-                  <p className="text-xs text-muted-foreground">{request.taskCode}</p>
+                {/* Los códigos por los que se busca la solicitud. Antes aquí
+                    solo salía el de la tarea y en crudo ("219"): sin el
+                    prefijo y sin el S-n, el usuario no tenía de dónde copiar
+                    lo que va a pegar en el buscador. */}
+                {formatSupportCodes(request) !== "" && (
+                  <p className="text-xs text-muted-foreground">
+                    {formatSupportCodes(request)}
+                  </p>
                 )}
               </div>
             </TableCell>

@@ -13,9 +13,10 @@ interface POSOpenWarningDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onGoToPOS: () => void;
+  onSignOutAnyway: () => void;
 }
 
-export function POSOpenWarningDialog({ open, onOpenChange, onGoToPOS }: POSOpenWarningDialogProps) {
+export function POSOpenWarningDialog({ open, onOpenChange, onGoToPOS, onSignOutAnyway }: POSOpenWarningDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px]" hideClose>
@@ -31,8 +32,8 @@ export function POSOpenWarningDialog({ open, onOpenChange, onGoToPOS }: POSOpenW
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
+          <Button variant="outline" onClick={onSignOutAnyway}>
+            Cerrar de todas maneras
           </Button>
           <Button onClick={onGoToPOS}>
             Ir a Punto de Venta

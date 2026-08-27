@@ -2,11 +2,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { ReportsFiltersContext } from '../context/ReportsFiltersContext';
 import type { ReportsFilters } from '../types/reports.types';
-import { DEFAULT_REPORTS_FILTERS } from '../types/reports.types';
+import { createDefaultReportsFilters } from '../types/reports.types';
 
 function ReportsLayout() {
-  const [filters, setFilters] = useState<ReportsFilters>(DEFAULT_REPORTS_FILTERS);
-  const [draft, setDraftState] = useState<ReportsFilters>(DEFAULT_REPORTS_FILTERS);
+  // Lazy initializer: la factory se evalúa al montar, no al importar el módulo,
+  // que es justo lo que evita arrastrar un rango de fechas obsoleto.
+  const [filters, setFilters] = useState<ReportsFilters>(createDefaultReportsFilters);
+  const [draft, setDraftState] = useState<ReportsFilters>(createDefaultReportsFilters);
   const [applyVersion, setApplyVersion] = useState(0);
 
   const setDraft = useCallback((partial: Partial<ReportsFilters>) => {

@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -72,69 +73,77 @@ const POSSessionsFilterModal = ({
           <DialogTitle>Filtrar Sesiones</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Date Range */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Rango de Fecha</Label>
-            <DateRangeFilter
-              startDate={internal.dateFrom || null}
-              endDate={internal.dateTo || null}
-              onChange={handleDateChange}
-              startLabel="Desde"
-              endLabel="Hasta"
-            />
-          </div>
+        {/* Tope de altura + scroll interno, igual que ProductsFilterModal: el
+            max-h va en un contenedor propio, no en el ScrollArea. Al ser un
+            máximo la altura se adapta al contenido y el scroll solo aparece si
+            hay de sobra, así que sirve el mismo valor en todos los modales. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 py-4 pl-1 pr-4">
+              {/* Date Range */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Rango de Fecha</Label>
+                <DateRangeFilter
+                  startDate={internal.dateFrom || null}
+                  endDate={internal.dateTo || null}
+                  onChange={handleDateChange}
+                  startLabel="Desde"
+                  endLabel="Hasta"
+                />
+              </div>
 
-          {/* Difference Type */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Diferencia</Label>
-            <Select
-              value={internal.differenceType || "all"}
-              onValueChange={(v) =>
-                setInternal((prev) => ({
-                  ...prev,
-                  differenceType: v === "all" ? "" : v,
-                }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="none">Sin diferencia</SelectItem>
-                <SelectItem value="opening">Diferencia en apertura</SelectItem>
-                <SelectItem value="closing">Diferencia en cierre</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              {/* Difference Type */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Diferencia</Label>
+                <Select
+                  value={internal.differenceType || "all"}
+                  onValueChange={(v) =>
+                    setInternal((prev) => ({
+                      ...prev,
+                      differenceType: v === "all" ? "" : v,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="none">Sin diferencia</SelectItem>
+                    <SelectItem value="opening">Diferencia en apertura</SelectItem>
+                    <SelectItem value="closing">Diferencia en cierre</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Sales Range */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Total de ventas</Label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                value={internal.salesMin}
-                onChange={(e) =>
-                  setInternal((prev) => ({ ...prev, salesMin: e.target.value }))
-                }
-                placeholder="Mínimo"
-                min="0"
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-              />
-              <Input
-                type="number"
-                value={internal.salesMax}
-                onChange={(e) =>
-                  setInternal((prev) => ({ ...prev, salesMax: e.target.value }))
-                }
-                placeholder="Máximo"
-                min="0"
-                onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-              />
+              {/* Sales Range */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Total de ventas</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    value={internal.salesMin}
+                    onChange={(e) =>
+                      setInternal((prev) => ({ ...prev, salesMin: e.target.value }))
+                    }
+                    placeholder="Mínimo"
+                    min="0"
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                  />
+                  <Input
+                    type="number"
+                    value={internal.salesMax}
+                    onChange={(e) =>
+                      setInternal((prev) => ({ ...prev, salesMax: e.target.value }))
+                    }
+                    placeholder="Máximo"
+                    min="0"
+                    onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          </ScrollArea>
         </div>
 
         <DialogFooter className="flex gap-2">

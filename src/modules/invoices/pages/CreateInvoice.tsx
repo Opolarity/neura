@@ -116,7 +116,15 @@ const CreateInvoice = ({ viewOnly = false }: { viewOnly?: boolean }) => {
             <FileText className="h-5 w-5" />
             Datos del Comprobante
           </CardTitle>
-          {!viewOnly && (
+          {!viewOnly && formData.paymentId && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-medium border border-green-200">
+                <LinkIcon className="h-3 w-3" />
+                Pago #{formData.paymentId} · {formData.orderIds?.length || 0} pedidos
+              </div>
+            </div>
+          )}
+          {!viewOnly && !formData.paymentId && (
             <div className="flex items-center gap-2">
               {formData.orderId ? (
                 <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium border border-blue-200">

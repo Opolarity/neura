@@ -1,17 +1,8 @@
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import {
-  ChartLoading,
-  ReportCard,
-  ReportSelect,
-} from '../shared/ReportScaffold';
-import {
-  chartAxis,
-  chartGrid,
-  formatCurrencyAxis,
-  reportChartColors,
-} from '../shared/reportChartUtils';
 import type { SalesOverTimeItem, Granularity } from '../../types/reports.types';
+import { ChartLoading, ReportCard, ReportSelect } from '../shared/ReportScaffold';
+import { chartAxis, chartGrid, formatCurrencyAxis, reportChartColors } from '../shared/reportChartUtils';
 
 interface Props {
   data: SalesOverTimeItem[];
@@ -20,11 +11,13 @@ interface Props {
   onGranularityChange: (g: Granularity) => void;
 }
 
-const GRANULARITY_LABELS: Record<Granularity, string> = {
-  day: 'Diario',
-  week: 'Semanal',
-  month: 'Mensual',
-};
+const GRANULARITY_OPTIONS: Array<{ value: Granularity; label: string }> = [
+  { value: 'day', label: 'Diario' },
+  { value: 'week', label: 'Semanal' },
+  { value: 'month', label: 'Mensual' },
+];
+
+const CHART_CONFIG = { ventas: { label: 'Ventas', color: reportChartColors.blue } };
 
 export function SalesOverTimeChart({ data, loading, granularity, onGranularityChange }: Props) {
   const chartData = data.map((d) => ({
@@ -40,41 +33,21 @@ export function SalesOverTimeChart({ data, loading, granularity, onGranularityCh
         <ReportSelect
           value={granularity}
           onValueChange={onGranularityChange}
-          options={(Object.entries(GRANULARITY_LABELS) as [Granularity, string][]).map(([value, label]) => ({
-            value,
-            label,
-          }))}
+          options={GRANULARITY_OPTIONS}
           className="w-32"
         />
       }
     >
       {loading ? (
-        <ChartLoading />
+        <ChartLoading className="h-56" />
       ) : (
-        <ChartContainer
-          config={{ ventas: { label: 'Ventas', color: reportChartColors.blue } }}
-          className="h-56 w-full aspect-auto"
-        >
+        <ChartContainer config={CHART_CONFIG} className="h-56 w-full aspect-auto">
           <AreaChart data={chartData} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} className={chartGrid} />
-            <XAxis dataKey="fecha" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              width={84}
-              tickFormatter={formatCurrencyAxis}
-              className={chartAxis}
-            />
-            <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrencyAxis(value as number)} />} />
-            <Area
-              dataKey="ventas"
-              type="monotone"
-              fill="var(--color-ventas)"
-              fillOpacity={0.18}
-              stroke="var(--color-ventas)"
-              strokeWidth={2}
-            />
+            <XAxis dataKey="fecha" tick={{ className: chartAxis }} tickLine={false} axisLine={false} />
+            <YAxis tickFormatter={formatCurrencyAxis} width={84} tick={{ className: chartAxis }} tickLine={false} axisLine={false} />
+            <ChartTooltip content={<ChartTooltipContent formatter={(v) => formatCurrencyAxis(v as number)} />} />
+            <Area dataKey="ventas" type="monotone" fill="var(--color-ventas)" fillOpacity={0.18} stroke="var(--color-ventas)" strokeWidth={2} />
           </AreaChart>
         </ChartContainer>
       )}

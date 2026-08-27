@@ -5,10 +5,11 @@ import type {
   SalesKpis,
   SalesOverTimeItem,
   SalesByDimensionItem,
-  SalesGeoHeatmapItem,
   TopProductItem,
+  TopMetric,
   SalesDimension,
   Granularity,
+  OrderSituationOption,
   ProductsByCategoryItem,
   ProductSearchResult,
   ProductDetailData,
@@ -62,6 +63,7 @@ function mapFilters(f: ReportsFilters) {
     p_neighborhood_id: f.neighborhoodId ?? undefined,
     p_sale_type_id: f.saleTypeId ?? undefined,
     p_payment_method_id: f.paymentMethodId ?? undefined,
+    p_situation_ids: f.situationIds ?? undefined,
   };
 }
 
@@ -74,45 +76,30 @@ async function rpc<T>(fn: string, params?: Record<string, unknown>): Promise<T> 
 // ============================================================
 // SALES
 // ============================================================
-export interface SalesExtraFilters {
-  productId?: number | null;
-  /** Solo para mostrar en el combobox — no se manda al backend. */
-  productTitle?: string;
-  minTotal?: number | null;
-  maxTotal?: number | null;
-}
-
-function mapSalesExtraFilters(extra?: SalesExtraFilters) {
-  return {
-    p_product_id: extra?.productId ?? undefined,
-    p_min_total: extra?.minTotal ?? undefined,
-    p_max_total: extra?.maxTotal ?? undefined,
-  };
-}
-
 export const salesService = {
-  getKpis: (f: ReportsFilters, extra?: SalesExtraFilters) =>
-    rpc<SalesKpis>('sp_rpt_sales_kpis', { ...mapFilters(f), ...mapSalesExtraFilters(extra) }),
+  getKpis: (f: ReportsFilters) =>
+    rpc<SalesKpis>('sp_rpt_sales_kpis', mapFilters(f)),
 
-  getOverTime: (f: ReportsFilters, granularity: Granularity = 'day', extra?: SalesExtraFilters) =>
+  getOverTime: (f: ReportsFilters, granularity: Granularity = 'day') =>
     rpc<SalesOverTimeItem[]>('sp_rpt_sales_over_time', {
       ...mapFilters(f),
       p_granularity: granularity,
-      ...mapSalesExtraFilters(extra),
     }),
 
-  getByDimension: (f: ReportsFilters, dimension: SalesDimension, extra?: SalesExtraFilters) =>
+  getByDimension: (f: ReportsFilters, dimension: SalesDimension) =>
     rpc<SalesByDimensionItem[]>('sp_rpt_sales_by_dimension', {
       ...mapFilters(f),
       p_dimension: dimension,
-      ...mapSalesExtraFilters(extra),
     }),
 
-  getGeoHeatmap: (f: ReportsFilters, mapStateId?: number, mapCityId?: number) =>
-    rpc<SalesGeoHeatmapItem[]>('sp_rpt_sales_geo_heatmap', {
-      ...mapFilters(f),
-      p_map_state_id: mapStateId ?? null,
-      p_map_city_id:  mapCityId  ?? null,
+  getTopProducts: (f: ReportsFilters, metric: TopMetric = 'revenue', limit = 10) =>
+    rpc<TopProductItem[]>('sp_rpt_top_products_sales', {
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
+      p_metric: metric,
+      p_limit: limit,
+      p_situation_ids: f.situationIds ?? undefined,
     }),
 };
 
@@ -421,6 +408,10 @@ export interface SalesReportRow {
   sale_type: string | null;
   seller: string | null;
   total: number;
+  paid_amount: number;
+  // Métodos de pago de la orden, ya formateados por el SP como
+  // "Efectivo (50.00), Yape (30.00)". "-" cuando la orden no tiene pagos.
+  payment_methods: string | null;
   invoice: string | null;
   situation: string | null;
   district: string | null;
@@ -432,32 +423,49 @@ export interface SalesReportRow {
   products: string;
 }
 
-export const fetchSalesReport = async (
-  startDate: string,
-  endDate: string,
-  filters?: ReportsFilters,
-  extra?: SalesExtraFilters,
-): Promise<SalesReportRow[]> => {
-  const endpoint = buildEndpoint('get-sales-report', {
-    start_date: startDate,
-    end_date: endDate,
-    branch_id: filters?.branchId ?? undefined,
-    sale_type_id: filters?.saleTypeId ?? undefined,
-    payment_method_id: filters?.paymentMethodId ?? undefined,
-    country_id: filters?.countryId ?? undefined,
-    state_id: filters?.stateId ?? undefined,
-    city_id: filters?.cityId ?? undefined,
-    neighborhood_id: filters?.neighborhoodId ?? undefined,
-    product_id: extra?.productId ?? undefined,
-    min_total: extra?.minTotal ?? undefined,
-    max_total: extra?.maxTotal ?? undefined,
-  });
-  const { data, error } = await supabase.functions.invoke(endpoint, {
-    method: 'GET',
-  });
-  if (error) throw error;
-  return data;
-};
+// Una fila por ITEM vendido, para la hoja "Ventas Detalle". Misma población y
+// mismos filtros que fetchSalesReport, así que las dos hojas del Excel miden
+// sobre el mismo conjunto de órdenes.
+export interface SalesDetailReportRow {
+  order_product_id: number;
+  order_id: number;
+  order_date: string;
+  customer_name: string;
+  sale_type: string | null;
+  seller: string | null;
+  situation: string | null;
+  branch: string | null;
+  invoice: string | null;
+  product_title: string | null;
+  sku: string | null;
+  variation: string | null;
+  quantity: number;
+  unit_price: number;
+  discount: number;
+  line_total: number;
+  categories: string | null;
+  brand: string | null;
+  tags: string | null;
+  // Costo de la línea al momento de la venta (order_products.unit_cost); si esa
+  // línea no lo tiene, cae al costo vigente de la variación. Va NULL cuando no
+  // hay ninguno de los dos, y entonces line_cost/line_margin/margin_pct también.
+  unit_cost: number | null;
+  line_cost: number | null;
+  line_margin: number | null;
+  margin_pct: number | null;
+  warehouse: string | null;
+}
+
+// Misma población y mismos filtros que los KPIs del dashboard. Las fechas salen
+// de `filters` como el resto: el Excel exporta exactamente lo que el usuario
+// tiene aplicado en la barra de filtros de /reports/sales.
+export const fetchSalesReport = (f: ReportsFilters): Promise<SalesReportRow[]> =>
+  rpc<SalesReportRow[]>('sp_rpt_export_sales', mapFilters(f));
+
+export const fetchSalesDetailReport = (
+  f: ReportsFilters,
+): Promise<SalesDetailReportRow[]> =>
+  rpc<SalesDetailReportRow[]>('sp_rpt_export_sales_detail', mapFilters(f));
 
 // ============================================================
 // SHARED: Refresh materialized views (called from UI)
@@ -469,6 +477,18 @@ export const refreshReportMviews = () =>
 // SHARED: Load filter options
 // ============================================================
 export const filterOptionsService = {
+  // El catálogo de situaciones no tiene columna de orden propia, así que se
+  // ordena por id: en la práctica los ids siguen el avance del pedido.
+  getOrderSituations: async (): Promise<OrderSituationOption[]> => {
+    const { data, error } = await supabase
+      .from('situations')
+      .select('id, name, code, modules!inner(code), statuses!inner(code)')
+      .eq('modules.code', 'ORD')
+      .order('id');
+    if (error) throw error;
+    return (data ?? []) as unknown as OrderSituationOption[];
+  },
+
   getBranches: async () => {
     const { data, error } = await supabase
       .from('branches')

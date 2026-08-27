@@ -102,7 +102,7 @@ const SalesFilterModal = ({
             pl-1 pr-4, que aparta los campos de la barra de scroll. */}
         <div className="max-h-[50vh]">
           <ScrollArea className="h-full">
-            <div className="grid gap-4 py-4 pl-1 pr-4">
+            <div className="space-y-4 py-4 pl-1 pr-4">
               <div className="grid grid-cols-2 gap-4">
                 {/* Situation Filter */}
                 <div className="grid gap-2">

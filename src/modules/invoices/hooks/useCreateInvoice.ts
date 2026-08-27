@@ -45,6 +45,7 @@ const INITIAL_FORM: InvoiceFormData = {
   clientAddress: "",
   orderId: "",
   movementId: "",
+  paymentId: "",
 };
 
 export const useCreateInvoice = () => {
@@ -122,10 +123,13 @@ export const useCreateInvoice = () => {
     loadSeries();
   }, [formData.invoiceProviderId]);
 
-  // 3. Load specific record data (Edit or from Order)
+  // 3. Load specific record data (Edit, from Order or from franchise Payment)
   useEffect(() => {
-    const orderIdFromUrl = new URLSearchParams(window.location.search).get("orderId");
-    if (!invoiceId && !orderIdFromUrl) return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const orderIdFromUrl = searchParams.get("orderId");
+    const paymentIdFromUrl = searchParams.get("paymentId");
+    const typeIdFromUrl = searchParams.get("typeId");
+    if (!invoiceId && !orderIdFromUrl && !paymentIdFromUrl) return;
 
     const loadSpecificData = async () => {
       setLoading(true);
@@ -133,7 +137,8 @@ export const useCreateInvoice = () => {
         const data = await getInvoiceFormDataApi({
           invoiceId: invoiceId ? parseInt(invoiceId) : undefined,
           orderId: orderIdFromUrl ? parseInt(orderIdFromUrl) : undefined,
-          movementId: new URLSearchParams(window.location.search).get("movementId") ? parseInt(new URLSearchParams(window.location.search).get("movementId")!) : undefined
+          movementId: searchParams.get("movementId") ? parseInt(searchParams.get("movementId")!) : undefined,
+          paymentId: paymentIdFromUrl ? parseInt(paymentIdFromUrl) : undefined,
         });
 
         // 3.1. Set Invoice Data (Edit Mode)
@@ -276,6 +281,98 @@ export const useCreateInvoice = () => {
           }]);
           
           toast({ title: "Datos del movimiento cargados correctamente", variant: "success" });
+        }
+
+        // 3.4. Set Payment Data (Creation from franchise Payment: one invoice for all its orders)
+        if (data.payment && !data.invoice) {
+          const payment = data.payment;
+          const orderProducts = data.orderProducts || [];
+
+          const invoicedOrderIds = [...new Set(
+            (data.existingOrderInvoices || [])
+              .filter((ei: any) =>
+                ei.invoices?.invoices_types?.code === "1" || ei.invoices?.invoices_types?.code === "2"
+              )
+              .map((ei: any) => ei.order_id)
+          )];
+
+          if (invoicedOrderIds.length > 0) {
+            toast({
+              title: "Bloqueo: Pedidos ya facturados legalmente",
+              description: `Los pedidos ${invoicedOrderIds.map((id) => `#${id}`).join(", ")} del pago ya cuentan con Boleta o Factura. No se permite crear otro comprobante legal por esta vía.`,
+              variant: "destructive"
+            });
+            setLoading(false);
+            return;
+          }
+
+          if (data.mixedClients) {
+            toast({
+              title: "Atención: clientes distintos",
+              description: "Los pedidos del pago no comparten el mismo documento de cliente. Revisa los datos antes de emitir.",
+              variant: "warning"
+            });
+          }
+
+          const client = data.client || {};
+          setFormData(prev => ({
+            ...prev,
+            clientName: [client.name, client.lastname].filter(Boolean).join(" ") || payment.franchise_name || "",
+            clientEmail: client.email || "",
+            clientAddress: client.address || "",
+            clientDocument: client.document_number || "",
+            paymentId: payment.id.toString(),
+            orderIds: data.orderIds || [],
+            orderId: "",
+            invoiceTypeId: typeIdFromUrl || prev.invoiceTypeId,
+          }));
+
+          // Cada linea refleja lo que el pago cubrio: la cantidad se deriva del monto
+          // pagado sobre el precio unitario efectivo (con descuento), no de la orden.
+          // Sin item de envio: el comprobante del pago es solo por los productos pagados.
+          const orderItems: InvoiceItemForm[] = orderProducts.map((p: any) => {
+            const unitPrice = parseFloat(p.product_price) || 0;
+            const orderQuantity = p.quantity || 1;
+            const orderDiscount = parseFloat(p.product_discount) || 0;
+            const paidAmount = parseFloat(p.paid_amount) || 0;
+            const lineTotal = +(orderQuantity * unitPrice - orderDiscount).toFixed(2);
+            const effectiveUnit = orderQuantity > 0 ? lineTotal / orderQuantity : unitPrice;
+
+            let quantity: number;
+            let discount: number;
+            if (paidAmount >= lineTotal - 0.01 || effectiveUnit <= 0) {
+              // Pago cubre la linea completa: usar los valores reales de la orden
+              quantity = orderQuantity;
+              discount = orderDiscount;
+            } else {
+              const rawQty = paidAmount / effectiveUnit;
+              quantity = Math.abs(rawQty - Math.round(rawQty)) < 0.001
+                ? Math.round(rawQty)
+                : +rawQty.toFixed(2);
+              // Descuento tal que qty * precio - descuento = monto pagado
+              discount = Math.max(0, +(quantity * unitPrice - paidAmount).toFixed(2));
+            }
+
+            const total = +(quantity * unitPrice - discount).toFixed(2);
+            const igv = +(total - total / 1.18).toFixed(2);
+
+            return {
+              id: crypto.randomUUID(),
+              description: p.product_title || p.product_name || "Producto",
+              quantity,
+              measurementUnit: "NIU",
+              unitPrice,
+              discount,
+              igv,
+              total,
+            };
+          });
+
+          if (orderItems.length > 0) setItems(orderItems);
+          toast({
+            title: `Datos del pago ${payment.movement_code || `#${payment.id}`} cargados (${(data.orderIds || []).length} pedidos)`,
+            variant: "success"
+          });
         }
       } catch (error) {
         console.error("Error loading record data:", error);
@@ -533,7 +630,8 @@ export const useCreateInvoice = () => {
             igv: i.igv,
             total: i.total,
           })),
-          order_id: formData.orderId ? parseInt(formData.orderId) : undefined,
+          order_id: formData.orderIds?.length ? undefined : (formData.orderId ? parseInt(formData.orderId) : undefined),
+          order_ids: formData.orderIds?.length ? formData.orderIds : undefined,
           movement_id: formData.movementId ? parseInt(formData.movementId) : undefined,
         });
         toast({ title: "Comprobante creado exitosamente", variant: "success" });

@@ -18,7 +18,7 @@ interface ReportsFilterBarProps {
   onClearExtra?: () => void;
   /** Botón "Descargar" del tab (si tiene exportación). */
   exportSlot?: ReactNode;
-  /** true si hay cambios sin aplicar en los filtros propios del tab (ej. producto/monto de Ventas). */
+  /** true si hay cambios sin aplicar en los filtros propios del tab (ej. producto de Productos). */
   extraDirty?: boolean;
 }
 

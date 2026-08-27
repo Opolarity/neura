@@ -34,6 +34,8 @@ export const getSupportRequests = async (
       reporter_names: filters.reporterName === null ? undefined : [filters.reporterName],
       statuses: filters.status === null ? undefined : [filters.status],
       origin_hosts: filters.originHost === null ? undefined : [filters.originHost],
+      // Omitido cuando está vacío: un término en blanco no es una búsqueda
+      search: filters.search.trim() || undefined,
       page: filters.page,
       page_size: filters.size,
     },

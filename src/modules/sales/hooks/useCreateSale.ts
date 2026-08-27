@@ -2060,7 +2060,12 @@ export const useCreateSale = () => {
             .filter((p) => p.paymentMethodId && p.amount)
             .reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0) - total),
           isExistingClient: isAnonymousPurchase ? true : isExistingClient, // anonymous purchase always uses existing account
-          products: products.map((p) => ({
+          // T-357: el backend inserta las lineas nuevas en el orden de este arreglo y
+          // sp_get_sale_by_id_products las devuelve con ORDER BY op.id DESC. En pantalla
+          // lo ultimo agregado va arriba (addProduct hace prepend), asi que hay que enviar
+          // de lo mas antiguo a lo mas nuevo para que el ultimo agregado reciba el id mayor
+          // y al releer la orden el orden coincida con el que se veia al editar.
+          products: [...products].reverse().map((p) => ({
             variationId: p.variationId,
             quantity: p.quantity,
             price: p.price,

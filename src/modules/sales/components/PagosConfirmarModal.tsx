@@ -26,6 +26,7 @@ import {
   type PendingPaymentFilter,
   type PendingPaymentRow,
 } from "../services/PendingPayments.service";
+import { FranchisePaymentInvoicesModal } from "./FranchisePaymentInvoicesModal";
 
 interface PagosConfirmarModalProps {
   open: boolean;
@@ -56,6 +57,7 @@ export const PagosConfirmarModal = ({
   const [size, setSize] = useState(20);
   const [loading, setLoading] = useState(false);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const [invoicesPayment, setInvoicesPayment] = useState<PendingPaymentRow | null>(null);
 
   const loadPayments = async () => {
     setLoading(true);
@@ -208,11 +210,20 @@ export const PagosConfirmarModal = ({
                       </TableCell>
                       <TableCell className="text-center">
                         {payment.status === "approved" ? (
-                          <span className="whitespace-nowrap text-sm text-muted-foreground">
-                            {payment.processedAt
-                              ? formatDateTime(payment.processedAt)
-                              : "—"}
-                          </span>
+                          <div className="flex flex-col items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setInvoicesPayment(payment)}
+                            >
+                              Comprobantes
+                            </Button>
+                            <span className="whitespace-nowrap text-sm text-muted-foreground">
+                              {payment.processedAt
+                                ? formatDateTime(payment.processedAt)
+                                : "—"}
+                            </span>
+                          </div>
                         ) : (
                           <Button
                             size="sm"
@@ -248,6 +259,16 @@ export const PagosConfirmarModal = ({
             </div>
           )}
         </div>
+
+        {invoicesPayment && (
+          <FranchisePaymentInvoicesModal
+            payment={invoicesPayment}
+            open
+            onOpenChange={(isOpen) => {
+              if (!isOpen) setInvoicesPayment(null);
+            }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

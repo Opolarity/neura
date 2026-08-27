@@ -1,41 +1,34 @@
 import { KpiCard } from '../shared/KpiCard';
 import { SalesOverTimeChart } from './SalesOverTimeChart';
 import { SalesByDimensionChart } from './SalesByDimensionChart';
-import { SalesHeatmap } from './SalesHeatmap';
+import { TopProductsTable } from './TopProductsTable';
 import { useSalesDashboard } from '../../hooks/useSalesDashboard';
-import type { SalesExtraFilters } from '../../services/reports.service';
-import type { ReportsFilters, SalesByDimensionItem, SalesDimension } from '../../types/reports.types';
+import type { ReportsFilters, SalesDimension } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
 
 interface SalesDashboardProps {
   filters: ReportsFilters;
-  extra?: SalesExtraFilters;
 }
 
-export function SalesDashboard({ filters, extra }: SalesDashboardProps) {
-  const dash = useSalesDashboard(filters, extra);
+export function SalesDashboard({ filters }: SalesDashboardProps) {
+  const dash = useSalesDashboard(filters);
   const kpis = dash.kpis.data;
 
   const dimensions = Object.fromEntries(
     Object.entries(dash.byDimensionQueries).map(([dim, query]) => [
       dim,
-      { data: (query.data as SalesByDimensionItem[]) ?? [], loading: query.isLoading },
+      { data: (query.data as any[]) ?? [], loading: query.isLoading },
     ]),
-  ) as Record<SalesDimension, { data: SalesByDimensionItem[]; loading: boolean }>;
+  ) as Record<SalesDimension, { data: any[]; loading: boolean }>;
 
   return (
     <div className="space-y-6">
-      {/* KPIs */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          title="Ventas Netas"
+          title="Ventas Totales"
           value={kpis ? formatCurrency(kpis.total_revenue) : '—'}
           loading={dash.kpis.isLoading}
-          subtitle={
-            kpis
-              ? `Bruto: ${formatCurrency(kpis.gross_revenue)} · Dev: -${formatCurrency(kpis.total_refunds)}`
-              : 'en el periodo seleccionado'
-          }
+          subtitle="en el periodo seleccionado"
         />
         <KpiCard
           title="N° de Pedidos"
@@ -52,20 +45,8 @@ export function SalesDashboard({ filters, extra }: SalesDashboardProps) {
           value={kpis ? formatCurrency(kpis.total_discount) : '—'}
           loading={dash.kpis.isLoading}
         />
-        <KpiCard
-          title="Productos Vendidos"
-          value={kpis?.units_sold ?? '—'}
-          loading={dash.kpis.isLoading}
-          suffix=" uds"
-        />
-        <KpiCard
-          title="Promedio Productos/Pedido"
-          value={kpis?.avg_products_per_order ?? '—'}
-          loading={dash.kpis.isLoading}
-        />
       </div>
 
-      {/* Sales over time */}
       <SalesOverTimeChart
         data={dash.overTime.data ?? []}
         loading={dash.overTime.isLoading}
@@ -73,11 +54,16 @@ export function SalesDashboard({ filters, extra }: SalesDashboardProps) {
         onGranularityChange={dash.setGranularity}
       />
 
-      {/* Mapa de calor por departamento / provincia */}
-      <SalesHeatmap filters={filters} />
-
-      {/* Sales by dimension — un bloque por dimensión */}
       <SalesByDimensionChart dimensions={dimensions} />
+
+      <TopProductsTable
+        data={dash.topProducts.data ?? []}
+        loading={dash.topProducts.isLoading}
+        metric={dash.topMetric}
+        limit={dash.topLimit}
+        onMetricChange={dash.setTopMetric}
+        onLimitChange={dash.setTopLimit}
+      />
     </div>
   );
 }

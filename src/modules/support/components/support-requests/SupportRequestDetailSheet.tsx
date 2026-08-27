@@ -15,6 +15,7 @@ import type {
   SupportErrorCode,
   SupportRequestDetail,
 } from "../../types/Support.types";
+import { formatSupportCodes } from "../../utils/requestCodes";
 import { sanitizeSupportHtml } from "../../utils/sanitizeSupportHtml";
 import { SupportAttachmentLink } from "./SupportAttachmentLink";
 import { SupportConversation } from "./SupportConversation";
@@ -220,9 +221,9 @@ export const SupportRequestDetailSheet = ({
                 {detail.requestType === "ticket" ? "Problema" : "Sugerencia"}
               </Badge>
               <SupportStatusBadge item={detail} />
-              {detail.taskCode && (
+              {formatSupportCodes(detail) !== "" && (
                 <span className="text-xs text-muted-foreground">
-                  Tarea {detail.taskCode}
+                  {formatSupportCodes(detail)}
                 </span>
               )}
               {conversationLabel && (

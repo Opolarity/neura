@@ -83,7 +83,7 @@ export default function POSListFilterModal({
             pl-1 pr-4, que aparta los campos de la barra de scroll. */}
         <div className="max-h-[50vh]">
           <ScrollArea className="h-full">
-            <div className="space-y-4 py-2 pl-1 pr-4">
+            <div className="space-y-4 py-4 pl-1 pr-4">
               <div className="space-y-1">
                 <label className="text-sm font-medium">Usuario</label>
                 <Select

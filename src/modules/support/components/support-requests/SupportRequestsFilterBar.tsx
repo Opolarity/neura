@@ -1,5 +1,6 @@
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -14,12 +15,15 @@ import type {
 } from "../../types/Support.types";
 
 interface SupportRequestsFilterBarProps {
+  /** Término tal cual lo escribe el usuario (sin debounce). */
+  search: string;
   requestType: SupportRequestType | null;
   reporterName: string | null;
   status: string | null;
   originHost: string | null;
   facets: SupportRequestsFacets;
   hasActiveFilters: boolean;
+  onSearchChange: (value: string) => void;
   onRequestTypeChange: (value: SupportRequestType | null) => void;
   onReporterNameChange: (value: string | null) => void;
   onStatusChange: (value: string | null) => void;
@@ -29,10 +33,16 @@ interface SupportRequestsFilterBarProps {
 }
 
 /**
- * Cuatro filtros: tipo (lista fija del contrato) y reportante / estado /
- * origen, cuyas opciones vienen de la API (`facets`). No se codifican aquí:
- * los estados son configurables en OPOLARITY y los orígenes dependen de desde
- * dónde se creó cada solicitud.
+ * Un buscador de texto libre y cuatro filtros: tipo (lista fija del contrato) y
+ * reportante / estado / origen, cuyas opciones vienen de la API (`facets`). No
+ * se codifican aquí: los estados son configurables en OPOLARITY y los orígenes
+ * dependen de desde dónde se creó cada solicitud.
+ *
+ * La búsqueda se resuelve en el servidor, no sobre la página ya cargada: con
+ * paginación de servidor, filtrar en el cliente solo encontraría lo que está a
+ * la vista. Cruza título, código de solicitud (`S-n`) y código de la tarea
+ * vinculada (`T-n`), y el prefijo lo compara ya concatenado la API, así que
+ * "S-21", "s-21" y "21" encuentran lo mismo.
  *
  * "" ES un valor válido (solicitudes sin reportante o sin origen), así que el
  * "Todos" del select no puede ser la cadena vacía: se usa el centinela ALL.
@@ -83,12 +93,14 @@ const FilterSelect = ({
 );
 
 export const SupportRequestsFilterBar = ({
+  search,
   requestType,
   reporterName,
   status,
   originHost,
   facets,
   hasActiveFilters,
+  onSearchChange,
   onRequestTypeChange,
   onReporterNameChange,
   onStatusChange,
@@ -104,6 +116,20 @@ export const SupportRequestsFilterBar = ({
 
   return (
     <div className="flex flex-wrap items-center gap-3">
+      {/* El buscador NO se deshabilita mientras carga, a diferencia de los
+          selects: cada término dispara una consulta, y bloquear el campo en
+          vuelo le robaría el foco al usuario a media palabra. */}
+      <div className="relative w-[280px]">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        <Input
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="Buscar por nombre, S-21 o T-45..."
+          aria-label="Buscar por nombre, código de solicitud o código de tarea"
+          className="pl-9"
+        />
+      </div>
+
       <Select
         value={requestType ?? ALL}
         disabled={disabled}
