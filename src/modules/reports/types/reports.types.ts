@@ -21,6 +21,11 @@ export interface ReportsFilters {
    * un array = exactamente esas situaciones.
    */
   situationIds: number[] | null;
+  /**
+   * Código de la lista de precios (`orders.price_list_code`), no su id: es lo
+   * que persiste la orden. `null` = todas las listas.
+   */
+  priceListCode: string | null;
 }
 
 /**
@@ -41,6 +46,7 @@ export const createDefaultReportsFilters = (): ReportsFilters => ({
   saleTypeId: null,
   paymentMethodId: null,
   situationIds: null,
+  priceListCode: null,
 });
 
 // -------------------------------------------------------

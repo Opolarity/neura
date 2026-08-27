@@ -47,6 +47,7 @@ export default function SalesPage() {
       draft.neighborhoodId,
       draft.saleTypeId,
       draft.paymentMethodId,
+      draft.priceListCode,
     ].filter((v) => v !== null && v !== undefined).length + (situationIsDefault ? 0 : 1);
 
   function handleClearExtra() {
@@ -60,6 +61,7 @@ export default function SalesPage() {
       saleTypeId: null,
       paymentMethodId: null,
       situationIds: null,
+      priceListCode: null,
     });
   }
 

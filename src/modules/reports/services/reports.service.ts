@@ -64,6 +64,7 @@ function mapFilters(f: ReportsFilters) {
     p_sale_type_id: f.saleTypeId ?? undefined,
     p_payment_method_id: f.paymentMethodId ?? undefined,
     p_situation_ids: f.situationIds ?? undefined,
+    p_price_list_code: f.priceListCode ?? undefined,
   };
 }
 
@@ -542,6 +543,20 @@ export const filterOptionsService = {
     const { data, error } = await supabase
       .from('sale_types')
       .select('id, name')
+      .order('name');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  // Solo listas activas y con código: el filtro compara contra
+  // orders.price_list_code, así que una lista sin código no es seleccionable.
+  getPriceLists: async () => {
+    const { data, error } = await supabase
+      .from('price_list')
+      .select('id, name, code')
+      .eq('is_active', true)
+      .not('code', 'is', null)
+      .neq('code', '')
       .order('name');
     if (error) throw error;
     return data ?? [];
