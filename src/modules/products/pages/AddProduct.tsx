@@ -18,7 +18,7 @@ import { useAddProduct } from '../hooks/useAddProduct';
 import PromotionalTextSection from '../components/products/PromotionalTextSection';
 import CategoryQuickAddForm from '../components/products/CategoryQuickAddForm';
 import TagsComboboxInput from '../components/products/TagsComboboxInput';
-import BrandsComboboxInput from '../components/products/BrandsComboboxInput';
+import BrandQuickAddForm from '../components/products/BrandQuickAddForm';
 import ExhibitionSection from '../components/products/ExhibitionSection';
 import { PageLoader } from '@/shared/components/page-loader';
 import { buildCategoryTree, flattenCategoryTree } from '../utils/categoryTree';
@@ -111,6 +111,14 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     const tree = buildCategoryTree(categories);
     return flattenCategoryTree(tree);
   }, [categories]);
+
+  // Las marcas no tienen jerarquía (son filas de `tags` con type = 'brand'),
+  // pero se ordenan alfabéticamente igual que cada nivel del árbol de categorías
+  // para que una marca recién creada no quede al final de la lista.
+  const sortedBrands = useMemo(
+    () => [...brands].sort((a, b) => a.name.localeCompare(b.name)),
+    [brands]
+  );
 
   if (isEditMode && (isLoadingProduct || !initialDataLoaded)) {
     return (
@@ -729,14 +737,30 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
               <CardTitle>Marcas</CardTitle>
             </CardHeader>
             <CardContent>
-              <BrandsComboboxInput
-                brands={brands}
-                selectedBrands={selectedBrands}
-                onSelect={toggleBrandsSelection}
-                onRemove={toggleBrandsSelection}
-                onCreateBrand={createBrandInline}
-                disabled={viewOnly}
-              />
+              <div className="space-y-1 max-h-[300px] overflow-y-auto">
+                {sortedBrands.map(brand => (
+                  <div key={brand.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`brand-${brand.id}`}
+                      checked={selectedBrands.includes(brand.id)}
+                      onCheckedChange={() => toggleBrandsSelection(brand.id)}
+                      disabled={viewOnly}
+                    />
+                    <Label
+                      htmlFor={`brand-${brand.id}`}
+                      className="text-sm cursor-pointer flex items-center gap-1"
+                    >
+                      {brand.name}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+
+              {!viewOnly && (
+                <div className="mt-3">
+                  <BrandQuickAddForm onCreate={createBrandInline} />
+                </div>
+              )}
             </CardContent>
           </Card>
 
