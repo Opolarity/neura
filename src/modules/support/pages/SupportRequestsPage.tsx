@@ -17,9 +17,11 @@ const SupportRequestsPage = () => {
     loading,
     errorState,
     filters,
+    search,
     hasActiveFilters,
     pagination,
     dialogOpen,
+    onSearchChange,
     onPageChange,
     onPageSizeChange,
     onRequestTypeChange,
@@ -45,12 +47,14 @@ const SupportRequestsPage = () => {
       <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="!p-4">
           <SupportRequestsFilterBar
+            search={search}
             requestType={filters.requestType}
             reporterName={filters.reporterName}
             status={filters.status}
             originHost={filters.originHost}
             facets={facets}
             hasActiveFilters={hasActiveFilters}
+            onSearchChange={onSearchChange}
             onRequestTypeChange={onRequestTypeChange}
             onReporterNameChange={onReporterNameChange}
             onStatusChange={onStatusChange}

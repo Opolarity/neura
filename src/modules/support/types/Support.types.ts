@@ -28,10 +28,17 @@ export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5 MB
 /** Item tal como lo devuelve la edge function (snake_case, crudo). */
 export interface SupportRequestApiItem {
   id: string;
+  /**
+   * Código público de la solicitud (el `S-n`). Número: el prefijo "S-" es
+   * presentación y lo pone la UI. Opcional porque las versiones anteriores de
+   * la API externa no lo devolvían.
+   */
+  code?: number | null;
   title: string | null;
   /** "recibido" | "rechazado" | nombre del estado de la tarea (configurable). */
   status: string | null;
-  task_code: string | null;
+  /** Código de la tarea vinculada (el `T-n`), o null si todavía no es tarea. */
+  task_code: number | null;
   /**
    * Fecha límite (YYYY-MM-DD) de la tarea. Opcional: las versiones anteriores
    * de la API externa no la devolvían en el listado. Es null mientras la
@@ -94,12 +101,15 @@ export interface SupportRequestsFacets {
 /** Item adaptado para la UI. `status` se muestra TAL CUAL (es configurable). */
 export interface SupportRequestListItem {
   id: string;
+  /** Código de la solicitud (`S-n`); null solo si la API todavía no lo manda. */
+  code: number | null;
   title: string;
   status: string;
   statusSource: string;
   statusCategory: string | null;
   requestType: SupportRequestType;
-  taskCode: string | null;
+  /** Código de la tarea vinculada (`T-n`); null mientras no sea tarea. */
+  taskCode: number | null;
   /** Fecha límite estimada de la tarea (YYYY-MM-DD); null si todavía no hay. */
   dueDate: string | null;
   reporterName: string | null;
@@ -252,6 +262,13 @@ export interface SupportMessageApiResponse {
 export interface SupportRequestsFilters {
   page: number;
   size: number;
+  /**
+   * Texto libre: cruza título, código de solicitud (`S-21`) y código de la
+   * tarea vinculada (`T-45`). "" = sin búsqueda. La API compara el prefijo ya
+   * concatenado, así que "S-21", "s-21" y "21" encuentran lo mismo y aquí no
+   * hay que normalizar nada.
+   */
+  search: string;
   /** null = "Todos": no se envía request_type a la API. */
   requestType: SupportRequestType | null;
   /** null = "Todos". "" es un valor válido: solicitudes sin ese dato. */

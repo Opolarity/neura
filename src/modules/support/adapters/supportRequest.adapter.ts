@@ -96,6 +96,9 @@ export const adaptSupportRequestDetail = (
 
   return {
     id: item.id,
+    // Mismo criterio que el listado: el detalle hereda `code` de la misma
+    // proyección de la API, así que el S-n del sheet y el de la tabla coinciden
+    code: item.code ?? null,
     title: item.title?.trim() || "(Sin título)",
     status: item.status?.trim() || "Sin estado",
     statusSource: item.status_source ?? "solicitud",
