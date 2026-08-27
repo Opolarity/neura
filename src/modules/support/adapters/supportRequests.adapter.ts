@@ -33,6 +33,8 @@ export const adaptSupportRequestsResponse = (
 
     return {
       id: item.id,
+      // Los dos códigos llegan como número; el prefijo S-/T- lo pone la UI
+      code: item.code ?? null,
       title: item.title?.trim() || "(Sin título)",
       // Texto crudo: nunca se traduce ni se mapea a una lista fija
       status: item.status?.trim() || "Sin estado",
