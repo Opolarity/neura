@@ -10,9 +10,14 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { Code, Edit, Eye, FileText, Loader2 } from "lucide-react";
-import type { InvoiceItem } from "../../types/Invoices.types";
+import { Code, Edit, Eye, FileText, Loader2, Printer } from "lucide-react";
+import type { InvoiceItem, InvoiceType } from "../../types/Invoices.types";
 import { ComponentPermission } from "@/shared/components/component-permission";
+import { useInvoicePrint } from "../../hooks/useInvoicePrint";
+
+// Los de tipo "Comprobante" no se emiten a SUNAT, así que nunca tienen pdf_url:
+// su PDF se genera en el cliente con el mismo ticket que usa el POS.
+const INTERNAL_INVOICE_TYPE_CODE = "INV";
 
 // Codes de la columna ACCIONES, en una constante para que la cabecera y la
 // celda no puedan quedar con listas distintas y aparezca un th sin td o al
@@ -27,6 +32,7 @@ const ACTION_CODES = [
 interface TableInvoicesProps {
   invoices: InvoiceItem[];
   loading: boolean;
+  invoiceTypes?: InvoiceType[];
 }
 
 const downloadXml = (item: InvoiceItem) => {
@@ -38,8 +44,17 @@ const downloadXml = (item: InvoiceItem) => {
   link.remove();
 };
 
-export default function InvoicesTable({ invoices = [], loading }: TableInvoicesProps) {
+export default function InvoicesTable({ invoices = [], loading, invoiceTypes = [] }: TableInvoicesProps) {
   const navigate = useNavigate();
+  const { printInvoice, printingId } = useInvoicePrint();
+
+  // El listado solo trae el id del tipo; el code viene del catálogo para no
+  // depender de ids en duro, que pueden diferir entre entornos.
+  const internalTypeIds = new Set(
+    invoiceTypes
+      .filter((type) => type.code === INTERNAL_INVOICE_TYPE_CODE)
+      .map((type) => type.id)
+  );
 
   if (loading && invoices.length === 0) {
     return (
@@ -120,6 +135,23 @@ export default function InvoicesTable({ invoices = [], loading }: TableInvoicesP
                         onClick={() => navigate(`/invoices/edit/${item.id}`)}
                       >
                         <Edit className="w-4 h-4" />
+                      </Button>
+                    </ComponentPermission>
+                  )}
+                  {internalTypeIds.has(item.invoiceTypeId) && (
+                    <ComponentPermission codeIn={["invoices.print"]}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Imprimir PDF"
+                        disabled={printingId === item.id}
+                        onClick={() => printInvoice(item.id)}
+                      >
+                        {printingId === item.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Printer className="w-4 h-4" />
+                        )}
                       </Button>
                     </ComponentPermission>
                   )}

@@ -21,9 +21,12 @@ export const invoicesAdapter = (response: InvoicesResponse): InvoicesAdapted => 
   };
 };
 
-export const invoiceTypesAdapter = (response: { id: number; name: string }[]): InvoiceType[] => {
+export const invoiceTypesAdapter = (
+  response: { id: number; name: string; code?: string | null }[]
+): InvoiceType[] => {
   return response.map((item) => ({
     id: item.id,
     name: item.name,
+    code: item.code ?? null,
   }));
 };
