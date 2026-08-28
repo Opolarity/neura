@@ -67,6 +67,9 @@ const CMovementTable = ({
                 </span>
 
                 <span className="text-xs text-muted-foreground">
+                  {product.sku}
+                </span>
+                <span className="text-xs text-muted-foreground">
                   {product.originType.name}
                 </span>
               </div>
