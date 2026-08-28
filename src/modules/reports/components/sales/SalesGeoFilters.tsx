@@ -58,6 +58,12 @@ export function SalesGeoFilters() {
     staleTime: 1000 * 60 * 60,
   });
 
+  const priceLists = useQuery({
+    queryKey: ['filter_price_lists'],
+    queryFn: filterOptionsService.getPriceLists,
+    staleTime: 1000 * 60 * 60,
+  });
+
   const situations = useQuery({
     queryKey: ['filter_order_situations'],
     queryFn: filterOptionsService.getOrderSituations,
@@ -142,6 +148,25 @@ export function SalesGeoFilters() {
             <SelectItem value={ALL_VALUE}>Todos</SelectItem>
             {paymentMethods.data?.map((pm) => (
               <SelectItem key={pm.id} value={pm.id.toString()}>{pm.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Lista de precios */}
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-muted-foreground font-medium">Lista de precios</span>
+        <Select
+          value={draft.priceListCode ?? ALL_VALUE}
+          onValueChange={(v) => setDraft({ priceListCode: v === ALL_VALUE ? null : v })}
+        >
+          <SelectTrigger className="h-9 w-[160px]">
+            <SelectValue placeholder="Todas" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_VALUE}>Todas</SelectItem>
+            {priceLists.data?.map((pl) => (
+              <SelectItem key={pl.id} value={pl.code!}>{pl.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
