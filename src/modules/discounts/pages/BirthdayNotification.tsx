@@ -1,10 +1,20 @@
 import { Cake } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import { useBirthdayNotifications } from '../hooks/useBirthdayNotifications';
 import { BirthdayNotificationTable } from '../components/BirthdayNotificationTable';
+import { BirthdayNotificationFilterBar } from '../components/BirthdayNotificationFilterBar';
 
 const BirthdayNotification = () => {
-  const { profiles, loading } = useBirthdayNotifications();
+  const {
+    profiles,
+    loading,
+    pagination,
+    search,
+    onSearchChange,
+    onPageChange,
+    onPageSizeChange,
+  } = useBirthdayNotifications();
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
@@ -24,9 +34,23 @@ const BirthdayNotification = () => {
             Clientes en rango de cumpleaños
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
-          <BirthdayNotificationTable profiles={profiles} loading={loading} />
+        <CardContent className="p-0 flex flex-col flex-1 min-h-0 overflow-hidden">
+          <BirthdayNotificationFilterBar search={search} onSearchChange={onSearchChange} />
+          <div className="flex-1 min-h-0 overflow-auto">
+            <BirthdayNotificationTable profiles={profiles} loading={loading} />
+          </div>
         </CardContent>
+        <CardFooter className="!p-0">
+          <PaginationBar
+            pagination={{
+              p_page: pagination.page,
+              p_size: pagination.size,
+              total: pagination.total,
+            }}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+          />
+        </CardFooter>
       </Card>
     </div>
   );
