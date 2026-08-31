@@ -3,6 +3,7 @@ import { Switch } from "@/components/ui/switch";
 import type { ExclusionFilter } from "../../types/priceRule.types";
 import { ProductReferenceField } from "./ProductReferenceField";
 import { CategoryReferenceField } from "./CategoryReferenceField";
+import { TagReferenceField } from "./TagReferenceField";
 
 interface ExclusionSectionProps {
   exclusions: ExclusionFilter | null;
@@ -13,25 +14,27 @@ const EMPTY: ExclusionFilter = {
   product_ids: [],
   variation_ids: [],
   category_ids: [],
+  brand_ids: [],
+  tag_ids: [],
   include_descendants: false,
 };
 
 export const ExclusionSection = ({ exclusions, onChange }: ExclusionSectionProps) => {
   const current: ExclusionFilter = exclusions ?? EMPTY;
 
+  const hasAny = (source: ExclusionFilter) =>
+    !!source.product_ids?.length ||
+    !!source.variation_ids?.length ||
+    !!source.category_ids?.length ||
+    !!source.brand_ids?.length ||
+    !!source.tag_ids?.length;
+
   const update = (patch: Partial<ExclusionFilter>) => {
     const next = { ...current, ...patch };
-    const isEmpty =
-      !next.product_ids?.length &&
-      !next.variation_ids?.length &&
-      !next.category_ids?.length;
-    onChange(isEmpty ? null : next);
+    onChange(hasAny(next) ? next : null);
   };
 
-  const hasExclusions =
-    !!current.product_ids?.length ||
-    !!current.variation_ids?.length ||
-    !!current.category_ids?.length;
+  const hasExclusions = hasAny(current);
 
   return (
     <div className="space-y-4">
@@ -71,6 +74,22 @@ export const ExclusionSection = ({ exclusions, onChange }: ExclusionSectionProps
             <Label className="text-xs">Incluir subcategorías</Label>
           </div>
         )}
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TagReferenceField
+          kind="brand"
+          label="Marcas excluidas"
+          ids={current.brand_ids ?? []}
+          onChangeIds={(ids) => update({ brand_ids: ids })}
+        />
+
+        <TagReferenceField
+          kind="tag"
+          label="Etiquetas excluidas"
+          ids={current.tag_ids ?? []}
+          onChangeIds={(ids) => update({ tag_ids: ids })}
+        />
       </div>
 
       {!hasExclusions && (
