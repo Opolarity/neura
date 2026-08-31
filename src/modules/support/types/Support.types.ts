@@ -259,7 +259,23 @@ export interface SupportMessageApiResponse {
   data: SupportMessageApi | null;
 }
 
-export interface SupportRequestsFilters {
+/**
+ * Los cuatro filtros que se editan en el modal. La búsqueda y la paginación
+ * quedan fuera a propósito: la primera es un input aparte en la barra y la
+ * segunda no es un filtro.
+ */
+export interface SupportModalFilters {
+  /** null = "Todos": no se envía request_type a la API. */
+  requestType: SupportRequestType | null;
+  /** null = "Todos". "" es un valor válido: solicitudes sin ese dato. */
+  reporterName: string | null;
+  /** Nombre del estado tal cual lo devuelve la API (configurable). */
+  status: string | null;
+  /** Host de origen; "" = solicitudes sin origen registrado. */
+  originHost: string | null;
+}
+
+export interface SupportRequestsFilters extends SupportModalFilters {
   page: number;
   size: number;
   /**
@@ -269,14 +285,6 @@ export interface SupportRequestsFilters {
    * hay que normalizar nada.
    */
   search: string;
-  /** null = "Todos": no se envía request_type a la API. */
-  requestType: SupportRequestType | null;
-  /** null = "Todos". "" es un valor válido: solicitudes sin ese dato. */
-  reporterName: string | null;
-  /** Nombre del estado tal cual lo devuelve la API (configurable). */
-  status: string | null;
-  /** Host de origen; "" = solicitudes sin origen registrado. */
-  originHost: string | null;
 }
 
 /**

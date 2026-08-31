@@ -17,6 +17,7 @@ import {
 } from "../../types/priceRule.types";
 import { ProductReferenceField } from "./ProductReferenceField";
 import { CategoryReferenceField } from "./CategoryReferenceField";
+import { TagReferenceField } from "./TagReferenceField";
 
 interface ActionRowProps {
   action: ActionConfig;
@@ -44,6 +45,10 @@ const TargetFilterEditor = ({
         return onChange({ apply_to: applyTo, product_ids: target.product_ids ?? [] });
       case "specific_variations":
         return onChange({ apply_to: applyTo, variation_ids: target.variation_ids ?? [] });
+      case "specific_brands":
+        return onChange({ apply_to: applyTo, brand_ids: target.brand_ids ?? [] });
+      case "specific_tags":
+        return onChange({ apply_to: applyTo, tag_ids: target.tag_ids ?? [] });
       case "specific_categories":
         return onChange({
           apply_to: applyTo,
@@ -74,6 +79,8 @@ const TargetFilterEditor = ({
             <SelectItem value="specific_products">Productos específicos</SelectItem>
             <SelectItem value="specific_categories">Categorías específicas</SelectItem>
             <SelectItem value="specific_variations">Variaciones específicas</SelectItem>
+            <SelectItem value="specific_brands">Marcas específicas</SelectItem>
+            <SelectItem value="specific_tags">Etiquetas específicas</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -114,6 +121,24 @@ const TargetFilterEditor = ({
           label="Variaciones"
           ids={target.variation_ids ?? []}
           onChangeIds={(ids) => onChange({ ...target, variation_ids: ids })}
+        />
+      )}
+
+      {target.apply_to === "specific_brands" && (
+        <TagReferenceField
+          kind="brand"
+          label="Marcas"
+          ids={target.brand_ids ?? []}
+          onChangeIds={(ids) => onChange({ ...target, brand_ids: ids })}
+        />
+      )}
+
+      {target.apply_to === "specific_tags" && (
+        <TagReferenceField
+          kind="tag"
+          label="Etiquetas"
+          ids={target.tag_ids ?? []}
+          onChangeIds={(ids) => onChange({ ...target, tag_ids: ids })}
         />
       )}
     </div>
