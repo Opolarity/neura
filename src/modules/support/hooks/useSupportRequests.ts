@@ -4,8 +4,8 @@ import { useDebounce } from "@/shared/hooks/useDebounce";
 import {
   SupportServiceError,
   type SupportErrorCode,
+  type SupportModalFilters,
   type SupportRequestListItem,
-  type SupportRequestType,
   type SupportRequestsFacets,
   type SupportRequestsFilters,
 } from "../types/Support.types";
@@ -63,6 +63,7 @@ export function useSupportRequests() {
     total: 0,
   });
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isOpenFilterModal, setIsOpenFilterModal] = useState(false);
 
   const load = useCallback(async (currentFilters: SupportRequestsFilters) => {
     setLoading(true);
@@ -119,20 +120,17 @@ export function useSupportRequests() {
     setFilters((prev) => ({ ...prev, size, page: 1 }));
   };
 
-  const onRequestTypeChange = (requestType: SupportRequestType | null) => {
-    setFilters((prev) => ({ ...prev, requestType, page: 1 }));
-  };
+  const onOpenFilterModal = () => setIsOpenFilterModal(true);
 
-  const onReporterNameChange = (reporterName: string | null) => {
-    setFilters((prev) => ({ ...prev, reporterName, page: 1 }));
-  };
+  const onCloseFilterModal = () => setIsOpenFilterModal(false);
 
-  const onStatusChange = (status: string | null) => {
-    setFilters((prev) => ({ ...prev, status, page: 1 }));
-  };
-
-  const onOriginHostChange = (originHost: string | null) => {
-    setFilters((prev) => ({ ...prev, originHost, page: 1 }));
+  // Los cuatro filtros se aplican de una sola vez, al confirmar el modal, y no
+  // select a select: así una consulta cubre todo el cambio en vez de una por
+  // campo tocado. Se vuelve a la página 1 — la página 3 del listado sin filtrar
+  // no tiene equivalente en el filtrado.
+  const onApplyFilter = (next: SupportModalFilters) => {
+    setFilters((prev) => ({ ...prev, ...next, page: 1 }));
+    setIsOpenFilterModal(false);
   };
 
   // Se conserva el tamaño de página elegido: solo se limpian los filtros
@@ -165,13 +163,13 @@ export function useSupportRequests() {
     hasActiveFilters: hasActiveSupportFilters(filters),
     pagination,
     dialogOpen,
+    isOpenFilterModal,
     onSearchChange: setSearchInput,
     onPageChange,
     onPageSizeChange,
-    onRequestTypeChange,
-    onReporterNameChange,
-    onStatusChange,
-    onOriginHostChange,
+    onOpenFilterModal,
+    onCloseFilterModal,
+    onApplyFilter,
     clearFilters,
     refresh,
     openNewRequest,
