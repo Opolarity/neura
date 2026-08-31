@@ -4,6 +4,8 @@ export type ConditionType =
   | "product_in_cart"
   | "variation_in_cart"
   | "category_in_cart"
+  | "brand_in_cart"
+  | "tag_in_cart"
   | "min_total_quantity"
   | "min_category_quantity"
   | "customer_level"
@@ -75,10 +77,22 @@ export type ActionType =
 export const DEFAULT_INCLUDE_DESCENDANTS = true;
 
 export interface TargetFilter {
-  apply_to: "all" | "specific_products" | "specific_categories" | "specific_variations";
+  apply_to:
+    | "all"
+    | "specific_products"
+    | "specific_categories"
+    | "specific_variations"
+    | "specific_brands"
+    | "specific_tags";
   product_ids?: number[];
   category_ids?: number[];
   variation_ids?: number[];
+  // Marcas y etiquetas comparten la tabla `tags` (discriminadas por `type`),
+  // pero se guardan en claves distintas para que el destino elegido quede
+  // explícito en el JSON y el motor no tenga que consultar la tabla para
+  // saber si un id era marca o etiqueta.
+  brand_ids?: number[];
+  tag_ids?: number[];
   include_descendants?: boolean;
 }
 
@@ -86,6 +100,8 @@ export interface ExclusionFilter {
   product_ids?: number[];
   variation_ids?: number[];
   category_ids?: number[];
+  brand_ids?: number[];
+  tag_ids?: number[];
   include_descendants?: boolean;
 }
 
@@ -143,12 +159,16 @@ export interface PriceRuleReferences {
   products: Array<{ id: number; name: string }>;
   variations: Array<{ id: number; name: string }>;
   categories: Array<{ id: number; name: string }>;
+  brands: Array<{ id: number; name: string }>;
+  tags: Array<{ id: number; name: string }>;
 }
 
 export const EMPTY_REFERENCES: PriceRuleReferences = {
   products: [],
   variations: [],
   categories: [],
+  brands: [],
+  tags: [],
 };
 
 // --- Discount/Coupon ---
@@ -210,6 +230,8 @@ export const CONDITION_TYPE_LABELS: Record<ConditionType, string> = {
   product_in_cart: "Producto en el carrito",
   variation_in_cart: "Variación en el carrito",
   category_in_cart: "Categoría en el carrito",
+  brand_in_cart: "Marca en el carrito",
+  tag_in_cart: "Etiqueta en el carrito",
   min_total_quantity: "Cantidad mínima total",
   min_category_quantity: "Cantidad mínima por categoría",
   customer_level: "Nivel del cliente (puntos)",
