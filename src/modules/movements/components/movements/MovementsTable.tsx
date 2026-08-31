@@ -148,8 +148,8 @@ const MovementsTable = ({
                 <ComponentPermission codeIn={ACTION_CODES}>
                   <TableCell>
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant="outline"
+                      size="sm"
                       onClick={() => setPreviewId(movement.id)}
                       title="Ver detalle"
                     >

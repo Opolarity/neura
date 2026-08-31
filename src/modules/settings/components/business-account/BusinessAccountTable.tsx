@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Loader2, Trash2 } from "lucide-react";
+import { Edit, Loader2, Trash } from "lucide-react";
 import { BusinessAccount } from "../../types/BusinessAccount.types";
 import { ComponentPermission } from "@/shared/components/component-permission";
 
@@ -106,8 +106,8 @@ const BusinessAccountTable = ({
                     <ComponentPermission codeIn={["business_accounts.edit"]}>
                       <Button
                         variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
+                        size="sm"
+                        title="Editar la cuenta"
                         onClick={() => {
                           onEditItem(item);
                           onOpenChange(true);
@@ -119,11 +119,11 @@ const BusinessAccountTable = ({
                     <ComponentPermission codeIn={["business_accounts.delete"]}>
                       <Button
                         variant="destructive"
-                        size="icon"
-                        className="h-8 w-8"
+                        size="sm"
+                        title="Eliminar la cuenta"
                         onClick={() => onDeleteClick(item)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash className="h-4 w-4" />
                       </Button>
                     </ComponentPermission>
                   </div>

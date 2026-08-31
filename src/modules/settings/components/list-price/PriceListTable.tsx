@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Loader2, Trash2 } from "lucide-react";
+import { Edit, Loader2, Trash } from "lucide-react";
 import { PriceList } from "../../types/PriceList.types";
 import { ComponentPermission } from "@/shared/components/component-permission";
 
@@ -85,8 +85,8 @@ const PriceListTable = ({
                     <ComponentPermission codeIn={["price_lists.edit"]}>
                       <Button
                         variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
+                        size="sm"
+                        title="Editar la lista de precios"
                         onClick={() => {
                           onEditItem(item);
                           onOpenChange(true);
@@ -98,11 +98,11 @@ const PriceListTable = ({
                     <ComponentPermission codeIn={["price_lists.delete"]}>
                       <Button
                         variant="destructive"
-                        size="icon"
-                        className="h-8 w-8"
+                        size="sm"
+                        title="Eliminar la lista de precios"
                         onClick={() => onDeleteClick(item)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash className="h-4 w-4" />
                       </Button>
                     </ComponentPermission>
                   </div>

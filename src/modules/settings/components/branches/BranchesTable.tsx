@@ -1,4 +1,4 @@
-import { Edit, Trash2, Loader2 } from 'lucide-react';
+import { Edit, Trash, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link } from 'react-router-dom';
@@ -76,7 +76,7 @@ const BranchesTable = ({ branches, loading, onDeleteClick }: BranchesTableProps)
                                                 protegida con branches.edit: se reutiliza ese
                                                 code. */}
                                             <ComponentPermission codeIn={["branches.edit"]}>
-                                                <Button variant="outline" size="sm" asChild>
+                                                <Button variant="outline" size="sm" title="Editar la sucursal" asChild>
                                                     <Link to={`/settings/branches/edit/${branch.id}`}>
                                                         <Edit className="w-4 h-4" />
                                                     </Link>
@@ -85,10 +85,11 @@ const BranchesTable = ({ branches, loading, onDeleteClick }: BranchesTableProps)
                                             <ComponentPermission codeIn={["branches.delete"]}>
                                                 <Button
                                                     variant="destructive"
+                                                    title="Eliminar la sucursal"
                                                     size="sm"
                                                     onClick={() => onDeleteClick(branch)}
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
+                                                    <Trash className="w-4 h-4" />
                                                 </Button>
                                             </ComponentPermission>
                                         </div>

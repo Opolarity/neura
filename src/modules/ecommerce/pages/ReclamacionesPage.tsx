@@ -126,8 +126,9 @@ export default function ReclamacionesPage() {
                             protegida con ecommerce_claims.view: se reutiliza ese
                             code. */}
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
+                          title="Ver la reclamación"
                           onClick={() => navigate(`/ecommerce/reclamaciones/view/${r.id}`)}
                         >
                           <Eye className="w-4 h-4" />

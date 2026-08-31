@@ -1,4 +1,4 @@
-import { Edit, Trash2, Loader2 } from 'lucide-react';
+import { Edit, Trash, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -98,7 +98,7 @@ const WarehousesTable = ({ warehouses, loading, onDeleteClick }: WarehousesTable
                                                 ya protegida con warehouses.edit: se reutiliza
                                                 ese code. */}
                                             <ComponentPermission codeIn={["warehouses.edit"]}>
-                                                <Button variant="outline" size="sm" asChild>
+                                                <Button variant="outline" size="sm" title="Editar el almacén" asChild>
                                                     <Link to={`/settings/warehouses/edit/${w.id}`}>
                                                         <Edit className="w-4 h-4" />
                                                     </Link>
@@ -109,9 +109,10 @@ const WarehousesTable = ({ warehouses, loading, onDeleteClick }: WarehousesTable
                                                 <Button
                                                     variant="destructive"
                                                     size="sm"
+                                                    title="Eliminar el almacén"
                                                     onClick={() => onDeleteClick(w)}
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
+                                                    <Trash className="w-4 h-4" />
                                                 </Button>
                                             </ComponentPermission>
                                         </div>

@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Loader2, Edit } from "lucide-react";
+import { Loader2, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { MovementRequestListItem } from "../../types/MovementRequestList.types";
@@ -104,8 +104,9 @@ export default function MovementRequestsTable({ requests, loading }: Props) {
             <ComponentPermission codeIn={ACTION_CODES}>
               <TableCell className="text-right">
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  variant="outline"
+                  size="sm"
+                  title="Editar la solicitud de movimiento"
                   onClick={() => navigate(`/inventory/movement-requests/edit/${req.id}`)}
                 >
                   <Edit className="h-4 w-4" />

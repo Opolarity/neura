@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Edit, Loader2, Trash2 } from "lucide-react";
+import { Edit, Loader2, Trash } from "lucide-react";
 import { MovementClass } from "../../types/MovementClasses.types";
 
 interface MovementClassesTableProps {
@@ -76,8 +76,8 @@ const MovementClassesTable = ({
                   <div className="flex items-center justify-center gap-1">
                     <Button
                       variant="outline"
-                      size="icon"
-                      className="h-8 w-8"
+                      size="sm"
+                      title="Editar la clase de movimiento"
                       onClick={() => {
                         onEditItem(item);
                         onOpenChange(true);
@@ -89,11 +89,11 @@ const MovementClassesTable = ({
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          variant="destructive"
+                          size="sm"
+                          title="Eliminar la clase de movimiento"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>

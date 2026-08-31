@@ -1,4 +1,4 @@
-import { Edit, Trash2, Loader2 } from "lucide-react";
+import { Edit, Trash, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -89,17 +89,18 @@ const UsersTable = ({ users, loading, onEdit, onDeleteClick }: UsersTableProps) 
                     {/* El botón lleva a /settings/users/edit/:uid, ya protegida
                         con users.edit: se reutiliza ese code. */}
                     <ComponentPermission codeIn={["users.edit"]}>
-                      <Button variant="outline" size="icon" onClick={() => onEdit(u)}>
+                      <Button variant="outline" size="sm" title="Editar el usuario" onClick={() => onEdit(u)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                     </ComponentPermission>
                     <ComponentPermission codeIn={["users.delete"]}>
                       <Button
                         variant="destructive"
-                        size="icon"
+                        size="sm"
+                        title="Eliminar el usuario"
                         onClick={() => onDeleteClick(u)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash className="h-4 w-4" />
                       </Button>
                     </ComponentPermission>
                   </div>

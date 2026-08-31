@@ -120,8 +120,9 @@ export default function InvoicesTable({ invoices = [], loading, invoiceTypes = [
                 <div className="flex items-center gap-1">
                   <ComponentPermission codeIn={["invoices.view"]}>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
+                      title="Ver el comprobante"
                       onClick={() => navigate(`/invoices/view/${item.id}`)}
                     >
                       <Eye className="w-4 h-4" />
@@ -130,8 +131,9 @@ export default function InvoicesTable({ invoices = [], loading, invoiceTypes = [
                   {!item.declared && (
                     <ComponentPermission codeIn={["invoices.edit"]}>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
+                        title="Editar el comprobante"
                         onClick={() => navigate(`/invoices/edit/${item.id}`)}
                       >
                         <Edit className="w-4 h-4" />
