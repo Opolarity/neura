@@ -15,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Portal as TooltipPortal } from "@radix-ui/react-tooltip";
 import {
   Card,
   CardContent,
@@ -62,6 +63,7 @@ import {
   Image as ImageIcon,
   Warehouse,
   Lock,
+  Info,
 } from "lucide-react";
 import { useCreateSale } from "../hooks/useCreateSale";
 import { ProductVariationSelector } from "@/shared/components/product-variation-selector";
@@ -717,8 +719,33 @@ const CreateSale = () => {
                         <TableHead className="w-28 text-center">
                           Precio (S/)
                         </TableHead>
-                        <TableHead className="w-24 text-center">
-                          Desc. (S/)
+                        <TableHead className="w-40 text-center">
+                          <span className="inline-flex items-center justify-center gap-1">
+                            Desc. unit. (S/)
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  aria-label="Cómo se aplica el descuento"
+                                  className="inline-flex text-muted-foreground hover:text-foreground"
+                                >
+                                  <Info className="w-3.5 h-3.5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipPortal>
+                                <TooltipContent
+                                  side="top"
+                                  align="center"
+                                  className="max-w-64 text-center font-normal"
+                                >
+                                  El descuento es por unidad: se resta a cada producto
+                                  de la fila. Ej.: 2 polos que suman S/ 50 con S/ 10 de
+                                  descuento dan un Subtotal de S/ 40, y aquí se registra
+                                  S/ 5 por unidad.
+                                </TooltipContent>
+                              </TooltipPortal>
+                            </Tooltip>
+                          </span>
                         </TableHead>
                         <TableHead className="w-28 text-right">
                           Subtotal
