@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
+import WalkingBear from "@/shared/components/walking-bear/WalkingBear";
 import { useTrainings } from "../hooks/useTrainings";
 import { TrainingsHeader } from "../components/TrainingsHeader";
 import { TrainingsTable } from "../components/TrainingsTable";
@@ -32,34 +33,39 @@ const TrainingsPage = () => {
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
-      <TrainingsHeader
-        onSchedule={openSchedule}
-        onRefresh={refresh}
-        refreshing={loading}
-      />
+      <TrainingsHeader onSchedule={openSchedule} />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader className="!p-4">
-          <Tabs
-            value={filters.scope}
-            onValueChange={(value) => onScopeChange(value as TrainingScope)}
-          >
-            <TabsList>
-              <TabsTrigger value="upcoming">Próximas</TabsTrigger>
-              <TabsTrigger value="past">Realizadas</TabsTrigger>
-              <TabsTrigger value="cancelled">Canceladas</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </CardHeader>
+        {/* Con la pantalla en error no hay listado que filtrar: las pestañas
+            solo sugerirían que cambiar de scope arregla algo. */}
+        {!errorState && (
+          <CardHeader className="!p-4">
+            <Tabs
+              value={filters.scope}
+              onValueChange={(value) => onScopeChange(value as TrainingScope)}
+            >
+              <TabsList>
+                <TabsTrigger value="upcoming">Próximas</TabsTrigger>
+                <TabsTrigger value="past">Realizadas</TabsTrigger>
+                <TabsTrigger value="cancelled">Canceladas</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </CardHeader>
+        )}
 
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           {errorState ? (
-            <TrainingsErrorState
-              code={errorState.code}
-              message={errorState.message}
-              onRetry={refresh}
-              retrying={loading}
-            />
+            <>
+              <TrainingsErrorState
+                code={errorState.code}
+                message={errorState.message}
+                onRetry={refresh}
+                retrying={loading}
+              />
+              {/* Sin paginación no hay dónde esconder al oso, así que aquí va
+                  en flujo normal debajo de la alerta — no absolute. */}
+              <WalkingBear />
+            </>
           ) : (
             <TrainingsTable
               bookings={bookings}
@@ -73,11 +79,22 @@ const TrainingsPage = () => {
 
         {!errorState && pagination.total > 0 && (
           <CardFooter className="!p-0">
-            <PaginationBar
-              pagination={pagination}
-              onPageChange={onPageChange}
-              onPageSizeChange={onPageSizeChange}
-            />
+            {/* El oso camina por detrás de la barra de paginación. El contenedor
+                lleva isolate a propósito: sin un stacking context propio, el
+                z-index negativo lo mandaría detrás del fondo de la Card y
+                desaparecería. Con él, el -z-10 solo lo deja por debajo de la
+                barra, que no tiene fondo y lo deja ver. Así no hay que tocar
+                PaginationBar ni Pagination. */}
+            <div className="relative w-full isolate">
+              <div className="absolute inset-x-0 bottom-0 -z-10">
+                <WalkingBear />
+              </div>
+              <PaginationBar
+                pagination={pagination}
+                onPageChange={onPageChange}
+                onPageSizeChange={onPageSizeChange}
+              />
+            </div>
           </CardFooter>
         )}
       </Card>
