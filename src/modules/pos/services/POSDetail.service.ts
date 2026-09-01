@@ -1,20 +1,15 @@
-import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/query";
 import type { POSSessionDetailApiResponse } from "../types/POSDetail.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const getPOSSessionDetail = async (
   sessionId: number
 ): Promise<POSSessionDetailApiResponse> => {
   const endpoint = buildEndpoint("get-pos-session-detail", { session_id: sessionId });
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) {
-    console.error("Invoke error:", error);
-    throw error;
-  }
 
   return data;
 };

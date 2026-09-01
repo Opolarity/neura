@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/utils";
 import { AttributesApiResponse, AttributeFormValues, TermFormValues, TermGroupOption } from "../types/Attributes.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export interface GetAttributesParams {
   page?: number;
@@ -17,14 +18,9 @@ export const getAttributesApi = async (
 ): Promise<AttributesApiResponse> => {
   const endpoint = buildEndpoint("get-terms", params);
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) {
-    console.error("Invoke error:", error);
-    throw error;
-  }
 
   return (
     data ?? {
@@ -113,18 +109,13 @@ export const createTerm = async (data: {
   name: string;
   term_group_id: number | null;
 }) => {
-  const { data: result, error } = await supabase.functions.invoke("create-terms", {
+  const result = await invokeFunction("create-terms", {
     method: "POST",
     body: {
       name: data.name,
       term_group_id: data.term_group_id,
     },
   });
-
-  if (error) {
-    console.error("Error creating term:", error);
-    throw error;
-  }
 
   return result;
 };
@@ -149,7 +140,7 @@ export const getTermById = async (id: number): Promise<TermFormValues> => {
 export const updateTerm = async (data: TermFormValues) => {
   if (!data.id) throw new Error("ID is required for update");
 
-  const { data: result, error } = await supabase.functions.invoke("update-terms", {
+  const result = await invokeFunction("update-terms", {
     method: "POST",
     body: {
       id: data.id,
@@ -158,40 +149,25 @@ export const updateTerm = async (data: TermFormValues) => {
     },
   });
 
-  if (error) {
-    console.error("Error updating term:", error);
-    throw error;
-  }
-
   return result;
 };
 
 // Eliminar un término (soft delete)
 export const deleteTerm = async (id: number) => {
-  const { data, error } = await supabase.functions.invoke("delete-terms", {
+  const data = await invokeFunction("delete-terms", {
     method: "POST",
     body: { termsId: id },
   });
-
-  if (error) {
-    console.error("Error deleting term:", error);
-    throw error;
-  }
 
   return data;
 };
 
 // Eliminar un term_group y todos sus términos (soft delete)
 export const deleteTermGroup = async (id: number) => {
-  const { data, error } = await supabase.functions.invoke("delete-term-group", {
+  const data = await invokeFunction("delete-term-group", {
     method: "POST",
     body: { id },
   });
-
-  if (error) {
-    console.error("Error deleting term group:", error);
-    throw error;
-  }
 
   return data;
 };

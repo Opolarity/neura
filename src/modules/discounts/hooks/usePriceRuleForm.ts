@@ -30,6 +30,7 @@ import {
   isConsignmentMarkerGroup,
 } from "../adapters/priceRule.adapter";
 import { getPriceRuleFormError } from "../utils/priceRuleValidation";
+import { toastError } from "@/shared/utils/toastError";
 
 export function usePriceRuleForm() {
   const navigate = useNavigate();
@@ -59,7 +60,7 @@ export function usePriceRuleForm() {
         }
       } catch (error) {
         console.error("Error loading price rule:", error);
-        toast({ title: "Error al cargar la regla de precios", variant: "destructive" });
+        toastError(error, "Error al cargar la regla de precios");
         // Sin esto el usuario se queda en un formulario vacío que parece
         // editable. Pasa, por ejemplo, al entrar por URL directa a una regla
         // eliminada: el backend responde 404.
@@ -355,10 +356,7 @@ export function usePriceRuleForm() {
       const fallbackMessage = isEditMode
         ? "Error al actualizar la regla de precios"
         : "Error al crear la regla de precios";
-      toast({
-        title: error instanceof Error && error.message ? error.message : fallbackMessage,
-        variant: "destructive",
-      });
+      toastError(error, fallbackMessage);
     } finally {
       setSaving(false);
     }

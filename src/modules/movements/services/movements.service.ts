@@ -13,29 +13,16 @@ import {
   CreateMovementPayload,
   CreateMovementResponse,
 } from "../types/Movements.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const movementsApi = async (
   filters: MovementFilters = {}
 ): Promise<MovementApiResponse> => {
   const endpoint = buildEndpoint("get-movements", filters);
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  console.log("Movements API response:", data);
-  console.log("Movements API error:", error);
-
-  if (error) {
-    console.error("Error fetching movements:", error);
-    throw error;
-  }
-
-  // Check if response contains an error from the edge function
-  if (data?.error) {
-    console.error("Edge function error:", data.error);
-    throw new Error(data.error);
-  }
 
   return (
     data ?? {
@@ -235,20 +222,10 @@ export const uploadMovementAttachment = async (
 export const createMovementApi = async (
   payload: CreateMovementPayload
 ): Promise<CreateMovementResponse> => {
-  const { data, error } = await supabase.functions.invoke("create-movements", {
+  const data = await invokeFunction("create-movements", {
     method: "POST",
     body: payload,
   });
-
-  if (error) {
-    console.error("Error creating movement:", error);
-    throw error;
-  }
-
-  if (data?.error) {
-    console.error("Edge function error:", data.error);
-    throw new Error(data.error);
-  }
 
   return data;
 };
@@ -264,11 +241,9 @@ export const movementSalesChannels = async (): Promise<{ id: number; name: strin
 };
 
 export const getMovementDetails = async (id: number) => {
-  const { data, error } = await supabase.functions.invoke("get-movements-details", {
+  const data = await invokeFunction("get-movements-details", {
     body: {id}
-  })
-
-  if (error) throw error;
+  });
   return data ?? [];
 };
 
@@ -335,6 +310,9 @@ export const sendFranchiseePayment = async (params: {
   };
 
   const response = await fetch(
+    // API externa, no una edge function de neura-backend: no pasa por el
+    // chokepoint. OJO: esta URL apunta a demo en duro, en cualquier entorno.
+    // eslint-disable-next-line no-restricted-syntax
     "https://demo.supabase.neura.pe/functions/v1/supplier_quotations_payments",
     {
       method: "POST",

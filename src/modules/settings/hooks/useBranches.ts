@@ -5,6 +5,7 @@ import { BranchesAdapter } from '../adapters/Branches.adapter';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
+import { toastError } from "@/shared/utils/toastError";
 
 const useBranches = () => {
     const [branches, setBranches] = useState<BranchView[]>([]);
@@ -37,11 +38,7 @@ const useBranches = () => {
             setPagination(paginationData);
         } catch (error) {
             console.error('Error fetching branches:', error);
-            toast({
-                title: "Error",
-                description: "No se pudieron cargar las sucursales",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudieron cargar las sucursales");
         } finally {
             setLoading(false);
         }
@@ -91,11 +88,7 @@ const useBranches = () => {
             await loadBranches(filters);
         } catch (error) {
             console.error('Error deleting branch:', error);
-            toast({
-                title: "Error",
-                description: "No se pudo eliminar la sucursal",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudo eliminar la sucursal");
         }
     };
 

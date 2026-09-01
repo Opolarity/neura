@@ -7,6 +7,7 @@ import {
 } from "../services/crm.service";
 import { boardAdapter } from "../adapters/conversations.adapter";
 import type { BoardCard, BoardColumn } from "../types/crm.types";
+import { toastError } from "@/shared/utils/toastError";
 
 const POLL_MS = 45_000;
 
@@ -34,7 +35,7 @@ export const useConversationsBoard = () => {
       } catch (error) {
         console.error(error);
         if (!silent) {
-          toast({ title: "Error al cargar el tablero", variant: "destructive" });
+          toastError(error, "Error al cargar el tablero");
         }
       } finally {
         if (!silent) setLoading(false);
@@ -90,10 +91,7 @@ export const useConversationsBoard = () => {
         fetchBoard(true);
       } catch (error) {
         console.error(error);
-        toast({
-          title: error instanceof Error ? error.message : "No se pudo mover el chat",
-          variant: "destructive",
-        });
+        toastError(error, "No se pudo mover el chat");
         fetchBoard(true);
       }
     },

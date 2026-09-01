@@ -21,6 +21,7 @@ function isSameIdSet(a: number[], b: number[]): boolean {
 const SalesDashboard = lazy(() =>
   import('../components/sales/SalesDashboard').then((m) => ({ default: m.SalesDashboard })),
 );
+import { toastError } from "@/shared/utils/toastError";
 
 export default function SalesPage() {
   const { filters, draft, applyImmediate } = useReportsFilters();
@@ -82,8 +83,8 @@ export default function SalesPage() {
         filters.endDate ?? '',
       );
       toast({ title: `${rows.length} ventas y ${detailRows.length} ítems exportados`, variant: "success" });
-    } catch {
-      toast({ title: 'Error al generar el reporte. Inténtalo de nuevo.', variant: "destructive" });
+    } catch (error) {
+      toastError(error, 'Error al generar el reporte. Inténtalo de nuevo.');
     } finally {
       setIsExporting(false);
     }

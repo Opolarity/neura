@@ -1,6 +1,6 @@
-import { supabase } from '@/integrations/supabase/client';
 import { buildEndpoint } from '@/shared/utils/query';
 import type { BirthdayProfilesResponse } from '../types/birthdayNotification.types';
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export interface BirthdayProfilesParams {
   page?: number;
@@ -42,9 +42,7 @@ export const birthdayProfilesApi = async (
     today: getLocalToday(),
   });
 
-  const { data, error } = await supabase.functions.invoke<BirthdayProfilesResponse>(endpoint);
-
-  if (error) throw error;
+  const data = await invokeFunction<BirthdayProfilesResponse>(endpoint);
 
   return data ?? { data: [], page: { page, size, total: 0 } };
 };

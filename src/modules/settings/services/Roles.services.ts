@@ -1,4 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/utils";
 import {
   RoleDetailApiResponse,
@@ -6,20 +5,16 @@ import {
   RolesFilters,
   RolePayload,
 } from "../types/Roles.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const rolesApi = async (
   filters: RolesFilters,
 ): Promise<RolesApiResponse> => {
   const endpoint = buildEndpoint("get-roles", filters);
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) {
-    console.error("Invoke error in rolesApi:", error);
-    throw error;
-  }
 
   return (
     data ?? {
@@ -34,43 +29,28 @@ export const rolesApi = async (
 export const roleDetailApi = async (
   roleId: number,
 ): Promise<RoleDetailApiResponse> => {
-  const { data, error } = await supabase.functions.invoke("get-role-details", {
+  const data = await invokeFunction("get-role-details", {
     body: { roleId },
   });
-
-  if (error) {
-    console.error("Invoke error in roleDetailApi:", error);
-    throw error;
-  }
-  if (data?.error) throw new Error(data.error);
 
   return data;
 };
 
 export const deleteRoleApi = async (roleId: number) => {
-  const { data, error } = await supabase.functions.invoke("delete-role", {
+  await invokeFunction("delete-role", {
     body: { id: roleId },
   });
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
 };
 
 export const createRoleApi = async (newRole: RolePayload) => {
-  const { data, error } = await supabase.functions.invoke("create-role", {
+  await invokeFunction("create-role", {
     method: "POST",
     body: newRole,
   });
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
 };
 
 export const updateRoleApi = async (updateRole: RolePayload) => {
-  const { data, error } = await supabase.functions.invoke("update-role", {
+  await invokeFunction("update-role", {
     body: updateRole,
   });
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
 };

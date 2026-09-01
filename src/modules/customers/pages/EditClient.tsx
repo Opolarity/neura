@@ -14,6 +14,7 @@ import {
 import { toast } from "@/shared/hooks/use-toast";
 import { ArrowLeft } from 'lucide-react';
 import { PageLoader } from '@/shared/components/page-loader';
+import { toastError } from "@/shared/utils/toastError";
 
 interface DocumentType {
   id: number;
@@ -51,7 +52,7 @@ const EditClient = () => {
       if (error) throw error;
       setDocumentTypes(data || []);
     } catch (error: any) {
-      toast({ title: 'Error al cargar tipos de documento: ' + error.message, variant: "destructive" });
+      toastError(error, 'Error al cargar tipos de documento');
     }
   };
 
@@ -77,7 +78,7 @@ const EditClient = () => {
         });
       }
     } catch (error: any) {
-      toast({ title: 'Error al cargar cliente: ' + error.message, variant: "destructive" });
+      toastError(error, 'Error al cargar cliente');
       navigate('/customers/list');
     } finally {
       setFetching(false);
@@ -111,7 +112,7 @@ const EditClient = () => {
       toast({ title: 'Cliente actualizado exitosamente', variant: "success" });
       navigate('/customers/list');
     } catch (error: any) {
-      toast({ title: 'Error al actualizar cliente: ' + error.message, variant: "destructive" });
+      toastError(error, 'Error al actualizar cliente');
     } finally {
       setLoading(false);
     }

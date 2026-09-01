@@ -1,6 +1,6 @@
-import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/query";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export type FranchiseProductRow = {
   id: number;
@@ -154,11 +154,9 @@ export const fetchFranchiseProducts = async (
       : {}),
   });
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) throw error;
 
   const rows: FranchiseProductRow[] = ((data?.data ?? []) as RawFranchiseProduct[]).map(
     (item) => {

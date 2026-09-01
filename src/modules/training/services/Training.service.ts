@@ -1,5 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
-import { throwEdgeFunctionError } from "@/shared/services/edgeFunctionError";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import type {
   ScheduleTrainingPayload,
   TrainingBookingApi,
@@ -11,21 +10,23 @@ import type {
 
 /**
  * Mismo contrato que soporte: los errores de negocio llegan como 200 +
- * {error, error_code} y los de infraestructura con status != 2xx.
+ * {error, error_code} y los de infraestructura con status != 2xx. Los dos los
+ * resuelve `invokeFunction`, que preserva el `error_code` — de ahi salen los
+ * `code === "slot_taken"` que miran los dialogos.
  */
-const throwTrainingFunctionError = (error: unknown): Promise<never> =>
-  throwEdgeFunctionError(
-    error,
-    "No se pudo conectar con el servicio de capacitaciones. Revisa tu conexión e intenta nuevamente.",
-  );
+const NETWORK_MESSAGE =
+  "No se pudo conectar con el servicio de capacitaciones. Revisa tu conexión e intenta nuevamente.";
+
+/** Envoltura comun de la API externa: el payload util viaja dentro de `data`. */
+interface TrainingEnvelope<T> {
+  data?: T;
+}
 
 export const getTrainingHosts = async (): Promise<TrainingHostApi[]> => {
-  const { data, error } = await supabase.functions.invoke("get-training-hosts", {
-    method: "POST",
-    body: {},
-  });
-  if (error) await throwTrainingFunctionError(error);
-  if (data?.error) await throwTrainingFunctionError({ context: null, message: data.error });
+  const data = await invokeFunction<TrainingEnvelope<{ items?: TrainingHostApi[] }>>(
+    "get-training-hosts",
+    { method: "POST", body: {}, networkMessage: NETWORK_MESSAGE },
+  );
 
   return Array.isArray(data?.data?.items) ? data.data.items : [];
 };
@@ -41,12 +42,10 @@ export const getTrainingHosts = async (): Promise<TrainingHostApi[]> => {
 export const getTrainingSlots = async (
   slug: string,
 ): Promise<TrainingSlotsApiResponse> => {
-  const { data, error } = await supabase.functions.invoke("get-training-slots", {
-    method: "POST",
-    body: { slug },
-  });
-  if (error) await throwTrainingFunctionError(error);
-  if (data?.error) await throwTrainingFunctionError({ context: null, message: data.error });
+  const data = await invokeFunction<TrainingEnvelope<TrainingSlotsApiResponse>>(
+    "get-training-slots",
+    { method: "POST", body: { slug }, networkMessage: NETWORK_MESSAGE },
+  );
 
   return {
     timezone: data?.data?.timezone ?? "America/Lima",
@@ -57,34 +56,32 @@ export const getTrainingSlots = async (
 
 export const getTrainingBookings = async (
   filters: TrainingFilters,
-): Promise<TrainingBookingsApiResponse> => {
-  const { data, error } = await supabase.functions.invoke("get-training-bookings", {
+): Promise<TrainingBookingsApiResponse> =>
+  invokeFunction<TrainingBookingsApiResponse>("get-training-bookings", {
     method: "POST",
+    networkMessage: NETWORK_MESSAGE,
     body: { scope: filters.scope, page: filters.page, page_size: filters.size },
   });
-  if (error) await throwTrainingFunctionError(error);
-  if (data?.error) await throwTrainingFunctionError({ context: null, message: data.error });
-
-  return data as TrainingBookingsApiResponse;
-};
 
 export const createTrainingBooking = async (
   payload: ScheduleTrainingPayload,
 ): Promise<TrainingBookingApi> => {
-  const { data, error } = await supabase.functions.invoke("create-training-booking", {
-    method: "POST",
-    body: {
-      slug: payload.slug,
-      start: payload.start,
-      invitee_name: payload.inviteeName,
-      // La zona del navegador solo se guarda como referencia: los instantes
-      // viajan siempre en UTC.
-      invitee_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      notes: payload.notes || undefined,
+  const data = await invokeFunction<TrainingEnvelope<TrainingBookingApi>>(
+    "create-training-booking",
+    {
+      method: "POST",
+      networkMessage: NETWORK_MESSAGE,
+      body: {
+        slug: payload.slug,
+        start: payload.start,
+        invitee_name: payload.inviteeName,
+        // La zona del navegador solo se guarda como referencia: los instantes
+        // viajan siempre en UTC.
+        invitee_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        notes: payload.notes || undefined,
+      },
     },
-  });
-  if (error) await throwTrainingFunctionError(error);
-  if (data?.error) await throwTrainingFunctionError({ context: null, message: data.error });
+  );
 
   return data.data as TrainingBookingApi;
 };
@@ -93,12 +90,14 @@ export const cancelTrainingBooking = async (
   bookingId: string,
   reason?: string,
 ): Promise<TrainingBookingApi> => {
-  const { data, error } = await supabase.functions.invoke("cancel-training-booking", {
-    method: "POST",
-    body: { booking_id: bookingId, reason: reason || undefined },
-  });
-  if (error) await throwTrainingFunctionError(error);
-  if (data?.error) await throwTrainingFunctionError({ context: null, message: data.error });
+  const data = await invokeFunction<TrainingEnvelope<TrainingBookingApi>>(
+    "cancel-training-booking",
+    {
+      method: "POST",
+      networkMessage: NETWORK_MESSAGE,
+      body: { booking_id: bookingId, reason: reason || undefined },
+    },
+  );
 
   return data.data as TrainingBookingApi;
 };
@@ -107,12 +106,14 @@ export const rescheduleTrainingBooking = async (
   bookingId: string,
   start: string,
 ): Promise<TrainingBookingApi> => {
-  const { data, error } = await supabase.functions.invoke("reschedule-training-booking", {
-    method: "POST",
-    body: { booking_id: bookingId, start },
-  });
-  if (error) await throwTrainingFunctionError(error);
-  if (data?.error) await throwTrainingFunctionError({ context: null, message: data.error });
+  const data = await invokeFunction<TrainingEnvelope<TrainingBookingApi>>(
+    "reschedule-training-booking",
+    {
+      method: "POST",
+      networkMessage: NETWORK_MESSAGE,
+      body: { booking_id: bookingId, start },
+    },
+  );
 
   return data.data as TrainingBookingApi;
 };

@@ -17,6 +17,7 @@ import { formatNumber } from '../shared/reportChartUtils';
 import { inventoryService } from '../../services/reports.service';
 import { generateLowStockReportExcel } from '../../utils/generateLowStockReportExcel';
 import type { InventoryDashboardState } from '../../hooks/useInventoryDashboard';
+import { toastError } from "@/shared/utils/toastError";
 
 /** Tope de filas del export: la bandeja es para reponer, no para volcar el catálogo. */
 const EXPORT_MAX = 1000;
@@ -65,7 +66,7 @@ export function LowStockProductsTable({ dash }: { dash: InventoryDashboardState 
       }
     } catch (error) {
       console.error(error);
-      toast({ title: 'No se pudo generar el export', variant: 'destructive' });
+      toastError(error, 'No se pudo generar el export');
     } finally {
       setExporting(false);
     }

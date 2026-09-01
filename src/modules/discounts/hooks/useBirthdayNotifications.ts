@@ -6,6 +6,7 @@ import {
 } from '../types/birthdayNotification.types';
 import { birthdayProfilesApi } from '../services/BirthdayNotification.services';
 import { birthdayNotificationAdapter } from '../adapters/birthdayNotification.adapter';
+import { toastError } from "@/shared/utils/toastError";
 
 const DEFAULT_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -45,7 +46,7 @@ export const useBirthdayNotifications = () => {
         if (requestId !== requestRef.current) return;
 
         console.error(error);
-        toast({ title: 'Error al cargar cumpleaños', variant: 'destructive' });
+        toastError(error, 'Error al cargar cumpleaños');
       } finally {
         if (requestId === requestRef.current) setLoading(false);
       }

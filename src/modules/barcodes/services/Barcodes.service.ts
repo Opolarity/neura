@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { CreateBarcodePayload, CreateBarcodeResponse } from "../types/Barcodes.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 // =============================================================================
 // Search variations for barcode (paginated, via edge function + RPC)
@@ -35,11 +36,9 @@ export const searchBarcodeVariations = async (
     ? `search-barcode-variations?${queryParams.toString()}`
     : "search-barcode-variations";
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) throw error;
   return data;
 };
 
@@ -80,11 +79,9 @@ export const searchBarcodeMovements = async (
     ? `search-barcode-movements?${queryParams.toString()}`
     : "search-barcode-movements";
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) throw error;
   return data;
 };
 
@@ -206,19 +203,10 @@ export const getVariationPrice = async (
 export const createBarcodeApi = async (
   payload: CreateBarcodePayload
 ): Promise<CreateBarcodeResponse> => {
-  const { data, error } = await supabase.functions.invoke("create-barcode", {
+  const data = await invokeFunction("create-barcode", {
     method: "POST",
     body: payload,
   });
-
-  if (error) {
-    console.error("Error creating barcode:", error);
-    throw error;
-  }
-
-  if (data?.error) {
-    throw new Error(data.error);
-  }
 
   return data;
 };

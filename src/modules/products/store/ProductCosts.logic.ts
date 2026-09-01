@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { productCostsApi } from "../services/ProductCosts.service";
 import { productCostsAdapter } from "../adapters/ProductCosts.adapter";
 import { ProductCost } from "../types/ProductCosts.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useProductCostsLogic = () => {
   const [products, setProducts] = useState<ProductCost[]>([]);
@@ -27,11 +28,7 @@ export const useProductCostsLogic = () => {
       setProducts(products);
     } catch (error: any) {
       console.error("Error loading product costs:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo cargar los costos de productos",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo cargar los costos de productos");
     } finally {
       setLoading(false);
     }
@@ -77,14 +74,12 @@ export const useProductCostsLogic = () => {
         })
       );
 
-      const { error } = await supabase.functions.invoke(
+      await invokeFunction(
         "update-product-costs",
         {
           body: { costUpdates },
         }
       );
-
-      if (error) throw error;
 
       toast({
         title: "Éxito",
@@ -99,11 +94,7 @@ export const useProductCostsLogic = () => {
       await loadProductCosts();
     } catch (error: any) {
       console.error("Error saving costs:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar los costos",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo actualizar los costos");
     } finally {
       setIsSaving(false);
     }

@@ -10,6 +10,7 @@ import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useNavigate } from "react-router-dom";
 import type { POSSessionsFilterValues } from "../components/POSSessionsFilterModal";
 import { limaDateRangeToIsoBounds } from "@/shared/utils/date";
+import { toastError } from "@/shared/utils/toastError";
 
 const defaultFilters: POSSessionsFilters = {
   search: null,
@@ -60,11 +61,7 @@ export const usePOSSessions = () => {
       });
     } catch (err) {
       console.error("Error loading POS sessions:", err);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las sesiones de caja",
-        variant: "destructive",
-      });
+      toastError(err, "No se pudieron cargar las sesiones de caja");
     } finally {
       setLoading(false);
     }

@@ -11,6 +11,7 @@ import {
   getSupportRequest,
 } from "../services/SupportRequests.service";
 import { adaptSupportRequestDetail } from "../adapters/supportRequest.adapter";
+import { toastError } from "@/shared/utils/toastError";
 
 interface SupportDetailErrorState {
   message: string;
@@ -88,7 +89,7 @@ export function useSupportRequestDetail() {
         console.error("Error sending support request message:", error);
         const err = error as SupportServiceError;
         // Escritura: sí lleva toast (igual que la creación de solicitudes)
-        toast({ title: err?.message || "No se pudo enviar el mensaje", variant: "destructive" });
+        toastError(error, err?.message || "No se pudo enviar el mensaje");
         return false;
       } finally {
         setSending(false);

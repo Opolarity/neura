@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { PaymentMethodsApiResponse, PaymentMethodsFilters, PaymentMethod } from "../types/PaymentMethods.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const PaymentMethodsApi = async (
     filters: PaymentMethodsFilters
@@ -13,14 +14,9 @@ export const PaymentMethodsApi = async (
     const endpoint = queryParams.toString()
         ? `get-payments-methods?${queryParams.toString()}`
         : "get-payments-methods";
-    const { data, error } = await supabase.functions.invoke(endpoint, {
+    const data = await invokeFunction(endpoint, {
         method: "GET",
     });
-
-    if (error) {
-        console.error("Invoke error in PaymentMethodsApi:", error);
-        throw error;
-    }
 
     return (
         data?.paymentsMethodsData ?? {
@@ -45,20 +41,18 @@ export const GetPaymentMethodDetails = async (id: number): Promise<{ paymentMeth
 };
 
 export const CreatePaymentMethod = async (paymentMethod: Omit<PaymentMethod, 'id'>): Promise<any> => {
-    const { data, error } = await supabase.functions.invoke("create-payments-methods", {
+    const data = await invokeFunction("create-payments-methods", {
         method: "POST",
         body: paymentMethod,
     });
-    if (error) throw error;
     return data;
 };
 
 export const UpdatePaymentMethod = async (paymentMethod: PaymentMethod): Promise<any> => {
-    const { data, error } = await supabase.functions.invoke("update-payments-methods", {
+    const data = await invokeFunction("update-payments-methods", {
         method: "PUT",
         body: paymentMethod,
     });
-    if (error) throw error;
     return data;
 };
 

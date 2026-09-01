@@ -20,6 +20,7 @@ import {
   type ProductExportRow,
   type CategoryExportRow,
 } from '../../utils/generateProductsReportExcel';
+import { toastError } from "@/shared/utils/toastError";
 
 interface ProductsExportModalProps {
   open: boolean;
@@ -89,8 +90,8 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
       generateProductsReportExcel(byProduct, byCategory, start, end);
       toast({ title: `Reporte exportado: ${byProduct.length} productos`, variant: "success" });
       onOpenChange(false);
-    } catch {
-      toast({ title: 'Error al generar el reporte. Inténtalo de nuevo.', variant: "destructive" });
+    } catch (error) {
+      toastError(error, 'Error al generar el reporte. Inténtalo de nuevo.');
     } finally {
       setIsLoading(false);
     }

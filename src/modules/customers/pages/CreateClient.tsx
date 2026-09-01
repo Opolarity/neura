@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from "@/shared/hooks/use-toast";
 import { ArrowLeft } from 'lucide-react';
+import { toastError } from "@/shared/utils/toastError";
 
 interface DocumentType {
   id: number;
@@ -47,7 +48,7 @@ const CreateClient = () => {
       if (error) throw error;
       setDocumentTypes(data || []);
     } catch (error: any) {
-      toast({ title: 'Error al cargar tipos de documento: ' + error.message, variant: "destructive" });
+      toastError(error, 'Error al cargar tipos de documento');
     }
   };
 
@@ -77,7 +78,7 @@ const CreateClient = () => {
       toast({ title: 'Cliente creado exitosamente', variant: "success" });
       navigate('/customers/list');
     } catch (error: any) {
-      toast({ title: 'Error al crear cliente: ' + error.message, variant: "destructive" });
+      toastError(error, 'Error al crear cliente');
     } finally {
       setLoading(false);
     }

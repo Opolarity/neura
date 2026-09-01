@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/table";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
+import { toastError } from "@/shared/utils/toastError";
 
 const formatCurrency = (value: number | null): string => {
   if (value === null) return "-";
@@ -197,7 +198,7 @@ const FranchiseProducts = () => {
       toast({ title: `${result.data.length} registros exportados correctamente.`, variant: "success" });
     } catch (err) {
       console.error("Error exporting franchise products:", err);
-      toast({ title: "No se pudo generar el Excel. Inténtalo de nuevo.", variant: "destructive" });
+      toastError(err, "No se pudo generar el Excel. Inténtalo de nuevo.");
     } finally {
       setExporting(false);
     }

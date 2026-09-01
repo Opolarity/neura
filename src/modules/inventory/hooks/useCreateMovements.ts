@@ -9,6 +9,7 @@ import { ProductSales, UserSummary, ProductSalesFilter, SelectedProduct } from "
 import { Types } from '@/shared/types/type';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
 import { useDebounce } from '@/shared/hooks';
+import { toastError } from "@/shared/utils/toastError";
 
 export const useCreateMovements = () => {
     const navigate = useNavigate();
@@ -263,11 +264,7 @@ export const useCreateMovements = () => {
             navigate("/inventory/movements");
         } catch (error) {
             console.error("Error al crear movimiento:", error);
-            toast({
-                title: "Error",
-                description: "No se pudo crear el movimiento de inventario.",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudo crear el movimiento de inventario.");
         }
     }
 

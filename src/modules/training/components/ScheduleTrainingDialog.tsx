@@ -25,6 +25,7 @@ import { useTrainingSlots } from "../hooks/useTrainingSlots";
 import { createTrainingBooking } from "../services/Training.service";
 import { TrainingServiceError, MAX_NOTES_LENGTH } from "../types/Training.types";
 import { TrainingSlotPicker } from "./TrainingSlotPicker";
+import { toastError } from "@/shared/utils/toastError";
 
 interface ScheduleTrainingDialogProps {
   open: boolean;
@@ -85,14 +86,7 @@ export const ScheduleTrainingDialog = ({
     } catch (error) {
       const isSlotTaken =
         error instanceof TrainingServiceError && error.code === "slot_taken";
-      toast({
-        variant: "destructive",
-        title: isSlotTaken ? "Ese horario acaba de ocuparse" : "No se pudo agendar",
-        description:
-          error instanceof TrainingServiceError
-            ? error.message
-            : "Intenta nuevamente en unos minutos.",
-      });
+      toastError(error, "Intenta nuevamente en unos minutos.");
       // El horario dejó de estar libre: se recarga la rejilla y se suelta la
       // selección para que el usuario elija sobre datos vigentes.
       if (isSlotTaken) {

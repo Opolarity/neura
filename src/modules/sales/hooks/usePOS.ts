@@ -49,6 +49,7 @@ import { getPOSSessionDetail } from "@/modules/pos/services/POSDetail.service";
 
 import { filterShippingCostsByLocation } from "../utils";
 import { findExactScanMatch } from "../utils/scan";
+import { toastError } from "@/shared/utils/toastError";
 
 // Initial state values
 const DEFAULT_CUSTOMER: POSCustomerData = {
@@ -262,11 +263,7 @@ export const usePOS = () => {
       await loadUserWarehouse();
     } catch (error) {
       console.error("Error loading initial data:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los datos del formulario",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudieron cargar los datos del formulario");
     } finally {
       setLoading(false);
     }
@@ -1132,11 +1129,7 @@ export const usePOS = () => {
       console.error("Error creating order:", error);
       const errorMessage =
         error instanceof Error ? error.message : "No se pudo crear la venta";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toastError(error, errorMessage);
       return null;
     } finally {
       setSaving(false);

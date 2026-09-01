@@ -9,6 +9,7 @@ import { Send, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { uploadNoteImage } from '../services';
+import { toastError } from "@/shared/utils/toastError";
 
 interface Note {
   id: number;
@@ -210,11 +211,7 @@ export const SaleSidebar = ({ orderId, selectedSituation: externalSituation, onS
       });
     } catch (error) {
       console.error('Error saving note:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo guardar la nota',
-        variant: 'destructive',
-      });
+      toastError(error, 'No se pudo guardar la nota');
     } finally {
       setUploading(false);
     }

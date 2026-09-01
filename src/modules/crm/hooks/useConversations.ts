@@ -11,6 +11,7 @@ import {
   takeConversationApi,
 } from "../services/crm.service";
 import type { Conversation, ConversationFilters, Situation } from "../types/crm.types";
+import { toastError } from "@/shared/utils/toastError";
 
 const EMPTY_FILTERS: ConversationFilters = {
   search: "",
@@ -60,10 +61,7 @@ export const useConversations = () => {
         );
       } catch (error) {
         console.error(error);
-        toast({
-          title: "No se pudo cargar la configuración del CRM",
-          variant: "destructive",
-        });
+        toastError(error, "No se pudo cargar la configuración del CRM");
       }
     })();
 
@@ -94,7 +92,7 @@ export const useConversations = () => {
         // En el refresco silencioso no se avisa: un corte de red momentáneo no
         // debería llenar la pantalla de toasts cada 30 segundos.
         if (!silent) {
-          toast({ title: "Error al cargar las conversaciones", variant: "destructive" });
+          toastError(error, "Error al cargar las conversaciones");
         }
       } finally {
         if (!silent) setLoading(false);
@@ -123,10 +121,7 @@ export const useConversations = () => {
         return true;
       } catch (error) {
         console.error(error);
-        toast({
-          title: error instanceof Error ? error.message : "No se pudo completar la acción",
-          variant: "destructive",
-        });
+        toastError(error, "No se pudo completar la acción");
         return false;
       } finally {
         setActing(false);

@@ -15,6 +15,7 @@ import {
 import { salesListAdapter } from "../adapters/Sales.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useToast } from "@/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useSales = () => {
   const [sales, setSales] = useState<SaleListItem[]>([]);
@@ -72,11 +73,7 @@ export const useSales = () => {
       console.error("Error loading sales:", err);
       if (requestId !== requestIdRef.current) return;
       setError("Ocurrió un error al cargar las ventas");
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las ventas",
-        variant: "destructive",
-      });
+      toastError(err, "No se pudieron cargar las ventas");
     } finally {
       if (requestId === requestIdRef.current) setLoading(false);
     }

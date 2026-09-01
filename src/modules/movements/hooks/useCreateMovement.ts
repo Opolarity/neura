@@ -25,6 +25,7 @@ import {
 import { getPaymentMethodsIsActiveTrueAndActiveTrue } from "@/shared/services/service";
 import { useUserProfile } from "@/modules/auth/hooks/useUserProfile";
 import { getTodayDate } from "@/shared/utils/date";
+import { toastError } from "@/shared/utils/toastError";
 
 const movementSchema = z.object({
   amount: z
@@ -247,11 +248,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
       setValue("user_id", user.id);
     } catch (error: any) {
       console.error("Error fetching data:", error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudieron cargar los datos",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudieron cargar los datos");
     }
   };
 
@@ -272,7 +269,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
       setNewCategoryName("");
       toast({ title: "Motivo creado", description: `"${created.name}" fue agregado.`, variant: "success" });
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "No se pudo crear el motivo", variant: "destructive" });
+      toastError(error, "No se pudo crear el motivo");
     } finally {
       setCreatingCategory(false);
     }
@@ -342,11 +339,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
           );
         } catch (linkError: any) {
           console.error("Error linking orders:", linkError);
-          toast({
-            title: "Advertencia",
-            description: "El ingreso fue creado pero no se pudieron vincular las ventas.",
-            variant: "destructive",
-          });
+          toastError(linkError, "El ingreso fue creado pero no se pudieron vincular las ventas.", "Advertencia");
         }
       }
 
@@ -359,11 +352,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
       navigate("/movements");
     } catch (error: any) {
       console.error("Error creating movement:", error);
-      toast({
-        title: "Error",
-        description: error.message || messages.error,
-        variant: "destructive",
-      });
+      toastError(error, messages.error);
     } finally {
       setLoading(false);
     }

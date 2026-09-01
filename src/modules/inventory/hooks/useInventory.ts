@@ -19,6 +19,7 @@ import {
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { getWarehousesIsActiveTrue } from "@/shared/services/service";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useInventory = () => {
   const [inventory, setInventory] = useState<Inventory[]>([]);
@@ -66,11 +67,7 @@ export const useInventory = () => {
       await loadInventory(filters, true);
     } catch (error: any) {
       console.error("Error loading initial data:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo cargar el inventario inicial",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo cargar el inventario inicial");
     } finally {
       setLoading(false);
     }
@@ -97,11 +94,7 @@ export const useInventory = () => {
       }
     } catch (error: any) {
       console.error("Error loading inventory:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo cargar el inventario",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo cargar el inventario");
     } finally {
       setStockChanges(new Map());
     }
@@ -245,11 +238,7 @@ export const useInventory = () => {
       await loadInventory();
     } catch (error: any) {
       console.error("Error saving inventory:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el inventario",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo actualizar el inventario");
     } finally {
       setIsSaving(false);
     }

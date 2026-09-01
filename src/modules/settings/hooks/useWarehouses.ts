@@ -5,6 +5,7 @@ import { WarehousesAdapter } from '../adapters/Warehouses.adapters';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
+import { toastError } from "@/shared/utils/toastError";
 
 const useWarehouses = () => {
     const [warehouses, setWarehouses] = useState<WarehouseView[]>([]);
@@ -37,11 +38,7 @@ const useWarehouses = () => {
             setPagination(paginationData);
         } catch (error) {
             console.error('Error fetching roles:', error);
-            toast({
-                title: "Error",
-                description: "No se pudieron cargar los almacenes",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudieron cargar los almacenes");
         } finally {
             setLoading(false);
         }
@@ -91,11 +88,7 @@ const useWarehouses = () => {
             await loadWarehouses(filters);
         } catch (error) {
             console.error('Error deleting warehouse:', error);
-            toast({
-                title: "Error",
-                description: "No se pudo eliminar el almacén",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudo eliminar el almacén");
         }
     };
 

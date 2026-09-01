@@ -10,6 +10,8 @@ import { SelectedRequestProduct } from "../types/MovementRequests.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks";
 import { SituationHistoryItem, SituationOption } from "../components/edit-movement-request/RequestSituationsHistory";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { toastError } from "@/shared/utils/toastError";
 
 interface SimpleWarehouse {
   id: number;
@@ -75,10 +77,10 @@ export const useEditMovementRequest = () => {
       if (!requestId) throw new Error("ID inválido");
 
       // Load user, warehouses, and request data from edge function
-      const [userRes, warehousesRes, edgeRes] = await Promise.all([
+      const [userRes, warehousesRes, respData] = await Promise.all([
         getUserWarehouse(),
         getWarehousesIsActiveTrue(),
-        supabase.functions.invoke(`get-stock-movement-request-detail?id=${requestId}`, {
+        invokeFunction(`get-stock-movement-request-detail?id=${requestId}`, {
           method: "GET",
         }),
       ]);
@@ -86,10 +88,9 @@ export const useEditMovementRequest = () => {
       const userAdp = getUserWarehouseAdapter(userRes);
       setUserSummary(userAdp);
 
-      if (edgeRes.error) throw edgeRes.error;
-      const respData = edgeRes.data;
-      if (!respData.success || !respData.request) {
-        throw new Error(respData.error || "Error al obtener la solicitud");
+      // `invokeFunction` ya lanzó si la function devolvió error o success:false.
+      if (!respData.request) {
+        throw new Error("Error al obtener la solicitud");
       }
 
       const reqData = respData.request;
@@ -220,11 +221,7 @@ export const useEditMovementRequest = () => {
       }
     } catch (error) {
       console.error("Error loading request:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo cargar la solicitud.",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo cargar la solicitud.");
     } finally {
       setLoadingInitial(false);
     }
@@ -419,7 +416,7 @@ export const useEditMovementRequest = () => {
       const notes = generateNotes();
       const combinedMessage = notes ? `${message}\n\n${notes}` : message;
 
-      const { data, error } = await supabase.functions.invoke('update-stock-movements-request', {
+      await invokeFunction('update-stock-movements-request', {
         body: {
           request_id: requestId,
           situation_code: selectedSit.code,
@@ -428,9 +425,6 @@ export const useEditMovementRequest = () => {
           items_approval: payloadItems,
         },
       });
-
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Error al procesar la actualización");
 
       // Update current status/situation display locally if we were to stay on page
       setStatusName("");
@@ -441,7 +435,7 @@ export const useEditMovementRequest = () => {
       navigate("/inventory/movement-requests");
     } catch (error: any) {
       console.error("Error submitting situation:", error);
-      toast({ title: "Error", description: error.message || "No se pudo enviar la actualización.", variant: "destructive" });
+      toastError(error, "No se pudo enviar la actualización.");
     } finally {
       setSubmittingNewSituation(false);
     }

@@ -4,6 +4,7 @@ import { toast } from "@/shared/hooks/use-toast";
 import { CustomerPoint } from "../types/customerPoints.types";
 import { getCustomerPointsApi } from "../services/customerPoints.service";
 import { customerPointsAdapter } from "../adapters/customerPoints.adapter";
+import { toastError } from "@/shared/utils/toastError";
 
 export type { CustomerPoint };
 
@@ -27,7 +28,7 @@ export const useCustomerPoints = () => {
       setPagination(pag);
     } catch (error) {
       console.error(error);
-      toast({ title: "Error al cargar puntos de clientes", variant: "destructive" });
+      toastError(error, "Error al cargar puntos de clientes");
     } finally {
       setLoading(false);
     }

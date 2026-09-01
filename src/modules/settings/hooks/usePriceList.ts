@@ -14,6 +14,7 @@ import {
 import { getPriceListsAdapter } from "../adapters/PriceList.adapter";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { toast } from "@/shared/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 
 export const usePriceList = () => {
   const [priceLists, setPriceLists] = useState<PriceList[]>([]);
@@ -53,7 +54,7 @@ export const usePriceList = () => {
       });
     } catch (error) {
       console.error(error);
-      toast({ title: "Precio de Lista no creado", variant: "destructive" });
+      toastError(error, "Precio de Lista no creado");
     } finally {
       setSaving(false);
       setOpenFormModal(false);

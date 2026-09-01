@@ -21,6 +21,7 @@ import {
 } from "../types/Barcodes.types";
 import { generateBarcodePdf } from "../utils/generateBarcodePdf";
 import { useLabelLayout } from "./useLabelLayout";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useBarcodes = () => {
   // Select options
@@ -79,11 +80,7 @@ export const useBarcodes = () => {
         setPriceLists(priceListsAdapter(priceListsRaw));
       } catch (error: any) {
         console.error("Error loading barcode data:", error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar los datos",
-          variant: "destructive",
-        });
+        toastError(error, "No se pudieron cargar los datos");
       } finally {
         setInitialLoading(false);
       }
@@ -242,11 +239,7 @@ export const useBarcodes = () => {
       loadBarcodeList();
     } catch (error: any) {
       console.error("Error creating barcode:", error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo crear el código de barras",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo crear el código de barras");
     } finally {
       setLoading(false);
     }
@@ -287,7 +280,7 @@ export const useBarcodes = () => {
       };
       generateBarcodePdf(ticketData, item.quantities ?? 1, labelLayout);
     } catch (error: any) {
-      toast({ title: "Error", description: "No se pudo reimprimir", variant: "destructive" });
+      toastError(error, "No se pudo reimprimir");
     }
   };
 

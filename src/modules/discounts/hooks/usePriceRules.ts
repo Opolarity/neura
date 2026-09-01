@@ -13,6 +13,7 @@ import {
   updateBulkPriceRule,
 } from "../services/PriceRule.services";
 import { adaptPriceRulesListResponse } from "../adapters/priceRule.adapter";
+import { toastError } from "@/shared/utils/toastError";
 
 const DEFAULT_FILTERS: PriceRuleFilters = {
   page: 1,
@@ -54,7 +55,7 @@ export function usePriceRules() {
       });
     } catch (error) {
       console.error("Error loading price rules:", error);
-      toast({ title: "Error al cargar las reglas de precios", variant: "destructive" });
+      toastError(error, "Error al cargar las reglas de precios");
     } finally {
       setLoading(false);
     }
@@ -117,7 +118,7 @@ export function usePriceRules() {
       reloadAfterDelete(1);
     } catch (error) {
       console.error("Error deleting price rule:", error);
-      toast({ title: "Error al eliminar la regla de precios", variant: "destructive" });
+      toastError(error, "Error al eliminar la regla de precios");
     } finally {
       setIsDeleting(false);
     }
@@ -147,7 +148,7 @@ export function usePriceRules() {
       reloadAfterDelete(ids.length);
     } catch (error) {
       console.error("Error bulk deleting price rules:", error);
-      toast({ title: "Error al eliminar las reglas de precios", variant: "destructive" });
+      toastError(error, "Error al eliminar las reglas de precios");
     } finally {
       setIsBulkDeleting(false);
     }
@@ -196,7 +197,7 @@ export function usePriceRules() {
       loadRules(filters);
     } catch (error) {
       console.error("Error applying bulk status:", error);
-      toast({ title: "Error al actualizar el estado de las reglas", variant: "destructive" });
+      toastError(error, "Error al actualizar el estado de las reglas");
     } finally {
       setIsApplyingBulk(false);
     }

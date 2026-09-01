@@ -10,6 +10,7 @@ import type {
   ChannelPointApi,
   ChannelProductApi,
 } from "../types/crm.types";
+import { toastError } from "@/shared/utils/toastError";
 
 export type RangePreset = "30d" | "90d" | "120d" | "365d";
 
@@ -71,11 +72,7 @@ export const useChannelMetrics = () => {
       setProducts(top.products);
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Error al cargar el rendimiento por canal",
-        description: (error as Error).message,
-        variant: "destructive",
-      });
+      toastError(error, undefined, "Error al cargar el rendimiento por canal");
     } finally {
       setLoading(false);
     }

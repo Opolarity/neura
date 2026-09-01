@@ -39,6 +39,8 @@ import {
 } from "@/modules/invoices/utils/shippingItem";
 import { useToast } from "@/hooks/use-toast";
 import { formatDateDisplay } from "@/shared/utils/date";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { toastError } from "@/shared/utils/toastError";
 
 interface Invoice {
   id: number;
@@ -366,19 +368,14 @@ export default function InvoicingStep({
         gre: greData,
       };
 
-      const { error: fnError } = await supabase.functions.invoke("create-invoice", { body });
-
-      if (fnError) {
-        toast({ title: "Error", description: "Error al crear la guía de remisión", variant: "destructive" });
-        return;
-      }
+      await invokeFunction("create-invoice", { body });
 
       toast({ title: "Éxito", description: "Guía de remisión creada correctamente", variant: "success" });
       setGuiaModalOpen(false);
       setPendingGuiaInvoiceType(null);
       fetchInvoices();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
+    } catch (err) {
+      toastError(err, "Error al crear la guía de remisión");
     } finally {
       setCreating(false);
     }
@@ -481,17 +478,12 @@ export default function InvoicingStep({
         }
       }
 
-      const { error: fnError } = await supabase.functions.invoke("create-invoice", { body });
-
-      if (fnError) {
-        toast({ title: "Error", description: "Error al crear el comprobante", variant: "destructive" });
-        return;
-      }
+      await invokeFunction("create-invoice", { body });
 
       toast({ title: "Éxito", description: `${invoiceType.name} creado correctamente`, variant: "success" });
       fetchInvoices();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
+    } catch (err) {
+      toastError(err, "Error al crear el comprobante");
     } finally {
       setCreating(false);
     }
@@ -512,24 +504,15 @@ export default function InvoicingStep({
     setEmitting(true);
     try {
       const fnName = typeCode === "7" ? "emit-guia" : "emit-invoice";
-      const { data, error } = await supabase.functions.invoke(fnName, {
+      await invokeFunction(fnName, {
         body: { invoice_id: invoice.id },
       });
 
-      if (error) {
-        toast({ title: "Error", description: "Error al emitir el comprobante", variant: "destructive" });
-        return;
-      }
-
-      if (data?.error) {
-        toast({ title: "Error de emisión", description: data.error, variant: "destructive" });
-        return;
-      }
-
       toast({ title: "Éxito", description: "Comprobante emitido correctamente a SUNAT", variant: "success" });
       fetchInvoices();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
+    } catch (err) {
+      // El rechazo de SUNAT viaja como mensaje de la function: llega tal cual.
+      toastError(err, "Error al emitir el comprobante", "Error de emisión");
     } finally {
       setEmitting(false);
       setPendingEmitInvoice(null);
@@ -636,12 +619,7 @@ export default function InvoicingStep({
         body.customer_document_estate_code = customerDocumentEstateCode;
       }
 
-      const { error: fnError } = await supabase.functions.invoke("create-invoice", { body });
-
-      if (fnError) {
-        toast({ title: "Error", description: "Error al crear el comprobante", variant: "destructive" });
-        return;
-      }
+      await invokeFunction("create-invoice", { body });
 
       // Obtener el invoice recién creado para esta orden
       const { data: orderInvoicesData } = await supabase
@@ -664,16 +642,18 @@ export default function InvoicingStep({
 
       if (newInvoice && (typeCode === "1" || typeCode === "2")) {
         setEmitting(true);
-        const { data: emitData, error: emitError } = await supabase.functions.invoke("emit-invoice", {
-          body: { invoice_id: newInvoice.id },
-        });
-        setEmitting(false);
-
-        if (emitError || emitData?.error) {
-          toast({ title: "Error de emisión", description: emitData?.error || "Error al emitir a SUNAT", variant: "destructive" });
-        } else {
+        // El comprobante ya está creado: si la emisión a SUNAT falla se avisa,
+        // pero no se propaga — eso abortaría el flujo de algo que sí ocurrió.
+        try {
+          await invokeFunction("emit-invoice", {
+            body: { invoice_id: newInvoice.id },
+          });
           toast({ title: "Éxito", description: `${invoiceType.name} emitido a SUNAT correctamente`, variant: "success" });
           printInvoice(newInvoice.id);
+        } catch (emitErr) {
+          toastError(emitErr, "Error al emitir a SUNAT", "Error de emisión");
+        } finally {
+          setEmitting(false);
         }
       } else if (newInvoice) {
         toast({ title: "Éxito", description: `${invoiceType.name} creado correctamente`, variant: "success" });
@@ -682,7 +662,7 @@ export default function InvoicingStep({
 
       fetchInvoices();
     } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
+      toastError(err, "Error inesperado");
     } finally {
       setCreating(false);
       setEmitting(false);

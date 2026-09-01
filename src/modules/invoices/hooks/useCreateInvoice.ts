@@ -8,6 +8,8 @@ import { getTypesAdapter } from "@/shared/adapters/adapter";
 import type { Types } from "@/shared/types/type";
 import type { InvoiceItemForm, InvoiceFormData, DocumentType, InvoiceProvider, InvoiceSerie } from "../types/Invoices.types";
 import { buildShippingFormItem } from "../utils/shippingItem";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { toastError } from "@/shared/utils/toastError";
 
 
 const createEmptyItem = (): InvoiceItemForm => ({
@@ -376,7 +378,7 @@ export const useCreateInvoice = () => {
         }
       } catch (error) {
         console.error("Error loading record data:", error);
-        toast({ title: "Error al cargar datos", variant: "destructive" });
+        toastError(error, "Error al cargar datos");
       } finally {
         setLoading(false);
       }
@@ -496,7 +498,7 @@ export const useCreateInvoice = () => {
       toast({ title: "Datos del pedido cargados correctamente", variant: "success" });
     } catch (error: any) {
       console.error("Error loading order data:", error);
-      toast({ title: "Error al cargar datos del pedido", variant: "destructive" });
+      toastError(error, "Error al cargar datos del pedido");
     } finally {
       setLoading(false);
     }
@@ -533,12 +535,24 @@ export const useCreateInvoice = () => {
       // If not found, try document-lookup API
       const selectedDocType = documentTypes.find((d) => d.id.toString() === docTypeId);
       if (selectedDocType) {
-        const { data: lookupData, error: lookupError } = await supabase.functions.invoke(
-          `document-lookup?document_type=${selectedDocType.code}&document_number=${doc}`,
-          { method: "GET" }
-        );
+        // Consulta externa best-effort: si falla, se cae al "Cliente no
+        // encontrado" de abajo en vez de cortar la búsqueda.
+        let lookupData: {
+          razon_social?: string;
+          nombres?: string;
+          apellidoPaterno?: string;
+          apellidoMaterno?: string;
+        } | null = null;
+        try {
+          lookupData = await invokeFunction(
+            `document-lookup?document_type=${selectedDocType.code}&document_number=${doc}`,
+            { method: "GET" }
+          );
+        } catch (lookupError) {
+          console.error("document-lookup:", lookupError);
+        }
 
-        if (!lookupError && lookupData) {
+        if (lookupData) {
           const name = lookupData.razon_social ||
             [lookupData.nombres, lookupData.apellidoPaterno, lookupData.apellidoMaterno].filter(Boolean).join(" ");
           setFormData((prev) => ({
@@ -554,8 +568,8 @@ export const useCreateInvoice = () => {
 
       toast({ title: "Cliente no encontrado", variant: "destructive" });
       setFormData((prev) => ({ ...prev, clientName: "" }));
-    } catch {
-      toast({ title: "Error buscando cliente", variant: "destructive" });
+    } catch (error) {
+      toastError(error, "Error buscando cliente");
     } finally {
       setSearchingClient(false);
     }
@@ -639,7 +653,7 @@ export const useCreateInvoice = () => {
       navigate("/invoices");
     } catch (error) {
       console.error("Error saving invoice:", error);
-      toast({ title: isEditing ? "Error al actualizar comprobante" : "Error al crear comprobante", variant: "destructive" });
+      toastError(error, isEditing ? "Error al actualizar comprobante" : "Error al crear comprobante");
     } finally {
       setSaving(false);
     }
@@ -649,16 +663,15 @@ export const useCreateInvoice = () => {
     if (!invoiceId) return;
     setEmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("emit-invoice", {
+      const data = await invokeFunction<{
+        pdf_url?: string;
+        xml_url?: string;
+        cdr_url?: string;
+        sunat_description?: string;
+      }>("emit-invoice", {
         method: "POST",
         body: { invoice_id: parseInt(invoiceId) },
       });
-
-      if (error) throw error;
-      if (data?.error) {
-        toast({ title: data.error, variant: "destructive" });
-        return;
-      }
 
       setDeclared(true);
       if (data?.pdf_url) setPdfUrl(data.pdf_url);
@@ -669,9 +682,9 @@ export const useCreateInvoice = () => {
         description: data?.sunat_description || "Emitido correctamente",
         variant: "success",
       });
-    } catch (error: any) {
-      console.error("Error emitting invoice:", error);
-      toast({ title: error?.message || "Error al emitir en SUNAT", variant: "destructive" });
+    } catch (error) {
+      // El rechazo de SUNAT viaja como mensaje de la function: llega tal cual.
+      toastError(error, "Error al emitir en SUNAT", "Error de emisión");
     } finally {
       setEmitting(false);
     }

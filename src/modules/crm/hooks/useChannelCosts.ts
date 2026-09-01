@@ -3,6 +3,7 @@ import { toast } from "@/shared/hooks/use-toast";
 import { getChannelCostsApi } from "../services/crm.service";
 import type { ChannelCostsResponse } from "../types/crm.types";
 import { RANGE_LABELS, type RangePreset } from "./useChannelMetrics";
+import { toastError } from "@/shared/utils/toastError";
 
 const DAYS: Record<RangePreset, number> = {
   "30d": 30,
@@ -34,11 +35,7 @@ export const useChannelCosts = () => {
       setData(await getChannelCostsApi(start, end));
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Error al cargar los costos por canal",
-        description: (error as Error).message,
-        variant: "destructive",
-      });
+      toastError(error, undefined, "Error al cargar los costos por canal");
     } finally {
       setLoading(false);
     }

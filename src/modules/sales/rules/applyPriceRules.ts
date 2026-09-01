@@ -3,8 +3,8 @@
 // Calls the process-price-rules edge function
 // to get cart items with prices adjusted by rules.
 // =============================================
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
-import { supabase } from "@/integrations/supabase/client";
 
 interface CartItemForRules {
   variationId: number;
@@ -55,18 +55,27 @@ export async function applyPriceRules<T extends CartItemForRules>(
       sale_price: null,
     }));
 
-    const { data, error } = await supabase.functions.invoke("process-price-rules", {
-      body: {
-        items: payloadItems,
-        priceListId: Number(priceListId),
-        userId: userId ?? null,
-        accountId: accountId ?? null,
-        paymentMethodCode: paymentMethodCode ?? null,
-        couponCode: couponCode ?? null,
-      },
-    });
-
-    if (error) {
+    // Si el motor de reglas falla, la venta sigue con los precios de catálogo:
+    // es degradación deliberada, no un error que deba cortar el flujo. Por eso
+    // aquí se captura en vez de dejar que `invokeFunction` propague.
+    let data: {
+      items?: unknown[];
+      appliedRules?: unknown[];
+      gifts?: unknown[];
+      discounts?: unknown[];
+    };
+    try {
+      data = await invokeFunction("process-price-rules", {
+        body: {
+          items: payloadItems,
+          priceListId: Number(priceListId),
+          userId: userId ?? null,
+          accountId: accountId ?? null,
+          paymentMethodCode: paymentMethodCode ?? null,
+          couponCode: couponCode ?? null,
+        },
+      });
+    } catch (error) {
       console.error("Error calling process-price-rules:", error);
       return { items, gifts: [], appliedRules: [], discounts: [] };
     }

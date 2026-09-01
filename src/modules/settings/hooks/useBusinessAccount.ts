@@ -14,6 +14,7 @@ import { getBusinessAccountsAdapter } from "../adapters/BusinessAccount.adapter"
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/shared/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useBusinessAccount = () => {
   const [businessAccounts, setBusinessAccounts] = useState<BusinessAccount[]>([]);
@@ -106,7 +107,7 @@ export const useBusinessAccount = () => {
       });
     } catch (error) {
       console.error(error);
-      toast({ title: "Error al guardar la cuenta de negocio", variant: "destructive" });
+      toastError(error, "Error al guardar la cuenta de negocio");
     } finally {
       setSaving(false);
       setOpenFormModal(false);
@@ -121,7 +122,7 @@ export const useBusinessAccount = () => {
       toast({ title: "Cuenta de negocio eliminada correctamente", variant: "success" });
     } catch (error) {
       console.error(error);
-      toast({ title: "Error al eliminar la cuenta de negocio", variant: "destructive" });
+      toastError(error, "Error al eliminar la cuenta de negocio");
     } finally {
       setIsDeleting(false);
       setItemToDelete(null);
