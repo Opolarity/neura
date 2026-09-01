@@ -3,18 +3,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import { useBirthdayNotifications } from '../hooks/useBirthdayNotifications';
 import { BirthdayNotificationTable } from '../components/BirthdayNotificationTable';
-import { BirthdayNotificationFilterBar } from '../components/BirthdayNotificationFilterBar';
 
 const BirthdayNotification = () => {
-  const {
-    profiles,
-    loading,
-    pagination,
-    search,
-    onSearchChange,
-    onPageChange,
-    onPageSizeChange,
-  } = useBirthdayNotifications();
+  const { profiles, loading, pagination, onPageChange, onPageSizeChange } =
+    useBirthdayNotifications();
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
@@ -35,7 +27,6 @@ const BirthdayNotification = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0 flex flex-col flex-1 min-h-0 overflow-hidden">
-          <BirthdayNotificationFilterBar search={search} onSearchChange={onSearchChange} />
           <div className="flex-1 min-h-0 overflow-auto">
             <BirthdayNotificationTable profiles={profiles} loading={loading} />
           </div>

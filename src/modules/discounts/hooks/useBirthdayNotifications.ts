@@ -8,7 +8,6 @@ import { birthdayProfilesApi } from '../services/BirthdayNotification.services';
 import { birthdayNotificationAdapter } from '../adapters/birthdayNotification.adapter';
 
 const DEFAULT_SIZE = 20;
-const SEARCH_DEBOUNCE_MS = 400;
 
 export const useBirthdayNotifications = () => {
   const [profiles, setProfiles] = useState<BirthdayProfile[]>([]);
@@ -18,73 +17,48 @@ export const useBirthdayNotifications = () => {
     size: DEFAULT_SIZE,
     total: 0,
   });
-  const [search, setSearch] = useState('');
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Contador de peticiones: al teclear rapido pueden solaparse varias y no
+  // Contador de peticiones: pulsar rapido en el paginador solapa varias y no
   // tienen por que responder en orden. Solo la ultima lanzada pinta.
   const requestRef = useRef(0);
 
-  const fetchProfiles = useCallback(
-    async (page: number, size: number, searchValue: string) => {
-      const requestId = ++requestRef.current;
-      setLoading(true);
+  const fetchProfiles = useCallback(async (page: number, size: number) => {
+    const requestId = ++requestRef.current;
+    setLoading(true);
 
-      try {
-        const response = await birthdayProfilesApi({
-          page,
-          size,
-          search: searchValue || undefined,
-        });
+    try {
+      const response = await birthdayProfilesApi({ page, size });
 
-        if (requestId !== requestRef.current) return;
+      if (requestId !== requestRef.current) return;
 
-        setProfiles(birthdayNotificationAdapter(response.data));
-        setPagination(response.page);
-      } catch (error) {
-        if (requestId !== requestRef.current) return;
+      setProfiles(birthdayNotificationAdapter(response.data));
+      setPagination(response.page);
+    } catch (error) {
+      if (requestId !== requestRef.current) return;
 
-        console.error(error);
-        toast({ title: 'Error al cargar cumpleaños', variant: 'destructive' });
-      } finally {
-        if (requestId === requestRef.current) setLoading(false);
-      }
-    },
-    [],
-  );
+      console.error(error);
+      toast({ title: 'Error al cargar cumpleaños', variant: 'destructive' });
+    } finally {
+      if (requestId === requestRef.current) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchProfiles(1, DEFAULT_SIZE, '');
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
+    fetchProfiles(1, DEFAULT_SIZE);
   }, [fetchProfiles]);
 
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(
-      () => fetchProfiles(1, pagination.size, value),
-      SEARCH_DEBOUNCE_MS,
-    );
-  };
-
   const handlePageChange = (page: number) => {
-    fetchProfiles(page, pagination.size, search);
+    fetchProfiles(page, pagination.size);
   };
 
   const handlePageSizeChange = (size: number) => {
-    fetchProfiles(1, size, search);
+    fetchProfiles(1, size);
   };
 
   return {
     profiles,
     loading,
     pagination,
-    search,
-    onSearchChange: handleSearchChange,
     onPageChange: handlePageChange,
     onPageSizeChange: handlePageSizeChange,
   };
