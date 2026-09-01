@@ -22,6 +22,7 @@ export const productAdapter = (response: ProductApiResponse) => {
       price: item.price,
       terms: item.terminos,
       stock: item.stock,
+      lowStockVariations: item.low_stock_variations ?? 0,
     })
   );
 

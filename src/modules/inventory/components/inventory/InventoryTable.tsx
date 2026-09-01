@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Inventory, Warehouse } from "../../types/Inventory.types";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 
 interface InventoryTableProps {
@@ -114,7 +115,34 @@ const InventoryTable = ({
                   </TableCell>
                 );
               })}
-              <TableCell className="font-semibold">{total}</TableCell>
+              <TableCell className="font-semibold">
+                <div className="flex items-center gap-2">
+                  <span>{total}</span>
+                  {/*
+                    T-269 · El badge sigue al dato del SP (is_low_stock), NO a
+                    `total`: esa suma es local (solo los almacenes filtrados,
+                    con stock virtual) y además se recalcula en vivo desde los
+                    inputs editables, así que parpadearía con cada tecla.
+                    ASIMETRÍA DECLARADA: con un almacén filtrado el badge sigue
+                    siendo global y la columna Total es local.
+                  */}
+                  {item.stock_global_prd === 0 ? (
+                    <Badge
+                      variant="destructive-soft"
+                      title="Sin stock vendible en ningún almacén activo"
+                    >
+                      Sin stock
+                    </Badge>
+                  ) : item.is_low_stock ? (
+                    <Badge
+                      variant="warning"
+                      title={`Stock global bajo el umbral: ${item.stock_global_prd} unidades en todos los almacenes activos`}
+                    >
+                      Stock bajo
+                    </Badge>
+                  ) : null}
+                </div>
+              </TableCell>
             </TableRow>
           );
         })}

@@ -244,6 +244,22 @@ export interface LowStockDistributionItem {
   skus: number;
 }
 
+/** T-269 · Fila de la bandeja de reposición (sp_rpt_low_stock_products). */
+export interface LowStockProductItem {
+  product_variation_id: number;
+  product_id: number;
+  product_title: string;
+  sku: string | null;
+  /** Total global PRD en almacenes activos (definición única). */
+  stock: number;
+  warehouse_ids: number[];
+}
+
+export interface LowStockProductsReport {
+  page: { page: number; size: number; total: number };
+  data: LowStockProductItem[];
+}
+
 export interface StockRotationItem {
   product_id: number;
   product_title: string;

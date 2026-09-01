@@ -17,7 +17,8 @@ import type { LowStockDistributionItem } from '../../types/reports.types';
 interface Props {
   data: LowStockDistributionItem[];
   loading: boolean;
-  threshold: number;
+  /** T-269: null = umbral no configurado. */
+  threshold: number | null;
 }
 
 export function LowStockDistributionChart({ data, loading, threshold }: Props) {
@@ -32,7 +33,7 @@ export function LowStockDistributionChart({ data, loading, threshold }: Props) {
       title="Distribución de stock bajo"
       actions={
         <Badge variant="outline" className="border-warning-soft bg-warning-soft text-warning-soft-foreground">
-          {formatNumber(total)} SKUs ≤ {threshold} uds
+          {formatNumber(total)} SKUs{threshold !== null ? ` ≤ ${threshold} uds` : ''}
         </Badge>
       }
     >

@@ -16,9 +16,14 @@ export function InventoryOptionsPanel({ dash }: { dash: InventoryDashboardState 
   const warehouses = dash.warehouses.data ?? [];
 
   // El umbral configurado en Configuración > Negocio siempre está disponible
-  // en la lista, aunque no sea uno de los valores sugeridos.
+  // en la lista, aunque no sea uno de los valores sugeridos. T-269: puede no
+  // estar configurado (null), y entonces simplemente no se agrega.
   const thresholdOptions = Array.from(
-    new Set([...BASE_THRESHOLD_OPTIONS, dash.globalThreshold]),
+    new Set(
+      dash.globalThreshold !== null
+        ? [...BASE_THRESHOLD_OPTIONS, dash.globalThreshold]
+        : BASE_THRESHOLD_OPTIONS,
+    ),
   ).sort((a, b) => a - b);
 
   return (
@@ -46,13 +51,13 @@ export function InventoryOptionsPanel({ dash }: { dash: InventoryDashboardState 
       <div className="flex flex-col gap-1">
         <span className="text-xs text-muted-foreground font-medium">Umbral stock bajo</span>
         <Select
-          value={String(dash.threshold)}
+          value={dash.threshold !== null ? String(dash.threshold) : undefined}
           onValueChange={(v) =>
             dash.setThresholdOverride(Number(v) === dash.globalThreshold ? undefined : Number(v))
           }
         >
           <SelectTrigger className="h-9 w-[160px]">
-            <SelectValue />
+            <SelectValue placeholder="Sin configurar" />
           </SelectTrigger>
           <SelectContent>
             {thresholdOptions.map((t) => (
