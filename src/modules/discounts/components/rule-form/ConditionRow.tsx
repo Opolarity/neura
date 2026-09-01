@@ -487,10 +487,15 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
               <SelectValue placeholder="Seleccionar condición" />
             </SelectTrigger>
             <SelectContent>
-              {/* consignment_channel es un marcador que se gestiona con el
-                  checkbox "Promoción de consignación", no desde acá. */}
+              {/* consignment_channel y franchisee_exclusion son marcadores que
+                  se gestionan con los checkboxes de Información Básica, no
+                  desde acá. */}
               {Object.entries(CONDITION_TYPE_LABELS)
-                .filter(([key]) => key !== "consignment_channel")
+                .filter(
+                  ([key]) =>
+                    key !== "consignment_channel" &&
+                    key !== "franchisee_exclusion",
+                )
                 .map(([key, label]) => (
                   <SelectItem key={key} value={key}>
                     {label}

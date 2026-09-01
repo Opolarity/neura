@@ -14,6 +14,7 @@ import { EMPTY_REFERENCES } from "../types/priceRule.types";
 import {
   CONSIGNMENT_ALLOWED_ACTION_TYPES,
   CONSIGNMENT_CONDITION_TYPE,
+  FRANCHISEE_EXCLUSION_CONDITION_TYPE,
   ACTION_TYPE_LABELS,
 } from "../types/priceRule.types";
 import {
@@ -28,6 +29,9 @@ import {
   getConsignmentTenantReferences,
   hasConsignmentMarker,
   isConsignmentMarkerGroup,
+  getFranchiseeExclusionTenantReferences,
+  hasFranchiseeExclusionMarker,
+  isFranchiseeExclusionMarkerGroup,
 } from "../adapters/priceRule.adapter";
 import { getPriceRuleFormError } from "../utils/priceRuleValidation";
 import { toastError } from "@/shared/utils/toastError";
@@ -199,7 +203,10 @@ export function usePriceRuleForm() {
     formData.conditions,
   );
 
-  const setConsignmentTenantReferences = (refs: string[]) => {
+  // Escribe (o limpia) la lista de tenant_reference del marcador indicado.
+  // Sin selección NO se persiste el campo: el formato canónico de "todos los
+  // franquiciados" es el marcador pelado.
+  const setMarkerTenantReferences = (markerType: string, refs: string[]) => {
     const cleaned = [
       ...new Set(refs.map((r) => r.trim()).filter((r) => r.length > 0)),
     ];
@@ -210,11 +217,9 @@ export function usePriceRuleForm() {
         groups: prev.conditions.groups.map((g) => ({
           ...g,
           conditions: g.conditions.map((c) =>
-            c.type === CONSIGNMENT_CONDITION_TYPE
+            c.type === markerType
               ? {
-                  // Sin selección NO se persiste el campo: el formato canónico
-                  // de "todos los franquiciados" es el marcador pelado.
-                  type: CONSIGNMENT_CONDITION_TYPE,
+                  type: markerType as Condition["type"],
                   ...(cleaned.length > 0
                     ? { tenant_references: cleaned }
                     : {}),
@@ -226,35 +231,42 @@ export function usePriceRuleForm() {
     }));
   };
 
-  const toggleConsignmentPromo = (enabled: boolean) => {
+  // Agrega el marcador en su propio grupo (operador global forzado a AND) o lo
+  // quita junto con cualquier condición suelta del mismo tipo.
+  const toggleMarker = (
+    markerType: string,
+    enabled: boolean,
+    isMarkerGroup: (g: ConditionGroup) => boolean,
+  ) => {
     setFormData((prev) => {
       if (enabled) {
-        if (hasConsignmentMarker(prev.conditions)) return prev;
+        if (
+          prev.conditions.groups.some((g) =>
+            g.conditions.some((c) => c.type === markerType),
+          )
+        ) {
+          return prev;
+        }
         return {
           ...prev,
-          rule_type: "automatic",
           conditions: {
             operator: "AND",
             groups: [
               ...prev.conditions.groups,
               {
                 operator: "AND" as const,
-                conditions: [{ type: CONSIGNMENT_CONDITION_TYPE }],
+                conditions: [{ type: markerType as Condition["type"] }],
               },
             ],
           },
         };
       }
 
-      // Quitar el marcador: se eliminan los grupos-marcador y cualquier
-      // condición de consignación suelta; siempre queda al menos un grupo.
       const groups = prev.conditions.groups
-        .filter((g) => !isConsignmentMarkerGroup(g))
+        .filter((g) => !isMarkerGroup(g))
         .map((g) => ({
           ...g,
-          conditions: g.conditions.filter(
-            (c) => c.type !== CONSIGNMENT_CONDITION_TYPE,
-          ),
+          conditions: g.conditions.filter((c) => c.type !== markerType),
         }));
 
       return {
@@ -268,6 +280,38 @@ export function usePriceRuleForm() {
       };
     });
   };
+
+  const setConsignmentTenantReferences = (refs: string[]) =>
+    setMarkerTenantReferences(CONSIGNMENT_CONDITION_TYPE, refs);
+
+  const toggleConsignmentPromo = (enabled: boolean) => {
+    if (enabled) {
+      // Una promo de consignación solo existe para el canal franquiciados y es
+      // siempre automática.
+      setFormData((prev) => ({ ...prev, rule_type: "automatic" }));
+    }
+    toggleMarker(CONSIGNMENT_CONDITION_TYPE, enabled, isConsignmentMarkerGroup);
+  };
+
+  // --- Excluir franquiciados ---
+  // Marcador { type: "franchisee_exclusion" }: la regla no aplica a los
+  // franquiciados listados, o a ninguno de ellos si no hay selección.
+  const isFranchiseeExclusion = hasFranchiseeExclusionMarker(
+    formData.conditions,
+  );
+
+  const franchiseeExclusionTenantReferences =
+    getFranchiseeExclusionTenantReferences(formData.conditions);
+
+  const setFranchiseeExclusionTenantReferences = (refs: string[]) =>
+    setMarkerTenantReferences(FRANCHISEE_EXCLUSION_CONDITION_TYPE, refs);
+
+  const toggleFranchiseeExclusion = (enabled: boolean) =>
+    toggleMarker(
+      FRANCHISEE_EXCLUSION_CONDITION_TYPE,
+      enabled,
+      isFranchiseeExclusionMarkerGroup,
+    );
 
   // --- Action management ---
   const addAction = (action: ActionConfig) => {
@@ -340,6 +384,17 @@ export function usePriceRuleForm() {
       };
     }
 
+    // El marcador de exclusión de franquiciados vive en su propio grupo: con
+    // un OR entre grupos la regla podría aplicarse igual al franquiciado, así
+    // que se fuerza AND al guardar (el usuario puede haber cambiado el
+    // operador desde el builder después de marcar el checkbox).
+    if (isFranchiseeExclusion) {
+      dataToSave = {
+        ...dataToSave,
+        conditions: { ...dataToSave.conditions, operator: "AND" },
+      };
+    }
+
     setSaving(true);
     try {
       const payload = adaptFormToPayload(dataToSave);
@@ -385,6 +440,10 @@ export function usePriceRuleForm() {
     toggleConsignmentPromo,
     consignmentTenantReferences,
     setConsignmentTenantReferences,
+    isFranchiseeExclusion,
+    toggleFranchiseeExclusion,
+    franchiseeExclusionTenantReferences,
+    setFranchiseeExclusionTenantReferences,
     handleSubmit,
     navigate,
   };
