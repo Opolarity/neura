@@ -18,7 +18,7 @@ const BirthdayNotification = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Notificaciones de Cumpleaños</h1>
+        <h1 className="text-2xl font-bold text-foreground">Notificaciones de Cumpleaños</h1>
         <p className="text-muted-foreground">
           Clientes con cumpleaños desde 2 días antes hasta 1 día después de hoy
         </p>
