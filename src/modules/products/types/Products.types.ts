@@ -36,7 +36,8 @@ export interface Product {
 export interface ProductFilters {
   minprice?: number;
   maxprice?: number;
-  category?: number;
+  /** Ids de las categorías marcadas. Vacío = todas (sin filtro). */
+  category_ids?: number[];
   status?: boolean;
   web?: boolean;
   minstock?: number;

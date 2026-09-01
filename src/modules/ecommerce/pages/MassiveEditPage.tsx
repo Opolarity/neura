@@ -76,7 +76,8 @@ const PromotionalTextPage = () => {
 
   const {
     products,
-    categories,
+    selectedCategories,
+    setSelectedCategories,
     tags,
     brands,
     loading,
@@ -490,7 +491,8 @@ const PromotionalTextPage = () => {
 
       <ProductsFilterModal
         isOpen={isOpenFilterModal}
-        categories={categories}
+        selectedCategories={selectedCategories}
+        onChangeSelectedCategories={setSelectedCategories}
         tags={tags}
         brands={brands}
         filters={filters}

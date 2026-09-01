@@ -9,7 +9,14 @@ import {
 export const productsApi = async (
   filters: ProductFilters = {},
 ): Promise<ProductApiResponse> => {
-  const endpoint = buildEndpoint("get-products-list", filters);
+  // `category_ids` se arma a mano y solo si hay selección: buildEndpoint pasa
+  // por cleanFilters, que hace String(value) y no descarta el arreglo vacío
+  // (no es null ni ""), así que delegarlo emitiría un `category_ids=` vacío.
+  const { category_ids, ...rest } = filters;
+  const endpoint = buildEndpoint("get-products-list", {
+    ...rest,
+    ...(category_ids?.length ? { category_ids: category_ids.join(",") } : {}),
+  });
 
   const { data, error } = await supabase.functions.invoke(endpoint, {
     method: "GET",
