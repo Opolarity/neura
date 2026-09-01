@@ -94,6 +94,74 @@ export const paymentMethodsWithAccountApi = async (): Promise<
   return data ?? [];
 };
 
+/**
+ * Cuentas de tipo CAJA de la sucursal del usuario (T-274).
+ *
+ * Servicio propio del módulo, NO un parámetro opcional en el
+ * `getBusinessAccountIsActiveTrue()` compartido: ese lo consumen también el
+ * POS, crear venta y el filtro del listado de movimientos, que deben seguir
+ * viendo TODAS las cuentas activas.
+ *
+ * El tipo se resuelve por `types.code = 'CHR'`, nunca por el id 44 en duro:
+ * los ids cambian entre entornos.
+ *
+ * FAIL-CLOSED: sin sucursal válida (`branch_id > 0`) y sin bypass, devuelve
+ * lista vacía — no todas las cajas. "Sucursal válida" se mide por
+ * `branch_id > 0` y NO por `branches.is_active`, porque la fila centinela
+ * id 0 está inactiva en main pero activa en develop.
+ *
+ * El bypass es solo `isAdmin` o el permiso `movements.accounts.all_branches`.
+ * Ninguna otra vía.
+ */
+export const cashBusinessAccountsApi = async (
+  branchId: number | null,
+  allBranches = false,
+): Promise<{ id: number; name: string; total_amount: number; branch_id: number | null }[]> => {
+  const { data, error } = await (supabase as any)
+    .from("business_accounts")
+    .select("id, name, total_amount, branch_id, types:business_account_type_id!inner(code)")
+    .eq("types.code", "CHR")
+    .eq("is_active", true)
+    .gt("id", 0)
+    .order("name");
+
+  if (error) throw error;
+
+  const rows = (data ?? []).map((r: any) => ({
+    id: r.id,
+    name: r.name,
+    total_amount: r.total_amount,
+    branch_id: r.branch_id ?? null,
+  }));
+
+  if (allBranches) return rows;
+  if (!branchId || branchId <= 0) return [];
+  return rows.filter((r) => r.branch_id === branchId);
+};
+
+/**
+ * Ids de `classes` habilitados como motivo para un usuario sin el permiso
+ * `movements.reasons.all` (T-274).
+ *
+ * Se configura por ID y no por code porque los code de `classes` están
+ * duplicados ("MOV" lo comparten varias clases). Lista vacía = sin
+ * restricción = comportamiento idéntico al actual.
+ */
+export const allowedMovementReasonIds = async (): Promise<number[]> => {
+  const { data, error } = await (supabase as any)
+    .from("parameters")
+    .select("value")
+    .eq("name", "MovementReasonsAllowedIds")
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return String(data?.value ?? "")
+    .split(",")
+    .map((v: string) => Number(v.trim()))
+    .filter((v: number) => Number.isFinite(v) && v > 0);
+};
+
 export const movementClassesApi = async (): Promise<MovementClass[]> => {
   // First get the module id for 'MOV'
   const { data: moduleData, error: moduleError } = await (supabase as any)

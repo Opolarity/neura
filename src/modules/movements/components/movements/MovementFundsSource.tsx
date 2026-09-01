@@ -19,6 +19,12 @@ interface MovementFundsSourceProps {
   selectedManualBusinessAccountId: string;
   setSelectedManualBusinessAccountId: (value: string) => void;
   isIncome: boolean;
+  /**
+   * T-274 — el perfil no tiene una sucursal válida (branch_id > 0) ni el
+   * bypass de admin / movements.accounts.all_branches. Fail-closed: en vez de
+   * mostrar todas las cajas, se explica por qué no hay ninguna.
+   */
+  missingBranch: boolean;
 }
 
 const MovementFundsSource = ({
@@ -29,6 +35,7 @@ const MovementFundsSource = ({
   selectedManualBusinessAccountId,
   setSelectedManualBusinessAccountId,
   isIncome,
+  missingBranch,
 }: MovementFundsSourceProps) => {
   const [manualOverride, setManualOverride] = useState(false);
 
@@ -89,6 +96,16 @@ const MovementFundsSource = ({
           <div className="flex h-10 items-center rounded-md border bg-background px-3 text-sm">
             {readOnlyName || "—"}
           </div>
+        ) : needsManualBusinessAccount && missingBranch ? (
+          // Nunca un desplegable vacío y mudo: se dice qué falta y a quién pedírselo.
+          <p className="text-[13px] text-muted-foreground">
+            Tu usuario no tiene una sucursal asignada. Pide a un administrador que te
+            asigne una sucursal para poder registrar movimientos en efectivo.
+          </p>
+        ) : needsManualBusinessAccount && businessAccounts.length === 0 ? (
+          <p className="text-[13px] text-muted-foreground">
+            No hay cajas activas asignadas a tu sucursal. Contacta al administrador.
+          </p>
         ) : (
           <Select
             value={selectedManualBusinessAccountId}

@@ -12,12 +12,12 @@ import { Edit, Loader2, Trash } from "lucide-react";
 import { BusinessAccount } from "../../types/BusinessAccount.types";
 import { ComponentPermission } from "@/shared/components/component-permission";
 
-// ID, Nombre, Banco, N° Cuenta, Monto Total, Estado, Acciones. Si el rol no
+// ID, Nombre, Banco, N° Cuenta, Sucursal, Monto Total, Estado, Acciones. Si el rol no
 // puede editar ni eliminar, la columna de Acciones no se pinta y este número
 // queda uno largo: solo afecta a las filas de "cargando" y "no se encontraron
 // cuentas de negocio", y la columna sobrante colapsa a 0px porque ninguna otra
 // fila la ocupa.
-const COL_SPAN = 7;
+const COL_SPAN = 8;
 
 // Codes de la columna Acciones, en una constante para que la cabecera y la
 // celda no puedan quedar con listas distintas y aparezca un th sin td o al
@@ -47,6 +47,7 @@ const BusinessAccountTable = ({
           <TableHead>Nombre</TableHead>
           <TableHead>Banco</TableHead>
           <TableHead>N° Cuenta</TableHead>
+          <TableHead>Sucursal</TableHead>
           <TableHead className="text-right">Monto Total</TableHead>
           <TableHead className="text-center">Estado</TableHead>
           {/* Se envuelve el th entero y no su texto: una celda vacía sigue
@@ -85,6 +86,12 @@ const BusinessAccountTable = ({
               <TableCell>{item.bank}</TableCell>
               <TableCell className="font-mono text-sm">
                 {item.account_number}
+              </TableCell>
+              {/* Una caja sin sucursal queda invisible en el selector de
+                  movimientos: aquí se muestra explícitamente para que no sea
+                  un estado silencioso. */}
+              <TableCell className={item.branch_name ? "" : "text-muted-foreground"}>
+                {item.branch_name ?? "Sin sucursal"}
               </TableCell>
               <TableCell className="text-right">
                 {item.total_amount != null
