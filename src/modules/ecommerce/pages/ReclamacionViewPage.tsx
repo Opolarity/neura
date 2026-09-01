@@ -1,112 +1,70 @@
-﻿import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 import {
-  getReclamacionById,
-  ReclamacionDetalle,
-} from "../services/reclamaciones.service";
-import { formatDateDisplay } from "@/shared/utils/date";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft, Mail } from "lucide-react";
+import { PageLoader } from "@/shared/components/page-loader";
+import { ComponentPermission } from "@/shared/components/component-permission";
+import { formatDateDisplay, formatDateTime } from "@/shared/utils/date";
+import { useReclamacionDetalle } from "../hooks/useReclamacionDetalle";
+import ComplaintNotes from "../components/reclamaciones/ComplaintNotes";
+import ComplaintReplyDialog from "../components/reclamaciones/ComplaintReplyDialog";
+import {
+  ComplaintStatusBadge,
+  ComplaintTypeBadge,
+} from "../components/reclamaciones/ComplaintBadges";
+import {
+  COMPLAINT_STATUS_LABEL,
+  type ComplaintStatus,
+} from "../types/reclamaciones.types";
 
 const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
   <div className="space-y-1">
     <p className="text-sm text-muted-foreground">{label}</p>
-    <p className="font-medium">{value || "-"}</p>
+    <div className="font-medium break-words">{value || "-"}</div>
   </div>
 );
 
-const formatDate = (date: string) =>
-  date
-    ? formatDateDisplay(date)
-    : "-";
+const LongField = ({ label, value }: { label: string; value: string }) => (
+  <div className="space-y-1">
+    <p className="text-sm text-muted-foreground">{label}</p>
+    <p className="whitespace-pre-line font-medium">{value || "-"}</p>
+  </div>
+);
 
 const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(
-    amount,
-  );
+  new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(amount);
 
-const formatBoolean = (value?: boolean | string) => {
-  if (value === true || value === "true") return "Sí";
-  if (value === false || value === "false") return "No";
-  return "-";
-};
-
-const renderClaimType = (claimType: string | null | undefined) => {
-  if (!claimType) return <Badge variant="destructive">Reclamo</Badge>;
-  const normalized = claimType.toLowerCase();
-  return (
-    <Badge variant={normalized === "reclamo" ? "destructive" : "outline"}>
-      {claimType.charAt(0).toUpperCase() + claimType.slice(1).toLowerCase()}
-    </Badge>
-  );
-};
-
-const renderDetailBadge = (detail?: string | null) => {
-  const value = detail?.trim() || "";
-  const normalized = value.toLowerCase();
-  if (normalized === "queja") {
-    return <Badge variant="outline">Queja</Badge>;
-  }
-
-  if (
-    normalized === "reclamacion" ||
-    normalized === "reclamación" ||
-    normalized === "reclamo"
-  ) {
-    return <Badge variant="destructive">Reclamo</Badge>;
-  }
-
-  return "-";
-};
+const yesNo = (value: boolean) => (value ? "Sí" : "No");
 
 export default function ReclamacionViewPage() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { id } = useParams();
-  const [reclamacion, setReclamacion] = useState<ReclamacionDetalle | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(true);
+  const claimId = Number(id);
+  const isValidId = Number.isInteger(claimId) && claimId > 0;
 
-  useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
+  const {
+    reclamacion,
+    notes,
+    loading,
+    savingNote,
+    savingStatus,
+    addNote,
+    changeStatus,
+  } = useReclamacionDetalle(isValidId ? claimId : null);
 
-    const claimId = Number(id);
-    if (Number.isNaN(claimId)) {
-      toast({
-        title: "ID inválido",
-        description: "El id de reclamación no es válido.",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    getReclamacionById(claimId)
-      .then(setReclamacion)
-      .catch((error) => {
-        toast({
-          title: "Error al cargar reclamación",
-          description: error?.message ?? "No se pudo obtener la reclamación.",
-          variant: "destructive",
-        });
-      })
-      .finally(() => setLoading(false));
-  }, [id, toast]);
+  const [replyOpen, setReplyOpen] = useState(false);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[320px] items-center justify-center">
-        <p className="text-sm text-muted-foreground">Cargando reclamación...</p>
-      </div>
-    );
+    return <PageLoader message="Cargando reclamación..." />;
   }
 
   if (!reclamacion) {
@@ -119,9 +77,15 @@ export default function ReclamacionViewPage() {
     );
   }
 
+  // El apoderado solo aplica a menores de edad; mostrar la tarjeta siempre
+  // llenaba media pantalla de guiones.
+  const showRepresentative =
+    !reclamacion.isAdult ||
+    Boolean(reclamacion.representativeName || reclamacion.representativeDocumentNumber);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
         <Button
           variant="ghost"
           size="sm"
@@ -130,191 +94,182 @@ export default function ReclamacionViewPage() {
           <ArrowLeft className="mr-1 h-4 w-4" />
           Volver
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reclamación</h1>
-          <p className="text-gray-600">Detalle completo de la reclamación</p>
-        </div>
+
+        <h1 className="text-2xl font-bold text-foreground">
+          Reclamo #{reclamacion.id}
+        </h1>
+
+        <ComplaintTypeBadge claimType={reclamacion.claimType} />
+        <ComplaintStatusBadge status={reclamacion.status} />
+
         <div className="ml-auto">
-          {renderClaimType(reclamacion.claim_type || reclamacion.detail)}
+          <ComponentPermission codeIn={["ecommerce_claims.send"]}>
+            <Button onClick={() => setReplyOpen(true)}>
+              <Mail className="mr-2 h-4 w-4" />
+              Responder al reclamante
+            </Button>
+          </ComponentPermission>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Datos del Reclamante</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-            <Field
-              label="Nombres"
-              value={
-                reclamacion.requester_name ||
-                reclamacion.representative_name ||
-                "-"
-              }
-            />
-            <Field
-              label="Apellido Paterno"
-              value={reclamacion.requester_last_name || "-"}
-            />
-            <Field
-              label="Apellido Materno"
-              value={reclamacion.requester_last_name2 || "-"}
-            />
-            <Field label="Correo" value={reclamacion.email || "-"} />
-            <Field
-              label="Teléfono"
-              value={reclamacion.requester_phone || "-"}
-            />
-            <Field
-              label="Tipo de Documento"
-              value={
-                (reclamacion.requester_document_type ||
-                  reclamacion.representative_document_type ||
-                  reclamacion.requester_document_type_id) ??
-                reclamacion.representative_document_type_id ??
-                "-"
-              }
-            />
-            <Field
-              label="Número de Documento"
-              value={reclamacion.requester_document_number || "-"}
-            />
-            <Field
-              label="País"
-              value={
-                ((reclamacion.requester_country ||
-                  reclamacion.requester_country_id) ??
-                  reclamacion.representative_country) ||
-                "-"
-              }
-            />
-            <Field
-              label="Departamento"
-              value={reclamacion.requester_department || "-"}
-            />
-            <Field
-              label="Estado"
-              value={
-                (reclamacion.requester_state ||
-                  reclamacion.requester_state_id) ??
-                "-"
-              }
-            />
-            <Field
-              label="Ciudad"
-              value={
-                ((reclamacion.requester_city ||
-                  reclamacion.requester_city_id) ??
-                  reclamacion.representative_city) ||
-                "-"
-              }
-            />
-            <Field
-              label="Distrito"
-              value={reclamacion.requester_district || "-"}
-            />
-            <Field
-              label="Vecindario"
-              value={reclamacion.requester_neighborhood_id ?? "-"}
-            />
-            <Field
-              label="Dirección"
-              value={
-                reclamacion.requester_address ||
-                reclamacion.representative_address ||
-                "-"
-              }
-            />
-            <Field
-              label="Edad"
-              value={formatBoolean(reclamacion.requester_age)}
-            />
-            <Field label="Producto" value={reclamacion.good || "-"} />
-            <Field
-              label="Aceptó términos"
-              value={formatBoolean(reclamacion.terms)}
-            />
-            <Field
-              label="Apoderado"
-              value={reclamacion.representative_name || "-"}
-            />
-            <Field
-              label="Email apoderado"
-              value={reclamacion.representative_email || "-"}
-            />
-            <Field
-              label="Teléfono apoderado"
-              value={reclamacion.representative_phone || "-"}
-            />
-            <Field
-              label="Tipo documento apoderado"
-              value={reclamacion.representative_document_type || "-"}
-            />
-            <Field
-              label="Número documento apoderado"
-              value={reclamacion.representative_document_number || "-"}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Columna principal: quién reclama y qué reclama */}
+        <div className="space-y-4 lg:col-span-2">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Datos del reclamante</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+              <Field label="Nombres" value={reclamacion.fullName} />
+              <Field label="Tipo de documento" value={reclamacion.documentTypeName} />
+              <Field label="N° de documento" value={reclamacion.documentNumber} />
+              <Field label="Correo" value={reclamacion.email} />
+              <Field label="Teléfono" value={reclamacion.phone} />
+              <Field label="Mayor de edad" value={yesNo(reclamacion.isAdult)} />
+              <Field label="País" value={reclamacion.countryName} />
+              <Field label="Departamento" value={reclamacion.stateName} />
+              <Field label="Ciudad" value={reclamacion.cityName} />
+              <Field label="Distrito" value={reclamacion.neighborhoodName} />
+              <div className="sm:col-span-2 md:col-span-3">
+                <Field label="Dirección" value={reclamacion.address} />
+              </div>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Datos de la Reclamación</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-          <Field
-            label="Orden"
-            value={
-              reclamacion.order_id
-                ? `#${reclamacion.order_id}`
-                : `Reclamo #${reclamacion.id}`
-            }
-          />
-          <Field label="Correo" value={reclamacion.email} />
-          <Field
-            label="Fecha de Incidente"
-            value={formatDate(reclamacion.incident_date)}
-          />
-          <Field
-            label="Monto a reclamar (en soles)"
-            value={formatCurrency(reclamacion.amount_claim)}
-          />
-          <Field
-            label="Detalle"
-            value={renderDetailBadge(reclamacion.detail)}
-          />
-          <Field
-            label="Tipo de reclamo"
-            value={renderClaimType(reclamacion.claim_type)}
-          />
-          <Field
-            label="Creado"
-            value={
-              reclamacion.created_at ? formatDate(reclamacion.created_at) : "-"
-            }
-          />
-          <div className="space-y-4 sm:col-span-2 md:col-span-3">
-            <p className="text-sm text-muted-foreground">
-              Descripción de reclamo
-            </p>
-            <p className="whitespace-pre-line font-medium">
-              {reclamacion.complaint_description || "-"}
-            </p>
-            <p className="text-sm text-muted-foreground">Detalle</p>
-            <p className="whitespace-pre-line font-medium">
-              {reclamacion.detail || "-"}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Pedido del reclamante
-            </p>
-            <p className="whitespace-pre-line font-medium">
-              {reclamacion.claimant_request || "-"}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          {showRepresentative && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Datos del apoderado</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+                <Field label="Nombres y apellidos" value={reclamacion.representativeName} />
+                <Field
+                  label="Tipo de documento"
+                  value={reclamacion.representativeDocumentTypeName}
+                />
+                <Field
+                  label="N° de documento"
+                  value={reclamacion.representativeDocumentNumber}
+                />
+                <Field label="Correo" value={reclamacion.representativeEmail} />
+                <Field label="Teléfono" value={reclamacion.representativePhone} />
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Detalle del reclamo</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+                <Field
+                  label="Orden asociada"
+                  value={reclamacion.orderId ? `#${reclamacion.orderId}` : "-"}
+                />
+                <Field label="Bien contratado" value={reclamacion.good} />
+                <Field
+                  label="Fecha del incidente"
+                  value={
+                    reclamacion.incidentDate
+                      ? formatDateDisplay(reclamacion.incidentDate)
+                      : "-"
+                  }
+                />
+                <Field
+                  label="Monto reclamado"
+                  value={formatCurrency(reclamacion.amountClaim)}
+                />
+                <Field
+                  label="Tipo"
+                  value={<ComplaintTypeBadge claimType={reclamacion.claimType} />}
+                />
+                <Field label="Aceptó términos" value={yesNo(reclamacion.terms)} />
+              </div>
+
+              <Separator />
+
+              <div className="space-y-6">
+                <LongField
+                  label="Descripción del reclamo"
+                  value={reclamacion.claimDescription}
+                />
+                <LongField label="Detalle" value={reclamacion.detail} />
+                <LongField
+                  label="Pedido del reclamante"
+                  value={reclamacion.complainingRequest}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Columna lateral: en qué punto está y qué se ha hecho */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Estado</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ComponentPermission codeIn={["ecommerce_claims.edit"]}>
+                <Select
+                  value={reclamacion.status}
+                  onValueChange={(value) => changeStatus(value as ComplaintStatus)}
+                  disabled={savingStatus}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(COMPLAINT_STATUS_LABEL) as ComplaintStatus[]).map(
+                      (value) => (
+                        <SelectItem key={value} value={value}>
+                          {COMPLAINT_STATUS_LABEL[value]}
+                        </SelectItem>
+                      ),
+                    )}
+                  </SelectContent>
+                </Select>
+              </ComponentPermission>
+
+              <Field
+                label="Fecha de registro"
+                value={
+                  reclamacion.createdAt ? formatDateTime(reclamacion.createdAt) : "-"
+                }
+              />
+              <Field
+                label="Fecha de respuesta"
+                value={
+                  reclamacion.answeredAt ? formatDateTime(reclamacion.answeredAt) : "-"
+                }
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Notas internas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ComplaintNotes
+                notes={notes}
+                saving={savingNote}
+                onAddNote={(message) => addNote(message, false)}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <ComplaintReplyDialog
+        open={replyOpen}
+        onOpenChange={setReplyOpen}
+        complaintId={reclamacion.id}
+        customerEmail={reclamacion.email}
+        saving={savingNote}
+        onSend={(message) => addNote(message, true)}
+      />
     </div>
   );
 }
