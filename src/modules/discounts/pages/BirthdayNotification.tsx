@@ -1,4 +1,4 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import { useBirthdayNotifications } from '../hooks/useBirthdayNotifications';
 import { BirthdayNotificationTable } from '../components/BirthdayNotificationTable';
@@ -25,11 +25,6 @@ const BirthdayNotification = () => {
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader className="!p-4">
-          <CardTitle className="text-base font-semibold">
-            Clientes en rango de cumpleaños
-          </CardTitle>
-        </CardHeader>
         <CardContent className="p-0 flex flex-col flex-1 min-h-0 overflow-hidden">
           <BirthdayNotificationFilterBar search={search} onSearchChange={onSearchChange} />
           <div className="flex-1 min-h-0 overflow-auto">
