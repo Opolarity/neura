@@ -13,6 +13,8 @@ import {
   createMovementClassApi,
   uploadMovementAttachment,
   createOrderPaymentsForMovement,
+  cashBusinessAccountsApi,
+  allowedMovementReasonIds,
 } from "../services/movements.service";
 import {
   MovementFormData,
@@ -20,7 +22,8 @@ import {
   MovementClass,
   CurrentUserProfile,
 } from "../types/Movements.types";
-import { getPaymentMethodsIsActiveTrueAndActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
+import { getPaymentMethodsIsActiveTrueAndActiveTrue } from "@/shared/services/service";
+import { useUserProfile } from "@/modules/auth/hooks/useUserProfile";
 import { getTodayDate } from "@/shared/utils/date";
 
 const movementSchema = z.object({
@@ -31,7 +34,7 @@ const movementSchema = z.object({
       message: "El monto debe ser mayor a 0",
     }),
   payment_method_id: z.string().min(1, "El método de pago es requerido"),
-  movement_class_id: z.string().min(1, "La categoría es requerida"),
+  movement_class_id: z.string().min(1, "El motivo es requerido"),
   user_id: z.string().optional(),
   description: z.string().optional(),
   movement_date: z.string().min(1, "La fecha es requerida"),
@@ -45,7 +48,12 @@ interface UseCreateMovementProps {
 
 export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, permissionCodes, isAdmin } = useAuth();
+  // La sucursal sale del perfil cacheado una vez por sesión, el mismo
+  // mecanismo que ya usan POS, crear venta y devoluciones.
+  // `currentUserProfileApi()` sigue vivo, pero solo alimenta el nombre del
+  // usuario en el resumen: deja de ser la fuente de la sucursal.
+  const { profile } = useUserProfile();
 
   const [loading, setLoading] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodWithAccount[]>([]);
@@ -65,6 +73,24 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
   const [creatingCategory, setCreatingCategory] = useState(false);
 
   const isIncome = movementType === "income";
+
+  // T-274 — FAIL-CLOSED. "Ver cajas de todas las sucursales" depende SOLO de
+  // isAdmin o del permiso movements.accounts.all_branches; no hay ninguna otra
+  // vía. Un perfil sin sucursal NO cae en "ve todas": cae en el estado vacío
+  // explicativo de MovementFundsSource.
+  //
+  // "Sucursal válida" se mide por branch_id > 0 y NO por branches.is_active:
+  // la fila centinela id 0 está inactiva en main pero activa en develop, así
+  // que el id es el único criterio estable en los dos entornos.
+  const canSeeAllBranches =
+    isAdmin || permissionCodes.includes("movements.accounts.all_branches");
+  const userBranchId =
+    typeof profile?.branch_id === "number" ? profile.branch_id : null;
+  const hasValidBranch = !!userBranchId && userBranchId > 0;
+  // Solo bloquea cuando el método de pago exige elegir caja (Efectivo).
+  const missingBranch = !canSeeAllBranches && !hasValidBranch;
+  const canCreateReason =
+    isAdmin || permissionCodes.includes("movements.reasons.create");
 
   const messages = {
     title: isIncome ? "Añadir Ingreso" : "Añadir Gasto",
@@ -105,6 +131,12 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     return () => clearTimeout(timer);
   }, [inputAmount]);
 
+  // T-274 — Con método Efectivo, si el usuario no tiene sucursal válida o su
+  // sucursal no tiene cajas activas, no hay nada que elegir: se deshabilita el
+  // guardado para no disparar una llamada que el servidor va a rechazar igual.
+  const cashSelectionBlocked =
+    needsManualBusinessAccount && (missingBranch || businessAccounts.length === 0);
+
   // ¿Hay una cuenta resuelta? (fija por el método, o elegida manualmente)
   const hasAccountSelected = needsManualBusinessAccount
     ? !!selectedManualBusinessAccountId
@@ -132,7 +164,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
 
   useEffect(() => {
     fetchData();
-  }, [user, movementType]);
+  }, [user, movementType, userBranchId, canSeeAllBranches]);
 
   useEffect(() => {
     if (selectedPaymentMethodId) {
@@ -177,17 +209,29 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     if (!user) return;
 
     try {
-      const [pmData, classesData, userProfile, movementTypes, baData] = await Promise.all([
-        getPaymentMethodsIsActiveTrueAndActiveTrue(),
-        movementClassesApi(),
-        currentUserProfileApi(user.id),
-        movementTypesApi(),
-        getBusinessAccountIsActiveTrue(),
-      ]);
+      const [pmData, classesData, userProfile, movementTypes, baData, allowedReasonIds] =
+        await Promise.all([
+          getPaymentMethodsIsActiveTrueAndActiveTrue(),
+          movementClassesApi(),
+          currentUserProfileApi(user.id),
+          movementTypesApi(),
+          // Solo cajas (types.code = 'CHR') de la sucursal del usuario.
+          cashBusinessAccountsApi(userBranchId, canSeeAllBranches),
+          allowedMovementReasonIds(),
+        ]);
 
       setPaymentMethods(pmData as any as PaymentMethodWithAccount[]);
       setBusinessAccounts((baData || []).map((ba: any) => ({ id: ba.id, name: ba.name, total_amount: ba.total_amount })));
-      setClasses(classesData);
+
+      // Recorte de motivos por parámetro. Vacío = sin restricción, que es el
+      // comportamiento actual. Ninguna clase se desactiva en el catálogo.
+      const canSeeAllReasons =
+        isAdmin || permissionCodes.includes("movements.reasons.all");
+      setClasses(
+        allowedReasonIds.length > 0 && !canSeeAllReasons
+          ? classesData.filter((c) => allowedReasonIds.includes(c.id))
+          : classesData
+      );
       setCurrentUserProfile(userProfile);
 
       const typeName = isIncome ? "Ingreso" : "Egreso";
@@ -226,9 +270,9 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
       setSelectedClassName(created.name);
       setNewCategoryDialogOpen(false);
       setNewCategoryName("");
-      toast({ title: "Categoría creada", description: `"${created.name}" fue agregada.`, variant: "success" });
+      toast({ title: "Motivo creado", description: `"${created.name}" fue agregado.`, variant: "success" });
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "No se pudo crear la categoría", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "No se pudo crear el motivo", variant: "destructive" });
     } finally {
       setCreatingCategory(false);
     }
@@ -335,6 +379,9 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     paymentMethods,
     classes,
     currentUserProfile,
+    missingBranch,
+    canCreateReason,
+    cashSelectionBlocked,
     selectedBusinessAccount,
     businessAccountAmount,
     isIncome,

@@ -19,6 +19,7 @@ import type {
   CategoryOverTimeItem,
   InventorySummary,
   LowStockDistributionItem,
+  LowStockProductsReport,
   StockRotationItem,
   StockMovementTypeItem,
   InventoryValuation,
@@ -182,16 +183,34 @@ export const productsService = {
 // INVENTORY
 // ============================================================
 export const inventoryService = {
-  getSummary: (warehouseId?: number, threshold = 10) =>
+  // T-269: sin `= 10`. Si no se pasa threshold, el SP resuelve el umbral global
+  // con fn_low_stock_threshold(); el front ya no inventa ningún valor.
+  getSummary: (warehouseId?: number, threshold?: number) =>
     rpc<InventorySummary>('sp_rpt_inventory_summary', {
       p_warehouse_id: warehouseId ?? undefined,
-      p_low_stock_threshold: threshold,
+      p_low_stock_threshold: threshold ?? undefined,
     }),
 
-  getLowStockDistribution: (warehouseId?: number, threshold = 10) =>
+  getLowStockDistribution: (warehouseId?: number, threshold?: number) =>
     rpc<LowStockDistributionItem[]>('sp_rpt_low_stock_distribution', {
       p_warehouse_id: warehouseId ?? undefined,
-      p_threshold: threshold,
+      p_threshold: threshold ?? undefined,
+    }),
+
+  /** T-269 · Bandeja de reposición: SKUs bajo el umbral, paginados. */
+  getLowStockProducts: (
+    warehouseId?: number,
+    threshold?: number,
+    page = 1,
+    size = 10,
+    search?: string,
+  ) =>
+    rpc<LowStockProductsReport>('sp_rpt_low_stock_products', {
+      p_warehouse_id: warehouseId ?? undefined,
+      p_threshold: threshold ?? undefined,
+      p_page: page,
+      p_size: size,
+      p_search: search ?? undefined,
     }),
 
   getRotation: (f: ReportsFilters, warehouseId?: number, limit = 20) =>

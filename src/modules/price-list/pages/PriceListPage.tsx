@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Loader2, Pencil, Trash2 } from "lucide-react";
+import { DollarSign, Loader2, SquarePen, Trash } from "lucide-react";
 import { usePriceList } from "../hooks/usePriceList";
 import { PriceListEditDialog } from "../components/PriceListEditDialog";
 import type { PriceListItem } from "../types/PriceList.types";
@@ -97,19 +97,19 @@ const PriceListPage = () => {
                       <div className="flex items-center justify-center gap-1">
                         <Button
                           variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
+                          size="sm"
+                          title="Editar el precio"
                           onClick={() => setEditingItem(item)}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <SquarePen className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="destructive"
-                          size="icon"
-                          className="h-8 w-8"
+                          size="sm"
+                          title="Eliminar el precio"
                           onClick={() => {}}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>

@@ -139,7 +139,7 @@ const MovementsFilterModal = ({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Categoria</Label>
+                <Label className="text-sm font-medium">Motivo</Label>
                 <Select
                   value={
                     internalFilters.class ? String(internalFilters.class) : "none"
@@ -147,10 +147,10 @@ const MovementsFilterModal = ({
                   onValueChange={(value) => handleSelectChange("class", value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Todas las categorias" />
+                    <SelectValue placeholder="Todos los motivos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Todas las categorias</SelectItem>
+                    <SelectItem value="none">Todos los motivos</SelectItem>
                     {categories.map((c) => (
                       <SelectItem key={c.id} value={String(c.id)}>
                         {c.name}

@@ -143,8 +143,9 @@ export const SupportRequestsTable = ({
             </TableCell>
             <TableCell className="text-right">
               <Button
-                variant="ghost"
-                size="icon"
+                variant="outline"
+                size="sm"
+                title="Ver detalle de la solicitud"
                 aria-label={`Ver detalle de ${request.title}`}
                 onClick={() => onViewDetail(request.id)}
               >

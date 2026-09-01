@@ -91,8 +91,9 @@ export const TrainingsTable = ({
             </TableCell>
             <TableCell>
               <Button
-                variant="ghost"
-                size="icon"
+                variant="outline"
+                size="sm"
+                title="Ver detalle de la capacitación"
                 aria-label="Ver detalle"
                 onClick={() => onViewDetail(booking)}
               >

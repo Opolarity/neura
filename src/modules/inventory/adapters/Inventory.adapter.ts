@@ -19,6 +19,8 @@ export const inventoryAdapter = (response: InventoryApiResponse) => {
       stock: w.stock ?? null,
       stock_virtual: w.stock_virtual ?? null,
     })),
+    stock_global_prd: item.stock_global_prd ?? 0,
+    is_low_stock: item.is_low_stock ?? false,
   }));
 
   const pagination: PaginationState = {

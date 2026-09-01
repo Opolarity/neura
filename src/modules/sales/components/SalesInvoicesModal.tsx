@@ -655,13 +655,12 @@ export const SalesInvoicesModal = ({
                         {formatDateDisplay(inv.created_at)}
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
+                        <div className="flex items-center gap-2">
                           {inv.declared ? (
                             <>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                variant="outline"
+                                size="sm"
                                 title="Imprimir ticket"
                                 disabled={printingId === inv.id}
                                 onClick={() => printInvoice(inv.id)}
@@ -671,9 +670,8 @@ export const SalesInvoicesModal = ({
                                   : <Printer className="h-4 w-4" />}
                               </Button>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                variant="outline"
+                                size="sm"
                                 title="Ver comprobante"
                                 onClick={() => {
                                   window.open(`/invoices/edit/${inv.id}`, "_blank");
@@ -683,9 +681,8 @@ export const SalesInvoicesModal = ({
                               </Button>
                               {inv.pdf_url && (
                                 <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
+                                  variant="outline"
+                                  size="sm"
                                   title="Ver PDF"
                                   onClick={() => window.open(inv.pdf_url!, "_blank")}
                                 >
@@ -694,9 +691,8 @@ export const SalesInvoicesModal = ({
                               )}
                               {inv.xml_url && (
                                 <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
+                                  variant="outline"
+                                  size="sm"
                                   title="Descargar XML"
                                   onClick={() => {
                                     const link = document.createElement("a");
@@ -712,18 +708,16 @@ export const SalesInvoicesModal = ({
                           ) : showEmitAction ? (
                             <>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                variant="outline"
+                                size="sm"
                                 title="Emitir a SUNAT"
                                 onClick={() => setPendingEmitInvoice(inv)}
                               >
                                 <ArrowUp className="h-4 w-4" />
                               </Button>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                variant="outline"
+                                size="sm"
                                 title="Ver comprobante"
                                 onClick={() => {
                                   window.open(`/invoices/edit/${inv.id}`, "_blank");
@@ -735,9 +729,8 @@ export const SalesInvoicesModal = ({
                           ) : typeCode === "INV" ? (
                             <>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                variant="outline"
+                                size="sm"
                                 title="Ver comprobante"
                                 onClick={() => {
                                   window.open(`/invoices/edit/${inv.id}`, "_blank");
@@ -746,9 +739,8 @@ export const SalesInvoicesModal = ({
                                 <Eye className="h-4 w-4" />
                               </Button>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                variant="outline"
+                                size="sm"
                                 title="Imprimir ticket"
                                 disabled={printingId === inv.id}
                                 onClick={() => printInvoice(inv.id)}

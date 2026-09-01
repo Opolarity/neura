@@ -9,6 +9,8 @@ interface ProductsData {
     terminos: string;
     web: boolean;
     stock: number;
+    /** T-269 · Variaciones del producto bajo el umbral global (definición única). */
+    low_stock_variations?: number | null;
   }>;
   page: {
     p_page: number;
@@ -30,7 +32,14 @@ export interface Product {
   name: string;
   price: string;
   terms: string;
+  /**
+   * Stock por PRODUCTO, solo del almacén del usuario y sin filtrar stock_type
+   * (lo calcula get_products_list). NO es comparable con el umbral global: por
+   * eso el indicador de stock bajo cuelga de `lowStockVariations`.
+   */
   stock: number;
+  /** T-269 · Cuántas variaciones de este producto están bajo el umbral global. */
+  lowStockVariations: number;
 }
 
 export interface ProductFilters {
