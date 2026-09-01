@@ -1,4 +1,3 @@
-import { Cake } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import { useBirthdayNotifications } from '../hooks/useBirthdayNotifications';
@@ -10,14 +9,11 @@ const BirthdayNotification = () => {
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
-      <div className="flex items-center gap-3 mb-6">
-        <Cake className="w-8 h-8" />
-        <div>
-          <h1 className="text-3xl font-bold">Notificaciones de Cumpleaños</h1>
-          <p className="text-muted-foreground">
-            Clientes con cumpleaños desde 2 días antes hasta 1 día después de hoy
-          </p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Notificaciones de Cumpleaños</h1>
+        <p className="text-muted-foreground">
+          Clientes con cumpleaños desde 2 días antes hasta 1 día después de hoy
+        </p>
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
