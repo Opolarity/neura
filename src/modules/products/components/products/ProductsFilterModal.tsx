@@ -16,13 +16,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Category } from "../../types/Products.types";
 import { ProductFilters } from "../../types/Products.types";
 import type { TagsResponse } from "@/shared/types/type";
+import {
+  CategorySelector,
+  type CategoryOption,
+} from "@/shared/components/category-selector";
+import { ChevronsUpDown } from "lucide-react";
+import { cn } from "@/shared/utils/utils";
 import { useEffect, useState } from "react";
 
 interface ProductsFilterModalProps {
-  categories: Category[];
+  /**
+   * Categorías marcadas. Viajan como objetos y no como ids para conservar el
+   * nombre entre aperturas: el catálogo lo pagina el CategorySelector, así que
+   * el modal no tiene de dónde volver a resolverlos.
+   */
+  selectedCategories: CategoryOption[];
+  onChangeSelectedCategories: (items: CategoryOption[]) => void;
   /** Etiquetas (tags.type = 'tag'), ya filtradas por useProducts. */
   tags?: TagsResponse[];
   /** Marcas (tags.type = 'brand'), ya filtradas por useProducts. */
@@ -33,8 +44,15 @@ interface ProductsFilterModalProps {
   onApply?: (filters: ProductFilters) => void;
 }
 
+const getCategoriesLabel = (categories: CategoryOption[]): string => {
+  if (categories.length === 0) return "Todas las categorías";
+  if (categories.length === 1) return categories[0].name;
+  return `${categories.length} categorías`;
+};
+
 const ProductsFilterModal = ({
-  categories,
+  selectedCategories,
+  onChangeSelectedCategories,
   tags = [],
   brands = [],
   filters,
@@ -44,19 +62,17 @@ const ProductsFilterModal = ({
 }: ProductsFilterModalProps) => {
   const [internalFilters, setInternalFilters] =
     useState<ProductFilters>(filters);
+  // Borrador de la selección: igual que el resto de filtros, solo se confirma
+  // al pulsar "Aplicar", no al marcar dentro del popover.
+  const [internalCategories, setInternalCategories] =
+    useState<CategoryOption[]>(selectedCategories);
 
   useEffect(() => {
     if (isOpen) {
       setInternalFilters(filters);
+      setInternalCategories(selectedCategories);
     }
-  }, [isOpen, filters]);
-
-  const handleCategoryChange = (value: string) => {
-    setInternalFilters((prev) => ({
-      ...prev,
-      category: value === "none" ? null : Number(value),
-    }));
-  };
+  }, [isOpen, filters, selectedCategories]);
 
   const handleTagChange = (value: string) => {
     setInternalFilters((prev) => ({
@@ -102,13 +118,14 @@ const ProductsFilterModal = ({
   };
 
   const handleClear = () => {
+    setInternalCategories([]);
     setInternalFilters({
       page: 1,
       size: filters.size,
       search: null,
       minprice: null,
       maxprice: null,
-      category: null,
+      category_ids: [],
       status: null,
       web: null,
       minstock: null,
@@ -116,6 +133,14 @@ const ProductsFilterModal = ({
       order: null,
       tag: null,
       brand: null,
+    });
+  };
+
+  const handleApply = () => {
+    onChangeSelectedCategories(internalCategories);
+    onApply?.({
+      ...internalFilters,
+      category_ids: internalCategories.map((category) => category.id),
     });
   };
 
@@ -138,26 +163,26 @@ const ProductsFilterModal = ({
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Categorías</Label>
                 <div className="flex gap-2">
-                  <Select
-                    value={
-                      internalFilters?.category
-                        ? String(internalFilters.category)
-                        : "none"
+                  <CategorySelector
+                    selectedItems={internalCategories}
+                    onChangeItems={setInternalCategories}
+                    trigger={
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "w-full justify-between text-left font-normal",
+                          internalCategories.length === 0 &&
+                            "text-muted-foreground",
+                        )}
+                      >
+                        <span className="truncate">
+                          {getCategoriesLabel(internalCategories)}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
                     }
-                    onValueChange={handleCategoryChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todas las categorías" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Todas las categorías</SelectItem>
-                      {categories.map((c) => (
-                        <SelectItem key={c.id} value={String(c.id)}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
                 </div>
               </div>
               <div className="space-y-2">
@@ -277,9 +302,7 @@ const ProductsFilterModal = ({
           <Button variant="outline" onClick={handleClear}>
             Limpiar
           </Button>
-          <Button onClick={() => onApply && onApply(internalFilters)}>
-            Aplicar
-          </Button>
+          <Button onClick={handleApply}>Aplicar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

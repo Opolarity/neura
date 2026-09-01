@@ -4,23 +4,27 @@ import { useNavigate } from "react-router-dom";
 import {
   Product,
   ProductFilters,
-  Category,
   PaginationState,
 } from "../types/Products.types";
 import {
-  categoriesApi,
   deleteProductApi,
   deleteProductsApi,
   productsApi,
 } from "../services/products.service";
-import { categoryAdapter, productAdapter } from "../adapters/Product.adapter";
+import { productAdapter } from "../adapters/Product.adapter";
+import type { CategoryOption } from "@/shared/components/category-selector";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { getTags } from "@/shared/services/service";
 import type { TagsResponse } from "@/shared/types/type";
 
 export const useProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  // Las categorías del filtro viajan como objetos y no como ids sueltos para
+  // conservar el nombre entre aperturas del modal (el catálogo ya no se trae
+  // completo: lo pagina y busca el CategorySelector).
+  const [selectedCategories, setSelectedCategories] = useState<CategoryOption[]>(
+    [],
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -33,7 +37,7 @@ export const useProducts = () => {
   const [filters, setFilters] = useState<ProductFilters>({
     minprice: null,
     maxprice: null,
-    category: null,
+    category_ids: [],
     status: null,
     web: null,
     minstock: null,
@@ -76,19 +80,6 @@ export const useProducts = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const dataCategories = await categoriesApi();
-        const categoriesResponse = categoryAdapter(dataCategories);
-        setCategories(categoriesResponse);
-      } catch (error) {
-        console.error("Error loading categories:", error);
-      }
-    };
-    loadCategories();
-  }, []);
 
   useEffect(() => {
     const loadTags = async () => {
@@ -210,7 +201,7 @@ export const useProducts = () => {
   const hasActiveFilters =
     filters.minprice !== null ||
     filters.maxprice !== null ||
-    filters.category !== null ||
+    !!filters.category_ids?.length ||
     filters.status !== null ||
     filters.web !== null ||
     filters.minstock !== null ||
@@ -219,7 +210,8 @@ export const useProducts = () => {
     filters.brand !== null;
   return {
     products,
-    categories,
+    selectedCategories,
+    setSelectedCategories,
     tags,
     brands,
     pagination,
