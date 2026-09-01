@@ -117,7 +117,7 @@ export default function InvoicesTable({ invoices = [], loading, invoiceTypes = [
             </TableCell>
             <ComponentPermission codeIn={ACTION_CODES}>
               <TableCell>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   <ComponentPermission codeIn={["invoices.view"]}>
                     <Button
                       variant="outline"
@@ -143,7 +143,7 @@ export default function InvoicesTable({ invoices = [], loading, invoiceTypes = [
                   {internalTypeIds.has(item.invoiceTypeId) && (
                     <ComponentPermission codeIn={["invoices.print"]}>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         title="Imprimir PDF"
                         disabled={printingId === item.id}
@@ -160,7 +160,7 @@ export default function InvoicesTable({ invoices = [], loading, invoiceTypes = [
                   {item.pdfUrl && (
                     <ComponentPermission codeIn={["invoices.print"]}>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         title="Ver PDF"
                         onClick={() => window.open(item.pdfUrl!, "_blank", "noopener,noreferrer")}
@@ -172,7 +172,7 @@ export default function InvoicesTable({ invoices = [], loading, invoiceTypes = [
                   {item.xmlUrl && (
                     <ComponentPermission codeIn={["invoices.download"]}>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         title="Descargar XML"
                         onClick={() => downloadXml(item)}
