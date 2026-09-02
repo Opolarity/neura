@@ -3,8 +3,8 @@
 // Re-exports existing services and adds POS-specific functionality
 // =============================================
 
-import { supabase } from "@/integrations/supabase/client";
 import type { CreatePOSOrderRequest } from "../types/POS.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 // Re-export existing services that POS uses
 export {
@@ -28,7 +28,7 @@ export {
 
 // Create POS order (uses existing create-order edge function)
 export const createPOSOrder = async (orderData: CreatePOSOrderRequest) => {
-  const { data, error } = await supabase.functions.invoke("create-order", {
+  const data = await invokeFunction("create-order", {
     body: {
       document_type: orderData.documentType,
       document_number: orderData.documentNumber,
@@ -81,8 +81,5 @@ export const createPOSOrder = async (orderData: CreatePOSOrderRequest) => {
       discounts: orderData.discounts || [],
     },
   });
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
   return data;
 };

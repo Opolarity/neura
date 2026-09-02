@@ -2,7 +2,10 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { ConditionsConfig, Condition } from "../../types/priceRule.types";
-import { isConsignmentMarkerGroup } from "../../adapters/priceRule.adapter";
+import {
+  isConsignmentMarkerGroup,
+  isFranchiseeExclusionMarkerGroup,
+} from "../../adapters/priceRule.adapter";
 import { ConditionGroup } from "./ConditionGroup";
 
 interface ConditionBuilderProps {
@@ -30,7 +33,11 @@ export const ConditionBuilder = ({
   // se gestiona con el checkbox de Información Básica y acá se esconde.
   const visibleGroups = conditions.groups
     .map((group, originalIndex) => ({ group, originalIndex }))
-    .filter(({ group }) => !isConsignmentMarkerGroup(group));
+    .filter(
+      ({ group }) =>
+        !isConsignmentMarkerGroup(group) &&
+        !isFranchiseeExclusionMarkerGroup(group),
+    );
 
   return (
     <div className="space-y-4">

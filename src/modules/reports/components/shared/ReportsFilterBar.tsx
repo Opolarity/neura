@@ -6,6 +6,7 @@ import { useReportsFilters } from '../../context/ReportsFiltersContext';
 import { useState } from 'react';
 import { toast } from "@/shared/hooks/use-toast";
 import { DateRangeFilter } from '@/shared/components/date-range';
+import { toastError } from "@/shared/utils/toastError";
 
 const MAX_RANGE_DAYS = 90;
 
@@ -32,8 +33,8 @@ export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExt
     try {
       await refreshReportMviews();
       toast({ title: 'Datos actualizados correctamente', variant: "success" });
-    } catch {
-      toast({ title: 'Error al actualizar los datos', variant: "destructive" });
+    } catch (error) {
+      toastError(error, 'Error al actualizar los datos');
     } finally {
       setRefreshing(false);
     }

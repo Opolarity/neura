@@ -11,6 +11,7 @@ import type {
   CashRegister,
 } from "../types/POS.types";
 import { statussesByModuleCode } from "@/shared/services/service";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 // Get cash registers (business_accounts with type CHR from module BNA)
 export const getCashRegisters = async (): Promise<CashRegister[]> => {
@@ -55,7 +56,7 @@ export const getCashRegisters = async (): Promise<CashRegister[]> => {
 export const openPOSSession = async (
   request: OpenPOSSessionRequest
 ): Promise<{ success: boolean; session: POSSessionApiResponse }> => {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "manage-pos-session",
     {
       body: {
@@ -68,19 +69,13 @@ export const openPOSSession = async (
       },
     }
   );
-
-  if (error) {
-    const body = data as any;
-    throw new Error(body?.details || body?.error || error.message);
-  }
-  if (data?.error) throw new Error(data.details || data.error);
   return data;
 };
 
 export const closePOSSession = async (
   request: ClosePOSSessionRequest
 ): Promise<{ success: boolean; session: POSSessionApiResponse }> => {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "manage-pos-session",
     {
       body: {
@@ -92,26 +87,17 @@ export const closePOSSession = async (
       },
     }
   );
-
-  if (error) {
-    const body = data as any;
-    throw new Error(body?.details || body?.error || error.message);
-  }
-  if (data?.error) throw new Error(data.details || data.error);
   return data;
 };
 
 export const getActivePOSSession = async (): Promise<POSSessionApiResponse | null> => {
   const openType = (await statussesByModuleCode('POS')).filter(t => t.code === 'OPE')[0];
 
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "manage-pos-session",
     {
       body: { action: "get-active", openTypeId: openType?.id },
     }
   );
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
   return data?.session || null;
 };

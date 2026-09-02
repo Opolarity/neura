@@ -27,6 +27,7 @@ import {
   type PendingPaymentRow,
 } from "../services/PendingPayments.service";
 import { FranchisePaymentInvoicesModal } from "./FranchisePaymentInvoicesModal";
+import { toastError } from "@/shared/utils/toastError";
 
 interface PagosConfirmarModalProps {
   open: boolean;
@@ -71,11 +72,7 @@ export const PagosConfirmarModal = ({
       setTotal(count);
     } catch (err) {
       console.error("Error cargando pagos:", err);
-      toast({
-        title: "Error",
-        description: "No se pudo cargar los pagos.",
-        variant: "destructive",
-      });
+      toastError(err, "No se pudo cargar los pagos.");
     } finally {
       setLoading(false);
     }
@@ -103,12 +100,7 @@ export const PagosConfirmarModal = ({
       await loadPayments();
     } catch (err) {
       console.error("Error confirmando pago:", err);
-      toast({
-        title: "Error al confirmar",
-        description:
-          err instanceof Error ? err.message : "No se pudo confirmar el pago.",
-        variant: "destructive",
-      });
+      toastError(err, "No se pudo confirmar el pago.", "Error al confirmar");
     } finally {
       setConfirmingId(null);
     }

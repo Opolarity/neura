@@ -5,63 +5,53 @@ import {
   BusinessAccountPayload,
 } from "../types/BusinessAccount.types";
 import { buildEndpoint } from "@/shared/utils/query";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const getBusinessAccountsApi = async (
   filters: BusinessAccountFilters
 ): Promise<BusinessAccountApiResponse> => {
   const endpoint = buildEndpoint("get-business-accounts", filters);
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) throw error;
   return data;
 };
 
 export const createBusinessAccountApi = async (
   payload: BusinessAccountPayload
 ) => {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "create-business-account",
     {
       method: "POST",
       body: payload,
     }
   );
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
   return data;
 };
 
 export const updateBusinessAccountApi = async (
   payload: BusinessAccountPayload
 ) => {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "update-business-account",
     {
       method: "PUT",
       body: payload,
     }
   );
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
   return data;
 };
 
 export const deleteBusinessAccountApi = async (id: number) => {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "delete-business-account",
     {
       method: "PATCH",
       body: { id },
     }
   );
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
   return data;
 };
 

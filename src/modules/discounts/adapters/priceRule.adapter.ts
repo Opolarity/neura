@@ -7,14 +7,20 @@ import type {
 } from "../types/priceRule.types";
 import {
   CONSIGNMENT_CONDITION_TYPE,
+  FRANCHISEE_EXCLUSION_CONDITION_TYPE,
   DEFAULT_INCLUDE_DESCENDANTS,
 } from "../types/priceRule.types";
 import { limaDateTimeLocalToIso, limaIsoToDateTimeLocal } from "@/shared/utils/date";
 
-// ¿La regla está marcada como promoción de consignación (franquiciados)?
-// Soporta el formato vigente ({ groups }) y el legacy (array plano).
-export function hasConsignmentMarker(
+// --- Marcadores de franquiciados dentro de `conditions` -------------------
+// Dos marcadores comparten la misma forma: viven en un grupo propio y llevan
+// opcionalmente `tenant_references`. `consignment_channel` marca la promo de
+// consignación; `franchisee_exclusion` marca a quién NO se le aplica la regla.
+// Ambos soportan el formato vigente ({ groups }) y el legacy (array plano).
+
+function hasMarkerOfType(
   conditions: ConditionsConfig | unknown[] | null | undefined,
+  markerType: string,
 ): boolean {
   if (!conditions) return false;
 
@@ -24,18 +30,16 @@ export function hasConsignmentMarker(
       (c) =>
         !!c &&
         typeof c === "object" &&
-        (c as { type?: unknown }).type === CONSIGNMENT_CONDITION_TYPE,
+        (c as { type?: unknown }).type === markerType,
     );
 
   if (Array.isArray(conditions)) return hasMarker(conditions);
   return (conditions.groups ?? []).some((g) => hasMarker(g?.conditions));
 }
 
-// tenant_reference de los franquiciados seleccionados en el marcador de
-// consignación. Vacío = la promo aplica a todos los franquiciados. Soporta el
-// formato vigente ({ groups }) y el legacy (array plano).
-export function getConsignmentTenantReferences(
+function getMarkerTenantReferences(
   conditions: ConditionsConfig | unknown[] | null | undefined,
+  markerType: string,
 ): string[] {
   if (!conditions) return [];
 
@@ -45,7 +49,7 @@ export function getConsignmentTenantReferences(
       if (
         !!c &&
         typeof c === "object" &&
-        (c as { type?: unknown }).type === CONSIGNMENT_CONDITION_TYPE
+        (c as { type?: unknown }).type === markerType
       ) {
         const refs = (c as { tenant_references?: unknown }).tenant_references;
         if (!Array.isArray(refs)) return [];
@@ -69,16 +73,60 @@ export function getConsignmentTenantReferences(
   return [];
 }
 
+function isMarkerGroupOfType(
+  group: { conditions?: Array<{ type?: string }> },
+  markerType: string,
+): boolean {
+  return (
+    (group.conditions?.length ?? 0) > 0 &&
+    (group.conditions ?? []).every((c) => c?.type === markerType)
+  );
+}
+
+// ¿La regla está marcada como promoción de consignación (franquiciados)?
+export function hasConsignmentMarker(
+  conditions: ConditionsConfig | unknown[] | null | undefined,
+): boolean {
+  return hasMarkerOfType(conditions, CONSIGNMENT_CONDITION_TYPE);
+}
+
+// tenant_reference de los franquiciados seleccionados en el marcador de
+// consignación. Vacío = la promo aplica a todos los franquiciados.
+export function getConsignmentTenantReferences(
+  conditions: ConditionsConfig | unknown[] | null | undefined,
+): string[] {
+  return getMarkerTenantReferences(conditions, CONSIGNMENT_CONDITION_TYPE);
+}
+
 // ¿Este grupo es el grupo marcador (solo contiene la condición de consignación)?
 export function isConsignmentMarkerGroup(group: {
   conditions?: Array<{ type?: string }>;
 }): boolean {
-  return (
-    (group.conditions?.length ?? 0) > 0 &&
-    (group.conditions ?? []).every(
-      (c) => c?.type === CONSIGNMENT_CONDITION_TYPE,
-    )
+  return isMarkerGroupOfType(group, CONSIGNMENT_CONDITION_TYPE);
+}
+
+// ¿La regla excluye franquiciados?
+export function hasFranchiseeExclusionMarker(
+  conditions: ConditionsConfig | unknown[] | null | undefined,
+): boolean {
+  return hasMarkerOfType(conditions, FRANCHISEE_EXCLUSION_CONDITION_TYPE);
+}
+
+// tenant_reference de los franquiciados excluidos. Vacío = se excluyen todos.
+export function getFranchiseeExclusionTenantReferences(
+  conditions: ConditionsConfig | unknown[] | null | undefined,
+): string[] {
+  return getMarkerTenantReferences(
+    conditions,
+    FRANCHISEE_EXCLUSION_CONDITION_TYPE,
   );
+}
+
+// ¿Este grupo es el grupo marcador de exclusión de franquiciados?
+export function isFranchiseeExclusionMarkerGroup(group: {
+  conditions?: Array<{ type?: string }>;
+}): boolean {
+  return isMarkerGroupOfType(group, FRANCHISEE_EXCLUSION_CONDITION_TYPE);
 }
 
 export const DEFAULT_CONDITIONS: ConditionsConfig = {

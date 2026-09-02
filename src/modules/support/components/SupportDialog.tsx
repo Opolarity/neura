@@ -27,6 +27,7 @@ import {
   type SupportRequestType,
 } from "../types/Support.types";
 import { readFileAsBase64 } from "../utils/readFileAsBase64";
+import { toastError } from "@/shared/utils/toastError";
 
 interface SupportDialogProps {
   open: boolean;
@@ -120,7 +121,7 @@ export const SupportDialog = ({ open, onOpenChange }: SupportDialogProps) => {
       toast({ title: "Solicitud enviada al equipo de soporte", variant: "success" });
       onOpenChange(false);
     } catch (err: any) {
-      toast({ title: err?.message ?? "No se pudo enviar la solicitud de soporte", variant: "destructive" });
+      toastError(err, "No se pudo enviar la solicitud de soporte");
     }
   };
 

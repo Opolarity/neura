@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { SalesFilters, SalesApiResponse } from "../types/Sales.types";
 import { buildEndpoint } from "@/shared/utils/utils";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const fetchSalesList = async (
   filters: SalesFilters
@@ -21,14 +22,9 @@ export const fetchSalesList = async (
 
   const endpoint = buildEndpoint("get-sales-list", params);
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) {
-    console.error("Invoke error:", error);
-    throw error;
-  }
 
   return data;
 };

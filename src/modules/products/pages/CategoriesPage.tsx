@@ -18,6 +18,7 @@ import { CategoryDeleteDialog } from "../components/categories/CategoryDeleteDia
 import { CategoryFormValues } from "../utils/CategorySchema";
 import CategoriesTable from "../components/categories/CategoriesTable";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
+import { toastError } from "@/shared/utils/toastError";
 
 const Categories = () => {
   const {
@@ -142,10 +143,7 @@ const Categories = () => {
       setIsFormOpen(false);
       setEditingCategory(null);
     } catch (error: any) {
-      toast({
-        title: "Error al guardar categoría: " + (error.message || "Error desconocido"),
-        variant: "destructive",
-      });
+      toastError(error, "Error al guardar categoría");
       console.error(error);
     } finally {
       setSaving(false);
@@ -207,11 +205,7 @@ const Categories = () => {
       toast({ title: "Categoría eliminada exitosamente", variant: "success" });
       setIsDeleteOpen(false);
     } catch (error: any) {
-      toast({
-        title: "Error al eliminar categoría: " +
-        (error.message || "Error desconocido"),
-        variant: "destructive",
-      });
+      toastError(error, "Error al eliminar categoría");
     } finally {
       setDeleting(false);
     }

@@ -12,6 +12,7 @@ import {
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { getAccountsByModuleCodeAndTypeUser, getWarehousesIsActiveTrue } from "@/shared/services/service";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useMovements = () => {
     const [movements, setMovements] = useState<Movements[]>([]);
@@ -56,11 +57,7 @@ export const useMovements = () => {
             await loadMovements(filters);
         } catch (error: any) {
             console.error("Error loading initial data:", error);
-            toast({
-                title: "Error",
-                description: "No se pudo cargar el inventario inicial",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudo cargar el inventario inicial");
         } finally {
             setLoading(false);
         }
@@ -78,11 +75,7 @@ export const useMovements = () => {
             setPagination(newPagination);
         } catch (error: any) {
             console.error("Error loading movements:", error);
-            toast({
-                title: "Error",
-                description: "No se pudieron cargar los movimientos de stock",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudieron cargar los movimientos de stock");
         } finally {
             setLoading(false);
         }
@@ -234,11 +227,7 @@ const loadInitial = async () => {
             await loadMovements(filters, true);
         } catch (error: any) {
             console.error("Error loading initial data:", error);
-            toast({
-                title: "Error",
-                description: "No se pudo cargar el inventario inicial",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudo cargar el inventario inicial");
         } finally {
             setLoading(false);
         }
@@ -259,11 +248,7 @@ const loadInitial = async () => {
             setPagination(newPagination);
         } catch (error: any) {
             console.error("Error loading inventory:", error);
-            toast({
-                title: "Error",
-                description: "No se pudo cargar el inventario",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudo cargar el inventario");
         }
     };
 */

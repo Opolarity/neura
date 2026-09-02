@@ -21,6 +21,7 @@ import { TrainingServiceError, type TrainingBooking } from "../types/Training.ty
 import { formatTrainingDate, formatTrainingTime } from "../utils/formatTraining";
 import { TrainingSlotPicker } from "./TrainingSlotPicker";
 import { TrainingStatusBadge } from "./TrainingStatusBadge";
+import { toastError } from "@/shared/utils/toastError";
 
 interface TrainingDetailSheetProps {
   booking: TrainingBooking | null;
@@ -69,14 +70,7 @@ export const TrainingDetailSheet = ({
       onChanged();
       onClose();
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "No se pudo cancelar",
-        description:
-          error instanceof TrainingServiceError
-            ? error.message
-            : "Intenta nuevamente en unos minutos.",
-      });
+      toastError(error, "Intenta nuevamente en unos minutos.", "No se pudo cancelar");
     } finally {
       setWorking(false);
     }
@@ -93,14 +87,7 @@ export const TrainingDetailSheet = ({
     } catch (error) {
       const isSlotTaken =
         error instanceof TrainingServiceError && error.code === "slot_taken";
-      toast({
-        variant: "destructive",
-        title: isSlotTaken ? "Ese horario acaba de ocuparse" : "No se pudo reprogramar",
-        description:
-          error instanceof TrainingServiceError
-            ? error.message
-            : "Intenta nuevamente en unos minutos.",
-      });
+      toastError(error, "Intenta nuevamente en unos minutos.");
       if (isSlotTaken) {
         setNewStart(null);
         slots.reload();

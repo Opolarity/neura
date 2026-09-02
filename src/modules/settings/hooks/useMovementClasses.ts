@@ -9,6 +9,7 @@ import {
 } from "../services/MovementClasses.services";
 import { getMovementClassesAdapter } from "../adapters/MovementClasses.adapter";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useMovementClasses = () => {
   const [classes, setClasses] = useState<MovementClass[]>([]);
@@ -60,7 +61,7 @@ export const useMovementClasses = () => {
       });
     } catch (error) {
       console.error(error);
-      toast({ title: "Error al guardar la clase", variant: "destructive" });
+      toastError(error, "Error al guardar la clase");
     } finally {
       setSaving(false);
       setOpenFormModal(false);
@@ -74,7 +75,7 @@ export const useMovementClasses = () => {
       toast({ title: "Clase eliminada correctamente", variant: "success" });
     } catch (error) {
       console.error(error);
-      toast({ title: "Error al eliminar la clase", variant: "destructive" });
+      toastError(error, "Error al eliminar la clase");
     }
   };
 

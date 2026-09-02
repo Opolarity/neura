@@ -1,4 +1,4 @@
-import type { EdgeFunctionErrorCode } from "@/shared/services/edgeFunctionError";
+import type { FunctionErrorCode as EdgeFunctionErrorCode } from "@/shared/utils/functionError";
 
 export type SupportRequestType = "ticket" | "suggestion";
 
@@ -293,4 +293,4 @@ export interface SupportRequestsFilters extends SupportModalFilters {
  * siempre para no tocar los imports del módulo.
  */
 export type SupportErrorCode = EdgeFunctionErrorCode;
-export { EdgeFunctionError as SupportServiceError } from "@/shared/services/edgeFunctionError";
+export { FunctionError as SupportServiceError } from "@/shared/utils/functionError";

@@ -31,6 +31,7 @@ import { useShippingLocations } from "../hooks/useShippingLocations";
 import { PageLoader } from "@/shared/components/page-loader";
 
 import { useToast } from "@/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 
 let tempId = 0;
 
@@ -238,11 +239,7 @@ const CreateShipping = () => {
       navigate("/shipping");
     } catch (error: any) {
       console.error(error);
-      toast({
-        title: "Error",
-        description: error.message || "Ocurrió un error al guardar el método de envío",
-        variant: "destructive",
-      });
+      toastError(error, "Ocurrió un error al guardar el método de envío");
     } finally {
       setLoadingCreate(false);
     }

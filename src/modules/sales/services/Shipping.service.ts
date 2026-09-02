@@ -11,20 +11,16 @@ import {
   ShippingDetailsApiResponse,
   ShippingEdit,
 } from "../types/Shipping.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const ShippingApi = async (
   filters: ShippingFilters = {},
 ): Promise<ShippingApiResponse> => {
   const endpoint = buildEndpoint("get-shipping-methods", filters);
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) {
-    console.error("Invoke error:", error);
-    throw error;
-  }
 
   console.log("ShippingApi payload:", data);
 
@@ -139,55 +135,40 @@ export async function getDistrictsByCityIdApi(
 export async function createShippingMethodApi(
   payload: ShippingPayload,
 ): Promise<void> {
-  const { data, error } = await supabase.functions.invoke(
+  await invokeFunction(
     "create-shipping-method",
     {
       method: "POST",
       body: payload,
     },
   );
-
-  if (error) {
-    console.error("Invoke error:", error);
-    throw error;
-  }
 }
 export async function updateShippingMethodApi(
   payload: ShippingEdit,
 ): Promise<void> {
-  const { data, error } = await supabase.functions.invoke(
+  await invokeFunction(
     "update-shipping-method",
     {
       body: payload,
     },
   );
-
-  if (error) {
-    console.error("Invoke error (update-shipping-method):", error);
-    throw error;
-  }
 }
 
 export async function getShippingById(
   id: string,
 ): Promise<ShippingDetailsApiResponse> {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "get-details-shipping-method",
     {
       body: { shippingmethodID: Number(id) },
     },
   );
 
-  if (error) {
-    console.error("Invoke error:", error);
-    throw error;
-  }
-
   return data;
 }
 
 export async function deleteShippingMethodApi(id: number): Promise<void> {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "delete-shipping-method",
     {
       body: {
@@ -195,10 +176,5 @@ export async function deleteShippingMethodApi(id: number): Promise<void> {
       },
     },
   );
-
-  if (error) {
-    console.error("Invoke error:", error);
-    throw error;
-  }
   return data;
 }

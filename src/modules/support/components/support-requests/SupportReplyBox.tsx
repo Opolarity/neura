@@ -11,6 +11,7 @@ import {
   type SupportAttachment,
 } from "../../types/Support.types";
 import { readFileAsBase64 } from "../../utils/readFileAsBase64";
+import { toastError } from "@/shared/utils/toastError";
 
 interface SupportReplyBoxProps {
   sending: boolean;
@@ -86,10 +87,7 @@ export const SupportReplyBox = ({ sending, onSend }: SupportReplyBoxProps) => {
           })),
         );
       } catch (error) {
-        toast({
-          title: error instanceof Error ? error.message : "No se pudieron leer los archivos",
-          variant: "destructive",
-        });
+        toastError(error, "No se pudieron leer los archivos");
         return;
       } finally {
         setPreparing(false);

@@ -8,6 +8,7 @@ import useOrderChannelTypes from '../hooks/useOrderChannelTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ComponentPermission } from '@/shared/components/component-permission';
+import { toastError } from "@/shared/utils/toastError";
 
 const OrderChannelTypesList = () => {
     const { toast } = useToast();
@@ -30,7 +31,7 @@ const OrderChannelTypesList = () => {
             toast({ title: "Canal de venta eliminado correctamente", variant: "success" });
             refresh();
         } catch (err: any) {
-            toast({ title: "Error", description: err.message, variant: "destructive" });
+            toastError(err);
         }
     };
 

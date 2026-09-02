@@ -5,6 +5,7 @@ import { ReturnItem } from '../types/Returns.types';
 import { toast } from "@/shared/hooks/use-toast";
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
+import { toastError } from "@/shared/utils/toastError";
 
 export const useReturns = () => {
     const [returns, setReturns] = useState<ReturnItem[]>([]);
@@ -31,7 +32,7 @@ export const useReturns = () => {
             setPagination((prev) => ({ ...prev, p_page: currentPage, p_size: currentSize, total }));
         } catch (error: any) {
             console.error('Error loading returns:', error);
-            toast({ title: 'Error al cargar las devoluciones', variant: "destructive" });
+            toastError(error, 'Error al cargar las devoluciones');
         } finally {
             setLoading(false);
         }

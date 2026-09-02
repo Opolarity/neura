@@ -13,6 +13,7 @@ import {
 } from '../services/Users.services';
 import { FilterOption, DocumentLookupPayload } from '../types/Users.types';
 import { typesByModuleCode } from '@/shared/services/service';
+import { toastError } from "@/shared/utils/toastError";
 
 interface FormData {
     user_name: string;
@@ -172,11 +173,7 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
                 }
             } catch (error) {
                 console.error('Error fetching options:', error);
-                toast({
-                    title: "Error",
-                    description: "No se pudieron cargar las opciones del formulario",
-                    variant: "destructive",
-                });
+                toastError(error, "No se pudieron cargar las opciones del formulario");
             } finally {
                 setOptionsLoading(false);
             }
@@ -273,11 +270,7 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
 
                 } catch (error) {
                     console.error('=== Error fetching user ===', error);
-                    toast({
-                        title: "Error",
-                        description: "No se pudo cargar la información del usuario",
-                        variant: "destructive",
-                    });
+                    toastError(error, "No se pudo cargar la información del usuario");
                 } finally {
                     setFetchingUser(false);
                 }
@@ -485,11 +478,7 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
             navigate('/settings/users');
         } catch (error: any) {
             console.error('=== Error saving user ===', error);
-            toast({
-                title: "Error",
-                description: error.message || "No se pudo guardar el usuario",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudo guardar el usuario");
         } finally {
             setLoading(false);
         }

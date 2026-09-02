@@ -16,6 +16,7 @@ import type {
   OpenPOSSessionRequest,
   ClosePOSSessionRequest,
 } from "../types/POS.types";
+import { toastError } from "@/shared/utils/toastError";
 
 export const usePOSSession = () => {
   const { toast } = useToast();
@@ -59,11 +60,7 @@ export const usePOSSession = () => {
         console.error("Error opening session:", error);
         const errorMessage =
           error instanceof Error ? error.message : "No se pudo abrir la caja";
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        toastError(error, errorMessage);
         throw error;
       } finally {
         setOpening(false);
@@ -89,11 +86,7 @@ export const usePOSSession = () => {
         console.error("Error closing session:", error);
         const errorMessage =
           error instanceof Error ? error.message : "No se pudo cerrar la caja";
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        toastError(error, errorMessage);
         throw error;
       } finally {
         setClosing(false);

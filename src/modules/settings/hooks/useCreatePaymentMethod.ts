@@ -7,6 +7,7 @@ import {
     GetPaymentMethodDetails,
     BusinessAccountsApi
 } from '../services/PaymentMethods.services';
+import { toastError } from "@/shared/utils/toastError";
 
 interface PaymentMethodFormData {
     name: string;
@@ -35,11 +36,7 @@ const useCreatePaymentMethod = (paymentMethodId?: number | null, isEdit?: boolea
                 setBusinessAccounts(accounts);
             } catch (error) {
                 console.error("Error loading business accounts:", error);
-                toast({
-                    title: "Error",
-                    description: "No se pudieron cargar las cuentas de negocio",
-                    variant: "destructive"
-                });
+                toastError(error, "No se pudieron cargar las cuentas de negocio");
             } finally {
                 setOptionsLoading(false);
             }
@@ -62,11 +59,7 @@ const useCreatePaymentMethod = (paymentMethodId?: number | null, isEdit?: boolea
                     }
                 } catch (error) {
                     console.error("Error fetching details:", error);
-                    toast({
-                        title: "Error",
-                        description: "No se pudieron cargar los detalles",
-                        variant: "destructive"
-                    });
+                    toastError(error, "No se pudieron cargar los detalles");
                 } finally {
                     setLoading(false);
                 }
@@ -129,11 +122,7 @@ const useCreatePaymentMethod = (paymentMethodId?: number | null, isEdit?: boolea
             navigate('/settings/payment-methods');
         } catch (error: any) {
             console.error("Error saving payment method:", error);
-            toast({
-                title: "Error",
-                description: error.message || "Error al guardar",
-                variant: "destructive"
-            });
+            toastError(error, "Error al guardar");
         } finally {
             setLoading(false);
         }

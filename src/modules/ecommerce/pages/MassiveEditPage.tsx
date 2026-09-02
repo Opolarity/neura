@@ -58,6 +58,7 @@ import ShortDescriptionMayModal from "../components/DescriptionMaYModal";
 import PromotionalImageModal from "../components/PromotionalImage";
 import EcommerceEditorButton from "@/shared/components/EcommerceEditorButton";
 import { ComponentPermission } from "@/shared/components/component-permission";
+import { toastError } from "@/shared/utils/toastError";
 
 
 const PromotionalTextPage = () => {
@@ -269,13 +270,7 @@ const PromotionalTextPage = () => {
         }
       }
     } catch (error) {
-      toast({
-        title: isUnassign
-          ? "Error al desasignar etiquetas"
-          : "Error al asignar etiquetas",
-        description: error instanceof Error ? error.message : "Error desconocido",
-        variant: "destructive",
-      });
+      toastError(error, "Error desconocido");
       throw error;
     }
   };
@@ -326,11 +321,7 @@ const PromotionalTextPage = () => {
         });
       }
     } catch (error) {
-      toast({
-        title: isUnassign ? "Error al desasignar marcas" : "Error al asignar marcas",
-        description: error instanceof Error ? error.message : "Error desconocido",
-        variant: "destructive",
-      });
+      toastError(error, "Error desconocido");
       throw error;
     }
   };

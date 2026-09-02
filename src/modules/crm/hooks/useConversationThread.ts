@@ -3,6 +3,7 @@ import { toast } from "@/shared/hooks/use-toast";
 import { threadAdapter } from "../adapters/conversations.adapter";
 import { getConversationThreadApi } from "../services/crm.service";
 import type { Conversation, ConversationMessage } from "../types/crm.types";
+import { toastError } from "@/shared/utils/toastError";
 
 const POLL_MS = 15_000;
 
@@ -32,7 +33,7 @@ export const useConversationThread = (conversation: Conversation | null) => {
       } catch (error) {
         console.error(error);
         if (!silent) {
-          toast({ title: "Error al cargar la conversación", variant: "destructive" });
+          toastError(error, "Error al cargar la conversación");
         }
       } finally {
         if (!silent) setLoading(false);

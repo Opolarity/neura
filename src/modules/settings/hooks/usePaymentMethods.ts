@@ -5,6 +5,7 @@ import { CreatePaymentMethod, getActivePaymentMethods, PaymentMethodsApi, Update
 import { PaymentMethodsAdapter } from '../adapters/PaymentMethods.adapter';
 import { useToast } from '@/hooks/use-toast';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
+import { toastError } from "@/shared/utils/toastError";
 
 const usePaymentMethods = () => {
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -31,11 +32,7 @@ const usePaymentMethods = () => {
             setPagination(paginationData);
         } catch (error) {
             console.error('Error fetching payment methods:', error);
-            toast({
-                title: "Error",
-                description: "No se pudieron cargar los métodos de pago",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudieron cargar los métodos de pago");
         }
     };
 
@@ -77,11 +74,7 @@ const usePaymentMethods = () => {
             });
         } catch (error: any) {
             console.error("Error saving payment method:", error);
-            toast({
-                title: "Error",
-                description: error.message || "Error al guardar",
-                variant: "destructive",
-            });
+            toastError(error, "Error al guardar");
         } finally {
             setSaving(false);
             setOpenFormModal(false);

@@ -13,7 +13,8 @@ export type ConditionType =
   | "new_customer"
   | "customer_birthday"
   | "date_range"
-  | "consignment_channel";
+  | "consignment_channel"
+  | "franchisee_exclusion";
 
 // Marcador de "promoción de consignación (franquiciados)". Una regla que lo
 // lleva NUNCA aplica al ecommerce/ERP (el motor process-price-rules la
@@ -25,6 +26,15 @@ export const CONSIGNMENT_CONDITION_TYPE: ConditionType = "consignment_channel";
 
 // Acciones soportadas por el canal consignación (el backend solo sabe
 // liquidar estas tres contra el precio de la orden de consignación).
+// Marcador de "excluir franquiciados". Una regla que lo lleva NO aplica a los
+// franquiciados listados en `tenant_references` (o a ninguno de ellos si la
+// lista está ausente/vacía); a los demás clientes aplica con normalidad. Lo
+// evalúa process-price-rules contra el tenant_reference de la cuenta
+// compradora. Se gestiona con el checkbox del formulario, no desde el builder
+// de condiciones.
+export const FRANCHISEE_EXCLUSION_CONDITION_TYPE: ConditionType =
+  "franchisee_exclusion";
+
 export const CONSIGNMENT_ALLOWED_ACTION_TYPES: ActionType[] = [
   "set_fixed_price",
   "fixed_discount_per_product",
@@ -33,8 +43,9 @@ export const CONSIGNMENT_ALLOWED_ACTION_TYPES: ActionType[] = [
 
 export interface Condition {
   type: ConditionType;
-  // Solo en el marcador de consignación: tenant_reference de los franquiciados
-  // que participan en la promo. Ausente o vacío = todos los franquiciados.
+  // Solo en los marcadores de franquiciados: tenant_reference de los
+  // franquiciados que participan en la promo de consignación, o de los que
+  // quedan excluidos de la regla. Ausente o vacío = todos los franquiciados.
   tenant_references?: string[];
   [key: string]: unknown;
 }
@@ -240,6 +251,7 @@ export const CONDITION_TYPE_LABELS: Record<ConditionType, string> = {
   customer_birthday: "Cumpleaños del cliente",
   date_range: "Rango de fechas",
   consignment_channel: "Canal: consignación (franquiciados)",
+  franchisee_exclusion: "Excluir franquiciados",
 };
 
 export const ACTION_TYPE_LABELS: Record<ActionType, string> = {

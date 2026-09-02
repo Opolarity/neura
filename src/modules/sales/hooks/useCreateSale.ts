@@ -63,6 +63,8 @@ import {
 } from "../utils";
 import { getParameter } from "@/modules/settings/services/Parameters.service";
 import { useAuth, useUserProfile } from "@/modules/auth";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { toastError } from "@/shared/utils/toastError";
 
 const INITIAL_FORM_DATA: SaleFormData = {
   documentType: "",
@@ -556,11 +558,7 @@ export const useCreateSale = () => {
       setSelectedStockTypeId(tId.toString());
     } catch (error) {
       console.error("Error loading form data:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los datos del formulario",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudieron cargar los datos del formulario");
     } finally {
       // Only set loading to false if NOT editing (orderId will trigger loadOrderData)
       if (!orderId) {
@@ -588,11 +586,7 @@ export const useCreateSale = () => {
       setPriceLists(adaptPriceLists(data || []));
     } catch (error) {
       console.error("Error loading price lists:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las listas de precios",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudieron cargar las listas de precios");
     } finally {
       setPriceListsLoading(false);
     }
@@ -756,11 +750,7 @@ export const useCreateSale = () => {
 
     } catch (error) {
       console.error("Error loading order:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo cargar la venta",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo cargar la venta");
     } finally {
       setLoading(false);
     }
@@ -959,11 +949,7 @@ export const useCreateSale = () => {
       apiKey = `${payloadBase64}.${signatureHex}`;
     } catch (e) {
       console.error("Error generando token de consignación:", e);
-      toast({
-        title: "Error",
-        description: e instanceof Error ? e.message : "No se pudo generar el token de autenticación",
-        variant: "destructive",
-      });
+      toastError(e, "No se pudo generar el token de autenticación");
       setSendingToFranchisee(false);
       return;
     }
@@ -982,17 +968,12 @@ export const useCreateSale = () => {
     };
 
     try {
-      const { data, error } = await supabase.functions.invoke(
+      const data = await invokeFunction(
         "get-products-for-send-to-franchise",
         {
           body: { order_id: Number(orderId) },
         },
       );
-
-      if (error) throw error;
-      if (!data?.success || !data?.data) {
-        throw new Error(data?.error ?? "No se pudo obtener el detalle de productos para franquiciado");
-      }
 
       franchiseProductsPayload = {
         products: data.data.products ?? [],
@@ -1004,11 +985,7 @@ export const useCreateSale = () => {
       }
     } catch (e) {
       console.error("Error obteniendo productos para franquiciado:", e);
-      toast({
-        title: "Error",
-        description: e instanceof Error ? e.message : "No se pudo obtener la información de productos para el franquiciado",
-        variant: "destructive",
-      });
+      toastError(e, "No se pudo obtener la información de productos para el franquiciado");
       setSendingToFranchisee(false);
       return;
     }
@@ -1024,8 +1001,10 @@ export const useCreateSale = () => {
 
     try {
       const fchUrl = import.meta.env.VITE_FCH_URL as string;
-      console.log("[Franquiciado] URL a consultar:", `${fchUrl}/functions/v1/create-consignment-intake`);
       const response = await fetch(
+        // API de franquiciados (otro repo, auth por x-api-key): no es una edge
+        // function de neura-backend, así que no pasa por el chokepoint.
+        // eslint-disable-next-line no-restricted-syntax
         `${fchUrl}/functions/v1/create-consignment-intake`,
         {
           method: "POST",
@@ -1078,11 +1057,7 @@ export const useCreateSale = () => {
       }
     } catch (error) {
       console.error("Error enviando a franquiciado:", error);
-      toast({
-        title: "Error al enviar",
-        description: "No se pudo enviar la consignación al franquiciado. Intente nuevamente.",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo enviar la consignación al franquiciado. Intente nuevamente.", "Error al enviar");
     } finally {
       setSendingToFranchisee(false);
     }
@@ -1469,12 +1444,7 @@ export const useCreateSale = () => {
                 customerLastname: "",
                 customerLastname2: "",
               }));
-              toast({
-                title: "Error de consulta",
-                description:
-                  "No se pudo consultar el documento. Ingrese los datos manualmente.",
-                variant: "destructive",
-              });
+              toastError(lookupError, "No se pudo consultar el documento. Ingrese los datos manualmente.", "Error de consulta");
             }
           } else {
             // Other document types (Passport, etc.) - enable manual input
@@ -1489,11 +1459,7 @@ export const useCreateSale = () => {
         }
       } catch (error) {
         console.error("Error searching client:", error);
-        toast({
-          title: "Error",
-          description: "No se pudo buscar el cliente",
-          variant: "destructive",
-        });
+        toastError(error, "No se pudo buscar el cliente");
       } finally {
         setSearchingClient(false);
       }
@@ -1780,11 +1746,7 @@ export const useCreateSale = () => {
         });
       } catch (error) {
         console.error("Error saving note:", error);
-        toast({
-          title: "Error",
-          description: "No se pudo guardar la nota",
-          variant: "destructive",
-        });
+        toastError(error, "No se pudo guardar la nota");
       }
       return;
     }
@@ -1844,11 +1806,7 @@ export const useCreateSale = () => {
       });
     } catch (err) {
       console.error("Error confirming payment:", err);
-      toast({
-        title: "Error",
-        description: "No se pudo confirmar el pago",
-        variant: "destructive",
-      });
+      toastError(err, "No se pudo confirmar el pago");
       throw err;
     }
   }, [toast]);
@@ -2217,13 +2175,9 @@ export const useCreateSale = () => {
         }
       } catch (error) {
         console.error("Error saving sale:", error);
-        toast({
-          title: "Error",
-          description: orderId
+        toastError(error, orderId
             ? "No se pudo actualizar la venta"
-            : "No se pudo crear la venta",
-          variant: "destructive",
-        });
+            : "No se pudo crear la venta");
       } finally {
         setSaving(false);
       }
@@ -2260,11 +2214,7 @@ export const useCreateSale = () => {
       setCancelModalOpen(true);
     } catch (error: any) {
       console.error("Error obteniendo pagos de la orden:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo verificar los pagos del pedido",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo verificar los pagos del pedido");
     }
   }, [orderId, toast]);
 
@@ -2298,11 +2248,7 @@ export const useCreateSale = () => {
         navigate("/sales");
       } catch (error: any) {
         console.error("Error cancelando el pedido:", error);
-        toast({
-          title: "No se pudo cancelar",
-          description: error?.message || "Error al cancelar el pedido",
-          variant: "destructive",
-        });
+        toastError(error, "Error al cancelar el pedido", "No se pudo cancelar");
       } finally {
         setCancelling(false);
       }

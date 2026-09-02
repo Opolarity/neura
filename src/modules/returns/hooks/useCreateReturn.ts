@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useUserProfile } from "@/modules/auth";
 import { toast } from "@/shared/hooks/use-toast";
 import { returnsService } from "../services/Returns.service";
@@ -15,6 +14,8 @@ import {
     Situation,
     ReturnPayment,
 } from "../types/Returns.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { toastError } from "@/shared/utils/toastError";
 
 const createEmptyPayment = (): ReturnPayment => ({
     id: crypto.randomUUID(),
@@ -120,7 +121,7 @@ export const useCreateReturn = () => {
             setPaymentMethods(paymentMethodsData);
         } catch (error: any) {
             console.error("Error loading data:", error);
-            toast({ title: "Error al cargar los datos", variant: "destructive" });
+            toastError(error, "Error al cargar los datos");
         } finally {
             setLoading(false);
         }
@@ -135,7 +136,7 @@ export const useCreateReturn = () => {
     ) => {
         setEdgeLoading(true);
         try {
-            const { data, error } = await supabase.functions.invoke("get-return-order-and-return", {
+            const data = await invokeFunction("get-return-order-and-return", {
                 body: {
                     order: source === "orders",
                     returns: source === "returns",
@@ -146,8 +147,6 @@ export const useCreateReturn = () => {
                 },
             });
 
-            if (error) throw error;
-
             const items = Array.isArray(data) ? data : (data?.data || []);
             const total = data?.page?.total ?? data?.total_rows ?? data?.total ?? items.length;
 
@@ -155,7 +154,7 @@ export const useCreateReturn = () => {
             setEdgePagination({ p_page: page, p_size: size, total });
         } catch (err: any) {
             console.error("Error fetching edge data:", err);
-            toast({ title: "Error al cargar los datos", variant: "destructive" });
+            toastError(err, "Error al cargar los datos");
         } finally {
             setEdgeLoading(false);
         }
@@ -263,7 +262,7 @@ export const useCreateReturn = () => {
             setShowOrderModal(false);
         } catch (error) {
             console.error("Error loading order products:", error);
-            toast({ title: "Error al cargar los productos de la orden", variant: "destructive" });
+            toastError(error, "Error al cargar los productos de la orden");
         }
     };
 
@@ -517,35 +516,12 @@ export const useCreateReturn = () => {
 
             toast({ title: "Devolución/Cambio creado exitosamente", variant: "success" });
             navigate("/returns");
-        } catch (error: any) {
-            // Extract all available info from the error
-            const message = error.message || "Error al crear la devolución/cambio";
-            const hint = error.hint || error.details || error.detail || "";
-            const code = error.code ? ` [código: ${error.code}]` : "";
-
-            // Edge function errors may carry a context body
-            let contextInfo = "";
-            if (error.context) {
-                try {
-                    const ctx = typeof error.context === "string" ? JSON.parse(error.context) : error.context;
-                    contextInfo = ctx?.error || ctx?.message || JSON.stringify(ctx);
-                } catch {
-                    contextInfo = String(error.context);
-                }
-            }
-
-            const displayMsg = [message, hint, contextInfo].filter(Boolean).join(" | ") + code;
-
-            // Log full details including stack for file/line info
-            console.group("❌ Error al crear devolución/cambio");
-            console.error("Mensaje:", message);
-            if (hint) console.error("Hint:", hint);
-            if (contextInfo) console.error("Contexto edge fn:", contextInfo);
-            if (error.stack) console.error("Stack:\n" + error.stack);
-            console.error("Error completo:", error);
-            console.groupEnd();
-
-            toast({ title: displayMsg, variant: "destructive", duration: 8000 });
+        } catch (error) {
+            // Antes aquí se rearmaba el mensaje a mano (message + hint + código
+            // + un JSON.parse sobre `error.context`, que es un Response y no un
+            // string). Eso lo hace ya `invokeFunction`, y el detalle técnico va
+            // a consola en vez de al toast.
+            toastError(error, "Error al crear la devolución/cambio");
         } finally {
             setSaving(false);
         }
