@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Mail } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { PageLoader } from "@/shared/components/page-loader";
 import { ComponentPermission } from "@/shared/components/component-permission";
 import { formatDateDisplay, formatDateTime } from "@/shared/utils/date";
@@ -87,27 +87,31 @@ export default function ReclamacionViewPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate("/ecommerce/reclamaciones")}
-        >
-          <ArrowLeft className="mr-1 h-4 w-4" />
-          Volver
-        </Button>
+      {/* Mismo header que crear/editar venta: a la izquierda el volver como
+          icono suelto y el título, a la derecha las acciones. Los badges van con
+          el título porque dicen de qué reclamo se trata y en qué punto está. */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Volver a Reclamaciones"
+            onClick={() => navigate("/ecommerce/reclamaciones")}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold text-foreground">
+              Reclamo #{reclamacion.id}
+            </h1>
+            <ComplaintTypeBadge claimType={reclamacion.claimType} />
+            <ComplaintStatusBadge status={reclamacion.status} />
+          </div>
+        </div>
 
-        <h1 className="text-2xl font-bold text-foreground">
-          Reclamo #{reclamacion.id}
-        </h1>
-
-        <ComplaintTypeBadge claimType={reclamacion.claimType} />
-        <ComplaintStatusBadge status={reclamacion.status} />
-
-        <div className="ml-auto">
+        <div className="flex gap-3">
           <ComponentPermission codeIn={["ecommerce_claims.send"]}>
             <Button onClick={() => setReplyOpen(true)}>
-              <Mail className="mr-2 h-4 w-4" />
               Responder al reclamante
             </Button>
           </ComponentPermission>
