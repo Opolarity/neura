@@ -11,12 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Mail } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { PageLoader } from "@/shared/components/page-loader";
 import { ComponentPermission } from "@/shared/components/component-permission";
-import { NotesPanel, type NotesPanelItem } from "@/shared/components/notes";
 import { formatDateDisplay, formatDateTime } from "@/shared/utils/date";
 import { useReclamacionDetalle } from "../hooks/useReclamacionDetalle";
+import ComplaintNotes from "../components/reclamaciones/ComplaintNotes";
 import ComplaintReplyDialog from "../components/reclamaciones/ComplaintReplyDialog";
 import {
   ComplaintStatusBadge,
@@ -85,17 +84,6 @@ export default function ReclamacionViewPage() {
   const showRepresentative =
     !reclamacion.isAdult ||
     Boolean(reclamacion.representativeName || reclamacion.representativeDocumentNumber);
-
-  // Las respuestas que salieron por correo van en el mismo hilo que las notas
-  // internas, marcadas, para leer de corrido qué se hizo y qué se le dijo.
-  const noteItems: NotesPanelItem[] = notes.map((note) => ({
-    id: note.id,
-    message: note.message,
-    createdAt: note.createdAt,
-    authorName: note.userName,
-    imageUrl: note.imageUrl,
-    badge: note.isReply ? <Badge variant="info">Respuesta enviada</Badge> : undefined,
-  }));
 
   return (
     <div className="space-y-4">
@@ -261,21 +249,12 @@ export default function ReclamacionViewPage() {
             </CardContent>
           </Card>
 
-          {/* Mismo panel de notas que editar venta. El botón de refrescar es
-              suyo: otra persona puede dejar una nota con esta pantalla abierta.
-              Alto fijo para que la caja de escribir no se mueva de sitio según
-              cuántas notas haya. */}
-          <NotesPanel
-            title="Notas internas"
-            notes={noteItems}
+          <ComplaintNotes
+            notes={notes}
             loading={loadingNotes}
-            sending={savingNote}
+            saving={savingNote}
             onRefresh={refreshNotes}
-            onSend={(message) => addNote(message, false)}
-            composerPermissionCodes={["ecommerce_claims.note"]}
-            emptyMessage="Todavía no hay notas en este reclamo"
-            placeholder="Escribir una nota interna..."
-            scrollClassName="h-[340px]"
+            onAddNote={(message) => addNote(message, false)}
           />
         </div>
       </div>
