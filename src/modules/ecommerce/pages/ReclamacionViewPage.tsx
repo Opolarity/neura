@@ -214,35 +214,34 @@ export default function ReclamacionViewPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <ComponentPermission codeIn={["ecommerce_claims.edit"]}>
-                <div className="space-y-2">
-                  <Select
-                    value={reclamacion.status}
-                    onValueChange={(value) => changeStatus(value as ComplaintStatus)}
-                    disabled={savingStatus}
+                <Select
+                  value={reclamacion.status}
+                  onValueChange={(value) => changeStatus(value as ComplaintStatus)}
+                  disabled={savingStatus}
+                >
+                  {/* Mientras guarda, el spinner ocupa el sitio del chevron: el
+                      selector se deshabilita y se ve por qué, sin mover nada de
+                      la tarjeta. El chevron lo pinta el SelectTrigger base como
+                      último svg, así que se oculta desde aquí en vez de tocar
+                      components/ui/select.tsx, que usa todo el ERP. */}
+                  <SelectTrigger
+                    className={savingStatus ? "[&>svg:last-child]:hidden" : undefined}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(Object.keys(COMPLAINT_STATUS_LABEL) as ComplaintStatus[]).map(
-                        (value) => (
-                          <SelectItem key={value} value={value}>
-                            {COMPLAINT_STATUS_LABEL[value]}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Sin esto el selector se bloquea sin explicación y parece
-                      que la pantalla se colgó. */}
-                  {savingStatus && (
-                    <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Guardando el estado...
-                    </p>
-                  )}
-                </div>
+                    <SelectValue />
+                    {savingStatus && (
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin opacity-50" />
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(COMPLAINT_STATUS_LABEL) as ComplaintStatus[]).map(
+                      (value) => (
+                        <SelectItem key={value} value={value}>
+                          {COMPLAINT_STATUS_LABEL[value]}
+                        </SelectItem>
+                      ),
+                    )}
+                  </SelectContent>
+                </Select>
               </ComponentPermission>
 
               <Field
