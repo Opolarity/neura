@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, MessageSquare, Send } from "lucide-react";
 import { ComponentPermission } from "@/shared/components/component-permission";
 import { formatDateTime } from "@/shared/utils/date";
@@ -42,38 +43,44 @@ const ComplaintNotes = ({
 
   return (
     <div className="space-y-4">
-      {notes.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-6 text-muted-foreground">
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <p className="text-sm">Cargando notas...</p>
-            </>
-          ) : (
-            <>
-              <MessageSquare className="w-5 h-5" />
-              <p className="text-sm">Todavía no hay notas en este reclamo</p>
-            </>
-          )}
-        </div>
-      ) : (
-        <ul
-          className={`space-y-3 transition-opacity ${loading ? "opacity-60" : ""}`}
-        >
-          {notes.map((note) => (
-            <li key={note.id} className="rounded-lg border p-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium">{note.userName}</span>
-                {note.isReply && <Badge variant="info">Respuesta enviada</Badge>}
-              </div>
-              <p className="mt-1 whitespace-pre-line text-sm">{note.message}</p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {formatDateTime(note.createdAt)}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* Altura fija con scroll propio: el hilo crece sin límite y sin esto la
+          tarjeta se estiraba hasta empujar la caja de escritura fuera de la
+          pantalla. Con la altura fija, la caja se queda siempre en el mismo
+          sitio aunque haya una nota o treinta. */}
+      <ScrollArea className="h-[340px] pr-3">
+        {notes.length === 0 ? (
+          <div className="flex min-h-[300px] flex-col items-center justify-center gap-2 text-muted-foreground">
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <p className="text-sm">Cargando notas...</p>
+              </>
+            ) : (
+              <>
+                <MessageSquare className="w-5 h-5" />
+                <p className="text-sm">Todavía no hay notas en este reclamo</p>
+              </>
+            )}
+          </div>
+        ) : (
+          <ul
+            className={`space-y-3 transition-opacity ${loading ? "opacity-60" : ""}`}
+          >
+            {notes.map((note) => (
+              <li key={note.id} className="rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium">{note.userName}</span>
+                  {note.isReply && <Badge variant="info">Respuesta enviada</Badge>}
+                </div>
+                <p className="mt-1 whitespace-pre-line text-sm">{note.message}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {formatDateTime(note.createdAt)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </ScrollArea>
 
       <ComponentPermission codeIn={["ecommerce_claims.note"]}>
         <div className="space-y-2 border-t pt-4">
