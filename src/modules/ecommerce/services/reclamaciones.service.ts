@@ -12,11 +12,14 @@ import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import { buildEndpoint } from "@/shared/utils/query";
 import type {
   ComplaintDetailApiResponse,
+  ComplaintNotesApiResponse,
   ComplaintStatus,
   ComplaintsApiResponse,
   ComplaintsExportApiResponse,
   ComplaintsFilters,
   CreateComplaintNotePayload,
+  CreateComplaintNoteResponse,
+  UpdateComplaintStatusResponse,
 } from "../types/reclamaciones.types";
 
 const EMPTY_LIST: ComplaintsApiResponse = {
@@ -46,10 +49,27 @@ export const getComplaintDetailApi = async (
   });
 };
 
+/**
+ * Solo el hilo de notas. El detalle no se vuelve a pedir: las notas cambian por
+ * su cuenta y el reclamo no, así que refrescarlas no tiene por qué repintar la
+ * pantalla entera.
+ */
+export const getComplaintNotesApi = async (
+  complaintId: number,
+): Promise<ComplaintNotesApiResponse> => {
+  const endpoint = buildEndpoint("get-complaint-notes", {
+    complaint_id: complaintId,
+  });
+
+  return await invokeFunction<ComplaintNotesApiResponse>(endpoint, {
+    method: "GET",
+  });
+};
+
 export const createComplaintNoteApi = async (
   payload: CreateComplaintNotePayload,
-) => {
-  return await invokeFunction("create-complaint-note", {
+): Promise<CreateComplaintNoteResponse> => {
+  return await invokeFunction<CreateComplaintNoteResponse>("create-complaint-note", {
     method: "POST",
     body: payload,
   });
@@ -58,8 +78,8 @@ export const createComplaintNoteApi = async (
 export const updateComplaintStatusApi = async (
   complaintId: number,
   status: ComplaintStatus,
-) => {
-  return await invokeFunction("update-complaint-status", {
+): Promise<UpdateComplaintStatusResponse> => {
+  return await invokeFunction<UpdateComplaintStatusResponse>("update-complaint-status", {
     method: "POST",
     body: { complaint_id: complaintId, status },
   });

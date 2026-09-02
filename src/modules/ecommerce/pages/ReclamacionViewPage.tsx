@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Mail } from "lucide-react";
+import { ArrowLeft, Mail, RefreshCw } from "lucide-react";
 import { PageLoader } from "@/shared/components/page-loader";
 import { ComponentPermission } from "@/shared/components/component-permission";
 import { formatDateDisplay, formatDateTime } from "@/shared/utils/date";
@@ -55,10 +55,12 @@ export default function ReclamacionViewPage() {
     reclamacion,
     notes,
     loading,
+    loadingNotes,
     savingNote,
     savingStatus,
     addNote,
     changeStatus,
+    refreshNotes,
   } = useReclamacionDetalle(isValidId ? claimId : null);
 
   const [replyOpen, setReplyOpen] = useState(false);
@@ -249,12 +251,28 @@ export default function ReclamacionViewPage() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Notas internas</CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-lg">Notas internas</CardTitle>
+                {/* Refresca solo el hilo: otra persona puede haber dejado una
+                    nota mientras esta pantalla estaba abierta. */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  title="Actualizar notas"
+                  onClick={refreshNotes}
+                  disabled={loadingNotes}
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 ${loadingNotes ? "animate-spin" : ""}`}
+                  />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <ComplaintNotes
                 notes={notes}
                 saving={savingNote}
+                loading={loadingNotes}
                 onAddNote={(message) => addNote(message, false)}
               />
             </CardContent>

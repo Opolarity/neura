@@ -10,6 +10,8 @@ import type { ComplaintNote } from "../../types/reclamaciones.types";
 interface ComplaintNotesProps {
   notes: ComplaintNote[];
   saving: boolean;
+  /** Refresco del hilo. No bloquea la pantalla: solo atenúa la lista. */
+  loading?: boolean;
   onAddNote: (message: string) => Promise<boolean>;
 }
 
@@ -22,7 +24,12 @@ interface ComplaintNotesProps {
  *
  * La tabla y el SP existían desde el inicio, pero ningún frontend los llamaba.
  */
-const ComplaintNotes = ({ notes, saving, onAddNote }: ComplaintNotesProps) => {
+const ComplaintNotes = ({
+  notes,
+  saving,
+  loading = false,
+  onAddNote,
+}: ComplaintNotesProps) => {
   const [message, setMessage] = useState("");
 
   const handleSubmit = async () => {
@@ -37,11 +44,22 @@ const ComplaintNotes = ({ notes, saving, onAddNote }: ComplaintNotesProps) => {
     <div className="space-y-4">
       {notes.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-6 text-muted-foreground">
-          <MessageSquare className="w-5 h-5" />
-          <p className="text-sm">Todavía no hay notas en este reclamo</p>
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <p className="text-sm">Cargando notas...</p>
+            </>
+          ) : (
+            <>
+              <MessageSquare className="w-5 h-5" />
+              <p className="text-sm">Todavía no hay notas en este reclamo</p>
+            </>
+          )}
         </div>
       ) : (
-        <ul className="space-y-3">
+        <ul
+          className={`space-y-3 transition-opacity ${loading ? "opacity-60" : ""}`}
+        >
           {notes.map((note) => (
             <li key={note.id} className="rounded-lg border p-3">
               <div className="flex items-center justify-between gap-2">
