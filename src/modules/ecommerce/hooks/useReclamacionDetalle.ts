@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/shared/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 import {
   createComplaintNoteApi,
   getComplaintDetailApi,
@@ -47,13 +48,8 @@ export const useReclamacionDetalle = (id: number | null) => {
       setReclamacion(reclamacionDetalleAdapter(response.data));
       setNotes(reclamacionNotasAdapter(response.notes));
     } catch (error) {
-      console.error("Error al cargar la reclamación:", error);
       setReclamacion(null);
-      toast({
-        title: "Error al cargar la reclamación",
-        description: (error as Error)?.message,
-        variant: "destructive",
-      });
+      toastError(error, "Error al cargar la reclamación");
     } finally {
       setLoading(false);
     }
@@ -71,12 +67,7 @@ export const useReclamacionDetalle = (id: number | null) => {
 
       setNotes(reclamacionNotasAdapter(response.notes));
     } catch (error) {
-      console.error("Error al cargar las notas:", error);
-      toast({
-        title: "Error al cargar las notas",
-        description: (error as Error)?.message,
-        variant: "destructive",
-      });
+      toastError(error, "Error al cargar las notas");
     } finally {
       setLoadingNotes(false);
     }
@@ -114,6 +105,7 @@ export const useReclamacionDetalle = (id: number | null) => {
 
       toast({
         title: notifyCustomer ? "Respuesta enviada al reclamante" : "Nota agregada",
+        variant: "success",
       });
 
       if (response?.complaint) {
@@ -126,12 +118,10 @@ export const useReclamacionDetalle = (id: number | null) => {
       await loadNotes(id);
       return true;
     } catch (error) {
-      console.error("Error al guardar la nota:", error);
-      toast({
-        title: notifyCustomer ? "No se pudo enviar la respuesta" : "No se pudo guardar la nota",
-        description: (error as Error)?.message,
-        variant: "destructive",
-      });
+      toastError(
+        error,
+        notifyCustomer ? "No se pudo enviar la respuesta" : "No se pudo guardar la nota",
+      );
       return false;
     } finally {
       setSavingNote(false);
@@ -149,7 +139,7 @@ export const useReclamacionDetalle = (id: number | null) => {
 
     try {
       const response = await updateComplaintStatusApi(id, status);
-      toast({ title: "Estado actualizado" });
+      toast({ title: "Estado actualizado", variant: "success" });
 
       // answered_at lo sella el backend la primera vez que pasa a respondido.
       if (response?.complaint) {
@@ -159,13 +149,8 @@ export const useReclamacionDetalle = (id: number | null) => {
         );
       }
     } catch (error) {
-      console.error("Error al cambiar el estado:", error);
       setReclamacion((current) => (current ? { ...current, status: previous } : current));
-      toast({
-        title: "No se pudo cambiar el estado",
-        description: (error as Error)?.message,
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo cambiar el estado");
     } finally {
       setSavingStatus(false);
     }
