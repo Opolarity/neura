@@ -54,8 +54,11 @@ const ComplaintNotes = ({
     if (ok) setMessage("");
   };
 
+  // El alto fijo va en la tarjeta entera, no solo en el hilo: así la sección
+  // mide lo mismo con una nota o con cincuenta, y si mañana cambia la cabecera
+  // o la caja de escribir sigue sin crecer — el hilo absorbe la diferencia.
   return (
-    <Card className="flex flex-col overflow-hidden">
+    <Card className="flex h-[480px] flex-col overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2">
           {/* El icono va sin color propio: hereda el del título, como el resto
@@ -77,7 +80,7 @@ const ComplaintNotes = ({
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
-        <ScrollArea className="h-[340px] pr-4">
+        <ScrollArea className="flex-1 pr-4">
           <div className="space-y-3">
             {loading && notes.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center">
