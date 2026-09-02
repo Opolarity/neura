@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +45,28 @@ const ComplaintNotes = ({
   onAddNote,
 }: ComplaintNotesProps) => {
   const [message, setMessage] = useState("");
+  const scrollRootRef = useRef<HTMLDivElement>(null);
+  const previousCountRef = useRef(notes.length);
+
+  // Las notas van de la más vieja a la más nueva, así que al agregar una queda
+  // fuera de vista y el hilo se quedaba mostrando la penúltima. Se baja al final
+  // solo cuando el hilo crece: al refrescar sin novedades, o al reordenar, no se
+  // mueve el scroll de quien está leyendo.
+  useEffect(() => {
+    const previousCount = previousCountRef.current;
+    previousCountRef.current = notes.length;
+
+    if (notes.length <= previousCount) return;
+
+    // El nodo que scrollea es el viewport que monta Radix dentro del Root, no
+    // el Root, que está en overflow-hidden.
+    const viewport = scrollRootRef.current?.querySelector<HTMLElement>(
+      "[data-radix-scroll-area-viewport]",
+    );
+    if (!viewport) return;
+
+    viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
+  }, [notes.length]);
 
   const handleSend = async () => {
     const trimmed = message.trim();
@@ -80,7 +102,7 @@ const ComplaintNotes = ({
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
-        <ScrollArea className="flex-1 pr-4">
+        <ScrollArea ref={scrollRootRef} className="flex-1 pr-4">
           <div className="space-y-3">
             {loading && notes.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center">
