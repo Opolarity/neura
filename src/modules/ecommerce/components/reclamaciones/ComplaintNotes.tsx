@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, RefreshCw, Send } from "lucide-react";
+import { Loader2, MessageSquare, RefreshCw, Send } from "lucide-react";
 import { ComponentPermission } from "@/shared/components/component-permission";
 import { formatDateTime } from "@/shared/utils/date";
 import type { ComplaintNote } from "../../types/reclamaciones.types";
@@ -58,7 +58,12 @@ const ComplaintNotes = ({
     <Card className="flex flex-col overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-lg">Notas internas</CardTitle>
+          {/* El icono va sin color propio: hereda el del título, como el resto
+              de iconos del sistema. */}
+          <CardTitle className="text-lg flex items-center gap-2">
+            <MessageSquare className="w-5 h-5" />
+            Notas internas
+          </CardTitle>
           <Button
             variant="ghost"
             size="sm"

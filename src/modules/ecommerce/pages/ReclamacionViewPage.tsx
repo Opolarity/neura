@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Mail } from "lucide-react";
+import { ArrowLeft, Loader2, Mail } from "lucide-react";
 import { PageLoader } from "@/shared/components/page-loader";
 import { ComponentPermission } from "@/shared/components/component-permission";
 import { formatDateDisplay, formatDateTime } from "@/shared/utils/date";
@@ -214,24 +214,35 @@ export default function ReclamacionViewPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <ComponentPermission codeIn={["ecommerce_claims.edit"]}>
-                <Select
-                  value={reclamacion.status}
-                  onValueChange={(value) => changeStatus(value as ComplaintStatus)}
-                  disabled={savingStatus}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(COMPLAINT_STATUS_LABEL) as ComplaintStatus[]).map(
-                      (value) => (
-                        <SelectItem key={value} value={value}>
-                          {COMPLAINT_STATUS_LABEL[value]}
-                        </SelectItem>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Select
+                    value={reclamacion.status}
+                    onValueChange={(value) => changeStatus(value as ComplaintStatus)}
+                    disabled={savingStatus}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(COMPLAINT_STATUS_LABEL) as ComplaintStatus[]).map(
+                        (value) => (
+                          <SelectItem key={value} value={value}>
+                            {COMPLAINT_STATUS_LABEL[value]}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Sin esto el selector se bloquea sin explicación y parece
+                      que la pantalla se colgó. */}
+                  {savingStatus && (
+                    <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Guardando el estado...
+                    </p>
+                  )}
+                </div>
               </ComponentPermission>
 
               <Field
