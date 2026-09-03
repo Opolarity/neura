@@ -1,5 +1,6 @@
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import {
+  FranchiseCategory,
   FranchiseStockApiResponse,
   FranchiseStockRow,
   FranchiseWarehouse,

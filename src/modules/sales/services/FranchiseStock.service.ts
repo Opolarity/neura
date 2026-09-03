@@ -1,9 +1,23 @@
 import { buildEndpoint } from "@/shared/utils/query";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import {
+  FranchiseeTenant,
   FranchiseStockApiResponse,
   FranchiseStockFilters,
 } from "../types/FranchiseStock.types";
+
+/**
+ * Franquiciados activos para el selector de la pantalla.
+ *
+ * Va contra get-franchise-tenants, el otro puente de este backend hacia
+ * franquiciados. Da el nombre comercial del tenant, que es por el que se
+ * conoce al franquiciado; get-franchisee-accounts da la cuenta, que es lo que
+ * necesitan las promociones de consignación.
+ */
+export const fetchFranchiseTenants = async (): Promise<FranchiseeTenant[]> => {
+  const data = await invokeFunction("get-franchise-tenants", { method: "GET" });
+  return (data?.data ?? []) as FranchiseeTenant[];
+};
 
 /**
  * Stock físico de la mercadería Overtake en los almacenes de un franquiciado.

@@ -2,12 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { toastError } from "@/shared/utils/toastError";
-import { getFranchiseeAccounts } from "@/modules/discounts/services/PriceRule.services";
-import { FranchiseeAccount } from "@/modules/discounts/types/priceRule.types";
-import { fetchFranchiseStock } from "../services/FranchiseStock.service";
+import {
+  fetchFranchiseStock,
+  fetchFranchiseTenants,
+} from "../services/FranchiseStock.service";
 import { franchiseStockAdapter } from "../adapters/FranchiseStock.adapter";
 import {
   FranchiseCategory,
+  FranchiseeTenant,
   FranchiseStockFilters,
   FranchiseStockRow,
   FranchiseWarehouse,
@@ -24,7 +26,7 @@ const DEFAULT_FILTERS: FranchiseStockFilters = {
 };
 
 export const useFranchiseStock = () => {
-  const [franchisees, setFranchisees] = useState<FranchiseeAccount[]>([]);
+  const [franchisees, setFranchisees] = useState<FranchiseeTenant[]>([]);
   const [loadingFranchisees, setLoadingFranchisees] = useState(true);
   const [tenantReference, setTenantReference] = useState<string | null>(null);
 
@@ -57,8 +59,8 @@ export const useFranchiseStock = () => {
     const loadFranchisees = async () => {
       setLoadingFranchisees(true);
       try {
-        const accounts = await getFranchiseeAccounts();
-        if (!cancelled) setFranchisees(accounts);
+        const tenants = await fetchFranchiseTenants();
+        if (!cancelled) setFranchisees(tenants);
       } catch (error) {
         console.error("Error cargando franquiciados:", error);
         if (!cancelled) toastError(error, "No se pudo cargar la lista de franquiciados");
@@ -165,7 +167,7 @@ export const useFranchiseStock = () => {
     !!filters.categories?.length;
 
   const selectedFranchisee =
-    franchisees.find((f) => f.tenant_reference === tenantReference) ?? null;
+    franchisees.find((f) => f.code === tenantReference) ?? null;
 
   return {
     franchisees,
