@@ -117,6 +117,8 @@ export interface ScheduleTrainingPayload {
   /** Uno de los `start` que devolvió la API, exacto. */
   start: string;
   inviteeName: string;
+  /** Celular del solicitante, ya normalizado. Opcional: no todos lo tienen. */
+  inviteePhone?: string;
   notes?: string;
 }
 

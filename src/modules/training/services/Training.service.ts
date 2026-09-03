@@ -75,6 +75,7 @@ export const createTrainingBooking = async (
         slug: payload.slug,
         start: payload.start,
         invitee_name: payload.inviteeName,
+        invitee_phone: payload.inviteePhone || undefined,
         // La zona del navegador solo se guarda como referencia: los instantes
         // viajan siempre en UTC.
         invitee_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
