@@ -5,6 +5,14 @@
 // los almacenes llegan dentro de la respuesta (son los del franquiciado, no los
 // nuestros) en vez de leerse con getWarehousesIsActiveTrue.
 
+/** Categoría del franquiciado; el árbol cambia con cada franquiciado. */
+export interface FranchiseCategory {
+  id: number;
+  name: string;
+  /** null = categoría raíz. Filtrar por una incluye a sus descendientes. */
+  parentId: number | null;
+}
+
 /** Almacén del franquiciado; cada uno es una columna de la tabla. */
 export interface FranchiseWarehouse {
   id: number;
@@ -37,6 +45,8 @@ export interface FranchiseStockFilters {
   order?: string | null;
   minstock?: number | null;
   maxstock?: number | null;
+  /** Ids de categoría del franquiciado; viajan como CSV en el query string. */
+  categories?: number[] | null;
 }
 
 // ── Forma cruda que devuelve la edge function (snake_case) ──────────────────
@@ -56,6 +66,7 @@ export interface FranchiseStockApiResponse {
     }>;
   }>;
   warehouses: Array<{ id: number; name: string | null }>;
+  categories?: Array<{ id: number; name: string | null; parent_id: number | null }>;
   page: {
     page: number;
     size: number;

@@ -10,10 +10,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEffect, useState } from "react";
-import { FranchiseStockFilters } from "../../types/FranchiseStock.types";
+import {
+  FranchiseCategory,
+  FranchiseStockFilters,
+} from "../../types/FranchiseStock.types";
+import FranchiseCategoryFilter from "./FranchiseCategoryFilter";
 
 interface FranchiseStockFilterModalProps {
   filters: FranchiseStockFilters;
+  /** Árbol del franquiciado elegido; llega con la respuesta del stock. */
+  categories: FranchiseCategory[];
   isOpen: boolean;
   onClose: () => void;
   onApply: (filters: FranchiseStockFilters) => void;
@@ -21,6 +27,7 @@ interface FranchiseStockFilterModalProps {
 
 const FranchiseStockFilterModal = ({
   filters,
+  categories,
   isOpen,
   onClose,
   onApply,
@@ -46,6 +53,7 @@ const FranchiseStockFilterModal = ({
       order: null,
       minstock: null,
       maxstock: null,
+      categories: null,
     });
   };
 
@@ -62,6 +70,20 @@ const FranchiseStockFilterModal = ({
         <div className="max-h-[50vh]">
           <ScrollArea className="h-full">
             <div className="space-y-4 py-4 pl-1 pr-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Categorías</Label>
+                <FranchiseCategoryFilter
+                  categories={categories}
+                  selected={internalFilters.categories ?? []}
+                  onChange={(ids) =>
+                    setInternalFilters((prev) => ({
+                      ...prev,
+                      categories: ids.length > 0 ? ids : null,
+                    }))
+                  }
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Stock</Label>
                 <div className="flex gap-2">

@@ -24,6 +24,7 @@ const FranchiseStock = () => {
     tenantReference,
     rows,
     warehouses,
+    categories,
     loading,
     search,
     pagination,
@@ -87,6 +88,7 @@ const FranchiseStock = () => {
 
       <FranchiseStockFilterModal
         filters={filters}
+        categories={categories}
         isOpen={isOpenFilterModal}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}

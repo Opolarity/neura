@@ -7,6 +7,7 @@ import { FranchiseeAccount } from "@/modules/discounts/types/priceRule.types";
 import { fetchFranchiseStock } from "../services/FranchiseStock.service";
 import { franchiseStockAdapter } from "../adapters/FranchiseStock.adapter";
 import {
+  FranchiseCategory,
   FranchiseStockFilters,
   FranchiseStockRow,
   FranchiseWarehouse,
@@ -19,6 +20,7 @@ const DEFAULT_FILTERS: FranchiseStockFilters = {
   order: null,
   minstock: null,
   maxstock: null,
+  categories: null,
 };
 
 export const useFranchiseStock = () => {
@@ -28,6 +30,10 @@ export const useFranchiseStock = () => {
 
   const [rows, setRows] = useState<FranchiseStockRow[]>([]);
   const [warehouses, setWarehouses] = useState<FranchiseWarehouse[]>([]);
+  // Arbol de categorias del franquiciado. Llega en la misma respuesta del stock
+  // (el SP lo calcula sobre el universo del tenant, sin aplicar los filtros),
+  // asi que no hay llamada extra ni la lista cambia al filtrar.
+  const [categories, setCategories] = useState<FranchiseCategory[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [search, setSearch] = useState("");
@@ -73,6 +79,7 @@ export const useFranchiseStock = () => {
     if (!tenantReference) {
       setRows([]);
       setWarehouses([]);
+      setCategories([]);
       setPagination((prev) => ({ ...prev, total: 0 }));
       return;
     }
@@ -83,10 +90,15 @@ export const useFranchiseStock = () => {
     fetchFranchiseStock(tenantReference, filters)
       .then((response) => {
         if (currentRequest !== requestId.current) return;
-        const { data, warehouses: whs, pagination: newPagination } =
-          franchiseStockAdapter(response);
+        const {
+          data,
+          warehouses: whs,
+          categories: cats,
+          pagination: newPagination,
+        } = franchiseStockAdapter(response);
         setRows(data);
         setWarehouses(whs);
+        setCategories(cats);
         setPagination(newPagination);
       })
       .catch((error) => {
@@ -148,7 +160,9 @@ export const useFranchiseStock = () => {
   );
 
   const hasActiveFilters =
-    filters.minstock !== null || filters.maxstock !== null;
+    filters.minstock !== null ||
+    filters.maxstock !== null ||
+    !!filters.categories?.length;
 
   const selectedFranchisee =
     franchisees.find((f) => f.tenant_reference === tenantReference) ?? null;
@@ -160,6 +174,7 @@ export const useFranchiseStock = () => {
     selectedFranchisee,
     rows,
     warehouses,
+    categories,
     loading,
     search,
     pagination,
