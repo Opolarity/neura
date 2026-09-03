@@ -172,7 +172,7 @@ export const APP_PERMISSIONS_CONFIG = [
         code: "sales.group", name: "Ventas", node: [
           { name: "Lista de ventas", path: "/sales", code: "sales.list", element: <Sales />, showSidebar: true, node: [] },
           { name: "Ventas a franquicias", path: "/sales/products/franchise", code: "sales_franchise.list", element: <FranchiseProducts />, showSidebar: true, node: [] },
-          { name: "Stock de franquicias", path: "/stock/products/franchise", code: "franchise_stock.list", element: <FranchiseStock />, showSidebar: true, node: [] },
+          { name: "Stock de franquicias", path: "/stock/products/franchise", code: "franchise_stock.list", element: <FranchiseStock />, showSidebar: false, node: [] },
           { name: "Añadir venta", path: "/sales/create", code: "sales.create", element: <CreateSale />, showSidebar: true, node: [] },
           { name: "Editar venta", path: "/sales/edit/:id", code: "sales.edit", element: <CreateSale />, showSidebar: false, node: [] },
           { name: "Envíos", path: "/shipping", code: "shipments.list", element: <Shipping />, showSidebar: true, node: [] },
