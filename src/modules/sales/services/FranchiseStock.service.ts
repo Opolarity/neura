@@ -26,6 +26,8 @@ export const fetchFranchiseStock = async (
     order: filters.order,
     minstock: filters.minstock,
     maxstock: filters.maxstock,
+    // CSV: buildEndpoint hace String(array), que ya produce "27,31".
+    categories: filters.categories?.length ? filters.categories.join(",") : null,
   });
 
   const data = await invokeFunction(endpoint, { method: "GET" });
