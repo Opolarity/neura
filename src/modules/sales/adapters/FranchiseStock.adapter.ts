@@ -34,11 +34,15 @@ export const franchiseStockAdapter = (response: FranchiseStockApiResponse) => {
     (w) => ({ id: w.id, name: w.name ?? "" }),
   );
 
+  const categories: FranchiseCategory[] = (response?.categories ?? []).map(
+    (c) => ({ id: c.id, name: c.name ?? "", parentId: c.parent_id ?? null }),
+  );
+
   const pagination: PaginationState = {
     p_page: toNumber(response?.page?.page) || 1,
     p_size: toNumber(response?.page?.size) || 20,
     total: toNumber(response?.page?.total),
   };
 
-  return { data: rows, warehouses, pagination };
+  return { data: rows, warehouses, categories, pagination };
 };
