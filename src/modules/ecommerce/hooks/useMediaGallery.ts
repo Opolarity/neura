@@ -62,6 +62,15 @@ export const useMediaGallery = () => {
 
   const refetch = () => loadData();
 
+  // Tras subir, el archivo nuevo entra al tope del orden (created_at DESC), así
+  // que hay que recargar volviendo a la primera página: si el usuario estaba en
+  // otra, un refetch a secas lo dejaría sin ver lo que acaba de subir.
+  const reloadFirstPage = () => {
+    const updated = { ...filters, page: 1 };
+    setFilters(updated);
+    loadData(updated);
+  };
+
   return {
     items,
     loading,
@@ -72,5 +81,6 @@ export const useMediaGallery = () => {
     handlePageSizeChange,
     applyFilters,
     refetch,
+    reloadFirstPage,
   };
 };

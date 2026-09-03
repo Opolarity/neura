@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateDisplay } from "@/shared/utils/date";
 import type { Medio } from "../types/medios.types";
 import { ComponentPermission } from "@/shared/components/component-permission";
+import { getThumbnailUrl } from "../utils/mediaThumbnail";
 
 interface MediaGridProps {
   medios: Medio[];
@@ -50,11 +51,23 @@ const MediaGrid = ({ medios, loading, onSelect, onDelete }: MediaGridProps) => {
                 <span className="text-xs">Video</span>
               </div>
             ) : (
+              // Miniatura, no el original: el archivo completo se sirve solo
+              // en el diálogo de detalle.
               <img
-                src={medio.url}
+                src={getThumbnailUrl(medio.url)}
                 alt={medio.name}
                 className="h-full w-full object-cover"
                 loading="lazy"
+                decoding="async"
+                onError={(e) => {
+                  // imgproxy rechaza las fuentes de mas de 16.8 MP con
+                  // "Invalid source image". Antes que dejar el hueco roto se
+                  // cae al original: pesa, pero se ve.
+                  const img = e.currentTarget;
+                  if (img.dataset.fallback) return;
+                  img.dataset.fallback = "1";
+                  img.src = medio.url;
+                }}
               />
             )}
           </div>

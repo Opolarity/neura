@@ -124,19 +124,31 @@ export function generateFranchiseProductsExcel({
     "Precio unitario",
     "Descuento",
     "Monto Desc.",
+    "Pagado",
     "Total (por pagar)",
     "Franquiciado",
   ];
 
   let totalDiscount = 0;
+  let totalPaid = 0;
   let totalDue = 0;
 
   const dataRows: SheetCell[][] = rows.map((item) => {
     const sold = item.soldByFranchise ?? 0;
-    // Lo que el franquiciado debe por esta línea, neto de promociones.
-    // Valorizado por evento desde el SP: cada venta conserva su precio.
-    const due = item.soldAmount;
+    // Monto vendido de la línea, neto de promociones. Valorizado por evento
+    // desde el SP: cada venta conserva su precio.
+    const soldAmount = item.soldAmount;
+    // Con filtro de fecha el pagado es el atribuido a las ventas del rango
+    // (FIFO en el SP); sin filtro, el acumulado de la línea. Así la columna
+    // cuadra con el bloque de montos de arriba en ambos casos.
+    const paid = summary.dateFilterActive
+      ? item.paidInRange
+      : (item.paidByFranchise ?? 0);
+    // Lo que falta pagar de esta línea. Nunca negativo: un pago de más queda
+    // saldado en 0 y no resta deuda de otras líneas.
+    const due = Math.max(0, soldAmount - paid);
     totalDiscount += item.franchiseDiscount;
+    totalPaid += paid;
     totalDue += due;
 
     return [
@@ -148,6 +160,7 @@ export function generateFranchiseProductsExcel({
       roundMoney(item.productPrice),
       item.promoNames.join(", ") || null,
       roundMoney(item.franchiseDiscount),
+      roundMoney(paid),
       roundMoney(due),
       item.franchiseName ?? "-",
     ];
@@ -163,6 +176,7 @@ export function generateFranchiseProductsExcel({
     null,
     null,
     roundMoney(totalDiscount),
+    roundMoney(totalPaid),
     roundMoney(totalDue),
     null,
   ];
@@ -185,10 +199,11 @@ export function generateFranchiseProductsExcel({
     { wch: 14 },
     { wch: 14 },
     { wch: 16 },
+    { wch: 16 },
     { wch: 28 },
   ];
 
-  const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:I1");
+  const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:J1");
   for (let row = range.s.r; row <= range.e.r; row += 1) {
     for (let col = range.s.c; col <= range.e.c; col += 1) {
       const cell = ws[XLSX.utils.encode_cell({ r: row, c: col })];
@@ -200,8 +215,8 @@ export function generateFranchiseProductsExcel({
       }
 
       if (row > filterRows.length + summaryRows.length) {
-        // Precio unitario, Monto Desc. y Total (por pagar).
-        if ([4, 6, 7].includes(col)) cell.z = '"S/ "#,##0.00';
+        // Precio unitario, Monto Desc., Pagado y Total (por pagar).
+        if ([4, 6, 7, 8].includes(col)) cell.z = '"S/ "#,##0.00';
         // Vendido por franquiciado.
         if (col === 3) cell.z = "#,##0.##";
       }
