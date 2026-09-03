@@ -122,6 +122,24 @@ export interface TopProductItem {
   total_revenue: number;
 }
 
+export type HeatmapMetric = 'total_revenue' | 'order_count';
+
+/**
+ * Fila del mapa de calor. `total_revenue` es el neto (cobros + devoluciones
+ * confirmadas), el mismo calculo que los KPIs del reporte.
+ */
+export interface SalesGeoHeatmapItem {
+  state_id?: number;
+  city_id?: number;
+  geo_map: string | null;
+  label: string;
+  state_geo_map?: string | null;
+  order_count: number;
+  gross_revenue?: number;
+  total_refunds?: number;
+  total_revenue: number;
+}
+
 export type SalesDimension =
   | 'branch'
   | 'sale_type'
