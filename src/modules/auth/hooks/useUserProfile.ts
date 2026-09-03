@@ -14,12 +14,26 @@ import { useAuth } from "./useAuth";
 // El select es la unión de lo que pedía cada sitio por separado (unos
 // `warehouses`, otros `branches(*)`), de modo que una sola consulta cubre a
 // todos. Ojo: en este esquema la columna del usuario en `profiles` es "UID".
-const PROFILE_SELECT = "*, warehouses(id, name, code), branches(*)";
+//
+// `accounts` se embebe para el nombre completo del usuario: `profiles.account_id`
+// es la única FK a esa tabla, así que la relación no es ambigua.
+const PROFILE_SELECT =
+  "*, warehouses(id, name, code), branches(*), accounts(name, middle_name, last_name, last_name2)";
 
 export interface UserProfileWarehouse {
   id: number;
   name: string | null;
   code: string | null;
+}
+
+export interface UserProfileAccount {
+  // Nombre y apellidos: es el dato con el que el ERP identifica al usuario en
+  // las capacitaciones. `sp_get_user_permissions` no devuelve nombre y el
+  // header solo pide `accounts.name`, así que aquí se trae completo.
+  name: string | null;
+  middle_name: string | null;
+  last_name: string | null;
+  last_name2: string | null;
 }
 
 export interface UserProfile {
@@ -28,6 +42,7 @@ export interface UserProfile {
   branch_id: number | null;
   warehouses: UserProfileWarehouse | null;
   branches: Record<string, unknown> | null;
+  accounts: UserProfileAccount | null;
   [key: string]: unknown;
 }
 
@@ -58,6 +73,7 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile> {
     ...row,
     warehouses: one<UserProfileWarehouse>(row.warehouses),
     branches: one<Record<string, unknown>>(row.branches),
+    accounts: one<UserProfileAccount>(row.accounts),
   } as UserProfile;
 }
 
