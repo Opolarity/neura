@@ -5,6 +5,23 @@
 // los almacenes llegan dentro de la respuesta (son los del franquiciado, no los
 // nuestros) en vez de leerse con getWarehousesIsActiveTrue.
 
+/**
+ * Franquiciado del selector, tal como lo devuelve get-franchise-tenants (una
+ * fila de `tenants` del otro backend).
+ *
+ * No se usa FranchiseeAccount (accounts con tenant_reference) porque esa tabla
+ * guarda al franquiciado como cliente de Overtake — "GARB CORP SAC" — y no por
+ * su nombre comercial. Aquel tipo sigue vivo para las promociones de
+ * consignación, donde lo que hace falta es justamente la cuenta.
+ */
+export interface FranchiseeTenant {
+  id: number;
+  /** Lo que en este ERP se guarda como accounts.tenant_reference. */
+  code: string;
+  /** Nombre comercial: "Bultiger Club", "Bunker Clothing". */
+  name: string;
+}
+
 /** Categoría del franquiciado; el árbol cambia con cada franquiciado. */
 export interface FranchiseCategory {
   id: number;

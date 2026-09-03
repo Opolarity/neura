@@ -7,10 +7,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ListFilter, Search } from "lucide-react";
-import { FranchiseeAccount } from "@/modules/discounts/types/priceRule.types";
+import { FranchiseeTenant } from "../../types/FranchiseStock.types";
 
 interface FranchiseStockFilterBarProps {
-  franchisees: FranchiseeAccount[];
+  franchisees: FranchiseeTenant[];
   loadingFranchisees: boolean;
   tenantReference: string | null;
   onSelectFranchisee: (value: string) => void;
@@ -22,9 +22,8 @@ interface FranchiseStockFilterBarProps {
   hasActiveFilters?: boolean;
 }
 
-const franchiseeLabel = (account: FranchiseeAccount) =>
-  [account.name, account.last_name].filter(Boolean).join(" ").trim() ||
-  account.tenant_reference;
+const franchiseeLabel = (tenant: FranchiseeTenant) =>
+  tenant.name?.trim() || tenant.code;
 
 export default function FranchiseStockFilterBar({
   franchisees,
@@ -59,12 +58,9 @@ export default function FranchiseStockFilterBar({
           />
         </SelectTrigger>
         <SelectContent>
-          {franchisees.map((account) => (
-            <SelectItem
-              key={account.tenant_reference}
-              value={account.tenant_reference}
-            >
-              {franchiseeLabel(account)}
+          {franchisees.map((tenant) => (
+            <SelectItem key={tenant.code} value={tenant.code}>
+              {franchiseeLabel(tenant)}
             </SelectItem>
           ))}
         </SelectContent>
