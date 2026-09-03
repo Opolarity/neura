@@ -3,6 +3,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import Dashboard from "@/modules/dashboard/pages/Dashboard";
 import Login from "@/modules/auth/pages/Login";
 import NotFound from "@/shared/components/NotFound";
+import RouteError from "@/shared/components/RouteError";
 import PublicRoute from "./PublicRoute";
 import { ProtectedRoute } from "./ProtectedRoute";
 import ProtectedLayout from "./ProtectedLayout";
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    errorElement: <RouteError />,
     element: (
       <ProtectedLayout>
         <DashboardLayout />
