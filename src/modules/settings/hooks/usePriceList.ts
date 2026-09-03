@@ -78,9 +78,15 @@ export const usePriceList = () => {
       }
       toast({ title: "Precio de Lista eliminado correctamente", variant: "success" });
     } catch (error) {
+      // Antes solo hacia console.error: cuando el SP fallaba, el dialogo se
+      // cerraba, la fila seguia ahi y la pantalla no decia nada, asi que el
+      // boton parecia muerto. `savePriceList` ya usaba toastError; esto lo
+      // alinea para que un fallo del backend se vea.
       console.error(error);
+      toastError(error, "Precio de Lista no eliminado");
     }
   };
+
   const load = async (newFilters?: PriceListFilters): Promise<void> => {
     try {
       const priceListsRes = newFilters
