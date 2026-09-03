@@ -96,7 +96,7 @@ const CreateUser = () => {
                       }}
                       disabled={isEdit}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger aria-required={requiredMarks.document_type_id}>
                         <SelectValue placeholder="Seleccionar tipo" />
                       </SelectTrigger>
                       <SelectContent>
@@ -118,6 +118,8 @@ const CreateUser = () => {
                         placeholder="Ingrese el número"
                         value={formData.document_number}
                         onChange={handleChange}
+                        required={requiredMarks.document_number}
+                        aria-required={requiredMarks.document_number}
                         onBlur={() => handleDocumentLookup()}
                         disabled={isEdit || !formData.document_type_id}
                         className={isSearchingDocument ? "pr-10" : ""}
@@ -151,7 +153,8 @@ const CreateUser = () => {
                       }
                       value={formData.name}
                       onChange={handleChange}
-                      required
+                      required={requiredMarks.name}
+                      aria-required={requiredMarks.name}
                       disabled={isEdit || isDocumentFound}
                     />
                   </div>
@@ -178,7 +181,8 @@ const CreateUser = () => {
                           placeholder="Primer apellido"
                           value={formData.last_name}
                           onChange={handleChange}
-                          required
+                          required={requiredMarks.last_name}
+                          aria-required={requiredMarks.last_name}
                           disabled={isEdit || isDocumentFound}
                         />
                       </div>
@@ -214,7 +218,8 @@ const CreateUser = () => {
                       placeholder="nombre.usuario@ejemplo.com"
                       value={formData.user_name}
                       onChange={handleChange}
-                      required
+                      required={requiredMarks.user_name}
+                      aria-required={requiredMarks.user_name}
                       disabled={isEdit}
                     />
                   </div>
@@ -226,7 +231,8 @@ const CreateUser = () => {
                       placeholder="correo@ejemplo.com"
                       value={formData.email}
                       onChange={handleChange}
-                      required
+                      required={requiredMarks.email}
+                      aria-required={requiredMarks.email}
                       disabled={isEdit}
                     />
                   </div>
@@ -241,7 +247,8 @@ const CreateUser = () => {
                         placeholder="********"
                         value={formData.password}
                         onChange={handleChange}
-                        required={!isEdit}
+                        required={requiredMarks.password}
+                        aria-required={requiredMarks.password}
                         disabled={isEdit && !showPasswordField}
                         className="flex-1"
                       />
@@ -260,6 +267,10 @@ const CreateUser = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone" required={requiredMarks.phone}>Celular</Label>
+                    {/* Sin `required` nativo a propósito: el celular se marca
+                        siempre, pero solo bloquea al CREAR. El del navegador
+                        trabaría también la edición de los usuarios antiguos que
+                        no tienen teléfono. */}
                     <Input
                       id="phone"
                       inputMode="numeric"
@@ -280,6 +291,7 @@ const CreateUser = () => {
                       <Button
                         variant="outline"
                         role="combobox"
+                        aria-required={requiredMarks.role_ids}
                         className="w-full justify-between font-normal"
                       >
                         {formData.role_ids.length > 0
@@ -454,7 +466,7 @@ const CreateUser = () => {
                     value={formData.branches_id}
                     onValueChange={handleBranchChange}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-required={requiredMarks.branches_id}>
                       <SelectValue placeholder="Seleccionar sucursal" />
                     </SelectTrigger>
                     <SelectContent>
@@ -478,7 +490,7 @@ const CreateUser = () => {
                     }
                     disabled={true}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-required={requiredMarks.warehouse_id}>
                       <SelectValue placeholder="Seleccionar almacén" />
                     </SelectTrigger>
                     <SelectContent>
