@@ -95,6 +95,35 @@ export interface ComplaintDetailApiResponse {
   error?: string;
 }
 
+/** Respuesta de `get-complaint-notes`: solo el hilo, sin el reclamo. */
+export interface ComplaintNotesApiResponse {
+  success: boolean;
+  notes: ComplaintNoteApiRow[] | null;
+  error?: string;
+}
+
+export interface CreateComplaintNoteResponse {
+  success: boolean;
+  note_id?: number;
+  complaints_book_note_id?: number;
+  /**
+   * Solo viene cuando la nota se envió al reclamante: cómo quedó el reclamo
+   * después de marcarlo respondido, para actualizar esos dos campos en la
+   * pantalla sin recargar el detalle.
+   */
+  complaint?: { status: ComplaintStatus; answered_at: string | null } | null;
+  error?: string;
+}
+
+export interface UpdateComplaintStatusResponse {
+  success: boolean;
+  id?: number;
+  status?: ComplaintStatus;
+  /** Cómo quedó el reclamo, para actualizar la pantalla sin recargar. */
+  complaint?: { status: ComplaintStatus; answered_at: string | null } | null;
+  error?: string;
+}
+
 export interface ComplaintsExportApiResponse {
   success: boolean;
   data: ComplaintExportRow[] | null;

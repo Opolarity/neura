@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/shared/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 import {
   createComplaintNoteApi,
   getComplaintDetailApi,
+  getComplaintNotesApi,
   updateComplaintStatusApi,
 } from "../services/reclamaciones.service";
 import {
@@ -17,16 +19,23 @@ import type {
 
 /**
  * Detalle de un reclamo: datos, notas internas, respuesta al reclamante y
- * cambio de estado. El detalle y las notas llegan en una sola llamada
- * (`get-complaint-detail`), que es como las necesita la pantalla.
+ * cambio de estado.
+ *
+ * El detalle y las notas se piden juntos solo en la carga inicial. Después van
+ * por separado a propósito: las notas cambian solas (se agrega una, alguien más
+ * responde) mientras el reclamo no, así que refrescar el hilo no tiene por qué
+ * repintar la pantalla entera. Lo mismo al agregar una nota o al cambiar el
+ * estado: el backend devuelve lo que cambió y se actualiza en sitio.
  */
 export const useReclamacionDetalle = (id: number | null) => {
   const [reclamacion, setReclamacion] = useState<ComplaintDetail | null>(null);
   const [notes, setNotes] = useState<ComplaintNote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingNotes, setLoadingNotes] = useState(false);
   const [savingNote, setSavingNote] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
 
+  /** Carga inicial: reclamo + hilo en una sola llamada. */
   const load = useCallback(async (complaintId: number) => {
     setLoading(true);
     try {
@@ -39,15 +48,28 @@ export const useReclamacionDetalle = (id: number | null) => {
       setReclamacion(reclamacionDetalleAdapter(response.data));
       setNotes(reclamacionNotasAdapter(response.notes));
     } catch (error) {
-      console.error("Error al cargar la reclamación:", error);
       setReclamacion(null);
-      toast({
-        title: "Error al cargar la reclamación",
-        description: (error as Error)?.message,
-        variant: "destructive",
-      });
+      toastError(error, "Error al cargar la reclamación");
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  /** Solo el hilo de notas. No toca el reclamo ni el loader de la página. */
+  const loadNotes = useCallback(async (complaintId: number) => {
+    setLoadingNotes(true);
+    try {
+      const response = await getComplaintNotesApi(complaintId);
+
+      if (!response?.success) {
+        throw new Error(response?.error ?? "No se pudieron obtener las notas");
+      }
+
+      setNotes(reclamacionNotasAdapter(response.notes));
+    } catch (error) {
+      toastError(error, "Error al cargar las notas");
+    } finally {
+      setLoadingNotes(false);
     }
   }, []);
 
@@ -59,17 +81,23 @@ export const useReclamacionDetalle = (id: number | null) => {
     load(id);
   }, [id, load]);
 
+  const refreshNotes = useCallback(() => {
+    if (id == null) return;
+    loadNotes(id);
+  }, [id, loadNotes]);
+
   /**
    * Agrega una nota. Con `notifyCustomer` la nota se le envía por correo al
    * reclamante y el reclamo pasa a respondido; el backend solo la guarda si el
-   * correo salió, así que basta con recargar para ver el estado real.
+   * correo salió, y devuelve cómo quedó el reclamo para reflejarlo sin recargar
+   * el detalle.
    */
   const addNote = async (message: string, notifyCustomer = false) => {
     if (id == null) return false;
 
     setSavingNote(true);
     try {
-      await createComplaintNoteApi({
+      const response = await createComplaintNoteApi({
         complaint_id: id,
         message,
         notify_customer: notifyCustomer,
@@ -77,17 +105,23 @@ export const useReclamacionDetalle = (id: number | null) => {
 
       toast({
         title: notifyCustomer ? "Respuesta enviada al reclamante" : "Nota agregada",
+        variant: "success",
       });
 
-      await load(id);
+      if (response?.complaint) {
+        const { status, answered_at } = response.complaint;
+        setReclamacion((current) =>
+          current ? { ...current, status, answeredAt: answered_at } : current,
+        );
+      }
+
+      await loadNotes(id);
       return true;
     } catch (error) {
-      console.error("Error al guardar la nota:", error);
-      toast({
-        title: notifyCustomer ? "No se pudo enviar la respuesta" : "No se pudo guardar la nota",
-        description: (error as Error)?.message,
-        variant: "destructive",
-      });
+      toastError(
+        error,
+        notifyCustomer ? "No se pudo enviar la respuesta" : "No se pudo guardar la nota",
+      );
       return false;
     } finally {
       setSavingNote(false);
@@ -104,17 +138,19 @@ export const useReclamacionDetalle = (id: number | null) => {
     setSavingStatus(true);
 
     try {
-      await updateComplaintStatusApi(id, status);
-      toast({ title: "Estado actualizado" });
-      await load(id);
+      const response = await updateComplaintStatusApi(id, status);
+      toast({ title: "Estado actualizado", variant: "success" });
+
+      // answered_at lo sella el backend la primera vez que pasa a respondido.
+      if (response?.complaint) {
+        const { status: newStatus, answered_at } = response.complaint;
+        setReclamacion((current) =>
+          current ? { ...current, status: newStatus, answeredAt: answered_at } : current,
+        );
+      }
     } catch (error) {
-      console.error("Error al cambiar el estado:", error);
       setReclamacion((current) => (current ? { ...current, status: previous } : current));
-      toast({
-        title: "No se pudo cambiar el estado",
-        description: (error as Error)?.message,
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo cambiar el estado");
     } finally {
       setSavingStatus(false);
     }
@@ -124,9 +160,11 @@ export const useReclamacionDetalle = (id: number | null) => {
     reclamacion,
     notes,
     loading,
+    loadingNotes,
     savingNote,
     savingStatus,
     addNote,
     changeStatus,
+    refreshNotes,
   };
 };

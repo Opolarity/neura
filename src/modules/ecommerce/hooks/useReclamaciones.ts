@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { toast } from "@/shared/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 import {
   getComplaintsApi,
   getComplaintsExportApi,
@@ -48,12 +49,7 @@ export const useReclamaciones = () => {
         setReclamaciones(data);
         setPagination(nextPagination);
       } catch (error) {
-        console.error("Error al cargar reclamaciones:", error);
-        toast({
-          title: "Error al cargar las reclamaciones",
-          description: (error as Error)?.message,
-          variant: "destructive",
-        });
+        toastError(error, "Error al cargar las reclamaciones");
       } finally {
         setLoading(false);
       }
@@ -87,12 +83,7 @@ export const useReclamaciones = () => {
 
       generateComplaintsBookExcel(rows);
     } catch (error) {
-      console.error("Error al exportar el libro de reclamaciones:", error);
-      toast({
-        title: "Error al exportar el libro",
-        description: (error as Error)?.message,
-        variant: "destructive",
-      });
+      toastError(error, "Error al exportar el libro de reclamaciones");
     } finally {
       setExporting(false);
     }

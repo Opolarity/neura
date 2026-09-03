@@ -5,6 +5,7 @@ import type {
   SalesKpis,
   SalesOverTimeItem,
   SalesByDimensionItem,
+  SalesGeoHeatmapItem,
   TopProductItem,
   TopMetric,
   SalesDimension,
@@ -92,6 +93,13 @@ export const salesService = {
     rpc<SalesByDimensionItem[]>('sp_rpt_sales_by_dimension', {
       ...mapFilters(f),
       p_dimension: dimension,
+    }),
+
+  getGeoHeatmap: (f: ReportsFilters, mapStateId?: number, mapCityId?: number) =>
+    rpc<SalesGeoHeatmapItem[]>('sp_rpt_sales_geo_heatmap', {
+      ...mapFilters(f),
+      p_map_state_id: mapStateId ?? null,
+      p_map_city_id: mapCityId ?? null,
     }),
 
   getTopProducts: (f: ReportsFilters, metric: TopMetric = 'revenue', limit = 10) =>
