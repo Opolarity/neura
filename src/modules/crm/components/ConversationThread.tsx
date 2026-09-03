@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { AlertCircle, Bot, MessageSquare } from "lucide-react";
@@ -13,11 +13,46 @@ interface Props {
 /**
  * Las imágenes viajan dentro del texto, con la convención que ya usa el bot:
  * `[El cliente envió una imagen ... URL: https://...]`. Se extrae para poder
- * mostrarla como enlace en vez de volcar la URL cruda en la burbuja.
+ * mostrarla dentro de la burbuja en vez de volcar la URL cruda.
  */
+const IMAGE_BLOCK = /\[[^\]]*URL:\s*https?:\/\/[^\]]*\]/gi;
+
 const extractImageUrl = (message: string): string | null => {
   const match = message.match(/URL:\s*(https?:\/\/\S+?)(?:\s|\]|$)/i);
   return match ? match[1] : null;
+};
+
+/** El bloque `[... URL: ...]` es metadata del bot: no debe verse en el chat. */
+const stripImageBlock = (message: string): string =>
+  message.replace(IMAGE_BLOCK, "").replace(/\n{3,}/g, "\n\n").trim();
+
+const ChatImage = ({ url }: { url: string }) => {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer noopener"
+        className="mt-1 inline-block text-xs font-medium underline underline-offset-2"
+      >
+        Ver imagen
+      </a>
+    );
+  }
+
+  return (
+    <a href={url} target="_blank" rel="noreferrer noopener" className="mt-1 block">
+      <img
+        src={url}
+        alt="Imagen enviada en la conversación"
+        loading="lazy"
+        onError={() => setFailed(true)}
+        className="max-h-64 w-auto max-w-full cursor-zoom-in rounded-lg object-contain"
+      />
+    </a>
+  );
 };
 
 const dayLabel = (iso: string) => {
@@ -66,6 +101,7 @@ export const ConversationThread = ({ messages, loading }: Props) => {
           lastDay = day;
 
           const imageUrl = extractImageUrl(m.message);
+          const text = imageUrl ? stripImageBlock(m.message) : m.message;
 
           return (
             <div key={m.id} className="flex flex-col gap-4">
@@ -102,18 +138,9 @@ export const ConversationThread = ({ messages, loading }: Props) => {
                     </span>
                   )}
 
-                  <p className="whitespace-pre-wrap break-words">{m.message}</p>
+                  {text && <p className="whitespace-pre-wrap break-words">{text}</p>}
 
-                  {imageUrl && (
-                    <a
-                      href={imageUrl}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="mt-1 inline-block text-xs font-medium underline underline-offset-2"
-                    >
-                      Ver imagen
-                    </a>
-                  )}
+                  {imageUrl && <ChatImage url={imageUrl} />}
 
                   <div className="mt-1 flex items-center gap-2 text-[10px] opacity-70">
                     <span className="tabular-nums">{timeLabel(m.createdAt)}</span>
