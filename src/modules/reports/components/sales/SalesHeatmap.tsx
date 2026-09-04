@@ -34,6 +34,13 @@ function topoFeatures(topo: Topology, objectName: string): GeoFeature[] {
 const DEPT_FEATURES = topoFeatures(deptTopo as unknown as Topology, 'peru_departamental_simple');
 const PROV_FEATURES = topoFeatures(provTopo as unknown as Topology, 'peru_provincial_simple');
 
+// Sustituto para un departamento cuyo archivo de distritos no cargue: mantiene
+// el contrato de Geographies sin dibujar nada.
+const EMPTY_TOPOLOGY: Topology = {
+  objects: { peru_distritos: { type: 'GeometryCollection', geometries: [] } },
+  arcs: [],
+} as unknown as Topology;
+
 const METRIC_OPTIONS: Array<{ value: HeatmapMetric; label: string }> = [
   { value: 'total_revenue', label: 'Ingresos' },
   { value: 'order_count',   label: 'Pedidos'  },
@@ -142,19 +149,34 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
   const [selectedProv, setSelectedProv] = useState<DrillLevel | null>(null);
   const [hovered, setHovered]           = useState<SalesGeoHeatmapItem | null>(null);
 
-  // TopoJSON de distritos cargado de forma lazy (solo cuando se necesita)
-  const [distTopo, setDistTopo] = useState<Topology | null>(null);
+  // TopoJSON de distritos: uno por departamento, cargado en demanda al entrar a
+  // una provincia. El archivo nacional pesaba 1.3 MB para pintar una sola
+  // provincia; el mas grande de estos (Lima) son 82 KB. Los genera
+  // tools/geo/build-district-topojson.mjs, que nombra cada archivo con la misma
+  // clave normalizada que guarda DrillLevel.geoMap.
+  const [distTopo, setDistTopo] = useState<{ key: string; topo: Topology } | null>(null);
+  const deptKey = selectedDept?.geoMap ?? null;
   useEffect(() => {
-    if (selectedProv && !distTopo) {
-      import('@/assets/geo/peru-districts.json').then((mod) =>
-        setDistTopo((mod.default ?? mod) as unknown as Topology),
-      );
-    }
-  }, [selectedProv, distTopo]);
+    if (!selectedProv || !deptKey || distTopo?.key === deptKey) return;
+    let cancelled = false;
+    // Ruta relativa y no el alias @: Vite necesita el prefijo ./ o ../ para
+    // resolver estaticamente un import dinamico con plantilla.
+    import(`../../../../assets/geo/districts/${deptKey}.json`)
+      .then((mod) => {
+        if (!cancelled) setDistTopo({ key: deptKey, topo: (mod.default ?? mod) as unknown as Topology });
+      })
+      .catch(() => {
+        // Un departamento sin archivo deja el mapa vacio en vez de tumbar la
+        // pantalla o quedarse cargando para siempre; el ranking al costado
+        // sigue mostrando los montos.
+        if (!cancelled) setDistTopo({ key: deptKey, topo: EMPTY_TOPOLOGY });
+      });
+    return () => { cancelled = true; };
+  }, [selectedProv, deptKey, distTopo?.key]);
 
   // Features de distritos derivadas del TopoJSON lazy
   const distFeatures = useMemo(
-    () => (distTopo ? topoFeatures(distTopo, 'peru_distritos') : []),
+    () => (distTopo ? topoFeatures(distTopo.topo, 'peru_distritos') : []),
     [distTopo],
   );
 
@@ -188,7 +210,7 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
          :                        (nationalQuery.data ?? [])),
     [view, provQuery.data, deptQuery.data, nationalQuery.data],
   );
-  const isLoading  = view === 'districts' ? (provQuery.isLoading  || !distTopo)
+  const isLoading  = view === 'districts' ? (provQuery.isLoading  || distTopo?.key !== deptKey)
                    : view === 'provinces'  ? deptQuery.isLoading
                    :                         nationalQuery.isLoading;
 
@@ -336,7 +358,7 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
             style={{ width: '100%', height: 'auto' }}
           >
             {view === 'districts' ? (
-              <Geographies geography={distTopo}>
+              <Geographies geography={distTopo!.topo}>
                 {({ geographies }) =>
                   geographies
                     .filter((geo) => normGeo(geo.properties['NOMBPROV']) === selectedProv!.geoMap)
