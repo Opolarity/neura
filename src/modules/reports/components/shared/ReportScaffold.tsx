@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -11,22 +11,30 @@ import { cn } from '@/shared/utils/utils';
 
 interface ReportCardProps {
   title?: ReactNode;
+  /** Nota metodológica bajo el título — texto corto, sin color propio. */
+  description?: ReactNode;
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
   contentClassName?: string;
 }
 
-export function ReportCard({ title, actions, children, className, contentClassName }: ReportCardProps) {
+export function ReportCard({ title, description, actions, children, className, contentClassName }: ReportCardProps) {
+  const hasHeader = Boolean(title || description || actions);
   return (
     <Card className={cn('overflow-hidden', className)}>
-      {(title || actions) && (
+      {hasHeader && (
         <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 pb-3">
-          {title && <CardTitle className="text-base font-semibold">{title}</CardTitle>}
+          {(title || description) && (
+            <div className="min-w-0 space-y-1">
+              {title && <CardTitle className="text-base font-semibold">{title}</CardTitle>}
+              {description && <CardDescription className="text-xs">{description}</CardDescription>}
+            </div>
+          )}
           {actions}
         </CardHeader>
       )}
-      <CardContent className={cn(title || actions ? 'pt-0' : undefined, contentClassName)}>
+      <CardContent className={cn(hasHeader ? 'pt-0' : undefined, contentClassName)}>
         {children}
       </CardContent>
     </Card>

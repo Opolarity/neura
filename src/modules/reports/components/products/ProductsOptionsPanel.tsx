@@ -15,6 +15,8 @@ import {
 import { cn } from '@/shared/utils/utils';
 import { filterOptionsService } from '../../services/reports.service';
 import { useReportsFilters } from '../../context/ReportsFiltersContext';
+import { OrderSituationFilter } from '../shared/OrderSituationFilter';
+import { defaultProductSituationIds } from '../../types/reports.types';
 import type { ProductsDashboardState } from '../../hooks/useProductsDashboard';
 
 const ALL_VALUE = '__all__';
@@ -120,6 +122,13 @@ export function ProductsOptionsPanel({ dash }: Props) {
           </PopoverContent>
         </Popover>
       </div>
+
+      {/* Estado de pedido — su default es solo Enviado y Entregado, no el de Ventas */}
+      <OrderSituationFilter
+        value={draft.productSituationIds}
+        onChange={(ids) => setDraft({ productSituationIds: ids })}
+        defaultIds={defaultProductSituationIds}
+      />
 
       {/* Sede */}
       <div className="flex flex-col gap-1">

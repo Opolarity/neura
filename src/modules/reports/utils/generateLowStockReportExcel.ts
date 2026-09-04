@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { getTodayDate } from '@/shared/utils/date';
 import type { LowStockProductItem } from '../types/reports.types';
 
 /**
@@ -30,5 +31,6 @@ export function generateLowStockReportExcel(
   ws['!cols'] = [{ wch: 45 }, { wch: 20 }, { wch: 18 }];
 
   XLSX.utils.book_append_sheet(wb, ws, 'Stock bajo');
-  XLSX.writeFile(wb, `stock-bajo-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  // El dia del nombre del archivo es el de LIMA, no el UTC de toISOString().
+  XLSX.writeFile(wb, `stock-bajo-${getTodayDate()}.xlsx`);
 }

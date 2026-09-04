@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { formatDateLong, formatTime } from "@/shared/utils/date";
 import { AlertCircle, Bot, MessageSquare } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import type { ConversationMessage } from "../types/crm.types";
@@ -55,21 +54,14 @@ const ChatImage = ({ url }: { url: string }) => {
   );
 };
 
-const dayLabel = (iso: string) => {
-  try {
-    return format(new Date(iso), "d 'de' MMMM, yyyy", { locale: es });
-  } catch {
-    return "";
-  }
-};
+// El separador de dia y la hora de cada mensaje se resuelven en Lima con los
+// helpers de shared/utils/date. Con `format()` de date-fns pelado se pintaban
+// en el huso del navegador: un mensaje de las 21:00 de Lima aparecia bajo el
+// separador del dia siguiente en cuanto el ERP se abria desde Europa, y la
+// hora tampoco era la que vio el vendedor.
+const dayLabel = (iso: string) => formatDateLong(iso);
 
-const timeLabel = (iso: string) => {
-  try {
-    return format(new Date(iso), "HH:mm");
-  } catch {
-    return "";
-  }
-};
+const timeLabel = (iso: string) => formatTime(iso);
 
 export const ConversationThread = ({ messages, loading }: Props) => {
   const bottomRef = useRef<HTMLDivElement>(null);

@@ -1,12 +1,9 @@
-import { RefreshCw, Check, Filter, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Check, Filter, ChevronDown, ChevronUp, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { refreshReportMviews } from '../../services/reports.service';
 import { useReportsFilters } from '../../context/ReportsFiltersContext';
 import { useState } from 'react';
-import { toast } from "@/shared/hooks/use-toast";
 import { DateRangeFilter } from '@/shared/components/date-range';
-import { toastError } from "@/shared/utils/toastError";
 
 const MAX_RANGE_DAYS = 90;
 
@@ -26,19 +23,6 @@ interface ReportsFilterBarProps {
 export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExtra, exportSlot, extraDirty = false }: ReportsFilterBarProps) {
   const { draft, setDraft, apply, isDirty } = useReportsFilters();
   const [open, setOpen] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-
-  async function handleRefresh() {
-    setRefreshing(true);
-    try {
-      await refreshReportMviews();
-      toast({ title: 'Datos actualizados correctamente', variant: "success" });
-    } catch (error) {
-      toastError(error, 'Error al actualizar los datos');
-    } finally {
-      setRefreshing(false);
-    }
-  }
 
   return (
     <div className="rounded-lg border bg-card p-4 space-y-3 mb-6">
@@ -83,11 +67,6 @@ export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExt
 
       {/* Fila de acciones — siempre visible */}
       <div className="flex items-center gap-2 pt-3 border-t">
-        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Actualizar datos
-        </Button>
-
         <div className="ml-auto flex items-center gap-2">
           {extraActiveCount > 0 && onClearExtra && (
             <Button

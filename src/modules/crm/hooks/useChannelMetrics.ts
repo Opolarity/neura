@@ -11,6 +11,7 @@ import type {
   ChannelProductApi,
 } from "../types/crm.types";
 import { toastError } from "@/shared/utils/toastError";
+import { addCalendarDays, getTodayDate } from "@/shared/utils/date";
 
 export type RangePreset = "30d" | "90d" | "120d" | "365d";
 
@@ -27,8 +28,6 @@ export const RANGE_LABELS: Record<RangePreset, string> = {
   "120d": "Últimos 120 días",
   "365d": "Último año",
 };
-
-const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 /**
  * Con 30 días un gráfico diario ya tiene 30 puntos por canal; con un año
@@ -48,10 +47,11 @@ export const useChannelMetrics = () => {
   const [range, setRange] = useState<{ start: string; end: string } | null>(null);
 
   const { start, end } = useMemo(() => {
-    const hoy = new Date();
-    const desde = new Date();
-    desde.setDate(hoy.getDate() - (DAYS[preset] - 1));
-    return { start: iso(desde), end: iso(hoy) };
+    // El rango son dias civiles de LIMA. Antes salian de
+    // `new Date().toISOString().slice(0, 10)`, que es el dia UTC: a partir de
+    // las 19:00 de Lima el reporte se pedia ya para el dia siguiente.
+    const hoy = getTodayDate();
+    return { start: addCalendarDays(hoy, -(DAYS[preset] - 1)), end: hoy };
   }, [preset]);
 
   const fetchAll = useCallback(async () => {

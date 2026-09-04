@@ -4,6 +4,7 @@ import { getChannelCostsApi } from "../services/crm.service";
 import type { ChannelCostsResponse } from "../types/crm.types";
 import { RANGE_LABELS, type RangePreset } from "./useChannelMetrics";
 import { toastError } from "@/shared/utils/toastError";
+import { addCalendarDays, getTodayDate } from "@/shared/utils/date";
 
 const DAYS: Record<RangePreset, number> = {
   "30d": 30,
@@ -11,8 +12,6 @@ const DAYS: Record<RangePreset, number> = {
   "120d": 120,
   "365d": 365,
 };
-
-const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 export { RANGE_LABELS };
 export type { RangePreset };
@@ -23,10 +22,11 @@ export const useChannelCosts = () => {
   const [data, setData] = useState<ChannelCostsResponse | null>(null);
 
   const { start, end } = useMemo(() => {
-    const hoy = new Date();
-    const desde = new Date();
-    desde.setDate(hoy.getDate() - (DAYS[preset] - 1));
-    return { start: iso(desde), end: iso(hoy) };
+    // El rango son dias civiles de LIMA. Antes salian de
+    // `new Date().toISOString().slice(0, 10)`, que es el dia UTC: a partir de
+    // las 19:00 de Lima el reporte se pedia ya para el dia siguiente.
+    const hoy = getTodayDate();
+    return { start: addCalendarDays(hoy, -(DAYS[preset] - 1)), end: hoy };
   }, [preset]);
 
   const fetchData = useCallback(async () => {
