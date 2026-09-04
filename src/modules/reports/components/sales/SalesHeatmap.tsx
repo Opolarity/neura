@@ -30,7 +30,8 @@ function topoFeatures(topo: Topology, objectName: string): GeoFeature[] {
   return (collection as unknown as { features: GeoFeature[] }).features;
 }
 
-// Convertir TopoJSON de provincias → GeoJSON una sola vez al cargar el módulo
+// Convertir TopoJSON → GeoJSON una sola vez al cargar el módulo
+const DEPT_FEATURES = topoFeatures(deptTopo as unknown as Topology, 'peru_departamental_simple');
 const PROV_FEATURES = topoFeatures(provTopo as unknown as Topology, 'peru_provincial_simple');
 
 const METRIC_OPTIONS: Array<{ value: HeatmapMetric; label: string }> = [
@@ -45,7 +46,22 @@ function walkCoords(coords: unknown, cb: (lon: number, lat: number) => void): vo
   (coords as unknown[]).forEach((c) => walkCoords(c, cb));
 }
 
-// Calcula center + scale para hacer zoom al bounding box de las features dadas
+// Lienzo del SVG. El viewBox usa estas medidas y el contenedor lo escala a lo
+// ancho, asi que ajustar al rectangulo completo es ajustar a lo que se ve.
+const MAP_W = 800;
+const MAP_H = 480;
+const MAP_PAD = 8;
+
+// Mercator: la proyeccion no es lineal en latitud, asi que el alto que ocupa un
+// bounding box se mide sobre la y proyectada, no sobre los grados.
+const RAD = Math.PI / 180;
+const mercY = (lat: number) => Math.log(Math.tan(Math.PI / 4 + (lat * RAD) / 2));
+const mercLat = (y: number) => (2 * Math.atan(Math.exp(y)) - Math.PI / 2) / RAD;
+
+// Calcula el center + scale que hacen que las features dadas llenen el lienzo.
+// Es el equivalente a d3.geoMercator().fitExtent(), resuelto a mano para no
+// sumar d3-geo como dependencia directa: react-simple-maps solo acepta
+// center/scale por projectionConfig.
 function fitProjection(
   features: Array<{ geometry?: { coordinates?: unknown } }>,
 ): { center: [number, number]; scale: number } {
@@ -57,11 +73,20 @@ function fitProjection(
     });
   });
   if (!isFinite(minLon)) return { center: [-75.0, -9.5], scale: 1700 };
-  const centerLon = (minLon + maxLon) / 2;
-  const centerLat = (minLat + maxLat) / 2;
-  const maxExtent = Math.max(maxLon - minLon, maxLat - minLat, 0.1);
-  const scale = Math.round((1700 * 18) / maxExtent * 0.65);
-  return { center: [centerLon, centerLat], scale };
+
+  // Ancho en radianes y alto en unidades Mercator del bounding box.
+  const dx = Math.max((maxLon - minLon) * RAD, 1e-6);
+  const dy = Math.max(mercY(maxLat) - mercY(minLat), 1e-6);
+
+  // El eje mas apretado manda: asi entra completo sin recortar.
+  const scale = Math.min((MAP_W - 2 * MAP_PAD) / dx, (MAP_H - 2 * MAP_PAD) / dy);
+
+  // El centro vertical es el punto medio en Mercator, no el promedio de
+  // latitudes: con el promedio la zona queda descentrada hacia un borde.
+  return {
+    center: [(minLon + maxLon) / 2, mercLat((mercY(minLat) + mercY(maxLat)) / 2)],
+    scale,
+  };
 }
 
 // Normaliza nombres geográficos para matchear BD ↔ TopoJSON:
@@ -192,7 +217,7 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
       const features = PROV_FEATURES.filter((f) => normGeo(f.properties['FIRST_NOMB']) === selectedDept.geoMap);
       return fitProjection(features);
     }
-    return { center: [-75.0, -9.5] as [number, number], scale: 1700 };
+    return fitProjection(DEPT_FEATURES);
   }, [selectedDept, selectedProv, distFeatures]);
 
   const mapKey = selectedProv
@@ -306,7 +331,9 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
             key={mapKey}
             projection="geoMercator"
             projectionConfig={projectionConfig}
-            style={{ width: '100%', height: '480px' }}
+            width={MAP_W}
+            height={MAP_H}
+            style={{ width: '100%', height: 'auto' }}
           >
             {view === 'districts' ? (
               <Geographies geography={distTopo}>
