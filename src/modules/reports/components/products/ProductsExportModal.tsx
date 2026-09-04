@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Download, Loader2 } from 'lucide-react';
 import { toast } from "@/shared/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +21,9 @@ import {
   type ProductExportRow,
   type CategoryExportRow,
 } from '../../utils/generateProductsReportExcel';
+import { useReportsFilters } from '../../context/ReportsFiltersContext';
+import { filterOptionsService } from '../../services/reports.service';
+import { defaultProductSituationIds } from '../../types/reports.types';
 import { toastError } from "@/shared/utils/toastError";
 
 interface ProductsExportModalProps {
@@ -30,6 +34,19 @@ interface ProductsExportModalProps {
 const MAX_DAYS = 31;
 
 export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalProps) {
+  const { filters } = useReportsFilters();
+
+  const situations = useQuery({
+    queryKey: ['filter_order_situations'],
+    queryFn: filterOptionsService.getOrderSituations,
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const situationIds = useMemo(
+    () => filters.productSituationIds ?? defaultProductSituationIds(situations.data ?? []),
+    [filters.productSituationIds, situations.data],
+  );
+
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,14 +82,18 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
       const start = startDate;
       const end = endDate;
 
+      // El rango es propio del modal, pero el criterio de venta no: el Excel
+      // tiene que cuadrar con lo que se ve en los gráficos.
       const [resProducts, resCategories] = await Promise.all([
         supabase.rpc('sp_rpt_export_products_by_product', {
           p_start_date: start,
           p_end_date: end,
+          p_situation_ids: situationIds,
         }),
         supabase.rpc('sp_rpt_export_products_by_category', {
           p_start_date: start,
           p_end_date: end,
+          p_situation_ids: situationIds,
         }),
       ]);
 

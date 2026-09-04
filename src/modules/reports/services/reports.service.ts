@@ -70,6 +70,25 @@ function mapFilters(f: ReportsFilters) {
   };
 }
 
+/**
+ * Params comunes de los SP de la pestaña Productos. Deliberadamente NO es
+ * `mapFilters`: esos SP solo aceptan fecha/sede/canal/situación, y PostgREST
+ * resuelve la sobrecarga por el conjunto exacto de argumentos nombrados —
+ * mandarles los once de Ventas devuelve PGRST202 (404).
+ *
+ * `situationIds` llega ya resuelto desde el hook: lo que se envía es
+ * literalmente lo que el filtro muestra marcado.
+ */
+function mapProductFilters(f: ReportsFilters, situationIds: number[]) {
+  return {
+    p_start_date: f.startDate ?? undefined,
+    p_end_date: f.endDate ?? undefined,
+    p_branch_id: f.branchId ?? undefined,
+    p_sale_type_id: f.saleTypeId ?? undefined,
+    p_situation_ids: situationIds,
+  };
+}
+
 async function rpc<T>(fn: string, params?: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.rpc(fn, params);
   if (error) throw error;
@@ -117,22 +136,19 @@ export const salesService = {
 // PRODUCTS
 // ============================================================
 export const productsService = {
-  getByCategory: (f: ReportsFilters) =>
-    rpc<ProductsByCategoryItem[]>('sp_rpt_products_by_category', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-      p_sale_type_id: f.saleTypeId ?? undefined,
-    }),
+  getByCategory: (f: ReportsFilters, situationIds: number[]) =>
+    rpc<ProductsByCategoryItem[]>('sp_rpt_products_by_category', mapProductFilters(f, situationIds)),
 
-  getTopByCategory: (f: ReportsFilters, categoryId: number | null, limit = 10) =>
+  getTopByCategory: (
+    f: ReportsFilters,
+    categoryId: number | null,
+    limit = 10,
+    situationIds: number[] = [],
+  ) =>
     rpc<TopProductItem[]>('sp_rpt_top_products_by_category', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
+      ...mapProductFilters(f, situationIds),
       p_category_id: categoryId ?? undefined,
       p_limit: limit,
-      p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 
   search: (query: string, limit = 10) =>
@@ -141,49 +157,44 @@ export const productsService = {
       p_limit: limit,
     }),
 
-  getDetail: (productId: number, f: ReportsFilters) =>
+  getDetail: (productId: number, f: ReportsFilters, situationIds: number[]) =>
     rpc<ProductDetailData>('sp_rpt_product_detail', {
+      ...mapProductFilters(f, situationIds),
       p_product_id: productId,
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-      p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 
-  getPareto: (f: ReportsFilters, limit: ParetoLimit = 10) =>
+  getPareto: (f: ReportsFilters, limit: ParetoLimit = 10, situationIds: number[] = []) =>
     rpc<ProductsParetoItem[]>('sp_rpt_products_pareto', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-      p_sale_type_id: f.saleTypeId ?? undefined,
+      ...mapProductFilters(f, situationIds),
       p_limit: limit,
     }),
 
-  getSalesBySize: (f: ReportsFilters) =>
-    rpc<SizeByCategoryItem[]>('sp_rpt_products_sales_by_size', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-      p_sale_type_id: f.saleTypeId ?? undefined,
-    }),
+  getSalesBySize: (f: ReportsFilters, situationIds: number[]) =>
+    rpc<SizeByCategoryItem[]>('sp_rpt_products_sales_by_size', mapProductFilters(f, situationIds)),
 
-  getCategoryOverTime: (f: ReportsFilters, granularity: Granularity = 'week') =>
+  getCategoryOverTime: (
+    f: ReportsFilters,
+    granularity: Granularity = 'week',
+    situationIds: number[] = [],
+  ) =>
     rpc<CategoryOverTimeItem[]>('sp_rpt_products_category_over_time', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
+      ...mapProductFilters(f, situationIds),
       p_granularity: granularity,
-      p_branch_id: f.branchId ?? undefined,
-      p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 
   // Reutiliza el RPC del tab financiero: devuelve unidades, ingresos y margen
   // por producto — acá alimenta el scatter margen vs volumen.
-  getMarginScatter: (f: ReportsFilters, limit = 100) =>
+  //
+  // No usa mapProductFilters porque ese SP no acepta p_sale_type_id. Y como lo
+  // comparte la pestaña Financiero, su p_situation_ids en NULL conserva el
+  // comportamiento viejo (sin filtro): acá hay que mandar el array explícito.
+  getMarginScatter: (f: ReportsFilters, limit = 100, situationIds: number[] = []) =>
     rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
       p_branch_id: f.branchId ?? undefined,
       p_limit: limit,
+      p_situation_ids: situationIds,
     }),
 };
 
@@ -494,12 +505,6 @@ export const fetchSalesDetailReport = (
   f: ReportsFilters,
 ): Promise<SalesDetailReportRow[]> =>
   rpc<SalesDetailReportRow[]>('sp_rpt_export_sales_detail', mapFilters(f));
-
-// ============================================================
-// SHARED: Refresh materialized views (called from UI)
-// ============================================================
-export const refreshReportMviews = () =>
-  supabase.rpc('fn_refresh_report_mviews');
 
 // ============================================================
 // SHARED: Load filter options

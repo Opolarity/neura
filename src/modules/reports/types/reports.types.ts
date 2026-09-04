@@ -22,6 +22,13 @@ export interface ReportsFilters {
    */
   situationIds: number[] | null;
   /**
+   * Situaciones de la pestaña Productos. Campo aparte a propósito: su default
+   * (solo Enviado y Entregado) no es el de Ventas, y `filters` es compartido
+   * entre pestañas — con un único campo la selección de una viajaría a la otra
+   * con un significado distinto.
+   */
+  productSituationIds: number[] | null;
+  /**
    * Código de la lista de precios (`orders.price_list_code`), no su id: es lo
    * que persiste la orden. `null` = todas las listas.
    */
@@ -46,6 +53,7 @@ export const createDefaultReportsFilters = (): ReportsFilters => ({
   saleTypeId: null,
   paymentMethodId: null,
   situationIds: null,
+  productSituationIds: null,
   priceListCode: null,
 });
 
@@ -70,6 +78,28 @@ export const isDefaultExcludedSituation = (s: OrderSituationOption): boolean =>
 /** Ids marcados por defecto: todas las situaciones menos las excluidas. */
 export const defaultSituationIds = (options: OrderSituationOption[]): number[] =>
   options.filter((s) => !isDefaultExcludedSituation(s)).map((s) => s.id);
+
+/**
+ * Situaciones que Productos cuenta como venta por defecto: la mercadería que
+ * efectivamente salió del almacén. Es un criterio DISTINTO al de Ventas —
+ * Ventas mide lo que se pidió, Productos lo que salió — y por eso viaja en su
+ * propio campo (`productSituationIds`) en vez de compartir `situationIds`.
+ */
+export const PRODUCTS_DEFAULT_SITUATION_CODES: readonly string[] = ['SEN-PHY', 'FIN-PHY'];
+
+export const isDefaultProductSituation = (s: OrderSituationOption): boolean =>
+  s.code !== null && PRODUCTS_DEFAULT_SITUATION_CODES.includes(s.code);
+
+/** Ids marcados por defecto en Productos: solo Enviado y Entregado. */
+export const defaultProductSituationIds = (options: OrderSituationOption[]): number[] =>
+  options.filter(isDefaultProductSituation).map((s) => s.id);
+
+/** Compara dos listas de ids sin importar el orden. */
+export function isSameIdSet(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((id) => set.has(id));
+}
 
 // -------------------------------------------------------
 // Branch / Location lookup
@@ -177,7 +207,18 @@ export interface ProductsParetoItem {
 export interface SizeByCategoryItem {
   category_id: number | null;
   category_name: string;
+  /**
+   * Clave real de la talla: hay dos grupos que se llaman los dos "Talla", así
+   * que el nombre del grupo no basta para distinguirlos. `null` en las filas
+   * de "Sin talla".
+   */
+  size_group_id: number | null;
+  /** "Talla pantalón", "Talla zapatos"… o "Sin talla". */
+  size_group_name: string;
+  /** Nombre crudo del término: "M", "32"… o "Sin talla". */
   size_name: string;
+  /** Etiqueta lista para el eje: "Talla pantalón · 32" o "Sin talla". */
+  size_label: string;
   total_quantity: number;
   total_revenue: number;
 }

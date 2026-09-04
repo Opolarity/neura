@@ -8,15 +8,8 @@ import { TabSkeleton } from '../components/shared/TabSkeleton';
 import { ReportsFilterBar } from '../components/shared/ReportsFilterBar';
 import { SalesGeoFilters } from '../components/sales/SalesGeoFilters';
 import { fetchSalesReport, fetchSalesDetailReport, filterOptionsService } from '../services/reports.service';
-import { defaultSituationIds } from '../types/reports.types';
+import { defaultSituationIds, isSameIdSet } from '../types/reports.types';
 import { generateSalesReportExcel } from '../utils/generateSalesReportExcel';
-
-/** Compara dos listas de ids sin importar el orden. */
-function isSameIdSet(a: number[], b: number[]): boolean {
-  if (a.length !== b.length) return false;
-  const set = new Set(a);
-  return b.every((id) => set.has(id));
-}
 
 const SalesDashboard = lazy(() =>
   import('../components/sales/SalesDashboard').then((m) => ({ default: m.SalesDashboard })),
