@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { getTodayDate } from "@/shared/utils/date";
 import type {
   FranchisePaymentStatus,
   FranchiseProductRow,
@@ -226,6 +227,8 @@ export function generateFranchiseProductsExcel({
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Ventas Franquiciados");
 
-  const today = new Date().toISOString().slice(0, 10);
+  // El dia del nombre del archivo es el de LIMA. toISOString() da el dia UTC,
+  // asi que a partir de las 19:00 el export salia fechado manana.
+  const today = getTodayDate();
   XLSX.writeFile(wb, `ventas-franquiciados-${today}.xlsx`);
 }

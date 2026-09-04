@@ -1,6 +1,7 @@
 import { buildEndpoint } from '@/shared/utils/query';
 import type { BirthdayProfilesResponse } from '../types/birthdayNotification.types';
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { getTodayDate } from "@/shared/utils/date";
 
 export interface BirthdayProfilesParams {
   page?: number;
@@ -10,18 +11,6 @@ export interface BirthdayProfilesParams {
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_SIZE = 20;
-
-/**
- * Fecha de hoy del navegador en YYYY-MM-DD, construida con los getters
- * locales y no con toISOString(), que convierte a UTC y en Peru (UTC-5)
- * devolveria el dia siguiente a partir de las 19:00.
- */
-const getLocalToday = (): string => {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${now.getFullYear()}-${month}-${day}`;
-};
 
 /**
  * Cumpleanos en la ventana de -2 a +1 dias, paginados y filtrados en el
@@ -39,7 +28,9 @@ export const birthdayProfilesApi = async (
     page,
     size,
     search: params.search,
-    today: getLocalToday(),
+    // Hoy en Lima, no en el huso del navegador: getTodayDate() es el unico
+    // helper que decide ese dia, y es el mismo que usa el SP del otro lado.
+    today: getTodayDate(),
   });
 
   const data = await invokeFunction<BirthdayProfilesResponse>(endpoint);
