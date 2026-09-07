@@ -1047,11 +1047,27 @@ export const useCreateSale = () => {
 
         setSendedToFranchiseAt(sentAt);
         setSendedToFranchiseBy(currentUserId);
-        toast({
-          title: "Consignación enviada",
-          description: "El envío al franquiciado se realizó correctamente",
-          variant: "success",
-        });
+        // La API de franquiciados devuelve `warnings` cuando algún SKU se
+        // ingresó sin talla. No aborta el envío, pero callarlo es lo que dejó
+        // catálogos enteros con las variaciones indistinguibles: se muestra.
+        const warnings: string[] = Array.isArray(result.warnings) ? result.warnings : [];
+
+        if (warnings.length > 0) {
+          console.warn("Avisos del envío a franquiciado:", warnings);
+          const shown = warnings.slice(0, 3).join(" · ");
+          const rest = warnings.length > 3 ? ` (y ${warnings.length - 3} más)` : "";
+          toast({
+            title: "Consignación enviada con avisos",
+            description: `${shown}${rest}`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Consignación enviada",
+            description: "El envío al franquiciado se realizó correctamente",
+            variant: "success",
+          });
+        }
       } else {
         throw new Error("La respuesta no fue exitosa");
       }
