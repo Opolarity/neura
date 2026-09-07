@@ -28,7 +28,8 @@ export const OrderProductsInfoTable = ({ orderProducts, formatCurrency }: OrderP
             </TableHeader>
             <TableBody>
                 {orderProducts.map((product) => {
-                    const unitPrice = product.product_price * (1 - product.product_discount / 100);
+                    // T-630: product_discount es un MONTO por unidad, no un porcentaje.
+                    const unitPrice = product.product_price - product.product_discount;
                     return (
                         <TableRow key={product.id}>
                             <TableCell>{product.product_name ?? product.variations?.products?.title ?? ""}</TableCell>

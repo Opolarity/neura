@@ -252,7 +252,8 @@ export const useCreateReturn = () => {
                     product_name: p.product_name ?? '',
                     sku: p.sku ?? '',
                     variation_name: p.terms?.map(t => t.term_name).join(' / ') ?? '',
-                    price: p.product_price * (1 - p.product_discount / 100),
+                    // T-630: product_discount es un MONTO por unidad, no un porcentaje.
+                    price: p.product_price - p.product_discount,
                     output: false,
                     maxQuantity: p.quantity,
                 }));
@@ -322,7 +323,8 @@ export const useCreateReturn = () => {
                 product_name: product.product_name ?? product.variations?.products?.title ?? '',
                 sku: product.sku ?? product.variations?.sku ?? '',
                 variation_name: product.terms?.map(t => t.term_name).join(' / ') ?? '',
-                price: product.product_price * (1 - product.product_discount / 100),
+                // T-630: product_discount es un MONTO por unidad, no un porcentaje.
+                price: product.product_price - product.product_discount,
                 output: false,
                 maxQuantity: product.quantity,
             };

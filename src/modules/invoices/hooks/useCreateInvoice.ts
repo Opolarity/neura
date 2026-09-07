@@ -232,7 +232,9 @@ export const useCreateInvoice = () => {
           const orderItems: InvoiceItemForm[] = orderProducts.map((p: any) => {
             const unitPrice = parseFloat(p.product_price) || 0;
             const quantity = p.quantity || 1;
-            const discount = parseFloat(p.product_discount) || 0;
+            // T-630: order_products.product_discount es el descuento POR UNIDAD;
+            // el campo discount del comprobante es el de la linea entera.
+            const discount = (parseFloat(p.product_discount) || 0) * quantity;
             const base = quantity * unitPrice;
             const baseWithDiscount = base - discount;
             const total = +baseWithDiscount.toFixed(2);
@@ -335,7 +337,9 @@ export const useCreateInvoice = () => {
           const orderItems: InvoiceItemForm[] = orderProducts.map((p: any) => {
             const unitPrice = parseFloat(p.product_price) || 0;
             const orderQuantity = p.quantity || 1;
-            const orderDiscount = parseFloat(p.product_discount) || 0;
+            // T-630: order_products.product_discount es el descuento POR UNIDAD;
+            // de aca para abajo se trabaja con el de la linea entera.
+            const orderDiscount = (parseFloat(p.product_discount) || 0) * orderQuantity;
             const paidAmount = parseFloat(p.paid_amount) || 0;
             const lineTotal = +(orderQuantity * unitPrice - orderDiscount).toFixed(2);
             const effectiveUnit = orderQuantity > 0 ? lineTotal / orderQuantity : unitPrice;
@@ -472,7 +476,9 @@ export const useCreateInvoice = () => {
       const orderItems: InvoiceItemForm[] = orderProducts.map((p: any) => {
         const unitPrice = p.price || 0;
         const quantity = p.quantity || 1;
-        const discount = p.discount_amount || 0;
+        // T-630: sp_get_sale_by_id_products devuelve discount_amount POR UNIDAD;
+        // el campo discount del comprobante es el de la linea entera.
+        const discount = (p.discount_amount || 0) * quantity;
         const base = quantity * unitPrice;
         const baseWithDiscount = base - discount;
         const total = +baseWithDiscount.toFixed(2);
