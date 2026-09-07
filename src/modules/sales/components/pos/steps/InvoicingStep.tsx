@@ -426,7 +426,10 @@ export default function InvoicingStep({
       const totalTaxes = totalAmount - (totalAmount / 1.18);
 
       const items = orderProducts.map((op: any) => {
-        const lineTotal = (Number(op.product_price) * Number(op.quantity)) - Number(op.product_discount || 0);
+        // T-630: order_products.product_discount es el descuento POR UNIDAD; el
+        // campo discount del comprobante es el de la linea entera.
+        const lineDiscount = Number(op.product_discount || 0) * Number(op.quantity);
+        const lineTotal = (Number(op.product_price) * Number(op.quantity)) - lineDiscount;
         const igv = lineTotal - (lineTotal / 1.18);
         const baseTitle = op.variations?.products?.title || op.product_name || `Producto ${op.product_variation_id}`;
         return {
@@ -434,7 +437,7 @@ export default function InvoicingStep({
           quantity: Number(op.quantity),
           measurement_unit: "NIU",
           unit_price: Number(op.product_price),
-          discount: Number(op.product_discount || 0),
+          discount: lineDiscount,
           igv: Math.round(igv * 100) / 100,
           total: Math.round(lineTotal * 100) / 100,
         };
@@ -571,7 +574,10 @@ export default function InvoicingStep({
       const totalTaxes = totalAmount - (totalAmount / 1.18);
 
       const items = orderProducts.map((op: any) => {
-        const lineTotal = (Number(op.product_price) * Number(op.quantity)) - Number(op.product_discount || 0);
+        // T-630: order_products.product_discount es el descuento POR UNIDAD; el
+        // campo discount del comprobante es el de la linea entera.
+        const lineDiscount = Number(op.product_discount || 0) * Number(op.quantity);
+        const lineTotal = (Number(op.product_price) * Number(op.quantity)) - lineDiscount;
         const igv = lineTotal - (lineTotal / 1.18);
         const baseTitle = op.variations?.products?.title || op.product_name || `Producto ${op.product_variation_id}`;
         return {
@@ -579,7 +585,7 @@ export default function InvoicingStep({
           quantity: Number(op.quantity),
           measurement_unit: "NIU",
           unit_price: Number(op.product_price),
-          discount: Number(op.product_discount || 0),
+          discount: lineDiscount,
           igv: Math.round(igv * 100) / 100,
           total: Math.round(lineTotal * 100) / 100,
         };
