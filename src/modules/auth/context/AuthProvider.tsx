@@ -127,6 +127,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         // nada: se acaba en /login, donde PublicRoute solo mira `loading`, y el
         // siguiente login válido los vuelve a resolver.
         lastFetchedUserId.current = null;
+        // RUM: el SIGNED_OUT posterior sale por el early-return, asi que se limpia aqui.
+        setRumUser(null);
         await signOut();
         return;
       }
