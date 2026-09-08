@@ -12,7 +12,7 @@ const PriceListHeader = ({ onOpenDialog }: PriceListHeaderProps) => {
     <div className="flex justify-between items-start mb-2">
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          Listas de Precios
+          Listas de precios
         </h1>
         <p className="text-muted-foreground">
           Gestiona las listas de precios del sistema

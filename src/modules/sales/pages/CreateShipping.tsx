@@ -278,7 +278,7 @@ const CreateShipping = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-foreground">
-          {id ? "Actualizar Método de Envío" : "Crear Método de Envío"}
+          {id ? "Actualizar método de envío" : "Crear método de envío"}
         </h1>
         <div className="flex gap-3">
           <Link to="/shipping">

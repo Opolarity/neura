@@ -94,7 +94,7 @@ export const useCreateMovement = ({ movementType }: UseCreateMovementProps) => {
     isAdmin || permissionCodes.includes("movements.reasons.create");
 
   const messages = {
-    title: isIncome ? "Añadir Ingreso" : "Añadir Gasto",
+    title: isIncome ? "Añadir ingreso" : "Añadir gasto",
     subtitle: isIncome
       ? "Registra un nuevo ingreso en el sistema"
       : "Registra un nuevo gasto en el sistema",

@@ -72,7 +72,7 @@ const CreateUser = () => {
             </Button>
           </Link>
           <h1 className="text-2xl font-bold">
-            {isEdit ? "Editar Usuario" : "Crear Nuevo Usuario"}
+            {isEdit ? "Editar usuario" : "Crear nuevo usuario"}
           </h1>
         </div>
       </div>

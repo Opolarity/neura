@@ -36,11 +36,6 @@ function ReportsLayout() {
       value={{ filters, draft, setDraft, apply, applyImmediate, isDirty, applyVersion }}
     >
       <div className="p-6 space-y-2">
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold tracking-tight">Reportes</h1>
-          <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
-        </div>
-
         <Outlet />
       </div>
     </ReportsFiltersContext.Provider>

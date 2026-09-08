@@ -155,7 +155,7 @@ const CreateReturn = () => {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold">Nueva Devolución/Cambio</h1>
+              <h1 className="text-3xl font-bold">Nueva devolución/cambio</h1>
               <p className="text-muted-foreground mt-1">
                 Completa la información de la devolución o cambio
               </p>

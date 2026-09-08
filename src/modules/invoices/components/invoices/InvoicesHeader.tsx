@@ -15,7 +15,7 @@ function InvoicesHeader({ onOpenOrder }: { onOpenOrder: () => void }) {
   return (
     <div className="flex justify-between items-center mb-4">
       <div>
-        <h1 className="text-2xl font-bold">FACTURACIÓN</h1>
+        <h1 className="text-2xl font-bold">Lista de comprobantes</h1>
         <p className="text-gray-600">
           Gestiona y consulta los comprobantes emitidos en el sistema
         </p>

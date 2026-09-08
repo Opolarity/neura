@@ -1,7 +1,7 @@
 const POS = () => {
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold">Punto de Venta</h1>
+      <h1 className="text-2xl font-bold">Punto de venta</h1>
       <p className="text-muted-foreground">Funcionalidad en desarrollo</p>
     </div>
   );

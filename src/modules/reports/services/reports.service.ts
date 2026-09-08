@@ -3,6 +3,7 @@ import { buildEndpoint } from '@/shared/utils/utils';
 import type {
   ReportsFilters,
   SalesKpis,
+  ProductsKpis,
   SalesOverTimeItem,
   SalesByDimensionItem,
   SalesGeoHeatmapItem,
@@ -48,7 +49,6 @@ import type {
   CustomersRecencyItem,
   CustomersParetoItem,
   CustomersBySaleTypeItem,
-  UpcomingBirthdayItem,
 } from '../types/reports.types';
 
 // -------------------------------------------------------
@@ -71,13 +71,16 @@ function mapFilters(f: ReportsFilters) {
 }
 
 /**
- * Params comunes de los SP de la pestaña Productos. Deliberadamente NO es
- * `mapFilters`: esos SP solo aceptan fecha/sede/canal/situación, y PostgREST
- * resuelve la sobrecarga por el conjunto exacto de argumentos nombrados —
- * mandarles los once de Ventas devuelve PGRST202 (404).
+ * Params comunes de los SP de la pestaña Productos. Sigue siendo distinto de
+ * `mapFilters` por una sola razón: la situación viaja en `productSituationIds`
+ * y llega ya resuelta desde el hook, así que lo que se envía es literalmente
+ * lo que el filtro muestra marcado. El resto del universo de pedidos se acota
+ * con los mismos campos que Ventas, todos opcionales.
  *
- * `situationIds` llega ya resuelto desde el hook: lo que se envía es
- * literalmente lo que el filtro muestra marcado.
+ * Ojo al agregar params: PostgREST resuelve por el conjunto exacto de
+ * argumentos nombrados, así que mandar uno que el SP no declare devuelve
+ * PGRST202 (404). Estos existen en los SP de Productos desde la migración
+ * 31000908124100.
  */
 function mapProductFilters(f: ReportsFilters, situationIds: number[]) {
   return {
@@ -85,6 +88,12 @@ function mapProductFilters(f: ReportsFilters, situationIds: number[]) {
     p_end_date: f.endDate ?? undefined,
     p_branch_id: f.branchId ?? undefined,
     p_sale_type_id: f.saleTypeId ?? undefined,
+    p_country_id: f.countryId ?? undefined,
+    p_state_id: f.stateId ?? undefined,
+    p_city_id: f.cityId ?? undefined,
+    p_neighborhood_id: f.neighborhoodId ?? undefined,
+    p_payment_method_id: f.paymentMethodId ?? undefined,
+    p_price_list_code: f.priceListCode ?? undefined,
     p_situation_ids: situationIds,
   };
 }
@@ -136,6 +145,12 @@ export const salesService = {
 // PRODUCTS
 // ============================================================
 export const productsService = {
+  // Totales del periodo sin duplicar por categoría — es la cifra que va en las
+  // tarjetas, y cuadra con el Pareto y con el Excel, no con los gráficos por
+  // categoría.
+  getKpis: (f: ReportsFilters, situationIds: number[]) =>
+    rpc<ProductsKpis>('sp_rpt_products_kpis', mapProductFilters(f, situationIds)),
+
   getByCategory: (f: ReportsFilters, situationIds: number[]) =>
     rpc<ProductsByCategoryItem[]>('sp_rpt_products_by_category', mapProductFilters(f, situationIds)),
 
@@ -185,16 +200,14 @@ export const productsService = {
   // Reutiliza el RPC del tab financiero: devuelve unidades, ingresos y margen
   // por producto — acá alimenta el scatter margen vs volumen.
   //
-  // No usa mapProductFilters porque ese SP no acepta p_sale_type_id. Y como lo
-  // comparte la pestaña Financiero, su p_situation_ids en NULL conserva el
-  // comportamiento viejo (sin filtro): acá hay que mandar el array explícito.
+  // Desde la migración 31000908124100 ese SP acepta los mismos filtros que el
+  // resto de Productos, así que ya puede usar mapProductFilters. Financiero lo
+  // sigue llamando con su propio subconjunto de params, que continúa siendo
+  // válido porque los nuevos tienen DEFAULT.
   getMarginScatter: (f: ReportsFilters, limit = 100, situationIds: number[] = []) =>
     rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
+      ...mapProductFilters(f, situationIds),
       p_limit: limit,
-      p_situation_ids: situationIds,
     }),
 };
 
@@ -369,69 +382,61 @@ export const financialService = {
 // ============================================================
 // CUSTOMERS
 // ============================================================
+/**
+ * Params comunes de los SP de la pestaña Clientes. `situationIds` en NULL deja
+ * que el backend aplique su default, que es el mismo de Ventas: todo menos
+ * cancelado y reembolsado.
+ *
+ * Desde la migración 31000908161000 los nueve SP aceptan el mismo juego que
+ * Ventas, así que ya no hace falta una excepción para el de geografía.
+ */
+function mapCustomerFilters(f: ReportsFilters) {
+  return {
+    p_start_date: f.startDate ?? undefined,
+    p_end_date: f.endDate ?? undefined,
+    p_branch_id: f.branchId ?? undefined,
+    p_sale_type_id: f.saleTypeId ?? undefined,
+    p_country_id: f.countryId ?? undefined,
+    p_state_id: f.stateId ?? undefined,
+    p_city_id: f.cityId ?? undefined,
+    p_neighborhood_id: f.neighborhoodId ?? undefined,
+    p_payment_method_id: f.paymentMethodId ?? undefined,
+    p_price_list_code: f.priceListCode ?? undefined,
+    p_situation_ids: f.situationIds ?? undefined,
+  };
+}
+
 export const customersService = {
   getKpis: (f: ReportsFilters) =>
-    rpc<CustomersKpis>('sp_rpt_customers_kpis', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<CustomersKpis>('sp_rpt_customers_kpis', mapCustomerFilters(f)),
 
   getTopCustomers: (f: ReportsFilters, limit = 10) =>
     rpc<TopCustomer[]>('sp_rpt_top_customers', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
+      ...mapCustomerFilters(f),
       p_limit: limit,
     }),
 
   getGeoDistribution: (f: ReportsFilters) =>
-    rpc<GeoDistributionData>('sp_rpt_customers_geo_distribution', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_country_id: f.countryId ?? undefined,
-    }),
+    rpc<GeoDistributionData>('sp_rpt_customers_geo_distribution', mapCustomerFilters(f)),
 
-  getByLoyalty: () =>
-    rpc<CustomersByLoyaltyItem[]>('sp_rpt_customers_by_loyalty'),
+  getByLoyalty: (f: ReportsFilters) =>
+    rpc<CustomersByLoyaltyItem[]>('sp_rpt_customers_by_loyalty', mapCustomerFilters(f)),
 
   getPurchaseFrequency: (f: ReportsFilters) =>
-    rpc<PurchaseFrequencyItem[]>('sp_rpt_customers_purchase_frequency', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-    }),
+    rpc<PurchaseFrequencyItem[]>('sp_rpt_customers_purchase_frequency', mapCustomerFilters(f)),
 
   getNewVsReturning: (f: ReportsFilters) =>
-    rpc<NewVsReturningData>('sp_rpt_customers_new_vs_returning', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<NewVsReturningData>('sp_rpt_customers_new_vs_returning', mapCustomerFilters(f)),
 
   getRecency: (f: ReportsFilters) =>
-    rpc<CustomersRecencyItem[]>('sp_rpt_customers_recency', {
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<CustomersRecencyItem[]>('sp_rpt_customers_recency', mapCustomerFilters(f)),
 
   getPareto: (f: ReportsFilters) =>
-    rpc<CustomersParetoItem[]>('sp_rpt_customers_pareto', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<CustomersParetoItem[]>('sp_rpt_customers_pareto', mapCustomerFilters(f)),
 
   getBySaleType: (f: ReportsFilters) =>
-    rpc<CustomersBySaleTypeItem[]>('sp_rpt_customers_by_sale_type', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<CustomersBySaleTypeItem[]>('sp_rpt_customers_by_sale_type', mapCustomerFilters(f)),
 
-  getUpcomingBirthdays: (days: number, limit = 15) =>
-    rpc<UpcomingBirthdayItem[]>('sp_rpt_customers_upcoming_birthdays', {
-      p_days: days,
-      p_limit: limit,
-    }),
 };
 
 // ============================================================
@@ -447,7 +452,12 @@ export interface SalesReportRow {
   sale_type: string | null;
   seller: string | null;
   total: number;
+  // Cobrado NETO de devoluciones confirmadas, para que la hoja cierre con la
+  // tarjeta "Ventas Totales" del dashboard.
   paid_amount: number;
+  // Reembolsos confirmados de la orden. Vienen en negativo, así que
+  // paid_amount = (pagos) + refund_amount.
+  refund_amount: number;
   // Métodos de pago de la orden, ya formateados por el SP como
   // "Efectivo (50.00), Yape (30.00)". "-" cuando la orden no tiene pagos.
   payment_methods: string | null;
@@ -505,6 +515,27 @@ export const fetchSalesDetailReport = (
   f: ReportsFilters,
 ): Promise<SalesDetailReportRow[]> =>
   rpc<SalesDetailReportRow[]>('sp_rpt_export_sales_detail', mapFilters(f));
+
+// Una fila por CLIENTE, para el Excel de /reports/clients. Misma identidad y
+// mismos filtros que la pantalla, pero sin límite: "Top clientes" corta en el
+// límite elegido, esto trae todos.
+export interface CustomerExportRow {
+  customer_name: string;
+  document_number: string | null;
+  has_account: boolean;
+  /** true para la fila de las ventas sin cliente identificable. */
+  is_anonymous: boolean;
+  order_count: number;
+  total_spent: number;
+  avg_ticket: number;
+  first_order: string;
+  last_order: string;
+  loyalty_level: string;
+  loyalty_points: number | null;
+}
+
+export const fetchCustomersReport = (f: ReportsFilters): Promise<CustomerExportRow[]> =>
+  rpc<CustomerExportRow[]>('sp_rpt_export_customers', mapCustomerFilters(f));
 
 // ============================================================
 // SHARED: Load filter options

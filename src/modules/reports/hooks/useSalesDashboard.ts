@@ -16,12 +16,16 @@ export function useSalesDashboard(filters: ReportsFilters) {
 
   const {
     startDate, endDate, branchId, countryId, stateId, cityId,
-    neighborhoodId, saleTypeId, paymentMethodId, situationIds,
+    neighborhoodId, saleTypeId, paymentMethodId, situationIds, priceListCode,
   } = filters;
   // Las situaciones van serializadas: un array nuevo en cada render rompería
   // la igualdad de la queryKey y refetchearía sin necesidad.
   const situationKey = situationIds?.join(',') ?? null;
-  const queryKey = [startDate, endDate, branchId, countryId, stateId, cityId, neighborhoodId, saleTypeId, paymentMethodId, situationKey] as const;
+  // Todo filtro que viaje a los SP tiene que estar acá: `mapFilters` manda
+  // `priceListCode`, pero al faltar en la clave React Query servía el cache y
+  // la pantalla se quedaba con las cifras de "todas las listas" mientras el
+  // Excel — que no pasa por el cache — sí venía filtrado.
+  const queryKey = [startDate, endDate, branchId, countryId, stateId, cityId, neighborhoodId, saleTypeId, paymentMethodId, situationKey, priceListCode] as const;
 
   const kpis = useQuery({
     queryKey: ['rpt_sales_kpis', ...queryKey],

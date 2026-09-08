@@ -294,3 +294,22 @@ export interface SupportRequestsFilters extends SupportModalFilters {
  */
 export type SupportErrorCode = EdgeFunctionErrorCode;
 export { FunctionError as SupportServiceError } from "@/shared/utils/functionError";
+
+/** Documento del protocolo tal cual lo devuelve la API externa de OPOLARITY. */
+export interface TicketProtocolApiResponse {
+  slug: string;
+  title: string;
+  subtitle: string | null;
+  content_html: string;
+  version: number;
+  updated_at: string;
+}
+
+/** El mismo documento ya normalizado para la vista. */
+export interface TicketProtocol {
+  title: string;
+  subtitle: string | null;
+  html: string;
+  version: number;
+  updatedAt: string | null;
+}

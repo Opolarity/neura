@@ -26,7 +26,7 @@ const MovementClassesPage = () => {
     <div className="h-full min-h-0 flex flex-col gap-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Clases de Movimiento</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Clases de movimiento</h1>
           <p className="text-muted-foreground mt-2">
             Administra las clases de movimiento del sistema
           </p>

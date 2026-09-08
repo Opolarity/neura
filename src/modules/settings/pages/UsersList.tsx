@@ -52,7 +52,7 @@ const UsersList = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Listado de Usuarios</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Listado de usuarios</h1>
           <p className="text-muted-foreground mt-2">
             Administra los usuarios del sistema
           </p>

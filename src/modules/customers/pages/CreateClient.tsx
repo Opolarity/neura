@@ -95,7 +95,7 @@ const CreateClient = () => {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Volver
         </Button>
-        <h1 className="text-3xl font-bold">Añadir Cliente</h1>
+        <h1 className="text-3xl font-bold">Añadir cliente</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">

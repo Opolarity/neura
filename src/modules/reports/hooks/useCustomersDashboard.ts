@@ -5,7 +5,6 @@ import type { ReportsFilters } from '../types/reports.types';
 
 export function useCustomersDashboard(filters: ReportsFilters) {
   const [topLimit, setTopLimit] = useState(10);
-  const [birthdayDays, setBirthdayDays] = useState(30);
 
   const queryKey = [filters];
 
@@ -27,9 +26,12 @@ export function useCustomersDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Desde la migración 31000908142000 respeta el rango y el estado de pedido,
+  // así que ya no puede tener una clave sin filtros: antes mostraba las 2770
+  // fichas de toda la base sin importar el período.
   const byLoyalty = useQuery({
-    queryKey: ['rpt_customers_by_loyalty'],
-    queryFn: () => customersService.getByLoyalty(),
+    queryKey: ['rpt_customers_by_loyalty', ...queryKey],
+    queryFn: () => customersService.getByLoyalty(filters),
     staleTime: 1000 * 60 * 10,
   });
 
@@ -45,8 +47,10 @@ export function useCustomersDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Idem: antes solo dependía de la sede y contaba los 1395 clientes del
+  // histórico completo; ahora el rango y el estado de pedido entran en juego.
   const recency = useQuery({
-    queryKey: ['rpt_customers_recency', filters.branchId],
+    queryKey: ['rpt_customers_recency', ...queryKey],
     queryFn: () => customersService.getRecency(filters),
     staleTime: 1000 * 60 * 5,
   });
@@ -63,12 +67,6 @@ export function useCustomersDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const upcomingBirthdays = useQuery({
-    queryKey: ['rpt_customers_upcoming_birthdays', birthdayDays],
-    queryFn: () => customersService.getUpcomingBirthdays(birthdayDays),
-    staleTime: 1000 * 60 * 10,
-  });
-
   return {
     kpis,
     topCustomers,
@@ -79,10 +77,7 @@ export function useCustomersDashboard(filters: ReportsFilters) {
     recency,
     pareto,
     bySaleType,
-    upcomingBirthdays,
     topLimit,
     setTopLimit,
-    birthdayDays,
-    setBirthdayDays,
   };
 }

@@ -186,6 +186,20 @@ export type TopLimit = 5 | 10 | 20;
 // -------------------------------------------------------
 // Products Dashboard
 // -------------------------------------------------------
+
+/**
+ * Totales del periodo contando cada producto UNA vez. No coinciden con la suma
+ * de los gráficos por categoría, que atribuyen el producto entero a cada una
+ * de sus categorías — ver MultiCategoryNotice.
+ */
+export interface ProductsKpis {
+  total_quantity: number;
+  total_revenue: number;
+  products_with_sales: number;
+  orders_count: number;
+  avg_unit_price: number;
+}
+
 export interface ProductsByCategoryItem {
   category_id: number | null;
   category_name: string;
@@ -494,11 +508,19 @@ export interface LoyaltyDistributionItem {
 }
 
 export interface CustomersKpis {
+  /**
+   * Clientes distintos, identificados por DNI/RUC con respaldo en cuenta y
+   * nombre — ver vw_rpt_order_customers. Las ventas sin identificar cuentan
+   * como un único cliente "Sin identificar".
+   */
   unique_buyers: number;
+  /** Clientes con al menos un pedido asociado a una cuenta. */
   with_account: number;
+  /** El resto. with_account + without_account = unique_buyers. */
   without_account: number;
   avg_ticket: number;
   total_orders: number;
+  orders_per_customer: number;
   loyalty_distribution: LoyaltyDistributionItem[];
 }
 

@@ -15,7 +15,7 @@ const AttributesHeader = ({
     <div className="flex justify-between items-center">
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          Listado de Atributos
+          Listado de atributos
         </h1>
         <p className="text-muted-foreground">
           Administra los atributos y sus valores
