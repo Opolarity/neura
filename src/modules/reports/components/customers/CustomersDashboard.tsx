@@ -7,7 +7,6 @@ import { NewVsReturningChart } from './NewVsReturningChart';
 import { CustomersRecencyChart } from './CustomersRecencyChart';
 import { CustomersParetoChart } from './CustomersParetoChart';
 import { CustomersBySaleTypeChart } from './CustomersBySaleTypeChart';
-import { UpcomingBirthdaysCard } from './UpcomingBirthdaysCard';
 import { useCustomersDashboard } from '../../hooks/useCustomersDashboard';
 import type { ReportsFilters } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
@@ -98,19 +97,11 @@ export function CustomersDashboard({ filters }: CustomersDashboardProps) {
         loading={dash.geoDistribution.isLoading}
       />
 
-      {/* Canal de venta + cumpleaños */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <CustomersBySaleTypeChart
-          data={dash.bySaleType.data ?? []}
-          loading={dash.bySaleType.isLoading}
-        />
-        <UpcomingBirthdaysCard
-          data={dash.upcomingBirthdays.data ?? []}
-          loading={dash.upcomingBirthdays.isLoading}
-          days={dash.birthdayDays}
-          onDaysChange={dash.setBirthdayDays}
-        />
-      </div>
+      {/* Canal de venta */}
+      <CustomersBySaleTypeChart
+        data={dash.bySaleType.data ?? []}
+        loading={dash.bySaleType.isLoading}
+      />
     </div>
   );
 }

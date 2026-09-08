@@ -49,7 +49,6 @@ import type {
   CustomersRecencyItem,
   CustomersParetoItem,
   CustomersBySaleTypeItem,
-  UpcomingBirthdayItem,
 } from '../types/reports.types';
 
 // -------------------------------------------------------
@@ -434,13 +433,6 @@ export const customersService = {
   getBySaleType: (f: ReportsFilters) =>
     rpc<CustomersBySaleTypeItem[]>('sp_rpt_customers_by_sale_type', mapCustomerFilters(f)),
 
-  // Mira hacia adelante ("quién cumple en los próximos N días"), así que no
-  // recibe el rango del reporte: aplicarle un período pasado la dejaría vacía.
-  getUpcomingBirthdays: (days: number, limit = 15) =>
-    rpc<UpcomingBirthdayItem[]>('sp_rpt_customers_upcoming_birthdays', {
-      p_days: days,
-      p_limit: limit,
-    }),
 };
 
 // ============================================================

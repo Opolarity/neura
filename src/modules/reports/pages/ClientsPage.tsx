@@ -59,9 +59,7 @@ export default function ClientsPage() {
             clientes aparece como una fila con muchas compras: es mostrador sin identificar, no
             una persona.{' '}
             <strong className="font-medium text-foreground">Distribución de lealtad</strong> solo
-            cubre a los clientes con cuenta, porque el nivel vive en su ficha.{' '}
-            <strong className="font-medium text-foreground">Próximos cumpleaños</strong> mira
-            hacia adelante y no depende del rango elegido.
+            cubre a los clientes con cuenta, porque el nivel vive en su ficha.
           </>
         }
       />

@@ -5,7 +5,6 @@ import type { ReportsFilters } from '../types/reports.types';
 
 export function useCustomersDashboard(filters: ReportsFilters) {
   const [topLimit, setTopLimit] = useState(10);
-  const [birthdayDays, setBirthdayDays] = useState(30);
 
   const queryKey = [filters];
 
@@ -68,12 +67,6 @@ export function useCustomersDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const upcomingBirthdays = useQuery({
-    queryKey: ['rpt_customers_upcoming_birthdays', birthdayDays],
-    queryFn: () => customersService.getUpcomingBirthdays(birthdayDays),
-    staleTime: 1000 * 60 * 10,
-  });
-
   return {
     kpis,
     topCustomers,
@@ -84,10 +77,7 @@ export function useCustomersDashboard(filters: ReportsFilters) {
     recency,
     pareto,
     bySaleType,
-    upcomingBirthdays,
     topLimit,
     setTopLimit,
-    birthdayDays,
-    setBirthdayDays,
   };
 }
