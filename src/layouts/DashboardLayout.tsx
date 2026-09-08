@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import { RumBoundary } from "@/shared/components/RumBoundary";
 import { AppSidebar } from "../components/layout/AppSidebar";
 import Header from "../components/layout/Header";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -22,7 +23,9 @@ export default function DashboardLayout() {
             y solo desplazan sus filas. `relative` es lo que ancla el PageLoader
             a esta área: así el loader no tapa el sidebar ni el header. */}
         <main className="relative flex-1 min-h-0 overflow-y-auto min-w-0 p-4">
-          <Outlet />
+          <RumBoundary>
+            <Outlet />
+          </RumBoundary>
         </main>
       </div>
     </SidebarProvider>);

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import AuthContext from "./AuthContext";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { setUser as setRumUser } from "@/lib/rum";
 import { getHeaderUserData } from "@/shared/services/service";
 import { getParameter } from "@/modules/settings/services/Parameters.service";
 import { AppUser } from "../types";
@@ -114,6 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const userId = currentUser?.id ?? null;
     if (userId === lastFetchedUserId.current) return;
     lastFetchedUserId.current = userId;
+    // RUM: identifica la sesion (el id viaja hasheado, nunca en claro)
+    setRumUser(userId);
     if (currentUser) {
       const allowed = await validateErpAccess();
       if (!allowed) {

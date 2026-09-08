@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { applyPriceRules, type GiftItem } from "../rules/applyPriceRules";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { measure } from "@/lib/rum";
 import { useUserProfile } from "@/modules/auth";
 import { useToast } from "@/hooks/use-toast";
 import { usePOSSession } from "./usePOSSession";
@@ -1016,6 +1017,8 @@ export const usePOS = () => {
 
     setSaving(true);
     try {
+      // RUM: se mide la operacion completa (varias llamadas)
+      return await measure("pos_venta", async () => {
       // Get "Completado" or first available situation
       // POS orders are always created with "Entregado" situation (id: 20)
       const situationId = 20;
@@ -1125,6 +1128,7 @@ export const usePOS = () => {
       setCurrentStep(6);
 
       return result;
+      });
     } catch (error: unknown) {
       console.error("Error creating order:", error);
       const errorMessage =

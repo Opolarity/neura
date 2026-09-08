@@ -16,6 +16,7 @@ import {
 } from "../types/Returns.types";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import { toastError } from "@/shared/utils/toastError";
+import { measure } from "@/lib/rum";
 
 const createEmptyPayment = (): ReturnPayment => ({
     id: crypto.randomUUID(),
@@ -431,6 +432,8 @@ export const useCreateReturn = () => {
         setSaving(true);
 
         try {
+          // RUM: se mide la operacion completa (varias llamadas)
+          return await measure("devolucion_crear", async () => {
             const selectedSituation = getSelectedSituation();
             const situationCode = selectedSituation?.code || "VIR";
 
@@ -518,6 +521,7 @@ export const useCreateReturn = () => {
 
             toast({ title: "Devolución/Cambio creado exitosamente", variant: "success" });
             navigate("/returns");
+          });
         } catch (error) {
             // Antes aquí se rearmaba el mensaje a mano (message + hint + código
             // + un JSON.parse sobre `error.context`, que es un Response y no un

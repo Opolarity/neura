@@ -3,10 +3,16 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+COPY package*.json .npmrc ./
+# NPM_TOKEN: token de lectura de GitHub Packages (@opolarity/rum). Build Variable en Coolify.
+ARG NPM_TOKEN
+RUN NPM_TOKEN=$NPM_TOKEN npm ci
 
 COPY . .
+# Release para el RUM: Coolify pasa SOURCE_COMMIT como build-arg.
+ARG SOURCE_COMMIT
+ENV VITE_RUM_RELEASE=$SOURCE_COMMIT
+
 RUN npm run build
 
 # 2) Serve (Nginx)
