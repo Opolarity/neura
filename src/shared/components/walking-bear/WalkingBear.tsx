@@ -1,17 +1,21 @@
 import { useEffect, useRef } from "react";
 
+import { cn } from "@/shared/utils/utils";
+
 // Sprites: oso polar pixel-art propio (97x64, alineado abajo-centro, mirando a la derecha).
-const WALK_SRC = "/images/pets/bear-walk-v2.gif";
+const WALK_SRC = "/images/pets/bear-walk-v3.gif";
 // Al llegar a cada extremo el oso ataca y se cae; se queda tumbado hasta reanudar la caminata.
 const ATTACK_SRC = "/images/pets/bear-attack-v2.gif";
 
 export type WalkingBearProps = {
   /** alto del sprite en px */
   height?: number;
+  /** recorrido maximo en px; si el contenedor es mas angosto, manda el contenedor */
+  maxTravel?: number;
   className?: string;
 };
 
-export default function WalkingBear({ height = 64, className }: WalkingBearProps) {
+export default function WalkingBear({ height = 64, maxTravel = 200, className }: WalkingBearProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
@@ -53,7 +57,7 @@ export default function WalkingBear({ height = 64, className }: WalkingBearProps
 
       if (walking) {
         x += dir * 18 * dt;
-        const maxX = Math.max(0, width - imgW());
+        const maxX = Math.min(maxTravel, Math.max(0, width - imgW()));
         if (x <= 0) {
           x = 0;
           dir = 1;
@@ -83,12 +87,13 @@ export default function WalkingBear({ height = 64, className }: WalkingBearProps
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
     };
-  }, [height]);
+  }, [height, maxTravel]);
 
   return (
     <div
       ref={hostRef}
-      className={className}
+      // Solo escritorio: en movil y tablet (<1024px) el oso no se muestra.
+      className={cn("hidden lg:block", className)}
       // flexShrink 0: dentro de un flex-col con alto acotado (paginas con tabla
       // llena) el contenedor se comprimia y recortaba al oso por arriba.
       style={{ position: "relative", height, flexShrink: 0, overflow: "hidden" }}
