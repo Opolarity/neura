@@ -77,7 +77,7 @@ const drawLabel = (
 
     // SKU-Lote text below barcode
     const skuLabel = ticketData.sku
-      ? `${ticketData.sku}-${ticketData.barcodeValue.split("-").pop() || ""}`
+      ? `${ticketData.sku}-${ticketData.sequence}`
       : ticketData.barcodeValue;
     doc.setFontSize(4);
     doc.setFont("helvetica", "normal");

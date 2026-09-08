@@ -18,9 +18,15 @@ interface ReportsFilterBarProps {
   exportSlot?: ReactNode;
   /** true si hay cambios sin aplicar en los filtros propios del tab (ej. producto de Productos). */
   extraDirty?: boolean;
+  /**
+   * Nota al pie de la caja de filtros — aclara cómo lee sus cifras la pestaña
+   * (qué suma cada KPI, qué queda fuera). Va por prop y no en duro porque esta
+   * barra la comparten las siete pestañas y cada una mide cosas distintas.
+   */
+  footNote?: ReactNode;
 }
 
-export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExtra, exportSlot, extraDirty = false }: ReportsFilterBarProps) {
+export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExtra, exportSlot, extraDirty = false, footNote }: ReportsFilterBarProps) {
   const { draft, setDraft, apply, isDirty } = useReportsFilters();
   const [open, setOpen] = useState(false);
 
@@ -86,6 +92,12 @@ export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExt
           </Button>
         </div>
       </div>
+
+      {footNote && (
+        <p className="pt-3 border-t text-xs leading-relaxed text-muted-foreground">
+          {footNote}
+        </p>
+      )}
     </div>
   );
 }

@@ -82,6 +82,7 @@ export type ActionType =
   | "free_shipping"
   | "shipping_discount_fixed"
   | "shipping_discount_percent"
+  | "shipping_fixed_price"
   | "payment_surcharge_percent";
 
 /** Valor por defecto del switch "Incluir subcategorías" cuando la clave no existe. */
@@ -266,5 +267,6 @@ export const ACTION_TYPE_LABELS: Record<ActionType, string> = {
   free_shipping: "Envío gratis",
   shipping_discount_fixed: "Descuento fijo en envío",
   shipping_discount_percent: "% descuento en envío",
+  shipping_fixed_price: "Precio fijo de envío",
   payment_surcharge_percent: "Recargo por método de pago",
 };

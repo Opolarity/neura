@@ -89,6 +89,16 @@ export default function SalesPage() {
         extraFields={<SalesGeoFilters />}
         extraActiveCount={extraActiveCount}
         onClearExtra={handleClearExtra}
+        footNote={
+          <>
+            <strong className="font-medium text-foreground">Ventas Totales</strong> suma los pagos
+            registrados de cada pedido, neto de devoluciones: un pedido sin cobrar o cobrado en
+            parte aporta solo lo efectivamente pagado.{' '}
+            <strong className="font-medium text-foreground">N° de Pedidos</strong> cuenta los
+            pedidos por su estado, estén pagados o no — por eso las dos cifras no siempre se
+            acompañan.
+          </>
+        }
         exportSlot={
           <Button
             variant="outline"
