@@ -1,9 +1,16 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState } from 'react';
+import { Download, Loader2 } from 'lucide-react';
+import { toast } from '@/shared/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 import { useReportsFilters } from '../context/ReportsFiltersContext';
 import { TabSkeleton } from '../components/shared/TabSkeleton';
 import { ReportsFilterBar } from '../components/shared/ReportsFilterBar';
 import { InventoryOptionsPanel } from '../components/inventory/InventoryOptionsPanel';
 import { useInventoryDashboard } from '../hooks/useInventoryDashboard';
+import { fetchInventoryReport } from '../services/reports.service';
+import { generateInventoryReportExcel } from '../utils/generateInventoryReportExcel';
+import { getTodayDate } from '@/shared/utils/date';
+import { toastError } from '@/shared/utils/toastError';
 
 const InventoryDashboard = lazy(() =>
   import('../components/inventory/InventoryDashboard').then((m) => ({ default: m.InventoryDashboard })),
@@ -12,6 +19,7 @@ const InventoryDashboard = lazy(() =>
 export default function StockPage() {
   const { filters } = useReportsFilters();
   const dash = useInventoryDashboard(filters);
+  const [isExporting, setIsExporting] = useState(false);
 
   const extraActiveCount = [
     dash.warehouseId,
@@ -25,6 +33,29 @@ export default function StockPage() {
     dash.setValuationPriceListId(undefined);
   }
 
+  // El Excel no lleva el rango de fechas en el nombre porque el stock es una
+  // foto del presente: el archivo vale para el día en que se descargó.
+  async function handleDownload() {
+    setIsExporting(true);
+    try {
+      const rows = await fetchInventoryReport(
+        dash.warehouseId,
+        dash.threshold ?? undefined,
+        dash.valuationPriceListId,
+      );
+      if (rows.length === 0) {
+        toast({ title: 'No hay stock para los filtros seleccionados', variant: 'warning' });
+        return;
+      }
+      generateInventoryReportExcel(rows, getTodayDate());
+      toast({ title: `Reporte exportado: ${rows.length} filas de stock`, variant: 'success' });
+    } catch (error) {
+      toastError(error, 'Error al generar el reporte. Inténtalo de nuevo.');
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="mb-4">
@@ -35,6 +66,22 @@ export default function StockPage() {
         extraFields={<InventoryOptionsPanel dash={dash} />}
         extraActiveCount={extraActiveCount}
         onClearExtra={handleClearExtra}
+        exportSlot={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={isExporting}
+            className="gap-1.5"
+          >
+            {isExporting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            {isExporting ? 'Generando...' : 'Descargar'}
+          </Button>
+        }
         footNote={
           <>
             Casi todo Inventario es una{' '}

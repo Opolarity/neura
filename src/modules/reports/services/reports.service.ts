@@ -541,6 +541,37 @@ export interface CustomerExportRow {
 export const fetchCustomersReport = (f: ReportsFilters): Promise<CustomerExportRow[]> =>
   rpc<CustomerExportRow[]>('sp_rpt_export_customers', mapCustomerFilters(f));
 
+// Una fila por variación y ALMACÉN, que es el grano del stock: para un conteo
+// físico importa dónde está cada unidad. No recibe el rango de fechas porque el
+// stock es una foto del presente.
+export interface InventoryExportRow {
+  sku: string;
+  product_title: string;
+  warehouse_name: string;
+  /** Stock en ese almacén. */
+  stock: number;
+  /** Stock del SKU sumando almacenes: es contra esto que se decide el stock bajo. */
+  stock_sku_total: number;
+  /** null cuando el umbral global no está configurado. */
+  is_low_stock: boolean | null;
+  unit_cost: number;
+  cost_value: number;
+  unit_price: number;
+  retail_value: number;
+  last_movement: string | null;
+}
+
+export const fetchInventoryReport = (
+  warehouseId?: number,
+  threshold?: number,
+  priceListId?: number,
+): Promise<InventoryExportRow[]> =>
+  rpc<InventoryExportRow[]>('sp_rpt_export_inventory', {
+    p_warehouse_id: warehouseId ?? undefined,
+    p_threshold: threshold ?? undefined,
+    p_price_list_id: priceListId ?? undefined,
+  });
+
 // ============================================================
 // SHARED: Load filter options
 // ============================================================
