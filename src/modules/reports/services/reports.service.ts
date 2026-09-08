@@ -260,9 +260,13 @@ export const inventoryService = {
       p_warehouse_id: warehouseId ?? undefined,
     }),
 
-  getValuation: (warehouseId?: number) =>
+  // `priceListId` sin definir deja que el SP use su referencia: la lista del
+  // canal minorista. Valorizar a mayorista da otro numero, y para un negocio
+  // que vende por los dos canales la diferencia importa.
+  getValuation: (warehouseId?: number, priceListId?: number) =>
     rpc<InventoryValuation>('sp_rpt_inventory_valuation', {
       p_warehouse_id: warehouseId ?? undefined,
+      p_price_list_id: priceListId ?? undefined,
     }),
 
   getStockByCategory: (warehouseId?: number) =>

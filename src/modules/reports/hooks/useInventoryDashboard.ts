@@ -7,6 +7,9 @@ import type { Granularity, ReportsFilters } from '../types/reports.types';
 
 export function useInventoryDashboard(filters: ReportsFilters) {
   const [warehouseId, setWarehouseId] = useState<number | undefined>(undefined);
+  // Lista de precios con la que se valoriza el inventario. undefined = la
+  // referencia del SP (la del canal minorista).
+  const [valuationPriceListId, setValuationPriceListId] = useState<number | undefined>(undefined);
   // Umbral de stock bajo: el valor de referencia es el parámetro global
   // (Configuración > Negocio > Operación). El selector del reporte solo
   // define un override de sesión, que no se persiste.
@@ -43,8 +46,8 @@ export function useInventoryDashboard(filters: ReportsFilters) {
   });
 
   const valuation = useQuery({
-    queryKey: ['rpt_inventory_valuation', warehouseId],
-    queryFn: () => inventoryService.getValuation(warehouseId),
+    queryKey: ['rpt_inventory_valuation', warehouseId, valuationPriceListId],
+    queryFn: () => inventoryService.getValuation(warehouseId, valuationPriceListId),
     staleTime: 1000 * 60 * 5,
   });
 
@@ -124,6 +127,8 @@ export function useInventoryDashboard(filters: ReportsFilters) {
       setDeadStockPage(1);
       setLowStockPage(1);
     },
+    valuationPriceListId,
+    setValuationPriceListId,
     threshold,
     globalThreshold,
     thresholdOverride,
