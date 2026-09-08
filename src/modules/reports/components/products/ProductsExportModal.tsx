@@ -13,8 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { DateRangeFilter, DateRangeValue } from '@/shared/components/date-range';
-import { diffCalendarDays } from '@/shared/utils/date';
+import { diffCalendarDays, formatDateDisplay } from '@/shared/utils/date';
 
 import {
   generateProductsReportExcel,
@@ -31,8 +30,6 @@ interface ProductsExportModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const MAX_DAYS = 31;
-
 export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalProps) {
   const { filters } = useReportsFilters();
 
@@ -47,47 +44,39 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
     [filters.productSituationIds, situations.data],
   );
 
-  const [startDate, setStartDate] = useState<string | null>(null);
-  const [endDate, setEndDate] = useState<string | null>(null);
+  /**
+   * Sin esto el Excel podía salir vacío en silencio: si el catálogo de
+   * situaciones no había cargado (o su query falló), `defaultProductSituationIds`
+   * devuelve [] y el SP con `p_situation_ids` en array vacío no matchea ninguna
+   * orden — 0 filas, sin error. El hook del dashboard ya se protegía igual.
+   */
+  const situationsReady = filters.productSituationIds !== null || situations.isSuccess;
+
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleDateChange = ({ startDate, endDate }: DateRangeValue) => {
-    setStartDate(startDate);
-    setEndDate(endDate);
-  };
+  // El rango es el de la barra de filtros, no uno propio del modal: el archivo
+  // tiene que cubrir el mismo periodo que la pantalla. Antes el modal pedía sus
+  // fechas aparte, con un tope de 31 días contra los 90 que permite la barra.
+  const startDate = filters.startDate;
+  const endDate = filters.endDate;
+  const dayCount =
+    startDate && endDate ? diffCalendarDays(startDate, endDate) + 1 : null;
 
-  const daysDiff = startDate && endDate ? diffCalendarDays(startDate, endDate) : null;
-
-  const isValid =
-    startDate !== null &&
-    endDate !== null &&
-    daysDiff !== null &&
-    daysDiff >= 0 &&
-    daysDiff <= MAX_DAYS;
-
-  const validationError =
-    startDate && endDate && daysDiff !== null
-      ? daysDiff < 0
-        ? 'La fecha fin debe ser posterior a la fecha inicio'
-        : daysDiff > MAX_DAYS
-        ? `El rango máximo permitido es de ${MAX_DAYS} días`
-        : null
-      : null;
+  const canDownload = startDate !== null && endDate !== null && situationsReady && !isLoading;
 
   async function handleDownload() {
-    if (!isValid || !startDate || !endDate) return;
+    if (!startDate || !endDate || !situationsReady) return;
 
     setIsLoading(true);
     try {
-      const start = startDate;
-      const end = endDate;
-
-      // El rango es propio del modal, pero el resto del criterio no: el Excel
-      // tiene que cuadrar con lo que se ve en los gráficos. Hasta la migración
-      // 31000908124100 estos SP solo aceptaban fecha y situación, así que el
-      // archivo salía sin filtrar por sede ni canal — con sede = Gamarra la
-      // pantalla mostraba 637.00 y el Excel exportaba 5816.25.
+      // Mismo criterio que los gráficos, para que el Excel no contradiga a la
+      // pantalla. Hasta la migración 31000908124100 estos SP solo aceptaban
+      // fecha y situación, así que el archivo salía sin filtrar por sede ni
+      // canal — con sede = Gamarra la pantalla mostraba 637.00 y el Excel
+      // exportaba 5816.25.
       const scope = {
+        p_start_date: startDate,
+        p_end_date: endDate,
         p_branch_id: filters.branchId ?? undefined,
         p_sale_type_id: filters.saleTypeId ?? undefined,
         p_country_id: filters.countryId ?? undefined,
@@ -100,16 +89,8 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
       };
 
       const [resProducts, resCategories] = await Promise.all([
-        supabase.rpc('sp_rpt_export_products_by_product', {
-          p_start_date: start,
-          p_end_date: end,
-          ...scope,
-        }),
-        supabase.rpc('sp_rpt_export_products_by_category', {
-          p_start_date: start,
-          p_end_date: end,
-          ...scope,
-        }),
+        supabase.rpc('sp_rpt_export_products_by_product', scope),
+        supabase.rpc('sp_rpt_export_products_by_category', scope),
       ]);
 
       if (resProducts.error) throw resProducts.error;
@@ -123,7 +104,7 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
         return;
       }
 
-      generateProductsReportExcel(byProduct, byCategory, start, end);
+      generateProductsReportExcel(byProduct, byCategory, startDate, endDate);
       toast({ title: `Reporte exportado: ${byProduct.length} productos`, variant: "success" });
       onOpenChange(false);
     } catch (error) {
@@ -134,13 +115,7 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
   }
 
   function handleOpenChange(value: boolean) {
-    if (!isLoading) {
-      if (!value) {
-        setStartDate(null);
-        setEndDate(null);
-      }
-      onOpenChange(value);
-    }
+    if (!isLoading) onOpenChange(value);
   }
 
   return (
@@ -149,32 +124,31 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
         <DialogHeader>
           <DialogTitle>Descargar Reporte de Productos</DialogTitle>
           <DialogDescription>
-            Selecciona un rango de fechas (máximo {MAX_DAYS} días) para exportar las
-            ventas por producto y categoría a Excel.
+            Se exportan las ventas por producto y por categoría del mismo periodo y con los
+            mismos filtros que muestra la pantalla.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <DateRangeFilter
-            startDate={startDate}
-            endDate={endDate}
-            onChange={handleDateChange}
-            startLabel="Fecha inicio"
-            endLabel="Fecha fin"
-            maxRangeDays={MAX_DAYS}
-            disabled={isLoading}
-          />
-
-          {validationError && (
-            <p className="text-sm text-destructive">{validationError}</p>
+        <div className="grid gap-2 py-4 text-sm">
+          {startDate && endDate ? (
+            <p className="text-muted-foreground">
+              Periodo:{' '}
+              <span className="font-medium text-foreground">
+                {formatDateDisplay(startDate)} — {formatDateDisplay(endDate)}
+              </span>
+              {dayCount !== null && ` (${dayCount} día${dayCount !== 1 ? 's' : ''})`}
+            </p>
+          ) : (
+            <p className="text-destructive">
+              Elegí un rango de fechas en los filtros antes de exportar.
+            </p>
           )}
 
-          {isValid && daysDiff !== null && (
-            <p className="text-sm text-muted-foreground">
-              Rango seleccionado:{' '}
-              <span className="font-medium text-foreground">
-                {daysDiff + 1} día{daysDiff + 1 !== 1 ? 's' : ''}
-              </span>
+          {!situationsReady && (
+            <p className="text-destructive">
+              {situations.isError
+                ? 'No se pudo cargar el catálogo de estados de pedido. Recargá la página e intentá de nuevo.'
+                : 'Cargando estados de pedido…'}
             </p>
           )}
         </div>
@@ -183,7 +157,7 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
           <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isLoading}>
             Cancelar
           </Button>
-          <Button onClick={handleDownload} disabled={!isValid || isLoading}>
+          <Button onClick={handleDownload} disabled={!canDownload}>
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (

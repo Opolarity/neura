@@ -1,10 +1,12 @@
 import * as XLSX from 'xlsx';
 
+// Espejo exacto de lo que devuelve sp_rpt_export_products_by_product. Declaraba
+// además `category_name`, que ese SP no devuelve: la categoría va en la otra
+// hoja, que sale de sp_rpt_export_products_by_category.
 export interface ProductExportRow {
   product_id: number;
   product_title: string;
   sku: string;
-  category_name: string;
   total_quantity: number;
   total_revenue: number;
 }
