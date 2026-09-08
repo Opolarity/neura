@@ -41,7 +41,7 @@ const CreateRole = () => {
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            {isEdit ? "Editar Rol" : "Crear Rol"}
+            {isEdit ? "Editar rol" : "Crear rol"}
           </h1>
           <p className="text-muted-foreground mt-2">
             {isEdit

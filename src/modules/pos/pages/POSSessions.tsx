@@ -57,7 +57,7 @@ const POSSessions = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold">Sesiones de Punto de Venta</h1>
+          <h1 className="text-3xl font-bold">Sesiones de punto de venta</h1>
           <p className="text-muted-foreground mt-1">
             Historial de sesiones del punto de venta
           </p>

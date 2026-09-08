@@ -45,7 +45,7 @@ const CreateWarehouses = () => {
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                     </Link>
-                    <h1 className="text-2xl font-bold">Crear Nuevo Almacén</h1>
+                    <h1 className="text-2xl font-bold">Crear nuevo almacén</h1>
                 </div>
             </div>
             <form onSubmit={handleSubmit}>

@@ -16,7 +16,7 @@ const SalesHeader = ({
   return (
     <div className="flex justify-between items-start">
       <div>
-        <h1 className="text-3xl font-bold">Gestión de Ventas</h1>
+        <h1 className="text-3xl font-bold">Gestión de ventas</h1>
         <p className="text-muted-foreground mt-1">
           Administra las ventas realizadas
         </p>

@@ -35,7 +35,7 @@ export const PriceRulesHeader = ({
       <div className="flex items-center gap-3">
         <Tags className="w-8 h-8" />
         <div>
-          <h1 className="text-3xl font-bold">Reglas de Precios</h1>
+          <h1 className="text-3xl font-bold">Reglas de precios</h1>
           <p className="text-muted-foreground">
             Gestiona las reglas de precios y cupones
           </p>

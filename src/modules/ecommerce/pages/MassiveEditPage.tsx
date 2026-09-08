@@ -344,7 +344,7 @@ const PromotionalTextPage = () => {
     <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex flex-wrap gap-4 justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Edición Masiva</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Edición masiva</h1>
           <p className="text-gray-600">Gestiona y actualiza los productos del ecommerce</p>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">

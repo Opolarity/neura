@@ -33,7 +33,7 @@ const CustomerPointsMovements = () => {
 
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Movimientos de Puntos</h1>
+          <h1 className="text-3xl font-bold">Movimientos de puntos</h1>
           <p className="text-muted-foreground">Historial de movimientos de puntos por cliente</p>
         </div>
         {/* Sumar puntos es acreditar saldo al cliente, así que se concede

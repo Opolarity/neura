@@ -11,7 +11,7 @@ const POSListHeader = ({ handleGoToPOS }: POSListHeaderProps) => {
     <div className="flex justify-between items-center">
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          Sesiones de Caja
+          Sesiones de caja
         </h1>
         <p className="text-muted-foreground">
           Listado de sesiones POS abiertas y cerradas

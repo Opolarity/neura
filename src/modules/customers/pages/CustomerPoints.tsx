@@ -19,7 +19,7 @@ const CustomerPoints = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       <div>
-        <h1 className="text-3xl font-bold">Puntos de Clientes</h1>
+        <h1 className="text-3xl font-bold">Puntos de clientes</h1>
         <p className="text-muted-foreground">Ranking de puntos por cliente</p>
       </div>
 

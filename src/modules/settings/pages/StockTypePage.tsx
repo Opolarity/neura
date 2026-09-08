@@ -28,7 +28,7 @@ const StockTypePage = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tipos de Stock</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Tipos de inventario de productos</h1>
           <p className="text-muted-foreground mt-2">
             Administra los tipos de stock del sistema
           </p>
