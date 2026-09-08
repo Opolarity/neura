@@ -63,6 +63,10 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-4">
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold tracking-tight">Reportes de productos</h1>
+        <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+      </div>
       <ReportsFilterBar
         extraFields={<ProductsOptionsPanel dash={dash} />}
         extraActiveCount={extraActiveCount}
