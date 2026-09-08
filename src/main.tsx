@@ -1,3 +1,5 @@
+// Primer import a proposito: el RUM parchea fetch antes de que se cree el cliente de Supabase.
+import "./lib/rum";
 import { createRoot } from "react-dom/client";
 import App from "./app/App.tsx";
 import "./index.css";
