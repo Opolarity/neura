@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
 
-// Sprites: oso polar (white) de vscode-pets (github.com/tonybaloney/vscode-pets), MIT License.
+// Sprites: oso polar pixel-art propio (97x64, alineado abajo-centro, mirando a la derecha).
 const WALK_SRC = "/images/pets/bear-walk.gif";
-const IDLE_SRC = "/images/pets/bear-idle.gif";
+// Al llegar a cada extremo el oso ataca y se cae; se queda tumbado hasta reanudar la caminata.
+const ATTACK_SRC = "/images/pets/bear-attack.gif";
 
 export type WalkingBearProps = {
   /** alto del sprite en px */
@@ -35,7 +36,7 @@ export default function WalkingBear({ height = 64, className }: WalkingBearProps
 
     const setWalking = (on: boolean) => {
       walking = on;
-      const src = on ? WALK_SRC : IDLE_SRC;
+      const src = on ? WALK_SRC : ATTACK_SRC;
       if (!img.src.endsWith(src)) img.src = src;
     };
 
@@ -51,18 +52,18 @@ export default function WalkingBear({ height = 64, className }: WalkingBearProps
       width = host.clientWidth || width;
 
       if (walking) {
-        x += dir * 36 * dt;
+        x += dir * 18 * dt;
         const maxX = Math.max(0, width - imgW());
         if (x <= 0) {
           x = 0;
           dir = 1;
           setWalking(false);
-          holdUntil = now + (1500 + Math.random() * 2500);
+          holdUntil = now + (2500 + Math.random() * 2500);
         } else if (x >= maxX) {
           x = maxX;
           dir = -1;
           setWalking(false);
-          holdUntil = now + (1500 + Math.random() * 2500);
+          holdUntil = now + (2500 + Math.random() * 2500);
         }
       } else if (now >= holdUntil) {
         setWalking(true);
