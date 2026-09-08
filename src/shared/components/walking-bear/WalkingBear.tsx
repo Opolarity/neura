@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 
 // Sprites: oso polar pixel-art propio (97x64, alineado abajo-centro, mirando a la derecha).
-const WALK_SRC = "/images/pets/bear-walk.gif";
+const WALK_SRC = "/images/pets/bear-walk-v2.gif";
 // Al llegar a cada extremo el oso ataca y se cae; se queda tumbado hasta reanudar la caminata.
-const ATTACK_SRC = "/images/pets/bear-attack.gif";
+const ATTACK_SRC = "/images/pets/bear-attack-v2.gif";
 
 export type WalkingBearProps = {
   /** alto del sprite en px */
