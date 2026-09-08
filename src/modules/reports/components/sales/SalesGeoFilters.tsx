@@ -1,9 +1,8 @@
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MultiSelect } from '@/shared/components/MultiSelect';
 import { filterOptionsService } from '../../services/reports.service';
 import { useReportsFilters } from '../../context/ReportsFiltersContext';
+import { OrderSituationFilter } from '../shared/OrderSituationFilter';
 import { defaultSituationIds } from '../../types/reports.types';
 
 const ALL_VALUE = '__all__';
@@ -58,37 +57,20 @@ export function SalesGeoFilters() {
     staleTime: 1000 * 60 * 60,
   });
 
-  const situations = useQuery({
-    queryKey: ['filter_order_situations'],
-    queryFn: filterOptionsService.getOrderSituations,
+  const priceLists = useQuery({
+    queryKey: ['filter_price_lists'],
+    queryFn: filterOptionsService.getPriceLists,
     staleTime: 1000 * 60 * 60,
   });
-
-  // `situationIds` en null significa "el default del backend": se muestra
-  // marcado todo menos Cancelado y Reembolsado, sin escribir nada en el draft
-  // hasta que el usuario toque el filtro.
-  const situationOptions = situations.data ?? [];
-  const selectedSituations = useMemo(
-    () => draft.situationIds ?? defaultSituationIds(situationOptions),
-    [draft.situationIds, situationOptions],
-  );
 
   return (
     <>
       {/* Estado de pedido */}
-      <div className="flex flex-col gap-1 w-[200px]">
-        <span className="text-xs text-muted-foreground font-medium">Estado de pedido</span>
-        <MultiSelect
-          className="h-9"
-          options={situationOptions.map((s) => ({ label: s.name, value: s.id.toString() }))}
-          value={selectedSituations.map((id) => id.toString())}
-          onChange={(vals) => setDraft({ situationIds: vals.map(Number) })}
-          placeholder="Ninguno"
-          showSelectAll
-          selectAllLabel="Todos"
-          maxVisible={1}
-        />
-      </div>
+      <OrderSituationFilter
+        value={draft.situationIds}
+        onChange={(ids) => setDraft({ situationIds: ids })}
+        defaultIds={defaultSituationIds}
+      />
 
       {/* Sucursal */}
       <div className="flex flex-col gap-1">
@@ -142,6 +124,25 @@ export function SalesGeoFilters() {
             <SelectItem value={ALL_VALUE}>Todos</SelectItem>
             {paymentMethods.data?.map((pm) => (
               <SelectItem key={pm.id} value={pm.id.toString()}>{pm.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Lista de precios */}
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-muted-foreground font-medium">Lista de precios</span>
+        <Select
+          value={draft.priceListCode ?? ALL_VALUE}
+          onValueChange={(v) => setDraft({ priceListCode: v === ALL_VALUE ? null : v })}
+        >
+          <SelectTrigger className="h-9 w-[160px]">
+            <SelectValue placeholder="Todas" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_VALUE}>Todas</SelectItem>
+            {priceLists.data?.map((pl) => (
+              <SelectItem key={pl.id} value={pl.code!}>{pl.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>

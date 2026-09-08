@@ -77,8 +77,8 @@ const StockTypeTable = ({
                 <TableCell className="text-center">
                   <Button
                     variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
+                    size="sm"
+                    title="Editar el tipo de stock"
                     onClick={() => {
                       onEditItem(item);
                       onOpenChange(true);

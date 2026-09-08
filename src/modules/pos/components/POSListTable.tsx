@@ -148,8 +148,8 @@ const POSListTable = ({ sessions, loading, search }: POSListTableProps) => {
                 <ComponentPermission codeIn={ACTION_CODES}>
                   <TableCell>
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleViewDetail(session.id)}
                       title="Ver detalles"
                     >

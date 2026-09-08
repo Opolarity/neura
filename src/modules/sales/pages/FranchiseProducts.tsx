@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Download, Filter, Loader2, RefreshCw, Search } from "lucide-react";
+import { Boxes, Download, Filter, Loader2, RefreshCw, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "@/shared/hooks/use-toast";
 import { PagosConfirmarModal } from "../components/PagosConfirmarModal";
 import FranchiseFilterModal, {
@@ -36,6 +37,8 @@ import {
 } from "@/components/ui/table";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
+import { toastError } from "@/shared/utils/toastError";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 const formatCurrency = (value: number | null): string => {
   if (value === null) return "-";
@@ -81,6 +84,7 @@ const hasDefaultPaymentStatuses = (
 };
 
 const FranchiseProducts = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<FranchiseProductRow[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     p_page: 1,
@@ -197,7 +201,7 @@ const FranchiseProducts = () => {
       toast({ title: `${result.data.length} registros exportados correctamente.`, variant: "success" });
     } catch (err) {
       console.error("Error exporting franchise products:", err);
-      toast({ title: "No se pudo generar el Excel. Inténtalo de nuevo.", variant: "destructive" });
+      toastError(err, "No se pudo generar el Excel. Inténtalo de nuevo.");
     } finally {
       setExporting(false);
     }
@@ -318,6 +322,15 @@ const FranchiseProducts = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <ComponentPermission codeIn={["franchise_stock.list"]}>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/stock/products/franchise")}
+            >
+              <Boxes className="mr-2 h-4 w-4" />
+              Inventario
+            </Button>
+          </ComponentPermission>
           <Button
             variant="outline"
             onClick={() => setPagosModalOpen(true)}

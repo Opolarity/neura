@@ -6,6 +6,7 @@ import { useToast } from "@/shared/hooks";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useNavigate } from "react-router-dom";
+import { toastError } from "@/shared/utils/toastError";
 
 const useRoles = () => {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -40,11 +41,7 @@ const useRoles = () => {
       setPagination(paginationData);
     } catch (error) {
       console.error("Error fetching roles:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los roles",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudieron cargar los roles");
     } finally {
       setLoading(false);
     }

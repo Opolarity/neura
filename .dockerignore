@@ -2,7 +2,7 @@ node_modules
 dist
 .supabase
 supabase
-.git
 .gitignore
 Dockerfile
 docker-compose.yml
+# .git se deja en el contexto: el build lee el commit para el release del RUM

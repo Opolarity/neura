@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { throwFunctionError } from "@/shared/utils/functionError";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export type PendingPaymentStatus = "pending" | "approved";
 
@@ -101,15 +101,10 @@ export const fetchPendingPayments = async ({
 export const confirmPendingPayment = async (
   pendingRequestId: number,
 ): Promise<void> => {
-  const { data, error } = await supabase.functions.invoke(
+  await invokeFunction(
     "fch-confirm-payment",
     {
       body: { pending_request_id: pendingRequestId },
     },
   );
-
-  if (error) await throwFunctionError(error);
-  if (data && !data.success) {
-    throw new Error(data.error ?? "Error al confirmar el pago");
-  }
 };

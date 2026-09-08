@@ -13,6 +13,12 @@ interface MovementSummaryProps {
   exceedsAvailableAmount: boolean;
   currentUserProfile: CurrentUserProfile | null;
   loading: boolean;
+  /**
+   * T-274 — con método Efectivo no hay ninguna caja elegible (perfil sin
+   * sucursal, o sucursal sin cajas activas). Se bloquea el guardado en vez de
+   * dejar disparar una llamada que la edge function va a rechazar igual.
+   */
+  cashSelectionBlocked?: boolean;
   onCancel: () => void;
 }
 
@@ -32,6 +38,7 @@ const MovementSummary = ({
   exceedsAvailableAmount,
   currentUserProfile,
   loading,
+  cashSelectionBlocked = false,
   onCancel,
 }: MovementSummaryProps) => {
   const movementAmount = Math.abs(remainingAmount - businessAccountAmount);
@@ -100,7 +107,7 @@ const MovementSummary = ({
 
       {/* Acciones */}
       <div className="space-y-2 pt-1">
-        <Button type="submit" className="w-full" disabled={loading || exceedsAvailableAmount}>
+        <Button type="submit" className="w-full" disabled={loading || exceedsAvailableAmount || cashSelectionBlocked}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Registrar {label}
         </Button>

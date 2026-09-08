@@ -1,4 +1,4 @@
-import type { EdgeFunctionErrorCode } from "@/shared/services/edgeFunctionError";
+import type { FunctionErrorCode as EdgeFunctionErrorCode } from "@/shared/utils/functionError";
 
 export type SupportRequestType = "ticket" | "suggestion";
 
@@ -259,16 +259,12 @@ export interface SupportMessageApiResponse {
   data: SupportMessageApi | null;
 }
 
-export interface SupportRequestsFilters {
-  page: number;
-  size: number;
-  /**
-   * Texto libre: cruza título, código de solicitud (`S-21`) y código de la
-   * tarea vinculada (`T-45`). "" = sin búsqueda. La API compara el prefijo ya
-   * concatenado, así que "S-21", "s-21" y "21" encuentran lo mismo y aquí no
-   * hay que normalizar nada.
-   */
-  search: string;
+/**
+ * Los cuatro filtros que se editan en el modal. La búsqueda y la paginación
+ * quedan fuera a propósito: la primera es un input aparte en la barra y la
+ * segunda no es un filtro.
+ */
+export interface SupportModalFilters {
   /** null = "Todos": no se envía request_type a la API. */
   requestType: SupportRequestType | null;
   /** null = "Todos". "" es un valor válido: solicitudes sin ese dato. */
@@ -279,10 +275,22 @@ export interface SupportRequestsFilters {
   originHost: string | null;
 }
 
+export interface SupportRequestsFilters extends SupportModalFilters {
+  page: number;
+  size: number;
+  /**
+   * Texto libre: cruza título, código de solicitud (`S-21`) y código de la
+   * tarea vinculada (`T-45`). "" = sin búsqueda. La API compara el prefijo ya
+   * concatenado, así que "S-21", "s-21" y "21" encuentran lo mismo y aquí no
+   * hay que normalizar nada.
+   */
+  search: string;
+}
+
 /**
  * Los códigos y la clase de error viven en shared: capacitaciones consume el
  * mismo contrato de las edge functions puente. Se reexportan con el nombre de
  * siempre para no tocar los imports del módulo.
  */
 export type SupportErrorCode = EdgeFunctionErrorCode;
-export { EdgeFunctionError as SupportServiceError } from "@/shared/services/edgeFunctionError";
+export { FunctionError as SupportServiceError } from "@/shared/utils/functionError";

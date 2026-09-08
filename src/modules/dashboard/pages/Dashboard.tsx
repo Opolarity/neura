@@ -1,10 +1,11 @@
 import React from "react";
+import { formatDateTime } from "@/shared/utils/date";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Bell, BellOff, Clock, LogIn, Loader2 } from "lucide-react";
 import { useAuth } from "@/modules/auth";
 import { useNotifications } from "@/modules/notifications/hooks/useNotifications";
 import { NotificationItem } from "@/modules/notifications/components/NotificationItem";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
 const Dashboard = () => {
@@ -19,10 +20,14 @@ const Dashboard = () => {
   } = useNotifications();
   const lastSignIn = user?.last_sign_in_at ?? null;
 
+  // La fecha absoluta va por formatDateTime, que resuelve en Lima. Con
+  // `format()` de date-fns se pintaba en el huso del navegador. Lo relativo
+  // ("hace 3 horas") es una duracion y no depende de la zona, asi que se queda
+  // con date-fns.
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return {
-      full: format(date, "dd MMM yyyy, HH:mm", { locale: es }),
+      full: formatDateTime(dateStr),
       relative: formatDistanceToNow(date, { addSuffix: true, locale: es }),
     };
   };

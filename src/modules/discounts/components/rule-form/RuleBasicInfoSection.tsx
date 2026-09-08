@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { PriceRuleFormData } from "../../types/priceRule.types";
+import type { FranchiseeAccount, PriceRuleFormData } from "../../types/priceRule.types";
 import { useFranchiseeAccounts } from "../../hooks/useFranchiseeAccounts";
 
 interface RuleBasicInfoSectionProps {
@@ -23,7 +23,66 @@ interface RuleBasicInfoSectionProps {
   toggleConsignmentPromo: (enabled: boolean) => void;
   consignmentTenantReferences: string[];
   setConsignmentTenantReferences: (refs: string[]) => void;
+  isFranchiseeExclusion: boolean;
+  toggleFranchiseeExclusion: (enabled: boolean) => void;
+  franchiseeExclusionTenantReferences: string[];
+  setFranchiseeExclusionTenantReferences: (refs: string[]) => void;
 }
+
+// Lista de franquiciados con checkbox, compartida por los dos marcadores
+// (promo de consignación y exclusión de franquiciados).
+const FranchiseeChecklist = ({
+  idPrefix,
+  label,
+  hint,
+  accounts,
+  loading,
+  selected,
+  onToggle,
+}: {
+  idPrefix: string;
+  label: string;
+  hint: string;
+  accounts: FranchiseeAccount[];
+  loading: boolean;
+  selected: string[];
+  onToggle: (tenantReference: string, checked: boolean) => void;
+}) => (
+  <div className="space-y-2 pt-2">
+    <Label>{label}</Label>
+    <p className="text-xs text-muted-foreground">{hint}</p>
+    {loading ? (
+      <p className="text-xs text-muted-foreground">Cargando franquiciados...</p>
+    ) : accounts.length === 0 ? (
+      <p className="text-xs text-muted-foreground">
+        No hay cuentas franquiciadas registradas.
+      </p>
+    ) : (
+      <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border p-3">
+        {accounts.map((account) => (
+          <div key={account.id} className="flex items-center gap-2">
+            <Checkbox
+              id={`${idPrefix}-${account.id}`}
+              checked={selected.includes(account.tenant_reference)}
+              onCheckedChange={(checked) =>
+                onToggle(account.tenant_reference, checked === true)
+              }
+            />
+            <Label
+              htmlFor={`${idPrefix}-${account.id}`}
+              className="cursor-pointer font-normal"
+            >
+              {[account.name, account.last_name].filter(Boolean).join(" ")}
+              <span className="ml-1 text-xs text-muted-foreground">
+                ({account.tenant_reference})
+              </span>
+            </Label>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);
 
 export const RuleBasicInfoSection = ({
   formData,
@@ -32,15 +91,32 @@ export const RuleBasicInfoSection = ({
   toggleConsignmentPromo,
   consignmentTenantReferences,
   setConsignmentTenantReferences,
+  isFranchiseeExclusion,
+  toggleFranchiseeExclusion,
+  franchiseeExclusionTenantReferences,
+  setFranchiseeExclusionTenantReferences,
 }: RuleBasicInfoSectionProps) => {
   const { accounts: franchiseeAccounts, loading: loadingFranchisees } =
-    useFranchiseeAccounts(isConsignmentPromo);
+    useFranchiseeAccounts(isConsignmentPromo || isFranchiseeExclusion);
 
   const toggleTenantReference = (tenantReference: string, checked: boolean) => {
     setConsignmentTenantReferences(
       checked
         ? [...consignmentTenantReferences, tenantReference]
         : consignmentTenantReferences.filter((r) => r !== tenantReference),
+    );
+  };
+
+  const toggleExcludedTenantReference = (
+    tenantReference: string,
+    checked: boolean,
+  ) => {
+    setFranchiseeExclusionTenantReferences(
+      checked
+        ? [...franchiseeExclusionTenantReferences, tenantReference]
+        : franchiseeExclusionTenantReferences.filter(
+            (r) => r !== tenantReference,
+          ),
     );
   };
 
@@ -113,76 +189,76 @@ export const RuleBasicInfoSection = ({
           </div>
         </div>
 
-        <div className="flex items-start gap-3 rounded-md border p-4">
-          <Checkbox
-            id="consignment-promo"
-            checked={isConsignmentPromo}
-            onCheckedChange={(checked) =>
-              toggleConsignmentPromo(checked === true)
-            }
-          />
-          <div className="space-y-1">
-            <Label htmlFor="consignment-promo" className="cursor-pointer">
-              Promoción de consignación (franquiciados)
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              No aplica al ecommerce ni al POS: solo la ven los franquiciados
-              por la API de consignación, y el descuento se liquida sobre las
-              unidades que reporten como vendidas mientras la promoción esté
-              vigente. Acciones soportadas: precio fijo, descuento fijo o % por
-              producto.
-            </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          <div className="flex items-start gap-3 rounded-md border p-4">
+            <Checkbox
+              id="consignment-promo"
+              checked={isConsignmentPromo}
+              disabled={isFranchiseeExclusion}
+              onCheckedChange={(checked) =>
+                toggleConsignmentPromo(checked === true)
+              }
+            />
+            <div className="space-y-1">
+              <Label htmlFor="consignment-promo" className="cursor-pointer">
+                Promoción de consignación (franquiciados)
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                No aplica al ecommerce ni al POS: solo la ven los franquiciados
+                por la API de consignación, y el descuento se liquida sobre las
+                unidades que reporten como vendidas mientras la promoción esté
+                vigente. Acciones soportadas: precio fijo, descuento fijo o %
+                por producto.
+              </p>
 
-            {isConsignmentPromo && (
-              <div className="space-y-2 pt-2">
-                <Label>Franquiciados participantes</Label>
-                <p className="text-xs text-muted-foreground">
-                  Sin selección = aplica a todos los franquiciados.
-                </p>
-                {loadingFranchisees ? (
-                  <p className="text-xs text-muted-foreground">
-                    Cargando franquiciados...
-                  </p>
-                ) : franchiseeAccounts.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    No hay cuentas franquiciadas registradas.
-                  </p>
-                ) : (
-                  <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border p-3">
-                    {franchiseeAccounts.map((account) => (
-                      <div
-                        key={account.id}
-                        className="flex items-center gap-2"
-                      >
-                        <Checkbox
-                          id={`franchisee-${account.id}`}
-                          checked={consignmentTenantReferences.includes(
-                            account.tenant_reference,
-                          )}
-                          onCheckedChange={(checked) =>
-                            toggleTenantReference(
-                              account.tenant_reference,
-                              checked === true,
-                            )
-                          }
-                        />
-                        <Label
-                          htmlFor={`franchisee-${account.id}`}
-                          className="cursor-pointer font-normal"
-                        >
-                          {[account.name, account.last_name]
-                            .filter(Boolean)
-                            .join(" ")}
-                          <span className="ml-1 text-xs text-muted-foreground">
-                            ({account.tenant_reference})
-                          </span>
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+              {isConsignmentPromo && (
+                <FranchiseeChecklist
+                  idPrefix="franchisee"
+                  label="Franquiciados participantes"
+                  hint="Sin selección = aplica a todos los franquiciados."
+                  accounts={franchiseeAccounts}
+                  loading={loadingFranchisees}
+                  selected={consignmentTenantReferences}
+                  onToggle={toggleTenantReference}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Marcador inverso del anterior: en vez de restringir la regla al
+              canal consignación, la deja fuera de los franquiciados. Por eso
+              son mutuamente excluyentes. */}
+          <div className="flex items-start gap-3 rounded-md border p-4">
+            <Checkbox
+              id="franchisee-exclusion"
+              checked={isFranchiseeExclusion}
+              disabled={isConsignmentPromo}
+              onCheckedChange={(checked) =>
+                toggleFranchiseeExclusion(checked === true)
+              }
+            />
+            <div className="space-y-1">
+              <Label htmlFor="franchisee-exclusion" className="cursor-pointer">
+                Excluir franquiciados
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                La regla no aplica a los clientes franquiciados. Al marcarla se
+                excluyen todos; si se seleccionan algunos, solo esos quedan
+                excluidos y al resto sí se les aplica.
+              </p>
+
+              {isFranchiseeExclusion && (
+                <FranchiseeChecklist
+                  idPrefix="excluded-franchisee"
+                  label="Franquiciados excluidos"
+                  hint="Sin selección = se excluyen todos los franquiciados."
+                  accounts={franchiseeAccounts}
+                  loading={loadingFranchisees}
+                  selected={franchiseeExclusionTenantReferences}
+                  onToggle={toggleExcludedTenantReference}
+                />
+              )}
+            </div>
           </div>
         </div>
       </CardContent>

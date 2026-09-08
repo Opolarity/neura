@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export interface POSSessionListItem {
   id: number;
@@ -47,12 +48,10 @@ export const fetchPOSSessions = async (
   if (filters.salesMax !== null) params.set("sales_max", String(filters.salesMax));
   params.set("order_by", filters.orderBy);
 
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "get-pos-sessions-list?" + params.toString(),
     { method: "GET" }
   );
-
-  if (error) throw error;
 
   const rpcResult = data?.sessions_data;
   if (!rpcResult) throw new Error("No data returned from RPC");

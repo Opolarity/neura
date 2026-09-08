@@ -140,7 +140,7 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
 
             {/* Detalles */}
             <div className="border-t pt-2">
-              <DetailRow label="Categoría" value={detail.category} />
+              <DetailRow label="Motivo" value={detail.category} />
               <DetailRow label="Descripción" value={detail.description} />
               <DetailRow label="Método de pago" value={detail.paymentMethod} />
               <DetailRow label="Cuenta" value={detail.businessAccount} />

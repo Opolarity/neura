@@ -15,6 +15,8 @@ import { ChevronsUpDown, Check, Loader2, Search } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/shared/hooks/use-toast";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { toastError } from "@/shared/utils/toastError";
 
 type AccountOption = {
   id: number;
@@ -88,11 +90,9 @@ export const AddPointsDialog = ({ open, onOpenChange, onSuccess }: AddPointsDial
 
     setSaving(true);
     try {
-      const { data, error } = await supabase.functions.invoke("add-customer-points", {
+      await invokeFunction("add-customer-points", {
         body: { account_id: selectedAccount.id, quantity: qty, note: note.trim() || null },
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
 
       toast({
         title: `${qty > 0 ? "+" : ""}${qty} puntos aplicados a ${buildLabel(selectedAccount)}`,
@@ -101,7 +101,7 @@ export const AddPointsDialog = ({ open, onOpenChange, onSuccess }: AddPointsDial
       onSuccess();
       onOpenChange(false);
     } catch (err: any) {
-      toast({ title: err?.message ?? "Error al guardar puntos", variant: "destructive" });
+      toastError(err, "Error al guardar puntos");
     } finally {
       setSaving(false);
     }

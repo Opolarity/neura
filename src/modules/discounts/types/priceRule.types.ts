@@ -4,6 +4,8 @@ export type ConditionType =
   | "product_in_cart"
   | "variation_in_cart"
   | "category_in_cart"
+  | "brand_in_cart"
+  | "tag_in_cart"
   | "min_total_quantity"
   | "min_category_quantity"
   | "customer_level"
@@ -11,7 +13,8 @@ export type ConditionType =
   | "new_customer"
   | "customer_birthday"
   | "date_range"
-  | "consignment_channel";
+  | "consignment_channel"
+  | "franchisee_exclusion";
 
 // Marcador de "promoción de consignación (franquiciados)". Una regla que lo
 // lleva NUNCA aplica al ecommerce/ERP (el motor process-price-rules la
@@ -23,6 +26,15 @@ export const CONSIGNMENT_CONDITION_TYPE: ConditionType = "consignment_channel";
 
 // Acciones soportadas por el canal consignación (el backend solo sabe
 // liquidar estas tres contra el precio de la orden de consignación).
+// Marcador de "excluir franquiciados". Una regla que lo lleva NO aplica a los
+// franquiciados listados en `tenant_references` (o a ninguno de ellos si la
+// lista está ausente/vacía); a los demás clientes aplica con normalidad. Lo
+// evalúa process-price-rules contra el tenant_reference de la cuenta
+// compradora. Se gestiona con el checkbox del formulario, no desde el builder
+// de condiciones.
+export const FRANCHISEE_EXCLUSION_CONDITION_TYPE: ConditionType =
+  "franchisee_exclusion";
+
 export const CONSIGNMENT_ALLOWED_ACTION_TYPES: ActionType[] = [
   "set_fixed_price",
   "fixed_discount_per_product",
@@ -31,8 +43,9 @@ export const CONSIGNMENT_ALLOWED_ACTION_TYPES: ActionType[] = [
 
 export interface Condition {
   type: ConditionType;
-  // Solo en el marcador de consignación: tenant_reference de los franquiciados
-  // que participan en la promo. Ausente o vacío = todos los franquiciados.
+  // Solo en los marcadores de franquiciados: tenant_reference de los
+  // franquiciados que participan en la promo de consignación, o de los que
+  // quedan excluidos de la regla. Ausente o vacío = todos los franquiciados.
   tenant_references?: string[];
   [key: string]: unknown;
 }
@@ -75,10 +88,22 @@ export type ActionType =
 export const DEFAULT_INCLUDE_DESCENDANTS = true;
 
 export interface TargetFilter {
-  apply_to: "all" | "specific_products" | "specific_categories" | "specific_variations";
+  apply_to:
+    | "all"
+    | "specific_products"
+    | "specific_categories"
+    | "specific_variations"
+    | "specific_brands"
+    | "specific_tags";
   product_ids?: number[];
   category_ids?: number[];
   variation_ids?: number[];
+  // Marcas y etiquetas comparten la tabla `tags` (discriminadas por `type`),
+  // pero se guardan en claves distintas para que el destino elegido quede
+  // explícito en el JSON y el motor no tenga que consultar la tabla para
+  // saber si un id era marca o etiqueta.
+  brand_ids?: number[];
+  tag_ids?: number[];
   include_descendants?: boolean;
 }
 
@@ -86,6 +111,8 @@ export interface ExclusionFilter {
   product_ids?: number[];
   variation_ids?: number[];
   category_ids?: number[];
+  brand_ids?: number[];
+  tag_ids?: number[];
   include_descendants?: boolean;
 }
 
@@ -143,12 +170,16 @@ export interface PriceRuleReferences {
   products: Array<{ id: number; name: string }>;
   variations: Array<{ id: number; name: string }>;
   categories: Array<{ id: number; name: string }>;
+  brands: Array<{ id: number; name: string }>;
+  tags: Array<{ id: number; name: string }>;
 }
 
 export const EMPTY_REFERENCES: PriceRuleReferences = {
   products: [],
   variations: [],
   categories: [],
+  brands: [],
+  tags: [],
 };
 
 // --- Discount/Coupon ---
@@ -210,6 +241,8 @@ export const CONDITION_TYPE_LABELS: Record<ConditionType, string> = {
   product_in_cart: "Producto en el carrito",
   variation_in_cart: "Variación en el carrito",
   category_in_cart: "Categoría en el carrito",
+  brand_in_cart: "Marca en el carrito",
+  tag_in_cart: "Etiqueta en el carrito",
   min_total_quantity: "Cantidad mínima total",
   min_category_quantity: "Cantidad mínima por categoría",
   customer_level: "Nivel del cliente (puntos)",
@@ -218,6 +251,7 @@ export const CONDITION_TYPE_LABELS: Record<ConditionType, string> = {
   customer_birthday: "Cumpleaños del cliente",
   date_range: "Rango de fechas",
   consignment_channel: "Canal: consignación (franquiciados)",
+  franchisee_exclusion: "Excluir franquiciados",
 };
 
 export const ACTION_TYPE_LABELS: Record<ActionType, string> = {

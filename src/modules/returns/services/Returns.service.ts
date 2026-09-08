@@ -7,6 +7,7 @@ import {
     ReturnProduct,
     DocumentProducts
 } from "../types/Returns.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const returnsService = {
     async getOrders(userId: string) {
@@ -124,32 +125,16 @@ export const returnsService = {
     },
 
     async getDocumentProducts(params: { order_id?: number; return_id?: number }) {
-        const { data, error } = await supabase.functions.invoke("get-return-order-products", {
+        const data = await invokeFunction("get-return-order-products", {
             body: params,
         });
-
-        if (error) throw error;
         return data as DocumentProducts;
     },
 
     async createReturn(payload: any) {
-        const { data, error } = await supabase.functions.invoke("create-returns", {
+        const data = await invokeFunction("create-returns", {
             body: payload,
         });
-
-        // When the edge function returns a non-2xx status, Supabase throws but also
-        // populates `data` with the response body — prefer data.error over the generic message.
-        if (error) {
-            if (error.context instanceof Response) {
-                try {
-                    const body = await error.context.json();
-                    throw new Error(body?.error || body?.message || error.message);
-                } catch (parseErr: any) {
-                    if (parseErr.message !== error.message) throw parseErr;
-                }
-            }
-            throw error;
-        }
         return data;
     },
 
@@ -162,11 +147,9 @@ export const returnsService = {
         const queryString = urlParams.toString();
         const endpoint = queryString ? `get-returns?${queryString}` : "get-returns";
 
-        const { data, error } = await supabase.functions.invoke(endpoint, {
+        const data = await invokeFunction(endpoint, {
             method: "GET",
         });
-
-        if (error) throw error;
 
         // Based on the provided sample, the structure is { returnsdata: { data: [...], page: {...} } }
         const returnsData = data?.returnsdata?.data || [];
@@ -192,22 +175,16 @@ export const returnsService = {
     },
 
     async updateReturnFull(payload: any) {
-        const { data, error } = await supabase.functions.invoke('update-return', {
+        const data = await invokeFunction('update-return', {
             body: payload,
         });
-
-        if (error) throw error;
-        if (!data?.success) throw new Error(data?.error || 'Error al actualizar la devolución');
         return data;
     },
 
     async getReturnDetails(id: number) {
-        const { data, error } = await supabase.functions.invoke('get-return-details', {
+        const data = await invokeFunction('get-return-details', {
             body: { return_id: id },
         });
-
-        if (error) throw error;
-        if (!data?.success) throw new Error(data?.error || 'Error al obtener los detalles del retorno');
         return data.data as any;
     },
 

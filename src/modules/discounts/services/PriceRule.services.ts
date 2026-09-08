@@ -1,30 +1,9 @@
-import { supabase } from "@/integrations/supabase/client";
 import type {
   FranchiseeAccount,
   PriceRuleFormData,
   PriceRuleFilters,
 } from "../types/priceRule.types";
-
-const throwFunctionError = async (error: unknown): Promise<never> => {
-  const functionError = error as { context?: unknown; message?: string };
-
-  if (functionError.context instanceof Response) {
-    let body: { error?: unknown; message?: unknown; details?: unknown } | null = null;
-    try {
-      body = await functionError.context.json();
-    } catch {
-      body = null;
-    }
-
-    const message = body?.error || body?.message || body?.details;
-    if (message) {
-      throw new Error(String(message));
-    }
-  }
-
-  if (error instanceof Error) throw error;
-  throw new Error("Error desconocido al llamar la función");
-};
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const getPriceRules = async (filters: PriceRuleFilters) => {
   const params = new URLSearchParams();
@@ -35,71 +14,63 @@ export const getPriceRules = async (filters: PriceRuleFilters) => {
   if (filters.is_active !== null) params.set("is_active", filters.is_active);
   if (filters.price_list_id) params.set("price_list_id", filters.price_list_id);
 
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     `get-price-rules?${params.toString()}`,
     { method: "GET" }
   );
-  if (error) await throwFunctionError(error);
   return data;
 };
 
 export const getPriceRuleDetails = async (id: number) => {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     `get-price-rule-details?id=${id}`,
     { method: "GET" }
   );
-  if (error) await throwFunctionError(error);
   return data;
 };
 
 export const createPriceRule = async (rule: PriceRuleFormData) => {
-  const { data, error } = await supabase.functions.invoke("create-price-rule", {
+  const data = await invokeFunction("create-price-rule", {
     body: rule,
   });
-  if (error) await throwFunctionError(error);
   return data;
 };
 
 export const updatePriceRule = async (id: number, rule: Partial<PriceRuleFormData>) => {
-  const { data, error } = await supabase.functions.invoke("update-price-rule", {
+  const data = await invokeFunction("update-price-rule", {
     body: { id, ...rule },
   });
-  if (error) await throwFunctionError(error);
   return data;
 };
 
 export const updateBulkPriceRule = async (ruleIds: number[], isActive: boolean) => {
-  const { data, error } = await supabase.functions.invoke("bulk-update-price-rule-status", {
+  const data = await invokeFunction("bulk-update-price-rule-status", {
     body: { ruleIds, isActive },
   });
-  if (error) await throwFunctionError(error);
   return data;
 };
 
 export const deletePriceRule = async (id: number) => {
-  const { data, error } = await supabase.functions.invoke("delete-price-rule", {
+  const data = await invokeFunction("delete-price-rule", {
     body: { id },
   });
-  if (error) await throwFunctionError(error);
   return data;
 };
 
 // Cuentas franquiciadas activas (accounts con tenant_reference), para el
 // selector de franquiciados de las promociones de consignación.
 export const getFranchiseeAccounts = async (): Promise<FranchiseeAccount[]> => {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "get-franchisee-accounts",
     { method: "GET" }
   );
-  if (error) await throwFunctionError(error);
   return (data?.data ?? []) as FranchiseeAccount[];
 };
 
 export const deletePriceRulesBulk = async (ruleIds: number[]) => {
-  const { data, error } = await supabase.functions.invoke("delete-massive-price-rules", {
+  const data = await invokeFunction("delete-massive-price-rules", {
     body: { ruleIds },
   });
-  if (error) await throwFunctionError(error);
   return data as {
     success: boolean;
     requested: number;

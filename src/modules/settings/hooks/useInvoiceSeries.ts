@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 
 export interface InvoiceSerie {
   id: number;
@@ -55,7 +56,7 @@ export const useInvoiceSeries = () => {
         }))
       );
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toastError(err);
     } finally {
       setLoading(false);
     }

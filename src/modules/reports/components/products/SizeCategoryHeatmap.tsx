@@ -6,6 +6,7 @@ import {
 } from '../shared/ReportScaffold';
 import { formatCurrencyAxis, formatNumber, reportChartColors } from '../shared/reportChartUtils';
 import type { SizeByCategoryItem } from '../../types/reports.types';
+import { MultiCategoryNotice } from './MultiCategoryNotice';
 
 interface Props {
   data: SizeByCategoryItem[];
@@ -16,6 +17,8 @@ interface Props {
 // en orden ascendente, y cualquier otra etiqueta al final por alfabeto.
 const LETTER_SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 
+const NO_SIZE = 'Sin talla';
+
 function sizeSortKey(size: string): [number, number, string] {
   const letterIdx = LETTER_SIZE_ORDER.indexOf(size.toUpperCase());
   if (letterIdx !== -1) return [0, letterIdx, ''];
@@ -24,9 +27,27 @@ function sizeSortKey(size: string): [number, number, string] {
   return [2, 0, size.toLowerCase()];
 }
 
-function compareSizes(a: string, b: string) {
-  const [ga, na, sa] = sizeSortKey(a);
-  const [gb, nb, sb] = sizeSortKey(b);
+/** Una columna del heatmap: un grupo de talla concreto y un término suyo. */
+interface SizeColumn {
+  /** Clave compuesta: la misma "M" de dos grupos distintos son dos columnas. */
+  key: string;
+  group: string;
+  size: string;
+  label: string;
+  groupId: number | null;
+}
+
+// Primero se agrupan las columnas por grupo de talla y solo dentro del grupo se
+// aplica el orden natural: una "M" de camisas y una "M" de boxers son columnas
+// distintas y tienen que quedar juntas con las suyas. "Sin talla" va al final.
+function compareColumns(a: SizeColumn, b: SizeColumn) {
+  if (a.group !== b.group) {
+    if (a.group === NO_SIZE) return 1;
+    if (b.group === NO_SIZE) return -1;
+    return a.group.localeCompare(b.group);
+  }
+  const [ga, na, sa] = sizeSortKey(a.size);
+  const [gb, nb, sb] = sizeSortKey(b.size);
   return ga - gb || na - nb || sa.localeCompare(sb);
 }
 
@@ -37,7 +58,8 @@ interface HeatmapCell {
 
 interface HoveredCell {
   category: string;
-  size: string;
+  /** Etiqueta completa de la columna: "Talla pantalón · 32" o "Sin talla". */
+  label: string;
   cell: HeatmapCell | null;
   /** Posición del anclaje, relativa al wrapper del gráfico. */
   x: number;
@@ -51,36 +73,50 @@ export function SizeCategoryHeatmap({ data, loading }: Props) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState<HoveredCell | null>(null);
   const { sizes, rows, maxQuantity } = useMemo(() => {
-    const sizeSet = new Set<string>();
+    // La clave es (grupo, talla), no la talla sola: hay siete nombres que se
+    // repiten entre grupos y antes se sumaban en una misma columna.
+    const columns = new Map<string, SizeColumn>();
     const byCategory = new Map<string, { total: number; cells: Map<string, HeatmapCell> }>();
 
     for (const d of data) {
-      sizeSet.add(d.size_name);
+      const key = `${d.size_group_id ?? ''}|${d.size_name}`;
+      if (!columns.has(key)) {
+        columns.set(key, {
+          key,
+          group: d.size_group_name,
+          size: d.size_name,
+          label: d.size_label,
+          groupId: d.size_group_id,
+        });
+      }
       let row = byCategory.get(d.category_name);
       if (!row) {
         row = { total: 0, cells: new Map() };
         byCategory.set(d.category_name, row);
       }
       row.total += d.total_quantity;
-      const prev = row.cells.get(d.size_name);
-      row.cells.set(d.size_name, {
+      const prev = row.cells.get(key);
+      row.cells.set(key, {
         quantity: (prev?.quantity ?? 0) + d.total_quantity,
         revenue: (prev?.revenue ?? 0) + d.total_revenue,
       });
     }
 
-    const sortedSizes = [...sizeSet].sort(compareSizes);
+    const sortedSizes = [...columns.values()].sort(compareColumns);
     const sortedRows = [...byCategory.entries()].sort((a, b) => b[1].total - a[1].total);
     const max = Math.max(0, ...data.map((d) => d.total_quantity));
     return { sizes: sortedSizes, rows: sortedRows, maxQuantity: max };
   }, [data]);
 
   return (
-    <ReportCard title="Unidades vendidas por talla y categoría">
+    <ReportCard
+      title="Unidades vendidas por talla y categoría"
+      description={<MultiCategoryNotice />}
+    >
       {loading ? (
         <ChartLoading className="h-80" />
       ) : rows.length === 0 ? (
-        <EmptyReportState>Sin ventas con talla asignada en el periodo</EmptyReportState>
+        <EmptyReportState>Sin ventas en el periodo</EmptyReportState>
       ) : (
         <div ref={wrapperRef} className="relative">
           {hovered && (
@@ -91,7 +127,7 @@ export function SizeCategoryHeatmap({ data, loading }: Props) {
               style={{ left: hovered.x, top: hovered.below ? hovered.y + 6 : hovered.y - 6 }}
             >
               <p className="mb-1 whitespace-nowrap font-medium">
-                {hovered.category} · Talla {hovered.size}
+                {hovered.category} · {hovered.label}
               </p>
               {hovered.cell ? (
                 <div className="grid gap-1">
@@ -118,10 +154,11 @@ export function SizeCategoryHeatmap({ data, loading }: Props) {
                 </th>
                 {sizes.map((s) => (
                   <th
-                    key={s}
+                    key={s.key}
+                    title={s.label}
                     className="sticky top-0 z-[5] min-w-11 bg-background p-1 text-center font-medium text-muted-foreground"
                   >
-                    {s}
+                    {s.size}
                   </th>
                 ))}
               </tr>
@@ -136,14 +173,14 @@ export function SizeCategoryHeatmap({ data, loading }: Props) {
                     {category}
                   </td>
                   {sizes.map((s) => {
-                    const cell = row.cells.get(s);
+                    const cell = row.cells.get(s.key);
                     const intensity =
                       cell && maxQuantity > 0
                         ? Math.max(0.08, cell.quantity / maxQuantity)
                         : 0;
                     return (
                       <td
-                        key={s}
+                        key={s.key}
                         className="rounded-md p-0 text-center align-middle tabular-nums"
                         onMouseEnter={(e) => {
                           const wrapper = wrapperRef.current;
@@ -155,7 +192,7 @@ export function SizeCategoryHeatmap({ data, loading }: Props) {
                           const below = top < 96;
                           setHovered({
                             category,
-                            size: s,
+                            label: s.label,
                             cell: cell ?? null,
                             x: Math.min(Math.max(rawX, 110), wrapperRect.width - 110),
                             y: below ? cellRect.bottom - wrapperRect.top : top,

@@ -10,6 +10,7 @@ import {
   StockMovementDetailApiResponse,
 } from "../types/Movements.types";
 import { buildEndpoint } from "@/shared/utils/utils";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const getStockMovementsApi = async (
   filters: MovementsFilters = {},
@@ -23,27 +24,11 @@ export const getStockMovementsApi = async (
   );
 
   const queryString = queryParams.toString();
-  const url = queryString
-    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-stock-movements?${queryString}`
-    : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-stock-movements`;
+  const endpoint = queryString
+    ? `get-stock-movements?${queryString}`
+    : "get-stock-movements";
 
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Error fetching stock movements: ${response.statusText}`);
-  }
-
-  const data = await response.json();
+  const data = await invokeFunction(endpoint, { method: "GET" });
 
   return (
     data ?? {
@@ -82,11 +67,9 @@ export const getSaleProducts = async (
 ): Promise<ProductSalesApiResponse> => {
   const endpoint = buildEndpoint("get-sale-products", filters);
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) throw error;
   return data;
 };
 
@@ -157,11 +140,9 @@ export const getStockByVariationAndTypeApi = async (
     stockTypeId,
     warehouseId,
   });
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) throw error;
   return data;
 };
 
@@ -174,13 +155,10 @@ interface MovementPayload {
 }
 
 export const createStockMovementsEntranceApi = async (newMovement: MovementPayload[]) => {
-  const { data, error } = await supabase.functions.invoke("create-stock-movements-entrance", {
+  const data = await invokeFunction("create-stock-movements-entrance", {
     method: "POST",
     body: newMovement
   });
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
   return data;
 }
 
@@ -195,35 +173,18 @@ interface MovementPayload2 {
 }
 
 export const createMovementsTypeStockApi = async (newMovement: MovementPayload2) => {
-  const { data, error } = await supabase.functions.invoke("create-movements-type-stock", {
+  const data = await invokeFunction("create-movements-type-stock", {
     method: "POST",
     body: newMovement
   });
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
   return data;
 }
 
-export const getStockMovementDetailApi = async (id: number): Promise<StockMovementDetailApiResponse> => {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
-
-  const response = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-stock-movement-detail?id=${id}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-      },
-    }
+export const getStockMovementDetailApi = async (id: number): Promise<StockMovementDetailApiResponse> =>
+  invokeFunction<StockMovementDetailApiResponse>(
+    `get-stock-movement-detail?id=${id}`,
+    { method: "GET" },
   );
-
-  if (!response.ok) throw new Error(`Error fetching movement detail: ${response.statusText}`);
-  return await response.json();
-};
 
 /*
 export const getUserWarehouse = async () => {

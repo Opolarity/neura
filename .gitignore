@@ -26,3 +26,6 @@ dist-ssr
 #supabase edge functions
 supabase/functions
 .env
+
+# Worktrees de agentes (temporales, no aportan una vez cumplido su proposito)
+.claude/worktrees/

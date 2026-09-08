@@ -14,6 +14,7 @@ import {
   formatCurrencyAxis,
 } from '../shared/reportChartUtils';
 import type { CategoryOverTimeItem, Granularity } from '../../types/reports.types';
+import { MultiCategoryNotice } from './MultiCategoryNotice';
 
 interface Props {
   data: CategoryOverTimeItem[];
@@ -70,6 +71,7 @@ export function CategoryOverTimeChart({ data, loading, granularity, onGranularit
   return (
     <ReportCard
       title="Ingresos por categoría en el tiempo"
+      description={<MultiCategoryNotice />}
       actions={
         <ReportSelect
           value={granularity}

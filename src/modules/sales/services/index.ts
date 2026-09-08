@@ -5,13 +5,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { CreateOrderRequest, ModuleTypeApiResponse } from "../types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 // Fetch sales form data (dropdowns, products, etc.)
 export const fetchSalesFormData = async () => {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "get-sales-form-data",
   );
-  if (error) throw error;
   return data;
 };
 
@@ -43,7 +43,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
     .filter(Boolean)
     .join(" ");
 
-  const { data, error } = await supabase.functions.invoke("create-order", {
+  const data = await invokeFunction("create-order", {
     body: {
       document_type: orderData.documentType,
       document_number: orderData.documentNumber,
@@ -102,7 +102,6 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
       discounts: orderData.discounts || [],
     },
   });
-  if (error) throw error;
   return data;
 };
 
@@ -115,7 +114,7 @@ export const updateOrder = async (
     .filter(Boolean)
     .join(" ");
 
-  const { data, error } = await supabase.functions.invoke("update-order", {
+  const data = await invokeFunction("update-order", {
     body: {
       order_id: orderId,
       situation_id: orderData.initialSituationId,
@@ -174,7 +173,6 @@ export const updateOrder = async (
       discounts: orderData.discounts || [],
     },
   });
-  if (error) throw error;
   return data;
 };
 
@@ -195,29 +193,12 @@ export const updateOrderSituation = async (
   situationId: number,
   refund?: OrderRefund | null,
 ) => {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "update-order-situation",
     {
       body: { orderId, situationId, refund: refund ?? null },
     },
   );
-
-  // En un status != 2xx Supabase lanza error pero deja el cuerpo en data:
-  // preferimos el mensaje de negocio del SP sobre el genérico.
-  if (error) {
-    if (error.context instanceof Response) {
-      try {
-        const body = await error.context.json();
-        throw new Error(body?.error || body?.message || error.message);
-      } catch (parseErr: any) {
-        if (parseErr.message !== error.message) throw parseErr;
-      }
-    }
-    throw error;
-  }
-  if (data?.success === false) {
-    throw new Error(data.error || "No se pudo actualizar la situación");
-  }
   return data;
 };
 
@@ -361,10 +342,9 @@ export const lookupDocument = async (
   documentType: string,
   documentNumber: string,
 ) => {
-  const { data, error } = await supabase.functions.invoke("document-lookup", {
+  const data = await invokeFunction("document-lookup", {
     body: { documentType, documentNumber },
   });
-  if (error) throw error;
   return data;
 };
 
@@ -416,11 +396,9 @@ export const fetchSaleProducts = async (
     ? `get-sale-products?${queryParams.toString()}`
     : "get-sale-products";
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) throw error;
   return data;
 };
 
@@ -510,24 +488,22 @@ export const changeOrderProducts = async (payload: {
     stock_type_id: number;
   }[];
 }) => {
-  const { data, error } = await supabase.functions.invoke("change-order-products", {
+  const data = await invokeFunction("change-order-products", {
     body: payload,
   });
-  if (error) throw error;
   return data;
 };
 
 // Fetch sale by ID (consolidated data for editing)
 export const fetchSaleById = async (orderId: number) => {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     `get-sale-by-id?id=${orderId}`
   );
-  if (error) throw error;
   return data;
 };
 // Fetch sale by ID (consolidated data for editing)
 export const fetchSaleByIdProducts = async (orderId: number) => {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     "get-sale-by-id-products",
     {
       body: {
@@ -535,6 +511,5 @@ export const fetchSaleByIdProducts = async (orderId: number) => {
       }
     }
   );
-  if (error) throw error;
   return data;
 };

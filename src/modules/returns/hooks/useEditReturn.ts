@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/modules/auth';
 import { toast } from "@/shared/hooks/use-toast";
 import { returnsService } from '../services/Returns.service';
@@ -10,6 +9,7 @@ import {
     ExchangeProduct,
     ReturnPayment,
 } from '../types/Returns.types';
+import { toastError } from "@/shared/utils/toastError";
 
 const createEmptyPayment = (): ReturnPayment => ({
     id: crypto.randomUUID(),
@@ -181,7 +181,7 @@ export const useEditReturn = () => {
 
         } catch (error: any) {
             console.error('Error loading return:', error);
-            toast({ title: 'Error al cargar la devolución', variant: "destructive" });
+            toastError(error, 'Error al cargar la devolución');
             navigate('/returns');
         } finally {
             setLoading(false);
@@ -442,7 +442,7 @@ export const useEditReturn = () => {
             navigate('/returns');
         } catch (error: any) {
             console.error('Error updating return:', error);
-            toast({ title: 'Error al actualizar la devolución', variant: "destructive" });
+            toastError(error, 'Error al actualizar la devolución');
         } finally {
             setSaving(false);
         }

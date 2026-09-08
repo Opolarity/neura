@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { CreateSaleType, GetOrderChannelTypeDetails, UpdateSaleType, GetInvoiceSeries, GetBranches, GetCajas } from '../services/OrderChannelTypes.services';
 import { getPaymentMethodsIsActiveTrueAndActiveTrue } from '@/shared/services/service';
+import { toastError } from "@/shared/utils/toastError";
 
 interface FormData {
     name: string;
@@ -105,11 +106,7 @@ const useCreateOrderChannelType = () => {
                 }
             } catch (error) {
                 console.error("Error loading options:", error);
-                toast({
-                    title: "Error",
-                    description: "No se pudieron cargar las opciones",
-                    variant: "destructive"
-                });
+                toastError(error, "No se pudieron cargar las opciones");
             } finally {
                 setOptionsLoading(false);
             }
@@ -196,11 +193,7 @@ const useCreateOrderChannelType = () => {
             navigate('/settings/order-channel-types');
         } catch (error: any) {
             console.error("Error saving sale type:", error);
-            toast({
-                title: "Error",
-                description: error.message || (isEdit ? "Error al actualizar" : "Error al crear"),
-                variant: "destructive"
-            });
+            toastError(error, (isEdit ? "Error al actualizar" : "Error al crear"));
         } finally {
             setLoading(false);
         }

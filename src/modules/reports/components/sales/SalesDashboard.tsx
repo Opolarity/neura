@@ -1,5 +1,6 @@
 import { KpiCard } from '../shared/KpiCard';
 import { SalesOverTimeChart } from './SalesOverTimeChart';
+import { SalesHeatmap } from './SalesHeatmap';
 import { SalesByDimensionChart } from './SalesByDimensionChart';
 import { TopProductsTable } from './TopProductsTable';
 import { useSalesDashboard } from '../../hooks/useSalesDashboard';
@@ -53,6 +54,8 @@ export function SalesDashboard({ filters }: SalesDashboardProps) {
         granularity={dash.granularity}
         onGranularityChange={dash.setGranularity}
       />
+
+      <SalesHeatmap filters={filters} />
 
       <SalesByDimensionChart dimensions={dimensions} />
 

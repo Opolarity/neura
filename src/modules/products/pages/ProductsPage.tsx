@@ -20,7 +20,8 @@ const Products = () => {
 
   const {
     products,
-    categories,
+    selectedCategories,
+    setSelectedCategories,
     tags,
     brands,
     loading,
@@ -99,7 +100,8 @@ const Products = () => {
 
       <ProductsFilterModal
         isOpen={isOpenFilterModal}
-        categories={categories}
+        selectedCategories={selectedCategories}
+        onChangeSelectedCategories={setSelectedCategories}
         tags={tags}
         brands={brands}
         filters={filters}

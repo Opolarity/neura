@@ -120,7 +120,7 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
         key: "LowStockThreshold",
         label: "Umbral de stock bajo (unidades)",
         control: "number",
-        help: "Un SKU se considera con stock bajo cuando tiene stock mayor a 0 y menor o igual a este valor. Se usa en los reportes de inventario (Reportes → Stock).",
+        help: "Un SKU se considera con stock bajo cuando su stock vendible en almacenes activos es mayor a 0 y menor o igual a este valor. Gobierna la alerta de la campana al cruzar el umbral, el indicador de los listados de inventario y productos, y la bandeja de reposición (Reportes → Inventario). Sin valor configurado no se emiten alertas.",
       },
       {
         key: "CompanyDireccionPartida",

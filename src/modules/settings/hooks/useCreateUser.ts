@@ -13,6 +13,8 @@ import {
 } from '../services/Users.services';
 import { FilterOption, DocumentLookupPayload } from '../types/Users.types';
 import { typesByModuleCode } from '@/shared/services/service';
+import { toastError } from "@/shared/utils/toastError";
+import { isValidLocalPhone, toLocalPhone } from "@/shared/utils/phone";
 
 interface FormData {
     user_name: string;
@@ -139,6 +141,23 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
         }
     }, [isEdit]);
 
+    // Etiquetas de los campos obligatorios, para poder decir cuál falta en vez
+    // de un "complete los campos (*)" que no señala nada.
+    const FIELD_LABELS: Record<string, string> = {
+        document_type_id: 'Tipo de Documento',
+        document_number: 'Número de Documento',
+        name: 'Nombre / Razón Social',
+        last_name: 'Primer Apellido',
+        user_name: 'Nombre de Usuario',
+        email: 'Email',
+        password: 'Contraseña',
+        phone: 'Celular',
+        role_ids: 'Roles',
+        branches_id: 'Sucursal',
+        warehouse_id: 'Almacén',
+        type_ids: 'Tipo de cuenta',
+    };
+
     // Computed values
     const isRUC = documentTypes.find(t => t.id.toString() === formData.document_type_id)?.name.includes('RUC') || false;
 
@@ -172,11 +191,7 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
                 }
             } catch (error) {
                 console.error('Error fetching options:', error);
-                toast({
-                    title: "Error",
-                    description: "No se pudieron cargar las opciones del formulario",
-                    variant: "destructive",
-                });
+                toastError(error, "No se pudieron cargar las opciones del formulario");
             } finally {
                 setOptionsLoading(false);
             }
@@ -228,7 +243,7 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
                         role_ids: roleIds,
                         warehouse_id: user.warehouse_id?.toString() || profile?.warehouse_id?.toString() || '',
                         branches_id: user.branch_id?.toString() || profile?.branch_id?.toString() || profile?.branches_id?.toString() || '',
-                        phone: user.phone?.toString() || profile?.phone?.toString() || '',
+                        phone: toLocalPhone(profile?.phone ?? user.phone),
                         country_id: user.country_id?.toString() || '',
                         state_id: user.state_id?.toString() || '',
                         city_id: user.city_id?.toString() || '',
@@ -273,11 +288,7 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
 
                 } catch (error) {
                     console.error('=== Error fetching user ===', error);
-                    toast({
-                        title: "Error",
-                        description: "No se pudo cargar la información del usuario",
-                        variant: "destructive",
-                    });
+                    toastError(error, "No se pudo cargar la información del usuario");
                 } finally {
                     setFetchingUser(false);
                 }
@@ -372,6 +383,30 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
         }
     };
 
+    // ÚNICA lista de campos obligatorios del formulario (T-603). De aquí salen
+    // las dos cosas que antes divergían: el asterisco del label
+    // (`requiredMarks`) y lo que bloquea el guardado (`getMissingRequired`).
+    //
+    // No coinciden a propósito: el celular se MARCA siempre pero solo BLOQUEA
+    // al crear. Hay usuarios antiguos sin teléfono y exigírselo al editar
+    // trabaría cambios de rol o de sucursal que no tienen nada que ver.
+    //
+    // `type_ids` es obligatorio y no tiene campo visible (USE + COL se asignan
+    // solos), así que no aparece aquí: no hay label que marcar.
+    const requiredMarks = {
+        document_type_id: true,
+        document_number: true,
+        name: true,
+        last_name: !isRUC,
+        user_name: true,
+        email: true,
+        password: !isEdit,
+        phone: true,
+        role_ids: true,
+        branches_id: true,
+        warehouse_id: true,
+    };
+
     // Handlers
     const toggleRole = (id: number) => {
         setFormData(prev => ({
@@ -413,8 +448,13 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
 
         try {
             // Validation
+            // Lo que BLOQUEA el guardado. Se corresponde con `requiredMarks`,
+            // salvo el celular (solo al crear) y `type_ids` (sin campo visible).
+            // `user_name` no está: lo frena el `required` del propio input y en
+            // personalizado la edge function ni lo lee.
             const requiredFields: any = {
-                //user_name: formData.user_name,
+                document_type_id: formData.document_type_id,
+                document_number: formData.document_number,
                 name: formData.name,
                 email: formData.email,
                 role_ids: formData.role_ids.length > 0,
@@ -431,6 +471,8 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
             // Password optional in edit mode
             if (!isEdit) {
                 requiredFields['password'] = formData.password;
+                // El celular es obligatorio SOLO en el alta (T-603).
+                requiredFields['phone'] = formData.phone;
             }
 
             const missingFields = Object.entries(requiredFields)
@@ -441,7 +483,20 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
                 console.log("Missing fields:", missingFields);
                 toast({
                     title: "Campos requeridos",
-                    description: "Por favor complete todos los campos obligatorios (*) o su formato es inválido",
+                    description: `Faltan campos obligatorios: ${missingFields.map(f => FIELD_LABELS[f] ?? f).join(', ')}`,
+                    variant: "destructive",
+                });
+                setLoading(false);
+                return;
+            }
+
+            // El formato del celular se valida siempre que haya algo escrito,
+            // también al editar: si el usuario lo llena, tiene que llenarlo
+            // bien. El "51" lo antepone el backend, aquí son 9 dígitos.
+            if (formData.phone && !isValidLocalPhone(formData.phone)) {
+                toast({
+                    title: "Celular inválido",
+                    description: "El celular debe tener 9 dígitos, sin el código de país.",
                     variant: "destructive",
                 });
                 setLoading(false);
@@ -485,11 +540,7 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
             navigate('/settings/users');
         } catch (error: any) {
             console.error('=== Error saving user ===', error);
-            toast({
-                title: "Error",
-                description: error.message || "No se pudo guardar el usuario",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudo guardar el usuario");
         } finally {
             setLoading(false);
         }
@@ -500,6 +551,7 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
     return {
         formData,
         setFormData,
+        requiredMarks,
         loading,
         optionsLoading,
         fetchingUser,

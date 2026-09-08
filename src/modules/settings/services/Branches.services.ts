@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { BranchesApiResponse, Branch, BranchesFilters, IdNameResponse } from "../types/Branches.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const BranchesApi = async (
     filters: BranchesFilters
@@ -12,14 +13,9 @@ export const BranchesApi = async (
     const endpoint = queryParams.toString()
         ? `get-branches?${queryParams.toString()}`
         : "get-branches";
-    const { data, error } = await supabase.functions.invoke(endpoint, {
+    const data = await invokeFunction(endpoint, {
         method: "GET",
     });
-
-    if (error) {
-        console.error("Invoke error in branchesApi:", error);
-        throw error;
-    }
 
     return (
         data ?? {
@@ -32,19 +28,17 @@ export const BranchesApi = async (
 };
 
 export const GetBranchDetails = async (branchId: number): Promise<BranchesApiResponse> => {
-    const { data, error } = await supabase.functions.invoke("get-branches-details", {
+    const data = await invokeFunction("get-branches-details", {
         method: "POST", // Forzamos POST porque enviamos body
         body: { branchID: branchId },
     });
-    if (error) throw error;
     return data ?? {};
 }
 
 export const DeleteBranch = async (branchesId: number): Promise<BranchesApiResponse> => {
-    const { data, error } = await supabase.functions.invoke("delete-branches", {
+    const data = await invokeFunction("delete-branches", {
         body: { branchesID: branchesId },
     });
-    if (error) throw error;
     return data ?? [];
 }
 
@@ -60,20 +54,18 @@ export const CreateBranch = async (branch: Branch): Promise<BranchesApiResponse>
         addresreferenc: branch.address_reference || "",
     };
 
-    const { data, error } = await supabase.functions.invoke("create-branches", {
+    const data = await invokeFunction("create-branches", {
         method: "POST",
         body: payload,
     });
-    if (error) throw error;
     return data ?? [];
 }
 
 export const UpdateBranch = async (branch: Branch): Promise<BranchesApiResponse> => {
-    const { data, error } = await supabase.functions.invoke("update-branches", {
+    const data = await invokeFunction("update-branches", {
         method: "PUT",
         body: { branch },
     });
-    if (error) throw error;
     return data ?? [];
 }
 

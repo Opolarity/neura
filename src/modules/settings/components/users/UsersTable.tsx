@@ -1,4 +1,5 @@
-import { Edit, Trash2, Loader2 } from "lucide-react";
+import { Edit, Trash, Loader2 } from "lucide-react";
+import { formatDateDisplay } from "@/shared/utils/date";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -9,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Users } from "../../types/Users.types";
-import { format } from "date-fns";
 import { ComponentPermission } from "@/shared/components/component-permission";
 
 // Usuario, Nombres, Documentos, Almacen, Sucursales, Roles, Fecha de Creación,
@@ -76,12 +76,11 @@ const UsersTable = ({ users, loading, onEdit, onDeleteClick }: UsersTableProps) 
               <TableCell>{u.branches || "Sin sucursal"}</TableCell>
               <TableCell>{u.role || "Sin roles"}</TableCell>
               <TableCell>
-                {u.created_at
-                  ? format(
-                    new Date(u.created_at.split("T")[0].replace(/-/g, "/")),
-                    "dd/MM/yyyy",
-                  )
-                  : "-"}
+                {/* created_at es un instante. Antes se le cortaba la hora con
+                    split("T")[0] —que da el dia UTC— y se re-parseaba local:
+                    dos conversiones y ninguna en Lima. formatDateDisplay lo
+                    resuelve de una. */}
+                {u.created_at ? formatDateDisplay(u.created_at) : "-"}
               </TableCell>
               <ComponentPermission codeIn={ACTION_CODES}>
                 <TableCell>
@@ -89,17 +88,18 @@ const UsersTable = ({ users, loading, onEdit, onDeleteClick }: UsersTableProps) 
                     {/* El botón lleva a /settings/users/edit/:uid, ya protegida
                         con users.edit: se reutiliza ese code. */}
                     <ComponentPermission codeIn={["users.edit"]}>
-                      <Button variant="outline" size="icon" onClick={() => onEdit(u)}>
+                      <Button variant="outline" size="sm" title="Editar el usuario" onClick={() => onEdit(u)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                     </ComponentPermission>
                     <ComponentPermission codeIn={["users.delete"]}>
                       <Button
                         variant="destructive"
-                        size="icon"
+                        size="sm"
+                        title="Eliminar el usuario"
                         onClick={() => onDeleteClick(u)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash className="h-4 w-4" />
                       </Button>
                     </ComponentPermission>
                   </div>

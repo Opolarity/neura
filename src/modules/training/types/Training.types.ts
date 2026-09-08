@@ -1,7 +1,7 @@
-import type { EdgeFunctionErrorCode } from "@/shared/services/edgeFunctionError";
+import type { FunctionErrorCode as EdgeFunctionErrorCode } from "@/shared/utils/functionError";
 
 export type { EdgeFunctionErrorCode as TrainingErrorCode };
-export { EdgeFunctionError as TrainingServiceError } from "@/shared/services/edgeFunctionError";
+export { FunctionError as TrainingServiceError } from "@/shared/utils/functionError";
 
 /* ------------------------------------------------------------------ *
  * API (snake_case, crudo tal como lo devuelve la edge function)
@@ -117,6 +117,8 @@ export interface ScheduleTrainingPayload {
   /** Uno de los `start` que devolvió la API, exacto. */
   start: string;
   inviteeName: string;
+  /** Celular del solicitante, ya normalizado. Opcional: no todos lo tienen. */
+  inviteePhone?: string;
   notes?: string;
 }
 

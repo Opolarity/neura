@@ -35,6 +35,10 @@ const PriceRuleFormPage = () => {
     toggleConsignmentPromo,
     consignmentTenantReferences,
     setConsignmentTenantReferences,
+    isFranchiseeExclusion,
+    toggleFranchiseeExclusion,
+    franchiseeExclusionTenantReferences,
+    setFranchiseeExclusionTenantReferences,
     handleSubmit,
     navigate,
   } = usePriceRuleForm();
@@ -82,6 +86,12 @@ const PriceRuleFormPage = () => {
         toggleConsignmentPromo={toggleConsignmentPromo}
         consignmentTenantReferences={consignmentTenantReferences}
         setConsignmentTenantReferences={setConsignmentTenantReferences}
+        isFranchiseeExclusion={isFranchiseeExclusion}
+        toggleFranchiseeExclusion={toggleFranchiseeExclusion}
+        franchiseeExclusionTenantReferences={franchiseeExclusionTenantReferences}
+        setFranchiseeExclusionTenantReferences={
+          setFranchiseeExclusionTenantReferences
+        }
       />
 
       {/* 2. Validity */}

@@ -13,6 +13,10 @@ export interface InventoryApiResponse {
     variation_id: number;
     variation_name: string;
     stock_by_warehouse: WarehouseApiResponse[];
+    /** T-269 · Total global PRD en almacenes activos (definición única). */
+    stock_global_prd?: number | null;
+    /** T-269 · Lo decide la BD, no la suma en pantalla. */
+    is_low_stock?: boolean | null;
   }>;
   page: {
     page: number;
@@ -36,6 +40,14 @@ export interface Inventory {
   variation_id: number;
   variation_name: string;
   stock_by_warehouse: Warehouse[];
+  /**
+   * T-269 · Total global de stock vendible (PRD) en almacenes activos.
+   * OJO: no es la suma de `stock_by_warehouse`, que es local (solo los
+   * almacenes filtrados) y usa stock virtual.
+   */
+  stock_global_prd: number;
+  /** T-269 · Bajo el umbral global según la BD. */
+  is_low_stock: boolean;
 }
 
 export interface InventoryFilters {

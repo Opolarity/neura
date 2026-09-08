@@ -203,8 +203,9 @@ const MovementsTable = ({ movements, loading, onViewDetail }: MovementsTableProp
                                 <ComponentPermission codeIn={ACTION_CODES}>
                                     <TableCell>
                                         <Button
-                                            variant="ghost"
-                                            size="icon"
+                                            variant="outline"
+                                            size="sm"
+                                            title="Ver detalle del movimiento"
                                             onClick={() => onViewDetail(movement.movements_id)}
                                         >
                                             <Eye className="w-4 h-4" />

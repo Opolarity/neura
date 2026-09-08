@@ -45,6 +45,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import GuiaRemisionModal, { type GuiaRemisionData } from "./GuiaRemisionModal";
 import { useInvoicePrint } from "@/modules/invoices/hooks/useInvoicePrint";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { toastError } from "@/shared/utils/toastError";
 
 interface Invoice {
   id: number;
@@ -404,19 +406,14 @@ export const SalesInvoicesModal = ({
         gre: greData,
       };
 
-      const { error: fnError } = await supabase.functions.invoke("create-invoice", { body });
-
-      if (fnError) {
-        toast({ title: "Error", description: "Error al crear la guía de remisión", variant: "destructive" });
-        return;
-      }
+      await invokeFunction("create-invoice", { body });
 
       toast({ title: "Éxito", description: "Guía de remisión creada correctamente", variant: "success" });
       setGuiaModalOpen(false);
       setPendingGuiaInvoiceType(null);
       fetchInvoices();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
+    } catch (err) {
+      toastError(err, "Error al crear la guía de remisión");
     } finally {
       setCreating(false);
     }
@@ -467,7 +464,10 @@ export const SalesInvoicesModal = ({
       const totalTaxes = totalAmount - (totalAmount / 1.18);
 
       const items = orderProducts.map((op: any) => {
-        const lineTotal = (Number(op.product_price) * Number(op.quantity)) - Number(op.product_discount || 0);
+        // T-630: order_products.product_discount es el descuento POR UNIDAD; el
+        // campo discount del comprobante es el de la linea entera.
+        const lineDiscount = Number(op.product_discount || 0) * Number(op.quantity);
+        const lineTotal = (Number(op.product_price) * Number(op.quantity)) - lineDiscount;
         const igv = lineTotal - (lineTotal / 1.18);
         const baseTitle = op.variations?.products?.title || op.product_name || `Producto ${op.product_variation_id}`;
         return {
@@ -475,7 +475,7 @@ export const SalesInvoicesModal = ({
           quantity: Number(op.quantity),
           measurement_unit: "NIU",
           unit_price: Number(op.product_price),
-          discount: Number(op.product_discount || 0),
+          discount: lineDiscount,
           igv: Math.round(igv * 100) / 100,
           total: Math.round(lineTotal * 100) / 100,
         };
@@ -519,17 +519,12 @@ export const SalesInvoicesModal = ({
         }
       }
 
-      const { error: fnError } = await supabase.functions.invoke("create-invoice", { body });
-
-      if (fnError) {
-        toast({ title: "Error", description: "Error al crear el comprobante", variant: "destructive" });
-        return;
-      }
+      await invokeFunction("create-invoice", { body });
 
       toast({ title: "Éxito", description: `${invoiceType.name} creado correctamente`, variant: "success" });
       fetchInvoices();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
+    } catch (err) {
+      toastError(err, "Error al crear el comprobante");
     } finally {
       setCreating(false);
     }
@@ -550,24 +545,15 @@ export const SalesInvoicesModal = ({
     setEmitting(true);
     try {
       const fnName = typeCode === "7" ? "emit-guia" : "emit-invoice";
-      const { data, error } = await supabase.functions.invoke(fnName, {
+      await invokeFunction(fnName, {
         body: { invoice_id: invoice.id },
       });
 
-      if (error) {
-        toast({ title: "Error", description: "Error al emitir el comprobante", variant: "destructive" });
-        return;
-      }
-
-      if (data?.error) {
-        toast({ title: "Error de emisión", description: data.error, variant: "destructive" });
-        return;
-      }
-
       toast({ title: "Éxito", description: "Comprobante emitido correctamente a SUNAT", variant: "success" });
       fetchInvoices();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Error inesperado", variant: "destructive" });
+    } catch (err) {
+      // El rechazo de SUNAT viaja como mensaje de la function: llega tal cual.
+      toastError(err, "Error al emitir el comprobante", "Error de emisión");
     } finally {
       setEmitting(false);
       setPendingEmitInvoice(null);
@@ -655,13 +641,12 @@ export const SalesInvoicesModal = ({
                         {formatDateDisplay(inv.created_at)}
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
+                        <div className="flex items-center gap-2">
                           {inv.declared ? (
                             <>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                variant="outline"
+                                size="sm"
                                 title="Imprimir ticket"
                                 disabled={printingId === inv.id}
                                 onClick={() => printInvoice(inv.id)}
@@ -671,9 +656,8 @@ export const SalesInvoicesModal = ({
                                   : <Printer className="h-4 w-4" />}
                               </Button>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                variant="outline"
+                                size="sm"
                                 title="Ver comprobante"
                                 onClick={() => {
                                   window.open(`/invoices/edit/${inv.id}`, "_blank");
@@ -683,9 +667,8 @@ export const SalesInvoicesModal = ({
                               </Button>
                               {inv.pdf_url && (
                                 <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
+                                  variant="outline"
+                                  size="sm"
                                   title="Ver PDF"
                                   onClick={() => window.open(inv.pdf_url!, "_blank")}
                                 >
@@ -694,9 +677,8 @@ export const SalesInvoicesModal = ({
                               )}
                               {inv.xml_url && (
                                 <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
+                                  variant="outline"
+                                  size="sm"
                                   title="Descargar XML"
                                   onClick={() => {
                                     const link = document.createElement("a");
@@ -712,18 +694,16 @@ export const SalesInvoicesModal = ({
                           ) : showEmitAction ? (
                             <>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                variant="outline"
+                                size="sm"
                                 title="Emitir a SUNAT"
                                 onClick={() => setPendingEmitInvoice(inv)}
                               >
                                 <ArrowUp className="h-4 w-4" />
                               </Button>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                variant="outline"
+                                size="sm"
                                 title="Ver comprobante"
                                 onClick={() => {
                                   window.open(`/invoices/edit/${inv.id}`, "_blank");
@@ -735,9 +715,8 @@ export const SalesInvoicesModal = ({
                           ) : typeCode === "INV" ? (
                             <>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                variant="outline"
+                                size="sm"
                                 title="Ver comprobante"
                                 onClick={() => {
                                   window.open(`/invoices/edit/${inv.id}`, "_blank");
@@ -746,9 +725,8 @@ export const SalesInvoicesModal = ({
                                 <Eye className="h-4 w-4" />
                               </Button>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                variant="outline"
+                                size="sm"
                                 title="Imprimir ticket"
                                 disabled={printingId === inv.id}
                                 onClick={() => printInvoice(inv.id)}

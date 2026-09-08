@@ -7,4 +7,4 @@ export {
   fetchUserProfile,
   userProfileQueryKey,
 } from "./hooks/useUserProfile";
-export type { UserProfile } from "./hooks/useUserProfile";
+export type { UserProfile, UserProfileAccount } from "./hooks/useUserProfile";

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Edit, Loader2, Trash2 } from "lucide-react";
+import { Edit, Loader2, Trash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -103,7 +103,7 @@ const OrderChannelTypesTable = ({
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <ComponentPermission codeIn={["sales_channels.edit"]}>
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(type.id)}>
+                      <Button variant="outline" size="sm" title="Editar el canal de venta" onClick={() => handleEdit(type.id)}>
                         <Edit className="w-4 h-4" />
                       </Button>
                     </ComponentPermission>
@@ -113,8 +113,8 @@ const OrderChannelTypesTable = ({
                     <ComponentPermission codeIn={["sales_channels.delete"]}>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                            <Trash2 className="w-4 h-4" />
+                          <Button variant="destructive" size="sm" title="Eliminar el canal de venta">
+                            <Trash className="w-4 h-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>

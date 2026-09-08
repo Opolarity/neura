@@ -33,6 +33,7 @@ import {
 } from "../../types/priceRule.types";
 import { ProductReferenceField } from "./ProductReferenceField";
 import { CategoryReferenceField } from "./CategoryReferenceField";
+import { TagReferenceField } from "./TagReferenceField";
 
 const PaymentMethodSelect = ({
   condition,
@@ -140,6 +141,12 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
           min_quantity: 1,
           include_descendants: DEFAULT_INCLUDE_DESCENDANTS,
         });
+        break;
+      case "brand_in_cart":
+        Object.assign(base, { brand_ids: [], min_quantity: 1 });
+        break;
+      case "tag_in_cart":
+        Object.assign(base, { tag_ids: [], min_quantity: 1 });
         break;
       case "min_total_quantity":
         Object.assign(base, { value: 1 });
@@ -291,6 +298,50 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
           </div>
         );
 
+      case "brand_in_cart":
+        return (
+          <div className="flex gap-2 items-end flex-wrap">
+            <TagReferenceField
+              className="flex-1 min-w-[200px]"
+              kind="brand"
+              label="Marcas"
+              ids={(condition as any).brand_ids ?? []}
+              onChangeIds={(ids) => updateField("brand_ids", ids)}
+            />
+            <div className="space-y-1">
+              <Label className="text-xs">Cant. mín.</Label>
+              <Input
+                type="number"
+                className="w-[100px]"
+                value={(condition as any).min_quantity ?? 1}
+                onChange={(e) => updateField("min_quantity", parseInt(e.target.value) || 1)}
+              />
+            </div>
+          </div>
+        );
+
+      case "tag_in_cart":
+        return (
+          <div className="flex gap-2 items-end flex-wrap">
+            <TagReferenceField
+              className="flex-1 min-w-[200px]"
+              kind="tag"
+              label="Etiquetas"
+              ids={(condition as any).tag_ids ?? []}
+              onChangeIds={(ids) => updateField("tag_ids", ids)}
+            />
+            <div className="space-y-1">
+              <Label className="text-xs">Cant. mín.</Label>
+              <Input
+                type="number"
+                className="w-[100px]"
+                value={(condition as any).min_quantity ?? 1}
+                onChange={(e) => updateField("min_quantity", parseInt(e.target.value) || 1)}
+              />
+            </div>
+          </div>
+        );
+
       case "min_total_quantity":
         return (
           <div className="space-y-1">
@@ -436,10 +487,15 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
               <SelectValue placeholder="Seleccionar condición" />
             </SelectTrigger>
             <SelectContent>
-              {/* consignment_channel es un marcador que se gestiona con el
-                  checkbox "Promoción de consignación", no desde acá. */}
+              {/* consignment_channel y franchisee_exclusion son marcadores que
+                  se gestionan con los checkboxes de Información Básica, no
+                  desde acá. */}
               {Object.entries(CONDITION_TYPE_LABELS)
-                .filter(([key]) => key !== "consignment_channel")
+                .filter(
+                  ([key]) =>
+                    key !== "consignment_channel" &&
+                    key !== "franchisee_exclusion",
+                )
                 .map(([key, label]) => (
                   <SelectItem key={key} value={key}>
                     {label}

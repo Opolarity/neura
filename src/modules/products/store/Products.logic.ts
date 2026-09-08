@@ -1,8 +1,9 @@
 /*
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { toastError } from "@/shared/utils/toastError";
 
 interface ProductData {
   id: number;
@@ -39,11 +40,9 @@ export const useProductsLogic = () => {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase.functions.invoke(
+      const data = await invokeFunction(
         "get-products-list"
       );
-
-      if (error) throw error;
 
       if (!data || !data.products || data.products.length === 0) {
         setProducts([]);
@@ -57,11 +56,7 @@ export const useProductsLogic = () => {
       setProducts(data.products);
     } catch (error) {
       console.error("Error fetching products:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los productos",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudieron cargar los productos");
     } finally {
       setLoading(false);
     }
@@ -178,18 +173,12 @@ export const useProductsLogic = () => {
     try {
       setDeleting(true);
 
-      const { data, error } = await supabase.functions.invoke(
+      const data = await invokeFunction(
         "delete-product",
         {
           body: { productIds: productsToDelete },
         }
       );
-
-      if (error) throw error;
-
-      if (!data.success) {
-        throw new Error(data.error || "Error al eliminar los productos");
-      }
 
       toast({
         title: "Productos eliminados",
@@ -201,11 +190,7 @@ export const useProductsLogic = () => {
       fetchProducts();
     } catch (error: any) {
       console.error("Error deleting products:", error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo eliminar el producto",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo eliminar el producto");
     } finally {
       setDeleting(false);
       setDeleteDialogOpen(false);

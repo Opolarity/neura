@@ -4,6 +4,7 @@ import { PaginationState } from '@/shared/components/pagination/Pagination';
 import { OrderChannelType } from '../types/OrderChannelTypes.types';
 import { GetOrderChannelTypes } from '../services/OrderChannelTypes.services';
 import { useDebounce } from '@/shared/hooks/useDebounce';
+import { toastError } from "@/shared/utils/toastError";
 
 export const useOrderChannelTypes = () => {
     const { toast } = useToast();
@@ -29,11 +30,7 @@ export const useOrderChannelTypes = () => {
             setPagination(prev => ({ ...prev, total: count }));
         } catch (error) {
             console.error("Error loading sale types:", error);
-            toast({
-                title: "Error",
-                description: "No se pudieron cargar los canales de venta",
-                variant: "destructive"
-            });
+            toastError(error, "No se pudieron cargar los canales de venta");
         } finally {
             setLoading(false);
         }

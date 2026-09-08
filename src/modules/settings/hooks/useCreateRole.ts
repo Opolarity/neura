@@ -11,6 +11,7 @@ import { roleDetailAdapter } from "../adapters/Roles.adapters";
 import { permissionsCatalogAdapter } from "../adapters/Permissions.adapters";
 import { PermissionTree } from "../types/Permissions.types";
 import { RolePayload } from "../types/Roles.types";
+import { toastError } from "@/shared/utils/toastError";
 
 const EMPTY_TREE: PermissionTree = {
   permissions: [],
@@ -69,13 +70,9 @@ const useCreateRole = (roleId?: number) => {
         }
       } catch (error) {
         console.error("Error loading role form:", error);
-        toast({
-          title: "Error",
-          description: isEdit
+        toastError(error, isEdit
             ? "No se pudieron cargar el rol y los permisos"
-            : "No se pudieron cargar los permisos",
-          variant: "destructive",
-        });
+            : "No se pudieron cargar los permisos");
       } finally {
         setLoading(false);
       }
@@ -178,11 +175,7 @@ const useCreateRole = (roleId?: number) => {
       navigate("/settings/roles");
     } catch (error: any) {
       console.error("Error saving role:", error);
-      toast({
-        title: "Error",
-        description: error?.message || "No se pudo guardar el rol",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo guardar el rol");
     } finally {
       setSaving(false);
     }

@@ -5,6 +5,7 @@ import type {
   SalesKpis,
   SalesOverTimeItem,
   SalesByDimensionItem,
+  SalesGeoHeatmapItem,
   TopProductItem,
   TopMetric,
   SalesDimension,
@@ -19,6 +20,7 @@ import type {
   CategoryOverTimeItem,
   InventorySummary,
   LowStockDistributionItem,
+  LowStockProductsReport,
   StockRotationItem,
   StockMovementTypeItem,
   InventoryValuation,
@@ -64,6 +66,26 @@ function mapFilters(f: ReportsFilters) {
     p_sale_type_id: f.saleTypeId ?? undefined,
     p_payment_method_id: f.paymentMethodId ?? undefined,
     p_situation_ids: f.situationIds ?? undefined,
+    p_price_list_code: f.priceListCode ?? undefined,
+  };
+}
+
+/**
+ * Params comunes de los SP de la pestaña Productos. Deliberadamente NO es
+ * `mapFilters`: esos SP solo aceptan fecha/sede/canal/situación, y PostgREST
+ * resuelve la sobrecarga por el conjunto exacto de argumentos nombrados —
+ * mandarles los once de Ventas devuelve PGRST202 (404).
+ *
+ * `situationIds` llega ya resuelto desde el hook: lo que se envía es
+ * literalmente lo que el filtro muestra marcado.
+ */
+function mapProductFilters(f: ReportsFilters, situationIds: number[]) {
+  return {
+    p_start_date: f.startDate ?? undefined,
+    p_end_date: f.endDate ?? undefined,
+    p_branch_id: f.branchId ?? undefined,
+    p_sale_type_id: f.saleTypeId ?? undefined,
+    p_situation_ids: situationIds,
   };
 }
 
@@ -92,6 +114,13 @@ export const salesService = {
       p_dimension: dimension,
     }),
 
+  getGeoHeatmap: (f: ReportsFilters, mapStateId?: number, mapCityId?: number) =>
+    rpc<SalesGeoHeatmapItem[]>('sp_rpt_sales_geo_heatmap', {
+      ...mapFilters(f),
+      p_map_state_id: mapStateId ?? null,
+      p_map_city_id: mapCityId ?? null,
+    }),
+
   getTopProducts: (f: ReportsFilters, metric: TopMetric = 'revenue', limit = 10) =>
     rpc<TopProductItem[]>('sp_rpt_top_products_sales', {
       p_start_date: f.startDate ?? undefined,
@@ -107,22 +136,19 @@ export const salesService = {
 // PRODUCTS
 // ============================================================
 export const productsService = {
-  getByCategory: (f: ReportsFilters) =>
-    rpc<ProductsByCategoryItem[]>('sp_rpt_products_by_category', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-      p_sale_type_id: f.saleTypeId ?? undefined,
-    }),
+  getByCategory: (f: ReportsFilters, situationIds: number[]) =>
+    rpc<ProductsByCategoryItem[]>('sp_rpt_products_by_category', mapProductFilters(f, situationIds)),
 
-  getTopByCategory: (f: ReportsFilters, categoryId: number | null, limit = 10) =>
+  getTopByCategory: (
+    f: ReportsFilters,
+    categoryId: number | null,
+    limit = 10,
+    situationIds: number[] = [],
+  ) =>
     rpc<TopProductItem[]>('sp_rpt_top_products_by_category', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
+      ...mapProductFilters(f, situationIds),
       p_category_id: categoryId ?? undefined,
       p_limit: limit,
-      p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 
   search: (query: string, limit = 10) =>
@@ -131,49 +157,44 @@ export const productsService = {
       p_limit: limit,
     }),
 
-  getDetail: (productId: number, f: ReportsFilters) =>
+  getDetail: (productId: number, f: ReportsFilters, situationIds: number[]) =>
     rpc<ProductDetailData>('sp_rpt_product_detail', {
+      ...mapProductFilters(f, situationIds),
       p_product_id: productId,
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-      p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 
-  getPareto: (f: ReportsFilters, limit: ParetoLimit = 10) =>
+  getPareto: (f: ReportsFilters, limit: ParetoLimit = 10, situationIds: number[] = []) =>
     rpc<ProductsParetoItem[]>('sp_rpt_products_pareto', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-      p_sale_type_id: f.saleTypeId ?? undefined,
+      ...mapProductFilters(f, situationIds),
       p_limit: limit,
     }),
 
-  getSalesBySize: (f: ReportsFilters) =>
-    rpc<SizeByCategoryItem[]>('sp_rpt_products_sales_by_size', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-      p_sale_type_id: f.saleTypeId ?? undefined,
-    }),
+  getSalesBySize: (f: ReportsFilters, situationIds: number[]) =>
+    rpc<SizeByCategoryItem[]>('sp_rpt_products_sales_by_size', mapProductFilters(f, situationIds)),
 
-  getCategoryOverTime: (f: ReportsFilters, granularity: Granularity = 'week') =>
+  getCategoryOverTime: (
+    f: ReportsFilters,
+    granularity: Granularity = 'week',
+    situationIds: number[] = [],
+  ) =>
     rpc<CategoryOverTimeItem[]>('sp_rpt_products_category_over_time', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
+      ...mapProductFilters(f, situationIds),
       p_granularity: granularity,
-      p_branch_id: f.branchId ?? undefined,
-      p_sale_type_id: f.saleTypeId ?? undefined,
     }),
 
   // Reutiliza el RPC del tab financiero: devuelve unidades, ingresos y margen
   // por producto — acá alimenta el scatter margen vs volumen.
-  getMarginScatter: (f: ReportsFilters, limit = 100) =>
+  //
+  // No usa mapProductFilters porque ese SP no acepta p_sale_type_id. Y como lo
+  // comparte la pestaña Financiero, su p_situation_ids en NULL conserva el
+  // comportamiento viejo (sin filtro): acá hay que mandar el array explícito.
+  getMarginScatter: (f: ReportsFilters, limit = 100, situationIds: number[] = []) =>
     rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
       p_branch_id: f.branchId ?? undefined,
       p_limit: limit,
+      p_situation_ids: situationIds,
     }),
 };
 
@@ -181,16 +202,34 @@ export const productsService = {
 // INVENTORY
 // ============================================================
 export const inventoryService = {
-  getSummary: (warehouseId?: number, threshold = 10) =>
+  // T-269: sin `= 10`. Si no se pasa threshold, el SP resuelve el umbral global
+  // con fn_low_stock_threshold(); el front ya no inventa ningún valor.
+  getSummary: (warehouseId?: number, threshold?: number) =>
     rpc<InventorySummary>('sp_rpt_inventory_summary', {
       p_warehouse_id: warehouseId ?? undefined,
-      p_low_stock_threshold: threshold,
+      p_low_stock_threshold: threshold ?? undefined,
     }),
 
-  getLowStockDistribution: (warehouseId?: number, threshold = 10) =>
+  getLowStockDistribution: (warehouseId?: number, threshold?: number) =>
     rpc<LowStockDistributionItem[]>('sp_rpt_low_stock_distribution', {
       p_warehouse_id: warehouseId ?? undefined,
-      p_threshold: threshold,
+      p_threshold: threshold ?? undefined,
+    }),
+
+  /** T-269 · Bandeja de reposición: SKUs bajo el umbral, paginados. */
+  getLowStockProducts: (
+    warehouseId?: number,
+    threshold?: number,
+    page = 1,
+    size = 10,
+    search?: string,
+  ) =>
+    rpc<LowStockProductsReport>('sp_rpt_low_stock_products', {
+      p_warehouse_id: warehouseId ?? undefined,
+      p_threshold: threshold ?? undefined,
+      p_page: page,
+      p_size: size,
+      p_search: search ?? undefined,
     }),
 
   getRotation: (f: ReportsFilters, warehouseId?: number, limit = 20) =>
@@ -468,12 +507,6 @@ export const fetchSalesDetailReport = (
   rpc<SalesDetailReportRow[]>('sp_rpt_export_sales_detail', mapFilters(f));
 
 // ============================================================
-// SHARED: Refresh materialized views (called from UI)
-// ============================================================
-export const refreshReportMviews = () =>
-  supabase.rpc('fn_refresh_report_mviews');
-
-// ============================================================
 // SHARED: Load filter options
 // ============================================================
 export const filterOptionsService = {
@@ -542,6 +575,20 @@ export const filterOptionsService = {
     const { data, error } = await supabase
       .from('sale_types')
       .select('id, name')
+      .order('name');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  // Solo listas activas y con código: el filtro compara contra
+  // orders.price_list_code, así que una lista sin código no es seleccionable.
+  getPriceLists: async () => {
+    const { data, error } = await supabase
+      .from('price_list')
+      .select('id, name, code')
+      .eq('is_active', true)
+      .not('code', 'is', null)
+      .neq('code', '')
       .order('name');
     if (error) throw error;
     return data ?? [];

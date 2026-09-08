@@ -8,19 +8,13 @@ import { TabSkeleton } from '../components/shared/TabSkeleton';
 import { ReportsFilterBar } from '../components/shared/ReportsFilterBar';
 import { SalesGeoFilters } from '../components/sales/SalesGeoFilters';
 import { fetchSalesReport, fetchSalesDetailReport, filterOptionsService } from '../services/reports.service';
-import { defaultSituationIds } from '../types/reports.types';
+import { defaultSituationIds, isSameIdSet } from '../types/reports.types';
 import { generateSalesReportExcel } from '../utils/generateSalesReportExcel';
-
-/** Compara dos listas de ids sin importar el orden. */
-function isSameIdSet(a: number[], b: number[]): boolean {
-  if (a.length !== b.length) return false;
-  const set = new Set(a);
-  return b.every((id) => set.has(id));
-}
 
 const SalesDashboard = lazy(() =>
   import('../components/sales/SalesDashboard').then((m) => ({ default: m.SalesDashboard })),
 );
+import { toastError } from "@/shared/utils/toastError";
 
 export default function SalesPage() {
   const { filters, draft, applyImmediate } = useReportsFilters();
@@ -47,6 +41,7 @@ export default function SalesPage() {
       draft.neighborhoodId,
       draft.saleTypeId,
       draft.paymentMethodId,
+      draft.priceListCode,
     ].filter((v) => v !== null && v !== undefined).length + (situationIsDefault ? 0 : 1);
 
   function handleClearExtra() {
@@ -60,6 +55,7 @@ export default function SalesPage() {
       saleTypeId: null,
       paymentMethodId: null,
       situationIds: null,
+      priceListCode: null,
     });
   }
 
@@ -80,8 +76,8 @@ export default function SalesPage() {
         filters.endDate ?? '',
       );
       toast({ title: `${rows.length} ventas y ${detailRows.length} ítems exportados`, variant: "success" });
-    } catch {
-      toast({ title: 'Error al generar el reporte. Inténtalo de nuevo.', variant: "destructive" });
+    } catch (error) {
+      toastError(error, 'Error al generar el reporte. Inténtalo de nuevo.');
     } finally {
       setIsExporting(false);
     }

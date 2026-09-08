@@ -1,4 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/utils";
 import {
   UsersApiResponse,
@@ -6,20 +5,16 @@ import {
   DocumentLookupPayload,
   DocumentLookupResponse,
 } from "../types/Users.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const UsersApi = async (
   filters: UsersFilters,
 ): Promise<UsersApiResponse> => {
   const endpoint = buildEndpoint("get-users", filters);
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) {
-    console.error("Invoke error in usersApi:", error);
-    throw error;
-  }
 
   return (
     data ?? {
@@ -32,60 +27,28 @@ export const UsersApi = async (
 };
 
 export const createUserApi = async (userData: any) => {
-  const { data, error } = await supabase.functions.invoke("create-users", {
+  const data = await invokeFunction("create-users", {
     method: "POST",
     body: userData,
   });
-
-  if (error) {
-    console.error("Invoke error in createUserApi:", error);
-    // Extract the JSON body from FunctionsHttpError to get the custom message
-    try {
-      const errorBody = error.context ? await error.context.json() : null;
-      if (errorBody?.error) {
-        throw new Error(errorBody.error);
-      }
-    } catch (parseErr) {
-      // If parsing fails, check if error itself has a message
-      if (parseErr instanceof Error && parseErr.message && parseErr.message !== error.message) {
-        throw parseErr;
-      }
-    }
-    throw error;
-  }
-
-  // Handle application-level errors from the edge function
-  if (data?.error) {
-    throw new Error(data.error);
-  }
 
   return data;
 };
 
 export const updateUserApi = async (id: number, uid: string, userData: any) => {
-  const { data, error } = await supabase.functions.invoke(`update-user`, {
+  const data = await invokeFunction(`update-user`, {
     method: "POST",
     body: { id, uid, ...userData },
   });
-
-  if (error) {
-    console.error("Invoke error in updateUserApi:", error);
-    throw error;
-  }
 
   return data;
 };
 
 export const deleteUserApi = async (uid: string) => {
-  const { data, error } = await supabase.functions.invoke(`delete-user`, {
+  const data = await invokeFunction(`delete-user`, {
     method: "POST",
     body: { uid },
   });
-
-  if (error) {
-    console.error("Invoke error in deleteUserApi:", error);
-    throw error;
-  }
 
   return data;
 };
@@ -93,15 +56,10 @@ export const deleteUserApi = async (uid: string) => {
 export const getUserDocumentApi = async (
   userData: DocumentLookupPayload,
 ): Promise<DocumentLookupResponse> => {
-  const { data, error } = await supabase.functions.invoke("document-lookup", {
+  const data = await invokeFunction("document-lookup", {
     method: "POST",
     body: userData,
   });
-
-  if (error) {
-    console.error("Invoke error in getUserDocumentApi:", error);
-    throw error;
-  }
 
   return data;
 };
@@ -114,24 +72,22 @@ export const getUsersFormDataApi = async (params?: {
   const queryParams = params
     ? "?" + new URLSearchParams(params as any).toString()
     : "";
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     `get-users-form-data${queryParams}`,
     {
       method: "GET",
     },
   );
-  if (error) throw error;
   return data;
 };
 
 export const getUserByIdApi = async (uid: string) => {
-  const { data, error } = await supabase.functions.invoke(
+  const data = await invokeFunction(
     `get-users-details?uid=${uid}`,
     {
       method: "GET",
     },
   );
-  if (error) throw error;
   return data;
 };
 

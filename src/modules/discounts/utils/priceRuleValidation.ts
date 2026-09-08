@@ -24,6 +24,10 @@ const targetError = (target: TargetFilter | undefined): string | null => {
       return target.variation_ids?.length ? null : "elige al menos una variación";
     case "specific_categories":
       return target.category_ids?.length ? null : "elige al menos una categoría";
+    case "specific_brands":
+      return target.brand_ids?.length ? null : "elige al menos una marca";
+    case "specific_tags":
+      return target.tag_ids?.length ? null : "elige al menos una etiqueta";
     default:
       return null;
   }
@@ -51,6 +55,14 @@ const conditionError = (condition: Condition): string | null => {
       return idsOf(condition, "category_ids").length
         ? null
         : "elige al menos una categoría";
+    case "brand_in_cart":
+      return idsOf(condition, "brand_ids").length
+        ? null
+        : "elige al menos una marca";
+    case "tag_in_cart":
+      return idsOf(condition, "tag_ids").length
+        ? null
+        : "elige al menos una etiqueta";
     default:
       return null;
   }

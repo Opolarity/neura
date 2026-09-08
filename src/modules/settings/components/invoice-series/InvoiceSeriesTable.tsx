@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Loader2 } from "lucide-react";
+import { SquarePen, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { InvoiceSerie } from "../../hooks/useInvoiceSeries";
 import { ComponentPermission } from "@/shared/components/component-permission";
@@ -82,11 +82,12 @@ const InvoiceSeriesTable = ({ loading, series }: InvoiceSeriesTableProps) => {
                   {/* El botón lleva a /invoices/series/edit/:serieId, ya
                       protegida con invoice_series.edit: se reutiliza ese code. */}
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    variant="outline"
+                    size="sm"
+                    title="Editar la serie"
                     onClick={() => navigate(`/invoices/series/edit/${item.id}`)}
                   >
-                    <Pencil className="h-4 w-4" />
+                    <SquarePen className="h-4 w-4" />
                   </Button>
                 </TableCell>
               </ComponentPermission>

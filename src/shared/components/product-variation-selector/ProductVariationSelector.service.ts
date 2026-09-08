@@ -1,10 +1,10 @@
-import { supabase } from "@/integrations/supabase/client";
 import type {
   FetchProductVariationsParams,
   FetchProductsParams,
   ProductVariationsApiResponse,
   ProductsApiResponse,
 } from "./ProductVariationSelector.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const fetchProductVariations = async (
   params: FetchProductVariationsParams,
@@ -22,11 +22,9 @@ export const fetchProductVariations = async (
     ? `get-sale-products?${queryParams.toString()}`
     : "get-sale-products";
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) throw error;
   return data;
 };
 
@@ -43,10 +41,8 @@ export const fetchProducts = async (
     ? `get-products-selector?${queryParams.toString()}`
     : "get-products-selector";
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) throw error;
   return data;
 };

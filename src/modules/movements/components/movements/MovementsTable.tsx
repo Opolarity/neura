@@ -15,7 +15,7 @@ import { useState } from "react";
 import { Movement } from "../../types/Movements.types";
 import { ComponentPermission } from "@/shared/components/component-permission";
 
-// Checkbox, Fecha, Tipo, Categoria, Metodo de Pago, Cuenta, Sucursal, Usuario,
+// Checkbox, Fecha, Tipo, Motivo, Metodo de Pago, Cuenta, Sucursal, Usuario,
 // Monto, Acciones. Si el rol no puede ver el detalle, la columna de Acciones no
 // se pinta y este número queda uno largo: solo afecta a las filas de "cargando"
 // y "no hay movimientos", y la columna sobrante colapsa a 0px porque ninguna
@@ -63,7 +63,7 @@ const MovementsTable = ({
             </TableHead>
             <TableHead>Fecha</TableHead>
             <TableHead>Tipo</TableHead>
-            <TableHead>Categoria</TableHead>
+            <TableHead>Motivo</TableHead>
             <TableHead>Metodo de Pago</TableHead>
             <TableHead>Cuenta</TableHead>
             <TableHead>Sucursal</TableHead>
@@ -148,8 +148,8 @@ const MovementsTable = ({
                 <ComponentPermission codeIn={ACTION_CODES}>
                   <TableCell>
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant="outline"
+                      size="sm"
                       onClick={() => setPreviewId(movement.id)}
                       title="Ver detalle"
                     >

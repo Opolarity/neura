@@ -11,6 +11,7 @@ import { ProductSales, UserSummary, ProductSalesFilter } from "../types/Movement
 import { SelectedRequestProduct } from "../types/MovementRequests.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks";
+import { toastError } from "@/shared/utils/toastError";
 
 interface SimpleWarehouse {
   id: number;
@@ -315,11 +316,7 @@ export const useCreateMovementRequest = () => {
       navigate("/inventory/movement-requests");
     } catch (error) {
       console.error("Error creating request:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo crear la solicitud.",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudo crear la solicitud.");
     } finally {
       setSubmitting(false);
     }

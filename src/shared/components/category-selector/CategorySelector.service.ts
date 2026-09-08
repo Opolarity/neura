@@ -1,8 +1,8 @@
-import { supabase } from "@/integrations/supabase/client";
 import type {
   FetchCategoriesParams,
   CategoriesApiResponse,
 } from "./CategorySelector.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const fetchCategories = async (
   params: FetchCategoriesParams,
@@ -17,10 +17,8 @@ export const fetchCategories = async (
     ? `get-categories-selector?${queryParams.toString()}`
     : "get-categories-selector";
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) throw error;
   return data;
 };

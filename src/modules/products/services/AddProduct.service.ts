@@ -1,11 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
-import { throwFunctionError } from '@/shared/utils/functionError';
 import type {
   ProductFormDataResponse, 
   ProductDetailsResponse,
   CreateProductRequest,
   UpdateProductRequest 
 } from '../types/AddProduct.types';
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const AddProductService = {
   /**
@@ -13,8 +13,7 @@ export const AddProductService = {
    * (categorías, términos, listas de precios, almacenes)
    */
   async getFormData(): Promise<ProductFormDataResponse> {
-    const { data, error } = await supabase.functions.invoke('get-product-form-data');
-    if (error) throw error;
+    const data = await invokeFunction('get-product-form-data');
     return data;
   },
 
@@ -22,10 +21,9 @@ export const AddProductService = {
    * Obtiene los detalles de un producto para edición
    */
   async getProductDetails(productId: number): Promise<ProductDetailsResponse> {
-    const { data, error } = await supabase.functions.invoke('get-product-details', {
+    const data = await invokeFunction('get-product-details', {
       body: { productId }
     });
-    if (error) throw error;
     return data;
   },
 
@@ -33,10 +31,9 @@ export const AddProductService = {
    * Valida si se puede cambiar el tipo de producto (variable/simple)
    */
   async validateTypeChange(productId: number, newIsVariable: boolean): Promise<{ canChange: boolean; reason?: string }> {
-    const { data, error } = await supabase.functions.invoke('validate-product-type-change', {
+    const data = await invokeFunction('validate-product-type-change', {
       body: { productId, newIsVariable }
     });
-    if (error) throw error;
     return data;
   },
 
@@ -44,11 +41,9 @@ export const AddProductService = {
    * Crea un nuevo producto
    */
   async createProduct(productData: CreateProductRequest): Promise<{ success: boolean; product?: any; error?: string; message?: string }> {
-    const { data, error } = await supabase.functions.invoke('create-product', {
+    const data = await invokeFunction('create-product', {
       body: productData
     });
-    
-    if (error) await throwFunctionError(error);
 
     return data;
   },
@@ -57,11 +52,9 @@ export const AddProductService = {
    * Actualiza un producto existente
    */
   async updateProduct(productData: UpdateProductRequest): Promise<{ success: boolean; error?: string; message?: string }> {
-    const { data, error } = await supabase.functions.invoke('update-product', {
+    const data = await invokeFunction('update-product', {
       body: productData
     });
-    
-    if (error) await throwFunctionError(error);
 
     return data;
   },

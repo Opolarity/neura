@@ -4,6 +4,7 @@ import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { Account, AccountsFilters, AccountType } from '../types/accounts.types';
 import { accountsAdapter } from '../adapters/accounts.adapter';
 import { accountsApi } from '../services/Account.services';
+import { toastError } from "@/shared/utils/toastError";
 
 
 export const useAccounts = () => {
@@ -41,7 +42,7 @@ export const useAccounts = () => {
             setPagination(list.pagination);
         } catch (error: any) {
             console.error(error);
-            toast({ title: 'Error al cargar cuentas', variant: "destructive" });
+            toastError(error, 'Error al cargar cuentas');
         } finally {
             setLoading(false);
         }

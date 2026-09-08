@@ -21,6 +21,18 @@ export interface ReportsFilters {
    * un array = exactamente esas situaciones.
    */
   situationIds: number[] | null;
+  /**
+   * Situaciones de la pestaña Productos. Campo aparte a propósito: su default
+   * (solo Enviado y Entregado) no es el de Ventas, y `filters` es compartido
+   * entre pestañas — con un único campo la selección de una viajaría a la otra
+   * con un significado distinto.
+   */
+  productSituationIds: number[] | null;
+  /**
+   * Código de la lista de precios (`orders.price_list_code`), no su id: es lo
+   * que persiste la orden. `null` = todas las listas.
+   */
+  priceListCode: string | null;
 }
 
 /**
@@ -41,6 +53,8 @@ export const createDefaultReportsFilters = (): ReportsFilters => ({
   saleTypeId: null,
   paymentMethodId: null,
   situationIds: null,
+  productSituationIds: null,
+  priceListCode: null,
 });
 
 // -------------------------------------------------------
@@ -64,6 +78,28 @@ export const isDefaultExcludedSituation = (s: OrderSituationOption): boolean =>
 /** Ids marcados por defecto: todas las situaciones menos las excluidas. */
 export const defaultSituationIds = (options: OrderSituationOption[]): number[] =>
   options.filter((s) => !isDefaultExcludedSituation(s)).map((s) => s.id);
+
+/**
+ * Situaciones que Productos cuenta como venta por defecto: la mercadería que
+ * efectivamente salió del almacén. Es un criterio DISTINTO al de Ventas —
+ * Ventas mide lo que se pidió, Productos lo que salió — y por eso viaja en su
+ * propio campo (`productSituationIds`) en vez de compartir `situationIds`.
+ */
+export const PRODUCTS_DEFAULT_SITUATION_CODES: readonly string[] = ['SEN-PHY', 'FIN-PHY'];
+
+export const isDefaultProductSituation = (s: OrderSituationOption): boolean =>
+  s.code !== null && PRODUCTS_DEFAULT_SITUATION_CODES.includes(s.code);
+
+/** Ids marcados por defecto en Productos: solo Enviado y Entregado. */
+export const defaultProductSituationIds = (options: OrderSituationOption[]): number[] =>
+  options.filter(isDefaultProductSituation).map((s) => s.id);
+
+/** Compara dos listas de ids sin importar el orden. */
+export function isSameIdSet(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((id) => set.has(id));
+}
 
 // -------------------------------------------------------
 // Branch / Location lookup
@@ -116,6 +152,24 @@ export interface TopProductItem {
   total_revenue: number;
 }
 
+export type HeatmapMetric = 'total_revenue' | 'order_count';
+
+/**
+ * Fila del mapa de calor. `total_revenue` es el neto (cobros + devoluciones
+ * confirmadas), el mismo calculo que los KPIs del reporte.
+ */
+export interface SalesGeoHeatmapItem {
+  state_id?: number;
+  city_id?: number;
+  geo_map: string | null;
+  label: string;
+  state_geo_map?: string | null;
+  order_count: number;
+  gross_revenue?: number;
+  total_refunds?: number;
+  total_revenue: number;
+}
+
 export type SalesDimension =
   | 'branch'
   | 'sale_type'
@@ -153,7 +207,18 @@ export interface ProductsParetoItem {
 export interface SizeByCategoryItem {
   category_id: number | null;
   category_name: string;
+  /**
+   * Clave real de la talla: hay dos grupos que se llaman los dos "Talla", así
+   * que el nombre del grupo no basta para distinguirlos. `null` en las filas
+   * de "Sin talla".
+   */
+  size_group_id: number | null;
+  /** "Talla pantalón", "Talla zapatos"… o "Sin talla". */
+  size_group_name: string;
+  /** Nombre crudo del término: "M", "32"… o "Sin talla". */
   size_name: string;
+  /** Etiqueta lista para el eje: "Talla pantalón · 32" o "Sin talla". */
+  size_label: string;
   total_quantity: number;
   total_revenue: number;
 }
@@ -236,6 +301,22 @@ export interface InventorySummary {
 export interface LowStockDistributionItem {
   stock: number;
   skus: number;
+}
+
+/** T-269 · Fila de la bandeja de reposición (sp_rpt_low_stock_products). */
+export interface LowStockProductItem {
+  product_variation_id: number;
+  product_id: number;
+  product_title: string;
+  sku: string | null;
+  /** Total global PRD en almacenes activos (definición única). */
+  stock: number;
+  warehouse_ids: number[];
+}
+
+export interface LowStockProductsReport {
+  page: { page: number; size: number; total: number };
+  data: LowStockProductItem[];
 }
 
 export interface StockRotationItem {

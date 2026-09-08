@@ -2,6 +2,7 @@ import { useState } from "react";
 import { uploadMedio, deleteMedio } from "../services/medios.service";
 import type { Medio } from "../types/medios.types";
 import { toast } from "@/shared/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useMedios = () => {
   const [uploading, setUploading] = useState(false);
@@ -14,7 +15,7 @@ export const useMedios = () => {
       }
       toast({ title: `${files.length} archivo(s) subido(s) correctamente`, variant: "success" });
     } catch (err) {
-      toast({ title: "Error al subir archivo(s)", variant: "destructive" });
+      toastError(err, "Error al subir archivo(s)");
       console.error(err);
     } finally {
       setUploading(false);
@@ -26,7 +27,7 @@ export const useMedios = () => {
       await deleteMedio(medio);
       toast({ title: "Medio eliminado", variant: "success" });
     } catch (err) {
-      toast({ title: "Error al eliminar el medio", variant: "destructive" });
+      toastError(err, "Error al eliminar el medio");
       console.error(err);
     }
   };

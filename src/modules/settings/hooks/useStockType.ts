@@ -4,6 +4,7 @@ import { createStockTypeApi, getStockTypesApi, updateStockTypeApi } from "../ser
 import { getStockTypesAdapter } from "../adapters/StockType.adapter";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { toast } from "@/shared/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useStockType = () => {
   const [stockTypes, setStockTypes] = useState<StockType[]>([]);
@@ -46,7 +47,7 @@ export const useStockType = () => {
       });
     } catch (error) {
       console.error(error);
-      toast({ title: "Error al guardar el tipo de stock", variant: "destructive" });
+      toastError(error, "Error al guardar el tipo de stock");
     } finally {
       setSaving(false);
       setOpenFormModal(false);

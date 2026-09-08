@@ -1,4 +1,4 @@
-import { Edit, Shield, Trash2, UserCheck, Loader2 } from 'lucide-react';
+import { Edit, Shield, Trash, UserCheck, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -92,7 +92,7 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                                                 protegida con roles.edit: se reutiliza ese
                                                 code. */}
                                             <ComponentPermission codeIn={["roles.edit"]}>
-                                                <Button variant="outline" size="sm" onClick={() => handleEditRole(r.id)}>
+                                                <Button variant="outline" size="sm" title="Editar el rol" onClick={() => handleEditRole(r.id)}>
                                                     <Edit className="w-4 h-4" />
                                                 </Button>
                                             </ComponentPermission>
@@ -100,9 +100,10 @@ const RolesTable = ({ roles, loading, onDeleteClick, handleEditRole }: RolesTabl
                                                 <Button
                                                     variant="destructive"
                                                     size="sm"
+                                                    title="Eliminar el rol"
                                                     onClick={() => onDeleteClick(r)}
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
+                                                    <Trash className="w-4 h-4" />
                                                 </Button>
                                             </ComponentPermission>
                                         </div>

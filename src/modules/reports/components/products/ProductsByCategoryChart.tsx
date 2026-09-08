@@ -12,6 +12,7 @@ import {
   formatCurrencyAxis,
   formatNumber,
 } from '../shared/reportChartUtils';
+import { MultiCategoryNotice } from './MultiCategoryNotice';
 import type { ProductsByCategoryItem, TopMetric } from '../../types/reports.types';
 
 interface Props {
@@ -100,6 +101,7 @@ export function ProductsByCategoryChart({ data, loading }: Props) {
   return (
     <ReportCard
       title="Ventas por categoría"
+      description={<MultiCategoryNotice />}
       actions={
         <ReportSelect
           value={metric}

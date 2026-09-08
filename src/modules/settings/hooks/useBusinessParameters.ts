@@ -8,6 +8,7 @@ import {
   type ParameterRow,
 } from "../services/Parameters.service";
 import { CURATED_KEYS, READ_ONLY_KEYS } from "../types/BusinessParameters.types";
+import { toastError } from "@/shared/utils/toastError";
 
 export interface AdvancedRow {
   /** id en BD; null si es una fila nueva aún no guardada */
@@ -56,7 +57,7 @@ const useBusinessParameters = () => {
       hydrate(await getAllParameters());
     } catch (error) {
       console.error(error);
-      toast({ title: "No se pudieron cargar los parámetros del negocio", variant: "destructive" });
+      toastError(error, "No se pudieron cargar los parámetros del negocio");
     } finally {
       setLoading(false);
     }
@@ -78,7 +79,7 @@ const useBusinessParameters = () => {
       toast({ title: "Logo subido. Recuerda guardar los cambios.", variant: "success" });
     } catch (error) {
       console.error(error);
-      toast({ title: "No se pudo subir el logo", variant: "destructive" });
+      toastError(error, "No se pudo subir el logo");
     } finally {
       setUploading(false);
     }
@@ -120,7 +121,7 @@ const useBusinessParameters = () => {
       await load();
     } catch (error) {
       console.error(error);
-      toast({ title: "No se pudo eliminar el parámetro", variant: "destructive" });
+      toastError(error, "No se pudo eliminar el parámetro");
     }
   };
 
@@ -193,7 +194,7 @@ const useBusinessParameters = () => {
       await load();
     } catch (err) {
       console.error(err);
-      toast({ title: "No se pudieron guardar los cambios", variant: "destructive" });
+      toastError(err, "No se pudieron guardar los cambios");
     } finally {
       setSaving(false);
     }

@@ -35,6 +35,7 @@ import { LinkOrdersModal, OrderSummary } from "../components/movements/LinkOrder
 import MovementFundsSource from "../components/movements/MovementFundsSource";
 import MovementSummary from "../components/movements/MovementSummary";
 import { toast } from "@/hooks/use-toast";
+import { ComponentPermission } from "@/shared/components/component-permission";
 
 interface AddMovementPageProps {
   movementType: MovementType;
@@ -74,6 +75,8 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
     setNewCategoryName,
     creatingCategory,
     handleCreateCategory,
+    missingBranch,
+    cashSelectionBlocked,
   } = useCreateMovement({ movementType });
 
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -210,23 +213,24 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
                   selectedManualBusinessAccountId={selectedManualBusinessAccountId}
                   setSelectedManualBusinessAccountId={setSelectedManualBusinessAccountId}
                   isIncome={isIncome}
+                  missingBranch={missingBranch}
                 />
               </div>
 
-              {/* Categoría (ancho completo) */}
+              {/* Motivo (ancho completo) */}
               <div className="space-y-2">
-                <Label>Categoría *</Label>
+                <Label>Motivo *</Label>
                 <Popover open={classSearchOpen} onOpenChange={setClassSearchOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                      {selectedClassName || "Seleccionar categoría"}
+                      {selectedClassName || "Seleccionar motivo"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                     <Command shouldFilter={false}>
                       <CommandInput
-                        placeholder="Buscar categoría..."
+                        placeholder="Buscar motivo..."
                         value={classSearch}
                         onValueChange={setClassSearch}
                       />
@@ -259,20 +263,25 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
                             ))}
                         </CommandGroup>
                       </CommandList>
-                      <div className="border-t p-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start gap-2 text-sm"
-                          onClick={() => {
-                            setClassSearchOpen(false);
-                            setNewCategoryDialogOpen(true);
-                          }}
-                        >
-                          <Plus className="h-4 w-4" />
-                          Añadir nueva categoría
-                        </Button>
-                      </div>
+                      {/* T-274: crear motivos al vuelo pasa a requerir permiso.
+                          Sin esto el recorte de motivos no serviría de nada:
+                          cualquiera podría crearse el que le falte. */}
+                      <ComponentPermission codeIn={["movements.reasons.create"]}>
+                        <div className="border-t p-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start gap-2 text-sm"
+                            onClick={() => {
+                              setClassSearchOpen(false);
+                              setNewCategoryDialogOpen(true);
+                            }}
+                          >
+                            <Plus className="h-4 w-4" />
+                            Añadir nuevo motivo
+                          </Button>
+                        </div>
+                      </ComponentPermission>
                     </Command>
                   </PopoverContent>
                 </Popover>
@@ -403,6 +412,7 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
                 exceedsAvailableAmount={exceedsAvailableAmount}
                 currentUserProfile={currentUserProfile}
                 loading={loading}
+                cashSelectionBlocked={cashSelectionBlocked}
                 onCancel={goBack}
               />
             </CardContent>
@@ -426,13 +436,13 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
       <Dialog open={newCategoryDialogOpen} onOpenChange={setNewCategoryDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Nueva Categoría</DialogTitle>
+            <DialogTitle>Nuevo Motivo</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 py-2">
             <Label htmlFor="new-category-name">Nombre *</Label>
             <Input
               id="new-category-name"
-              placeholder="Nombre de la categoría"
+              placeholder="Nombre del motivo"
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreateCategory()}

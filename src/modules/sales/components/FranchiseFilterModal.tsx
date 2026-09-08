@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatDateDisplay, toDateInputValue } from "@/shared/utils/date";
 import {
   Dialog,
   DialogContent,
@@ -24,8 +25,6 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarIcon, Check, ChevronDown, ChevronsUpDown } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { cn } from "@/shared/utils/utils";
 import { MultiSelect } from "@/modules/movements/components/movements/MultiSelect";
 import {
@@ -175,8 +174,11 @@ const FranchiseFilterModal = ({
     const parsedOrderId = parseInt(orderIdInput);
 
     onApply({
-      dateFrom: startDate ? format(startDate, "yyyy-MM-dd") : undefined,
-      dateTo: endDate ? format(endDate, "yyyy-MM-dd") : undefined,
+      // startDate/endDate son Date de CALENDARIO (los da <Calendar>), no
+      // instantes: se serializan por componentes locales con
+      // toDateInputValue, el mismo helper que usa el resto de la app.
+      dateFrom: startDate ? toDateInputValue(startDate) : undefined,
+      dateTo: endDate ? toDateInputValue(endDate) : undefined,
       paymentStatuses: selectedPaymentStatuses,
       salesStatus: selectedSalesStatus,
       accountIds: selectedAccountIds,
@@ -243,7 +245,7 @@ const FranchiseFilterModal = ({
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {startDate
-                        ? format(startDate, "dd/MM/yyyy", { locale: es })
+                        ? formatDateDisplay(toDateInputValue(startDate))
                         : "Seleccionar fecha"}
                     </Button>
                   </PopoverTrigger>
@@ -272,7 +274,7 @@ const FranchiseFilterModal = ({
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {endDate
-                        ? format(endDate, "dd/MM/yyyy", { locale: es })
+                        ? formatDateDisplay(toDateInputValue(endDate))
                         : "Seleccionar fecha"}
                     </Button>
                   </PopoverTrigger>

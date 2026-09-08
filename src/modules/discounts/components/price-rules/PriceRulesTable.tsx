@@ -1,4 +1,4 @@
-import { Pencil, Trash2, Loader2 } from "lucide-react";
+import { SquarePen, Trash, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -151,20 +151,22 @@ export const PriceRulesTable = ({
                 <div className="flex justify-end gap-1">
                   <ComponentPermission codeIn={["price_rules.edit"]}>
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant="outline"
+                      size="sm"
+                      title="Editar la regla de precio"
                       onClick={() => onEdit(rule)}
                     >
-                      <Pencil className="w-4 h-4" />
+                      <SquarePen className="w-4 h-4" />
                     </Button>
                   </ComponentPermission>
                   <ComponentPermission codeIn={["price_rules.delete"]}>
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant="destructive"
+                      size="sm"
+                      title="Eliminar la regla de precio"
                       onClick={() => onDelete(rule)}
                     >
-                      <Trash2 className="w-4 h-4 text-destructive" />
+                      <Trash className="w-4 h-4" />
                     </Button>
                   </ComponentPermission>
                 </div>

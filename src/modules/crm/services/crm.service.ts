@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { errorMessageOf, FunctionError } from "@/shared/utils/functionError";
 import type {
   BoardApiResponse,
   ConversationsApiResponse,
@@ -296,35 +298,35 @@ export const sendMessageApi = async (
   whatsappUserId: string | null,
   message: string
 ): Promise<SendMessageResult> => {
-  const { data, error } = await supabase.functions.invoke("crm-send-message", {
-    body: {
-      channelId,
-      phoneNumber,
-      whatsappUserId,
-      message,
-    },
-  });
+  // A diferencia del resto del ERP, aquí el rechazo NO se propaga: la pantalla
+  // lo pinta dentro de la conversación, así que se devuelve como resultado.
+  try {
+    const data = await invokeFunction<SendMessageResult>("crm-send-message", {
+      body: {
+        channelId,
+        phoneNumber,
+        whatsappUserId,
+        message,
+      },
+    });
 
-  // Con un status fuera de 2xx, invoke deja data en null y mete la respuesta
-  // dentro del error. Los rechazos de negocio viajan así (409/502/503), y sin
-  // leer ese cuerpo se perdería el motivo y solo quedaría un "Edge Function
-  // returned a non-2xx status code" que no le dice nada a nadie.
-  if (error) {
-    const context = (error as { context?: Response }).context;
-
-    if (context && typeof context.json === "function") {
-      try {
-        const body = (await context.json()) as SendMessageResult;
-        if (body?.error) return { ...body, success: false };
-      } catch {
-        // Cuerpo no-JSON: cae al mensaje genérico de abajo.
-      }
+    return (data ?? {
+      success: false,
+      error: "No se pudo enviar el mensaje.",
+    }) as SendMessageResult;
+  } catch (error) {
+    // Los rechazos de negocio (409/502/503) traen `reason` y `takenByName`:
+    // sin ellos la pantalla no puede distinguir "no se pudo enviar" de "la
+    // conversación la tomó otro". `invokeFunction` los deja en `error.body`.
+    if (error instanceof FunctionError && error.body) {
+      return { ...(error.body as SendMessageResult), success: false };
     }
 
-    return { success: false, error: error.message || "No se pudo enviar el mensaje." };
+    return {
+      success: false,
+      error: errorMessageOf(error, "No se pudo enviar el mensaje."),
+    };
   }
-
-  return (data ?? { success: false, error: "No se pudo enviar el mensaje." }) as SendMessageResult;
 };
 
 // ---------------------------------------------------------------------------

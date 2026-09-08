@@ -16,6 +16,8 @@ import type {
   OpenPOSSessionRequest,
   ClosePOSSessionRequest,
 } from "../types/POS.types";
+import { toastError } from "@/shared/utils/toastError";
+import { measure } from "@/lib/rum";
 
 export const usePOSSession = () => {
   const { toast } = useToast();
@@ -46,7 +48,7 @@ export const usePOSSession = () => {
     async (request: OpenPOSSessionRequest) => {
       try {
         setOpening(true);
-        const data = await openPOSSession(request);
+        const data = await measure("caja_abrir", () => openPOSSession(request));
         const adapted = adaptPOSSession(data.session);
         setSession(adapted);
         toast({
@@ -59,11 +61,7 @@ export const usePOSSession = () => {
         console.error("Error opening session:", error);
         const errorMessage =
           error instanceof Error ? error.message : "No se pudo abrir la caja";
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        toastError(error, errorMessage);
         throw error;
       } finally {
         setOpening(false);
@@ -76,7 +74,7 @@ export const usePOSSession = () => {
     async (request: ClosePOSSessionRequest) => {
       try {
         setClosing(true);
-        const data = await closePOSSession(request);
+        const data = await measure("caja_cerrar", () => closePOSSession(request));
         const result = data.session;
         setSession(null);
         toast({
@@ -89,11 +87,7 @@ export const usePOSSession = () => {
         console.error("Error closing session:", error);
         const errorMessage =
           error instanceof Error ? error.message : "No se pudo cerrar la caja";
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        toastError(error, errorMessage);
         throw error;
       } finally {
         setClosing(false);

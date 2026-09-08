@@ -11,6 +11,7 @@ import {
     GetWarehousesDetails
 } from '../services/Warehouses.services';
 import { Warehouses, IdModalResponse } from '../types/Warehouses.types';
+import { toastError } from "@/shared/utils/toastError";
 
 interface FormData {
     name: string;
@@ -80,11 +81,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
 
             } catch (error) {
                 console.error('Error fetching options:', error);
-                toast({
-                    title: "Error",
-                    description: "No se pudieron cargar las opciones del formulario",
-                    variant: "destructive",
-                });
+                toastError(error, "No se pudieron cargar las opciones del formulario");
             } finally {
                 setOptionsLoading(false);
             }
@@ -157,11 +154,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
                     }
                 } catch (error) {
                     console.error('Error fetching warehouse details:', error);
-                    toast({
-                        title: "Error",
-                        description: "No se pudieron cargar los detalles del almacén",
-                        variant: "destructive",
-                    });
+                    toastError(error, "No se pudieron cargar los detalles del almacén");
                 } finally {
                     setLoading(false);
                     setIsInitializing(false);
@@ -303,11 +296,7 @@ const useCreateWarehouse = (warehouseId?: number | null, isEdit?: boolean) => {
             navigate('/settings/warehouses');
         } catch (error: any) {
             console.error('Error saving warehouse:', error);
-            toast({
-                title: "Error",
-                description: error.message || "No se pudo guardar el almacén",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudo guardar el almacén");
         } finally {
             setLoading(false);
         }

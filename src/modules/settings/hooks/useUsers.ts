@@ -5,6 +5,7 @@ import { UsersAdapter } from '../adapters/Users.adapters';
 import { useToast } from '@/shared/hooks';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
+import { toastError } from "@/shared/utils/toastError";
 
 const useUsers = () => {
     const [users, setUsers] = useState<Users[]>([]);
@@ -41,11 +42,7 @@ const useUsers = () => {
             setPagination(paginationData);
         } catch (error) {
             console.error('Error fetching users:', error);
-            toast({
-                title: "Error",
-                description: "No se pudieron cargar los usuarios",
-                variant: "destructive",
-            });
+            toastError(error, "No se pudieron cargar los usuarios");
         } finally {
             setLoading(false);
         }
@@ -104,7 +101,7 @@ const useUsers = () => {
             toast({ title: "Éxito", description: "Usuario creado correctamente", variant: "success" });
             loadUsers(filters);
         } catch (error) {
-            toast({ title: "Error", description: "No se pudo crear el usuario", variant: "destructive" });
+            toastError(error, "No se pudo crear el usuario");
         }
     };
 
@@ -114,7 +111,7 @@ const useUsers = () => {
             toast({ title: "Éxito", description: "Usuario actualizado correctamente", variant: "success" });
             loadUsers(filters);
         } catch (error) {
-            toast({ title: "Error", description: "No se pudo actualizar el usuario", variant: "destructive" });
+            toastError(error, "No se pudo actualizar el usuario");
         }
     };
 
@@ -124,7 +121,7 @@ const useUsers = () => {
             toast({ title: "Éxito", description: "Usuario eliminado correctamente", variant: "success" });
             loadUsers(filters);
         } catch (error) {
-            toast({ title: "Error", description: "No se pudo eliminar el usuario", variant: "destructive" });
+            toastError(error, "No se pudo eliminar el usuario");
         }
     };
 

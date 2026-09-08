@@ -30,7 +30,7 @@ const Invoices = () => {
           <InvoicesFilterBar activeFilters={activeFilters} onApply={applyFilters} onClear={clearFilters} invoiceTypes={invoiceTypes} />
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
-          <InvoicesTable invoices={invoices} loading={loading} />
+          <InvoicesTable invoices={invoices} loading={loading} invoiceTypes={invoiceTypes} />
         </CardContent>
         <CardFooter className="!p-0">
           <PaginationBar

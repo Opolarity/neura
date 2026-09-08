@@ -32,6 +32,7 @@ const MediaGalleryPage = () => {
     handlePageSizeChange,
     applyFilters,
     refetch,
+    reloadFirstPage,
   } = useMediaGallery();
 
   const [selectedMedio, setSelectedMedio] = useState<Medio | null>(null);
@@ -40,6 +41,13 @@ const MediaGalleryPage = () => {
   const medios = items.map(toMedio);
 
   const hasActiveFilters = !!(filters.startDate || filters.endDate);
+
+  // handleUpload no refresca por su cuenta: sin esto la galería se queda con
+  // los datos viejos y el archivo recién subido no aparece hasta recargar.
+  const handleUpload_ = async (files: File[]) => {
+    await handleUpload(files);
+    reloadFirstPage();
+  };
 
   const handleDelete_ = async (medio: Medio) => {
     await handleDelete(medio);
@@ -56,7 +64,7 @@ const MediaGalleryPage = () => {
       {/* La dropzone entera es el control de subida —el área completa es
           clicable y acepta drag&drop—, así que se oculta como un bloque. */}
       <ComponentPermission codeIn={["ecommerce_media.create"]}>
-        <MediaDropzone onUpload={handleUpload} uploading={uploading} />
+        <MediaDropzone onUpload={handleUpload_} uploading={uploading} />
       </ComponentPermission>
 
       {/* Sin CardHeader: la galería no tiene barra de filtros dentro de la Card.

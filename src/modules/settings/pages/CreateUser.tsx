@@ -33,6 +33,7 @@ const CreateUser = () => {
 
   const {
     formData,
+    requiredMarks,
     loading,
     optionsLoading,
     fetchingUser,
@@ -86,7 +87,7 @@ const CreateUser = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Tipo de Documento</Label>
+                    <Label required={requiredMarks.document_type_id}>Tipo de Documento</Label>
                     <Select
                       value={formData.document_type_id}
                       onValueChange={(val) => {
@@ -95,7 +96,7 @@ const CreateUser = () => {
                       }}
                       disabled={isEdit}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger aria-required={requiredMarks.document_type_id}>
                         <SelectValue placeholder="Seleccionar tipo" />
                       </SelectTrigger>
                       <SelectContent>
@@ -108,13 +109,17 @@ const CreateUser = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="document_number">Número de Documento</Label>
+                    <Label htmlFor="document_number" required={requiredMarks.document_number}>
+                      Número de Documento
+                    </Label>
                     <div className="relative">
                       <Input
                         id="document_number"
                         placeholder="Ingrese el número"
                         value={formData.document_number}
                         onChange={handleChange}
+                        required={requiredMarks.document_number}
+                        aria-required={requiredMarks.document_number}
                         onBlur={() => handleDocumentLookup()}
                         disabled={isEdit || !formData.document_type_id}
                         className={isSearchingDocument ? "pr-10" : ""}
@@ -138,8 +143,8 @@ const CreateUser = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">
-                      {isRUC ? "Razón Social *" : "Nombre *"}
+                    <Label htmlFor="name" required={requiredMarks.name}>
+                      {isRUC ? "Razón Social" : "Nombre"}
                     </Label>
                     <Input
                       id="name"
@@ -148,7 +153,8 @@ const CreateUser = () => {
                       }
                       value={formData.name}
                       onChange={handleChange}
-                      required
+                      required={requiredMarks.name}
+                      aria-required={requiredMarks.name}
                       disabled={isEdit || isDocumentFound}
                     />
                   </div>
@@ -167,13 +173,16 @@ const CreateUser = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="last_name">Primer Apellido *</Label>
+                        <Label htmlFor="last_name" required={requiredMarks.last_name}>
+                          Primer Apellido
+                        </Label>
                         <Input
                           id="last_name"
                           placeholder="Primer apellido"
                           value={formData.last_name}
                           onChange={handleChange}
-                          required
+                          required={requiredMarks.last_name}
+                          aria-required={requiredMarks.last_name}
                           disabled={isEdit || isDocumentFound}
                         />
                       </div>
@@ -201,31 +210,35 @@ const CreateUser = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="user_name">Nombre de Usuario *</Label>
+                    <Label htmlFor="user_name" required={requiredMarks.user_name}>
+                      Nombre de Usuario
+                    </Label>
                     <Input
                       id="user_name"
                       placeholder="nombre.usuario@ejemplo.com"
                       value={formData.user_name}
                       onChange={handleChange}
-                      required
+                      required={requiredMarks.user_name}
+                      aria-required={requiredMarks.user_name}
                       disabled={isEdit}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="email" required={requiredMarks.email}>Email</Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="correo@ejemplo.com"
                       value={formData.email}
                       onChange={handleChange}
-                      required
+                      required={requiredMarks.email}
+                      aria-required={requiredMarks.email}
                       disabled={isEdit}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">
-                      Contraseña {isEdit ? "(opcional al actualizar)" : "*"}
+                    <Label htmlFor="password" required={requiredMarks.password}>
+                      Contraseña {isEdit ? "(opcional al actualizar)" : ""}
                     </Label>
                     <div className="flex gap-2">
                       <Input
@@ -234,7 +247,8 @@ const CreateUser = () => {
                         placeholder="********"
                         value={formData.password}
                         onChange={handleChange}
-                        required={!isEdit}
+                        required={requiredMarks.password}
+                        aria-required={requiredMarks.password}
                         disabled={isEdit && !showPasswordField}
                         className="flex-1"
                       />
@@ -252,24 +266,32 @@ const CreateUser = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Teléfono</Label>
+                    <Label htmlFor="phone" required={requiredMarks.phone}>Celular</Label>
+                    {/* Sin `required` nativo a propósito: el celular se marca
+                        siempre, pero solo bloquea al CREAR. El del navegador
+                        trabaría también la edición de los usuarios antiguos que
+                        no tienen teléfono. */}
                     <Input
                       id="phone"
-                      placeholder="Número de teléfono"
+                      inputMode="numeric"
+                      maxLength={9}
+                      placeholder="987654321"
                       value={formData.phone}
                       onChange={handleChange}
+                      aria-required={requiredMarks.phone}
                     />
                   </div>
                 </div>
 
                 {/* Roles Multi-select */}
                 <div className="space-y-2 pt-2">
-                  <Label>Roles </Label>
+                  <Label required={requiredMarks.role_ids}>Roles</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         role="combobox"
+                        aria-required={requiredMarks.role_ids}
                         className="w-full justify-between font-normal"
                       >
                         {formData.role_ids.length > 0
@@ -439,12 +461,12 @@ const CreateUser = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Sucursal *</Label>
+                  <Label required={requiredMarks.branches_id}>Sucursal</Label>
                   <Select
                     value={formData.branches_id}
                     onValueChange={handleBranchChange}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-required={requiredMarks.branches_id}>
                       <SelectValue placeholder="Seleccionar sucursal" />
                     </SelectTrigger>
                     <SelectContent>
@@ -460,7 +482,7 @@ const CreateUser = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Almacén *</Label>
+                  <Label required={requiredMarks.warehouse_id}>Almacén</Label>
                   <Select
                     value={formData.warehouse_id}
                     onValueChange={(val) =>
@@ -468,7 +490,7 @@ const CreateUser = () => {
                     }
                     disabled={true}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-required={requiredMarks.warehouse_id}>
                       <SelectValue placeholder="Seleccionar almacén" />
                     </SelectTrigger>
                     <SelectContent>

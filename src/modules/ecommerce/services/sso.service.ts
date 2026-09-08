@@ -1,20 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { SSOTokenResponse } from "../types/sso.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const generateSSOToken = async (
   channel_id: number,
 ): Promise<SSOTokenResponse> => {
-  const { data, error } = await supabase.functions.invoke<SSOTokenResponse>(
+  const data = await invokeFunction<SSOTokenResponse>(
     "generate-sso-token",
     {
       method: "POST",
       body: { channel_id },
     },
   );
-
-  if (error) {
-    throw new Error(error.message || "Error al generar token SSO");
-  }
 
   if (!data?.token) {
     throw new Error("No se recibió el token SSO");

@@ -19,7 +19,7 @@ import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Link as LinkIcon, Unlink, Heading1, Heading2, Heading3,
-  Undo, Redo, Highlighter, RemoveFormatting, Quote,
+  Undo, Redo, Highlighter, RemoveFormatting, Quote, Ban,
   Code, Code2, Pilcrow, ListChecks, Palette, Tag,
   Image as ImageIcon,
 } from 'lucide-react';
@@ -243,6 +243,15 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
     editor.chain().focus().setCustomClass(className).run();
   }, [editor]);
 
+  const openColorPicker = useCallback(() => {
+    if (!editor || !colorInputRef.current) return;
+    // La barra no se re-renderiza en cada transaccion (useEditor sin
+    // shouldRerenderOnTransaction), asi que el color aplicado se lee de forma
+    // imperativa justo antes de abrir el selector nativo.
+    colorInputRef.current.value = editor.getAttributes('textStyle').color ?? '#000000';
+    colorInputRef.current.click();
+  }, [editor]);
+
   const setLink = useCallback(() => {
     if (!editor) return;
     const previousUrl = editor.getAttributes('link').href;
@@ -291,25 +300,30 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
               <Strikethrough className="h-4 w-4" />
             </ToolbarButton>
 
-            {/* Color + Highlight (full only) */}
+            {/* Color (siempre) + Resaltado (full only).
+                El separador abre el grupo de color y ahora se pinta en las dos
+                variantes de toolbar; el resaltado sigue dentro de isFull y continua
+                el mismo grupo, por lo que en full la barra queda igual que antes y
+                en basic no aparece ningun separador huerfano ni duplicado. */}
+            <ToolbarSeparator />
+            <div className="relative">
+              <ToolbarButton tooltip="Color de texto" onClick={openColorPicker}>
+                <Palette className="h-4 w-4" />
+              </ToolbarButton>
+              <input
+                ref={colorInputRef}
+                type="color"
+                className="absolute opacity-0 w-0 h-0 pointer-events-none"
+                onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
+              />
+            </div>
+            <ToolbarButton onClick={() => editor.chain().focus().unsetColor().run()} tooltip="Quitar color">
+              <Ban className="h-4 w-4" />
+            </ToolbarButton>
             {isFull && (
-              <>
-                <ToolbarSeparator />
-                <div className="relative">
-                  <ToolbarButton tooltip="Color de texto" onClick={() => colorInputRef.current?.click()}>
-                    <Palette className="h-4 w-4" />
-                  </ToolbarButton>
-                  <input
-                    ref={colorInputRef}
-                    type="color"
-                    className="absolute opacity-0 w-0 h-0 pointer-events-none"
-                    onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
-                  />
-                </div>
-                <ToolbarButton onClick={() => editor.chain().focus().toggleHighlight().run()} isActive={editor.isActive('highlight')} tooltip="Resaltado">
-                  <Highlighter className="h-4 w-4" />
-                </ToolbarButton>
-              </>
+              <ToolbarButton onClick={() => editor.chain().focus().toggleHighlight().run()} isActive={editor.isActive('highlight')} tooltip="Resaltado">
+                <Highlighter className="h-4 w-4" />
+              </ToolbarButton>
             )}
 
             {/* Headings + Paragraph (full only) */}

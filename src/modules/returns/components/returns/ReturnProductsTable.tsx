@@ -66,7 +66,8 @@ export const ReturnProductsTable = ({
                 )}
                 {rows.map(({ returnProduct, orderProduct }) => {
                     if (!orderProduct) return null;
-                    const unitPrice = orderProduct.product_price * (1 - orderProduct.product_discount / 100);
+                    // T-630: product_discount es un MONTO por unidad, no un porcentaje.
+                    const unitPrice = orderProduct.product_price - orderProduct.product_discount;
 
                     return (
                         <TableRow key={orderProduct.id}>

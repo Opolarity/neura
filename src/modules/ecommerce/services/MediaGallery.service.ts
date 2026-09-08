@@ -1,20 +1,15 @@
-import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/utils";
 import type { MediaGalleryApiResponse, MediaGalleryFilters } from "../types/MediaGallery.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const getVisualEdits = async (
   filters: Partial<MediaGalleryFilters> = {}
 ): Promise<MediaGalleryApiResponse> => {
   const endpoint = buildEndpoint("get-visual-edits", filters);
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) {
-    console.error("Invoke error:", error);
-    throw error;
-  }
 
   return (
     data ?? {

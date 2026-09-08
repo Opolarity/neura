@@ -2,6 +2,7 @@ import { KpiCard } from '../shared/KpiCard';
 import { DeadStockTable } from './DeadStockTable';
 import { InventoryValuationKpis } from './InventoryValuationKpis';
 import { LowStockDistributionChart } from './LowStockDistributionChart';
+import { LowStockProductsTable } from './LowStockProductsTable';
 import { StockByCategoryChart } from './StockByCategoryChart';
 import { StockByTermChart } from './StockByTermChart';
 import { StockFlowChart } from './StockFlowChart';
@@ -31,10 +32,18 @@ export function InventoryDashboard({ dash }: InventoryDashboardProps) {
           loading={dash.summary.isLoading}
         />
         <KpiCard
-          title={`Stock bajo (≤${dash.threshold} uds)`}
-          value={summary?.low_stock_count ?? '—'}
+          title={
+            dash.threshold !== null
+              ? `Stock bajo (≤${dash.threshold} uds)`
+              : 'Stock bajo'
+          }
+          value={dash.threshold !== null ? summary?.low_stock_count ?? '—' : '—'}
           loading={dash.summary.isLoading}
-          subtitle="requieren reposición"
+          subtitle={
+            dash.threshold !== null
+              ? 'requieren reposición'
+              : 'umbral no configurado (Configuración → Negocio)'
+          }
         />
         <KpiCard
           title="Sin stock"
@@ -85,6 +94,9 @@ export function InventoryDashboard({ dash }: InventoryDashboardProps) {
           threshold={dash.threshold}
         />
       </div>
+
+      {/* T-269 · Bandeja de reposición: mismos SKUs que alimentan la alerta */}
+      <LowStockProductsTable dash={dash} />
 
       {/* Stock muerto */}
       <DeadStockTable

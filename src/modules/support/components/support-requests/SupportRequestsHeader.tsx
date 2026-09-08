@@ -1,34 +1,31 @@
-import { Plus, RefreshCw, Ticket } from "lucide-react";
+import { BookOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SupportRequestsHeaderProps {
   onNewRequest: () => void;
-  onRefresh: () => void;
-  refreshing: boolean;
+  onOpenProtocol: () => void;
 }
 
 export const SupportRequestsHeader = ({
   onNewRequest,
-  onRefresh,
-  refreshing,
+  onOpenProtocol,
 }: SupportRequestsHeaderProps) => {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <Ticket className="w-8 h-8" />
-        <div>
-          {/* "Soporte" es ahora el grupo del menú; esta pantalla es una de sus
-              tres opciones, así que el título es el de la opción. */}
-          <h1 className="text-3xl font-bold">Tickets</h1>
-          <p className="text-muted-foreground">
-            Tickets y sugerencias enviados al equipo de OPOLARITY
-          </p>
-        </div>
+    <div className="flex justify-between items-center">
+      <div>
+        {/* "Soporte" es ahora el grupo del menú; esta pantalla es una de sus
+            tres opciones, así que el título es el de la opción. */}
+        <h1 className="text-2xl font-bold text-foreground">Tickets</h1>
+        <p className="text-muted-foreground">
+          Tickets y sugerencias enviados al equipo de OPOLARITY
+        </p>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="outline" onClick={onRefresh} disabled={refreshing}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-          Actualizar
+        {/* Documento de consulta: cómo se atiende lo que el cliente envía.
+            Secundario frente a la acción principal de crear una solicitud. */}
+        <Button variant="outline" onClick={onOpenProtocol}>
+          <BookOpen className="w-4 h-4 mr-2" />
+          Respuestas de tickets
         </Button>
         <Button onClick={onNewRequest}>
           <Plus className="w-4 h-4 mr-2" />

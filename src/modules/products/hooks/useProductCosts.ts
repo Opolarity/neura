@@ -5,9 +5,10 @@ import { productCostsApi } from "../services/ProductCosts.service";
 import { productCostsAdapter } from "../adapters/ProductCosts.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { categoriesListApi } from "../services/Categories.service";
 import { SimpleCategory } from "../types/Categories.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useProductCosts = () => {
   const [products, setProducts] = useState<ProductCost[]>([]);
@@ -179,14 +180,12 @@ export const useProductCosts = () => {
         return;
       }
 
-      const { error } = await supabase.functions.invoke(
+      await invokeFunction(
         "update-product-costs",
         {
           body: { costUpdates },
         },
       );
-
-      if (error) throw error;
 
       toast({
         title: "Éxito",
@@ -207,11 +206,7 @@ export const useProductCosts = () => {
         ? "no se permiten costos negativos"
         : "No se pudo actualizar los costos";
 
-      toast({
-        title: "Error",
-        description,
-        variant: "destructive",
-      });
+      toastError(error, description);
     } finally {
       setIsSaving(false);
     }

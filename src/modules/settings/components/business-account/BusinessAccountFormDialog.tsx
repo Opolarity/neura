@@ -25,6 +25,7 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { useEffect, useRef, useState } from "react";
 import { typesByModuleCode } from "@/shared/services/service";
+import { BranchesAPI } from "../../services/Warehouses.services";
 import { supabase } from "@/integrations/supabase/client";
 
 type AccountOption = { id: number; name: string | null; last_name: string | null; document_number: string | null };
@@ -51,8 +52,14 @@ export const BusinessAccountFormDialog = ({
   onSaved,
   onOpenChange,
 }: BusinessAccountFormDialogProps) => {
-  const [accountTypes, setAccountTypes] = useState<{ id: number; name: string }[]>([]);
+  // El estado local lleva también el `code` del tipo: `typesByModuleCode()`
+  // hace select("types(*)") y el tipo `Type` ya lo trae, así que no hace falta
+  // tocar el servicio compartido (T-274, condición C2). El code es lo que
+  // permite saber si el tipo elegido es Caja sin hardcodear el id 44.
+  const [accountTypes, setAccountTypes] = useState<{ id: number; name: string; code: string }[]>([]);
   const [typesLoading, setTypesLoading] = useState(false);
+  const [branches, setBranches] = useState<{ id: number; name: string }[]>([]);
+  const [branchesLoading, setBranchesLoading] = useState(false);
   const [accountPopoverOpen, setAccountPopoverOpen] = useState(false);
   const [accountSearch, setAccountSearch] = useState("");
   const [searchResults, setSearchResults] = useState<AccountOption[]>([]);
@@ -60,7 +67,7 @@ export const BusinessAccountFormDialog = ({
   const [selectedAccount, setSelectedAccount] = useState<AccountOption | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { register, handleSubmit, control, reset } =
+  const { register, handleSubmit, control, reset, watch } =
     useForm<BusinessAccountPayload>({
       defaultValues: item
         ? {
@@ -70,6 +77,7 @@ export const BusinessAccountFormDialog = ({
             total_amount: item.total_amount,
             business_account_type_id: item.business_account_type_id,
             account_id: item.account_id,
+            branch_id: item.branch_id ?? undefined,
           }
         : {
             name: "",
@@ -78,6 +86,7 @@ export const BusinessAccountFormDialog = ({
             total_amount: 0,
             business_account_type_id: undefined,
             account_id: undefined,
+            branch_id: undefined,
           },
     });
 
@@ -86,9 +95,25 @@ export const BusinessAccountFormDialog = ({
     if (!open) return;
     setTypesLoading(true);
     typesByModuleCode("BNA")
-      .then(setAccountTypes)
+      .then((types) =>
+        setAccountTypes(
+          types.map((t) => ({ id: t.id, name: t.name, code: t.code }))
+        )
+      )
       .catch(console.error)
       .finally(() => setTypesLoading(false));
+  }, [open]);
+
+  // Sucursales activas (BranchesAPI ya filtra is_active y excluye la id 0).
+  useEffect(() => {
+    if (!open) return;
+    setBranchesLoading(true);
+    BranchesAPI()
+      .then((rows) =>
+        setBranches(rows.map((b: any) => ({ id: b.id, name: b.name })))
+      )
+      .catch(console.error)
+      .finally(() => setBranchesLoading(false));
   }, [open]);
 
   // When editing, fetch the currently selected account to show its label
@@ -136,6 +161,7 @@ export const BusinessAccountFormDialog = ({
       total_amount: data.total_amount,
       business_account_type_id: data.business_account_type_id,
       account_id: data.account_id,
+      branch_id: data.branch_id ?? null,
     };
     if (item?.id) {
       payload.id = item.id;
@@ -148,10 +174,17 @@ export const BusinessAccountFormDialog = ({
       total_amount: 0,
       business_account_type_id: undefined,
       account_id: undefined,
+      branch_id: undefined,
     });
   };
 
   const isEditing = !!item;
+
+  // La sucursal es obligatoria solo para las cuentas de tipo Caja. Se resuelve
+  // por el code del tipo seleccionado ('CHR'), nunca por el id 44 en duro.
+  const selectedTypeId = watch("business_account_type_id");
+  const isCashAccount =
+    accountTypes.find((t) => t.id === Number(selectedTypeId))?.code === "CHR";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -239,6 +272,42 @@ export const BusinessAccountFormDialog = ({
                 </Select>
               )}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Sucursal{isCashAccount ? " *" : ""}</Label>
+            <Controller
+              name="branch_id"
+              control={control}
+              rules={{ required: isCashAccount }}
+              render={({ field }) => (
+                <Select
+                  value={field.value ? field.value.toString() : ""}
+                  onValueChange={(val) => field.onChange(Number(val))}
+                  disabled={branchesLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        branchesLoading ? "Cargando..." : "Seleccionar sucursal"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {branches.map((branch) => (
+                      <SelectItem key={branch.id} value={branch.id.toString()}>
+                        {branch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <p className="text-xs text-muted-foreground">
+              {isCashAccount
+                ? "Las cuentas de tipo Caja pertenecen a una sucursal: solo los usuarios de esa sucursal podrán usarlas al registrar movimientos en efectivo."
+                : "Opcional. Las cuentas bancarias y corporativas no pertenecen a una sucursal."}
+            </p>
           </div>
 
           <div className="space-y-2">

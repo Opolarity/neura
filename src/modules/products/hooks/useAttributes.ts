@@ -22,6 +22,7 @@ import {
 } from "../services/Attributes.service";
 import { attributesAdapter } from "../adapters/Attributes.adapter";
 import { useDebounce } from "@/shared/hooks/useDebounce";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useAttributes = () => {
   const [attributes, setAttributes] = useState<AttributeGroup[]>([]);
@@ -190,7 +191,7 @@ export const useAttributes = () => {
       setIsOpenFormModal(true);
     } catch (err) {
       console.error(err);
-      toast({ title: "Error al cargar el atributo", variant: "destructive" });
+      toastError(err, "Error al cargar el atributo");
     } finally {
       setLoadingEdit(false);
     }
@@ -216,10 +217,7 @@ export const useAttributes = () => {
       loadTermGroups();
     } catch (err) {
       console.error(err);
-      toast({
-        title: data.id ? "Error al actualizar el atributo" : "Error al crear el atributo",
-        variant: "destructive",
-      });
+      toastError(err, data.id ? "Error al actualizar el atributo" : "Error al crear el atributo");
     } finally {
       setSaving(false);
     }
@@ -243,7 +241,7 @@ export const useAttributes = () => {
       setIsOpenTermModal(true);
     } catch (err) {
       console.error(err);
-      toast({ title: "Error al cargar el término", variant: "destructive" });
+      toastError(err, "Error al cargar el término");
     } finally {
       setLoadingEdit(false);
     }
@@ -267,10 +265,7 @@ export const useAttributes = () => {
       loadData();
     } catch (err) {
       console.error(err);
-      toast({
-        title: data.id ? "Error al actualizar el término" : "Error al crear el término",
-        variant: "destructive",
-      });
+      toastError(err, data.id ? "Error al actualizar el término" : "Error al crear el término");
     } finally {
       setSavingTerm(false);
     }
@@ -285,7 +280,7 @@ export const useAttributes = () => {
       loadTermGroups();
     } catch (err) {
       console.error(err);
-      toast({ title: "Error al eliminar el atributo", variant: "destructive" });
+      toastError(err, "Error al eliminar el atributo");
     } finally {
       setDeleting(false);
     }
@@ -299,7 +294,7 @@ export const useAttributes = () => {
       loadData();
     } catch (err) {
       console.error(err);
-      toast({ title: "Error al eliminar el término", variant: "destructive" });
+      toastError(err, "Error al eliminar el término");
     } finally {
       setDeleting(false);
     }

@@ -154,7 +154,8 @@ const MovementsDetailModal = ({ movementId, onClose }: MovementsDetailModalProps
                                                 <p className="text-sm text-muted-foreground">
                                                     {op.order_customer_name ? `${op.order_customer_name} · ` : ""}
                                                     Cant: {op.quantity} · S/ {Number(op.product_price).toFixed(2)}
-                                                    {op.product_discount ? ` (desc. ${op.product_discount}%)` : ""}
+                                                    {/* T-630: product_discount es un MONTO por unidad, no un porcentaje. */}
+                                                    {op.product_discount ? ` (desc. S/ ${Number(op.product_discount).toFixed(2)} c/u)` : ""}
                                                 </p>
                                             </div>
                                             <ExternalLink className="w-4 h-4 mt-1 shrink-0 text-muted-foreground" />

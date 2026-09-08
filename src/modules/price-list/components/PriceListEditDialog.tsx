@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "@/shared/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { PriceListItem } from "../types/PriceList.types";
+import { toastError } from "@/shared/utils/toastError";
 
 interface PriceListEditDialogProps {
   item: PriceListItem | null;
@@ -66,7 +67,7 @@ export const PriceListEditDialog = ({
       toast({ title: "Lista de precios actualizada", variant: "success" });
       onSaved();
     } catch (err: any) {
-      toast({ title: "Error al actualizar: " + (err.message || "Error desconocido"), variant: "destructive" });
+      toastError(err, "Error al actualizar la lista de precios");
     } finally {
       setSaving(false);
     }

@@ -132,7 +132,25 @@ const ProductsTable = ({
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.categories}</TableCell>
                 <TableCell>S/ {product.price}</TableCell>
-                <TableCell>{product.stock}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <span>{product.stock}</span>
+                    {/*
+                      T-269 · El badge NO cuelga de `product.stock`: ese número
+                      es por producto, solo del almacén del usuario y sin
+                      filtrar stock_type. `lowStockVariations` sí usa la
+                      definición única (total global PRD por variación).
+                    */}
+                    {product.lowStockVariations > 0 && (
+                      <Badge
+                        variant="warning"
+                        title="Variaciones cuyo stock global (todos los almacenes activos) está bajo el umbral"
+                      >
+                        {product.lowStockVariations} con stock bajo
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     {product.estatus === true && (

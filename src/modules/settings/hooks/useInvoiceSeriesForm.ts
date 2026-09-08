@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { InvoiceSerieForm } from "./useInvoiceSeries";
 import { emptyForm } from "./useInvoiceSeries";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useInvoiceSeriesForm = () => {
   const { serieId } = useParams<{ serieId: string }>();
@@ -50,7 +51,7 @@ export const useInvoiceSeriesForm = () => {
         });
       }
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toastError(err);
     } finally {
       setLoading(false);
     }
@@ -96,7 +97,7 @@ export const useInvoiceSeriesForm = () => {
 
       navigate("/invoices/series");
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toastError(err);
     } finally {
       setSaving(false);
     }

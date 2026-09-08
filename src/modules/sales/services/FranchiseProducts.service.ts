@@ -1,6 +1,6 @@
-import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/query";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export type FranchiseProductRow = {
   id: number;
@@ -10,6 +10,10 @@ export type FranchiseProductRow = {
   soldByFranchise: number | null;
   productPrice: number;
   paidByFranchise: number | null;
+  // Pagado atribuido a las ventas del rango (FIFO en el SP). Solo tiene
+  // sentido con filtro de fecha activo; sin filtro el pagado de la fila es
+  // paidByFranchise.
+  paidInRange: number;
   // Descuento acumulado por promociones de consignación (order_discounts
   // FCH-PROMO-%) sobre las unidades ya vendidas de esta línea.
   franchiseDiscount: number;
@@ -90,6 +94,7 @@ type RawFranchiseProduct = {
   quantity: number | string | null;
   sold_by_franchise: number | string | null;
   paid_by_franchise: number | string | null;
+  paid_in_range: number | string | null;
   franchise_discount: number | string | null;
   sold_amount: number | string | null;
   franchise_order_ids: string[] | null;
@@ -154,11 +159,9 @@ export const fetchFranchiseProducts = async (
       : {}),
   });
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) throw error;
 
   const rows: FranchiseProductRow[] = ((data?.data ?? []) as RawFranchiseProduct[]).map(
     (item) => {
@@ -172,6 +175,7 @@ export const fetchFranchiseProducts = async (
         soldByFranchise: toNullableNumber(item.sold_by_franchise),
         productPrice,
         paidByFranchise: toNullableNumber(item.paid_by_franchise),
+        paidInRange: toNumber(item.paid_in_range),
         franchiseDiscount: toNumber(item.franchise_discount),
         // Monto vendido valorizado por evento (cada venta a su precio). El SP
         // lo calcula; el front NO debe rehacer precio x cantidad, que

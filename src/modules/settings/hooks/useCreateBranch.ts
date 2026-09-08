@@ -12,6 +12,7 @@ import {
     GetBranchDetails
 } from '../services/Branches.services';
 import { Branch, IdNameResponse } from '../types/Branches.types';
+import { toastError } from "@/shared/utils/toastError";
 
 interface FormData {
     name: string;
@@ -60,7 +61,7 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
                 setCountries(countriesRes || []);
             } catch (error) {
                 console.error("Error loading base options:", error);
-                toast({ title: "Error", description: "No se pudieron cargar las opciones del formulario", variant: "destructive" });
+                toastError(error, "No se pudieron cargar las opciones del formulario");
             }
         };
         fetchBaseOptions();
@@ -117,7 +118,7 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
                     }
                 } catch (error) {
                     console.error("Error fetching branch details:", error);
-                    toast({ title: "Error", description: "No se pudieron cargar los detalles de la sucursal", variant: "destructive" });
+                    toastError(error, "No se pudieron cargar los detalles de la sucursal");
                 } finally {
                     setIsInitializing(false);
                 }
@@ -227,7 +228,7 @@ const useCreateBranch = (branchId?: number | null, isEdit?: boolean) => {
             navigate('/settings/branches');
         } catch (error: any) {
             console.error(error);
-            toast({ title: "Error", description: error.message || "No se pudo guardar la sucursal", variant: "destructive" });
+            toastError(error, "No se pudo guardar la sucursal");
         } finally {
             setLoading(false);
         }

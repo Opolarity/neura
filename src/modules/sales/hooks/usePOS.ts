@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { applyPriceRules, type GiftItem } from "../rules/applyPriceRules";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { measure } from "@/lib/rum";
 import { useUserProfile } from "@/modules/auth";
 import { useToast } from "@/hooks/use-toast";
 import { usePOSSession } from "./usePOSSession";
@@ -49,6 +50,7 @@ import { getPOSSessionDetail } from "@/modules/pos/services/POSDetail.service";
 
 import { filterShippingCostsByLocation } from "../utils";
 import { findExactScanMatch } from "../utils/scan";
+import { toastError } from "@/shared/utils/toastError";
 
 // Initial state values
 const DEFAULT_CUSTOMER: POSCustomerData = {
@@ -262,11 +264,7 @@ export const usePOS = () => {
       await loadUserWarehouse();
     } catch (error) {
       console.error("Error loading initial data:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los datos del formulario",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudieron cargar los datos del formulario");
     } finally {
       setLoading(false);
     }
@@ -1019,6 +1017,8 @@ export const usePOS = () => {
 
     setSaving(true);
     try {
+      // RUM: se mide la operacion completa (varias llamadas)
+      return await measure("pos_venta", async () => {
       // Get "Completado" or first available situation
       // POS orders are always created with "Entregado" situation (id: 20)
       const situationId = 20;
@@ -1128,15 +1128,12 @@ export const usePOS = () => {
       setCurrentStep(6);
 
       return result;
+      });
     } catch (error: unknown) {
       console.error("Error creating order:", error);
       const errorMessage =
         error instanceof Error ? error.message : "No se pudo crear la venta";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toastError(error, errorMessage);
       return null;
     } finally {
       setSaving(false);

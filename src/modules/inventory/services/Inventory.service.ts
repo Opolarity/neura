@@ -7,6 +7,7 @@ import {
   InventoryTypesApiResponse,
   Warehouse,
 } from "../types/Inventory.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 
 
@@ -15,14 +16,9 @@ export const inventoryApi = async (
 ): Promise<InventoryApiResponse> => {
   const endpoint = buildEndpoint("get-inventory", filters);
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-  if (error) {
-    console.error("Invoke error:", error);
-    throw error;
-  }
 
   return (
     data ?? {
@@ -35,15 +31,12 @@ export const inventoryApi = async (
 export const updateInventoryApi = async (
   updateCategory: InventoryPayload[],
 ) => {
-  const { data, error } = await supabase.functions.invoke(
+  await invokeFunction(
     "create-stock-movements-entrance",
     {
       body: updateCategory,
     },
   );
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
 };
 
 export const inventoryTypesApi = async (): Promise<

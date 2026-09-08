@@ -1,16 +1,11 @@
-import { supabase } from "@/integrations/supabase/client";
 import { PermissionsCatalogApiResponse } from "../types/Permissions.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const permissionsCatalogApi =
   async (): Promise<PermissionsCatalogApiResponse> => {
-    const { data, error } = await supabase.functions.invoke("get-permissions", {
+    const data = await invokeFunction("get-permissions", {
       method: "GET",
     });
-
-    if (error) {
-      console.error("Invoke error in permissionsCatalogApi:", error);
-      throw error;
-    }
 
     return data ?? { permissions: [] };
   };

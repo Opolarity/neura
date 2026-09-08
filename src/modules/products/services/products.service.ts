@@ -5,20 +5,23 @@ import {
   ProductFilters,
   Categories,
 } from "../types/Products.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const productsApi = async (
   filters: ProductFilters = {},
 ): Promise<ProductApiResponse> => {
-  const endpoint = buildEndpoint("get-products-list", filters);
-
-  const { data, error } = await supabase.functions.invoke(endpoint, {
-    method: "GET",
+  // `category_ids` se arma a mano y solo si hay selección: buildEndpoint pasa
+  // por cleanFilters, que hace String(value) y no descarta el arreglo vacío
+  // (no es null ni ""), así que delegarlo emitiría un `category_ids=` vacío.
+  const { category_ids, ...rest } = filters;
+  const endpoint = buildEndpoint("get-products-list", {
+    ...rest,
+    ...(category_ids?.length ? { category_ids: category_ids.join(",") } : {}),
   });
 
-  if (error) {
-    console.error("Invoke error:", error);
-    throw error;
-  }
+  const data = await invokeFunction(endpoint, {
+    method: "GET",
+  });
 
   return (
     data ?? {
@@ -31,28 +34,18 @@ export const productsApi = async (
 };
 
 export const deleteProductApi = async (productId: number) => {
-  const { data, error } = await supabase.functions.invoke("delete-product", {
+  await invokeFunction("delete-product", {
     body: { productId },
   });
-
-  console.log(data);
-
-  if (error || !data.success) {
-    throw new Error(data?.error || "Error al eliminar producto");
-  }
 };
 
 export const deleteProductsApi = async (productIds: number[]) => {
-  const { data, error } = await supabase.functions.invoke(
+  await invokeFunction(
     "delete-massive-products",
     {
       body: { productIds },
     },
   );
-
-  if (error || !data.success) {
-    throw new Error(data?.error || "Error al eliminar productos");
-  }
 };
 
 export const updatePromotionalTextApi = async (
@@ -184,20 +177,6 @@ export const updateSalesChannelsApi = async (
 
 // ================= Asignación masiva de etiquetas y marcas =================
 
-// Las edge functions devuelven el mensaje de error en el body, pero supabase-js
-// solo lo expone vía error.context (un Response) cuando el status es non-2xx.
-const getFunctionErrorMessage = async (error: any): Promise<string> => {
-  if (error?.context instanceof Response) {
-    try {
-      const body = await error.context.clone().json();
-      if (body?.error) return body.error;
-    } catch {
-      // el body no era JSON, se usa el fallback de abajo
-    }
-  }
-  return error?.message || "Error desconocido";
-};
-
 export interface AssignTagsResult {
   created: number;
   skipped: number;
@@ -213,12 +192,9 @@ export const assignMassiveTagsApi = async (
   productIds: number[],
   tagIds: number[],
 ): Promise<AssignTagsResult> => {
-  const { data, error } = await supabase.functions.invoke("assign-massive-tags", {
+  const data = await invokeFunction("assign-massive-tags", {
     body: { productIds, tagIds },
   });
-
-  if (error) throw new Error(await getFunctionErrorMessage(error));
-  if (!data?.success) throw new Error(data?.error || "Error al asignar etiquetas");
 
   return data.data as AssignTagsResult;
 };
@@ -237,12 +213,9 @@ export const unassignMassiveTagsApi = async (
   productIds: number[],
   tagIds: number[],
 ): Promise<UnassignTagsResult> => {
-  const { data, error } = await supabase.functions.invoke("unassign-massive-tags", {
+  const data = await invokeFunction("unassign-massive-tags", {
     body: { productIds, tagIds },
   });
-
-  if (error) throw new Error(await getFunctionErrorMessage(error));
-  if (!data?.success) throw new Error(data?.error || "Error al desasignar etiquetas");
 
   return data.data as UnassignTagsResult;
 };
@@ -268,16 +241,9 @@ export const assignMassiveBrandsApi = async (
   brandIds: number[],
   mode: MassiveBrandsMode,
 ): Promise<AssignBrandsResult> => {
-  const { data, error } = await supabase.functions.invoke("assign-massive-brands", {
+  const data = await invokeFunction("assign-massive-brands", {
     body: { productIds, brandIds, mode },
   });
-
-  if (error) throw new Error(await getFunctionErrorMessage(error));
-  if (!data?.success)
-    throw new Error(
-      data?.error ||
-        (mode === "assign" ? "Error al asignar marcas" : "Error al desasignar marcas"),
-    );
 
   return data.data as AssignBrandsResult;
 };

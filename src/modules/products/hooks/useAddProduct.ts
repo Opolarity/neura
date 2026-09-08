@@ -17,6 +17,7 @@ import type {
   ProductBrand
 } from '../types/AddProduct.types';
 import type { Category, TermGroup, Term, PriceList, Warehouse, VariationPrice, VariationStock, StockType, Channel } from '@/types';
+import { toastError } from "@/shared/utils/toastError";
 
 export const useAddProduct = () => {
   const { toast } = useToast();
@@ -156,11 +157,7 @@ export const useAddProduct = () => {
       
       setInitialDataLoaded(true);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Error al cargar los datos iniciales",
-        variant: "destructive"
-      });
+      toastError(error, "Error al cargar los datos iniciales");
     }
   };
 
@@ -218,11 +215,7 @@ export const useAddProduct = () => {
       });
     } catch (error) {
       console.error('Error loading product:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo cargar el producto",
-        variant: "destructive"
-      });
+      toastError(error, "No se pudo cargar el producto");
       navigate('/products');
     } finally {
       setLoading(false);
@@ -319,11 +312,7 @@ export const useAddProduct = () => {
       });
     } catch (error) {
       console.error('Error uploading images:', error);
-      toast({
-        title: "Error",
-        description: "Error al subir las imágenes",
-        variant: "destructive"
-      });
+      toastError(error, "Error al subir las imágenes");
     } finally {
       setLoading(false);
     }
@@ -395,11 +384,7 @@ export const useAddProduct = () => {
       });
     } catch (error) {
       console.error('Error uploading size image:', error);
-      toast({
-        title: "Error",
-        description: "Error al subir la imagen",
-        variant: "destructive"
-      });
+      toastError(error, "Error al subir la imagen");
     } finally {
       setLoading(false);
     }
@@ -468,11 +453,7 @@ export const useAddProduct = () => {
       return true;
     } catch (error) {
       console.error('Error creating category:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo crear la categoría",
-        variant: "destructive"
-      });
+      toastError(error, "No se pudo crear la categoría");
       return false;
     }
   };
@@ -491,11 +472,7 @@ export const useAddProduct = () => {
       toast({ title: "Tag creado correctamente", variant: "success" });
       return newTag;
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo crear la etiqueta",
-        variant: "destructive"
-      });
+      toastError(error, "No se pudo crear la etiqueta");
       try {
         const data = await AddProductService.getFormData();
         setTags(AddProductAdapter.adaptFormData(data).tags);
@@ -520,11 +497,7 @@ export const useAddProduct = () => {
       toast({ title: "Marca creada correctamente", variant: "success" });
       return newBrand;
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo crear la marca",
-        variant: "destructive"
-      });
+      toastError(error, "No se pudo crear la marca");
       try {
         const data = await AddProductService.getFormData();
         setBrands(AddProductAdapter.adaptFormData(data).brands);
@@ -885,11 +858,7 @@ export const useAddProduct = () => {
     } catch (error) {
       console.error('Error saving product:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      toastError(error, errorMessage);
     } finally {
       setLoading(false);
     }

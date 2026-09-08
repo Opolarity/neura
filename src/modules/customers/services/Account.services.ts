@@ -1,21 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/utils";
 import { AccountsApiResponse, AccountsFilters, AccountType } from "../types/accounts.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const accountsApi = async (
   filters: AccountsFilters
 ): Promise<AccountsApiResponse> => {
   const endpoint = buildEndpoint("get-accounts", filters);
 
-  const { data, error } = await supabase.functions.invoke(endpoint, {
+  const data = await invokeFunction(endpoint, {
     method: "GET",
   });
-
-
-  if (error) {
-    console.error("Invoke error in rolesApi:", error);
-    throw error;
-  }
 
   return (
     data ?? {

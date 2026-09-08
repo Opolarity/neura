@@ -9,6 +9,7 @@ import {
 } from "../types/MovementRequestList.types";
 import { getStockMovementRequestsApi } from "../services/MovementRequests.service";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
+import { toastError } from "@/shared/utils/toastError";
 
 export const useMovementRequests = () => {
   const [requests, setRequests] = useState<MovementRequestListItem[]>([]);
@@ -44,11 +45,7 @@ export const useMovementRequests = () => {
       }
     } catch (error: any) {
       console.error("Error loading movement requests:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las solicitudes",
-        variant: "destructive",
-      });
+      toastError(error, "No se pudieron cargar las solicitudes");
     } finally {
       setLoading(false);
     }

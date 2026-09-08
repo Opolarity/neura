@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { WarehousesApiResponse, Warehouses, WarehousesFilters, IdModalResponse } from "../types/Warehouses.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 
 export const WareApi = async (
@@ -14,15 +15,9 @@ export const WareApi = async (
     const endpoint = queryParams.toString()
         ? `get-warehouses?${queryParams.toString()}`
         : "get-warehouses";
-    const { data, error } = await supabase.functions.invoke(endpoint, {
+    const data = await invokeFunction(endpoint, {
         method: "GET",
     });
-
-
-    if (error) {
-        console.error("Invoke error in usersApi:", error);
-        throw error;
-    }
 
     return (
         data ?? {
@@ -36,18 +31,16 @@ export const WareApi = async (
 
 
 export const GetWarehousesDetails = async (warehouseId: number): Promise<WarehousesApiResponse> => {
-    const { data, error } = await supabase.functions.invoke("get-warehouses-details", {
+    const data = await invokeFunction("get-warehouses-details", {
         body: { warehouseID: warehouseId },
     });
-    if (error) throw error;
     return data ?? [];
 }
 
 export const DeleteWarehouses = async (warehouseId: number): Promise<WarehousesApiResponse> => {
-    const { data, error } = await supabase.functions.invoke("delete-warehouses", {
+    const data = await invokeFunction("delete-warehouses", {
         body: { warehousesID: warehouseId },
     });
-    if (error) throw error;
     return data ?? [];
 }
 
@@ -62,21 +55,19 @@ export const CreateWarehouses = async (warehouse: Warehouses): Promise<Warehouse
         addresreferenc: warehouse.address_reference || "",
     };
 
-    const { data, error } = await supabase.functions.invoke("create-warehouses", {
+    const data = await invokeFunction("create-warehouses", {
         method: "POST",
         body: payload, // Sending payload directly as req.json() expects it at root
     });
-    if (error) throw error;
     return data ?? [];
 }
 
 export const UpdateWarehouses = async (warehouse: Warehouses): Promise<WarehousesApiResponse> => {
 
-    const { data, error } = await supabase.functions.invoke("update-warehouses", {
+    const data = await invokeFunction("update-warehouses", {
         method: "PUT",
         body: { warehouse },
     });
-    if (error) throw error;
     return data ?? [];
 }
 
