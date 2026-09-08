@@ -675,10 +675,20 @@ export const filterOptionsService = {
 // Price Rules Report
 // -------------------------------------------------------
 export interface PriceRuleKpis {
+  /** Reglas que existen hoy y están activas. No depende del rango. */
   active: number;
+  /** Reglas que existen hoy y están apagadas. No depende del rango. */
   inactive: number;
-  automatic: number;
-  coupon: number;
+  /** Reglas con al menos una aplicación en el rango y con los filtros aplicados. */
+  used: number;
+  /** Aplicaciones atribuidas a una regla en el rango. */
+  applications: number;
+  /**
+   * Venta de los pedidos que tuvieron al menos una regla. Un pedido con dos
+   * reglas se cuenta una sola vez acá, aunque su venta aparezca en la fila de
+   * cada una de las dos.
+   */
+  revenue: number;
 }
 
 export interface PriceRuleReportRow {
@@ -693,19 +703,39 @@ export interface PriceRuleReportRow {
   // eliminada llega con is_active = false y sin este campo se contaría como
   // "inactiva" en la pestaña, contradiciendo al KPI.
   is_deleted: boolean;
+  /** Vigencia configurada en la regla. null = sin límite por ese lado. */
+  valid_from: string | null;
+  valid_to: string | null;
   applications: number;
-  rendimiento: number;
+  /** Pedidos distintos donde aplicó. Difiere de `applications` si aplicó dos veces al mismo pedido. */
+  orders: number;
+  /** Venta de esos pedidos (orders.total). No es el monto descontado: ver la nota al pie de la pestaña. */
+  revenue: number;
+  /** Participación sobre `kpis.applications`. La columna suma 100. */
+  share: number;
+}
+
+/**
+ * Descuentos del período que NO vienen de una regla de precios: los códigos que
+ * escribe el sistema (CUSTOM = descuento manual del POS, PRO = descuento por
+ * producto, MERCP_SURCHARGE = recargo de Mercado Pago) y los códigos cuya regla
+ * ya no existe. Van en una fila aparte para que el total de la pantalla cuadre
+ * con todos los descuentos del período, sin ensuciar el conteo de reglas.
+ */
+export interface PriceRulesOther {
+  applications: number;
+  orders: number;
+  revenue: number;
+  codes: string[];
 }
 
 export interface PriceRulesReport {
   kpis: PriceRuleKpis;
   table: PriceRuleReportRow[];
+  other: PriceRulesOther;
 }
 
 export const priceRulesReportService = {
-  getReport: (startDate: string | null, endDate: string | null) =>
-    rpc<PriceRulesReport>('sp_rpt_price_rules_report', {
-      p_start_date: startDate ?? undefined,
-      p_end_date: endDate ?? undefined,
-    }),
+  getReport: (f: ReportsFilters) =>
+    rpc<PriceRulesReport>('sp_rpt_price_rules_report', mapCustomerFilters(f)),
 };
