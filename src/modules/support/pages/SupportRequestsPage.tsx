@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import WalkingBear from "@/shared/components/walking-bear/WalkingBear";
@@ -6,6 +7,7 @@ import { useSupportRequestDetail } from "../hooks/useSupportRequestDetail";
 import { SupportDialog } from "../components/SupportDialog";
 import { SupportRequestDetailSheet } from "../components/support-requests/SupportRequestDetailSheet";
 import { SupportRequestsHeader } from "../components/support-requests/SupportRequestsHeader";
+import { TicketResponseProtocolDialog } from "../components/support-requests/TicketResponseProtocolDialog";
 import { SupportRequestsFilterBar } from "../components/support-requests/SupportRequestsFilterBar";
 import SupportRequestsFilterModal from "../components/support-requests/SupportRequestsFilterModal";
 import { SupportRequestsTable } from "../components/support-requests/SupportRequestsTable";
@@ -37,9 +39,16 @@ const SupportRequestsPage = () => {
 
   const detail = useSupportRequestDetail();
 
+  // Estado puramente de UI: el protocolo es contenido estático, no pasa por el
+  // hook de datos de la pantalla.
+  const [protocolOpen, setProtocolOpen] = useState(false);
+
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
-      <SupportRequestsHeader onNewRequest={openNewRequest} />
+      <SupportRequestsHeader
+        onNewRequest={openNewRequest}
+        onOpenProtocol={() => setProtocolOpen(true)}
+      />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
         {/* Con un error en pantalla no hay tabla que filtrar (ni empresa
@@ -109,6 +118,11 @@ const SupportRequestsPage = () => {
         facets={facets}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}
+      />
+
+      <TicketResponseProtocolDialog
+        open={protocolOpen}
+        onOpenChange={setProtocolOpen}
       />
 
       {/* Se reutiliza el formulario que antes vivía en el Sidebar, sin cambios */}

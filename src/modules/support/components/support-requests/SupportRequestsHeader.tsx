@@ -1,12 +1,14 @@
-import { Plus } from "lucide-react";
+import { BookOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SupportRequestsHeaderProps {
   onNewRequest: () => void;
+  onOpenProtocol: () => void;
 }
 
 export const SupportRequestsHeader = ({
   onNewRequest,
+  onOpenProtocol,
 }: SupportRequestsHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
@@ -18,10 +20,18 @@ export const SupportRequestsHeader = ({
           Tickets y sugerencias enviados al equipo de OPOLARITY
         </p>
       </div>
-      <Button onClick={onNewRequest}>
-        <Plus className="w-4 h-4 mr-2" />
-        Nueva solicitud
-      </Button>
+      <div className="flex items-center gap-2">
+        {/* Documento de consulta: cómo se atiende lo que el cliente envía.
+            Secundario frente a la acción principal de crear una solicitud. */}
+        <Button variant="outline" onClick={onOpenProtocol}>
+          <BookOpen className="w-4 h-4 mr-2" />
+          Respuestas de tickets
+        </Button>
+        <Button onClick={onNewRequest}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nueva solicitud
+        </Button>
+      </div>
     </div>
   );
 };
