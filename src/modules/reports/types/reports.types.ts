@@ -526,7 +526,8 @@ export interface CustomersKpis {
 
 export interface TopCustomer {
   customer_name: string;
-  document_number: string;
+  /** null en las ventas de mostrador sin documento cargado. */
+  document_number: string | null;
   order_count: number;
   total_spent: number;
   avg_ticket: number;

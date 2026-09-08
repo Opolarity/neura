@@ -43,6 +43,7 @@ export function TopCustomersTable({ data, loading, limit, onLimitChange }: Props
             <TableRow>
               <TableHead>#</TableHead>
               <TableHead>Cliente</TableHead>
+              <TableHead>Documento</TableHead>
               <TableHead className="text-right">Pedidos</TableHead>
               <TableHead className="text-right">Total gastado</TableHead>
               <TableHead>Nivel</TableHead>
@@ -55,6 +56,16 @@ export function TopCustomersTable({ data, loading, limit, onLimitChange }: Props
                   <Badge variant="outline" style={i < 3 ? chartBadgeStyle(reportChartColors.amber) : undefined}>{i + 1}</Badge>
                 </TableCell>
                 <TableCell className="font-medium text-sm">{c.customer_name}</TableCell>
+                {/*
+                  El documento identifica al cliente, así que conviene verlo:
+                  un DNI y un RUC personal de la misma persona son dos clientes
+                  distintos, y sin esta columna la tabla mostraría dos filas con
+                  nombres parecidos y ninguna forma de distinguirlas. "—" son
+                  las ventas de mostrador sin documento.
+                */}
+                <TableCell className="text-sm tabular-nums text-muted-foreground">
+                  {c.document_number ?? '—'}
+                </TableCell>
                 <TableCell className="text-right">{c.order_count}</TableCell>
                 <TableCell className="text-right font-medium">{formatCurrency(c.total_spent)}</TableCell>
                 <TableCell>
