@@ -16,7 +16,7 @@ import type {
   SupportRequestDetail,
 } from "../../types/Support.types";
 import { formatSupportCodes } from "../../utils/requestCodes";
-import { sanitizeSupportHtml } from "../../utils/sanitizeSupportHtml";
+import { SupportRichText } from "./SupportRichText";
 import { SupportAttachmentLink } from "./SupportAttachmentLink";
 import { SupportConversation } from "./SupportConversation";
 import { SupportReplyBox } from "./SupportReplyBox";
@@ -90,13 +90,7 @@ const DetailBody = ({ detail }: { detail: SupportRequestDetail }) => {
       <div className="space-y-2">
         <SectionTitle>Descripción</SectionTitle>
         {detail.descriptionHtml ? (
-          <div
-            className="text-sm leading-relaxed [&_a]:underline [&_img]:max-w-full [&_img]:rounded [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
-            // Sanea en sanitizeSupportHtml: viene del WysiwygEditor y da la vuelta por OPOLARITY
-            dangerouslySetInnerHTML={{
-              __html: sanitizeSupportHtml(detail.descriptionHtml),
-            }}
-          />
+          <SupportRichText html={detail.descriptionHtml} />
         ) : (
           <p className="text-sm text-muted-foreground">Sin descripción.</p>
         )}
