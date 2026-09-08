@@ -17,6 +17,7 @@ import type {
   ClosePOSSessionRequest,
 } from "../types/POS.types";
 import { toastError } from "@/shared/utils/toastError";
+import { measure } from "@/lib/rum";
 
 export const usePOSSession = () => {
   const { toast } = useToast();
@@ -47,7 +48,7 @@ export const usePOSSession = () => {
     async (request: OpenPOSSessionRequest) => {
       try {
         setOpening(true);
-        const data = await openPOSSession(request);
+        const data = await measure("caja_abrir", () => openPOSSession(request));
         const adapted = adaptPOSSession(data.session);
         setSession(adapted);
         toast({
@@ -73,7 +74,7 @@ export const usePOSSession = () => {
     async (request: ClosePOSSessionRequest) => {
       try {
         setClosing(true);
-        const data = await closePOSSession(request);
+        const data = await measure("caja_cerrar", () => closePOSSession(request));
         const result = data.session;
         setSession(null);
         toast({
