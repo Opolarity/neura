@@ -3,6 +3,9 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
+# git: el release del RUM se lee con `git rev-parse HEAD` (vite.config.ts); Coolify no pasa SOURCE_COMMIT al build.
+RUN apk add --no-cache git
+
 COPY package*.json .npmrc ./
 # NPM_TOKEN: token de lectura de GitHub Packages (@opolarity/rum). Build Variable en Coolify.
 ARG NPM_TOKEN
