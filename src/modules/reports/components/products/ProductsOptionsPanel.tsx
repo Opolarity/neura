@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Command,
   CommandEmpty,
@@ -13,13 +11,11 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { cn } from '@/shared/utils/utils';
-import { filterOptionsService } from '../../services/reports.service';
 import { useReportsFilters } from '../../context/ReportsFiltersContext';
 import { OrderSituationFilter } from '../shared/OrderSituationFilter';
+import { OrderScopeFilters } from '../shared/OrderScopeFilters';
 import { defaultProductSituationIds } from '../../types/reports.types';
 import type { ProductsDashboardState } from '../../hooks/useProductsDashboard';
-
-const ALL_VALUE = '__all__';
 
 interface Props {
   dash: ProductsDashboardState;
@@ -39,18 +35,6 @@ export function ProductsOptionsPanel({ dash }: Props) {
     selectedProductTitle,
     selectProduct,
   } = dash;
-
-  const branches = useQuery({
-    queryKey: ['filter_branches'],
-    queryFn: filterOptionsService.getBranches,
-    staleTime: 1000 * 60 * 10,
-  });
-
-  const saleTypes = useQuery({
-    queryKey: ['filter_sale_types'],
-    queryFn: filterOptionsService.getSaleTypes,
-    staleTime: 1000 * 60 * 60,
-  });
 
   const hasSelectedProduct = selectedProductId !== null;
   const results = searchResults.data ?? [];
@@ -130,43 +114,7 @@ export function ProductsOptionsPanel({ dash }: Props) {
         defaultIds={defaultProductSituationIds}
       />
 
-      {/* Sede */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium">Sede</span>
-        <Select
-          value={draft.branchId?.toString() ?? ALL_VALUE}
-          onValueChange={(v) => setDraft({ branchId: v === ALL_VALUE ? null : Number(v) })}
-        >
-          <SelectTrigger className="h-9 w-[160px]">
-            <SelectValue placeholder="Todas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>Todas</SelectItem>
-            {branches.data?.map((b) => (
-              <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Canal de venta */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium">Canal de venta</span>
-        <Select
-          value={draft.saleTypeId?.toString() ?? ALL_VALUE}
-          onValueChange={(v) => setDraft({ saleTypeId: v === ALL_VALUE ? null : Number(v) })}
-        >
-          <SelectTrigger className="h-9 w-[160px]">
-            <SelectValue placeholder="Todos" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>Todos</SelectItem>
-            {saleTypes.data?.map((st) => (
-              <SelectItem key={st.id} value={st.id.toString()}>{st.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <OrderScopeFilters />
     </>
   );
 }

@@ -50,6 +50,13 @@ export function useProductsDashboard(filters: ReportsFilters, applyVersion?: num
   const situationKey = situationIds.join(',');
   const queryKey = [filters, situationKey];
 
+  const kpis = useQuery({
+    queryKey: ['rpt_products_kpis', ...queryKey],
+    queryFn: () => productsService.getKpis(filters, situationIds),
+    staleTime: 1000 * 60 * 5,
+    enabled: ready,
+  });
+
   const byCategory = useQuery({
     queryKey: ['rpt_products_by_category', ...queryKey],
     queryFn: () => productsService.getByCategory(filters, situationIds),
@@ -120,6 +127,7 @@ export function useProductsDashboard(filters: ReportsFilters, applyVersion?: num
   const isProductDirty = selectedProductId !== appliedProductId;
 
   return {
+    kpis,
     byCategory,
     topByCategory,
     pareto,

@@ -37,11 +37,28 @@ export default function ProductsPage() {
       dash.selectedProductId,
       draft.branchId,
       draft.saleTypeId,
+      draft.countryId,
+      draft.stateId,
+      draft.cityId,
+      draft.neighborhoodId,
+      draft.paymentMethodId,
+      draft.priceListCode,
     ].filter((v) => v !== null && v !== undefined).length + (situationIsDefault ? 0 : 1);
 
   function handleClearExtra() {
     dash.selectProduct(null);
-    applyImmediate({ ...draft, branchId: null, saleTypeId: null, productSituationIds: null });
+    applyImmediate({
+      ...draft,
+      branchId: null,
+      saleTypeId: null,
+      countryId: null,
+      stateId: null,
+      cityId: null,
+      neighborhoodId: null,
+      paymentMethodId: null,
+      priceListCode: null,
+      productSituationIds: null,
+    });
   }
 
   return (
@@ -51,6 +68,15 @@ export default function ProductsPage() {
         extraActiveCount={extraActiveCount}
         extraDirty={dash.isProductDirty}
         onClearExtra={handleClearExtra}
+        footNote={
+          <>
+            Productos mide <strong className="font-medium text-foreground">mercadería que salió
+            del almacén</strong>: por defecto solo cuenta los pedidos Enviado y Entregado. Los
+            que están En proceso o Armado no entran acá, pero sí en Reportes de Ventas, que mide
+            lo que se pidió — por eso las dos pestañas no dan el mismo volumen. Para cambiar el
+            criterio, usá el filtro Estado de pedido.
+          </>
+        }
         exportSlot={
           <Button variant="outline" size="sm" onClick={() => setExportOpen(true)} className="gap-1.5">
             <Download className="w-3.5 h-3.5" />

@@ -186,6 +186,20 @@ export type TopLimit = 5 | 10 | 20;
 // -------------------------------------------------------
 // Products Dashboard
 // -------------------------------------------------------
+
+/**
+ * Totales del periodo contando cada producto UNA vez. No coinciden con la suma
+ * de los gráficos por categoría, que atribuyen el producto entero a cada una
+ * de sus categorías — ver MultiCategoryNotice.
+ */
+export interface ProductsKpis {
+  total_quantity: number;
+  total_revenue: number;
+  products_with_sales: number;
+  orders_count: number;
+  avg_unit_price: number;
+}
+
 export interface ProductsByCategoryItem {
   category_id: number | null;
   category_name: string;

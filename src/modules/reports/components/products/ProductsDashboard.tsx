@@ -1,3 +1,5 @@
+import { KpiCard } from '../shared/KpiCard';
+import { formatCurrency } from '@/shared/utils/currency';
 import { ProductsByCategoryChart } from './ProductsByCategoryChart';
 import { TopProductsChart } from './TopProductsChart';
 import { ProductsParetoChart } from './ProductsParetoChart';
@@ -12,8 +14,41 @@ interface ProductsDashboardProps {
 }
 
 export function ProductsDashboard({ dash }: ProductsDashboardProps) {
+  const kpis = dash.kpis.data;
+
   return (
     <div className="space-y-6">
+      {/*
+        Estas tarjetas cuentan cada producto una sola vez, así que NO coinciden
+        con la suma de los gráficos por categoría de más abajo — esos atribuyen
+        el producto entero a cada una de sus categorías (ver MultiCategoryNotice).
+      */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          title="Unidades Vendidas"
+          value={kpis ? kpis.total_quantity.toLocaleString('es-PE') : '—'}
+          loading={dash.kpis.isLoading}
+          subtitle="mercadería que salió del almacén"
+        />
+        <KpiCard
+          title="Ingresos"
+          value={kpis ? formatCurrency(kpis.total_revenue) : '—'}
+          loading={dash.kpis.isLoading}
+        />
+        <KpiCard
+          title="Productos con Venta"
+          value={kpis ? kpis.products_with_sales : '—'}
+          loading={dash.kpis.isLoading}
+          subtitle={kpis ? `en ${kpis.orders_count} pedidos` : undefined}
+        />
+        <KpiCard
+          title="Precio Promedio"
+          value={kpis ? formatCurrency(kpis.avg_unit_price) : '—'}
+          loading={dash.kpis.isLoading}
+          subtitle="por unidad vendida"
+        />
+      </div>
+
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <ProductsByCategoryChart
           data={dash.byCategory.data ?? []}

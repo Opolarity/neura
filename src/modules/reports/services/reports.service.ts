@@ -3,6 +3,7 @@ import { buildEndpoint } from '@/shared/utils/utils';
 import type {
   ReportsFilters,
   SalesKpis,
+  ProductsKpis,
   SalesOverTimeItem,
   SalesByDimensionItem,
   SalesGeoHeatmapItem,
@@ -71,13 +72,16 @@ function mapFilters(f: ReportsFilters) {
 }
 
 /**
- * Params comunes de los SP de la pestaña Productos. Deliberadamente NO es
- * `mapFilters`: esos SP solo aceptan fecha/sede/canal/situación, y PostgREST
- * resuelve la sobrecarga por el conjunto exacto de argumentos nombrados —
- * mandarles los once de Ventas devuelve PGRST202 (404).
+ * Params comunes de los SP de la pestaña Productos. Sigue siendo distinto de
+ * `mapFilters` por una sola razón: la situación viaja en `productSituationIds`
+ * y llega ya resuelta desde el hook, así que lo que se envía es literalmente
+ * lo que el filtro muestra marcado. El resto del universo de pedidos se acota
+ * con los mismos campos que Ventas, todos opcionales.
  *
- * `situationIds` llega ya resuelto desde el hook: lo que se envía es
- * literalmente lo que el filtro muestra marcado.
+ * Ojo al agregar params: PostgREST resuelve por el conjunto exacto de
+ * argumentos nombrados, así que mandar uno que el SP no declare devuelve
+ * PGRST202 (404). Estos existen en los SP de Productos desde la migración
+ * 31000908124100.
  */
 function mapProductFilters(f: ReportsFilters, situationIds: number[]) {
   return {
@@ -85,6 +89,12 @@ function mapProductFilters(f: ReportsFilters, situationIds: number[]) {
     p_end_date: f.endDate ?? undefined,
     p_branch_id: f.branchId ?? undefined,
     p_sale_type_id: f.saleTypeId ?? undefined,
+    p_country_id: f.countryId ?? undefined,
+    p_state_id: f.stateId ?? undefined,
+    p_city_id: f.cityId ?? undefined,
+    p_neighborhood_id: f.neighborhoodId ?? undefined,
+    p_payment_method_id: f.paymentMethodId ?? undefined,
+    p_price_list_code: f.priceListCode ?? undefined,
     p_situation_ids: situationIds,
   };
 }
@@ -136,6 +146,12 @@ export const salesService = {
 // PRODUCTS
 // ============================================================
 export const productsService = {
+  // Totales del periodo sin duplicar por categoría — es la cifra que va en las
+  // tarjetas, y cuadra con el Pareto y con el Excel, no con los gráficos por
+  // categoría.
+  getKpis: (f: ReportsFilters, situationIds: number[]) =>
+    rpc<ProductsKpis>('sp_rpt_products_kpis', mapProductFilters(f, situationIds)),
+
   getByCategory: (f: ReportsFilters, situationIds: number[]) =>
     rpc<ProductsByCategoryItem[]>('sp_rpt_products_by_category', mapProductFilters(f, situationIds)),
 
@@ -185,16 +201,14 @@ export const productsService = {
   // Reutiliza el RPC del tab financiero: devuelve unidades, ingresos y margen
   // por producto — acá alimenta el scatter margen vs volumen.
   //
-  // No usa mapProductFilters porque ese SP no acepta p_sale_type_id. Y como lo
-  // comparte la pestaña Financiero, su p_situation_ids en NULL conserva el
-  // comportamiento viejo (sin filtro): acá hay que mandar el array explícito.
+  // Desde la migración 31000908124100 ese SP acepta los mismos filtros que el
+  // resto de Productos, así que ya puede usar mapProductFilters. Financiero lo
+  // sigue llamando con su propio subconjunto de params, que continúa siendo
+  // válido porque los nuevos tienen DEFAULT.
   getMarginScatter: (f: ReportsFilters, limit = 100, situationIds: number[] = []) =>
     rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
+      ...mapProductFilters(f, situationIds),
       p_limit: limit,
-      p_situation_ids: situationIds,
     }),
 };
 

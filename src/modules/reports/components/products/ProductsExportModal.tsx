@@ -82,18 +82,33 @@ export function ProductsExportModal({ open, onOpenChange }: ProductsExportModalP
       const start = startDate;
       const end = endDate;
 
-      // El rango es propio del modal, pero el criterio de venta no: el Excel
-      // tiene que cuadrar con lo que se ve en los gráficos.
+      // El rango es propio del modal, pero el resto del criterio no: el Excel
+      // tiene que cuadrar con lo que se ve en los gráficos. Hasta la migración
+      // 31000908124100 estos SP solo aceptaban fecha y situación, así que el
+      // archivo salía sin filtrar por sede ni canal — con sede = Gamarra la
+      // pantalla mostraba 637.00 y el Excel exportaba 5816.25.
+      const scope = {
+        p_branch_id: filters.branchId ?? undefined,
+        p_sale_type_id: filters.saleTypeId ?? undefined,
+        p_country_id: filters.countryId ?? undefined,
+        p_state_id: filters.stateId ?? undefined,
+        p_city_id: filters.cityId ?? undefined,
+        p_neighborhood_id: filters.neighborhoodId ?? undefined,
+        p_payment_method_id: filters.paymentMethodId ?? undefined,
+        p_price_list_code: filters.priceListCode ?? undefined,
+        p_situation_ids: situationIds,
+      };
+
       const [resProducts, resCategories] = await Promise.all([
         supabase.rpc('sp_rpt_export_products_by_product', {
           p_start_date: start,
           p_end_date: end,
-          p_situation_ids: situationIds,
+          ...scope,
         }),
         supabase.rpc('sp_rpt_export_products_by_category', {
           p_start_date: start,
           p_end_date: end,
-          p_situation_ids: situationIds,
+          ...scope,
         }),
       ]);
 
