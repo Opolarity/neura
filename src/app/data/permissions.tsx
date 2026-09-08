@@ -137,7 +137,7 @@ export const APP_PERMISSIONS_CONFIG = [
         code: "inventory.group", name: "Inventario", node: [
           { name: "Lista de inventario", path: "/inventory", code: "inventory.list", element: <Inventory />, showSidebar: true, node: [] },
           { name: "Movimientos de inventario", path: "/inventory/movements", code: "inventory_movements.list", element: <InventoryMovements />, showSidebar: true, node: [] },
-          { name: "Crear Movimiento", path: "/inventory/movements/create", code: "inventory_movements.create", element: <CreateMovement />, showSidebar: true, node: [] },
+          { name: "Crear movimiento", path: "/inventory/movements/create", code: "inventory_movements.create", element: <CreateMovement />, showSidebar: true, node: [] },
           { name: "Código de barras", path: "/bar-codes", code: "barcodes.list", element: <BarcodesPage />, showSidebar: true, node: [] },
           { name: "Solicitudes de movimiento", path: "/inventory/movement-requests", code: "inventory_movement_requests.list", element: <MovementRequests />, showSidebar: true, node: [] },
           { name: "Crear solicitud", path: "/inventory/movement-requests/create", code: "inventory_movement_requests.create", element: <CreateMovementRequest />, showSidebar: false, node: [] },
@@ -171,15 +171,15 @@ export const APP_PERMISSIONS_CONFIG = [
       {
         code: "sales.group", name: "Ventas", node: [
           { name: "Lista de ventas", path: "/sales", code: "sales.list", element: <Sales />, showSidebar: true, node: [] },
-          { name: "Ventas a franquicias", path: "/sales/products/franchise", code: "sales_franchise.list", element: <FranchiseProducts />, showSidebar: true, node: [] },
+          { name: "Ventas de franquiciados", path: "/sales/products/franchise", code: "sales_franchise.list", element: <FranchiseProducts />, showSidebar: true, node: [] },
           { name: "Stock de franquicias", path: "/stock/products/franchise", code: "franchise_stock.list", element: <FranchiseStock />, showSidebar: false, node: [] },
           { name: "Añadir venta", path: "/sales/create", code: "sales.create", element: <CreateSale />, showSidebar: true, node: [] },
           { name: "Editar venta", path: "/sales/edit/:id", code: "sales.edit", element: <CreateSale />, showSidebar: false, node: [] },
           { name: "Envíos", path: "/shipping", code: "shipments.list", element: <Shipping />, showSidebar: true, node: [] },
           { name: "Crear envío", path: "/shipping/create", code: "shipments.create", element: <CreateShipping />, showSidebar: false, node: [] },
           { name: "Editar envío", path: "/shipping/edit/:id", code: "shipments.edit", element: <CreateShipping />, showSidebar: false, node: [] },
-          { name: "Sesiones de Caja", path: "/pos", code: "pos.list", element: <POSList />, showSidebar: true, node: [] },
-          { name: "Punto de Venta", path: "/pos/open", code: "pos.open", element: <SalesPOS />, showSidebar: false, node: [] },
+          { name: "Sesiones de caja", path: "/pos", code: "pos.list", element: <POSList />, showSidebar: true, node: [] },
+          { name: "Punto de venta", path: "/pos/open", code: "pos.open", element: <SalesPOS />, showSidebar: false, node: [] },
           { name: "Canales de venta", path: "/settings/order-channel-types", code: "sales_channels.list", element: <OrderChannelTypesList />, showSidebar: true, node: [] },
           { name: "Crear canal de venta", path: "/settings/order-channel-types/create", code: "sales_channels.create", element: <CreateOrderChannelType />, showSidebar: false, node: [] },
           { name: "Editar canal de venta", path: "/settings/order-channel-types/edit/:id", code: "sales_channels.edit", element: <CreateOrderChannelType />, showSidebar: false, node: [] },
@@ -214,7 +214,7 @@ export const APP_PERMISSIONS_CONFIG = [
             code: "movements.group", name: "Movimientos", node: [
               { name: "Lista de movimientos", path: "/movements", code: "movements.list", element: <MovementsPage />, showSidebar: true, node: [] },
               { name: "Añadir gasto", path: "/movements/add/expenses", code: "movements_expenses.create", element: <AddMovementPage movementType="expense" />, showSidebar: true, node: [] },
-              { name: "Añadir Ingreso", path: "/movements/add/income", code: "movements_income.create", element: <AddMovementPage movementType="income" />, showSidebar: true, node: [] },
+              { name: "Añadir ingreso", path: "/movements/add/income", code: "movements_income.create", element: <AddMovementPage movementType="income" />, showSidebar: true, node: [] },
             ]
           },
         ],
@@ -250,7 +250,7 @@ export const APP_PERMISSIONS_CONFIG = [
               { name: "Cambios/Retornos", path: "/reports/returns", code: "reports_returns.view", element: <ReportsReturnsPage />, showSidebar: true, node: [] },
               { name: "Financiero", path: "/reports/movements", code: "reports_movements.view", element: <ReportsMovementsPage />, showSidebar: true, node: [] },
               { name: "Clientes", path: "/reports/clients", code: "reports_clients.view", element:  <ReportsClientsPage />, showSidebar: true, node: [] },
-              { name: "Regla de Precios", path: "/reports/price-rules", code: "reports_price_rules.view", element: <PriceRulesReportPage />, showSidebar: true, node: [] },
+              { name: "Regla de precios", path: "/reports/price-rules", code: "reports_price_rules.view", element: <PriceRulesReportPage />, showSidebar: true, node: [] },
             ]
           },
         ],
@@ -263,10 +263,10 @@ export const APP_PERMISSIONS_CONFIG = [
           {
             code: "settings.group", name: "Configuración", node: [
               { name: "Negocio", path: "/settings/business", code: "business_parameters.list", element: <BusinessParametersPage />, showSidebar: true, node: [] },
-              { name: "Tipos de inventario", path: "/settings/stock-types", code: "stock_types.list", element: <StockTypePage />, showSidebar: true, node: [] },
+              { name: "Tipos de inventario de productos", path: "/settings/stock-types", code: "stock_types.list", element: <StockTypePage />, showSidebar: true, node: [] },
               { name: "Precios", path: "/settings/price-list", code: "price_lists.list", element: <PriceListPage />, showSidebar: true, node: [] },
               { name: "Métodos de pago", path: "/settings/payment-methods", code: "payment_methods.list", element: <PaymentMethodsList />, showSidebar: true, node: [] },
-              { name: "Cuentas bancarias", path: "/settings/business-accounts", code: "business_accounts.list", element: <BusinessAccountPage />, showSidebar: true, node: [] },
+              { name: "Cuentas de negocio", path: "/settings/business-accounts", code: "business_accounts.list", element: <BusinessAccountPage />, showSidebar: true, node: [] },
               { name: "Almacenes", path: "/settings/warehouses", code: "warehouses.list", element: <WarehousesList />, showSidebar: true, node: [] },
               { name: "Crear almacén", path: "/settings/warehouses/create", code: "warehouses.create", element: <CreateWarehouses />, showSidebar: false, node: [] },
               { name: "Editar almacén", path: "/settings/warehouses/edit/:id", code: "warehouses.edit", element: <CreateWarehouses />, showSidebar: false, node: [] },

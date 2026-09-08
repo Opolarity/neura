@@ -49,7 +49,7 @@ const ProductCosts = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Costos de Productos
+            Costos de productos
           </h1>
           <p className="text-muted-foreground">
             Gestiona el costo de cada variación de producto

@@ -17,7 +17,7 @@ const ProductHeader = ({
     <div className="flex justify-between items-center">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          Gestión de Productos
+          Gestión de productos
         </h1>
         <p className="text-gray-600">Administra tu catálogo de productos</p>
       </div>

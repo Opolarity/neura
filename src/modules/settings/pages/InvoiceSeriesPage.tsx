@@ -15,7 +15,7 @@ const InvoiceSeriesPage = () => {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Series de Facturación
+            Series de facturación
           </h1>
           <p className="text-muted-foreground mt-2">
             Administra las series de comprobantes electrónicos

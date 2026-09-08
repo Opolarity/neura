@@ -65,7 +65,7 @@ const PriceRuleFormPage = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-2xl font-bold">
-            {isEditMode ? "Editar Regla de Precios" : "Nueva Regla de Precios"}
+            {isEditMode ? "Editar regla de precios" : "Nueva regla de precios"}
           </h1>
         </div>
         <Button onClick={handleSubmit} disabled={saving}>

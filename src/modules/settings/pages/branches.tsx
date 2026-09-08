@@ -51,7 +51,7 @@ const BranchesList = () => {
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Listado de Sucursales</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Listado de sucursales</h1>
                     <p className="text-muted-foreground mt-2">
                         Administra las sucursales del sistema
                     </p>

@@ -33,7 +33,7 @@ const BusinessAccountPage = () => {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Cuentas de Negocio
+            Cuentas de negocio
           </h1>
           <p className="text-muted-foreground mt-2">
             Administra las cuentas de negocio del sistema

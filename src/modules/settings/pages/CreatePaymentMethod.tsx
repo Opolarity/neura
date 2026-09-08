@@ -37,7 +37,7 @@ const CreatePaymentMethod = () => {
                     </Button>
                 </Link>
                 <h1 className="text-2xl font-bold">
-                    {isEdit ? 'Editar Método de Pago' : 'Crear Método de Pago'}
+                    {isEdit ? 'Editar método de pago' : 'Crear método de pago'}
                 </h1>
             </div>
 

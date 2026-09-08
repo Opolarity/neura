@@ -36,7 +36,7 @@ export default function ConfigurationStep({
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-foreground">Nueva Venta</h1>
+        <h1 className="text-2xl font-bold text-foreground">Nueva venta</h1>
       </div>
 
       <Card className="mb-6">

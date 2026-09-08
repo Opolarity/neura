@@ -34,7 +34,7 @@ const WarehousesList = () => {
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Listado de Almacenes</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Listado de almacenes</h1>
                     <p className="text-muted-foreground mt-2">
                         Administra los almacenes del sistema
                     </p>

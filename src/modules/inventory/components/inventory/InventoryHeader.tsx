@@ -16,7 +16,7 @@ const InventoryHeader = ({ isEditing, handleEdit, handleCancel, handleSave, hasC
         <div className="flex justify-between items-center">
             <div>
                 <h1 className="text-2xl font-bold text-foreground">
-                    Inventario por Almacén
+                    Inventario por almacén
                 </h1>
                 <p className="text-muted-foreground">
                     Gestiona el stock de todas las variaciones

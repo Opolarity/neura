@@ -45,7 +45,7 @@ const CreateOrderChannelType = () => {
                 </Button>
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">
-                        {isEdit ? 'Editar Canal de Venta' : 'Crear Canal de Venta'}
+                        {isEdit ? 'Editar canal de venta' : 'Crear canal de venta'}
                     </h1>
                     <p className="text-muted-foreground mt-2">
                         {isEdit

@@ -35,7 +35,7 @@ const Movements = () => {
     <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Movimientos de Inventario</h1>
+          <h1 className="text-3xl font-bold">Movimientos de inventario</h1>
           <p className="text-muted-foreground">
             Historial completo de movimientos de stock
           </p>

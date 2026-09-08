@@ -32,7 +32,7 @@ const PriceListPage = () => {
           <DollarSign className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Listas de Precios</h1>
+          <h1 className="text-2xl font-bold">Listas de precios</h1>
           <p className="text-sm text-muted-foreground">
             Gestiona las listas de precios del sistema
           </p>

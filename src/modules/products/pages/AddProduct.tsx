@@ -165,7 +165,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              {viewOnly ? 'Ver Producto' : (isEditMode ? 'Editar Producto' : 'Añadir Producto')}
+              {viewOnly ? 'Ver producto' : (isEditMode ? 'Editar producto' : 'Añadir producto')}
             </h1>
             <p className="text-muted-foreground">
               {viewOnly ? 'Información del producto (solo lectura)' : (isEditMode ? 'Actualizar la información del producto' : 'Crear un nuevo producto en el catálogo')}

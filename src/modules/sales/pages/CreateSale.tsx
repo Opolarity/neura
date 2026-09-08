@@ -526,7 +526,7 @@ const CreateSale = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-2xl font-semibold text-foreground">
-            {orderId ? "Editar Venta" : "Crear Venta"}
+            {orderId ? "Editar venta" : "Crear venta"}
           </h1>
         </div>
         <div className="flex gap-3">
