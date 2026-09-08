@@ -383,64 +383,59 @@ export const financialService = {
 // ============================================================
 // CUSTOMERS
 // ============================================================
+/**
+ * Params comunes de los SP de la pestaña Clientes. `situationIds` en NULL deja
+ * que el backend aplique su default, que es el mismo de Ventas: todo menos
+ * cancelado y reembolsado. Existen desde la migración 31000908142000.
+ */
+function mapCustomerFilters(f: ReportsFilters) {
+  return {
+    p_start_date: f.startDate ?? undefined,
+    p_end_date: f.endDate ?? undefined,
+    p_branch_id: f.branchId ?? undefined,
+    p_situation_ids: f.situationIds ?? undefined,
+  };
+}
+
 export const customersService = {
   getKpis: (f: ReportsFilters) =>
-    rpc<CustomersKpis>('sp_rpt_customers_kpis', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<CustomersKpis>('sp_rpt_customers_kpis', mapCustomerFilters(f)),
 
   getTopCustomers: (f: ReportsFilters, limit = 10) =>
     rpc<TopCustomer[]>('sp_rpt_top_customers', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
+      ...mapCustomerFilters(f),
       p_limit: limit,
     }),
 
+  // Este SP acota por país en vez de por sede: es la única excepción.
   getGeoDistribution: (f: ReportsFilters) =>
     rpc<GeoDistributionData>('sp_rpt_customers_geo_distribution', {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
       p_country_id: f.countryId ?? undefined,
+      p_situation_ids: f.situationIds ?? undefined,
     }),
 
-  getByLoyalty: () =>
-    rpc<CustomersByLoyaltyItem[]>('sp_rpt_customers_by_loyalty'),
+  getByLoyalty: (f: ReportsFilters) =>
+    rpc<CustomersByLoyaltyItem[]>('sp_rpt_customers_by_loyalty', mapCustomerFilters(f)),
 
   getPurchaseFrequency: (f: ReportsFilters) =>
-    rpc<PurchaseFrequencyItem[]>('sp_rpt_customers_purchase_frequency', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-    }),
+    rpc<PurchaseFrequencyItem[]>('sp_rpt_customers_purchase_frequency', mapCustomerFilters(f)),
 
   getNewVsReturning: (f: ReportsFilters) =>
-    rpc<NewVsReturningData>('sp_rpt_customers_new_vs_returning', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<NewVsReturningData>('sp_rpt_customers_new_vs_returning', mapCustomerFilters(f)),
 
   getRecency: (f: ReportsFilters) =>
-    rpc<CustomersRecencyItem[]>('sp_rpt_customers_recency', {
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<CustomersRecencyItem[]>('sp_rpt_customers_recency', mapCustomerFilters(f)),
 
   getPareto: (f: ReportsFilters) =>
-    rpc<CustomersParetoItem[]>('sp_rpt_customers_pareto', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<CustomersParetoItem[]>('sp_rpt_customers_pareto', mapCustomerFilters(f)),
 
   getBySaleType: (f: ReportsFilters) =>
-    rpc<CustomersBySaleTypeItem[]>('sp_rpt_customers_by_sale_type', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<CustomersBySaleTypeItem[]>('sp_rpt_customers_by_sale_type', mapCustomerFilters(f)),
 
+  // Mira hacia adelante ("quién cumple en los próximos N días"), así que no
+  // recibe el rango del reporte: aplicarle un período pasado la dejaría vacía.
   getUpcomingBirthdays: (days: number, limit = 15) =>
     rpc<UpcomingBirthdayItem[]>('sp_rpt_customers_upcoming_birthdays', {
       p_days: days,

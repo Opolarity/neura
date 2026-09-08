@@ -28,7 +28,11 @@ export function CustomersDashboard({ filters }: CustomersDashboardProps) {
           title="Compradores únicos"
           value={kpis?.unique_buyers ?? '—'}
           loading={dash.kpis.isLoading}
-          subtitle="en el periodo"
+          subtitle={
+            kpis
+              ? `${kpis.total_orders} pedidos · ${kpis.orders_per_customer} por cliente`
+              : 'en el periodo'
+          }
         />
         <KpiCard
           title="Ticket promedio"
