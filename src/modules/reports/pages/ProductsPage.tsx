@@ -162,7 +162,7 @@ export default function ProductsPage() {
           <>
             Productos mide <strong className="font-medium text-foreground">mercadería que salió
             del almacén</strong>: por defecto solo cuenta los pedidos Enviado y Entregado. Los
-            que están En proceso o Armado no entran acá, pero sí en Reportes de Ventas, que mide
+            que están En proceso o Armado no entran acá, pero sí en Reportes de ventas, que mide
             lo que se pidió — por eso las dos pestañas no dan el mismo volumen; para cambiar el
             criterio, usá el filtro Estado de pedido.{' '}
             <strong className="font-medium text-foreground">Ingresos</strong> valoriza solo las
