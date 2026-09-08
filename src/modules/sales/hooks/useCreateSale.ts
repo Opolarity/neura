@@ -8,6 +8,7 @@ import { applyPriceRules, type GiftItem } from "../rules/applyPriceRules";
 import { getPriceListIsActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { measure } from "@/lib/rum";
 import { LIMA_TIME_ZONE } from "@/shared/utils/date";
 import { useToast } from "@/hooks/use-toast";
 import type {
@@ -2000,6 +2001,8 @@ export const useCreateSale = () => {
       console.log("[CreateSale] Submitting with saleType:", formData.saleType);
 
       try {
+        // RUM: se mide la operacion completa (varias llamadas)
+        return await measure("venta_guardar", async () => {
         const orderData = {
           documentType: isAnonymousPurchase ? "0" : formData.documentType,
           documentNumber: isAnonymousPurchase ? " " : formData.documentNumber,
@@ -2189,6 +2192,7 @@ export const useCreateSale = () => {
         } else {
           navigate("/sales");
         }
+        });
       } catch (error) {
         console.error("Error saving sale:", error);
         toastError(error, orderId

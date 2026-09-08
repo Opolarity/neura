@@ -3,10 +3,22 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+COPY package*.json .npmrc ./
+# NPM_TOKEN: token de lectura de GitHub Packages (@opolarity/rum). Build Variable en Coolify.
+ARG NPM_TOKEN
+RUN NPM_TOKEN=$NPM_TOKEN npm ci
 
 COPY . .
+# RUM: variables de build (Coolify las pasa como build-args) y release (SOURCE_COMMIT).
+ARG VITE_RUM_ENDPOINT
+ARG VITE_RUM_KEY
+ARG VITE_RUM_ENV
+ARG SOURCE_COMMIT
+ENV VITE_RUM_ENDPOINT=$VITE_RUM_ENDPOINT \
+    VITE_RUM_KEY=$VITE_RUM_KEY \
+    VITE_RUM_ENV=$VITE_RUM_ENV \
+    VITE_RUM_RELEASE=$SOURCE_COMMIT
+
 RUN npm run build
 
 # 2) Serve (Nginx)
