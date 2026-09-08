@@ -447,7 +447,12 @@ export interface SalesReportRow {
   sale_type: string | null;
   seller: string | null;
   total: number;
+  // Cobrado NETO de devoluciones confirmadas, para que la hoja cierre con la
+  // tarjeta "Ventas Totales" del dashboard.
   paid_amount: number;
+  // Reembolsos confirmados de la orden. Vienen en negativo, así que
+  // paid_amount = (pagos) + refund_amount.
+  refund_amount: number;
   // Métodos de pago de la orden, ya formateados por el SP como
   // "Efectivo (50.00), Yape (30.00)". "-" cuando la orden no tiene pagos.
   payment_methods: string | null;

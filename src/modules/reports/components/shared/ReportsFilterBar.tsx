@@ -18,9 +18,15 @@ interface ReportsFilterBarProps {
   exportSlot?: ReactNode;
   /** true si hay cambios sin aplicar en los filtros propios del tab (ej. producto de Productos). */
   extraDirty?: boolean;
+  /**
+   * Nota al pie de la caja de filtros — aclara cómo lee sus cifras la pestaña
+   * (qué suma cada KPI, qué queda fuera). Va por prop y no en duro porque esta
+   * barra la comparten las siete pestañas y cada una mide cosas distintas.
+   */
+  footNote?: ReactNode;
 }
 
-export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExtra, exportSlot, extraDirty = false }: ReportsFilterBarProps) {
+export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExtra, exportSlot, extraDirty = false, footNote }: ReportsFilterBarProps) {
   const { draft, setDraft, apply, isDirty } = useReportsFilters();
   const [open, setOpen] = useState(false);
 
@@ -56,17 +62,12 @@ export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExt
             {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </Button>
         )}
-      </div>
 
-      {/* Campos extra (expandido) */}
-      {open && extraFields && (
-        <div className="flex flex-wrap items-end gap-3 pt-3 border-t">
-          {extraFields}
-        </div>
-      )}
-
-      {/* Fila de acciones — siempre visible */}
-      <div className="flex items-center gap-2 pt-3 border-t">
+        {/*
+          Acciones pegadas al borde derecho de la misma fila del rango. Todos
+          los botones son h-9, igual que los campos de fecha, así que el
+          `items-end` del contenedor los deja alineados por la base.
+        */}
         <div className="ml-auto flex items-center gap-2">
           {extraActiveCount > 0 && onClearExtra && (
             <Button
@@ -86,6 +87,25 @@ export function ReportsFilterBar({ extraFields, extraActiveCount = 0, onClearExt
           </Button>
         </div>
       </div>
+
+      {/* Campos extra (expandido) */}
+      {open && extraFields && (
+        <div className="flex flex-wrap items-end gap-3 pt-3 border-t">
+          {extraFields}
+        </div>
+      )}
+
+      {/*
+        La nota solo acompaña a los filtros desplegados: es una aclaración
+        metodológica, no algo que tenga que estar ocupando lugar siempre.
+        Depende de `open`, así que una pestaña sin `extraFields` no tiene con
+        qué desplegarla — hoy la única que la usa es Ventas, que sí los tiene.
+      */}
+      {open && footNote && (
+        <p className="pt-3 border-t text-xs leading-relaxed text-muted-foreground">
+          {footNote}
+        </p>
+      )}
     </div>
   );
 }

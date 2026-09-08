@@ -35,6 +35,7 @@ function buildSalesSheet(rows: SalesReportRow[]): XLSX.WorkSheet {
     "Canal de Venta",
     "Vendedor",
     "Total",
+    "Devoluciones",
     "Cobrado",
     "Método de Pago",
     "Comprobante",
@@ -58,6 +59,7 @@ function buildSalesSheet(rows: SalesReportRow[]): XLSX.WorkSheet {
     r.sale_type ?? "-",
     r.seller ?? "-",
     r.total,
+    r.refund_amount,
     r.paid_amount,
     r.payment_methods ?? "-",
     r.invoice ?? "-",
@@ -83,6 +85,7 @@ function buildSalesSheet(rows: SalesReportRow[]): XLSX.WorkSheet {
     { wch: 16 }, // Canal de Venta
     { wch: 24 }, // Vendedor
     { wch: 12 }, // Total
+    { wch: 14 }, // Devoluciones
     { wch: 12 }, // Cobrado
     { wch: 34 }, // Método de Pago
     { wch: 18 }, // Comprobante

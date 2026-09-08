@@ -154,6 +154,7 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
       case "payment_surcharge_percent":
       case "shipping_discount_fixed":
       case "shipping_discount_percent":
+      case "shipping_fixed_price":
         Object.assign(base, { value: 0 });
         break;
       case "fixed_discount_per_product":
@@ -440,6 +441,22 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
               value={action.value ?? 0}
               onChange={(e) => updateField("value", parseFloat(e.target.value) || 0)}
             />
+          </div>
+        );
+
+      case "shipping_fixed_price":
+        return (
+          <div className="space-y-1">
+            <Label className="text-xs">Precio de envío (S/)</Label>
+            <Input
+              type="number"
+              className="w-[140px]"
+              value={action.value ?? 0}
+              onChange={(e) => updateField("value", parseFloat(e.target.value) || 0)}
+            />
+            <p className="text-sm text-muted-foreground">
+              El envío costará este monto, sin importar el método elegido
+            </p>
           </div>
         );
 
