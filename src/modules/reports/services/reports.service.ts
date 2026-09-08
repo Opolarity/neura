@@ -385,13 +385,23 @@ export const financialService = {
 /**
  * Params comunes de los SP de la pestaña Clientes. `situationIds` en NULL deja
  * que el backend aplique su default, que es el mismo de Ventas: todo menos
- * cancelado y reembolsado. Existen desde la migración 31000908142000.
+ * cancelado y reembolsado.
+ *
+ * Desde la migración 31000908161000 los nueve SP aceptan el mismo juego que
+ * Ventas, así que ya no hace falta una excepción para el de geografía.
  */
 function mapCustomerFilters(f: ReportsFilters) {
   return {
     p_start_date: f.startDate ?? undefined,
     p_end_date: f.endDate ?? undefined,
     p_branch_id: f.branchId ?? undefined,
+    p_sale_type_id: f.saleTypeId ?? undefined,
+    p_country_id: f.countryId ?? undefined,
+    p_state_id: f.stateId ?? undefined,
+    p_city_id: f.cityId ?? undefined,
+    p_neighborhood_id: f.neighborhoodId ?? undefined,
+    p_payment_method_id: f.paymentMethodId ?? undefined,
+    p_price_list_code: f.priceListCode ?? undefined,
     p_situation_ids: f.situationIds ?? undefined,
   };
 }
@@ -406,14 +416,8 @@ export const customersService = {
       p_limit: limit,
     }),
 
-  // Este SP acota por país en vez de por sede: es la única excepción.
   getGeoDistribution: (f: ReportsFilters) =>
-    rpc<GeoDistributionData>('sp_rpt_customers_geo_distribution', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_country_id: f.countryId ?? undefined,
-      p_situation_ids: f.situationIds ?? undefined,
-    }),
+    rpc<GeoDistributionData>('sp_rpt_customers_geo_distribution', mapCustomerFilters(f)),
 
   getByLoyalty: (f: ReportsFilters) =>
     rpc<CustomersByLoyaltyItem[]>('sp_rpt_customers_by_loyalty', mapCustomerFilters(f)),
@@ -511,6 +515,27 @@ export const fetchSalesDetailReport = (
   f: ReportsFilters,
 ): Promise<SalesDetailReportRow[]> =>
   rpc<SalesDetailReportRow[]>('sp_rpt_export_sales_detail', mapFilters(f));
+
+// Una fila por CLIENTE, para el Excel de /reports/clients. Misma identidad y
+// mismos filtros que la pantalla, pero sin límite: "Top clientes" corta en el
+// límite elegido, esto trae todos.
+export interface CustomerExportRow {
+  customer_name: string;
+  document_number: string | null;
+  has_account: boolean;
+  /** true para la fila de las ventas sin cliente identificable. */
+  is_anonymous: boolean;
+  order_count: number;
+  total_spent: number;
+  avg_ticket: number;
+  first_order: string;
+  last_order: string;
+  loyalty_level: string;
+  loyalty_points: number | null;
+}
+
+export const fetchCustomersReport = (f: ReportsFilters): Promise<CustomerExportRow[]> =>
+  rpc<CustomerExportRow[]>('sp_rpt_export_customers', mapCustomerFilters(f));
 
 // ============================================================
 // SHARED: Load filter options
