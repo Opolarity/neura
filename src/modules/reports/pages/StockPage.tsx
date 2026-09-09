@@ -92,7 +92,15 @@ export default function StockPage() {
             <strong className="font-medium text-foreground">Tipos de movimiento</strong> y{' '}
             <strong className="font-medium text-foreground">Rotación</strong>, que miden
             movimientos del período. Los filtros de canal, método de pago y geografía no existen
-            acá porque el stock no sale de un pedido; el equivalente de sede es el almacén.
+            acá porque el stock no sale de un pedido; el equivalente de sede es el almacén.{' '}
+            Ojo con ese filtro: al elegir un almacén,{' '}
+            <strong className="font-medium text-foreground">Unidades en stock</strong> son las de
+            ese almacén, pero{' '}
+            <strong className="font-medium text-foreground">Stock bajo</strong> cuenta los SKUs
+            cuyo stock <em>sumando todos los almacenes</em> queda bajo el umbral. Se repone por
+            SKU, no por depósito: no se compra porque un almacén esté corto si otro tiene de
+            sobra. La bandeja de reposición y la distribución usan ese mismo criterio, así que
+            las tres cifras siempre coinciden entre sí.
           </>
         }
       />
