@@ -134,14 +134,17 @@ export const salesService = {
       p_map_city_id: mapCityId ?? null,
     }),
 
+  // Pasa por `mapFilters` como el resto de la pestaña. Antes mandaba solo
+  // fecha, sede y situación: los otros siete campos de la barra —canal, método
+  // de pago, lista de precios y la cascada geográfica— ni siquiera existían en
+  // la firma del SP, así que la tabla se quedaba mostrando el top del período
+  // entero mientras el resto de la pantalla sí se acotaba, y sin avisar.
+  // Los acepta desde la migración 31000909143000.
   getTopProducts: (f: ReportsFilters, metric: TopMetric = 'revenue', limit = 10) =>
     rpc<TopProductItem[]>('sp_rpt_top_products_sales', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
+      ...mapFilters(f),
       p_metric: metric,
       p_limit: limit,
-      p_situation_ids: f.situationIds ?? undefined,
     }),
 };
 
