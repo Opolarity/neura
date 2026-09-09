@@ -42,6 +42,17 @@ export interface ReportsFilters {
  * sola vez al importar, así que una pestaña abierta cruzando medianoche o
  * cambio de mes arrastraba un rango obsoleto.
  */
+  /**
+   * Cuenta de `movements.business_account_id`. Solo la usa Financiero: es un
+   * campo de la caja, no del pedido, así que no aparece en el resto de las
+   * pestañas. `null` = todas las cuentas.
+   */
+  businessAccountId: number | null;
+  /**
+   * Clase de `movements.movement_class_id` (el "motivo" del movimiento). Igual
+   * que la anterior: vive en la caja, no en el pedido. `null` = todas.
+   */
+  movementClassId: number | null;
 export const createDefaultReportsFilters = (): ReportsFilters => ({
   startDate: getFirstDayOfMonth(),
   endDate: getTodayDate(),
@@ -66,6 +77,8 @@ export interface OrderSituationOption {
   code: string | null;
   statuses: { code: string };
 }
+  businessAccountId: null,
+  movementClassId: null,
 
 /**
  * Situaciones que arrancan desmarcadas en el filtro. Mismo criterio que aplica
@@ -469,11 +482,17 @@ export interface FinancialByPaymentItem {
   net: number;
 }
 
-export interface AccountBalance {
-  account_id: number;
-  account_name: string;
-  bank: string;
-  balance: number;
+/** Cuenta del negocio, para el filtro "Cuenta" de Financiero. */
+export interface BusinessAccountOption {
+  id: number;
+  name: string;
+  bank: string | null;
+}
+
+/** Clase (motivo) de movimiento del módulo MOV, para el filtro "Motivo". */
+export interface MovementClassOption {
+  id: number;
+  name: string;
 }
 
 export interface FinancialProfitKpis {

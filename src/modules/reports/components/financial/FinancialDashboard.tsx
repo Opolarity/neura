@@ -4,7 +4,7 @@ import { FinancialByClassChart } from './FinancialByClassChart';
 import { FinancialByPaymentChart } from './FinancialByPaymentChart';
 import { ProfitKpis } from './ProfitKpis';
 import { MarginByProductTable } from './MarginByProductTable';
-import { useFinancialDashboard } from '../../hooks/useFinancialDashboard';
+import { useFinancialDashboard, MARGIN_LIMIT } from '../../hooks/useFinancialDashboard';
 import type { ReportsFilters } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
 
@@ -70,6 +70,7 @@ export function FinancialDashboard({ filters }: FinancialDashboardProps) {
       <MarginByProductTable
         data={dash.marginByProduct.data ?? []}
         loading={dash.marginByProduct.isLoading}
+        limit={MARGIN_LIMIT}
       />
     </div>
   );

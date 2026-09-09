@@ -5,11 +5,13 @@ import { formatCurrency } from '@/shared/utils/currency';
 interface Props {
   data: MarginByProductItem[];
   loading: boolean;
+  /** Cuántos productos trae el SP. Va en el título: la tabla no es el total. */
+  limit: number;
 }
 
-export function MarginByProductTable({ data, loading }: Props) {
+export function MarginByProductTable({ data, loading, limit }: Props) {
   return (
-    <ReportCard title="Margen por producto">
+    <ReportCard title={`Top ${limit} productos por margen`}>
       {loading ? (
         <ChartLoading />
       ) : data.length === 0 ? (
