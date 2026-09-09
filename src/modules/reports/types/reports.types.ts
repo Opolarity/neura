@@ -33,15 +33,6 @@ export interface ReportsFilters {
    * que persiste la orden. `null` = todas las listas.
    */
   priceListCode: string | null;
-}
-
-/**
- * Rango por defecto: del día 1 del mes en curso a hoy, en calendario de Lima.
- *
- * Es una factory, no una constante: como constante de módulo se evaluaba una
- * sola vez al importar, así que una pestaña abierta cruzando medianoche o
- * cambio de mes arrastraba un rango obsoleto.
- */
   /**
    * Cuenta de `movements.business_account_id`. Solo la usa Financiero: es un
    * campo de la caja, no del pedido, así que no aparece en el resto de las
@@ -53,6 +44,15 @@ export interface ReportsFilters {
    * que la anterior: vive en la caja, no en el pedido. `null` = todas.
    */
   movementClassId: number | null;
+}
+
+/**
+ * Rango por defecto: del día 1 del mes en curso a hoy, en calendario de Lima.
+ *
+ * Es una factory, no una constante: como constante de módulo se evaluaba una
+ * sola vez al importar, así que una pestaña abierta cruzando medianoche o
+ * cambio de mes arrastraba un rango obsoleto.
+ */
 export const createDefaultReportsFilters = (): ReportsFilters => ({
   startDate: getFirstDayOfMonth(),
   endDate: getTodayDate(),
@@ -66,6 +66,8 @@ export const createDefaultReportsFilters = (): ReportsFilters => ({
   situationIds: null,
   productSituationIds: null,
   priceListCode: null,
+  businessAccountId: null,
+  movementClassId: null,
 });
 
 // -------------------------------------------------------
@@ -77,8 +79,6 @@ export interface OrderSituationOption {
   code: string | null;
   statuses: { code: string };
 }
-  businessAccountId: null,
-  movementClassId: null,
 
 /**
  * Situaciones que arrancan desmarcadas en el filtro. Mismo criterio que aplica

@@ -335,16 +335,30 @@ export const returnsService = {
 // ============================================================
 // FINANCIAL
 // ============================================================
+/**
+ * Params de la mitad de CAJA de Financiero: los cuatro SP que leen `movements`.
+ * Ahí no hay pedido, así que canal, geografía y lista de precios no existen —
+ * lo único que acota un movimiento es sede, cuenta, método de pago y motivo.
+ */
+function mapCashFilters(f: ReportsFilters) {
+  return {
+    p_start_date: f.startDate ?? undefined,
+    p_end_date: f.endDate ?? undefined,
+    p_branch_id: f.branchId ?? undefined,
+    p_business_account: f.businessAccountId ?? undefined,
+    p_payment_method_id: f.paymentMethodId ?? undefined,
+    p_movement_class_id: f.movementClassId ?? undefined,
+  };
+}
+
 export const financialService = {
   getKpis: (f: ReportsFilters) =>
     rpc<FinancialKpis>('sp_rpt_financial_kpis', mapCashFilters(f)),
 
   getCashflowOverTime: (f: ReportsFilters, granularity: Granularity = 'day') =>
     rpc<CashflowItem[]>('sp_rpt_cashflow_over_time', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
+      ...mapCashFilters(f),
       p_granularity: granularity,
-      p_branch_id: f.branchId ?? undefined,
     }),
 
   getByClass: (f: ReportsFilters) =>
@@ -362,14 +376,54 @@ export const financialService = {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
       p_branch_id: f.branchId ?? undefined,
+      p_situation_ids: situationIds,
+      p_payment_method_id: f.paymentMethodId ?? undefined,
     }),
 
   getMarginByProduct: (f: ReportsFilters, situationIds: number[], limit = 20) =>
     rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
-      ...mapCashFilters(f),
+      p_start_date: f.startDate ?? undefined,
+      p_end_date: f.endDate ?? undefined,
+      p_branch_id: f.branchId ?? undefined,
       p_limit: limit,
+      p_situation_ids: situationIds,
+      p_payment_method_id: f.paymentMethodId ?? undefined,
     }),
 };
+
+// Una fila por movimiento de caja, para la hoja "Movimientos" del Excel de
+// /reports/movements. Mismos filtros que la pantalla.
+export interface FinancialMovementExportRow {
+  movement_id: number;
+  movement_date: string;
+  code: string | null;
+  /**
+   * Ingreso/Egreso según el SIGNO del monto, que es como clasifican las
+   * tarjetas y los dos gráficos. Por eso las columnas de la hoja suman igual
+   * que los KPI.
+   */
+  direction: string;
+  /**
+   * El tipo tal como quedó registrado en el ERP. No siempre coincide con
+   * `direction`: los movimientos anteriores al fix de signo de julio de 2026
+   * quedaron con el tipo "Egreso" y monto positivo.
+   */
+  registered_type: string | null;
+  class_name: string;
+  description: string | null;
+  payment_method: string | null;
+  business_account: string | null;
+  branch: string | null;
+  user_name: string | null;
+  amount: number;
+  income: number;
+  expense: number;
+}
+
+export const fetchFinancialMovementsReport = (
+  f: ReportsFilters,
+): Promise<FinancialMovementExportRow[]> =>
+  rpc<FinancialMovementExportRow[]>('sp_rpt_export_financial_movements', mapCashFilters(f));
 
 // ============================================================
 // CUSTOMERS
@@ -420,8 +474,6 @@ export const customersService = {
   getNewVsReturning: (f: ReportsFilters) =>
     rpc<NewVsReturningData>('sp_rpt_customers_new_vs_returning', mapCustomerFilters(f)),
 
-      p_situation_ids: situationIds,
-      p_payment_method_id: f.paymentMethodId ?? undefined,
   getRecency: (f: ReportsFilters) =>
     rpc<CustomersRecencyItem[]>('sp_rpt_customers_recency', mapCustomerFilters(f)),
 
@@ -430,44 +482,8 @@ export const customersService = {
 
   getBySaleType: (f: ReportsFilters) =>
     rpc<CustomersBySaleTypeItem[]>('sp_rpt_customers_by_sale_type', mapCustomerFilters(f)),
-      p_situation_ids: situationIds,
-      p_payment_method_id: f.paymentMethodId ?? undefined,
 
 };
-
-// Una fila por movimiento de caja, para la hoja "Movimientos" del Excel de
-// /reports/movements. Mismos filtros que la pantalla.
-export interface FinancialMovementExportRow {
-  movement_id: number;
-  movement_date: string;
-  code: string | null;
-  /**
-   * Ingreso/Egreso según el SIGNO del monto, que es como clasifican las
-   * tarjetas y los dos gráficos. Por eso las columnas de la hoja suman igual
-   * que los KPI.
-   */
-  direction: string;
-  /**
-   * El tipo tal como quedó registrado en el ERP. No siempre coincide con
-   * `direction`: los movimientos anteriores al fix de signo de julio de 2026
-   * quedaron con el tipo "Egreso" y monto positivo.
-   */
-  registered_type: string | null;
-  class_name: string;
-  description: string | null;
-  payment_method: string | null;
-  business_account: string | null;
-  branch: string | null;
-  user_name: string | null;
-  amount: number;
-  income: number;
-  expense: number;
-}
-
-export const fetchFinancialMovementsReport = (
-  f: ReportsFilters,
-): Promise<FinancialMovementExportRow[]> =>
-  rpc<FinancialMovementExportRow[]>('sp_rpt_export_financial_movements', mapCashFilters(f));
 
 // ============================================================
 // SALES REPORT EXPORT
@@ -624,6 +640,32 @@ export const filterOptionsService = {
     return data ?? [];
   },
 
+  // Cuentas del negocio, para el filtro de Financiero. Solo las activas: las
+  // dadas de baja siguen teniendo movimientos históricos, pero no son algo
+  // sobre lo que hoy se quiera reportar.
+  getBusinessAccounts: async (): Promise<BusinessAccountOption[]> => {
+    const { data, error } = await supabase
+      .from('business_accounts')
+      .select('id, name, bank')
+      .eq('is_active', true)
+      .order('name');
+    if (error) throw error;
+    return (data ?? []) as BusinessAccountOption[];
+  },
+
+  // Motivos de movimiento del módulo MOV. Es el mismo catálogo que ofrece el
+  // alta de movimientos del ERP, así que el filtro del reporte y el formulario
+  // hablan de lo mismo.
+  getMovementClasses: async (): Promise<MovementClassOption[]> => {
+    const { data, error } = await supabase
+      .from('classes')
+      .select('id, name, modules!inner(code)')
+      .eq('modules.code', 'MOV')
+      .order('name');
+    if (error) throw error;
+    return (data ?? []) as unknown as MovementClassOption[];
+  },
+
   getCountries: async () => {
     const { data, error } = await supabase
       .from('countries')
@@ -710,32 +752,6 @@ export interface PriceRuleKpis {
   /** Aplicaciones atribuidas a una regla en el rango. */
   applications: number;
   /**
-  // Cuentas del negocio, para el filtro de Financiero. Solo las activas: las
-  // dadas de baja siguen teniendo movimientos históricos, pero no son algo
-  // sobre lo que hoy se quiera reportar.
-  getBusinessAccounts: async (): Promise<BusinessAccountOption[]> => {
-    const { data, error } = await supabase
-      .from('business_accounts')
-      .select('id, name, bank')
-      .eq('is_active', true)
-      .order('name');
-    if (error) throw error;
-    return (data ?? []) as BusinessAccountOption[];
-  },
-
-  // Motivos de movimiento del módulo MOV. Es el mismo catálogo que ofrece el
-  // alta de movimientos del ERP, así que el filtro del reporte y el formulario
-  // hablan de lo mismo.
-  getMovementClasses: async (): Promise<MovementClassOption[]> => {
-    const { data, error } = await supabase
-      .from('classes')
-      .select('id, name, modules!inner(code)')
-      .eq('modules.code', 'MOV')
-      .order('name');
-    if (error) throw error;
-    return (data ?? []) as unknown as MovementClassOption[];
-  },
-
    * Venta de los pedidos que tuvieron al menos una regla. Un pedido con dos
    * reglas se cuenta una sola vez acá, aunque su venta aparezca en la fila de
    * cada una de las dos.
