@@ -126,8 +126,9 @@ export default function PriceRulesReportPage() {
           <>
             Una <strong className="font-medium text-foreground">aplicación</strong> es un descuento
             de regla dentro de un pedido, contado una sola vez y acreditado a la regla que estaba
-            vigente ese día: varias reglas comparten código en el ERP, así que el código solo no
-            alcanza para saber cuál fue.{' '}
+            vigente ese día: el pedido solo guarda el código del descuento, y una regla dada de
+            baja conserva el suyo cuando se la recrea, así que el código solo no alcanza para
+            saber cuál fue. Entre las reglas vigentes ya no puede repetirse.{' '}
             <strong className="font-medium text-foreground">Venta generada</strong> es la venta de
             los pedidos donde aplicó, <em>no</em> el monto descontado: las reglas descuentan por
             unidad dentro de cada línea y el ERP no guarda ese monto atribuido a la regla. Un
