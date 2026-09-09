@@ -2,6 +2,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
+  EmptyReportState,
   ReportCard,
   ReportSelect,
 } from '../shared/ReportScaffold';
@@ -31,6 +32,7 @@ export function TopReturnedProductsChart({ data, loading, limit, onLimitChange }
   return (
     <ReportCard
       title="Productos más devueltos"
+      description="Solo la mercadería que entra; el reemplazo que sale en un cambio no cuenta."
       actions={
         <ReportSelect
           value={limit.toString()}
@@ -45,9 +47,14 @@ export function TopReturnedProductsChart({ data, loading, limit, onLimitChange }
     >
       {loading ? (
         <ChartLoading />
+      ) : data.length === 0 ? (
+        <EmptyReportState>Sin productos devueltos en el periodo</EmptyReportState>
       ) : (
         <ChartContainer
-          config={{ devoluciones: { label: 'Devoluciones', color: reportChartColors.blue } }}
+          config={{
+            devoluciones: { label: 'Devoluciones', color: reportChartColors.blue },
+            unidades: { label: 'Unidades', color: reportChartColors.sky },
+          }}
           className="h-56 w-full aspect-auto"
         >
           <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 16 }}>

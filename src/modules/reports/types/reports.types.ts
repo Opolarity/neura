@@ -29,6 +29,15 @@ export interface ReportsFilters {
    */
   productSituationIds: number[] | null;
   /**
+   * Situación del RETORNO en la pestaña de Cambios/Retornos — catálogo del
+   * módulo RTU, no el de pedidos. Campo aparte por la misma razón que
+   * `productSituationIds`: `filters` es compartido y esto no significa lo
+   * mismo que `situationIds`. `null` = el default del backend (solo Aceptado).
+   */
+  returnSituationIds: number[] | null;
+  /** Tipo de retorno (Devolución total / parcial / Cambio). `null` = todos. */
+  returnTypeIds: number[] | null;
+  /**
    * Código de la lista de precios (`orders.price_list_code`), no su id: es lo
    * que persiste la orden. `null` = todas las listas.
    */
@@ -65,6 +74,8 @@ export const createDefaultReportsFilters = (): ReportsFilters => ({
   paymentMethodId: null,
   situationIds: null,
   productSituationIds: null,
+  returnSituationIds: null,
+  returnTypeIds: null,
   priceListCode: null,
   businessAccountId: null,
   movementClassId: null,
@@ -420,8 +431,19 @@ export interface DeadStockReport {
 // -------------------------------------------------------
 export interface ReturnsKpis {
   total_returns: number;
+  /**
+   * Sale de `return_payments`, no de `returns.total_refund_amount`: el
+   * movimiento de caja es el dato firme (el campo del retorno lo pisa
+   * `sp_update_return` con lo que manda el front). Viene con el signo
+   * invertido, así que un reembolso lee positivo.
+   */
   total_refund_amount: number;
+  /** Retornos con al menos un movimiento en `return_payments`. */
+  refunded_count: number;
   avg_refund_amount: number;
+  total_units_returned: number;
+  /** Denominador de `return_rate_pct` — pedidos del período sin los cancelados. */
+  order_count: number;
   return_rate_pct: number;
 }
 
@@ -429,6 +451,7 @@ export interface ReturnsOverTimeItem {
   period: string;
   return_count: number;
   total_refund_amount: number;
+  total_units_returned: number;
 }
 
 export interface TopReturnedProduct {
@@ -436,15 +459,48 @@ export interface TopReturnedProduct {
   product_title: string;
   return_count: number;
   total_quantity_returned: number;
+  /** Precio unitario por cantidad devuelta. No es lo reembolsado. */
+  total_returned_value: number;
+}
+
+export interface ReturnsByTypeItem {
+  return_type_id: number | null;
+  return_type_name: string;
+  count: number;
   total_refund_amount: number;
+  total_units_returned: number;
 }
 
 export interface ReturnsByReasonItem {
   reason: string;
-  return_type_name: string;
   count: number;
   total_refund_amount: number;
+  total_units_returned: number;
 }
+
+/** Situación del retorno (catálogo del módulo RTU: Aceptado / Anulado / Pendiente). */
+export interface ReturnSituationOption {
+  id: number;
+  name: string;
+  code: string | null;
+}
+
+/** Tipo de retorno (Devolución total / parcial / Cambio). */
+export interface ReturnTypeOption {
+  id: number;
+  name: string;
+  code: string | null;
+}
+
+/**
+ * Situación que el backend cuenta cuando `returnSituationIds` viaja en null:
+ * solo la aceptada. Mismo criterio que ya aplica Ventas, que netea únicamente
+ * los `return_payments` de retornos confirmados.
+ */
+export const RETURNS_DEFAULT_SITUATION_CODE = 'PHY';
+
+export const defaultReturnSituationIds = (options: ReturnSituationOption[]): number[] =>
+  options.filter((s) => s.code === RETURNS_DEFAULT_SITUATION_CODE).map((s) => s.id);
 
 // -------------------------------------------------------
 // Financial Dashboard

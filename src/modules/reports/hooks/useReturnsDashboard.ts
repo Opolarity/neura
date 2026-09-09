@@ -27,6 +27,12 @@ export function useReturnsDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 5,
   });
 
+  const byType = useQuery({
+    queryKey: ['rpt_returns_by_type', ...queryKey],
+    queryFn: () => returnsService.getByType(filters),
+    staleTime: 1000 * 60 * 5,
+  });
+
   const byReason = useQuery({
     queryKey: ['rpt_returns_by_reason', ...queryKey],
     queryFn: () => returnsService.getByReason(filters),
@@ -37,6 +43,7 @@ export function useReturnsDashboard(filters: ReportsFilters) {
     kpis,
     overTime,
     topProducts,
+    byType,
     byReason,
     granularity,
     setGranularity,

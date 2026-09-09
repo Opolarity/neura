@@ -9,16 +9,23 @@ import {
   formatNumber,
   reportChartColors,
 } from '../shared/reportChartUtils';
-import type { ReturnsByReasonItem } from '../../types/reports.types';
+import type { ReturnsByTypeItem } from '../../types/reports.types';
 
 interface Props {
-  data: ReturnsByReasonItem[];
+  data: ReturnsByTypeItem[];
   loading: boolean;
 }
 
-export function ReturnsByReasonChart({ data, loading }: Props) {
+/**
+ * La torta muestra el TIPO de retorno, no el motivo: el tipo es un catálogo
+ * cerrado de tres (Devolución total, Devolución parcial, Cambio), mientras que
+ * `returns.reason` es texto libre — 73 valores distintos en 120 retornos — y
+ * daba una torta de veintipico de rebanadas ilegible. Los motivos ahora van en
+ * la tabla de al lado.
+ */
+export function ReturnsByTypeChart({ data, loading }: Props) {
   const chartData = data.map((d) => ({
-    name: d.reason,
+    name: d.return_type_name,
     value: d.count,
   }));
   const colors = [
@@ -31,7 +38,7 @@ export function ReturnsByReasonChart({ data, loading }: Props) {
   ];
 
   return (
-    <ReportCard title="Devoluciones por motivo">
+    <ReportCard title="Devoluciones por tipo">
       {loading ? (
         <ChartLoading />
       ) : data.length === 0 ? (

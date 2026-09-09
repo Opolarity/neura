@@ -32,7 +32,10 @@ import type {
   ReturnsKpis,
   ReturnsOverTimeItem,
   TopReturnedProduct,
+  ReturnsByTypeItem,
   ReturnsByReasonItem,
+  ReturnSituationOption,
+  ReturnTypeOption,
   FinancialKpis,
   CashflowItem,
   FinancialByClassItem,
@@ -301,36 +304,77 @@ export const inventoryService = {
 // ============================================================
 // RETURNS
 // ============================================================
+/**
+ * Params comunes de los SP de Cambios/Retornos. El universo de pedidos se
+ * acota con los mismos campos que Ventas — el retorno cuelga de un pedido —
+ * más los dos propios de la pestaña: la situación del retorno (catálogo del
+ * módulo RTU, no el de pedidos) y el tipo.
+ *
+ * Ojo al agregar params: PostgREST resuelve por el conjunto exacto de
+ * argumentos nombrados, así que mandar uno que el SP no declare devuelve
+ * PGRST202 (404). Estos existen desde la migración 31000908232000.
+ */
+function mapReturnFilters(f: ReportsFilters) {
+  return {
+    p_start_date: f.startDate ?? undefined,
+    p_end_date: f.endDate ?? undefined,
+    p_branch_id: f.branchId ?? undefined,
+    p_return_situation_ids: f.returnSituationIds ?? undefined,
+    p_return_type_ids: f.returnTypeIds ?? undefined,
+    p_sale_type_id: f.saleTypeId ?? undefined,
+    p_payment_method_id: f.paymentMethodId ?? undefined,
+    p_price_list_code: f.priceListCode ?? undefined,
+    p_country_id: f.countryId ?? undefined,
+    p_state_id: f.stateId ?? undefined,
+    p_city_id: f.cityId ?? undefined,
+    p_neighborhood_id: f.neighborhoodId ?? undefined,
+  };
+}
+
 export const returnsService = {
   getKpis: (f: ReportsFilters) =>
-    rpc<ReturnsKpis>('sp_rpt_returns_kpis', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<ReturnsKpis>('sp_rpt_returns_kpis', mapReturnFilters(f)),
 
   getOverTime: (f: ReportsFilters, granularity: Granularity = 'day') =>
     rpc<ReturnsOverTimeItem[]>('sp_rpt_returns_over_time', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
+      ...mapReturnFilters(f),
       p_granularity: granularity,
-      p_branch_id: f.branchId ?? undefined,
     }),
 
   getTopProducts: (f: ReportsFilters, limit = 10) =>
     rpc<TopReturnedProduct[]>('sp_rpt_top_returned_products', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
+      ...mapReturnFilters(f),
       p_limit: limit,
     }),
 
+  getByType: (f: ReportsFilters) =>
+    rpc<ReturnsByTypeItem[]>('sp_rpt_returns_by_type', mapReturnFilters(f)),
+
   getByReason: (f: ReportsFilters) =>
-    rpc<ReturnsByReasonItem[]>('sp_rpt_returns_by_reason', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<ReturnsByReasonItem[]>('sp_rpt_returns_by_reason', mapReturnFilters(f)),
 };
+
+/** Una fila por retorno — mismo grano y mismos filtros que las tarjetas. */
+export interface ReturnsExportRow {
+  return_id: number;
+  return_date: string;
+  order_id: number;
+  order_date: string | null;
+  customer_name: string;
+  customer_document: string;
+  return_type_name: string;
+  situation_name: string;
+  reason: string;
+  branch_name: string;
+  sale_type_name: string;
+  products: string;
+  units_returned: number;
+  returned_value: number;
+  refunded_amount: number;
+}
+
+export const fetchReturnsReport = (f: ReportsFilters): Promise<ReturnsExportRow[]> =>
+  rpc<ReturnsExportRow[]>('sp_rpt_export_returns', mapReturnFilters(f));
 
 // ============================================================
 // FINANCIAL
@@ -628,6 +672,32 @@ export const filterOptionsService = {
       .order('id');
     if (error) throw error;
     return (data ?? []) as unknown as OrderSituationOption[];
+  },
+
+  /**
+   * Situaciones del RETORNO — módulo RTU, no ORD: Aceptado, Anulado y
+   * Pendiente. Es otro catálogo, no un subconjunto del de pedidos.
+   */
+  getReturnSituations: async (): Promise<ReturnSituationOption[]> => {
+    const { data, error } = await supabase
+      .from('situations')
+      .select('id, name, code, modules!inner(code)')
+      .eq('modules.code', 'RTU')
+      .order('id');
+    if (error) throw error;
+    return (data ?? []) as unknown as ReturnSituationOption[];
+  },
+
+  /** Tipos de retorno: Devolución total, Devolución parcial y Cambio. */
+  getReturnTypes: async (): Promise<ReturnTypeOption[]> => {
+    const { data, error } = await supabase
+      .from('types')
+      .select('id, name, code, modules!inner(code)')
+      .eq('modules.code', 'RTU')
+      .eq('is_active', true)
+      .order('id');
+    if (error) throw error;
+    return (data ?? []) as unknown as ReturnTypeOption[];
   },
 
   getBranches: async () => {

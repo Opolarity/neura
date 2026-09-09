@@ -1,7 +1,8 @@
 import { KpiCard } from '../shared/KpiCard';
 import { ReturnsOverTimeChart } from './ReturnsOverTimeChart';
 import { TopReturnedProductsChart } from './TopReturnedProductsChart';
-import { ReturnsByReasonChart } from './ReturnsByReasonChart';
+import { ReturnsByTypeChart } from './ReturnsByTypeChart';
+import { ReturnsByReasonTable } from './ReturnsByReasonTable';
 import { useReturnsDashboard } from '../../hooks/useReturnsDashboard';
 import type { ReportsFilters } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
@@ -22,22 +23,29 @@ export function ReturnsDashboard({ filters }: ReturnsDashboardProps) {
           title="Total devoluciones"
           value={kpis?.total_returns ?? '—'}
           loading={dash.kpis.isLoading}
+          subtitle={
+            kpis ? `${kpis.total_units_returned.toLocaleString('es-PE')} unidades devueltas` : undefined
+          }
         />
         <KpiCard
           title="Monto reembolsado"
           value={kpis ? formatCurrency(kpis.total_refund_amount) : '—'}
           loading={dash.kpis.isLoading}
+          subtitle={kpis ? `${kpis.refunded_count} con movimiento registrado` : undefined}
         />
         <KpiCard
           title="Reembolso promedio"
           value={kpis ? formatCurrency(kpis.avg_refund_amount) : '—'}
           loading={dash.kpis.isLoading}
+          subtitle="por retorno con reembolso"
         />
         <KpiCard
           title="Tasa de devolución"
           value={kpis ? `${kpis.return_rate_pct}%` : '—'}
           loading={dash.kpis.isLoading}
-          subtitle="sobre total de pedidos"
+          subtitle={
+            kpis ? `sobre ${kpis.order_count.toLocaleString('es-PE')} pedidos del período` : undefined
+          }
         />
       </div>
 
@@ -49,7 +57,7 @@ export function ReturnsDashboard({ filters }: ReturnsDashboardProps) {
         onGranularityChange={dash.setGranularity}
       />
 
-      {/* Top returned + by reason side by side */}
+      {/* Top devueltos + torta por tipo */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <TopReturnedProductsChart
           data={dash.topProducts.data ?? []}
@@ -57,11 +65,17 @@ export function ReturnsDashboard({ filters }: ReturnsDashboardProps) {
           limit={dash.topLimit}
           onLimitChange={dash.setTopLimit}
         />
-        <ReturnsByReasonChart
-          data={dash.byReason.data ?? []}
-          loading={dash.byReason.isLoading}
+        <ReturnsByTypeChart
+          data={dash.byType.data ?? []}
+          loading={dash.byType.isLoading}
         />
       </div>
+
+      {/* Motivos: texto libre, va en tabla */}
+      <ReturnsByReasonTable
+        data={dash.byReason.data ?? []}
+        loading={dash.byReason.isLoading}
+      />
     </div>
   );
 }
