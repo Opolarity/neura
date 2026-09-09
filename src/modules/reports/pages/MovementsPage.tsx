@@ -117,6 +117,11 @@ export default function MovementsPage() {
             <strong className="font-medium text-foreground">pedidos</strong>, en unidades netas de
             devoluciones confirmadas y valuadas al costo que el producto tiene hoy en el catálogo,
             no al que tenía el día de la venta. Por eso las dos mitades no suman entre sí.
+            {' '}La tabla es además solo el{' '}
+            <strong className="font-medium text-foreground">Top 20 por margen</strong>, y los
+            de mayor margen suelen ser productos de poco volumen: no esperes que sus unidades ni
+            su costo sumen a las tarjetas. El Excel sí trae todos los productos del período, sin
+            ese corte, y ahí las dos cifras cuadran.
             {' '}Sede y método de pago acotan las dos mitades; cuenta y motivo, solo la caja;
             estado de pedido, solo la mitad de ganancia y margen.
           </>
