@@ -4,7 +4,7 @@ import { SalesHeatmap } from './SalesHeatmap';
 import { SalesByDimensionChart } from './SalesByDimensionChart';
 import { TopProductsTable } from './TopProductsTable';
 import { useSalesDashboard } from '../../hooks/useSalesDashboard';
-import type { ReportsFilters, SalesDimension } from '../../types/reports.types';
+import type { ReportsFilters, SalesByDimensionItem, SalesDimension } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
 
 interface SalesDashboardProps {
@@ -18,9 +18,9 @@ export function SalesDashboard({ filters }: SalesDashboardProps) {
   const dimensions = Object.fromEntries(
     Object.entries(dash.byDimensionQueries).map(([dim, query]) => [
       dim,
-      { data: (query.data as any[]) ?? [], loading: query.isLoading },
+      { data: query.data ?? [], loading: query.isLoading },
     ]),
-  ) as Record<SalesDimension, { data: any[]; loading: boolean }>;
+  ) as Record<SalesDimension, { data: SalesByDimensionItem[]; loading: boolean }>;
 
   return (
     <div className="space-y-6">

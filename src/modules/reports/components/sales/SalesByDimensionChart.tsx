@@ -40,6 +40,18 @@ const DIMENSION_LABELS: Record<ChartDimension, string> = {
   situation: 'Estado de pedido',
 };
 
+// Texto del ícono (i) de cada tarjeta.
+const DIMENSION_INFO: Record<ChartDimension, string> = {
+  branch:
+    'Ingresos del período por sucursal del pedido, según el total del pedido (incluye flete y descuentos). Se muestran las 8 sucursales con más ingresos; el resto va en Otros. Excluye cancelados y reembolsados salvo que cambies Estado de pedido.',
+  sale_type:
+    'Participación de cada canal de venta (tienda, web, WhatsApp, etc.) en los ingresos del período, según el total del pedido. Los 8 canales con más ingresos; el resto va en Otros. Excluye cancelados y reembolsados salvo que cambies Estado de pedido.',
+  payment_method:
+    'Ingresos del período según el método con que se pagó el pedido. Un pedido pagado con dos métodos suma en los dos, así que la suma de los arcos puede superar el total de ventas. Se muestran los 5 métodos principales; el resto va en Otros.',
+  situation:
+    'Ingresos del período según el estado actual de cada pedido (el último que registró). Por defecto quedan fuera los cancelados y reembolsados; si los elegís en el filtro Estado de pedido, aparecen acá.',
+};
+
 // Un tipo de gráfico por dimensión, elegido por lo que se lee en cada una:
 //  - dona    → participación sobre el total entre pocas categorías.
 //  - radial  → comparación entre pocas categorías, con el arco como magnitud.
@@ -94,7 +106,7 @@ export function SalesByDimensionChart({ dimensions }: Props) {
         const slices = toSlices(data, MAX_SLICES[kind]);
 
         return (
-          <ReportCard key={dim} title={`Ventas por ${DIMENSION_LABELS[dim]}`}>
+          <ReportCard key={dim} title={`Ventas por ${DIMENSION_LABELS[dim]}`} info={DIMENSION_INFO[dim]}>
             {loading ? (
               <ChartLoading className="h-64" />
             ) : slices.length === 0 ? (
