@@ -20,6 +20,9 @@ interface Props {
  * Reemplaza a la tabla de motivos (texto libre de `returns.reason`) a pedido
  * de Diego: solo los tres tipos del catálogo, con retornos, unidades y monto
  * reembolsado de cada uno, más una fila de total. Misma fuente que la dona.
+ *
+ * table-fixed: las cinco columnas se reparten el ancho de la tarjeta y el texto
+ * envuelve, así el contenedor no necesita scroll horizontal.
  */
 export function ReturnsByTypeTable({ data, loading }: Props) {
   const totals = data.reduce(
@@ -41,7 +44,7 @@ export function ReturnsByTypeTable({ data, loading }: Props) {
       ) : data.length === 0 ? (
         <EmptyReportState>Sin retornos en el periodo</EmptyReportState>
       ) : (
-        <Table>
+        <Table className="table-fixed" containerClassName="overflow-x-hidden">
           <TableHeader>
             <TableRow>
               <TableHead>Tipo</TableHead>
