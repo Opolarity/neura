@@ -65,6 +65,7 @@ export function TopProductsChart({ data, loading, limit, onLimitChange, category
 
   return (
     <ReportCard
+      info="Ranking de productos por ingresos o por unidades, filtrable por categoría. Ingresos valoriza solo la línea de producto (unidades × precio, menos descuento), sin flete. Las unidades son netas de devoluciones. Solo pedidos Enviado y Entregado y solo productos activos."
       title="Productos más vendidos"
       actions={
         <div className="flex flex-wrap gap-2">

@@ -117,7 +117,7 @@ export function ProductDetailSearch({
     })) ?? [];
 
   return (
-    <ReportCard title="Análisis de producto individual">
+    <ReportCard info="Ficha de un solo producto: unidades y monto vendido en el rango, stock actual por almacén, participación por sede y por canal, evolución diaria y las variaciones (SKU) más vendidas. Respeta los filtros aplicados arriba. El buscador solo encuentra productos activos." title="Análisis de producto individual">
       {/*
         El buscador y su Aplicar viven acá y no en la barra de filtros: solo
         afectan a esta tarjeta. Los filtros de arriba (fechas, sede, canal,

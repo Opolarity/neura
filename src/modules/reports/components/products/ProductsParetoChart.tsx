@@ -64,6 +64,7 @@ export function ProductsParetoChart({ data, loading, limit, onLimitChange }: Pro
 
   return (
     <ReportCard
+      info="Productos ordenados por ingresos de mayor a menor, con la línea del porcentaje acumulado. La clase A son los que juntos llegan al 80 % de los ingresos, B hasta el 95 % y C el resto. Solo pedidos Enviado y Entregado (o los elegidos en Estado de pedido) y solo productos activos."
       title="Pareto de productos (ABC)"
       actions={
         <ReportSelect
