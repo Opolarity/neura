@@ -57,13 +57,11 @@ export function ReturnsDashboard({ filters }: ReturnsDashboardProps) {
         onGranularityChange={dash.setGranularity}
       />
 
-      {/* Top devueltos + torta por tipo */}
+      {/* Detalle por tipo (tabla) + dona por tipo, lado a lado */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <TopReturnedProductsChart
-          data={dash.topProducts.data ?? []}
-          loading={dash.topProducts.isLoading}
-          limit={dash.topLimit}
-          onLimitChange={dash.setTopLimit}
+        <ReturnsByTypeTable
+          data={dash.byType.data ?? []}
+          loading={dash.byType.isLoading}
         />
         <ReturnsByTypeChart
           data={dash.byType.data ?? []}
@@ -71,10 +69,12 @@ export function ReturnsDashboard({ filters }: ReturnsDashboardProps) {
         />
       </div>
 
-      {/* Detalle por tipo (reemplaza a la tabla de motivos, que era texto libre) */}
-      <ReturnsByTypeTable
-        data={dash.byType.data ?? []}
-        loading={dash.byType.isLoading}
+      {/* Top devueltos a todo el ancho: con Top 10 necesita el alto */}
+      <TopReturnedProductsChart
+        data={dash.topProducts.data ?? []}
+        loading={dash.topProducts.isLoading}
+        limit={dash.topLimit}
+        onLimitChange={dash.setTopLimit}
       />
     </div>
   );
