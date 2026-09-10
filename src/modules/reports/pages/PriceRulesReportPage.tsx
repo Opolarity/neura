@@ -125,21 +125,15 @@ export default function PriceRulesReportPage() {
         footNote={
           <>
             Una <strong className="font-medium text-foreground">aplicación</strong> es un descuento
-            de regla dentro de un pedido, contado una sola vez y acreditado a la regla que estaba
-            vigente ese día: el pedido solo guarda el código del descuento, y una regla dada de
-            baja conserva el suyo cuando se la recrea, así que el código solo no alcanza para
-            saber cuál fue. Entre las reglas vigentes ya no puede repetirse.{' '}
+            de regla dentro de un pedido, acreditado a la regla vigente ese día.{' '}
             <strong className="font-medium text-foreground">Venta generada</strong> es la venta de
-            los pedidos donde aplicó, <em>no</em> el monto descontado: las reglas descuentan por
-            unidad dentro de cada línea y el ERP no guarda ese monto atribuido a la regla. Un
-            pedido con dos reglas suma su venta en las dos filas, mientras que la tarjeta{' '}
+            los pedidos donde aplicó, no el monto descontado (el ERP no lo guarda por regla); un
+            pedido con dos reglas suma en las dos filas, pero{' '}
             <strong className="font-medium text-foreground">Venta con regla</strong> lo cuenta una
-            sola vez.{' '}
-            <strong className="font-medium text-foreground">Otros descuentos</strong> junta lo que
-            no sale de una regla — el descuento manual del vendedor, el descuento por producto y el
-            recargo de Mercado Pago — y por eso queda fuera del % de uso.{' '}
+            vez. <strong className="font-medium text-foreground">Otros descuentos</strong> junta lo
+            que no sale de una regla (manual, por producto, recargo de Mercado Pago).{' '}
             <strong className="font-medium text-foreground">Reglas activas</strong> es el catálogo
-            de hoy y no cambia con el rango; las otras tres tarjetas sí.
+            de hoy y no cambia con el rango.
           </>
         }
       />
