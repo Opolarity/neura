@@ -8,7 +8,6 @@ import {
 import {
   formatCurrencyAxis,
   formatNumber,
-
 } from '../shared/reportChartUtils';
 import { returnTypeColor } from './returnTypeColors';
 import type { ReturnsByTypeItem } from '../../types/reports.types';
