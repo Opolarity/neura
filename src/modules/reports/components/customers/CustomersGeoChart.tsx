@@ -30,7 +30,7 @@ export function CustomersGeoChart({ data, loading }: Props) {
   const maxCityBuyers = Math.max(...cities.map((c) => c.unique_buyers), 1);
 
   return (
-    <ReportCard title="Distribución geográfica de clientes">
+    <ReportCard info="Compradores únicos del período según la dirección del pedido: los 10 departamentos y las 10 ciudades con más clientes. Un cliente que compró en dos lugares cuenta en ambos. Los pedidos sin dirección no aparecen." title="Distribución geográfica de clientes">
       {loading ? (
         <ChartLoading />
       ) : stateData.length === 0 && cities.length === 0 ? (

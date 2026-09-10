@@ -28,6 +28,9 @@ export function generateCustomersReportExcel(
     'Última Compra',
     'Nivel de Lealtad',
     'Puntos',
+    'Sucursales de compra',
+    'Canales de venta',
+    'Métodos de pago',
   ];
 
   const dataRows = rows.map((r) => [
@@ -43,6 +46,11 @@ export function generateCustomersReportExcel(
     r.last_order ? formatDateDisplay(r.last_order) : '-',
     LOYALTY_LABELS[r.loyalty_level] ?? r.loyalty_level,
     r.loyalty_points ?? '-',
+    // Concatenados con coma cuando el cliente compró en varias sedes /
+    // canales / con varios métodos (migración 31000910203000).
+    r.branches || '-',
+    r.sale_types || '-',
+    r.payment_methods || '-',
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows]);
@@ -58,6 +66,9 @@ export function generateCustomersReportExcel(
     { wch: 16 }, // Última Compra
     { wch: 22 }, // Nivel de Lealtad
     { wch: 12 }, // Puntos
+    { wch: 26 }, // Sucursales de compra
+    { wch: 36 }, // Canales de venta
+    { wch: 36 }, // Métodos de pago
   ];
 
   const wb = XLSX.utils.book_new();

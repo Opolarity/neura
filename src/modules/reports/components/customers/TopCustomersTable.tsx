@@ -22,6 +22,7 @@ interface Props {
 export function TopCustomersTable({ data, loading, limit, onLimitChange }: Props) {
   return (
     <ReportCard
+      info="Los clientes que más gastaron en el período, con su cantidad de pedidos y su nivel de fidelización. El cliente se identifica por el documento del pedido: un DNI y un RUC de la misma persona son dos filas. Las ventas de mostrador sin documento se muestran con guion."
       title="Top clientes"
       actions={
         <ReportSelect

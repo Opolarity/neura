@@ -675,6 +675,15 @@ export interface CustomersBySaleTypeItem {
   revenue: number;
 }
 
+/** sp_rpt_customers_by_branch (migración 31000910203000). */
+export interface CustomersByBranchItem {
+  branch_id: number | null;
+  branch_name: string;
+  unique_buyers: number;
+  order_count: number;
+  revenue: number;
+}
+
 export interface UpcomingBirthdayItem {
   user_name: string;
   next_birthday: string;

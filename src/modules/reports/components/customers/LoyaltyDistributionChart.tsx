@@ -38,7 +38,7 @@ export function LoyaltyDistributionChart({ data, loading, byLoyalty }: Props) {
   const avgSpentByLevel = new Map(byLoyalty.map((b) => [b.level, b.avg_spent]));
 
   return (
-    <ReportCard title="Distribución por nivel de fidelización">
+    <ReportCard info="Clientes con cuenta del período repartidos por su nivel de fidelización actual, que depende de los puntos acumulados: L1 desde 150, L2 desde 750, L3 desde 1.500, L4 desde 3.000. Sin nivel son cuentas por debajo de 150 puntos. La lista al pie agrega el gasto promedio de cada nivel." title="Distribución por nivel de fidelización">
       {loading ? (
         <ChartLoading />
       ) : chartData.length === 0 ? (

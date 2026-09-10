@@ -19,7 +19,7 @@ export function PurchaseFrequencyChart({ data, loading }: Props) {
   const total = data.reduce((sum, d) => sum + d.customer_count, 0);
 
   return (
-    <ReportCard title="Frecuencia de compra">
+    <ReportCard info="Compradores del período segmentados por cuántos pedidos hicieron dentro del rango (1, 2, 3 o más). Cada segmento muestra cantidad de clientes, su participación y el gasto promedio por cliente. Excluye pedidos cancelados y reembolsados." title="Frecuencia de compra">
       {loading ? (
         <ChartLoading />
       ) : data.length === 0 ? (

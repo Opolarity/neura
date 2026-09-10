@@ -47,7 +47,7 @@ export function CustomersRecencyChart({ data, loading }: Props) {
   }));
 
   return (
-    <ReportCard title="Recencia de clientes">
+    <ReportCard info="Cuántos clientes hay según los días desde su última compra, medidos contra el fin del rango elegido (no contra hoy): Activos menos de 30 días, En riesgo 30 a 90, Inactivos 90 a 180, Dormidos más de 180. Al pasar el mouse se ve el gasto histórico de cada grupo." title="Recencia de clientes">
       {loading ? (
         <ChartLoading />
       ) : chartData.length === 0 ? (

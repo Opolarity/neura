@@ -52,6 +52,7 @@ import type {
   CustomersRecencyItem,
   CustomersParetoItem,
   CustomersBySaleTypeItem,
+  CustomersByBranchItem,
 } from '../types/reports.types';
 
 // -------------------------------------------------------
@@ -527,6 +528,9 @@ export const customersService = {
   getBySaleType: (f: ReportsFilters) =>
     rpc<CustomersBySaleTypeItem[]>('sp_rpt_customers_by_sale_type', mapCustomerFilters(f)),
 
+  getByBranch: (f: ReportsFilters) =>
+    rpc<CustomersByBranchItem[]>('sp_rpt_customers_by_branch', mapCustomerFilters(f)),
+
 };
 
 // ============================================================
@@ -622,6 +626,10 @@ export interface CustomerExportRow {
   last_order: string;
   loyalty_level: string;
   loyalty_points: number | null;
+  /** Sucursales, canales y métodos de pago de sus compras, concatenados con coma. */
+  branches: string;
+  sale_types: string;
+  payment_methods: string;
 }
 
 export const fetchCustomersReport = (f: ReportsFilters): Promise<CustomerExportRow[]> =>

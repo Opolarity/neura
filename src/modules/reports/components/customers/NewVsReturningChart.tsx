@@ -35,7 +35,7 @@ export function NewVsReturningChart({ data, loading }: Props) {
   }));
 
   return (
-    <ReportCard title="Clientes nuevos vs recurrentes">
+    <ReportCard info="Por cada período, cuántos clientes compraron por primera vez (Nuevos) y cuántos ya habían comprado antes del rango (Recurrentes). La primera compra se busca en todo el historial, no solo dentro del rango. Se agrupa por día o por mes según el largo del rango." title="Clientes nuevos vs recurrentes">
       {loading ? (
         <ChartLoading />
       ) : chartData.length === 0 ? (

@@ -124,13 +124,12 @@ export default function ClientsPage() {
         footNote={
           <>
             Un <strong className="font-medium text-foreground">cliente</strong> es cualquiera con
-            al menos una compra, tenga cuenta o no, identificado por su DNI/RUC. Las ventas sin
-            documento, sin cuenta y sin nombre se agrupan en un único{' '}
-            <strong className="font-medium text-foreground">Sin identificar</strong>, que en Top
-            clientes aparece como una fila con muchas compras: es mostrador sin identificar, no
-            una persona.{' '}
-            <strong className="font-medium text-foreground">Distribución de lealtad</strong> solo
-            cubre a los clientes con cuenta, porque el nivel vive en su ficha.
+            al menos una compra, con cuenta o sin ella, identificado por su documento. Las ventas
+            sin documento, cuenta ni nombre van a un único{' '}
+            <strong className="font-medium text-foreground">Sin identificar</strong>: en Top
+            clientes es mostrador, no una persona.{' '}
+            <strong className="font-medium text-foreground">Lealtad</strong> solo cubre a los
+            clientes con cuenta, porque el nivel vive en su ficha.
           </>
         }
       />

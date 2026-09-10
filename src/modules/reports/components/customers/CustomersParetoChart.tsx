@@ -39,7 +39,7 @@ export function CustomersParetoChart({ data, loading }: Props) {
   const topDecile = data.find((d) => d.decile === 1);
 
   return (
-    <ReportCard title="Concentración de ingresos (Pareto)">
+    <ReportCard info="Ordena a los clientes del período de mayor a menor gasto y los parte en deciles: cada barra es el ingreso de ese 10 % de clientes y la línea acumula el porcentaje del total. La referencia en 80 % marca la regla de Pareto. Un cliente es un documento; sin documento ni cuenta, se agrupa como Sin identificar." title="Concentración de ingresos (Pareto)">
       {loading ? (
         <ChartLoading />
       ) : chartData.length === 0 ? (
