@@ -7,7 +7,7 @@ import { TabSkeleton } from '../components/shared/TabSkeleton';
 import { ReportsFilterBar } from '../components/shared/ReportsFilterBar';
 import { InventoryOptionsPanel } from '../components/inventory/InventoryOptionsPanel';
 import { useInventoryDashboard } from '../hooks/useInventoryDashboard';
-import { fetchInventoryReport } from '../services/reports.service';
+import { fetchInventoryReport, inventoryService } from '../services/reports.service';
 import { generateInventoryReportExcel } from '../utils/generateInventoryReportExcel';
 import { getTodayDate } from '@/shared/utils/date';
 import { toastError } from '@/shared/utils/toastError';
@@ -16,39 +16,51 @@ const InventoryDashboard = lazy(() =>
   import('../components/inventory/InventoryDashboard').then((m) => ({ default: m.InventoryDashboard })),
 );
 
+/** Tope de la hoja "Umbral bajo stock": la bandeja es para reponer, no para
+ * volcar el catálogo (mismo tope que el export de la tabla). */
+const LOW_STOCK_SHEET_MAX = 1000;
+
 export default function StockPage() {
-  const { filters } = useReportsFilters();
-  const dash = useInventoryDashboard(filters);
+  const { filters, applyVersion } = useReportsFilters();
+  const dash = useInventoryDashboard(filters, applyVersion);
   const [isExporting, setIsExporting] = useState(false);
 
+  // El badge cuenta el borrador, que es lo que el usuario ve en los selects.
   const extraActiveCount = [
-    dash.warehouseId,
-    dash.thresholdOverride,
-    dash.valuationPriceListId,
+    dash.extraDraft.warehouseId,
+    dash.extraDraft.thresholdOverride,
+    dash.extraDraft.valuationPriceListId,
   ].filter((v) => v !== null && v !== undefined).length;
 
-  function handleClearExtra() {
-    dash.setWarehouseId(undefined);
-    dash.setThresholdOverride(undefined);
-    dash.setValuationPriceListId(undefined);
-  }
-
   // El Excel no lleva el rango de fechas en el nombre porque el stock es una
-  // foto del presente: el archivo vale para el día en que se descargó.
+  // foto del presente: el archivo vale para el día en que se descargó. Sale
+  // con los filtros APLICADOS, igual que la pantalla.
   async function handleDownload() {
     setIsExporting(true);
     try {
-      const rows = await fetchInventoryReport(
-        dash.warehouseId,
-        dash.threshold ?? undefined,
-        dash.valuationPriceListId,
-      );
+      const [rows, lowStock] = await Promise.all([
+        fetchInventoryReport(dash.warehouseId, dash.threshold ?? undefined, dash.valuationPriceListId),
+        dash.threshold !== null
+          ? inventoryService.getLowStockProducts(
+              dash.warehouseId,
+              dash.threshold,
+              1,
+              LOW_STOCK_SHEET_MAX,
+            )
+          : Promise.resolve(null),
+      ]);
       if (rows.length === 0) {
         toast({ title: 'No hay stock para los filtros seleccionados', variant: 'warning' });
         return;
       }
-      generateInventoryReportExcel(rows, getTodayDate());
+      generateInventoryReportExcel(rows, lowStock?.data ?? [], dash.threshold, getTodayDate());
       toast({ title: `Reporte exportado: ${rows.length} filas de stock`, variant: 'success' });
+      if (lowStock && lowStock.page.total > LOW_STOCK_SHEET_MAX) {
+        toast({
+          title: `La hoja de umbral trae los primeros ${LOW_STOCK_SHEET_MAX} de ${lowStock.page.total} SKUs`,
+          variant: 'info',
+        });
+      }
     } catch (error) {
       toastError(error, 'Error al generar el reporte. Inténtalo de nuevo.');
     } finally {
@@ -65,7 +77,8 @@ export default function StockPage() {
       <ReportsFilterBar
         extraFields={<InventoryOptionsPanel dash={dash} />}
         extraActiveCount={extraActiveCount}
-        onClearExtra={handleClearExtra}
+        extraDirty={dash.isExtraDirty}
+        onClearExtra={dash.clearExtra}
         exportSlot={
           <Button
             variant="outline"
@@ -84,23 +97,16 @@ export default function StockPage() {
         }
         footNote={
           <>
-            Casi todo Inventario es una{' '}
-            <strong className="font-medium text-foreground">foto del stock de hoy</strong> y no
-            depende del rango de fechas: las tarjetas, la valorización, el stock por categoría y
-            por talla, la bandeja de reposición y el stock muerto. El rango solo afecta a{' '}
-            <strong className="font-medium text-foreground">Flujo de inventario</strong>,{' '}
-            <strong className="font-medium text-foreground">Tipos de movimiento</strong> y{' '}
-            <strong className="font-medium text-foreground">Rotación</strong>, que miden
-            movimientos del período. Los filtros de canal, método de pago y geografía no existen
-            acá porque el stock no sale de un pedido; el equivalente de sede es el almacén.{' '}
-            Ojo con ese filtro: al elegir un almacén,{' '}
+            Inventario es una{' '}
+            <strong className="font-medium text-foreground">foto del stock de hoy</strong>; el
+            rango de fechas solo afecta a Flujo de inventario, Tipos de movimiento y Rotación.
+            No hay filtros de canal, pago ni geografía porque el stock no sale de un pedido; el
+            equivalente de sede es el almacén. Con un almacén elegido,{' '}
             <strong className="font-medium text-foreground">Unidades en stock</strong> son las de
             ese almacén, pero{' '}
-            <strong className="font-medium text-foreground">Stock bajo</strong> cuenta los SKUs
-            cuyo stock <em>sumando todos los almacenes</em> queda bajo el umbral. Se repone por
-            SKU, no por depósito: no se compra porque un almacén esté corto si otro tiene de
-            sobra. La bandeja de reposición y la distribución usan ese mismo criterio, así que
-            las tres cifras siempre coinciden entre sí.
+            <strong className="font-medium text-foreground">Stock bajo</strong> y la bandeja de
+            reposición cuentan el SKU sumando todos los almacenes: se repone por SKU, no por
+            depósito.
           </>
         }
       />

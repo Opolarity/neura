@@ -1,7 +1,6 @@
 import { KpiCard } from '../shared/KpiCard';
 import { DeadStockTable } from './DeadStockTable';
 import { InventoryValuationKpis } from './InventoryValuationKpis';
-import { LowStockDistributionChart } from './LowStockDistributionChart';
 import { LowStockProductsTable } from './LowStockProductsTable';
 import { StockByCategoryChart } from './StockByCategoryChart';
 import { StockByTermChart } from './StockByTermChart';
@@ -82,18 +81,12 @@ export function InventoryDashboard({ dash }: InventoryDashboardProps) {
         />
       </div>
 
-      {/* Movement types + Low stock side by side */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <StockMovementTypesChart
-          data={dash.movementTypes.data ?? []}
-          loading={dash.movementTypes.isLoading}
-        />
-        <LowStockDistributionChart
-          data={dash.lowStockDistribution.data ?? []}
-          loading={dash.lowStockDistribution.isLoading}
-          threshold={dash.threshold}
-        />
-      </div>
+      {/* Tipos de movimiento (el gráfico de distribución de stock bajo se
+          quitó a pedido de Diego: la bandeja de abajo ya lista esos SKUs) */}
+      <StockMovementTypesChart
+        data={dash.movementTypes.data ?? []}
+        loading={dash.movementTypes.isLoading}
+      />
 
       {/* T-269 · Bandeja de reposición: mismos SKUs que alimentan la alerta */}
       <LowStockProductsTable dash={dash} />

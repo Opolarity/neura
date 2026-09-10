@@ -19,7 +19,7 @@ export function StockByCategoryChart({ data, loading }: Props) {
   const colors = chartQualitativeSeries;
 
   return (
-    <ReportCard title="Stock por categoría">
+    <ReportCard info="Unidades en stock hoy por categoría, con la participación de cada una. Un producto asignado a varias categorías cuenta en todas, así que la suma puede superar el stock total. Solo stock de tipo venta en almacenes activos." title="Stock por categoría">
       {loading ? (
         <ChartLoading />
       ) : chartData.length === 0 ? (

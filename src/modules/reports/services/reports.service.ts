@@ -20,7 +20,6 @@ import type {
   SizeByCategoryItem,
   CategoryOverTimeItem,
   InventorySummary,
-  LowStockDistributionItem,
   LowStockProductsReport,
   StockRotationItem,
   StockMovementTypeItem,
@@ -232,12 +231,6 @@ export const inventoryService = {
     rpc<InventorySummary>('sp_rpt_inventory_summary', {
       p_warehouse_id: warehouseId ?? undefined,
       p_low_stock_threshold: threshold ?? undefined,
-    }),
-
-  getLowStockDistribution: (warehouseId?: number, threshold?: number) =>
-    rpc<LowStockDistributionItem[]>('sp_rpt_low_stock_distribution', {
-      p_warehouse_id: warehouseId ?? undefined,
-      p_threshold: threshold ?? undefined,
     }),
 
   /** T-269 · Bandeja de reposición: SKUs bajo el umbral, paginados. */

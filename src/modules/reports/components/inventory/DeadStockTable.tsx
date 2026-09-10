@@ -39,6 +39,7 @@ export function DeadStockTable({ report, loading, days, onDaysChange, page, page
 
   return (
     <ReportCard
+      info="SKUs con stock que no registran ninguna salida en los últimos N días (elegís el umbral arriba). Muestra el stock actual, su valor a costo y la fecha de la última salida. Si un SKU nunca tuvo salida aparece como Sin salidas. No depende del rango de fechas de la barra."
       title="Stock sin rotación (stock muerto)"
       actions={
         <div className="flex items-center gap-2">

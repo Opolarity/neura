@@ -74,6 +74,7 @@ export function LowStockProductsTable({ dash }: { dash: InventoryDashboardState 
 
   return (
     <ReportCard
+      info="Lista para reponer: los SKUs cuyo stock efectivo está en o por debajo del umbral configurado en Configuración → Negocio → Operación. Usa la misma definición que la alerta de la campana, así que sin filtro de almacén el total coincide con el KPI de stock bajo. La descarga trae hasta 1.000 filas."
       title="Productos bajo el umbral (reposición)"
       actions={
         <div className="flex items-center gap-2">

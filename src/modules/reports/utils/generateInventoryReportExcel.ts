@@ -1,9 +1,12 @@
 import * as XLSX from 'xlsx';
 import { formatDateDisplay } from '@/shared/utils/date';
 import type { InventoryExportRow } from '../services/reports.service';
+import type { LowStockProductItem } from '../types/reports.types';
 
 export function generateInventoryReportExcel(
   rows: InventoryExportRow[],
+  lowStockRows: LowStockProductItem[],
+  threshold: number | null,
   fileLabel: string,
 ): void {
   const headerRow = [
@@ -53,5 +56,23 @@ export function generateInventoryReportExcel(
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Inventario');
+
+  // ── Hoja 2: SKUs bajo el umbral ──────────────────────────
+  // Misma definición que la bandeja de reposición y la alerta de la campana:
+  // el stock es el total del SKU en almacenes activos, no el de un depósito.
+  // Sin umbral configurado la hoja igual va, con el aviso, para que quien abre
+  // el archivo entienda por qué está vacía.
+  const lowHeader = ['Producto', 'SKU', 'Stock total (unidades)'];
+  const lowRows = lowStockRows.map((r) => [r.product_title, r.sku ?? '', r.stock]);
+  const lowMeta =
+    threshold === null
+      ? [['Umbral (unidades)', 'Sin configurar (Configuración → Negocio → Operación)'], []]
+      : [['Umbral (unidades)', threshold], ['SKUs bajo el umbral', lowStockRows.length], []];
+  const wsLow = XLSX.utils.aoa_to_sheet([...lowMeta, lowHeader, ...lowRows]);
+  wsLow['!cols'] = [{ wch: 38 }, { wch: 16 }, { wch: 22 }];
+  // Excel limita el nombre a 31 caracteres.
+  const sheetName = threshold === null ? 'Umbral bajo stock' : `Umbral bajo stock (${threshold})`;
+  XLSX.utils.book_append_sheet(wb, wsLow, sheetName.slice(0, 31));
+
   XLSX.writeFile(wb, `reporte-inventario-${fileLabel}.xlsx`);
 }

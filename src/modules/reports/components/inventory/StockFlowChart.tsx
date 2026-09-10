@@ -36,6 +36,7 @@ export function StockFlowChart({ data, loading, granularity, onGranularityChange
 
   return (
     <ReportCard
+      info="Unidades que entraron y salieron del inventario en cada período, según los movimientos de stock, y la línea con el neto (entradas menos salidas). Entran compras, ajustes positivos y devoluciones; salen ventas, ajustes negativos y traslados."
       title="Flujo de inventario (entradas vs salidas)"
       actions={
         <ReportSelect

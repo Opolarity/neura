@@ -336,11 +336,6 @@ export interface InventorySummary {
   }>;
 }
 
-export interface LowStockDistributionItem {
-  stock: number;
-  skus: number;
-}
-
 /** T-269 · Fila de la bandeja de reposición (sp_rpt_low_stock_products). */
 export interface LowStockProductItem {
   product_variation_id: number;
