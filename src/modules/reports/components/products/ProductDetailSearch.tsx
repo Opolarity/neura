@@ -17,9 +17,12 @@ import {
   reportChartColors,
 } from '../shared/reportChartUtils';
 import type { ProductDetailData } from '../../types/reports.types';
+import type { ProductsDashboardState } from '../../hooks/useProductsDashboard';
 import { formatCurrency } from '@/shared/utils/currency';
+import { ProductPicker } from './ProductPicker';
 
 interface Props {
+  dash: ProductsDashboardState;
   selectedProductId: number | null;
   selectedProductTitle: string;
   detail: ProductDetailData | null;
@@ -84,6 +87,7 @@ function BreakdownDonut({ title, slices }: { title: string; slices: DonutSlice[]
 }
 
 export function ProductDetailSearch({
+  dash,
   selectedProductId,
   selectedProductTitle,
   detail,
@@ -114,11 +118,23 @@ export function ProductDetailSearch({
 
   return (
     <ReportCard title="Análisis de producto individual">
+      {/*
+        El buscador y su Aplicar viven acá y no en la barra de filtros: solo
+        afectan a esta tarjeta. Los filtros de arriba (fechas, sede, canal,
+        estado…) sí se aplican al detalle, pero los ya aplicados.
+      */}
+      <div className="mb-6">
+        <ProductPicker dash={dash} />
+        <p className="mt-2 text-xs text-muted-foreground">
+          El análisis respeta el rango y los filtros aplicados arriba.
+        </p>
+      </div>
+
       {selectedProductId === null && (
         <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
           <PackageSearch className="w-10 h-10 text-muted-foreground/60" />
           <p className="text-sm text-muted-foreground">
-            Selecciona un producto en el filtro <span className="font-medium">"Más filtros +"</span> y da clic en <span className="font-medium">"Aplicar"</span> para ver su análisis individual.
+            Buscá un producto por nombre o SKU y da clic en <span className="font-medium">"Aplicar"</span> para ver su análisis individual.
           </p>
         </div>
       )}

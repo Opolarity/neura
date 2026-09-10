@@ -211,10 +211,14 @@ export const productsService = {
   // resto de Productos, así que ya puede usar mapProductFilters. Financiero lo
   // sigue llamando con su propio subconjunto de params, que continúa siendo
   // válido porque los nuevos tienen DEFAULT.
+  //
+  // p_only_active_products (migración 31000910123000): Productos no muestra ni
+  // cuenta productos con is_active = false; Financiero sigue viendo todos.
   getMarginScatter: (f: ReportsFilters, limit = 100, situationIds: number[] = []) =>
     rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
       ...mapProductFilters(f, situationIds),
       p_limit: limit,
+      p_only_active_products: true,
     }),
 };
 

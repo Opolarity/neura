@@ -1,112 +1,17 @@
-import { useState } from 'react';
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import { cn } from '@/shared/utils/utils';
 import { useReportsFilters } from '../../context/ReportsFiltersContext';
 import { OrderSituationFilter } from '../shared/OrderSituationFilter';
 import { OrderScopeFilters } from '../shared/OrderScopeFilters';
 import { defaultProductSituationIds } from '../../types/reports.types';
-import type { ProductsDashboardState } from '../../hooks/useProductsDashboard';
-
-interface Props {
-  dash: ProductsDashboardState;
-}
 
 /** Solo devuelve los campos de "Más filtros" de Productos — el contenedor
- * (caja, toggle, Limpiar, Descargar, Aplicar) vive en ReportsFilterBar. */
-export function ProductsOptionsPanel({ dash }: Props) {
+ * (caja, toggle, Limpiar, Descargar, Aplicar) vive en ReportsFilterBar. El
+ * buscador de producto no está acá: vive en la tarjeta "Análisis de producto
+ * individual" (ProductPicker), porque solo afecta a esa sección. */
+export function ProductsOptionsPanel() {
   const { draft, setDraft } = useReportsFilters();
-  const [comboOpen, setComboOpen] = useState(false);
-
-  const {
-    productSearch,
-    setProductSearch,
-    searchResults,
-    selectedProductId,
-    selectedProductTitle,
-    selectProduct,
-  } = dash;
-
-  const hasSelectedProduct = selectedProductId !== null;
-  const results = searchResults.data ?? [];
-  const isSearching = searchResults.isFetching && productSearch.length >= 2;
 
   return (
     <>
-      {/* Buscador de producto (combobox) */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium">Producto</span>
-        <Popover open={comboOpen} onOpenChange={setComboOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={comboOpen}
-              className="h-9 w-[280px] justify-between font-normal"
-            >
-              <span className="truncate">
-                {hasSelectedProduct ? selectedProductTitle : 'Buscar producto…'}
-              </span>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[320px] p-0" align="start">
-            <Command shouldFilter={false}>
-              <CommandInput
-                placeholder="Nombre o SKU…"
-                value={productSearch}
-                onValueChange={setProductSearch}
-              />
-              <CommandList>
-                {productSearch.length < 2 ? (
-                  <CommandEmpty>Escribe al menos 2 caracteres…</CommandEmpty>
-                ) : isSearching ? (
-                  <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Buscando…
-                  </div>
-                ) : results.length === 0 ? (
-                  <CommandEmpty>Sin resultados.</CommandEmpty>
-                ) : (
-                  <CommandGroup>
-                    {results.map((r) => (
-                      <CommandItem
-                        key={r.id}
-                        value={`${r.id}`}
-                        onSelect={() => {
-                          selectProduct(r);
-                          setComboOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            'mr-2 h-4 w-4',
-                            selectedProductId === r.id ? 'opacity-100' : 'opacity-0',
-                          )}
-                        />
-                        <div className="flex flex-col min-w-0">
-                          <span className="truncate text-sm">{r.title}</span>
-                          <span className="truncate text-xs text-muted-foreground">{r.sku}</span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      </div>
-
       {/* Estado de pedido — su default es solo Enviado y Entregado, no el de Ventas */}
       <OrderSituationFilter
         value={draft.productSituationIds}

@@ -92,6 +92,7 @@ export function ProductsDashboard({ dash }: ProductsDashboardProps) {
       </div>
 
       <ProductDetailSearch
+        dash={dash}
         selectedProductId={dash.appliedProductId}
         selectedProductTitle={dash.appliedProductTitle}
         detail={dash.productDetail.data ?? null}
