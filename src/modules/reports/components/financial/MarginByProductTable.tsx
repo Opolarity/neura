@@ -32,10 +32,14 @@ export function MarginByProductTable({ data, loading, limit }: Props) {
                 </p>
               </div>
               <div className="text-right shrink-0">
-                {p.margin !== null && p.margin_pct !== null ? (
+                {p.margin !== null ? (
                   <>
                     <p className="font-medium tabular-nums">{formatCurrency(p.margin)}</p>
-                    <p className="text-xs text-muted-foreground">{p.margin_pct}%</p>
+                    {/* margin_pct es null cuando la venta fue S/ 0 (regalo, canje):
+                        hay costo y margen, pero no un porcentaje sobre venta. */}
+                    <p className="text-xs text-muted-foreground">
+                      {p.margin_pct !== null ? `${p.margin_pct}%` : 'sin % (venta en 0)'}
+                    </p>
                   </>
                 ) : (
                   // Ninguna unidad vendida de este producto tiene un costo mayor a
