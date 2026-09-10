@@ -8,10 +8,13 @@ import {
 import {
   chartAxis,
   chartGrid,
-  formatCurrencyAxis,
+  formatCurrencyTick,
   reportChartColors,
 } from '../shared/reportChartUtils';
+import { currencyTooltipRow } from '../shared/reportChartFormatters';
 import type { CashflowItem, Granularity } from '../../types/reports.types';
+
+const TOOLTIP_LABELS = { ingresos: 'Ingresos', egresos: 'Egresos' };
 
 interface Props {
   data: CashflowItem[];
@@ -58,8 +61,8 @@ export function CashflowChart({ data, loading, granularity, onGranularityChange 
           <AreaChart data={chartData} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} className={chartGrid} />
             <XAxis dataKey="fecha" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={formatCurrencyAxis} className={chartAxis} />
-            <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrencyAxis(value as number)} />} />
+            <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={formatCurrencyTick} width={72} className={chartAxis} />
+            <ChartTooltip content={<ChartTooltipContent formatter={currencyTooltipRow(TOOLTIP_LABELS)} />} />
             <ChartLegend content={<ChartLegendContent />} />
             <Area dataKey="ingresos" type="monotone" fill="var(--color-ingresos)" fillOpacity={0.16} stroke="var(--color-ingresos)" strokeWidth={2} />
             <Area dataKey="egresos" type="monotone" fill="var(--color-egresos)" fillOpacity={0.12} stroke="var(--color-egresos)" strokeWidth={2} />
