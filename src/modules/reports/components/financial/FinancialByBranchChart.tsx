@@ -2,6 +2,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
+  EmptyReportState,
   ReportCard,
 } from '../shared/ReportScaffold';
 import {
@@ -10,24 +11,32 @@ import {
   formatCurrencyAxis,
   reportChartColors,
 } from '../shared/reportChartUtils';
-import type { FinancialByClassItem } from '../../types/reports.types';
+import type { FinancialByBranchItem } from '../../types/reports.types';
 
 interface Props {
-  data: FinancialByClassItem[];
+  data: FinancialByBranchItem[];
   loading: boolean;
 }
 
-export function FinancialByClassChart({ data, loading }: Props) {
+/** Gemelo de "Por clase de movimiento", agrupado por la sucursal del movimiento. */
+export function FinancialByBranchChart({ data, loading }: Props) {
   const chartData = data.map((d) => ({
-    clase: d.class_name,
+    sucursal: d.branch_name,
     ingresos: d.income,
     egresos: d.expense,
   }));
 
   return (
-    <ReportCard info="Ingresos contra egresos del período según la clase del movimiento de caja (venta, compra, gasto, retiro, etc.). Misma fuente que el flujo de caja: los movimientos de las cuentas, clasificados por el signo del monto." title="Por clase de movimiento" className="flex flex-col" contentClassName="flex-1 min-h-0">
+    <ReportCard
+      info="Ingresos contra egresos de caja del período según la sucursal en la que se registró el movimiento. Misma fuente que el flujo de caja: los movimientos de las cuentas, clasificados por el signo del monto. Los movimientos sin sucursal van en Sin sucursal."
+      title="Por sucursal"
+      className="flex flex-col"
+      contentClassName="flex-1 min-h-0"
+    >
       {loading ? (
         <ChartLoading />
+      ) : data.length === 0 ? (
+        <EmptyReportState>Sin movimientos en el periodo</EmptyReportState>
       ) : (
         <ChartContainer
           config={{
@@ -38,7 +47,7 @@ export function FinancialByClassChart({ data, loading }: Props) {
         >
           <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} className={chartGrid} />
-            <XAxis dataKey="clase" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
+            <XAxis dataKey="sucursal" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
             <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={formatCurrencyAxis} className={chartAxis} />
             <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrencyAxis(value as number)} />} />
             <ChartLegend content={<ChartLegendContent />} />

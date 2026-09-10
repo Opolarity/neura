@@ -58,6 +58,12 @@ export function useFinancialDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 5,
   });
 
+  const byBranch = useQuery({
+    queryKey: ['rpt_financial_by_branch', ...queryKey],
+    queryFn: () => financialService.getByBranch(filters),
+    staleTime: 1000 * 60 * 5,
+  });
+
   const profitKpis = useQuery({
     queryKey: ['rpt_financial_profit_kpis', ...queryKey, situationKey],
     queryFn: () => financialService.getProfitKpis(filters, situationIds),
@@ -77,6 +83,7 @@ export function useFinancialDashboard(filters: ReportsFilters) {
     cashflowOverTime,
     byClass,
     byPaymentMethod,
+    byBranch,
     profitKpis,
     marginByProduct,
     granularity,

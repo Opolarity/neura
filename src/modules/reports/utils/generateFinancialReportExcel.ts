@@ -81,7 +81,7 @@ export function generateFinancialReportExcel(
   const marginHeader = [
     'Producto',
     'Unidades vendidas',
-    'Unidades con costo conocido',
+    'Unidades con costo cargado',
     'Ingresos',
     'Costo',
     'Margen',
@@ -104,7 +104,7 @@ export function generateFinancialReportExcel(
   wsMargin['!cols'] = [
     { wch: 42 }, // Producto
     { wch: 18 }, // Unidades vendidas
-    { wch: 26 }, // Unidades con costo conocido
+    { wch: 26 }, // Unidades con costo cargado
     { wch: 16 }, // Ingresos
     { wch: 16 }, // Costo
     { wch: 16 }, // Margen

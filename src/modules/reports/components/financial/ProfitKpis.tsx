@@ -38,8 +38,8 @@ export function ProfitKpis({ data, loading }: Props) {
               <PopoverContent className="w-80 text-sm text-foreground space-y-2">
                 <p>
                   De las <strong>{data?.units_sold_total ?? 0}</strong> unidades vendidas en el periodo,{' '}
-                  <strong>{data?.units_with_known_cost ?? 0}</strong> corresponden a productos que tienen su costo
-                  registrado en el catálogo.
+                  <strong>{data?.units_with_known_cost ?? 0}</strong> corresponden a productos con un costo
+                  mayor a cero en el catálogo. Un costo en cero cuenta como no cargado.
                 </p>
                 <p>
                   Ganancia Neta, Margen y Costo Total se calculan solo sobre esas unidades: si la cobertura es baja,
@@ -59,7 +59,7 @@ export function ProfitKpis({ data, loading }: Props) {
           title="Ganancia Neta"
           value={data ? formatCurrency(data.net_profit) : '—'}
           loading={loading}
-          subtitle="sobre unidades con costo conocido"
+          subtitle="sobre unidades con costo cargado"
         />
         <KpiCard
           title="Margen"

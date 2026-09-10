@@ -33,7 +33,7 @@ export function FinancialByPaymentChart({ data, loading }: Props) {
   }));
 
   return (
-    <ReportCard title="Ingresos y egresos por método de pago" className="flex flex-col" contentClassName="flex-1 min-h-0">
+    <ReportCard info="Cuánto entró y cuánto salió por cada método de pago en el período. Se muestran las dos series porque un método puede usarse solo para pagar (tendría ingresos en cero pero egresos reales). Fuente: movimientos de caja." title="Ingresos y egresos por método de pago" className="flex flex-col" contentClassName="flex-1 min-h-0">
       {loading ? (
         <ChartLoading />
       ) : chartData.length === 0 ? (

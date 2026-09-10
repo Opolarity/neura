@@ -38,6 +38,7 @@ import type {
   CashflowItem,
   FinancialByClassItem,
   FinancialByPaymentItem,
+  FinancialByBranchItem,
   BusinessAccountOption,
   MovementClassOption,
   FinancialProfitKpis,
@@ -406,6 +407,9 @@ export const financialService = {
 
   getByPaymentMethod: (f: ReportsFilters) =>
     rpc<FinancialByPaymentItem[]>('sp_rpt_financial_by_payment_method', mapCashFilters(f)),
+
+  getByBranch: (f: ReportsFilters) =>
+    rpc<FinancialByBranchItem[]>('sp_rpt_financial_by_branch', mapCashFilters(f)),
 
   // La mitad de PEDIDOS. `situationIds` viaja siempre como array explícito —
   // nunca undefined — porque sp_rpt_financial_margin_by_product interpreta el

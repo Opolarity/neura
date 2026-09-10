@@ -520,6 +520,16 @@ export interface FinancialByClassItem {
   count: number;
 }
 
+/** sp_rpt_financial_by_branch (migración 31000910183000): caja por sucursal. */
+export interface FinancialByBranchItem {
+  branch_id: number | null;
+  branch_name: string;
+  income: number;
+  expense: number;
+  net: number;
+  count: number;
+}
+
 export interface FinancialByPaymentItem {
   payment_method_id: number;
   payment_method_name: string;

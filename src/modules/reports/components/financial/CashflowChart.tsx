@@ -30,6 +30,7 @@ export function CashflowChart({ data, loading, granularity, onGranularityChange 
 
   return (
     <ReportCard
+      info="Ingresos y egresos de caja por período, tomados de los movimientos de las cuentas del negocio (no de los pedidos). Se clasifican por el signo del monto. Cambiá la granularidad para verlo por día, semana o mes; los filtros de cuenta y motivo solo afectan esta mitad del reporte."
       title="Flujo de caja en el tiempo"
       actions={
         <ReportSelect

@@ -11,7 +11,10 @@ interface Props {
 
 export function MarginByProductTable({ data, loading, limit }: Props) {
   return (
-    <ReportCard title={`Top ${limit} productos por margen`}>
+    <ReportCard
+      info={`Los ${limit} productos con mayor margen bruto del período: ingresos por línea de producto menos costo de la variación, por las unidades vendidas netas de devoluciones. Solo se valorizan las unidades cuyo costo en el catálogo es mayor a cero; un producto sin ninguna unidad con costo figura como Sin costo cargado. Es un top, no el total: el Excel trae todos los productos.`}
+      title={`Top ${limit} productos por margen`}
+    >
       {loading ? (
         <ChartLoading />
       ) : data.length === 0 ? (
@@ -23,7 +26,9 @@ export function MarginByProductTable({ data, loading, limit }: Props) {
               <div className="min-w-0">
                 <p className="truncate">{p.product_title}</p>
                 <p className="text-xs text-muted-foreground">
-                  {p.units_sold} uds · {p.units_with_known_cost} con costo conocido
+                  {p.units_sold} uds vendidas
+                  {p.units_with_known_cost < p.units_sold &&
+                    ` · ${p.units_sold - p.units_with_known_cost} sin costo`}
                 </p>
               </div>
               <div className="text-right shrink-0">
@@ -33,7 +38,9 @@ export function MarginByProductTable({ data, loading, limit }: Props) {
                     <p className="text-xs text-muted-foreground">{p.margin_pct}%</p>
                   </>
                 ) : (
-                  <p className="text-xs text-muted-foreground">N/D — sin costo cargado</p>
+                  // Ninguna unidad vendida de este producto tiene un costo mayor a
+                  // cero en el catálogo, así que no hay margen que calcular.
+                  <p className="text-xs text-muted-foreground">Sin costo cargado</p>
                 )}
               </div>
             </div>

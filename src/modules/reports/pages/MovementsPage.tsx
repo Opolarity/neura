@@ -104,26 +104,14 @@ export default function MovementsPage() {
         onClearExtra={handleClearExtra}
         footNote={
           <>
-            Esta pestaña mide{' '}
-            <strong className="font-medium text-foreground">dos cosas distintas</strong>. Las
-            tarjetas de arriba, el flujo de caja y los dos gráficos salen de los{' '}
-            <strong className="font-medium text-foreground">movimientos de caja</strong>: cada
-            movimiento entra como ingreso o egreso según el signo de su monto, que es lo que suma
-            al saldo de la cuenta.{' '}
-            <strong className="font-medium text-foreground">Ganancia Neta</strong>,{' '}
-            <strong className="font-medium text-foreground">Margen</strong>,{' '}
-            <strong className="font-medium text-foreground">Costo Total</strong> y la tabla de
-            productos salen en cambio de los{' '}
-            <strong className="font-medium text-foreground">pedidos</strong>, en unidades netas de
-            devoluciones confirmadas y valuadas al costo que el producto tiene hoy en el catálogo,
-            no al que tenía el día de la venta. Por eso las dos mitades no suman entre sí.
-            {' '}La tabla es además solo el{' '}
-            <strong className="font-medium text-foreground">Top 20 por margen</strong>, y los
-            de mayor margen suelen ser productos de poco volumen: no esperes que sus unidades ni
-            su costo sumen a las tarjetas. El Excel sí trae todos los productos del período, sin
-            ese corte, y ahí las dos cifras cuadran.
-            {' '}Sede y método de pago acotan las dos mitades; cuenta y motivo, solo la caja;
-            estado de pedido, solo la mitad de ganancia y margen.
+            Dos fuentes distintas: las tarjetas de arriba, el flujo de caja y los gráficos salen
+            de la <strong className="font-medium text-foreground">caja</strong> (ingreso o egreso
+            según el signo del movimiento). <strong className="font-medium text-foreground">Ganancia
+            Neta, Margen y Costo Total</strong> salen de los{' '}
+            <strong className="font-medium text-foreground">pedidos</strong>, valuados al costo
+            actual del catálogo; solo cuentan las unidades con costo mayor a cero. Por eso las
+            dos partes no suman entre sí. Sede y método de pago afectan a todo; cuenta y motivo
+            solo a la caja; estado de pedido solo a la ganancia.
           </>
         }
         exportSlot={
