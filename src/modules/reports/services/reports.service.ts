@@ -32,7 +32,6 @@ import type {
   ReturnsOverTimeItem,
   TopReturnedProduct,
   ReturnsByTypeItem,
-  ReturnsByReasonItem,
   ReturnSituationOption,
   ReturnTypeOption,
   FinancialKpis,
@@ -349,9 +348,6 @@ export const returnsService = {
 
   getByType: (f: ReportsFilters) =>
     rpc<ReturnsByTypeItem[]>('sp_rpt_returns_by_type', mapReturnFilters(f)),
-
-  getByReason: (f: ReportsFilters) =>
-    rpc<ReturnsByReasonItem[]>('sp_rpt_returns_by_reason', mapReturnFilters(f)),
 };
 
 /** Una fila por retorno — mismo grano y mismos filtros que las tarjetas. */

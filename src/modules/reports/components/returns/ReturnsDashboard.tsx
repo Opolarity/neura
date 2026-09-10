@@ -2,7 +2,7 @@ import { KpiCard } from '../shared/KpiCard';
 import { ReturnsOverTimeChart } from './ReturnsOverTimeChart';
 import { TopReturnedProductsChart } from './TopReturnedProductsChart';
 import { ReturnsByTypeChart } from './ReturnsByTypeChart';
-import { ReturnsByReasonTable } from './ReturnsByReasonTable';
+import { ReturnsByTypeTable } from './ReturnsByTypeTable';
 import { useReturnsDashboard } from '../../hooks/useReturnsDashboard';
 import type { ReportsFilters } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
@@ -71,10 +71,10 @@ export function ReturnsDashboard({ filters }: ReturnsDashboardProps) {
         />
       </div>
 
-      {/* Motivos: texto libre, va en tabla */}
-      <ReturnsByReasonTable
-        data={dash.byReason.data ?? []}
-        loading={dash.byReason.isLoading}
+      {/* Detalle por tipo (reemplaza a la tabla de motivos, que era texto libre) */}
+      <ReturnsByTypeTable
+        data={dash.byType.data ?? []}
+        loading={dash.byType.isLoading}
       />
     </div>
   );

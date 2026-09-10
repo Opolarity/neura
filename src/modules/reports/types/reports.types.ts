@@ -452,6 +452,8 @@ export interface ReturnsOverTimeItem {
 export interface TopReturnedProduct {
   product_id: number;
   product_title: string;
+  /** false = el producto ya no está en el catálogo; igual cuenta (migración 31000910163000). */
+  product_is_active?: boolean;
   return_count: number;
   total_quantity_returned: number;
   /** Precio unitario por cantidad devuelta. No es lo reembolsado. */
@@ -461,13 +463,6 @@ export interface TopReturnedProduct {
 export interface ReturnsByTypeItem {
   return_type_id: number | null;
   return_type_name: string;
-  count: number;
-  total_refund_amount: number;
-  total_units_returned: number;
-}
-
-export interface ReturnsByReasonItem {
-  reason: string;
   count: number;
   total_refund_amount: number;
   total_units_returned: number;

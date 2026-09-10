@@ -128,24 +128,16 @@ export default function ReturnsPage() {
         }
         footNote={
           <>
-            La pestaña cuenta por defecto solo los retornos en situación{' '}
-            <strong className="font-medium text-foreground">Aceptado</strong>; los Pendientes y
-            Anulados se agregan desde el filtro. Se fechan por el día en que se registró el
-            retorno, no por el del pedido.{' '}
-            <strong className="font-medium text-foreground">Monto reembolsado</strong> es el neto
-            de los movimientos de caja del retorno: los reembolsos suman y las diferencias que
-            paga el cliente en un cambio restan; los retornos sin movimiento registrado cuentan en
-            la cantidad pero no en el monto, y por eso el promedio se calcula solo sobre los que
-            sí lo tienen. No coincide con el{' '}
-            <strong className="font-medium text-foreground">Devoluciones</strong> de la pestaña
-            Ventas, que atribuye el reembolso a la fecha del pedido y deja fuera los pedidos
-            cancelados y reembolsados.{' '}
+            Por defecto cuenta solo los retornos{' '}
+            <strong className="font-medium text-foreground">Aceptados</strong> (Pendientes y
+            Anulados se agregan desde el filtro), fechados por el día del retorno, no del pedido.{' '}
+            <strong className="font-medium text-foreground">Monto reembolsado</strong> es el neto de
+            caja del retorno: los reembolsos suman y la diferencia que paga el cliente en un cambio
+            resta; los retornos sin movimiento cuentan en cantidad pero no en monto. Por eso no
+            coincide con Devoluciones de la pestaña Ventas.{' '}
             <strong className="font-medium text-foreground">Tasa de devolución</strong> compara
-            contra los pedidos del período sin los cancelados; los reembolsados sí entran, porque
-            esa situación se la pone al pedido la propia devolución. En{' '}
-            <strong className="font-medium text-foreground">Productos más devueltos</strong> solo
-            entra la mercadería que vuelve: el reemplazo que sale en un cambio no es una
-            devolución.
+            contra los pedidos del período sin cancelados. Los productos inactivos siguen contando;
+            solo se marcan en el nombre.
           </>
         }
       />

@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
   EmptyReportState,
@@ -23,14 +23,17 @@ interface Props {
 }
 
 export function TopReturnedProductsChart({ data, loading, limit, onLimitChange }: Props) {
+  // Los productos inactivos siguen contando (decisión de Diego); solo se
+  // marca en el nombre para que se entienda por qué no aparecen en el catálogo.
   const chartData = data.map((d) => ({
-    producto: truncateLabel(d.product_title, 24),
+    producto: truncateLabel(d.product_title, 24) + (d.product_is_active === false ? ' (inactivo)' : ''),
     devoluciones: d.return_count,
     unidades: d.total_quantity_returned,
   }));
 
   return (
     <ReportCard
+      info="Los productos con más retornos en el período, contando cada retorno en el que aparece. Solo cuenta la mercadería que vuelve: en un cambio, el producto que sale como reemplazo no suma. Un producto marcado (inactivo) ya no está en el catálogo pero sus devoluciones siguen contando."
       title="Productos más devueltos"
       description="Solo la mercadería que entra; el reemplazo que sale en un cambio no cuenta."
       actions={
@@ -62,6 +65,7 @@ export function TopReturnedProductsChart({ data, loading, limit, onLimitChange }
             <XAxis type="number" hide />
             <YAxis type="category" dataKey="producto" tickLine={false} axisLine={false} width={136} className={chartAxis} />
             <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatNumber(value as number)} />} />
+            <ChartLegend content={<ChartLegendContent />} />
             <Bar dataKey="devoluciones" fill="var(--color-devoluciones)" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ChartContainer>

@@ -1,5 +1,5 @@
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
   EmptyReportState,
@@ -31,6 +31,7 @@ export function ReturnsOverTimeChart({ data, loading, granularity, onGranularity
 
   return (
     <ReportCard
+      info="Por período, cuántos retornos se registraron (eje izquierdo) y cuánto se reembolsó (eje derecho). Los períodos sin retornos no aparecen en el eje. Se fecha por la fecha del retorno, no por la del pedido original."
       title="Devoluciones en el tiempo"
       description="Los períodos sin retornos no aparecen en el eje."
       actions={
@@ -96,6 +97,7 @@ export function ReturnsOverTimeChart({ data, loading, granularity, onGranularity
                 />
               }
             />
+            <ChartLegend content={<ChartLegendContent />} />
             <Area
               yAxisId="count"
               dataKey="devoluciones"
