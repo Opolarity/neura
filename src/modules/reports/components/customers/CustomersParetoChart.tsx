@@ -7,7 +7,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
   EmptyReportState,
@@ -123,6 +123,7 @@ export function CustomersParetoChart({ data, loading }: Props) {
                 stroke={reportChartColors.slate}
                 strokeDasharray="4 4"
               />
+              <ChartLegend content={<ChartLegendContent />} />
               <Bar dataKey="ingresos" yAxisId="ingresos" fill="var(--color-ingresos)" radius={[4, 4, 0, 0]} />
               <Line
                 dataKey="acumulado"

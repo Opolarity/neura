@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
   EmptyReportState,
@@ -48,6 +48,7 @@ export function CustomersGeoChart({ data, loading }: Props) {
                 <XAxis type="number" hide />
                 <YAxis type="category" dataKey="label" tickLine={false} axisLine={false} width={136} className={chartAxis} />
                 <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatNumber(value as number)} />} />
+                <ChartLegend content={<ChartLegendContent />} />
                 <Bar dataKey="compradores" fill="var(--color-compradores)" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ChartContainer>

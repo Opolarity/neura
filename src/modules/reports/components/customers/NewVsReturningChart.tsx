@@ -1,5 +1,5 @@
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
   EmptyReportState,
@@ -60,6 +60,7 @@ export function NewVsReturningChart({ data, loading }: Props) {
               className={chartAxis}
             />
             <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatNumber(value as number)} />} />
+            <ChartLegend content={<ChartLegendContent />} />
             <Area
               dataKey="recurrentes"
               stackId="clientes"
