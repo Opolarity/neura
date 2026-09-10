@@ -24,7 +24,20 @@ export function PriceRulesDashboard({ filters }: Props) {
   const { report, visibleRows, maxApplications, view, setView } = usePriceRulesDashboard(filters);
 
   const loading = report.isLoading;
-  const kpis = report.data?.kpis ?? { active: 0, inactive: 0, used: 0, applications: 0, revenue: 0 };
+  const kpis = report.data?.kpis ?? {
+    active: 0,
+    inactive: 0,
+    used: 0,
+    applications: 0,
+    revenue: 0,
+    orders_with_rule: 0,
+    orders_total: 0,
+    revenue_total: 0,
+  };
+  // "Venta con regla" se lee sobre el total de pedidos del período: cuántos
+  // tuvieron al menos una regla y qué porcentaje son.
+  const ruleShare =
+    kpis.orders_total > 0 ? ((kpis.orders_with_rule / kpis.orders_total) * 100).toFixed(1) : null;
   const other = report.data?.other;
 
   // La fila de "Otros descuentos" solo tiene sentido en "Todas": no es una
@@ -59,7 +72,11 @@ export function PriceRulesDashboard({ filters }: Props) {
         <StatCard
           icon={<Coins className="w-5 h-5 text-success" />}
           label="Venta con regla"
-          hint="pedidos con al menos una"
+          hint={
+            ruleShare !== null
+              ? `${kpis.orders_with_rule.toLocaleString('es-PE')} de ${kpis.orders_total.toLocaleString('es-PE')} pedidos (${ruleShare}% del total)`
+              : 'pedidos con al menos una regla'
+          }
           value={formatCurrency(kpis.revenue)}
           loading={loading}
         />

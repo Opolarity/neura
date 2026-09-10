@@ -835,6 +835,11 @@ export interface PriceRuleKpis {
    * cada una de las dos.
    */
   revenue: number;
+  /** Pedidos distintos con al menos una regla (migración 31000910213000). */
+  orders_with_rule: number;
+  /** Pedidos del período con los mismos filtros, y su venta total. */
+  orders_total: number;
+  revenue_total: number;
 }
 
 export interface PriceRuleReportRow {
