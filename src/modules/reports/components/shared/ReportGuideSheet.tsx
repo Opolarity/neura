@@ -27,7 +27,7 @@ function SectionTitle({ children }: { children: string }) {
 }
 
 /**
- * Botón "Detalle del reporte" + panel lateral con la explicación de la
+ * Botón "Entender este reporte" + panel lateral con la explicación de la
  * pestaña: qué mide, qué es cada tarjeta y de dónde sale, qué muestra cada
  * gráfico, qué trae el Excel y cómo validar los números. El contenido vive en
  * guides/reportGuides.ts; acá solo se maqueta.
@@ -38,7 +38,7 @@ export function ReportGuideSheet({ guide }: Props) {
       <SheetTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <BookOpen className="h-3.5 w-3.5" />
-          Detalle del reporte
+          Entender este reporte
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">

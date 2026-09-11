@@ -1,5 +1,5 @@
 /**
- * Contenido del panel "Detalle del reporte" de cada pestaña de Reportes.
+ * Contenido del panel "Entender este reporte" de cada pestaña de Reportes.
  *
  * Es la versión corta del manual (docs/manual-reportes.md): qué mide la
  * pestaña, qué es cada tarjeta y de dónde sale, qué muestra cada gráfico,
