@@ -123,6 +123,12 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
         help: "Un SKU se considera con stock bajo cuando su stock vendible en almacenes activos es mayor a 0 y menor o igual a este valor. Gobierna la alerta de la campana al cruzar el umbral, el indicador de los listados de inventario y productos, y la bandeja de reposición (Reportes → Inventario). Sin valor configurado no se emiten alertas.",
       },
       {
+        key: "MinStockExternalDefault",
+        label: "Stock mínimo por defecto en canales externos (unidades)",
+        control: "number",
+        help: "T-596. Unidades que se reservan para la venta minorista y dejan de venderse en la web mayorista: una talla aparece agotada allí cuando su stock llega a este número. Aplica a toda variación que no tenga su propio mínimo cargado en Ecommerce → Edición masiva → Variaciones. Vacío desactiva el valor por defecto y solo queda protegido lo configurado a mano. No afecta a la web minorista, el POS, el ERP ni el chatbot.",
+      },
+      {
         key: "CompanyDireccionPartida",
         label: "Dirección de partida",
         control: "text",

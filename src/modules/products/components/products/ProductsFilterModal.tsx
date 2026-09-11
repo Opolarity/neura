@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { ProductFilters } from "../../types/Products.types";
 import type { TagsResponse } from "@/shared/types/type";
+import type { TermOption } from "@/modules/ecommerce/types/MinimumStock.types";
 import {
   CategorySelector,
   type CategoryOption,
@@ -38,6 +39,12 @@ interface ProductsFilterModalProps {
   tags?: TagsResponse[];
   /** Marcas (tags.type = 'brand'), ya filtradas por useProducts. */
   brands?: TagsResponse[];
+  /**
+   * T-596 · Atributos (términos) para filtrar por talla. Solo los pasa la
+   * pestaña de variaciones de Edición masiva; sin ellos la sección no se pinta
+   * y el modal queda igual que antes para el listado de productos.
+   */
+  terms?: TermOption[];
   filters: ProductFilters;
   isOpen: boolean;
   onClose?: () => void;
@@ -55,6 +62,7 @@ const ProductsFilterModal = ({
   onChangeSelectedCategories,
   tags = [],
   brands = [],
+  terms = [],
   filters,
   isOpen,
   onClose,
@@ -85,6 +93,13 @@ const ProductsFilterModal = ({
     setInternalFilters((prev) => ({
       ...prev,
       brand: value === "none" ? null : Number(value),
+    }));
+  };
+
+  const handleTermChange = (value: string) => {
+    setInternalFilters((prev) => ({
+      ...prev,
+      term: value === "none" ? null : Number(value),
     }));
   };
 
@@ -133,6 +148,7 @@ const ProductsFilterModal = ({
       order: null,
       tag: null,
       brand: null,
+      term: null,
     });
   };
 
@@ -231,6 +247,33 @@ const ProductsFilterModal = ({
                   </Select>
                 </div>
               </div>
+              {terms.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Atributo</Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={
+                        internalFilters?.term ? String(internalFilters.term) : "none"
+                      }
+                      onValueChange={handleTermChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todos los atributos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Todos los atributos</SelectItem>
+                        {/* El grupo desambigua: "S" existe en Talla y en Talla
+                            boxers, y son términos distintos. */}
+                        {terms.map((term) => (
+                          <SelectItem key={term.id} value={String(term.id)}>
+                            {term.name} · {term.groupName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Precio</Label>
                 <div className="flex gap-2">

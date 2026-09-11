@@ -53,12 +53,17 @@ import {
   AlignLeft,
   AlignRight,
   Radio,
+  ShieldCheck,
 } from "lucide-react";
 import ShortDescriptionMayModal from "../components/DescriptionMaYModal";
 import PromotionalImageModal from "../components/PromotionalImage";
 import EcommerceEditorButton from "@/shared/components/EcommerceEditorButton";
 import { ComponentPermission } from "@/shared/components/component-permission";
 import { toastError } from "@/shared/utils/toastError";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import MassiveEditVariationsTable from "@/modules/ecommerce/components/MassiveEditVariationsTable";
+import MinimumStockModal from "@/modules/ecommerce/components/MinimumStockModal";
+import { useVariationsMinStock } from "@/modules/ecommerce/hooks/useVariationsMinStock";
 
 
 const PromotionalTextPage = () => {
@@ -73,6 +78,10 @@ const PromotionalTextPage = () => {
     useState(false);
   const [isAssignTagsOpen, setIsAssignTagsOpen] = useState(false);
   const [isAssignBrandsOpen, setIsAssignBrandsOpen] = useState(false);
+  // T-596: la pestaña de variaciones trabaja por SKU, así que tiene su propio
+  // hook, su propia selección y su propia acción. La de productos no cambia.
+  const [isMinimumStockOpen, setIsMinimumStockOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("productos");
   const { toast } = useToast();
 
   const {
@@ -98,6 +107,34 @@ const PromotionalTextPage = () => {
     onSearchChange,
     onOrderChange,
   } = useProducts();
+
+  const {
+    variations,
+    defaultMinStock,
+    channel: wholesaleChannel,
+    selectedCategories: variationCategories,
+    setSelectedCategories: setVariationCategories,
+    tags: variationTags,
+    brands: variationBrands,
+    terms,
+    loading: loadingVariations,
+    search: variationSearch,
+    filters: variationFilters,
+    pagination: variationPagination,
+    isOpenFilterModal: isOpenVariationFilterModal,
+    selectedVariations,
+    hasActiveFilters: hasActiveVariationFilters,
+    onSearchChange: onVariationSearchChange,
+    onPageChange: onVariationPageChange,
+    onOrderChange: onVariationOrderChange,
+    handlePageSizeChange: handleVariationPageSizeChange,
+    onOpenFilterModal: onOpenVariationFilterModal,
+    onCloseFilterModal: onCloseVariationFilterModal,
+    onApplyFilter: onApplyVariationFilter,
+    toggleSelectAll: toggleAllVariations,
+    toggleVariationSelection,
+    saveMinStock,
+  } = useVariationsMinStock();
 
   const noSelectionToast = (label: string) => {
     toast({
@@ -326,6 +363,35 @@ const PromotionalTextPage = () => {
     }
   };
 
+  // T-596 · minStock null = "volver al valor por defecto" (borra las filas);
+  // un número = se reserva esa cantidad, y 0 es no proteger la variación.
+  const handleSaveMinimumStock = async (minStock: number | null) => {
+    if (selectedVariations.length === 0) {
+      toast({
+        title: "Sin variaciones seleccionadas",
+        description: "Selecciona al menos una variación para configurar el stock mínimo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const result = await saveMinStock(minStock);
+
+      toast({
+        title: minStock === null ? "Stock mínimo restablecido" : "Stock mínimo guardado",
+        description:
+          minStock === null
+            ? `${result.cleared} variación${result.cleared === 1 ? "" : "es"} vuelve${result.cleared === 1 ? "" : "n"} al valor por defecto.`
+            : `Se reservan ${minStock} unidad${minStock === 1 ? "" : "es"} en ${result.upserted} variación${result.upserted === 1 ? "" : "es"}.`,
+        variant: "success",
+      });
+    } catch (error) {
+      toastError(error, "Error desconocido");
+      throw error;
+    }
+  };
+
   const handleSaveSalesChannels = async (channelIds: number[]) => {
     //la funcion que se ejecuta al guardar
     if (selectedProducts.length === 0) {
@@ -354,9 +420,25 @@ const PromotionalTextPage = () => {
           <ComponentPermission codeIn={["ecommerce_editor.open"]}>
             <EcommerceEditorButton variant="outline" />
           </ComponentPermission>
+          {/* T-596 · La acción de la pestaña de variaciones: un valor para
+              todas las seleccionadas. Mismo code que el resto de la edición
+              masiva. */}
+          {activeTab === "variaciones" && (
+            <ComponentPermission codeIn={["products.edit"]}>
+              <Button
+                className="gap-2"
+                disabled={selectedVariations.length === 0}
+                onClick={() => setIsMinimumStockOpen(true)}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Configurar stock mínimo
+              </Button>
+            </ComponentPermission>
+          )}
           {/* Las diez opciones del menú escriben propiedades del producto
               (descripciones, imágenes, canales, etiquetas, marcas), solo que en
               lote: cuelgan del mismo products.edit que la ficha individual. */}
+          {activeTab === "productos" && (
           <ComponentPermission codeIn={["products.edit"]}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -443,42 +525,110 @@ const PromotionalTextPage = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </ComponentPermission>
+          )}
         </div>
       </div>
 
-      <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader className="!p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <ProductsFilterBar
-              search={search}
-              onSearchChange={onSearchChange}
-              onOpen={onOpenFilterModal}
-              order={filters.order}
-              onOrderChange={onOrderChange}
-              hasActiveFilters={hasActiveFilters}
-            />
-          </div>
-        </CardHeader>
+      {/* Dos vistas de lo mismo con distinto registro: la de siempre, por
+          producto, y la de variaciones (T-596), por SKU, que es la única forma
+          de configurar un mínimo que se guarda por variation_id. */}
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex flex-col flex-1 min-h-0 gap-4"
+      >
+        <TabsList className="w-fit">
+          <TabsTrigger value="productos">Productos</TabsTrigger>
+          <TabsTrigger value="variaciones">Variaciones</TabsTrigger>
+        </TabsList>
 
-        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
-          <MassiveEditProductsTable
-            search={search}
-            products={products}
-            loading={loading}
-            selectedProducts={selectedProducts}
-            onToggleAllProductsSelection={toggleSelectAll}
-            onToggleProductSelection={toggleProductSelection}
-          />
-        </CardContent>
+        <TabsContent
+          value="productos"
+          className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
+        >
+          <Card className="flex flex-col h-full min-h-0 overflow-hidden">
+            <CardHeader className="!p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <ProductsFilterBar
+                  search={search}
+                  onSearchChange={onSearchChange}
+                  onOpen={onOpenFilterModal}
+                  order={filters.order}
+                  onOrderChange={onOrderChange}
+                  hasActiveFilters={hasActiveFilters}
+                />
+              </div>
+            </CardHeader>
 
-        <CardFooter className="!p-0">
-          <PaginationBar
-            pagination={pagination}
-            onPageChange={onPageChange}
-            onPageSizeChange={handlePageSizeChange}
-          />
-        </CardFooter>
-      </Card>
+            <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
+              <MassiveEditProductsTable
+                search={search}
+                products={products}
+                loading={loading}
+                selectedProducts={selectedProducts}
+                onToggleAllProductsSelection={toggleSelectAll}
+                onToggleProductSelection={toggleProductSelection}
+              />
+            </CardContent>
+
+            <CardFooter className="!p-0">
+              <PaginationBar
+                pagination={pagination}
+                onPageChange={onPageChange}
+                onPageSizeChange={handlePageSizeChange}
+              />
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent
+          value="variaciones"
+          className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
+        >
+          <Card className="flex flex-col h-full min-h-0 overflow-hidden">
+            <CardHeader className="!p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <ProductsFilterBar
+                  search={variationSearch}
+                  onSearchChange={onVariationSearchChange}
+                  onOpen={onOpenVariationFilterModal}
+                  order={variationFilters.order}
+                  onOrderChange={onVariationOrderChange}
+                  hasActiveFilters={hasActiveVariationFilters}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {wholesaleChannel
+                  ? `Stock mínimo de ${wholesaleChannel.name}`
+                  : "Canal de la web mayorista no encontrado"}
+                {defaultMinStock !== null
+                  ? ` · por defecto ${defaultMinStock} unidades`
+                  : " · sin valor por defecto"}
+              </p>
+            </CardHeader>
+
+            <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
+              <MassiveEditVariationsTable
+                search={variationSearch}
+                variations={variations}
+                loading={loadingVariations}
+                defaultMinStock={defaultMinStock}
+                selectedVariations={selectedVariations}
+                onToggleAllVariationsSelection={toggleAllVariations}
+                onToggleVariationSelection={toggleVariationSelection}
+              />
+            </CardContent>
+
+            <CardFooter className="!p-0">
+              <PaginationBar
+                pagination={variationPagination}
+                onPageChange={onVariationPageChange}
+                onPageSizeChange={handleVariationPageSizeChange}
+              />
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <ProductsFilterModal
         isOpen={isOpenFilterModal}
@@ -489,6 +639,29 @@ const PromotionalTextPage = () => {
         filters={filters}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}
+      />
+
+      {/* Mismo modal de filtros, con el select de atributo que solo se pinta
+          cuando se le pasan términos. */}
+      <ProductsFilterModal
+        isOpen={isOpenVariationFilterModal}
+        selectedCategories={variationCategories}
+        onChangeSelectedCategories={setVariationCategories}
+        tags={variationTags}
+        brands={variationBrands}
+        terms={terms}
+        filters={variationFilters}
+        onClose={onCloseVariationFilterModal}
+        onApply={onApplyVariationFilter}
+      />
+
+      <MinimumStockModal
+        isOpen={isMinimumStockOpen}
+        onClose={() => setIsMinimumStockOpen(false)}
+        selectedCount={selectedVariations.length}
+        channelName={wholesaleChannel?.name ?? null}
+        defaultMinStock={defaultMinStock}
+        onSave={handleSaveMinimumStock}
       />
       <PromotionalTextModal
         isOpen={isModalOpen}
