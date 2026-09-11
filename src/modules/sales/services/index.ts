@@ -43,6 +43,8 @@ export const fetchShippingCosts = async () => {
 };
 
 // Search client by document type and number
+// Solo cuentas activas: una cuenta desactivada (is_active = false) no debe
+// contar como cliente existente en el buscador de Anadir venta / POS.
 export const searchClientByDocument = async (
   documentTypeId: number,
   documentNumber: string,
@@ -52,6 +54,7 @@ export const searchClientByDocument = async (
     .select("*")
     .eq("document_type_id", documentTypeId)
     .eq("document_number", documentNumber)
+    .eq("is_active", true)
     .maybeSingle();
   if (error) throw error;
   return data;
