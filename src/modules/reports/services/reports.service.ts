@@ -549,6 +549,11 @@ export interface SalesReportRow {
   customer_name: string;
   sale_type: string | null;
   seller: string | null;
+  /** Desglose del total (migración 31000911183000): productos − descuento + envío = total. */
+  products_amount: number;
+  /** Siempre positivo, aunque el ERP lo guarde con signo. */
+  discount_amount: number;
+  shipping_amount: number;
   total: number;
   // Cobrado NETO de devoluciones confirmadas, para que la hoja cierre con la
   // tarjeta "Ventas Totales" del dashboard.

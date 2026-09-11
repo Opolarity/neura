@@ -34,7 +34,10 @@ function buildSalesSheet(rows: SalesReportRow[]): XLSX.WorkSheet {
     "Nombre Cliente",
     "Canal de Venta",
     "Vendedor",
-    "Total",
+    "Monto de Productos",
+    "Descuentos",
+    "Envío",
+    "Total de la Venta",
     "Devoluciones",
     "Cobrado",
     "Método de Pago",
@@ -58,6 +61,10 @@ function buildSalesSheet(rows: SalesReportRow[]): XLSX.WorkSheet {
     r.customer_name ?? "-",
     r.sale_type ?? "-",
     r.seller ?? "-",
+    // Desglose: productos − descuentos + envío = total (0 cuando no hay).
+    r.products_amount ?? 0,
+    r.discount_amount ?? 0,
+    r.shipping_amount ?? 0,
     r.total,
     r.refund_amount,
     r.paid_amount,
@@ -84,7 +91,10 @@ function buildSalesSheet(rows: SalesReportRow[]): XLSX.WorkSheet {
     { wch: 32 }, // Nombre Cliente
     { wch: 16 }, // Canal de Venta
     { wch: 24 }, // Vendedor
-    { wch: 12 }, // Total
+    { wch: 18 }, // Monto de Productos
+    { wch: 12 }, // Descuentos
+    { wch: 10 }, // Envío
+    { wch: 16 }, // Total de la Venta
     { wch: 14 }, // Devoluciones
     { wch: 12 }, // Cobrado
     { wch: 34 }, // Método de Pago
