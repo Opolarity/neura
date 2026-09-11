@@ -98,8 +98,10 @@ export function generateFranchiseProductsExcel({
   // precio de la orden de Overtake, antes de descuentos. Con filtro de fecha,
   // pagado y por pagar son DEL RANGO: el pagado de cada línea se atribuye a
   // sus ventas más antiguas primero (FIFO en el SP), igual que liquida el
-  // sistema del franquiciado.
-  const summaryRows = [
+  // sistema del franquiciado. El crédito disponible (prendas devueltas que ya
+  // estaban pagadas) es global y ya viene restado del "por pagar"; si sobra,
+  // el excedente sale como saldo a favor.
+  const summaryRows: SheetCell[][] = [
     ["Montos"],
     ["Total de venta (inicial)", roundMoney(summary.totalSent)],
     ["Dscto. promociones", roundMoney(summary.totalPromoDiscount)],
@@ -107,21 +109,28 @@ export function generateFranchiseProductsExcel({
       summary.dateFilterActive ? "Total pagado (del rango)" : "Total pagado",
       roundMoney(summary.totalPaid),
     ],
+    ["Crédito disponible", roundMoney(summary.totalCredit)],
     [
       summary.dateFilterActive
         ? "Total por pagar (del rango)"
         : "Total por pagar",
       roundMoney(summary.totalPending),
     ],
+    ["Saldo a favor", roundMoney(summary.creditSurplus)],
+    ["Unidades devueltas", summary.totalUnitsReturned],
     [],
     [],
   ];
+  // Filas de montos (S/) dentro del bloque: todas menos el título y las
+  // unidades devueltas.
+  const MONEY_SUMMARY_ROWS = 6;
 
   const headerRow = [
     "Nombre del producto",
     "Id orden (overtake)",
     "ID orden (franquiciado)",
     "Vendido por franquiciado",
+    "Devueltas",
     "Precio unitario",
     "Descuento",
     "Monto Desc.",
@@ -158,6 +167,8 @@ export function generateFranchiseProductsExcel({
       // Una línea puede tener varias ventas reportadas por el franquiciado.
       item.franchiseOrderIds.join(", ") || "-",
       sold,
+      // Unidades devueltas por el cliente final; `sold` ya viene neto.
+      item.returnedUnits,
       roundMoney(item.productPrice),
       item.promoNames.join(", ") || null,
       roundMoney(item.franchiseDiscount),
@@ -171,6 +182,7 @@ export function generateFranchiseProductsExcel({
   // reporte completo y cuadran con el bloque de montos.
   const totalRow: SheetCell[] = [
     "TOTAL",
+    null,
     null,
     null,
     null,
@@ -196,6 +208,7 @@ export function generateFranchiseProductsExcel({
     { wch: 18 },
     { wch: 22 },
     { wch: 22.5 },
+    { wch: 12 },
     { wch: 14 },
     { wch: 14 },
     { wch: 14 },
@@ -204,22 +217,26 @@ export function generateFranchiseProductsExcel({
     { wch: 28 },
   ];
 
-  const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:J1");
+  const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:K1");
   for (let row = range.s.r; row <= range.e.r; row += 1) {
     for (let col = range.s.c; col <= range.e.c; col += 1) {
       const cell = ws[XLSX.utils.encode_cell({ r: row, c: col })];
       if (!cell || typeof cell.v !== "number") continue;
 
       // Las filas de filtros son todas texto: solo se formatean los montos.
-      if (row >= filterRows.length + 1 && row <= filterRows.length + 4 && col === 1) {
+      if (
+        row >= filterRows.length + 1 &&
+        row <= filterRows.length + MONEY_SUMMARY_ROWS &&
+        col === 1
+      ) {
         cell.z = '"S/ "#,##0.00';
       }
 
       if (row > filterRows.length + summaryRows.length) {
         // Precio unitario, Monto Desc., Pagado y Total (por pagar).
-        if ([4, 6, 7, 8].includes(col)) cell.z = '"S/ "#,##0.00';
-        // Vendido por franquiciado.
-        if (col === 3) cell.z = "#,##0.##";
+        if ([5, 7, 8, 9].includes(col)) cell.z = '"S/ "#,##0.00';
+        // Vendido por franquiciado y Devueltas.
+        if (col === 3 || col === 4) cell.z = "#,##0.##";
       }
     }
   }

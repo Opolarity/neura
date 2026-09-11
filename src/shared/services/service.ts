@@ -127,9 +127,36 @@ export const situationByModuleandStatus = async (moduleCode: string, statusCode:
   return data?.situations ?? [];
 };
 
+// ── Crédito de franquicia ───────────────────────────────────────────────────
+// Los métodos "Crédito" (CRE) y "Débito" (DEB) existen solo para el circuito
+// de consignación: el crédito lo generan las devoluciones de prendas ya
+// pagadas y el débito lo consume al confirmar un pago del franquiciado. No
+// son medios de pago que un usuario elija en una venta, un movimiento manual
+// o una devolución, así que los selectores generales los excluyen por
+// defecto. La cuenta de negocio de tipo CRE ("Crédito <franquiciado>") tiene
+// el mismo tratamiento.
+
+/** Codes de payment_methods reservados al crédito de franquicia. */
+export const CREDIT_PAYMENT_METHOD_CODES = ["CRE", "DEB"] as const;
+
+/** Code del tipo (módulo BNA) de las cuentas de crédito de franquicia. */
+export const CREDIT_BUSINESS_ACCOUNT_TYPE_CODE = "CRE";
+
+export const isCreditPaymentMethodCode = (code: string | null | undefined): boolean =>
+  !!code && (CREDIT_PAYMENT_METHOD_CODES as readonly string[]).includes(code);
+
+/** Quita los métodos CRE/DEB salvo que el llamador los pida explícitamente. */
+export const excludeCreditPaymentMethods = <T extends { code?: string | null }>(
+  methods: T[],
+  includeCredit = false,
+): T[] => (includeCredit ? methods : methods.filter((m) => !isCreditPaymentMethodCode(m.code)));
+
 //GET ACTIVE PAYMENT METHODS BY SALE TYPE ID//
 
-export const getActivePaymentMethodsBySaleTypeId = async (saleTypeId: number): Promise<PaymentMethod[]> => {
+export const getActivePaymentMethodsBySaleTypeId = async (
+  saleTypeId: number,
+  includeCredit = false,
+): Promise<PaymentMethod[]> => {
   const { data, error } = await supabase
     .from("payment_method_sale_type")
     .select("payment_method_id, payment_methods!inner(id, name, business_account_id, active, is_active, code)")
@@ -142,7 +169,10 @@ export const getActivePaymentMethodsBySaleTypeId = async (saleTypeId: number): P
     return [];
   }
 
-  return (data || []).map((item: any) => item.payment_methods).filter(Boolean);
+  const methods: PaymentMethod[] = (data || [])
+    .map((item: any) => item.payment_methods)
+    .filter(Boolean);
+  return excludeCreditPaymentMethods(methods, includeCredit);
 };
 
 
@@ -206,10 +236,20 @@ export const getPriceListIsActiveTrue = async (): Promise<PriceList[]> => {
 
 //GET BUSINESS ACCOUNT IS_ACTIVE TRUE//
 
-export const getBusinessAccountIsActiveTrue = async () => {
-  const { data, error } = await supabase
+/**
+ * Cuentas activas para los selectores de venta, POS y filtros.
+ *
+ * Por defecto deja fuera las de tipo CRE (crédito de franquicia): su saldo lo
+ * mueven las devoluciones y los pagos de franquicia, nunca un usuario desde
+ * un selector. El tipo se resuelve por `types.code`, no por id, porque los
+ * ids cambian entre entornos (mismo criterio que cashBusinessAccountsApi).
+ */
+export const getBusinessAccountIsActiveTrue = async (
+  includeCredit = false,
+): Promise<BusinessAccount[]> => {
+  const { data, error } = await (supabase as any)
     .from("business_accounts")
-    .select("*")
+    .select("*, types:business_account_type_id!inner(code)")
     .eq("is_active", true)
     .gt("id", 0);
 
@@ -218,12 +258,17 @@ export const getBusinessAccountIsActiveTrue = async () => {
     return [];
   }
 
-  return data || [];
+  const rows = (data ?? []) as Array<BusinessAccount & { types?: { code: string | null } | null }>;
+  return rows
+    .filter((row) => includeCredit || row.types?.code !== CREDIT_BUSINESS_ACCOUNT_TYPE_CODE)
+    .map(({ types: _types, ...account }) => account as BusinessAccount);
 };
 
 //GET PAYMENT METHODS IS_ACTIVE TRUE//
 
-export const getPaymentMethodsIsActiveTrue = async (): Promise<PaymentMethod[]> => {
+export const getPaymentMethodsIsActiveTrue = async (
+  includeCredit = false,
+): Promise<PaymentMethod[]> => {
   const { data, error } = await supabase
     .from("payment_methods")
     .select("*")
@@ -234,13 +279,15 @@ export const getPaymentMethodsIsActiveTrue = async (): Promise<PaymentMethod[]> 
     return [];
   }
 
-  return data || [];
+  return excludeCreditPaymentMethods(data || [], includeCredit);
 };
 
 
 //GET PAYMENT METHODS IS_ACTIVE TRUE AND ACTIVE TRUE//
 
-export const getPaymentMethodsIsActiveTrueAndActiveTrue = async (): Promise<(PaymentMethod & { business_accounts?: { name: string, total_amount: number } })[]> => {
+export const getPaymentMethodsIsActiveTrueAndActiveTrue = async (
+  includeCredit = false,
+): Promise<(PaymentMethod & { business_accounts?: { name: string, total_amount: number } })[]> => {
   const { data, error } = await supabase
     .from("payment_methods")
     .select("*, business_accounts(name, total_amount)")
@@ -252,7 +299,7 @@ export const getPaymentMethodsIsActiveTrueAndActiveTrue = async (): Promise<(Pay
     return [];
   }
 
-  return (data as any) || [];
+  return excludeCreditPaymentMethods(((data as any) || []) as (PaymentMethod & { business_accounts?: { name: string, total_amount: number } })[], includeCredit);
 };
 
 

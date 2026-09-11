@@ -69,7 +69,8 @@ const useCreateOrderChannelType = () => {
         const fetchOptions = async () => {
             try {
                 const promises: Promise<any>[] = [
-                    getPaymentMethodsIsActiveTrueAndActiveTrue(),
+                    // Configuración: lista completa, incluidos CRE/DEB.
+                    getPaymentMethodsIsActiveTrueAndActiveTrue(true),
                     GetInvoiceSeries(),
                     GetBranches(),
                     GetCajas(isEdit && channelTypeId ? parseInt(channelTypeId) : undefined),

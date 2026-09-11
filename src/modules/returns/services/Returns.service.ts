@@ -8,6 +8,7 @@ import {
     DocumentProducts
 } from "../types/Returns.types";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { excludeCreditPaymentMethods } from "@/shared/services/service";
 
 export const returnsService = {
     async getOrders(userId: string) {
@@ -70,14 +71,16 @@ export const returnsService = {
         return data;
     },
 
-    async getPaymentMethods() {
+    // Por defecto sin "Crédito" (CRE) ni "Débito" (DEB): son del circuito de
+    // crédito de franquicia, no un medio con el que se devuelve dinero.
+    async getPaymentMethods(includeCredit = false) {
         const { data, error } = await supabase
             .from("payment_methods")
             .select("*")
             .eq("active", true);
 
         if (error) throw error;
-        return data;
+        return excludeCreditPaymentMethods(data ?? [], includeCredit);
     },
 
     async getOrderProducts(orderId: number) {

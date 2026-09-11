@@ -12,6 +12,15 @@ export type PendingPaymentRow = {
   status: PendingPaymentStatus;
   franchiseName: string;
   totalAmount: number;
+  // Parte del pago cubierta con el crédito de franquicia (método DEB sobre la
+  // cuenta CRE del franquiciado). 0 cuando todo llega en efectivo.
+  creditAmount: number;
+  // totalAmount − creditAmount: lo que efectivamente entró en dinero.
+  cashAmount: number;
+  creditPaymentMethodId: number | null;
+  creditBusinessAccountId: number | null;
+  // Puede venir vacío cuando el pago se cubrió íntegramente con crédito: no
+  // hubo dinero, así que no hay comprobante que exigir.
   files: string[];
   movementCode: string;
   businessAccountId: number;
@@ -23,6 +32,10 @@ export type PendingPaymentRow = {
   }>;
 };
 
+/** true cuando el pago no movió dinero: todo se cubrió con crédito. */
+export const isFullyCoveredByCredit = (payment: PendingPaymentRow): boolean =>
+  payment.creditAmount > 0 && payment.creditAmount >= payment.totalAmount;
+
 type RawPendingRequest = {
   id: number;
   created_at: string;
@@ -31,7 +44,11 @@ type RawPendingRequest = {
   payload: {
     franchise_name: string;
     total_amount: number;
-    files: string[];
+    credit_amount?: number | string | null;
+    cash_amount?: number | string | null;
+    credit_payment_method_id?: number | null;
+    credit_business_account_id?: number | null;
+    files: string[] | null;
     movement_code: string;
     business_account_id: number;
     payment_method_id: number;
@@ -41,6 +58,11 @@ type RawPendingRequest = {
       amount: number;
     }>;
   };
+};
+
+const toNumber = (value: number | string | null | undefined): number => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
 };
 
 export type FetchPendingPaymentsParams = {
@@ -81,19 +103,31 @@ export const fetchPendingPayments = async ({
   if (error) throw error;
 
   return {
-    rows: ((data ?? []) as RawPendingRequest[]).map((row) => ({
-      id: row.id,
-      createdAt: row.created_at,
-      processedAt: row.processed_at,
-      status: row.status,
-      franchiseName: row.payload.franchise_name,
-      totalAmount: row.payload.total_amount,
-      files: row.payload.files ?? [],
-      movementCode: row.payload.movement_code,
-      businessAccountId: row.payload.business_account_id,
-      paymentMethodId: row.payload.payment_method_id,
-      orderProducts: row.payload.order_products ?? [],
-    })),
+    rows: ((data ?? []) as RawPendingRequest[]).map((row) => {
+      const totalAmount = toNumber(row.payload.total_amount);
+      const creditAmount = Math.max(0, toNumber(row.payload.credit_amount));
+      return {
+        id: row.id,
+        createdAt: row.created_at,
+        processedAt: row.processed_at,
+        status: row.status,
+        franchiseName: row.payload.franchise_name,
+        totalAmount,
+        creditAmount,
+        // Si el payload trae cash_amount se respeta; si no, se deriva.
+        cashAmount:
+          row.payload.cash_amount !== undefined && row.payload.cash_amount !== null
+            ? toNumber(row.payload.cash_amount)
+            : Math.max(0, totalAmount - creditAmount),
+        creditPaymentMethodId: row.payload.credit_payment_method_id ?? null,
+        creditBusinessAccountId: row.payload.credit_business_account_id ?? null,
+        files: row.payload.files ?? [],
+        movementCode: row.payload.movement_code,
+        businessAccountId: row.payload.business_account_id,
+        paymentMethodId: row.payload.payment_method_id,
+        orderProducts: row.payload.order_products ?? [],
+      };
+    }),
     total: count ?? 0,
   };
 };
