@@ -11,6 +11,8 @@ import { fetchSellersOrdersReport, filterOptionsService, sellersService } from '
 import { defaultSituationIds, isSameIdSet } from '../types/reports.types';
 import { generateSellersReportExcel } from '../utils/generateSellersReportExcel';
 import { toastError } from '@/shared/utils/toastError';
+import { ReportGuideSheet } from '../components/shared/ReportGuideSheet';
+import { sellersGuide } from '../guides/reportGuides';
 
 const SellersDashboard = lazy(() =>
   import('../components/sellers/SellersDashboard').then((m) => ({ default: m.SellersDashboard })),
@@ -90,9 +92,12 @@ export default function SellersPage() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Reporte de ventas por usuarios</h1>
-        <p className="text-muted-foreground text-sm">Quién registró cada venta: vendedores por sucursal, ranking y evolución</p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Reporte de ventas por usuarios</h1>
+          <p className="text-muted-foreground text-sm">Quién registró cada venta: vendedores por sucursal, ranking y evolución</p>
+        </div>
+        <ReportGuideSheet guide={sellersGuide} />
       </div>
       <ReportsFilterBar
         extraFields={<SalesGeoFilters />}

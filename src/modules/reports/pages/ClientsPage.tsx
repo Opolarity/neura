@@ -12,6 +12,8 @@ import { OrderSituationFilter } from '../components/shared/OrderSituationFilter'
 import { OrderScopeFilters } from '../components/shared/OrderScopeFilters';
 import { generateCustomersReportExcel } from '../utils/generateCustomersReportExcel';
 import { toastError } from '@/shared/utils/toastError';
+import { ReportGuideSheet } from '../components/shared/ReportGuideSheet';
+import { customersGuide } from '../guides/reportGuides';
 
 const CustomersDashboard = lazy(() =>
   import('../components/customers/CustomersDashboard').then((m) => ({ default: m.CustomersDashboard })),
@@ -85,9 +87,12 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Reportes de clientes</h1>
-        <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Reportes de clientes</h1>
+          <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+        </div>
+        <ReportGuideSheet guide={customersGuide} />
       </div>
       <ReportsFilterBar
         // El estado de pedido lleva el default de Ventas (todo menos cancelado y

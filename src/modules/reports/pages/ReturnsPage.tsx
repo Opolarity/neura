@@ -11,6 +11,8 @@ import { fetchReturnsReport, filterOptionsService } from '../services/reports.se
 import { defaultReturnSituationIds, isSameIdSet } from '../types/reports.types';
 import { generateReturnsReportExcel } from '../utils/generateReturnsReportExcel';
 import { toastError } from '@/shared/utils/toastError';
+import { ReportGuideSheet } from '../components/shared/ReportGuideSheet';
+import { returnsGuide } from '../guides/reportGuides';
 
 const ReturnsDashboard = lazy(() =>
   import('../components/returns/ReturnsDashboard').then((m) => ({ default: m.ReturnsDashboard })),
@@ -102,9 +104,12 @@ export default function ReturnsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Reportes de cambios/retornos</h1>
-        <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Reportes de cambios/retornos</h1>
+          <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+        </div>
+        <ReportGuideSheet guide={returnsGuide} />
       </div>
       <ReportsFilterBar
         extraFields={<ReturnsOptionsPanel />}

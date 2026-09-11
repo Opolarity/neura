@@ -12,6 +12,8 @@ import { OrderSituationFilter } from '../components/shared/OrderSituationFilter'
 import { OrderScopeFilters } from '../components/shared/OrderScopeFilters';
 import { generatePriceRulesReportExcel } from '../utils/generatePriceRulesReportExcel';
 import { toastError } from '@/shared/utils/toastError';
+import { ReportGuideSheet } from '../components/shared/ReportGuideSheet';
+import { priceRulesGuide } from '../guides/reportGuides';
 
 const PriceRulesDashboard = lazy(() =>
   import('../components/price-rules/PriceRulesDashboard').then((m) => ({ default: m.PriceRulesDashboard })),
@@ -85,9 +87,12 @@ export default function PriceRulesReportPage() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Reportes de regla de precios</h1>
-        <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Reportes de regla de precios</h1>
+          <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+        </div>
+        <ReportGuideSheet guide={priceRulesGuide} />
       </div>
       <ReportsFilterBar
         // Hasta acá la pestaña solo tenía el rango de fechas. El estado de

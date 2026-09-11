@@ -17,6 +17,8 @@ import {
   type CategoryExportRow,
 } from '../utils/generateProductsReportExcel';
 import { toastError } from '@/shared/utils/toastError';
+import { ReportGuideSheet } from '../components/shared/ReportGuideSheet';
+import { productsGuide } from '../guides/reportGuides';
 
 const ProductsDashboard = lazy(() =>
   import('../components/products/ProductsDashboard').then((m) => ({ default: m.ProductsDashboard })),
@@ -149,9 +151,12 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Reporte de ventas de productos</h1>
-        <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Reporte de ventas de productos</h1>
+          <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+        </div>
+        <ReportGuideSheet guide={productsGuide} />
       </div>
       <ReportsFilterBar
         extraFields={<ProductsOptionsPanel />}
