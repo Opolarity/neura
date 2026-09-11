@@ -1,0 +1,564 @@
+<title>Manual de Reportes Neura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --brand: #5A38A8;
+    --brand-soft: #EFEAF9;
+    --ink: #1F2233;
+    --muted: #71757E;
+    --ground: #FFFFFF;
+    --soft: #F8F9FA;
+    --border: #E9EAEE;
+    --check: #0E7C6B;
+    --check-soft: #E6F4F1;
+    --code-bg: #F1EFF7;
+    --font-display: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+    --font-body: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --brand: #B39BEE;
+      --brand-soft: #2A2340;
+      --ink: #ECEAF3;
+      --muted: #A29FB3;
+      --ground: #141320;
+      --soft: #1C1B2A;
+      --border: #2E2C3F;
+      --check: #5FD1BC;
+      --check-soft: #17302C;
+      --code-bg: #24223A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --brand: #B39BEE;
+    --brand-soft: #2A2340;
+    --ink: #ECEAF3;
+    --muted: #A29FB3;
+    --ground: #141320;
+    --soft: #1C1B2A;
+    --border: #2E2C3F;
+    --check: #5FD1BC;
+    --check-soft: #17302C;
+    --code-bg: #24223A;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  .shell { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100vh; }
+  nav.toc {
+    position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
+    padding: 28px 20px; border-right: 1px solid var(--border); background: var(--soft);
+  }
+  nav.toc .brand {
+    font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--brand); margin: 0 0 4px;
+  }
+  nav.toc .sub { font-size: 13px; color: var(--muted); margin: 0 0 20px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  nav.toc a {
+    display: block; padding: 6px 10px; border-radius: 6px; color: var(--ink); text-decoration: none; font-size: 14.5px;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible { background: var(--brand-soft); outline: none; }
+  nav.toc a.active { background: var(--brand); color: #fff; }
+  nav.toc .num { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-right: 8px; }
+  nav.toc a.active .num { color: rgba(255,255,255,.75); }
+
+  main { padding: 40px 56px 96px; max-width: 980px; }
+  article > * { max-width: 78ch; }
+  article > table, article > .table-wrap, article > .validate { max-width: none; }
+  h1 { font-family: var(--font-display); font-weight: 800; font-size: 40px; line-height: 1.1; margin: 0 0 12px; text-wrap: balance; letter-spacing: -.01em; }
+  h2 {
+    font-family: var(--font-display); font-weight: 700; font-size: 26px; margin: 56px 0 16px; padding-top: 20px;
+    border-top: 2px solid var(--brand); text-wrap: balance; scroll-margin-top: 24px;
+  }
+  h3 { font-family: var(--font-display); font-weight: 700; font-size: 18px; margin: 28px 0 8px; }
+  p { margin: 0 0 14px; }
+  hr { display: none; }
+  strong { font-weight: 600; }
+  a { color: var(--brand); }
+  ul, ol { padding-left: 24px; margin: 0 0 14px; }
+  li { margin: 0 0 6px; }
+  li > p { margin: 0; }
+
+  .table-wrap { overflow-x: auto; margin: 0 0 20px; border: 1px solid var(--border); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  th {
+    font-family: var(--font-display); font-weight: 700; font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); background: var(--soft);
+  }
+  tr:last-child td { border-bottom: 0; }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+  td { font-variant-numeric: tabular-nums; }
+  code { font-family: var(--font-mono); font-size: .9em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+
+  .validate {
+    margin: 24px 0 8px; padding: 18px 22px 8px; border-left: 4px solid var(--check); background: var(--check-soft); border-radius: 0 8px 8px 0;
+  }
+  .validate h3 { margin: 0 0 10px; color: var(--check); display: flex; align-items: center; gap: 8px; }
+  .validate h3::before { content: '✓'; font-family: var(--font-mono); font-weight: 500; }
+  .validate ol { margin-bottom: 8px; }
+
+  .lead { font-size: 19px; color: var(--muted); }
+  .meta { font-family: var(--font-mono); font-size: 13px; color: var(--muted); margin: 0 0 32px; }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    nav.toc { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+    main { padding: 28px 20px 64px; }
+    h1 { font-size: 32px; }
+  }
+  @media print {
+    nav.toc { display: none; }
+    .shell { display: block; }
+    h2 { break-before: page; }
+  }
+</style>
+
+<div class="shell">
+  <nav class="toc" aria-label="Contenido">
+    <p class="brand">Neura · Reportes</p>
+    <p class="sub">Manual de uso y validación</p>
+    <ol id="toc"></ol>
+  </nav>
+  <main>
+    <article id="content"></article>
+  </main>
+</div>
+
+<script type="text/markdown" id="src"># Manual de Reportes del ERP
+
+Qué muestra cada pestaña de **Reportes**, de dónde sale cada número y cómo comprobar que es correcto. Pensado para explicarle los reportes a alguien que no conoce el sistema por dentro.
+
+Versión: 11 de septiembre de 2026. Cubre las ocho pestañas: Ventas, Productos, Inventario, Cambios/Retornos, Financiero, Clientes, Regla de precios y Vendedores.
+
+---
+
+## 1. Conceptos que se repiten en todos los reportes
+
+### 1.1 El rango de fechas
+Todos los reportes tienen un rango **Desde / Hasta** (máximo 90 días). Salvo que se diga lo contrario, un pedido entra al rango por su **fecha de pedido** (la que se ve en Lista de ventas), no por la fecha en que se cobró ni se entregó. Inventario es la excepción: es una foto del stock de hoy y el rango solo afecta a tres de sus gráficos.
+
+### 1.2 El botón Aplicar
+Cambiar un filtro no recarga nada hasta dar clic en **Aplicar**. Esto vale para las fechas y para todo lo que está en **Más filtros**. El botón **Limpiar** vuelve todos los filtros extra a su valor por defecto.
+
+### 1.3 Los filtros de "Más filtros"
+Casi todos los reportes comparten estos filtros, que actúan sobre el pedido:
+
+| Filtro | Qué hace |
+|---|---|
+| Sede (sucursal) | Sucursal en la que se registró el pedido. |
+| Canal de venta | Caja, web minorista, web mayorista, WhatsApp, chatbot, etc. |
+| Método de pago | Pedidos que tienen al menos un pago con ese método. Un pedido pagado con dos métodos aparece en los dos. |
+| Lista de precios | Minorista o mayorista, según con qué lista se armó el pedido. |
+| Estado de pedido | Situación **actual** del pedido (la última registrada). Cada reporte tiene su default, ver 1.4. |
+| Geografía (país, departamento, provincia, distrito) | Dirección de entrega del pedido. |
+
+Inventario y Financiero tienen filtros propios porque no trabajan sobre pedidos (ver sus secciones).
+
+### 1.4 Estado de pedido: el default de cada reporte
+Un pedido puede estar En proceso, Armado, Enviado, Entregado, Cancelado, Reembolsado, etc. Cada reporte decide cuáles cuenta si no se toca el filtro:
+
+| Reporte | Default | Por qué |
+|---|---|---|
+| Ventas, Clientes, Financiero (mitad de pedidos), Regla de precios, Vendedores | Todo **menos Cancelado y Reembolsado** | Mide lo que se pidió. |
+| Productos | Solo **Enviado y Entregado** | Mide mercadería que salió del almacén. |
+| Cambios/Retornos | Solo retornos **Aceptados** (es el estado del retorno, no del pedido) | Un retorno pendiente o anulado no es una devolución. |
+
+Por esto Productos siempre muestra menos volumen que Ventas en el mismo rango: los pedidos en proceso o armados no cuentan en Productos.
+
+### 1.5 Tres formas de medir "venta"
+Es la causa más común de que dos cifras no cuadren. Cada tarjeta dice cuál usa.
+
+| Medida | Qué suma | Dónde se usa |
+|---|---|---|
+| **Cobranza neta** | Lo efectivamente pagado del pedido (pagos registrados) menos lo reembolsado en devoluciones. Un pedido sin cobrar aporta 0. | Ventas: Ventas Totales, Ventas en el tiempo, por dimensión, mapa de calor. |
+| **Valor del pedido** | El total del pedido (con flete y descuentos aplicados), se haya cobrado o no. | Clientes, Regla de precios, Vendedores, Retornos (tasa). |
+| **Líneas de producto** | Unidades × precio unitario − descuento por unidad. Sin flete ni otros conceptos. | Productos, Top productos de Ventas, Financiero (ganancia y margen). |
+
+### 1.6 Productos activos e inactivos
+Un producto puede desactivarse en el catálogo después de haberse vendido. Cada reporte lo trata distinto:
+
+| Reporte | Productos que cuenta | Detalle |
+|---|---|---|
+| **Productos** | Solo activos | Todas las tarjetas, gráficos, el buscador y el Excel excluyen productos inactivos. |
+| **Inventario** | Solo activos | El stock exige producto, variación y almacén activos. Un producto inactivo con stock no aparece. |
+| **Ventas** | Activos e inactivos | Las líneas de pedido se cuentan sin mirar el estado del producto. |
+| **Cambios/Retornos** | Activos e inactivos | Todo cuenta; en "Productos más devueltos" y en el Excel el nombre lleva "(inactivo)". |
+| **Financiero** | Activos e inactivos | Ganancia, margen y el Top 20 no filtran por estado del producto. |
+| **Vendedores** | Activos e inactivos | Las unidades salen de las líneas de pedido sin filtro. |
+| **Clientes**, **Regla de precios** | No usan productos | Trabajan sobre pedidos y descuentos. |
+
+Consecuencia: un producto vendido y luego desactivado desaparece de Productos e Inventario, pero sigue sumando en Ventas, Financiero, Retornos y Vendedores.
+
+### 1.7 El ícono ⓘ y la nota al pie
+Cada tarjeta de gráfico tiene un ícono **ⓘ** junto al título que explica qué mide y qué deja fuera. Al desplegar **Más filtros** aparece además una nota al pie con las reglas de esa pestaña. Este manual amplía esas notas.
+
+### 1.8 El botón Descargar
+Cada pestaña exporta un Excel con **los mismos filtros aplicados en la barra y los mismos cálculos de la pantalla**. Es la herramienta principal de validación: si la suma de una columna del Excel coincide con una tarjeta, la tarjeta está bien; y el Excel, al tener una fila por pedido o por producto, se puede cruzar con los módulos del ERP.
+
+### 1.9 Lista de ventas muestra solo tu sucursal
+El módulo **Ventas > Lista de ventas** filtra por la sucursal del usuario conectado, salvo que el usuario sea administrador. Los reportes muestran todas las sucursales. Para comparar, hay que entrar con un usuario administrador o poner el mismo filtro de Sede en el reporte.
+
+---
+
+## 2. Reporte de Ventas
+
+**Qué mide**: cuánto se cobró y cuánto se pidió en el período. Fuente: pedidos, sus pagos registrados y los reembolsos de devoluciones.
+
+### Tarjetas
+
+| Tarjeta | Qué es | De dónde sale |
+|---|---|---|
+| **Ventas Totales** | Cobranza neta del período: pagos registrados de los pedidos del rango, menos reembolsos. | Pagos del pedido + pagos de retorno (negativos). Un pedido entregado sin pago registrado aporta 0. |
+| **N° de Pedidos** | Pedidos del rango con estado dentro del default (todo menos cancelado y reembolsado). | Tabla de pedidos, por fecha de pedido. Cuenta el pedido esté cobrado o no. |
+| **Ticket Promedio** | Promedio de lo cobrado por pedido. | Cobranza ÷ pedidos. |
+| **Descuentos Totales** | Suma del campo descuento de cada pedido. | Descuento del pedido (no incluye descuentos por unidad dentro de las líneas). |
+
+Por eso Ventas Totales y N° de Pedidos no siempre se acompañan: el conteo mira estados, el monto mira cobros.
+
+### Gráficos
+
+- **Ventas en el tiempo**: cobranza neta por día, semana o mes según el selector. Se fecha por la fecha del pedido, no la del pago.
+- **Ventas por Sucursal / Canal de venta / Método de pago / Estado de pedido**: cobranza neta repartida por cada dimensión. En método de pago, un pedido con dos métodos suma en los dos, así que las porciones pueden superar el total. Los valores en cero no se dibujan y la cola se agrupa en "Otros".
+- **Mapa de calor**: cobranza o cantidad de pedidos por departamento, con clic para bajar a provincia y distrito, según la dirección de entrega. Los pedidos sin dirección solo aparecen en la tabla lateral.
+- **Top productos**: ranking por ingresos o por unidades. Acá los ingresos son **líneas de producto** (unidades × precio − descuento), no cobranza, y las unidades son brutas (no descuentan devoluciones).
+
+### Excel
+Hoja **Ventas**: un pedido por fila con fecha, cliente, canal, sede, estado, total del pedido, cobrado y reembolsado. Hoja **Ventas Detalle**: una línea de producto por fila.
+
+### Cómo validar
+
+1. **Pedidos**: en Lista de ventas (con usuario administrador) poner el mismo rango y excluir cancelados y reembolsados. El total de filas debe ser N° de Pedidos. Con la Sede filtrada en el reporte, coincide con lo que ve un usuario no administrador de esa sede.
+2. **Ventas Totales**: descargar el Excel y sumar la columna de cobrado menos reembolsado de la hoja Ventas. Debe dar la tarjeta. Si se compara contra el total de los pedidos en Lista de ventas, la diferencia son los pedidos sin cobrar o cobrados en parte; esa lista de pedidos sale de filtrar la hoja Ventas por cobrado menor al total.
+3. **Top productos**: sumar unidades por producto en la hoja Ventas Detalle.
+
+---
+
+## 3. Reporte de ventas de productos
+
+**Qué mide**: mercadería que salió del almacén. Fuente: líneas de producto de los pedidos **Enviado y Entregado**, netas de devoluciones confirmadas, y **solo productos activos**.
+
+### Tarjetas
+
+| Tarjeta | Qué es | De dónde sale |
+|---|---|---|
+| **Unidades Vendidas** | Unidades netas: vendidas menos devueltas (devoluciones confirmadas). | Líneas de pedido. |
+| **Ingresos** | Unidades netas × precio unitario − descuento por unidad. Sin flete. | Líneas de pedido. Es lo que valía la mercadería, no lo que se cobró. |
+| **Productos con Venta** | Productos distintos con al menos una unidad, y en cuántos pedidos. | Líneas de pedido. |
+| **Precio Promedio** | Ingresos ÷ unidades. | Calculado. |
+
+### Gráficos
+
+- **Ventas por categoría** (bloques): ingresos o unidades por categoría. **Un producto con varias categorías cuenta entero en cada una**, por eso la suma de los bloques supera las unidades de la tarjeta.
+- **Productos más vendidos**: ranking por ingresos o unidades, con filtro de categoría y Top 5/10/20.
+- **Pareto de productos (ABC)**: productos ordenados por ingresos con la línea de acumulado. Clase A: los que juntos llegan al 80 % de los ingresos; B hasta el 95 %; C el resto.
+- **Margen vs volumen**: cada burbuja es un producto (unidades, margen %, tamaño = ingresos). Solo entran productos con **costo cargado mayor a cero**; las líneas punteadas son las medianas.
+- **Ingresos por categoría en el tiempo**: áreas apiladas, 6 categorías principales y "Otras".
+- **Unidades vendidas por talla y categoría**: matriz de calor. Cada talla pertenece a su grupo (una M de camisas y una M de boxers son columnas distintas).
+- **Análisis de producto individual**: se busca un producto (solo activos) y con **Aplicar** se ve su ficha: unidades y monto, stock por almacén, participación por sede y canal, evolución diaria y variaciones más vendidas. Respeta los filtros aplicados arriba.
+
+### Excel
+Hoja **Por Producto**: una fila por producto × SKU × sucursal × lista de precios, con marca, categorías y etiquetas. Hoja **Por Categoría**.
+
+### Cómo validar
+
+1. En Lista de ventas filtrar el rango y estados **Enviado y Entregado**. Abrir los pedidos y sumar unidades de un producto: debe coincidir con "Productos más vendidos" (un producto inactivo no aparece en el reporte aunque esté en el pedido).
+2. Sumar la columna Cantidad del Excel "Por Producto": da Unidades Vendidas. Sumar Ingresos: da la tarjeta Ingresos.
+3. El stock por almacén de la ficha individual se compara con **Inventario > Lista de inventario** filtrando ese producto.
+
+---
+
+## 4. Reporte de inventario
+
+**Qué mide**: una **foto del stock de hoy**. No depende del rango de fechas, salvo Flujo de inventario, Tipos de movimiento y Rotación, que miden movimientos del período. Solo productos, variaciones y almacenes **activos**.
+
+Filtros propios: **Almacén**, **Umbral de stock bajo** (por defecto el configurado en Configuración > Negocio > Operación) y **Valorizar con** (Minorista o Mayorista). No hay filtros de canal, pago ni geografía porque el stock no sale de un pedido.
+
+### Tarjetas
+
+| Tarjeta | Qué es | Nota |
+|---|---|---|
+| **Total SKUs** | Variaciones activas con stock registrado en almacenes activos. | Con almacén elegido, las de ese almacén. |
+| **Unidades en stock** | Suma de unidades. | Con almacén elegido, las de ese almacén. |
+| **Stock bajo** | SKUs cuyo stock **sumando todos los almacenes** está en o por debajo del umbral. | Se repone por SKU, no por depósito: no cambia al elegir un almacén. |
+| **Sin stock** | SKUs con stock total 0. | |
+| **Valor del inventario (costo)** | Stock × costo del producto en el catálogo. | |
+| **Valor potencial de venta** | Stock × precio de la lista elegida (Minorista por defecto). | El subtítulo dice con qué lista se valorizó. |
+| **Margen potencial** | Venta potencial − costo, y su % sobre venta. | |
+| **Valor inmovilizado** | Costo del stock sin salidas en N días (el N del selector de Stock muerto). | |
+
+### Gráficos y tablas
+
+- **Flujo de inventario**: unidades que entraron y salieron por período según los movimientos de stock, y el neto.
+- **Stock por categoría**: unidades por categoría. Un producto con varias categorías cuenta en todas.
+- **Stock por talla**: unidades y SKUs por talla, con selector de grupo de talla.
+- **Tipos de movimiento**: cuántos movimientos y cuántas unidades por tipo en el período.
+- **Productos bajo el umbral (reposición)**: lista de SKUs con stock total en o bajo el umbral. Es la misma definición que la alerta de la campana del ERP, así que sin filtro de almacén su total es la tarjeta Stock bajo.
+- **Stock sin rotación (stock muerto)**: SKUs con stock y sin ninguna salida en los últimos 30/60/90/180 días, con valor a costo y última salida.
+- **Análisis de rotación**: por SKU, unidades vendidas en el período contra stock actual. Rotación = vendidas ÷ stock: Alta desde 3, Media desde 1, Baja por debajo. Ordenable por columna.
+
+### Excel
+Hoja **Inventario**: una fila por SKU y almacén con stock, stock total del SKU, marca de stock bajo, costo, valor a costo, precio y valor a venta. Hoja **Umbral bajo stock (N)**: los SKUs bajo el umbral.
+
+### Cómo validar
+
+1. **Unidades y SKUs**: en **Inventario > Lista de inventario**, filtrar el mismo almacén y comparar totales. Recordar que el reporte solo cuenta productos, variaciones y almacenes activos.
+2. **Stock bajo**: el número de la campana de alertas del ERP es el mismo que la tarjeta y que la tabla de reposición.
+3. **Valorización**: sumar la columna Valor a costo del Excel; debe dar la tarjeta. Cambiar Valorizar con a Mayorista y confirmar que Valor potencial baja y el subtítulo cambia.
+4. **Flujo y tipos de movimiento**: en **Inventario > Movimientos de inventario**, filtrar el rango y contar movimientos por tipo.
+
+---
+
+## 5. Reporte de cambios/retornos
+
+**Qué mide**: devoluciones y cambios registrados en el módulo de Retornos. Fuente: retornos en situación **Aceptado** (Pendientes y Anulados se agregan desde el filtro), fechados por el día del **retorno**, no del pedido.
+
+### Tarjetas
+
+| Tarjeta | Qué es | De dónde sale |
+|---|---|---|
+| **Total devoluciones** | Retornos del período, y cuántas unidades volvieron. | Tabla de retornos. |
+| **Monto reembolsado** | Neto de caja de los retornos: los reembolsos suman y la diferencia que paga el cliente en un cambio resta. Los retornos sin movimiento registrado cuentan en cantidad pero no en monto. | Pagos del retorno. |
+| **Reembolso promedio** | Monto ÷ retornos con movimiento. | Calculado. |
+| **Tasa de devolución** | Retornos ÷ pedidos del período (sin cancelados; los reembolsados sí entran, porque esa situación se la pone la propia devolución). | Calculado. |
+
+Por eso "Monto reembolsado" no coincide con "Devoluciones" de Ventas: Ventas atribuye el reembolso a la fecha del pedido y excluye los pedidos reembolsados.
+
+### Gráficos y tablas
+
+- **Devoluciones en el tiempo**: cantidad (eje izquierdo) y monto reembolsado (eje derecho) por período. Los períodos sin retornos no aparecen.
+- **Detalle por tipo de devolución** (tabla) y **Devoluciones por tipo** (dona): los tres tipos del catálogo, Devolución total, Devolución parcial y Cambio, con retornos, participación, unidades y monto. Se usa el tipo y no el motivo porque el motivo es texto libre.
+- **Productos más devueltos**: productos con más retornos. Solo la mercadería que **entra**; el reemplazo que sale en un cambio no cuenta. Los productos inactivos siguen contando y llevan la marca "inactivo".
+
+### Excel
+Una fila por retorno: fecha, pedido, cliente, tipo, situación, motivo, sede, canal, productos devueltos, unidades, valor devuelto (precio de lista de lo que volvió) y reembolsado.
+
+### Cómo validar
+
+1. En **Cambios/Retornos > Lista cambios/retornos** filtrar el rango por fecha de retorno y situación Aceptado. Las filas deben ser Total devoluciones.
+2. Sumar la columna Reembolsado del Excel: da Monto reembolsado. Sumar Unidades devueltas: da el subtítulo de la primera tarjeta.
+3. Tasa: Total devoluciones ÷ N° de Pedidos de la pestaña Ventas con el mismo rango (Ventas excluye reembolsados y esta tasa no, así que puede diferir en pocos pedidos).
+
+---
+
+## 6. Reporte financiero
+
+Mide **dos cosas distintas** con dos fuentes distintas. Sede y método de pago afectan a todo; cuenta y motivo solo a la caja; estado de pedido solo a la ganancia.
+
+### Mitad 1: la caja (movimientos)
+Fuente: movimientos de las cuentas del negocio. Cada movimiento es ingreso o egreso **según el signo de su monto**, que es lo que suma al saldo de la cuenta.
+
+| Tarjeta | Qué es |
+|---|---|
+| **Ingresos** | Suma de movimientos con monto positivo, y cuántos son. |
+| **Egresos** | Suma de movimientos con monto negativo (en valor absoluto). |
+| **Flujo neto** | Ingresos − egresos. |
+| **Total transacciones** | Movimientos del período. |
+
+Gráficos: **Flujo de caja en el tiempo** (día/semana/mes), **Por clase de movimiento** (venta, compra, gasto, retiro...), **Ingresos y egresos por método de pago** (un método puede tener solo egresos), **Por sucursal** (sucursal en la que se registró el movimiento).
+
+Nota: hay movimientos antiguos registrados como "Egreso" con monto positivo (anteriores a un arreglo de julio de 2026). Los reportes los clasifican por signo; el módulo de Movimientos, por tipo. Para esas filas viejas las dos pantallas discrepan.
+
+### Mitad 2: los pedidos (ganancia)
+Fuente: líneas de producto de los pedidos del período (default de Ventas), unidades netas de devoluciones, valuadas al **costo actual** de la variación en el catálogo, no al del día de la venta.
+
+| Elemento | Qué es |
+|---|---|
+| **Cobertura de costo** | Qué parte de las unidades vendidas tiene costo cargado **mayor a cero**. Costo en 0 o vacío cuenta como no cargado. Si es baja, las tres tarjetas siguientes no representan el total. |
+| **Ganancia Neta** | Venta de líneas − costo, solo sobre unidades con costo. |
+| **Margen** | Ganancia ÷ venta de esas unidades, en %. |
+| **Costo Total** | Unidades con costo × costo actual. |
+| **Top 20 productos por margen** | Los 20 con mayor ganancia. "Sin costo cargado" = ninguna unidad del producto tiene costo. "Sin % (venta en 0)" = tiene costo pero se vendió a S/ 0. Es un top, no el total. |
+
+Por eso las dos mitades no suman entre sí: una es caja y la otra es valor de mercadería.
+
+### Excel
+Hoja **Movimientos**: un movimiento por fila con dirección por signo, tipo registrado, clase, método, cuenta, sucursal y usuario. Hoja **Margen por producto**: todos los productos del período (sin el corte del Top 20).
+
+### Cómo validar
+
+1. **Caja**: en **Movimientos > Lista de movimientos** filtrar el rango y sumar montos positivos y negativos por separado. Deben dar Ingresos y Egresos. Si no cuadran, buscar movimientos tipo Egreso con monto positivo (los del caso viejo).
+2. **Ganancia**: sumar la columna de margen de la hoja Margen por producto del Excel: da Ganancia Neta (la pantalla solo muestra 20 filas).
+3. **Costo**: abrir un producto del Top 20 en **Productos** y confirmar que el costo de la variación es el que usa la fila (costo × unidades).
+
+---
+
+## 7. Reporte de clientes
+
+**Qué mide**: quién compra. Un **cliente** es cualquiera con al menos una compra, con cuenta o sin ella, identificado por su **documento** (un DNI y un RUC de la misma persona son dos clientes). Las ventas sin documento, sin cuenta y sin nombre van a un único **Sin identificar**: es mostrador, no una persona. Fuente: pedidos del período con el default de Ventas; venta = **valor del pedido**.
+
+### Tarjetas
+
+| Tarjeta | Qué es |
+|---|---|
+| **Compradores únicos** | Clientes distintos con al menos un pedido en el rango. |
+| **Ticket promedio** | Promedio del total del pedido. |
+| **Con cuenta registrada** | De esos compradores, los que tienen usuario en el sistema. |
+| **Sin cuenta** | Los que compraron sin usuario. Con cuenta + Sin cuenta = Compradores únicos. |
+
+### Gráficos y tablas
+
+- **Clientes nuevos vs recurrentes**: por período, quiénes compraron por primera vez (mirando todo el historial, no solo el rango) y quiénes ya habían comprado.
+- **Frecuencia de compra**: compradores según cuántos pedidos hicieron en el rango.
+- **Distribución por nivel de fidelización**: solo clientes con cuenta, por sus puntos: L1 desde 150, L2 desde 750, L3 desde 1.500, L4 desde 3.000.
+- **Recencia de clientes**: días desde la última compra, medidos contra el **fin del rango**: Activos < 30, En riesgo 30-90, Inactivos 90-180, Dormidos > 180.
+- **Concentración de ingresos (Pareto)**: clientes en deciles de gasto y % acumulado.
+- **Distribución geográfica**: compradores por departamento y ciudad según la dirección del pedido.
+- **Clientes por canal de venta** (bloques) y **Clientes por sucursal** (barras): compradores únicos por canal y por sede. Un cliente que compró en dos sedes cuenta en las dos.
+- **Top clientes**: los que más gastaron, con documento, pedidos y nivel. "Sin identificar" aparece como una fila con muchas compras.
+
+### Excel
+Una fila por cliente: nombre, documento, tipo (con cuenta / sin cuenta / sin identificar), pedidos, gasto, ticket, primera y última compra, nivel, puntos, y las sucursales, canales y métodos de pago de sus compras.
+
+### Cómo validar
+
+1. **Compradores únicos**: en Lista de ventas (administrador) con el mismo rango y estados, contar documentos distintos; las ventas sin documento son una sola fila "Sin identificar". El número de filas del Excel es la tarjeta.
+2. **Con cuenta**: los clientes con cuenta se encuentran en **Clientes > Lista de clientes** por documento; los sin cuenta no están ahí, y es normal.
+3. **Nivel**: abrir la ficha del cliente en Lista de clientes y comparar puntos y nivel con el Excel.
+
+---
+
+## 8. Reporte de regla de precios
+
+**Qué mide**: cuánto se usan las reglas de descuento automáticas. Fuente: los descuentos registrados en cada pedido del período (default de Ventas), acreditados a la regla que estaba vigente ese día.
+
+### Tarjetas
+
+| Tarjeta | Qué es |
+|---|---|
+| **Reglas activas** / apagadas | El catálogo de **hoy**. No cambia con el rango. |
+| **Reglas usadas** | Reglas con al menos una aplicación en el rango. |
+| **Aplicaciones** | Descuentos de regla dentro de pedidos, contados una vez cada uno. |
+| **Venta con regla** | Valor de los pedidos que tuvieron al menos una regla (un pedido con dos reglas cuenta una vez), y "N de M pedidos (X % del total)" sobre los pedidos del período. |
+
+### Tabla "Reglas por aplicación"
+Una fila por regla con su código (etiqueta gris; algunas reglas no tienen código), estado (activa, apagada o **Eliminada** si ya no existe pero tuvo aplicaciones en el rango), aplicaciones, pedidos, **venta generada** y participación. La barra morada compara el uso de cada regla con la más usada, no es un porcentaje del total.
+
+- **Venta generada** es la venta de los pedidos donde aplicó la regla, **no el monto descontado**: el sistema descuenta por unidad dentro de cada línea y no guarda ese monto atribuido a la regla.
+- **Otros descuentos** junta lo que no sale de una regla: descuento manual del vendedor, descuento por producto y recargo de Mercado Pago. Queda fuera del % de uso.
+
+### Cómo validar
+
+1. **Reglas activas**: contar en **Descuentos > Reglas de precios** las activas y las apagadas.
+2. **Aplicaciones**: abrir en Lista de ventas un pedido de los que figuran con regla; en su detalle se ve el descuento con el código de la regla.
+3. **Venta con regla**: en Lista de ventas filtrar el mismo rango y estados; el "M" del subtítulo es ese total de pedidos (con usuario administrador, o con la Sede filtrada).
+
+---
+
+## 9. Reporte de ventas por usuarios (vendedores)
+
+**Qué mide**: quién registró cada venta. **Vendedor** es el usuario que creó el pedido desde el ERP o el POS, con su nombre de la cuenta. Las ventas de la web y el chatbot **no tienen vendedor**: se cuentan aparte como "Sin vendedor" y no entran al ranking. Fuente: pedidos del período con el default de Ventas; venta = **valor del pedido**.
+
+### Tarjetas
+
+| Tarjeta | Qué es |
+|---|---|
+| **Vendedores con venta** | Usuarios distintos que registraron pedidos en el rango. |
+| **Ventas con vendedor** | Valor de los pedidos con vendedor, y qué % son del total del período. |
+| **Pedidos con vendedor** | Cuántos pedidos tienen vendedor y cuántos no (web / chatbot). |
+| **Ticket promedio** | Promedio del pedido con vendedor. |
+
+### Gráficos y tablas
+
+- **Vendedores con más ventas**: ranking por ventas o pedidos, Top 5/10/20. El tooltip muestra ventas, pedidos, unidades y la sucursal del vendedor (la de su perfil).
+- **Vendedores por sucursal**: ventas apiladas por vendedor según la **sucursal del pedido**. 6 vendedores principales, "Otros vendedores" y "Sin vendedor" en gris.
+- **Ventas por vendedor en el tiempo**: áreas apiladas por día, semana o mes.
+- **Detalle por vendedor**: pedidos, unidades netas, ventas, ticket, participación y última venta, ordenable, con total. "Sin vendedor" cierra la tabla.
+
+### Excel
+Hoja **Por vendedor** (la tabla) y hoja **Pedidos**: un pedido por fila con vendedor, sucursal del vendedor, sucursal del pedido, canal, estado, cliente, unidades y total.
+
+### Cómo validar
+
+1. El Excel de la pestaña **Ventas** tiene una columna **Vendedor** por pedido: con el mismo rango y estados, contar pedidos por vendedor debe dar la tabla de detalle. También se ve en Lista de ventas, en el historial de estados de cada pedido.
+2. Sumar la columna Total de la hoja Pedidos: da Ventas con vendedor + las ventas sin vendedor, es decir el total del período (mismo número que "Venta total" en Regla de precios con el mismo rango).
+3. Los pedidos de canal web o chatbot deben aparecer siempre como "Sin vendedor".
+
+---
+
+## 10. Guía rápida de validación
+
+| Quiero comprobar | Contra qué | Qué debe cuadrar |
+|---|---|---|
+| Cantidad de pedidos de un rango | Lista de ventas (admin), mismo rango y estados | N° de Pedidos (Ventas), M de "Venta con regla", Pedidos de Clientes |
+| Cobranza del rango | Excel de Ventas, columna cobrado − reembolsado | Ventas Totales |
+| Valor de los pedidos del rango | Excel de Vendedores, hoja Pedidos, columna Total | Ventas con vendedor + Sin vendedor; total de Regla de precios |
+| Unidades de un producto | Lista de ventas, pedidos Enviado/Entregado, o Excel de Productos | Productos más vendidos, Unidades Vendidas |
+| Stock de hoy | Inventario > Lista de inventario, y campana de stock bajo | Unidades en stock, Stock bajo, bandeja de reposición |
+| Caja del rango | Movimientos > Lista de movimientos | Ingresos, Egresos, Flujo neto |
+| Retornos del rango | Cambios/Retornos > Lista cambios/retornos, situación Aceptado | Total devoluciones |
+| Clientes distintos | Excel de Clientes (una fila = un cliente) | Compradores únicos |
+| Reglas del catálogo | Descuentos > Reglas de precios | Reglas activas / apagadas |
+
+Regla general: **primero el Excel de la pestaña** (mismos filtros y cálculos que la pantalla) y **después el módulo del ERP**. Si el Excel cuadra con la pantalla pero no con el módulo, la diferencia está en la definición (cobranza vs valor del pedido, estados por defecto, productos inactivos o la sucursal del usuario), no en un error de cálculo.
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script>
+  (function () {
+    var src = document.getElementById('src').textContent;
+    var root = document.getElementById('content');
+    root.innerHTML = marked.parse(src, { gfm: true, breaks: false });
+
+    // Lead + meta: los dos primeros párrafos del documento.
+    var ps = root.querySelectorAll(':scope > p');
+    if (ps[0]) ps[0].classList.add('lead');
+    if (ps[1]) ps[1].classList.add('meta');
+
+    // Tablas anchas: contenedor con scroll propio.
+    root.querySelectorAll(':scope > table').forEach(function (t) {
+      var w = document.createElement('div');
+      w.className = 'table-wrap';
+      t.parentNode.insertBefore(w, t);
+      w.appendChild(t);
+    });
+
+    // "Cómo validar": el h3 y su lista se envuelven en un panel.
+    root.querySelectorAll('h3').forEach(function (h) {
+      if (!/^C[oó]mo validar/.test(h.textContent)) return;
+      var panel = document.createElement('section');
+      panel.className = 'validate';
+      var next = h.nextElementSibling;
+      h.parentNode.insertBefore(panel, h);
+      panel.appendChild(h);
+      while (next && !/^H[23]$/.test(next.tagName)) {
+        var n = next.nextElementSibling;
+        panel.appendChild(next);
+        next = n;
+      }
+    });
+
+    // Índice a partir de los h2, con anclas.
+    var toc = document.getElementById('toc');
+    var h2s = root.querySelectorAll('h2');
+    h2s.forEach(function (h, i) {
+      var id = 's' + (i + 1);
+      h.id = id;
+      var m = h.textContent.match(/^(\d+)\.\s*(.*)$/);
+      var li = document.createElement('li');
+      var a = document.createElement('a');
+      a.href = '#' + id;
+      a.innerHTML = m ? '<span class="num">' + m[1] + '</span>' + m[2] : h.textContent;
+      li.appendChild(a);
+      toc.appendChild(li);
+    });
+
+    // Resaltar la sección visible.
+    var links = toc.querySelectorAll('a');
+    function setActive() {
+      var y = window.scrollY + 80, idx = 0;
+      h2s.forEach(function (h, i) { if (h.offsetTop <= y) idx = i; });
+      links.forEach(function (a, i) { a.classList.toggle('active', i === idx); });
+    }
+    window.addEventListener('scroll', setActive, { passive: true });
+    setActive();
+  })();
+</script>
