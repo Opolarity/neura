@@ -6,13 +6,33 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { CreateOrderRequest, ModuleTypeApiResponse } from "../types";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { CREDIT_PAYMENT_METHOD_CODES } from "@/shared/services/service";
 
 // Fetch sales form data (dropdowns, products, etc.)
-export const fetchSalesFormData = async () => {
+//
+// La edge function devuelve los métodos de pago sin `code`, así que los de
+// crédito de franquicia ("Crédito" CRE / "Débito" DEB) se resuelven aquí y se
+// quitan de la lista: no son medios que se elijan en una venta ni en el POS.
+export const fetchSalesFormData = async (includeCredit = false) => {
   const data = await invokeFunction(
     "get-sales-form-data",
   );
-  return data;
+  if (includeCredit || !Array.isArray(data?.paymentMethods)) return data;
+
+  const { data: creditMethods, error } = await supabase
+    .from("payment_methods")
+    .select("id, code")
+    .in("code", [...CREDIT_PAYMENT_METHOD_CODES]);
+  if (error) {
+    console.error("Error fetching credit payment methods:", error.message);
+    return data;
+  }
+
+  const creditIds = new Set((creditMethods ?? []).map((m) => m.id));
+  return {
+    ...data,
+    paymentMethods: data.paymentMethods.filter((pm: { id: number }) => !creditIds.has(pm.id)),
+  };
 };
 
 // Fetch shipping costs from database

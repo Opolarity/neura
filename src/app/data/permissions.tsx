@@ -54,6 +54,7 @@ import ReportsReturnsPage from "@/modules/reports/pages/ReturnsPage";
 import ReportsMovementsPage from "@/modules/reports/pages/MovementsPage";
 import ReportsClientsPage from "@/modules/reports/pages/ClientsPage";
 import PriceRulesReportPage from "@/modules/reports/pages/PriceRulesReportPage";
+import ReportsSellersPage from "@/modules/reports/pages/SellersPage";
 
 import StockTypePage from "@/modules/settings/pages/StockTypePage";
 import BusinessParametersPage from "@/modules/settings/pages/BusinessParametersPage";
@@ -251,6 +252,7 @@ export const APP_PERMISSIONS_CONFIG = [
               { name: "Financiero", path: "/reports/movements", code: "reports_movements.view", element: <ReportsMovementsPage />, showSidebar: true, node: [] },
               { name: "Clientes", path: "/reports/clients", code: "reports_clients.view", element:  <ReportsClientsPage />, showSidebar: true, node: [] },
               { name: "Regla de precios", path: "/reports/price-rules", code: "reports_price_rules.view", element: <PriceRulesReportPage />, showSidebar: true, node: [] },
+              { name: "Vendedores", path: "/reports/sellers", code: "reports_sellers.view", element: <ReportsSellersPage />, showSidebar: true, node: [] },
             ]
           },
         ],

@@ -7,7 +7,11 @@ export type FranchiseProductRow = {
   productName: string;
   orderId: number;
   quantity: number;
+  // Neto: el SP ya descuenta las unidades devueltas por el cliente final.
   soldByFranchise: number | null;
+  // Unidades devueltas de esta línea (eventos source='return' en
+  // order_product_franchise_sales). 0 si no hubo devoluciones.
+  returnedUnits: number;
   productPrice: number;
   paidByFranchise: number | null;
   // Pagado atribuido a las ventas del rango (FIFO en el SP). Solo tiene
@@ -70,7 +74,17 @@ export type FranchiseSummary = {
   // recortarlos por fecha daría un número sin significado. La pantalla los
   // rotula como globales.
   totalPaid: number;
+  // vendido − pagado − crédito disponible, nunca negativo. Si el crédito
+  // supera la deuda, el excedente va en `creditSurplus` ("Saldo a favor").
   totalPending: number;
+  // Saldo de la(s) cuenta(s) de crédito de franquicia (tipo CRE): lo que
+  // Overtake le debe al franquiciado por prendas devueltas que ya había
+  // pagado. Es GLOBAL (del franquiciado filtrado, o de todos): el crédito no
+  // tiene fecha de venta, así que con filtro de fecha también se resta.
+  totalCredit: number;
+  // Crédito que sobra después de cubrir toda la deuda.
+  creditSurplus: number;
+  totalUnitsReturned: number;
   totalPromoDiscount: number;
   // El rango filtra por fecha de venta y recorta las cantidades de cada fila,
   // pero los pagos no se pueden atribuir a una línea y una fecha
@@ -93,6 +107,7 @@ type RawFranchiseProduct = {
   product_price: number | string | null;
   quantity: number | string | null;
   sold_by_franchise: number | string | null;
+  returned_units: number | string | null;
   paid_by_franchise: number | string | null;
   paid_in_range: number | string | null;
   franchise_discount: number | string | null;
@@ -173,6 +188,7 @@ export const fetchFranchiseProducts = async (
         orderId: item.order_id,
         quantity,
         soldByFranchise: toNullableNumber(item.sold_by_franchise),
+        returnedUnits: toNumber(item.returned_units),
         productPrice,
         paidByFranchise: toNullableNumber(item.paid_by_franchise),
         paidInRange: toNumber(item.paid_in_range),
@@ -215,18 +231,30 @@ export const fetchFranchiseProducts = async (
       ? data?.summary?.total_promo_discount_range
       : data?.summary?.total_promo_discount,
   );
+  // Crédito disponible del franquiciado (o de todos, sin filtro de
+  // franquiciado). No depende del rango de fechas.
+  const totalCredit = toNumber(data?.summary?.total_credit);
+  const totalUnitsReturned = toNumber(data?.summary?.total_units_returned);
+  // Con filtro activo, pagado y por pagar son DEL RANGO: lo vendido en el
+  // rango menos el pagado atribuido a esas ventas. Es lo que el usuario
+  // espera al filtrar y coincide con la pantalla del franquiciado. (Antes
+  // se mostró la deuda global rotulada, y antes de eso un híbrido sin
+  // significado; ambos confundían.)
+  const debt = dateFilterActive
+    ? totalSoldRange - totalPaidRange
+    : totalSold - totalPaid;
+  // El crédito cubre deuda: por pagar = deuda − crédito, nunca negativo. Lo
+  // que sobra del crédito se muestra aparte como saldo a favor.
+  const totalPending = Math.max(0, debt - totalCredit);
+  const creditSurplus = Math.max(0, totalCredit - Math.max(0, debt));
   const summary: FranchiseSummary = {
     totalSent,
     totalSold: dateFilterActive ? totalSoldRange : totalSold,
-    // Con filtro activo, pagado y por pagar son DEL RANGO: lo vendido en el
-    // rango menos el pagado atribuido a esas ventas. Es lo que el usuario
-    // espera al filtrar y coincide con la pantalla del franquiciado. (Antes
-    // se mostró la deuda global rotulada, y antes de eso un híbrido sin
-    // significado; ambos confundían.)
     totalPaid: dateFilterActive ? totalPaidRange : totalPaid,
-    totalPending: dateFilterActive
-      ? totalSoldRange - totalPaidRange
-      : totalSold - totalPaid,
+    totalPending,
+    totalCredit,
+    creditSurplus,
+    totalUnitsReturned,
     totalPromoDiscount,
     dateFilterActive,
   };

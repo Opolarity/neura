@@ -2,9 +2,10 @@ import { KpiCard } from '../shared/KpiCard';
 import { CashflowChart } from './CashflowChart';
 import { FinancialByClassChart } from './FinancialByClassChart';
 import { FinancialByPaymentChart } from './FinancialByPaymentChart';
+import { FinancialByBranchChart } from './FinancialByBranchChart';
 import { ProfitKpis } from './ProfitKpis';
 import { MarginByProductTable } from './MarginByProductTable';
-import { useFinancialDashboard } from '../../hooks/useFinancialDashboard';
+import { useFinancialDashboard, MARGIN_LIMIT } from '../../hooks/useFinancialDashboard';
 import type { ReportsFilters } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
 
@@ -53,8 +54,8 @@ export function FinancialDashboard({ filters }: FinancialDashboardProps) {
         onGranularityChange={dash.setGranularity}
       />
 
-      {/* By class + By payment method */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      {/* Caja por clase, por método de pago y por sucursal */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <FinancialByClassChart
           data={dash.byClass.data ?? []}
           loading={dash.byClass.isLoading}
@@ -63,6 +64,10 @@ export function FinancialDashboard({ filters }: FinancialDashboardProps) {
           data={dash.byPaymentMethod.data ?? []}
           loading={dash.byPaymentMethod.isLoading}
         />
+        <FinancialByBranchChart
+          data={dash.byBranch.data ?? []}
+          loading={dash.byBranch.isLoading}
+        />
       </div>
 
       {/* Ganancia neta y margen (costo actual, no histórico) */}
@@ -70,6 +75,7 @@ export function FinancialDashboard({ filters }: FinancialDashboardProps) {
       <MarginByProductTable
         data={dash.marginByProduct.data ?? []}
         loading={dash.marginByProduct.isLoading}
+        limit={MARGIN_LIMIT}
       />
     </div>
   );

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { excludeCreditPaymentMethods } from "@/shared/services/service";
 import { buildEndpoint } from "@/shared/utils/utils";
 import {
   MovementApiResponse,
@@ -68,17 +69,25 @@ export const movementCategoriesApi = async (): Promise<MovementCategory[]> => {
 // SERVICIOS PARA EL FORMULARIO DE MOVIMIENTOS
 // =============================================================================
 
-export const paymentMethodsWithAccountApi = async (): Promise<
-  PaymentMethodWithAccount[]
-> => {
+/**
+ * Métodos de pago para el formulario de movimiento manual. Por defecto deja
+ * fuera "Crédito" (CRE) y "Débito" (DEB): son del circuito de crédito de
+ * franquicia y sus movimientos los genera el backend, no un usuario.
+ */
+export const paymentMethodsWithAccountApi = async (
+  includeCredit = false,
+): Promise<PaymentMethodWithAccount[]> => {
   const { data, error } = await (supabase as any)
     .from("payment_methods")
-    .select("id, name, business_account_id, business_accounts(name)")
+    .select("id, name, business_account_id, code, business_accounts(name)")
     .eq("active", true)
     .order("name");
 
   if (error) throw error;
-  return data ?? [];
+  return excludeCreditPaymentMethods(
+    (data ?? []) as (PaymentMethodWithAccount & { code?: string | null })[],
+    includeCredit,
+  );
 };
 
 /**

@@ -61,7 +61,7 @@ export function MarginVolumeScatter({ data, loading }: Props) {
   }, [data]);
 
   return (
-    <ReportCard title="Margen vs volumen por producto">
+    <ReportCard info="Cada burbuja es un producto: a la derecha los que más unidades vendieron, arriba los de mayor margen %, y el tamaño es el ingreso. Las líneas punteadas son las medianas y parten el gráfico en cuatro lecturas. Solo entran productos con costo cargado; sin costo no hay margen que ubicar." title="Margen vs volumen por producto">
       {loading ? (
         <ChartLoading className="h-80" />
       ) : points.length === 0 ? (

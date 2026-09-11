@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   fetchPendingPayments,
   confirmPendingPayment,
+  isFullyCoveredByCredit,
   type PendingPaymentFilter,
   type PendingPaymentRow,
 } from "../services/PendingPayments.service";
@@ -166,28 +167,51 @@ export const PagosConfirmarModal = ({
                       <TableCell className="text-sm text-muted-foreground">
                         {payment.movementCode}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-semibold">
-                        S/ {payment.totalAmount.toFixed(2)}
+                      <TableCell className="whitespace-nowrap text-right">
+                        <span className="font-semibold">
+                          S/ {payment.totalAmount.toFixed(2)}
+                        </span>
+                        {/* Desglose solo cuando parte (o todo) se cubrió con el
+                            crédito de franquicia: DEB sobre la cuenta CRE. */}
+                        {payment.creditAmount > 0 && (
+                          <div className="mt-1 flex flex-col items-end gap-0.5 text-xs text-muted-foreground">
+                            <span>Efectivo S/ {payment.cashAmount.toFixed(2)}</span>
+                            <span>
+                              Crédito aplicado S/ {payment.creditAmount.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {payment.files.map((url, i) => (
-                            <a
-                              key={i}
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <Badge
-                                variant="outline"
-                                className="cursor-pointer gap-1 hover:bg-muted"
+                        {payment.files.length === 0 &&
+                        isFullyCoveredByCredit(payment) ? (
+                          // No hubo dinero de por medio: no hay comprobante que
+                          // exigir ni revisar.
+                          <Badge variant="info">Cubierto con crédito</Badge>
+                        ) : payment.files.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">
+                            Sin comprobante
+                          </span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {payment.files.map((url, i) => (
+                              <a
+                                key={i}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
                               >
-                                <ExternalLink className="h-3 w-3" />
-                                Archivo {i + 1}
-                              </Badge>
-                            </a>
-                          ))}
-                        </div>
+                                <Badge
+                                  variant="outline"
+                                  className="cursor-pointer gap-1 hover:bg-muted"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  Archivo {i + 1}
+                                </Badge>
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge

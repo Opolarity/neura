@@ -7,6 +7,7 @@ import { NewVsReturningChart } from './NewVsReturningChart';
 import { CustomersRecencyChart } from './CustomersRecencyChart';
 import { CustomersParetoChart } from './CustomersParetoChart';
 import { CustomersBySaleTypeChart } from './CustomersBySaleTypeChart';
+import { CustomersByBranchChart } from './CustomersByBranchChart';
 import { useCustomersDashboard } from '../../hooks/useCustomersDashboard';
 import type { ReportsFilters } from '../../types/reports.types';
 import { formatCurrency } from '@/shared/utils/currency';
@@ -50,21 +51,6 @@ export function CustomersDashboard({ filters }: CustomersDashboardProps) {
         />
       </div>
 
-      {/* Loyalty + Top customers */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <LoyaltyDistributionChart
-          data={dash.kpis.data?.loyalty_distribution ?? []}
-          loading={dash.kpis.isLoading}
-          byLoyalty={dash.byLoyalty.data ?? []}
-        />
-        <TopCustomersTable
-          data={dash.topCustomers.data ?? []}
-          loading={dash.topCustomers.isLoading}
-          limit={dash.topLimit}
-          onLimitChange={dash.setTopLimit}
-        />
-      </div>
-
       {/* Adquisición vs retención + frecuencia */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2">
@@ -79,17 +65,24 @@ export function CustomersDashboard({ filters }: CustomersDashboardProps) {
         />
       </div>
 
-      {/* Recencia + Pareto */}
+      {/* Lealtad (Top clientes pasó al final, a todo el ancho) */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <LoyaltyDistributionChart
+          data={dash.kpis.data?.loyalty_distribution ?? []}
+          loading={dash.kpis.isLoading}
+          byLoyalty={dash.byLoyalty.data ?? []}
+        />
         <CustomersRecencyChart
           data={dash.recency.data ?? []}
           loading={dash.recency.isLoading}
         />
-        <CustomersParetoChart
-          data={dash.pareto.data ?? []}
-          loading={dash.pareto.isLoading}
-        />
       </div>
+
+      {/* Pareto */}
+      <CustomersParetoChart
+        data={dash.pareto.data ?? []}
+        loading={dash.pareto.isLoading}
+      />
 
       {/* Geo distribution */}
       <CustomersGeoChart
@@ -97,10 +90,24 @@ export function CustomersDashboard({ filters }: CustomersDashboardProps) {
         loading={dash.geoDistribution.isLoading}
       />
 
-      {/* Canal de venta */}
-      <CustomersBySaleTypeChart
-        data={dash.bySaleType.data ?? []}
-        loading={dash.bySaleType.isLoading}
+      {/* Canal de venta + sucursal */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <CustomersBySaleTypeChart
+          data={dash.bySaleType.data ?? []}
+          loading={dash.bySaleType.isLoading}
+        />
+        <CustomersByBranchChart
+          data={dash.byBranch.data ?? []}
+          loading={dash.byBranch.isLoading}
+        />
+      </div>
+
+      {/* Top clientes, al final */}
+      <TopCustomersTable
+        data={dash.topCustomers.data ?? []}
+        loading={dash.topCustomers.isLoading}
+        limit={dash.topLimit}
+        onLimitChange={dash.setTopLimit}
       />
     </div>
   );

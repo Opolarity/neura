@@ -1,52 +1,85 @@
-import { useState, useMemo, type ReactNode } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Tags, Zap, Ticket, CheckCircle2, XCircle } from 'lucide-react';
-import { priceRulesReportService } from '../../services/reports.service';
+import { Loader2, Tags, CheckCircle2, Percent, Zap, Coins } from 'lucide-react';
+import { formatCurrency } from '@/shared/utils/currency';
+import { formatDateDisplay } from '@/shared/utils/date';
 import { reportChartColors } from '../shared/reportChartUtils';
+import { usePriceRulesDashboard, type PriceRuleView } from '../../hooks/usePriceRulesDashboard';
+import type { PriceRuleReportRow } from '../../services/reports.service';
 import type { ReportsFilters } from '../../types/reports.types';
 
-type StatusFilter = 'all' | 'active' | 'inactive';
+const VIEWS: { key: PriceRuleView; label: string }[] = [
+  { key: 'all',      label: 'Todas' },
+  { key: 'used',     label: 'Usadas' },
+  { key: 'active',   label: 'Activas' },
+  { key: 'inactive', label: 'Inactivas' },
+];
 
 interface Props {
   filters: ReportsFilters;
 }
 
 export function PriceRulesDashboard({ filters }: Props) {
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const { report, visibleRows, maxApplications, view, setView } = usePriceRulesDashboard(filters);
 
-  const { data, isLoading: loading } = useQuery({
-    queryKey: ['rpt_price_rules_report', filters.startDate, filters.endDate],
-    queryFn: () => priceRulesReportService.getReport(filters.startDate, filters.endDate),
-    staleTime: 1000 * 60 * 5,
-  });
+  const loading = report.isLoading;
+  const kpis = report.data?.kpis ?? {
+    active: 0,
+    inactive: 0,
+    used: 0,
+    applications: 0,
+    revenue: 0,
+    orders_with_rule: 0,
+    orders_total: 0,
+    revenue_total: 0,
+  };
+  // "Venta con regla" se lee sobre el total de pedidos del período: cuántos
+  // tuvieron al menos una regla y qué porcentaje son.
+  const ruleShare =
+    kpis.orders_total > 0 ? ((kpis.orders_with_rule / kpis.orders_total) * 100).toFixed(1) : null;
+  const other = report.data?.other;
 
-  const kpis = data?.kpis ?? { active: 0, inactive: 0, automatic: 0, coupon: 0 };
-  const rows = data?.table ?? [];
-
-  // Las eliminadas llegan con is_active = false, pero el KPI "Reglas inactivas"
-  // ya no las cuenta: si se colaran en la pestaña "Inactivas", el contador y el
-  // número de filas se contradirían. Se quedan solo en "Todas", marcadas.
-  const filteredRows = useMemo(() => {
-    if (statusFilter === 'active')   return rows.filter((r) => r.is_active);
-    if (statusFilter === 'inactive') return rows.filter((r) => !r.is_active && !r.is_deleted);
-    return rows;
-  }, [rows, statusFilter]);
-
-  const maxApplications = useMemo(
-    () => Math.max(1, ...rows.map((r) => r.applications)),
-    [rows]
-  );
+  // La fila de "Otros descuentos" solo tiene sentido en "Todas": no es una
+  // regla, así que no puede estar activa, inactiva ni usada.
+  const showOther = view === 'all' && (other?.applications ?? 0) > 0;
 
   return (
     <div className="space-y-6 mt-4">
       {/* KPI cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={<CheckCircle2 className="w-5 h-5 text-success" />} label="Reglas activas"   value={kpis.active}    loading={loading} />
-        <StatCard icon={<XCircle      className="w-5 h-5 text-destructive"   />} label="Reglas inactivas" value={kpis.inactive}  loading={loading} />
-        <StatCard icon={<Zap          className="w-5 h-5" style={{ color: reportChartColors.blue }}   />} label="Automáticas"      value={kpis.automatic} loading={loading} />
-        <StatCard icon={<Ticket       className="w-5 h-5" style={{ color: reportChartColors.violet }}/>} label="Cupones"           value={kpis.coupon}    loading={loading} />
+        <StatCard
+          icon={<CheckCircle2 className="w-5 h-5 text-success" />}
+          label="Reglas activas"
+          hint={`${kpis.inactive.toLocaleString('es-PE')} apagadas`}
+          value={kpis.active.toLocaleString('es-PE')}
+          loading={loading}
+        />
+        <StatCard
+          icon={<Zap className="w-5 h-5" style={{ color: reportChartColors.blue }} />}
+          label="Reglas usadas"
+          hint="en el período"
+          value={kpis.used.toLocaleString('es-PE')}
+          loading={loading}
+        />
+        <StatCard
+          icon={<Percent className="w-5 h-5" style={{ color: reportChartColors.violet }} />}
+          label="Aplicaciones"
+          hint="en el período"
+          value={kpis.applications.toLocaleString('es-PE')}
+          loading={loading}
+        />
+        <StatCard
+          icon={<Coins className="w-5 h-5 text-success" />}
+          label="Venta con regla"
+          hint={
+            ruleShare !== null
+              ? `${kpis.orders_with_rule.toLocaleString('es-PE')} de ${kpis.orders_total.toLocaleString('es-PE')} pedidos (${ruleShare}% del total)`
+              : 'pedidos con al menos una regla'
+          }
+          value={formatCurrency(kpis.revenue)}
+          loading={loading}
+        />
       </div>
 
       {/* Table */}
@@ -58,17 +91,17 @@ export function PriceRulesDashboard({ filters }: Props) {
               Reglas por aplicación
             </CardTitle>
             <div className="flex gap-1 p-1 bg-muted rounded-lg text-sm">
-              {(['all', 'active', 'inactive'] as StatusFilter[]).map((f) => (
+              {VIEWS.map((v) => (
                 <button
-                  key={f}
-                  onClick={() => setStatusFilter(f)}
+                  key={v.key}
+                  onClick={() => setView(v.key)}
                   className={`px-3 py-1 rounded-md transition-colors ${
-                    statusFilter === f
+                    view === v.key
                       ? 'bg-background shadow-sm font-medium'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {f === 'all' ? 'Todas' : f === 'active' ? 'Activas' : 'Inactivas'}
+                  {v.label}
                 </button>
               ))}
             </div>
@@ -79,7 +112,7 @@ export function PriceRulesDashboard({ filters }: Props) {
             <div className="flex justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
-          ) : filteredRows.length === 0 ? (
+          ) : visibleRows.length === 0 && !showOther ? (
             <p className="text-center text-sm text-muted-foreground py-12">
               Sin datos para el período seleccionado
             </p>
@@ -88,14 +121,17 @@ export function PriceRulesDashboard({ filters }: Props) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40">
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nombre</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Tipo</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Uso (aplicaciones)</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Rendimiento</th>
+                    <th className="text-left  px-4 py-3 font-medium text-muted-foreground">Nombre</th>
+                    <th className="text-left  px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Tipo</th>
+                    <th className="text-left  px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Vigencia</th>
+                    <th className="text-left  px-4 py-3 font-medium text-muted-foreground">Uso (aplicaciones)</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Pedidos</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Venta generada</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">% de uso</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRows.map((row) => (
+                  {visibleRows.map((row) => (
                     <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -115,6 +151,9 @@ export function PriceRulesDashboard({ filters }: Props) {
                           {row.rule_type === 'automatic' ? 'Automática' : 'Cupón'}
                         </Badge>
                       </td>
+                      <td className="px-4 py-3 hidden lg:table-cell text-xs text-muted-foreground whitespace-nowrap">
+                        {describeValidity(row)}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-semibold w-16 shrink-0 tabular-nums">
@@ -128,17 +167,51 @@ export function PriceRulesDashboard({ filters }: Props) {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        {row.rendimiento > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-success bg-success/10 px-2 py-1 rounded-full">
-                            ↗ {row.rendimiento}%
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
+                      <td className="px-4 py-3 text-right tabular-nums hidden sm:table-cell">
+                        {row.orders > 0 ? row.orders.toLocaleString('es-PE') : <span className="text-muted-foreground">—</span>}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums font-medium">
+                        {row.applications > 0 ? formatCurrency(row.revenue) : <span className="font-normal text-muted-foreground">—</span>}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums hidden md:table-cell">
+                        {row.applications > 0 ? `${row.share}%` : <span className="text-muted-foreground">—</span>}
                       </td>
                     </tr>
                   ))}
+
+                  {/*
+                    Los descuentos que no salen de una regla. Van al pie y sin
+                    barra de uso: no compiten por participación con las reglas,
+                    y por eso su "% de uso" es un guion.
+                  */}
+                  {showOther && other && (
+                    <tr className="border-t bg-muted/20">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full shrink-0 bg-muted-foreground/40" />
+                          <span className="font-medium">Otros descuentos</span>
+                          <Badge variant="outline" className="text-xs">No vienen de una regla</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 pl-4">
+                          {other.codes.join(', ')}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">—</td>
+                      <td className="px-4 py-3 hidden lg:table-cell text-muted-foreground">—</td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-semibold w-16 shrink-0 tabular-nums">
+                          {other.applications.toLocaleString('es-PE')}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums hidden sm:table-cell">
+                        {other.orders.toLocaleString('es-PE')}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums font-medium">
+                        {formatCurrency(other.revenue)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">—</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -149,19 +222,45 @@ export function PriceRulesDashboard({ filters }: Props) {
   );
 }
 
-function StatCard({ icon, label, value, loading }: { icon: ReactNode; label: string; value: number; loading: boolean }) {
+/**
+ * 19 de las reglas apagadas lo están porque se les venció la vigencia. Sin esta
+ * columna la pantalla decía "inactiva" sin decir por qué.
+ */
+function describeValidity(row: PriceRuleReportRow): string {
+  if (!row.valid_from && !row.valid_to) return 'Sin límite';
+  if (row.valid_from && row.valid_to) {
+    return `${formatDateDisplay(row.valid_from)} – ${formatDateDisplay(row.valid_to)}`;
+  }
+  if (row.valid_from) return `Desde ${formatDateDisplay(row.valid_from)}`;
+  return `Hasta ${formatDateDisplay(row.valid_to!)}`;
+}
+
+function StatCard({
+  icon,
+  label,
+  hint,
+  value,
+  loading,
+}: {
+  icon: ReactNode;
+  label: string;
+  hint: string;
+  value: string;
+  loading: boolean;
+}) {
   return (
     <Card>
       <CardContent className="pt-5 pb-5">
         <div className="flex items-center gap-3">
           {icon}
-          <div>
+          <div className="min-w-0">
             <p className="text-xs text-muted-foreground">{label}</p>
             {loading ? (
-              <div className="h-7 w-10 bg-muted animate-pulse rounded mt-1" />
+              <div className="h-7 w-16 bg-muted animate-pulse rounded mt-1" />
             ) : (
-              <p className="text-2xl font-bold tabular-nums">{value}</p>
+              <p className="text-2xl font-bold tabular-nums truncate">{value}</p>
             )}
+            <p className="text-[11px] text-muted-foreground">{hint}</p>
           </div>
         </div>
       </CardContent>

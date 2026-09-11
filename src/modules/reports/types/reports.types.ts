@@ -29,10 +29,30 @@ export interface ReportsFilters {
    */
   productSituationIds: number[] | null;
   /**
+   * Situación del RETORNO en la pestaña de Cambios/Retornos — catálogo del
+   * módulo RTU, no el de pedidos. Campo aparte por la misma razón que
+   * `productSituationIds`: `filters` es compartido y esto no significa lo
+   * mismo que `situationIds`. `null` = el default del backend (solo Aceptado).
+   */
+  returnSituationIds: number[] | null;
+  /** Tipo de retorno (Devolución total / parcial / Cambio). `null` = todos. */
+  returnTypeIds: number[] | null;
+  /**
    * Código de la lista de precios (`orders.price_list_code`), no su id: es lo
    * que persiste la orden. `null` = todas las listas.
    */
   priceListCode: string | null;
+  /**
+   * Cuenta de `movements.business_account_id`. Solo la usa Financiero: es un
+   * campo de la caja, no del pedido, así que no aparece en el resto de las
+   * pestañas. `null` = todas las cuentas.
+   */
+  businessAccountId: number | null;
+  /**
+   * Clase de `movements.movement_class_id` (el "motivo" del movimiento). Igual
+   * que la anterior: vive en la caja, no en el pedido. `null` = todas.
+   */
+  movementClassId: number | null;
 }
 
 /**
@@ -54,7 +74,11 @@ export const createDefaultReportsFilters = (): ReportsFilters => ({
   paymentMethodId: null,
   situationIds: null,
   productSituationIds: null,
+  returnSituationIds: null,
+  returnTypeIds: null,
   priceListCode: null,
+  businessAccountId: null,
+  movementClassId: null,
 });
 
 // -------------------------------------------------------
@@ -312,11 +336,6 @@ export interface InventorySummary {
   }>;
 }
 
-export interface LowStockDistributionItem {
-  stock: number;
-  skus: number;
-}
-
 /** T-269 · Fila de la bandeja de reposición (sp_rpt_low_stock_products). */
 export interface LowStockProductItem {
   product_variation_id: number;
@@ -407,8 +426,19 @@ export interface DeadStockReport {
 // -------------------------------------------------------
 export interface ReturnsKpis {
   total_returns: number;
+  /**
+   * Sale de `return_payments`, no de `returns.total_refund_amount`: el
+   * movimiento de caja es el dato firme (el campo del retorno lo pisa
+   * `sp_update_return` con lo que manda el front). Viene con el signo
+   * invertido, así que un reembolso lee positivo.
+   */
   total_refund_amount: number;
+  /** Retornos con al menos un movimiento en `return_payments`. */
+  refunded_count: number;
   avg_refund_amount: number;
+  total_units_returned: number;
+  /** Denominador de `return_rate_pct` — pedidos del período sin los cancelados. */
+  order_count: number;
   return_rate_pct: number;
 }
 
@@ -416,22 +446,51 @@ export interface ReturnsOverTimeItem {
   period: string;
   return_count: number;
   total_refund_amount: number;
+  total_units_returned: number;
 }
 
 export interface TopReturnedProduct {
   product_id: number;
   product_title: string;
+  /** false = el producto ya no está en el catálogo; igual cuenta (migración 31000910163000). */
+  product_is_active?: boolean;
   return_count: number;
   total_quantity_returned: number;
-  total_refund_amount: number;
+  /** Precio unitario por cantidad devuelta. No es lo reembolsado. */
+  total_returned_value: number;
 }
 
-export interface ReturnsByReasonItem {
-  reason: string;
+export interface ReturnsByTypeItem {
+  return_type_id: number | null;
   return_type_name: string;
   count: number;
   total_refund_amount: number;
+  total_units_returned: number;
 }
+
+/** Situación del retorno (catálogo del módulo RTU: Aceptado / Anulado / Pendiente). */
+export interface ReturnSituationOption {
+  id: number;
+  name: string;
+  code: string | null;
+}
+
+/** Tipo de retorno (Devolución total / parcial / Cambio). */
+export interface ReturnTypeOption {
+  id: number;
+  name: string;
+  code: string | null;
+}
+
+/**
+ * Situación que el backend cuenta cuando `returnSituationIds` viaja en null:
+ * solo la aceptada. Mismo criterio que ya aplica Ventas, que netea únicamente
+ * los `return_payments` de retornos confirmados.
+ */
+export const RETURNS_DEFAULT_SITUATION_CODE = 'PHY';
+
+export const defaultReturnSituationIds = (options: ReturnSituationOption[]): number[] =>
+  options.filter((s) => s.code === RETURNS_DEFAULT_SITUATION_CODE).map((s) => s.id);
 
 // -------------------------------------------------------
 // Financial Dashboard
@@ -461,6 +520,16 @@ export interface FinancialByClassItem {
   count: number;
 }
 
+/** sp_rpt_financial_by_branch (migración 31000910183000): caja por sucursal. */
+export interface FinancialByBranchItem {
+  branch_id: number | null;
+  branch_name: string;
+  income: number;
+  expense: number;
+  net: number;
+  count: number;
+}
+
 export interface FinancialByPaymentItem {
   payment_method_id: number;
   payment_method_name: string;
@@ -469,11 +538,17 @@ export interface FinancialByPaymentItem {
   net: number;
 }
 
-export interface AccountBalance {
-  account_id: number;
-  account_name: string;
-  bank: string;
-  balance: number;
+/** Cuenta del negocio, para el filtro "Cuenta" de Financiero. */
+export interface BusinessAccountOption {
+  id: number;
+  name: string;
+  bank: string | null;
+}
+
+/** Clase (motivo) de movimiento del módulo MOV, para el filtro "Motivo". */
+export interface MovementClassOption {
+  id: number;
+  name: string;
 }
 
 export interface FinancialProfitKpis {
@@ -526,7 +601,8 @@ export interface CustomersKpis {
 
 export interface TopCustomer {
   customer_name: string;
-  document_number: string;
+  /** null en las ventas de mostrador sin documento cargado. */
+  document_number: string | null;
   order_count: number;
   total_spent: number;
   avg_ticket: number;
@@ -599,6 +675,15 @@ export interface CustomersBySaleTypeItem {
   revenue: number;
 }
 
+/** sp_rpt_customers_by_branch (migración 31000910203000). */
+export interface CustomersByBranchItem {
+  branch_id: number | null;
+  branch_name: string;
+  unique_buyers: number;
+  order_count: number;
+  revenue: number;
+}
+
 export interface UpcomingBirthdayItem {
   user_name: string;
   next_birthday: string;
@@ -608,3 +693,54 @@ export interface UpcomingBirthdayItem {
   last_order: string | null;
   loyalty_level: LoyaltyLevel;
 }
+
+// -------------------------------------------------------
+// Sellers Dashboard (Ventas por usuarios / vendedores)
+// -------------------------------------------------------
+
+/** sp_rpt_sellers_kpis. Vendedor = usuario que registró el pedido (orders.created_by). */
+export interface SellersKpis {
+  sellers_count: number;
+  orders_with_seller: number;
+  revenue_with_seller: number;
+  orders_total: number;
+  revenue_total: number;
+  /** Ticket promedio de las ventas con vendedor. */
+  avg_ticket: number;
+}
+
+/** sp_rpt_sellers_summary: una fila por vendedor, más "Sin vendedor" (seller_id null). */
+export interface SellerSummaryItem {
+  seller_id: string | null;
+  seller_name: string;
+  /** Sucursal del perfil del usuario, no la del pedido. */
+  branch_name: string;
+  orders: number;
+  units: number;
+  revenue: number;
+  avg_ticket: number;
+  share_pct: number | null;
+  first_order: string | null;
+  last_order: string | null;
+}
+
+/** sp_rpt_sellers_by_branch: sucursal del PEDIDO × vendedor. */
+export interface SellersByBranchItem {
+  branch_id: number | null;
+  branch_name: string;
+  seller_id: string | null;
+  seller_name: string;
+  orders: number;
+  revenue: number;
+}
+
+/** sp_rpt_sellers_over_time: período × vendedor. */
+export interface SellersOverTimeItem {
+  period: string;
+  seller_id: string | null;
+  seller_name: string;
+  orders: number;
+  revenue: number;
+}
+
+export type SellersMetric = 'revenue' | 'orders';

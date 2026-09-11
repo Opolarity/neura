@@ -67,3 +67,16 @@ export function formatCurrencyAxis(value: number | string) {
 export function truncateLabel(value: string, length: number) {
   return value.length > length ? `${value.slice(0, length)}...` : value;
 }
+
+/**
+ * Etiqueta compacta para el eje Y en soles: "S/ 2,2 M", "S/ 550 k",
+ * "S/ 1.500". El formato completo ("S/ 2,200,000") no entra en el ancho del
+ * eje y Recharts lo parte en dos renglones. El tooltip sigue con el completo.
+ */
+export function formatCurrencyTick(value: number | string) {
+  const n = Number(value);
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) return `S/ ${(n / 1_000_000).toLocaleString('es-PE', { maximumFractionDigits: 1 })} M`;
+  if (abs >= 10_000) return `S/ ${(n / 1_000).toLocaleString('es-PE', { maximumFractionDigits: 0 })} k`;
+  return `S/ ${n.toLocaleString('es-PE', { maximumFractionDigits: 0 })}`;
+}

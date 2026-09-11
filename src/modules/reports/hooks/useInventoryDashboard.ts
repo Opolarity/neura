@@ -1,16 +1,41 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { inventoryService } from '../services/reports.service';
 import { useLowStockThreshold } from '@/shared/hooks/useLowStockThreshold';
 import { getWarehousesIsActiveTrue } from '@/shared/services/service';
 import type { Granularity, ReportsFilters } from '../types/reports.types';
 
-export function useInventoryDashboard(filters: ReportsFilters) {
-  const [warehouseId, setWarehouseId] = useState<number | undefined>(undefined);
-  // Umbral de stock bajo: el valor de referencia es el parámetro global
-  // (Configuración > Negocio > Operación). El selector del reporte solo
-  // define un override de sesión, que no se persiste.
-  const [thresholdOverride, setThresholdOverride] = useState<number | undefined>(undefined);
+/**
+ * Filtros propios de Inventario ("Más filtros"). Viven acá y no en
+ * ReportsFilters porque no existen en las otras pestañas.
+ */
+export interface InventoryExtraFilters {
+  warehouseId: number | undefined;
+  /**
+   * Umbral de stock bajo: el valor de referencia es el parámetro global
+   * (Configuración > Negocio > Operación). Esto es solo un override de
+   * sesión, que no se persiste.
+   */
+  thresholdOverride: number | undefined;
+  /** Lista de precios con la que se valoriza el inventario. undefined = la
+   * referencia del SP (la del canal minorista). */
+  valuationPriceListId: number | undefined;
+}
+
+const EMPTY_EXTRA: InventoryExtraFilters = {
+  warehouseId: undefined,
+  thresholdOverride: undefined,
+  valuationPriceListId: undefined,
+};
+
+export function useInventoryDashboard(filters: ReportsFilters, applyVersion: number) {
+  // Igual que la barra: lo que se edita es el borrador y las queries recién
+  // cambian al dar clic en Aplicar. Antes cada select disparaba la recarga
+  // al instante y el botón Aplicar no hacía nada con estos tres filtros.
+  const [extraDraft, setExtraDraft] = useState<InventoryExtraFilters>(EMPTY_EXTRA);
+  const [extra, setExtra] = useState<InventoryExtraFilters>(EMPTY_EXTRA);
+  const { warehouseId, thresholdOverride, valuationPriceListId } = extra;
+
   const [flowGranularity, setFlowGranularity] = useState<Granularity>('day');
   const [termGroupId, setTermGroupId] = useState<number | undefined>(undefined);
   const [deadStockDays, setDeadStockDays] = useState(60);
@@ -20,6 +45,21 @@ export function useInventoryDashboard(filters: ReportsFilters) {
   const [lowStockPage, setLowStockPage] = useState(1);
   const [lowStockSearch, setLowStockSearch] = useState('');
   const lowStockPageSize = 10;
+
+  // El Aplicar de la barra incrementa applyVersion: ahí se promueve el
+  // borrador. Las páginas vuelven a 1 porque cambia el universo de filas.
+  useEffect(() => {
+    if (applyVersion === 0) return;
+    setExtra(extraDraft);
+    setDeadStockPage(1);
+    setLowStockPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applyVersion]);
+
+  const isExtraDirty =
+    extraDraft.warehouseId !== extra.warehouseId ||
+    extraDraft.thresholdOverride !== extra.thresholdOverride ||
+    extraDraft.valuationPriceListId !== extra.valuationPriceListId;
 
   const warehouses = useQuery({
     queryKey: ['rpt_warehouses'],
@@ -43,15 +83,8 @@ export function useInventoryDashboard(filters: ReportsFilters) {
   });
 
   const valuation = useQuery({
-    queryKey: ['rpt_inventory_valuation', warehouseId],
-    queryFn: () => inventoryService.getValuation(warehouseId),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const lowStockDistribution = useQuery({
-    queryKey: ['rpt_low_stock_distribution', warehouseId, threshold],
-    queryFn: () => inventoryService.getLowStockDistribution(warehouseId, threshold ?? undefined),
-    enabled: thresholdReady,
+    queryKey: ['rpt_inventory_valuation', warehouseId, valuationPriceListId],
+    queryFn: () => inventoryService.getValuation(warehouseId, valuationPriceListId),
     staleTime: 1000 * 60 * 5,
   });
 
@@ -109,7 +142,6 @@ export function useInventoryDashboard(filters: ReportsFilters) {
   return {
     summary,
     valuation,
-    lowStockDistribution,
     lowStockProducts,
     rotation,
     movementTypes,
@@ -118,16 +150,24 @@ export function useInventoryDashboard(filters: ReportsFilters) {
     byTermGroup,
     deadStock,
     warehouses,
+    // Aplicados (los que usan las queries y el Excel)
     warehouseId,
-    setWarehouseId: (id: number | undefined) => {
-      setWarehouseId(id);
-      setDeadStockPage(1);
-      setLowStockPage(1);
-    },
+    valuationPriceListId,
     threshold,
     globalThreshold,
     thresholdOverride,
-    setThresholdOverride,
+    // Borrador (lo que muestran los selects de "Más filtros")
+    extraDraft,
+    setExtraDraft: (partial: Partial<InventoryExtraFilters>) =>
+      setExtraDraft((prev) => ({ ...prev, ...partial })),
+    /** Limpia borrador y aplicado a la vez (botón Limpiar de la barra). */
+    clearExtra: () => {
+      setExtraDraft(EMPTY_EXTRA);
+      setExtra(EMPTY_EXTRA);
+      setDeadStockPage(1);
+      setLowStockPage(1);
+    },
+    isExtraDirty,
     flowGranularity,
     setFlowGranularity,
     termGroupId,

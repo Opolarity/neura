@@ -25,7 +25,7 @@ export function StockMovementTypesChart({ data, loading }: Props) {
   }));
 
   return (
-    <ReportCard title="Tipos de movimiento de inventario">
+    <ReportCard info="Por cada tipo de movimiento de inventario del período: cuántos movimientos hubo y cuántas unidades sumaron. Las dos series comparten el mismo eje, así que un tipo con pocos movimientos pero muchas unidades destaca por la segunda barra." title="Tipos de movimiento de inventario">
       {loading ? (
         <ChartLoading />
       ) : (

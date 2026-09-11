@@ -7,10 +7,13 @@ import {
 import {
   chartAxis,
   chartGrid,
-  formatCurrencyAxis,
+  formatCurrencyTick,
   reportChartColors,
 } from '../shared/reportChartUtils';
+import { currencyTooltipRow } from '../shared/reportChartFormatters';
 import type { FinancialByClassItem } from '../../types/reports.types';
+
+const TOOLTIP_LABELS = { ingresos: 'Ingresos', egresos: 'Egresos' };
 
 interface Props {
   data: FinancialByClassItem[];
@@ -25,7 +28,7 @@ export function FinancialByClassChart({ data, loading }: Props) {
   }));
 
   return (
-    <ReportCard title="Por clase de movimiento" className="flex flex-col" contentClassName="flex-1 min-h-0">
+    <ReportCard info="Ingresos contra egresos del período según la clase del movimiento de caja (venta, compra, gasto, retiro, etc.). Misma fuente que el flujo de caja: los movimientos de las cuentas, clasificados por el signo del monto." title="Por clase de movimiento" className="flex flex-col" contentClassName="flex-1 min-h-0">
       {loading ? (
         <ChartLoading />
       ) : (
@@ -39,8 +42,8 @@ export function FinancialByClassChart({ data, loading }: Props) {
           <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} className={chartGrid} />
             <XAxis dataKey="clase" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={formatCurrencyAxis} className={chartAxis} />
-            <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrencyAxis(value as number)} />} />
+            <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={formatCurrencyTick} width={72} className={chartAxis} />
+            <ChartTooltip content={<ChartTooltipContent formatter={currencyTooltipRow(TOOLTIP_LABELS)} />} />
             <ChartLegend content={<ChartLegendContent />} />
             <Bar dataKey="ingresos" fill="var(--color-ingresos)" radius={[4, 4, 0, 0]} />
             <Bar dataKey="egresos" fill="var(--color-egresos)" radius={[4, 4, 0, 0]} />

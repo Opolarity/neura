@@ -17,14 +17,16 @@ import {
   type CategoryExportRow,
 } from '../utils/generateProductsReportExcel';
 import { toastError } from '@/shared/utils/toastError';
+import { ReportGuideSheet } from '../components/shared/ReportGuideSheet';
+import { productsGuide } from '../guides/reportGuides';
 
 const ProductsDashboard = lazy(() =>
   import('../components/products/ProductsDashboard').then((m) => ({ default: m.ProductsDashboard })),
 );
 
 export default function ProductsPage() {
-  const { filters, draft, applyImmediate, applyVersion } = useReportsFilters();
-  const dash = useProductsDashboard(filters, applyVersion);
+  const { filters, draft, applyImmediate } = useReportsFilters();
+  const dash = useProductsDashboard(filters);
   const [isExporting, setIsExporting] = useState(false);
 
   // El catálogo ya está cacheado por el filtro de situación; se lee aquí para
@@ -40,9 +42,10 @@ export default function ProductsPage() {
     draft.productSituationIds === null ||
     isSameIdSet(draft.productSituationIds, defaultProductSituationIds(situations.data ?? []));
 
+  // El producto no cuenta acá: su buscador vive en "Análisis de producto
+  // individual", con su propio Aplicar y Limpiar.
   const extraActiveCount =
     [
-      dash.selectedProductId,
       draft.branchId,
       draft.saleTypeId,
       draft.countryId,
@@ -54,7 +57,6 @@ export default function ProductsPage() {
     ].filter((v) => v !== null && v !== undefined).length + (situationIsDefault ? 0 : 1);
 
   function handleClearExtra() {
-    dash.selectProduct(null);
     applyImmediate({
       ...draft,
       branchId: null,
@@ -149,25 +151,26 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Reportes de productos</h1>
-        <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Reporte de ventas de productos</h1>
+          <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+        </div>
+        <ReportGuideSheet guide={productsGuide} />
       </div>
       <ReportsFilterBar
-        extraFields={<ProductsOptionsPanel dash={dash} />}
+        extraFields={<ProductsOptionsPanel />}
         extraActiveCount={extraActiveCount}
-        extraDirty={dash.isProductDirty}
         onClearExtra={handleClearExtra}
         footNote={
           <>
             Productos mide <strong className="font-medium text-foreground">mercadería que salió
-            del almacén</strong>: por defecto solo cuenta los pedidos Enviado y Entregado. Los
-            que están En proceso o Armado no entran acá, pero sí en Reportes de ventas, que mide
-            lo que se pidió — por eso las dos pestañas no dan el mismo volumen; para cambiar el
-            criterio, usá el filtro Estado de pedido.{' '}
+            del almacén</strong>: por defecto solo cuenta pedidos Enviado y Entregado. En proceso y
+            Armado no entran acá, pero sí en Reporte de ventas; para cambiar el criterio, usá el
+            filtro Estado de pedido.{' '}
             <strong className="font-medium text-foreground">Ingresos</strong> valoriza solo las
-            líneas de producto (unidades × precio, menos descuento): no incluye el flete ni otros
-            conceptos del pedido, y es lo que valía la mercadería, no lo que se cobró.
+            líneas de producto (unidades × precio, menos descuento): sin flete ni otros conceptos,
+            y es lo que valía la mercadería, no lo que se cobró.
           </>
         }
         exportSlot={

@@ -70,6 +70,7 @@ export function CategoryOverTimeChart({ data, loading, granularity, onGranularit
 
   return (
     <ReportCard
+      info="Ingresos por línea de producto (unidades × precio, menos descuento) en cada período, apilados por categoría. Se muestran las 6 categorías con más ingresos; el resto va en Otras. Solo pedidos Enviado y Entregado (o los que elijas en Estado de pedido) y solo productos activos."
       title="Ingresos por categoría en el tiempo"
       description={<MultiCategoryNotice />}
       actions={

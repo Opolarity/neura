@@ -1,55 +1,64 @@
-import { Cell, Pie, PieChart } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
   EmptyReportState,
   ReportCard,
 } from '../shared/ReportScaffold';
-import { chartQualitativeSeries, formatCurrencyAxis } from '../shared/reportChartUtils';
+import {
+  chartAxis,
+  chartGrid,
+  formatCurrencyTick,
+  reportChartColors,
+} from '../shared/reportChartUtils';
+import { currencyTooltipRow } from '../shared/reportChartFormatters';
 import type { FinancialByPaymentItem } from '../../types/reports.types';
+
+const TOOLTIP_LABELS = { ingresos: 'Ingresos', egresos: 'Egresos' };
 
 interface Props {
   data: FinancialByPaymentItem[];
   loading: boolean;
 }
 
+/**
+ * Antes era una torta que solo graficaba `income`. El SP siempre devolvió
+ * también `expense`, así que la mitad del dato se descartaba: un método usado
+ * solo para pagar salía como una porción en cero. Barras agrupadas, igual que
+ * "Por clase de movimiento", que es su gemelo de al lado y siempre mostró las
+ * dos series.
+ */
 export function FinancialByPaymentChart({ data, loading }: Props) {
   const chartData = data.map((d) => ({
-    name: d.payment_method_name,
-    value: d.income,
+    metodo: d.payment_method_name,
+    ingresos: d.income,
+    egresos: d.expense,
   }));
-  const colors = chartQualitativeSeries;
 
   return (
-    <ReportCard title="Ingresos por método de pago">
+    <ReportCard info="Cuánto entró y cuánto salió por cada método de pago en el período. Se muestran las dos series porque un método puede usarse solo para pagar (tendría ingresos en cero pero egresos reales). Fuente: movimientos de caja." title="Ingresos y egresos por método de pago" className="flex flex-col" contentClassName="flex-1 min-h-0">
       {loading ? (
         <ChartLoading />
       ) : chartData.length === 0 ? (
         <EmptyReportState>Sin datos en el periodo</EmptyReportState>
       ) : (
-        <>
-          <ChartContainer
-            config={{ value: { label: 'Ingresos', color: 'hsl(var(--success))' } }}
-            className="h-52 w-full aspect-auto"
-          >
-            <PieChart>
-              <ChartTooltip content={<ChartTooltipContent hideLabel formatter={(value) => formatCurrencyAxis(value as number)} />} />
-              <Pie data={chartData} dataKey="value" nameKey="name" innerRadius={52} outerRadius={78} paddingAngle={2}>
-                {chartData.map((entry, index) => (
-                  <Cell key={entry.name} fill={colors[index % colors.length]} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ChartContainer>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {chartData.map((entry, index) => (
-              <span key={entry.name} className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
-                {entry.name}
-              </span>
-            ))}
-          </div>
-        </>
+        <ChartContainer
+          config={{
+            ingresos: { label: 'Ingresos', color: reportChartColors.emerald },
+            egresos: { label: 'Egresos', color: reportChartColors.rose },
+          }}
+          className="h-full min-h-56 w-full aspect-auto"
+        >
+          <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
+            <CartesianGrid vertical={false} className={chartGrid} />
+            <XAxis dataKey="metodo" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
+            <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={formatCurrencyTick} width={72} className={chartAxis} />
+            <ChartTooltip content={<ChartTooltipContent formatter={currencyTooltipRow(TOOLTIP_LABELS)} />} />
+            <ChartLegend content={<ChartLegendContent />} />
+            <Bar dataKey="ingresos" fill="var(--color-ingresos)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="egresos" fill="var(--color-egresos)" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ChartContainer>
       )}
     </ReportCard>
   );

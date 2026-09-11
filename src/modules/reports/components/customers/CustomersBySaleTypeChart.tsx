@@ -73,7 +73,7 @@ export function CustomersBySaleTypeChart({ data, loading }: Props) {
   }
 
   return (
-    <ReportCard title="Clientes por canal de venta">
+    <ReportCard info="Ingresos del período por canal de venta: el área de cada bloque es el monto vendido, y al pasar el mouse se ven compradores únicos y pedidos. Se muestran los 8 canales con más ingresos; el resto se agrupa en Otros. Excluye pedidos cancelados y reembolsados." title="Clientes por canal de venta">
       {loading ? (
         <ChartLoading />
       ) : nodes.length === 0 ? (

@@ -10,6 +10,8 @@ import { SalesGeoFilters } from '../components/sales/SalesGeoFilters';
 import { fetchSalesReport, fetchSalesDetailReport, filterOptionsService } from '../services/reports.service';
 import { defaultSituationIds, isSameIdSet } from '../types/reports.types';
 import { generateSalesReportExcel } from '../utils/generateSalesReportExcel';
+import { ReportGuideSheet } from '../components/shared/ReportGuideSheet';
+import { salesGuide } from '../guides/reportGuides';
 
 const SalesDashboard = lazy(() =>
   import('../components/sales/SalesDashboard').then((m) => ({ default: m.SalesDashboard })),
@@ -85,9 +87,12 @@ export default function SalesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Reportes de ventas</h1>
-        <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Reportes de ventas</h1>
+          <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
+        </div>
+        <ReportGuideSheet guide={salesGuide} />
       </div>
       <ReportsFilterBar
         extraFields={<SalesGeoFilters />}

@@ -1,5 +1,5 @@
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { SalesOverTimeItem, Granularity } from '../../types/reports.types';
 import { ChartLoading, ReportCard, ReportSelect } from '../shared/ReportScaffold';
 import { chartAxis, chartGrid, formatCurrencyAxis, reportChartColors } from '../shared/reportChartUtils';
@@ -28,6 +28,7 @@ export function SalesOverTimeChart({ data, loading, granularity, onGranularityCh
 
   return (
     <ReportCard
+      info="Ingresos por período según el total de los pedidos (incluye flete y descuentos aplicados). Se fecha por la fecha del pedido. Excluye pedidos cancelados y reembolsados, salvo que cambies el filtro Estado de pedido. La granularidad se elige arriba a la derecha."
       title="Ventas en el tiempo"
       actions={
         <ReportSelect
@@ -47,6 +48,7 @@ export function SalesOverTimeChart({ data, loading, granularity, onGranularityCh
             <XAxis dataKey="fecha" tick={{ className: chartAxis }} tickLine={false} axisLine={false} />
             <YAxis tickFormatter={formatCurrencyAxis} width={84} tick={{ className: chartAxis }} tickLine={false} axisLine={false} />
             <ChartTooltip content={<ChartTooltipContent formatter={(v) => formatCurrencyAxis(v as number)} />} />
+            <ChartLegend content={<ChartLegendContent />} />
             <Area dataKey="ventas" type="monotone" fill="var(--color-ventas)" fillOpacity={0.18} stroke="var(--color-ventas)" strokeWidth={2} />
           </AreaChart>
         </ChartContainer>

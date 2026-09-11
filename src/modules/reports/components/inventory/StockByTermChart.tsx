@@ -36,6 +36,7 @@ export function StockByTermChart({ data, loading, onGroupChange }: Props) {
 
   return (
     <ReportCard
+      info="Unidades en stock hoy por talla y cuántos SKUs distintos tienen esa talla. Las tallas se agrupan por su grupo (ropa, calzado, etc.); si hay más de uno aparece un selector. Las variaciones sin talla no entran."
       title="Stock por talla"
       actions={
         groups.length > 1 ? (

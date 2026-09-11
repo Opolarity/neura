@@ -61,6 +61,12 @@ export function useCustomersDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 5,
   });
 
+  const byBranch = useQuery({
+    queryKey: ['rpt_customers_by_branch', ...queryKey],
+    queryFn: () => customersService.getByBranch(filters),
+    staleTime: 1000 * 60 * 5,
+  });
+
   const bySaleType = useQuery({
     queryKey: ['rpt_customers_by_sale_type', ...queryKey],
     queryFn: () => customersService.getBySaleType(filters),
@@ -77,6 +83,7 @@ export function useCustomersDashboard(filters: ReportsFilters) {
     recency,
     pareto,
     bySaleType,
+    byBranch,
     topLimit,
     setTopLimit,
   };

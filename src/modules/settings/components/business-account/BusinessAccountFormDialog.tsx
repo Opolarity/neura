@@ -24,7 +24,10 @@ import {
 } from "../../types/BusinessAccount.types";
 import { useForm, Controller } from "react-hook-form";
 import { useEffect, useRef, useState } from "react";
-import { typesByModuleCode } from "@/shared/services/service";
+import {
+  CREDIT_BUSINESS_ACCOUNT_TYPE_CODE,
+  typesByModuleCode,
+} from "@/shared/services/service";
 import { BranchesAPI } from "../../services/Warehouses.services";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -183,8 +186,14 @@ export const BusinessAccountFormDialog = ({
   // La sucursal es obligatoria solo para las cuentas de tipo Caja. Se resuelve
   // por el code del tipo seleccionado ('CHR'), nunca por el id 44 en duro.
   const selectedTypeId = watch("business_account_type_id");
-  const isCashAccount =
-    accountTypes.find((t) => t.id === Number(selectedTypeId))?.code === "CHR";
+  const selectedTypeCode = accountTypes.find(
+    (t) => t.id === Number(selectedTypeId),
+  )?.code;
+  const isCashAccount = selectedTypeCode === "CHR";
+  // Cuenta de crédito de franquicia ("Crédito <franquiciado>"): su saldo lo
+  // escriben las devoluciones de prendas ya pagadas y los pagos que las
+  // consumen, nunca este formulario.
+  const isCreditAccount = selectedTypeCode === CREDIT_BUSINESS_ACCOUNT_TYPE_CODE;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -238,9 +247,14 @@ export const BusinessAccountFormDialog = ({
               type="number"
               step="0.01"
               placeholder="Ej: 10000.00"
-              disabled={!isEditing}
+              disabled={!isEditing || isCreditAccount}
               {...register("total_amount", { valueAsNumber: true })}
             />
+            {isCreditAccount && (
+              <p className="text-xs text-muted-foreground">
+                El saldo lo mueven las devoluciones y los pagos de franquicia.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

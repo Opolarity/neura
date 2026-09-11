@@ -28,6 +28,7 @@ const LIMIT_OPTIONS: Array<{ value: string; label: string }> = [
 export function TopProductsTable({ data, loading, metric, limit, onMetricChange, onLimitChange }: Props) {
   return (
     <ReportCard
+      info="Ranking de productos del período por ingresos o por cantidad, según la métrica elegida. Ingresos valoriza la línea de producto (unidades × precio, menos descuento). Respeta todos los filtros de la barra."
       title="Top productos"
       actions={
         <div className="flex gap-2">

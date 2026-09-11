@@ -332,6 +332,7 @@ export function SalesHeatmap({ filters }: SalesHeatmapProps) {
 
   return (
     <ReportCard
+      info="Mapa del Perú pintado por ingresos o pedidos según la dirección de entrega del pedido, con la tabla del mismo nivel al costado. Hacé clic en un departamento para bajar a provincias y luego a distritos. El color usa una escala suavizada para que las zonas con pocas ventas no queden en blanco. Los pedidos sin dirección solo aparecen en la tabla."
       title={breadcrumb}
       actions={
         <ReportSelect<HeatmapMetric>

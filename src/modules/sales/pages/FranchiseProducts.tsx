@@ -3,6 +3,7 @@ import { Boxes, Download, Filter, Loader2, RefreshCw, Search } from "lucide-reac
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/shared/hooks/use-toast";
 import { PagosConfirmarModal } from "../components/PagosConfirmarModal";
+import { CantidadesConfirmarModal } from "../components/CantidadesConfirmarModal";
 import FranchiseFilterModal, {
   type FranchiseFilterValues,
 } from "../components/FranchiseFilterModal";
@@ -52,6 +53,15 @@ const formatNumber = (value: number | null): string => {
   );
 };
 
+/** "9" o, si hubo devoluciones del cliente final, "9 (1 dev.)". */
+const formatSoldWithReturns = (
+  sold: number | null,
+  returned: number,
+): string =>
+  returned > 0
+    ? `${formatNumber(sold)} (${formatNumber(returned)} dev.)`
+    : formatNumber(sold);
+
 const DEFAULT_PAYMENT_STATUSES: FranchisePaymentStatus[] = [
   "unpaid",
   "partial",
@@ -95,6 +105,7 @@ const FranchiseProducts = () => {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagosModalOpen, setPagosModalOpen] = useState(false);
+  const [cantidadesModalOpen, setCantidadesModalOpen] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [summary, setSummary] = useState<FranchiseSummary | null>(null);
   const [franchisees, setFranchisees] = useState<FranchiseeOption[]>([]);
@@ -290,6 +301,7 @@ const FranchiseProducts = () => {
         (acc, item) => {
           acc.quantity += item.quantity;
           acc.sold += item.soldByFranchise ?? 0;
+          acc.returned += item.returnedUnits;
           // Neto de promociones. Viene valorizado por evento desde el SP:
           // cada venta a su precio, no precio vigente x cantidad.
           acc.soldAmount += item.soldAmount;
@@ -301,6 +313,7 @@ const FranchiseProducts = () => {
         {
           quantity: 0,
           sold: 0,
+          returned: 0,
           soldAmount: 0,
           promoDiscount: 0,
           paid: 0,
@@ -337,6 +350,12 @@ const FranchiseProducts = () => {
           >
             Pagos por confirmar
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => setCantidadesModalOpen(true)}
+          >
+            Cantidades por confirmar
+          </Button>
           <Button variant="outline" onClick={handleRefresh} disabled={loading}>
             {loading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -348,7 +367,7 @@ const FranchiseProducts = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {[
           { label: "Total enviado", value: summary?.totalSent ?? null },
           // Con filtro de fecha, "vendido" es lo del rango; "pagado" y "por
@@ -367,22 +386,45 @@ const FranchiseProducts = () => {
               : "Total pagado",
             value: summary?.totalPaid ?? null,
           },
+          // Crédito de franquicia: saldo de las cuentas CRE del franquiciado
+          // (prendas devueltas por el cliente final que ya estaban pagadas).
+          // Es global, no depende del rango de fechas, y se descuenta del
+          // "por pagar".
+          {
+            label: "Crédito disponible",
+            value: summary?.totalCredit ?? null,
+            hint:
+              summary && summary.totalUnitsReturned > 0
+                ? `${formatNumber(summary.totalUnitsReturned)} unid. devueltas`
+                : undefined,
+          },
+          // vendido − pagado − crédito, nunca negativo: si el crédito supera
+          // la deuda, se muestra 0 y el excedente como saldo a favor.
           {
             label: summary?.dateFilterActive
               ? "Total por pagar (del rango)"
               : "Total por pagar",
             value: summary?.totalPending ?? null,
+            hint:
+              summary && summary.creditSurplus > 0
+                ? `Saldo a favor: ${formatCurrency(summary.creditSurplus)}`
+                : undefined,
           },
-        ].map(({ label, value }) => (
+        ].map(({ label, value, hint }) => (
           <Card key={label}>
             <CardContent className="!p-4">
               <p className="text-xs text-muted-foreground">{label}</p>
               {loading && summary === null ? (
                 <div className="mt-1 h-7 w-32 animate-pulse rounded bg-muted" />
               ) : (
-                <p className="mt-1 text-2xl font-bold tabular-nums">
-                  {value !== null ? formatCurrency(value) : "-"}
-                </p>
+                <>
+                  <p className="mt-1 text-2xl font-bold tabular-nums">
+                    {value !== null ? formatCurrency(value) : "-"}
+                  </p>
+                  {hint && (
+                    <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -476,8 +518,11 @@ const FranchiseProducts = () => {
                     <TableCell className="text-right">
                       {formatNumber(item.quantity)}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {formatNumber(item.soldByFranchise)}
+                    <TableCell className="whitespace-nowrap text-right">
+                      {formatSoldWithReturns(
+                        item.soldByFranchise,
+                        item.returnedUnits,
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       {item.franchiseDiscount > 0
@@ -510,8 +555,8 @@ const FranchiseProducts = () => {
                   <TableCell className="text-right font-semibold">
                     {formatNumber(totals.quantity)}
                   </TableCell>
-                  <TableCell className="text-right font-semibold">
-                    {formatNumber(totals.sold)}
+                  <TableCell className="whitespace-nowrap text-right font-semibold">
+                    {formatSoldWithReturns(totals.sold, totals.returned)}
                   </TableCell>
                   <TableCell className="text-right font-semibold">
                     {formatCurrency(totals.promoDiscount)}
@@ -544,6 +589,11 @@ const FranchiseProducts = () => {
       <PagosConfirmarModal
         open={pagosModalOpen}
         onOpenChange={setPagosModalOpen}
+      />
+
+      <CantidadesConfirmarModal
+        open={cantidadesModalOpen}
+        onOpenChange={setCantidadesModalOpen}
       />
 
       <FranchiseFilterModal

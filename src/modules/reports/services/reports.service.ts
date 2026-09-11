@@ -20,7 +20,6 @@ import type {
   SizeByCategoryItem,
   CategoryOverTimeItem,
   InventorySummary,
-  LowStockDistributionItem,
   LowStockProductsReport,
   StockRotationItem,
   StockMovementTypeItem,
@@ -32,12 +31,16 @@ import type {
   ReturnsKpis,
   ReturnsOverTimeItem,
   TopReturnedProduct,
-  ReturnsByReasonItem,
+  ReturnsByTypeItem,
+  ReturnSituationOption,
+  ReturnTypeOption,
   FinancialKpis,
   CashflowItem,
   FinancialByClassItem,
   FinancialByPaymentItem,
-  AccountBalance,
+  FinancialByBranchItem,
+  BusinessAccountOption,
+  MovementClassOption,
   FinancialProfitKpis,
   MarginByProductItem,
   CustomersKpis,
@@ -49,6 +52,11 @@ import type {
   CustomersRecencyItem,
   CustomersParetoItem,
   CustomersBySaleTypeItem,
+  CustomersByBranchItem,
+  SellersKpis,
+  SellerSummaryItem,
+  SellersByBranchItem,
+  SellersOverTimeItem,
 } from '../types/reports.types';
 
 // -------------------------------------------------------
@@ -130,14 +138,17 @@ export const salesService = {
       p_map_city_id: mapCityId ?? null,
     }),
 
+  // Pasa por `mapFilters` como el resto de la pestaña. Antes mandaba solo
+  // fecha, sede y situación: los otros siete campos de la barra —canal, método
+  // de pago, lista de precios y la cascada geográfica— ni siquiera existían en
+  // la firma del SP, así que la tabla se quedaba mostrando el top del período
+  // entero mientras el resto de la pantalla sí se acotaba, y sin avisar.
+  // Los acepta desde la migración 31000909143000.
   getTopProducts: (f: ReportsFilters, metric: TopMetric = 'revenue', limit = 10) =>
     rpc<TopProductItem[]>('sp_rpt_top_products_sales', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
+      ...mapFilters(f),
       p_metric: metric,
       p_limit: limit,
-      p_situation_ids: f.situationIds ?? undefined,
     }),
 };
 
@@ -204,10 +215,14 @@ export const productsService = {
   // resto de Productos, así que ya puede usar mapProductFilters. Financiero lo
   // sigue llamando con su propio subconjunto de params, que continúa siendo
   // válido porque los nuevos tienen DEFAULT.
+  //
+  // p_only_active_products (migración 31000910123000): Productos no muestra ni
+  // cuenta productos con is_active = false; Financiero sigue viendo todos.
   getMarginScatter: (f: ReportsFilters, limit = 100, situationIds: number[] = []) =>
     rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
       ...mapProductFilters(f, situationIds),
       p_limit: limit,
+      p_only_active_products: true,
     }),
 };
 
@@ -221,12 +236,6 @@ export const inventoryService = {
     rpc<InventorySummary>('sp_rpt_inventory_summary', {
       p_warehouse_id: warehouseId ?? undefined,
       p_low_stock_threshold: threshold ?? undefined,
-    }),
-
-  getLowStockDistribution: (warehouseId?: number, threshold?: number) =>
-    rpc<LowStockDistributionItem[]>('sp_rpt_low_stock_distribution', {
-      p_warehouse_id: warehouseId ?? undefined,
-      p_threshold: threshold ?? undefined,
     }),
 
   /** T-269 · Bandeja de reposición: SKUs bajo el umbral, paginados. */
@@ -260,9 +269,13 @@ export const inventoryService = {
       p_warehouse_id: warehouseId ?? undefined,
     }),
 
-  getValuation: (warehouseId?: number) =>
+  // `priceListId` sin definir deja que el SP use su referencia: la lista del
+  // canal minorista. Valorizar a mayorista da otro numero, y para un negocio
+  // que vende por los dos canales la diferencia importa.
+  getValuation: (warehouseId?: number, priceListId?: number) =>
     rpc<InventoryValuation>('sp_rpt_inventory_valuation', {
       p_warehouse_id: warehouseId ?? undefined,
+      p_price_list_id: priceListId ?? undefined,
     }),
 
   getStockByCategory: (warehouseId?: number) =>
@@ -296,88 +309,170 @@ export const inventoryService = {
 // ============================================================
 // RETURNS
 // ============================================================
+/**
+ * Params comunes de los SP de Cambios/Retornos. El universo de pedidos se
+ * acota con los mismos campos que Ventas — el retorno cuelga de un pedido —
+ * más los dos propios de la pestaña: la situación del retorno (catálogo del
+ * módulo RTU, no el de pedidos) y el tipo.
+ *
+ * Ojo al agregar params: PostgREST resuelve por el conjunto exacto de
+ * argumentos nombrados, así que mandar uno que el SP no declare devuelve
+ * PGRST202 (404). Estos existen desde la migración 31000908232000.
+ */
+function mapReturnFilters(f: ReportsFilters) {
+  return {
+    p_start_date: f.startDate ?? undefined,
+    p_end_date: f.endDate ?? undefined,
+    p_branch_id: f.branchId ?? undefined,
+    p_return_situation_ids: f.returnSituationIds ?? undefined,
+    p_return_type_ids: f.returnTypeIds ?? undefined,
+    p_sale_type_id: f.saleTypeId ?? undefined,
+    p_payment_method_id: f.paymentMethodId ?? undefined,
+    p_price_list_code: f.priceListCode ?? undefined,
+    p_country_id: f.countryId ?? undefined,
+    p_state_id: f.stateId ?? undefined,
+    p_city_id: f.cityId ?? undefined,
+    p_neighborhood_id: f.neighborhoodId ?? undefined,
+  };
+}
+
 export const returnsService = {
   getKpis: (f: ReportsFilters) =>
-    rpc<ReturnsKpis>('sp_rpt_returns_kpis', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<ReturnsKpis>('sp_rpt_returns_kpis', mapReturnFilters(f)),
 
   getOverTime: (f: ReportsFilters, granularity: Granularity = 'day') =>
     rpc<ReturnsOverTimeItem[]>('sp_rpt_returns_over_time', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
+      ...mapReturnFilters(f),
       p_granularity: granularity,
-      p_branch_id: f.branchId ?? undefined,
     }),
 
   getTopProducts: (f: ReportsFilters, limit = 10) =>
     rpc<TopReturnedProduct[]>('sp_rpt_top_returned_products', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
+      ...mapReturnFilters(f),
       p_limit: limit,
     }),
 
-  getByReason: (f: ReportsFilters) =>
-    rpc<ReturnsByReasonItem[]>('sp_rpt_returns_by_reason', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+  getByType: (f: ReportsFilters) =>
+    rpc<ReturnsByTypeItem[]>('sp_rpt_returns_by_type', mapReturnFilters(f)),
 };
+
+/** Una fila por retorno — mismo grano y mismos filtros que las tarjetas. */
+export interface ReturnsExportRow {
+  return_id: number;
+  return_date: string;
+  order_id: number;
+  order_date: string | null;
+  customer_name: string;
+  customer_document: string;
+  return_type_name: string;
+  situation_name: string;
+  reason: string;
+  branch_name: string;
+  sale_type_name: string;
+  products: string;
+  units_returned: number;
+  returned_value: number;
+  refunded_amount: number;
+}
+
+export const fetchReturnsReport = (f: ReportsFilters): Promise<ReturnsExportRow[]> =>
+  rpc<ReturnsExportRow[]>('sp_rpt_export_returns', mapReturnFilters(f));
 
 // ============================================================
 // FINANCIAL
 // ============================================================
+/**
+ * Params de la mitad de CAJA de Financiero: los cuatro SP que leen `movements`.
+ * Ahí no hay pedido, así que canal, geografía y lista de precios no existen —
+ * lo único que acota un movimiento es sede, cuenta, método de pago y motivo.
+ */
+function mapCashFilters(f: ReportsFilters) {
+  return {
+    p_start_date: f.startDate ?? undefined,
+    p_end_date: f.endDate ?? undefined,
+    p_branch_id: f.branchId ?? undefined,
+    p_business_account: f.businessAccountId ?? undefined,
+    p_payment_method_id: f.paymentMethodId ?? undefined,
+    p_movement_class_id: f.movementClassId ?? undefined,
+  };
+}
+
 export const financialService = {
   getKpis: (f: ReportsFilters) =>
-    rpc<FinancialKpis>('sp_rpt_financial_kpis', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<FinancialKpis>('sp_rpt_financial_kpis', mapCashFilters(f)),
 
   getCashflowOverTime: (f: ReportsFilters, granularity: Granularity = 'day') =>
     rpc<CashflowItem[]>('sp_rpt_cashflow_over_time', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
+      ...mapCashFilters(f),
       p_granularity: granularity,
-      p_branch_id: f.branchId ?? undefined,
     }),
 
   getByClass: (f: ReportsFilters) =>
-    rpc<FinancialByClassItem[]>('sp_rpt_financial_by_class', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<FinancialByClassItem[]>('sp_rpt_financial_by_class', mapCashFilters(f)),
 
   getByPaymentMethod: (f: ReportsFilters) =>
-    rpc<FinancialByPaymentItem[]>('sp_rpt_financial_by_payment_method', {
-      p_start_date: f.startDate ?? undefined,
-      p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
-    }),
+    rpc<FinancialByPaymentItem[]>('sp_rpt_financial_by_payment_method', mapCashFilters(f)),
 
-  getAccountBalances: () =>
-    rpc<AccountBalance[]>('sp_rpt_financial_accounts_balances'),
+  getByBranch: (f: ReportsFilters) =>
+    rpc<FinancialByBranchItem[]>('sp_rpt_financial_by_branch', mapCashFilters(f)),
 
-  getProfitKpis: (f: ReportsFilters) =>
+  // La mitad de PEDIDOS. `situationIds` viaja siempre como array explícito —
+  // nunca undefined — porque sp_rpt_financial_margin_by_product interpreta el
+  // NULL como "sin filtro", no como el default de Ventas. Mandarles el mismo
+  // array a las dos es lo que hace que las tarjetas cierren con la tabla.
+  getProfitKpis: (f: ReportsFilters, situationIds: number[]) =>
     rpc<FinancialProfitKpis>('sp_rpt_financial_profit_kpis', {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
       p_branch_id: f.branchId ?? undefined,
+      p_situation_ids: situationIds,
+      p_payment_method_id: f.paymentMethodId ?? undefined,
     }),
 
-  getMarginByProduct: (f: ReportsFilters, limit = 20) =>
+  getMarginByProduct: (f: ReportsFilters, situationIds: number[], limit = 20) =>
     rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
       p_branch_id: f.branchId ?? undefined,
       p_limit: limit,
+      p_situation_ids: situationIds,
+      p_payment_method_id: f.paymentMethodId ?? undefined,
     }),
 };
+
+// Una fila por movimiento de caja, para la hoja "Movimientos" del Excel de
+// /reports/movements. Mismos filtros que la pantalla.
+export interface FinancialMovementExportRow {
+  movement_id: number;
+  movement_date: string;
+  code: string | null;
+  /**
+   * Ingreso/Egreso según el SIGNO del monto, que es como clasifican las
+   * tarjetas y los dos gráficos. Por eso las columnas de la hoja suman igual
+   * que los KPI.
+   */
+  direction: string;
+  /**
+   * El tipo tal como quedó registrado en el ERP. No siempre coincide con
+   * `direction`: los movimientos anteriores al fix de signo de julio de 2026
+   * quedaron con el tipo "Egreso" y monto positivo.
+   */
+  registered_type: string | null;
+  class_name: string;
+  description: string | null;
+  payment_method: string | null;
+  business_account: string | null;
+  branch: string | null;
+  user_name: string | null;
+  amount: number;
+  income: number;
+  expense: number;
+}
+
+export const fetchFinancialMovementsReport = (
+  f: ReportsFilters,
+): Promise<FinancialMovementExportRow[]> =>
+  rpc<FinancialMovementExportRow[]>('sp_rpt_export_financial_movements', mapCashFilters(f));
 
 // ============================================================
 // CUSTOMERS
@@ -436,6 +531,9 @@ export const customersService = {
 
   getBySaleType: (f: ReportsFilters) =>
     rpc<CustomersBySaleTypeItem[]>('sp_rpt_customers_by_sale_type', mapCustomerFilters(f)),
+
+  getByBranch: (f: ReportsFilters) =>
+    rpc<CustomersByBranchItem[]>('sp_rpt_customers_by_branch', mapCustomerFilters(f)),
 
 };
 
@@ -532,10 +630,45 @@ export interface CustomerExportRow {
   last_order: string;
   loyalty_level: string;
   loyalty_points: number | null;
+  /** Sucursales, canales y métodos de pago de sus compras, concatenados con coma. */
+  branches: string;
+  sale_types: string;
+  payment_methods: string;
 }
 
 export const fetchCustomersReport = (f: ReportsFilters): Promise<CustomerExportRow[]> =>
   rpc<CustomerExportRow[]>('sp_rpt_export_customers', mapCustomerFilters(f));
+
+// Una fila por variación y ALMACÉN, que es el grano del stock: para un conteo
+// físico importa dónde está cada unidad. No recibe el rango de fechas porque el
+// stock es una foto del presente.
+export interface InventoryExportRow {
+  sku: string;
+  product_title: string;
+  warehouse_name: string;
+  /** Stock en ese almacén. */
+  stock: number;
+  /** Stock del SKU sumando almacenes: es contra esto que se decide el stock bajo. */
+  stock_sku_total: number;
+  /** null cuando el umbral global no está configurado. */
+  is_low_stock: boolean | null;
+  unit_cost: number;
+  cost_value: number;
+  unit_price: number;
+  retail_value: number;
+  last_movement: string | null;
+}
+
+export const fetchInventoryReport = (
+  warehouseId?: number,
+  threshold?: number,
+  priceListId?: number,
+): Promise<InventoryExportRow[]> =>
+  rpc<InventoryExportRow[]>('sp_rpt_export_inventory', {
+    p_warehouse_id: warehouseId ?? undefined,
+    p_threshold: threshold ?? undefined,
+    p_price_list_id: priceListId ?? undefined,
+  });
 
 // ============================================================
 // SHARED: Load filter options
@@ -553,6 +686,32 @@ export const filterOptionsService = {
     return (data ?? []) as unknown as OrderSituationOption[];
   },
 
+  /**
+   * Situaciones del RETORNO — módulo RTU, no ORD: Aceptado, Anulado y
+   * Pendiente. Es otro catálogo, no un subconjunto del de pedidos.
+   */
+  getReturnSituations: async (): Promise<ReturnSituationOption[]> => {
+    const { data, error } = await supabase
+      .from('situations')
+      .select('id, name, code, modules!inner(code)')
+      .eq('modules.code', 'RTU')
+      .order('id');
+    if (error) throw error;
+    return (data ?? []) as unknown as ReturnSituationOption[];
+  },
+
+  /** Tipos de retorno: Devolución total, Devolución parcial y Cambio. */
+  getReturnTypes: async (): Promise<ReturnTypeOption[]> => {
+    const { data, error } = await supabase
+      .from('types')
+      .select('id, name, code, modules!inner(code)')
+      .eq('modules.code', 'RTU')
+      .eq('is_active', true)
+      .order('id');
+    if (error) throw error;
+    return (data ?? []) as unknown as ReturnTypeOption[];
+  },
+
   getBranches: async () => {
     const { data, error } = await supabase
       .from('branches')
@@ -561,6 +720,32 @@ export const filterOptionsService = {
       .order('name');
     if (error) throw error;
     return data ?? [];
+  },
+
+  // Cuentas del negocio, para el filtro de Financiero. Solo las activas: las
+  // dadas de baja siguen teniendo movimientos históricos, pero no son algo
+  // sobre lo que hoy se quiera reportar.
+  getBusinessAccounts: async (): Promise<BusinessAccountOption[]> => {
+    const { data, error } = await supabase
+      .from('business_accounts')
+      .select('id, name, bank')
+      .eq('is_active', true)
+      .order('name');
+    if (error) throw error;
+    return (data ?? []) as BusinessAccountOption[];
+  },
+
+  // Motivos de movimiento del módulo MOV. Es el mismo catálogo que ofrece el
+  // alta de movimientos del ERP, así que el filtro del reporte y el formulario
+  // hablan de lo mismo.
+  getMovementClasses: async (): Promise<MovementClassOption[]> => {
+    const { data, error } = await supabase
+      .from('classes')
+      .select('id, name, modules!inner(code)')
+      .eq('modules.code', 'MOV')
+      .order('name');
+    if (error) throw error;
+    return (data ?? []) as unknown as MovementClassOption[];
   },
 
   getCountries: async () => {
@@ -640,10 +825,25 @@ export const filterOptionsService = {
 // Price Rules Report
 // -------------------------------------------------------
 export interface PriceRuleKpis {
+  /** Reglas que existen hoy y están activas. No depende del rango. */
   active: number;
+  /** Reglas que existen hoy y están apagadas. No depende del rango. */
   inactive: number;
-  automatic: number;
-  coupon: number;
+  /** Reglas con al menos una aplicación en el rango y con los filtros aplicados. */
+  used: number;
+  /** Aplicaciones atribuidas a una regla en el rango. */
+  applications: number;
+  /**
+   * Venta de los pedidos que tuvieron al menos una regla. Un pedido con dos
+   * reglas se cuenta una sola vez acá, aunque su venta aparezca en la fila de
+   * cada una de las dos.
+   */
+  revenue: number;
+  /** Pedidos distintos con al menos una regla (migración 31000910213000). */
+  orders_with_rule: number;
+  /** Pedidos del período con los mismos filtros, y su venta total. */
+  orders_total: number;
+  revenue_total: number;
 }
 
 export interface PriceRuleReportRow {
@@ -658,19 +858,80 @@ export interface PriceRuleReportRow {
   // eliminada llega con is_active = false y sin este campo se contaría como
   // "inactiva" en la pestaña, contradiciendo al KPI.
   is_deleted: boolean;
+  /** Vigencia configurada en la regla. null = sin límite por ese lado. */
+  valid_from: string | null;
+  valid_to: string | null;
   applications: number;
-  rendimiento: number;
+  /** Pedidos distintos donde aplicó. Difiere de `applications` si aplicó dos veces al mismo pedido. */
+  orders: number;
+  /** Venta de esos pedidos (orders.total). No es el monto descontado: ver la nota al pie de la pestaña. */
+  revenue: number;
+  /** Participación sobre `kpis.applications`. La columna suma 100. */
+  share: number;
+}
+
+/**
+ * Descuentos del período que NO vienen de una regla de precios: los códigos que
+ * escribe el sistema (CUSTOM = descuento manual del POS, PRO = descuento por
+ * producto, MERCP_SURCHARGE = recargo de Mercado Pago) y los códigos cuya regla
+ * ya no existe. Van en una fila aparte para que el total de la pantalla cuadre
+ * con todos los descuentos del período, sin ensuciar el conteo de reglas.
+ */
+export interface PriceRulesOther {
+  applications: number;
+  orders: number;
+  revenue: number;
+  codes: string[];
 }
 
 export interface PriceRulesReport {
   kpis: PriceRuleKpis;
   table: PriceRuleReportRow[];
+  other: PriceRulesOther;
 }
 
-export const priceRulesReportService = {
-  getReport: (startDate: string | null, endDate: string | null) =>
-    rpc<PriceRulesReport>('sp_rpt_price_rules_report', {
-      p_start_date: startDate ?? undefined,
-      p_end_date: endDate ?? undefined,
+// ============================================================
+// SELLERS (Ventas por usuarios / vendedores)
+// ============================================================
+// Mismos 11 filtros que Ventas (mapFilters): la situación en NULL usa el
+// default del SP, todo menos cancelado y reembolsado.
+export const sellersService = {
+  getKpis: (f: ReportsFilters) =>
+    rpc<SellersKpis>('sp_rpt_sellers_kpis', mapFilters(f)),
+
+  getSummary: (f: ReportsFilters) =>
+    rpc<SellerSummaryItem[]>('sp_rpt_sellers_summary', mapFilters(f)),
+
+  getByBranch: (f: ReportsFilters) =>
+    rpc<SellersByBranchItem[]>('sp_rpt_sellers_by_branch', mapFilters(f)),
+
+  getOverTime: (f: ReportsFilters, granularity: Granularity = 'day') =>
+    rpc<SellersOverTimeItem[]>('sp_rpt_sellers_over_time', {
+      ...mapFilters(f),
+      p_granularity: granularity,
     }),
+};
+
+/** Un pedido por fila con su vendedor, para la hoja "Pedidos" del Excel. */
+export interface SellersOrderExportRow {
+  order_id: number;
+  order_date: string;
+  seller_name: string;
+  /** Sucursal del perfil del vendedor. */
+  seller_branch: string;
+  /** Sucursal del pedido. */
+  branch_name: string;
+  sale_type_name: string;
+  situation_name: string;
+  customer_name: string;
+  units: number;
+  total: number;
+}
+
+export const fetchSellersOrdersReport = (f: ReportsFilters): Promise<SellersOrderExportRow[]> =>
+  rpc<SellersOrderExportRow[]>('sp_rpt_export_sellers_orders', mapFilters(f));
+
+export const priceRulesReportService = {
+  getReport: (f: ReportsFilters) =>
+    rpc<PriceRulesReport>('sp_rpt_price_rules_report', mapCustomerFilters(f)),
 };

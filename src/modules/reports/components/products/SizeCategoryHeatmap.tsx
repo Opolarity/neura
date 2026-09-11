@@ -110,6 +110,7 @@ export function SizeCategoryHeatmap({ data, loading }: Props) {
 
   return (
     <ReportCard
+      info="Unidades vendidas por talla (columnas) y categoría (filas); cuanto más oscura la celda, más unidades. Cada talla pertenece a su grupo: una M de camisas y una M de boxers son columnas distintas. Un producto con varias categorías cuenta en todas sus filas."
       title="Unidades vendidas por talla y categoría"
       description={<MultiCategoryNotice />}
     >

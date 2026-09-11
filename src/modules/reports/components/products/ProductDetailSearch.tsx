@@ -1,7 +1,8 @@
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart, XAxis, YAxis } from 'recharts';
+import type { ReactNode } from 'react';
 import { PackageSearch } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   ChartLoading,
   EmptyReportState,
@@ -17,9 +18,12 @@ import {
   reportChartColors,
 } from '../shared/reportChartUtils';
 import type { ProductDetailData } from '../../types/reports.types';
+import type { ProductsDashboardState } from '../../hooks/useProductsDashboard';
 import { formatCurrency } from '@/shared/utils/currency';
+import { ProductPicker } from './ProductPicker';
 
 interface Props {
+  dash: ProductsDashboardState;
   selectedProductId: number | null;
   selectedProductTitle: string;
   detail: ProductDetailData | null;
@@ -32,12 +36,25 @@ interface DonutSlice {
   ingresos: number;
 }
 
+/**
+ * Marco de cada gráfico de la ficha: borde oscuro y título. Los cuatro
+ * (por sede, por canal, ventas en el tiempo y variaciones) van con el mismo
+ * marco para que se lean como bloques separados dentro de la tarjeta.
+ */
+function DetailChartFrame({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-foreground/80 p-4">
+      <p className="mb-3 text-sm font-medium">{title}</p>
+      {children}
+    </div>
+  );
+}
+
 // Mini-donut de participación (por sede / por canal) con leyenda de puntos,
 // mismo patrón del donut de métodos de pago del tab financiero.
 function BreakdownDonut({ title, slices }: { title: string; slices: DonutSlice[] }) {
   return (
-    <div>
-      <p className="mb-2 text-sm font-medium">{title}</p>
+    <DetailChartFrame title={title}>
       <ChartContainer config={{}} className="h-44 w-full aspect-auto">
         <PieChart>
           <ChartTooltip
@@ -79,11 +96,12 @@ function BreakdownDonut({ title, slices }: { title: string; slices: DonutSlice[]
           </span>
         ))}
       </div>
-    </div>
+    </DetailChartFrame>
   );
 }
 
 export function ProductDetailSearch({
+  dash,
   selectedProductId,
   selectedProductTitle,
   detail,
@@ -113,12 +131,24 @@ export function ProductDetailSearch({
     })) ?? [];
 
   return (
-    <ReportCard title="Análisis de producto individual">
+    <ReportCard info="Ficha de un solo producto: unidades y monto vendido en el rango, stock actual por almacén, participación por sede y por canal, evolución diaria y las variaciones (SKU) más vendidas. Respeta los filtros aplicados arriba. El buscador solo encuentra productos activos." title="Análisis de producto individual">
+      {/*
+        El buscador y su Aplicar viven acá y no en la barra de filtros: solo
+        afectan a esta tarjeta. Los filtros de arriba (fechas, sede, canal,
+        estado…) sí se aplican al detalle, pero los ya aplicados.
+      */}
+      <div className="mb-6">
+        <ProductPicker dash={dash} />
+        <p className="mt-2 text-xs text-muted-foreground">
+          El análisis respeta el rango y los filtros aplicados arriba.
+        </p>
+      </div>
+
       {selectedProductId === null && (
         <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
           <PackageSearch className="w-10 h-10 text-muted-foreground/60" />
           <p className="text-sm text-muted-foreground">
-            Selecciona un producto en el filtro <span className="font-medium">"Más filtros +"</span> y da clic en <span className="font-medium">"Aplicar"</span> para ver su análisis individual.
+            Buscá un producto por nombre o SKU y da clic en <span className="font-medium">"Aplicar"</span> para ver su análisis individual.
           </p>
         </div>
       )}
@@ -168,6 +198,7 @@ export function ProductDetailSearch({
           )}
 
           {/* Sales over time */}
+          <DetailChartFrame title="Ventas en el tiempo">
           {chartData.length > 0 ? (
             <ChartContainer
               config={{
@@ -191,6 +222,7 @@ export function ProductDetailSearch({
                 <XAxis dataKey="fecha" tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
                 <YAxis tickLine={false} axisLine={false} tickMargin={8} className={chartAxis} />
                 <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatNumber(value as number)} />} />
+                <ChartLegend content={<ChartLegendContent />} />
                 <Area
                   dataKey="ventas"
                   type="monotone"
@@ -212,15 +244,15 @@ export function ProductDetailSearch({
               Sin ventas en el periodo seleccionado
             </EmptyReportState>
           )}
+          </DetailChartFrame>
 
           {/* Top variations */}
           {variationData.length > 0 && (
-            <div>
-              <p className="mb-2 text-sm font-medium">Variaciones más vendidas</p>
+            <DetailChartFrame title="Variaciones más vendidas">
               <ChartContainer
                 config={{ unidades: { label: 'Unidades', color: reportChartColors.teal } }}
                 className="w-full aspect-auto"
-                style={{ height: Math.max(112, variationData.length * 36) }}
+                style={{ height: Math.max(112, variationData.length * 36) + 28 }}
               >
                 <BarChart data={variationData} layout="vertical" margin={{ left: 8, right: 56 }}>
                   <CartesianGrid horizontal={false} className={chartGrid} />
@@ -255,6 +287,7 @@ export function ProductDetailSearch({
                       />
                     }
                   />
+                  <ChartLegend content={<ChartLegendContent />} />
                   <Bar dataKey="unidades" fill="var(--color-unidades)" radius={[0, 4, 4, 0]}>
                     <LabelList
                       dataKey="unidades"
@@ -265,7 +298,7 @@ export function ProductDetailSearch({
                   </Bar>
                 </BarChart>
               </ChartContainer>
-            </div>
+            </DetailChartFrame>
           )}
         </div>
       )}

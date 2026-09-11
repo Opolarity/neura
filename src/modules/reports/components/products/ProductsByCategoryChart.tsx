@@ -100,6 +100,7 @@ export function ProductsByCategoryChart({ data, loading }: Props) {
 
   return (
     <ReportCard
+      info="Ventas del período por categoría; el tamaño del bloque es ingresos o unidades según la métrica elegida. Un producto con varias categorías se cuenta entero en cada una, por eso el total puede superar las unidades realmente vendidas. Solo pedidos Enviado y Entregado y solo productos activos."
       title="Ventas por categoría"
       description={<MultiCategoryNotice />}
       actions={

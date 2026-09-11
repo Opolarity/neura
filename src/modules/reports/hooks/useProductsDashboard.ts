@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import { filterOptionsService, productsService } from '../services/reports.service';
 import { defaultProductSituationIds } from '../types/reports.types';
 import type { Granularity, ParetoLimit, ProductSearchResult, ReportsFilters, TopLimit } from '../types/reports.types';
 
-export function useProductsDashboard(filters: ReportsFilters, applyVersion?: number) {
+export function useProductsDashboard(filters: ReportsFilters) {
   const [topLimit, setTopLimit] = useState<TopLimit>(10);
   const [paretoLimit, setParetoLimit] = useState<ParetoLimit>(10);
   const [categoryGranularity, setCategoryGranularity] = useState<Granularity>('week');
@@ -13,17 +13,14 @@ export function useProductsDashboard(filters: ReportsFilters, applyVersion?: num
   const [productSearch, setProductSearch] = useState('');
   // selectedProductId/Title: lo que el combobox muestra elegido (borrador).
   // appliedProductId/Title: lo que realmente dispara la query de "Análisis de
-  // producto individual" — espera al botón Aplicar, igual que el resto de filtros.
+  // producto individual". Espera al Aplicar PROPIO de esa sección (ProductPicker),
+  // no al de la barra: el producto no afecta a los KPIs ni a los gráficos de
+  // arriba, así que no tiene por qué pasar por el mismo botón. Los filtros de
+  // la barra sí se le aplican, vía `filters` (los ya aplicados).
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [selectedProductTitle, setSelectedProductTitle] = useState<string>('');
   const [appliedProductId, setAppliedProductId] = useState<number | null>(null);
   const [appliedProductTitle, setAppliedProductTitle] = useState<string>('');
-
-  useEffect(() => {
-    setAppliedProductId(selectedProductId);
-    setAppliedProductTitle(selectedProductTitle);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [applyVersion]);
 
   const debouncedSearch = useDebounce(productSearch, 400);
 
@@ -124,6 +121,12 @@ export function useProductsDashboard(filters: ReportsFilters, applyVersion?: num
     }
   };
 
+  /** Aplica el producto elegido (o `null` para limpiar) a la sección de detalle. */
+  const applyProduct = (productId: number | null = selectedProductId) => {
+    setAppliedProductId(productId);
+    setAppliedProductTitle(productId === null ? '' : selectedProductTitle);
+  };
+
   const isProductDirty = selectedProductId !== appliedProductId;
 
   return {
@@ -151,6 +154,7 @@ export function useProductsDashboard(filters: ReportsFilters, applyVersion?: num
     appliedProductId,
     appliedProductTitle,
     selectProduct,
+    applyProduct,
     isProductDirty,
   };
 }

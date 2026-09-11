@@ -105,8 +105,11 @@ export const useMovements = () => {
         const [types, cats, payments, accounts, sch] = await Promise.all([
           movementTypesApi(),
           movementCategoriesApi(),
-          getPaymentMethodsIsActiveTrue(),
-          getBusinessAccountIsActiveTrue(),
+          // El filtro del listado sí incluye "Crédito"/"Débito" y la cuenta
+          // CRE: los movimientos de crédito de franquicia existen y hay que
+          // poder buscarlos. La exclusión aplica al formulario de alta.
+          getPaymentMethodsIsActiveTrue(true),
+          getBusinessAccountIsActiveTrue(true),
           movementSalesChannels(),
         ]);
 

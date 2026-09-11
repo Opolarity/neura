@@ -2684,12 +2684,9 @@ const CreateSale = () => {
                   <TableHead className="w-40 text-center">
                     Recibido
                   </TableHead>
-                  {/* <TableHead className="w-40 text-center">
-                    Estado
-                  </TableHead>
                   <TableHead className="w-40 text-center">
                     Diferencia
-                  </TableHead> */}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -2728,23 +2725,18 @@ const CreateSale = () => {
                     >
                       {product.receivedByFranchise ?? 0}
                     </TableCell>
-                    {/* <TableCell className="text-center">
-                      {(product.receivedByFranchise ?? 0) > 0 ? (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success/15 text-success">
-                          Completado
-                        </span>
+                    <TableCell className="text-center">
+                      {/* Mientras haya diferencia, el franquiciado no puede
+                          ingresar la prenda: se resuelve desde "Cantidades por
+                          confirmar" en Ventas a franquicias. */}
+                      {(product.receivedByFranchise ?? 0) === product.quantity ? (
+                        "-"
                       ) : (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-warning/15 text-warning-foreground">
-                          Pendiente
-                        </span>
+                        <Badge variant="warning">
+                          {(product.receivedByFranchise ?? 0) - product.quantity}
+                        </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-center">
-                      {(product.receivedByFranchise ?? 0) <= 0 ||
-                      (product.receivedByFranchise ?? 0) === product.quantity
-                        ? "-"
-                        : (product.receivedByFranchise ?? 0) - product.quantity}
-                    </TableCell> */}
                   </TableRow>
                 ))}
               </TableBody>
