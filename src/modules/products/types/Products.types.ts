@@ -57,6 +57,12 @@ export interface ProductFilters {
   tag?: number;
   /** Id de marca (tags.type = 'brand'). */
   brand?: number;
+  /**
+   * T-596 · Id de término (talla u otro atributo). Solo lo usa la pestaña de
+   * variaciones de Edición masiva, donde el registro es el SKU; el listado de
+   * productos lo ignora.
+   */
+  term?: number | null;
   /** Nombres que espera la edge function; se derivan de tag/brand al enviar. */
   tag_id?: number;
   brand_id?: number;
