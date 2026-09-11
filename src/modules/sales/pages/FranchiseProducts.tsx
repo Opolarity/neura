@@ -3,6 +3,7 @@ import { Boxes, Download, Filter, Loader2, RefreshCw, Search } from "lucide-reac
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/shared/hooks/use-toast";
 import { PagosConfirmarModal } from "../components/PagosConfirmarModal";
+import { CantidadesConfirmarModal } from "../components/CantidadesConfirmarModal";
 import FranchiseFilterModal, {
   type FranchiseFilterValues,
 } from "../components/FranchiseFilterModal";
@@ -104,6 +105,7 @@ const FranchiseProducts = () => {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagosModalOpen, setPagosModalOpen] = useState(false);
+  const [cantidadesModalOpen, setCantidadesModalOpen] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [summary, setSummary] = useState<FranchiseSummary | null>(null);
   const [franchisees, setFranchisees] = useState<FranchiseeOption[]>([]);
@@ -348,6 +350,12 @@ const FranchiseProducts = () => {
           >
             Pagos por confirmar
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => setCantidadesModalOpen(true)}
+          >
+            Cantidades por confirmar
+          </Button>
           <Button variant="outline" onClick={handleRefresh} disabled={loading}>
             {loading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -581,6 +589,11 @@ const FranchiseProducts = () => {
       <PagosConfirmarModal
         open={pagosModalOpen}
         onOpenChange={setPagosModalOpen}
+      />
+
+      <CantidadesConfirmarModal
+        open={cantidadesModalOpen}
+        onOpenChange={setCantidadesModalOpen}
       />
 
       <FranchiseFilterModal
