@@ -53,6 +53,10 @@ import type {
   CustomersParetoItem,
   CustomersBySaleTypeItem,
   CustomersByBranchItem,
+  SellersKpis,
+  SellerSummaryItem,
+  SellersByBranchItem,
+  SellersOverTimeItem,
 } from '../types/reports.types';
 
 // -------------------------------------------------------
@@ -885,6 +889,47 @@ export interface PriceRulesReport {
   table: PriceRuleReportRow[];
   other: PriceRulesOther;
 }
+
+// ============================================================
+// SELLERS (Ventas por usuarios / vendedores)
+// ============================================================
+// Mismos 11 filtros que Ventas (mapFilters): la situación en NULL usa el
+// default del SP, todo menos cancelado y reembolsado.
+export const sellersService = {
+  getKpis: (f: ReportsFilters) =>
+    rpc<SellersKpis>('sp_rpt_sellers_kpis', mapFilters(f)),
+
+  getSummary: (f: ReportsFilters) =>
+    rpc<SellerSummaryItem[]>('sp_rpt_sellers_summary', mapFilters(f)),
+
+  getByBranch: (f: ReportsFilters) =>
+    rpc<SellersByBranchItem[]>('sp_rpt_sellers_by_branch', mapFilters(f)),
+
+  getOverTime: (f: ReportsFilters, granularity: Granularity = 'day') =>
+    rpc<SellersOverTimeItem[]>('sp_rpt_sellers_over_time', {
+      ...mapFilters(f),
+      p_granularity: granularity,
+    }),
+};
+
+/** Un pedido por fila con su vendedor, para la hoja "Pedidos" del Excel. */
+export interface SellersOrderExportRow {
+  order_id: number;
+  order_date: string;
+  seller_name: string;
+  /** Sucursal del perfil del vendedor. */
+  seller_branch: string;
+  /** Sucursal del pedido. */
+  branch_name: string;
+  sale_type_name: string;
+  situation_name: string;
+  customer_name: string;
+  units: number;
+  total: number;
+}
+
+export const fetchSellersOrdersReport = (f: ReportsFilters): Promise<SellersOrderExportRow[]> =>
+  rpc<SellersOrderExportRow[]>('sp_rpt_export_sellers_orders', mapFilters(f));
 
 export const priceRulesReportService = {
   getReport: (f: ReportsFilters) =>

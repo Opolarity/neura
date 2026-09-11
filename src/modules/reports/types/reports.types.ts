@@ -693,3 +693,54 @@ export interface UpcomingBirthdayItem {
   last_order: string | null;
   loyalty_level: LoyaltyLevel;
 }
+
+// -------------------------------------------------------
+// Sellers Dashboard (Ventas por usuarios / vendedores)
+// -------------------------------------------------------
+
+/** sp_rpt_sellers_kpis. Vendedor = usuario que registró el pedido (orders.created_by). */
+export interface SellersKpis {
+  sellers_count: number;
+  orders_with_seller: number;
+  revenue_with_seller: number;
+  orders_total: number;
+  revenue_total: number;
+  /** Ticket promedio de las ventas con vendedor. */
+  avg_ticket: number;
+}
+
+/** sp_rpt_sellers_summary: una fila por vendedor, más "Sin vendedor" (seller_id null). */
+export interface SellerSummaryItem {
+  seller_id: string | null;
+  seller_name: string;
+  /** Sucursal del perfil del usuario, no la del pedido. */
+  branch_name: string;
+  orders: number;
+  units: number;
+  revenue: number;
+  avg_ticket: number;
+  share_pct: number | null;
+  first_order: string | null;
+  last_order: string | null;
+}
+
+/** sp_rpt_sellers_by_branch: sucursal del PEDIDO × vendedor. */
+export interface SellersByBranchItem {
+  branch_id: number | null;
+  branch_name: string;
+  seller_id: string | null;
+  seller_name: string;
+  orders: number;
+  revenue: number;
+}
+
+/** sp_rpt_sellers_over_time: período × vendedor. */
+export interface SellersOverTimeItem {
+  period: string;
+  seller_id: string | null;
+  seller_name: string;
+  orders: number;
+  revenue: number;
+}
+
+export type SellersMetric = 'revenue' | 'orders';
