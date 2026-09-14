@@ -36,6 +36,7 @@ function buildSalesSheet(rows: SalesReportRow[]): XLSX.WorkSheet {
     "Vendedor",
     "Monto de Productos",
     "Descuentos",
+    "Recargos",
     "Envío",
     "Total de la Venta",
     "Devoluciones",
@@ -64,6 +65,7 @@ function buildSalesSheet(rows: SalesReportRow[]): XLSX.WorkSheet {
     // Desglose: productos − descuentos + envío = total (0 cuando no hay).
     r.products_amount ?? 0,
     r.discount_amount ?? 0,
+    r.surcharge_amount ?? 0,
     r.shipping_amount ?? 0,
     r.total,
     r.refund_amount,
@@ -93,6 +95,7 @@ function buildSalesSheet(rows: SalesReportRow[]): XLSX.WorkSheet {
     { wch: 24 }, // Vendedor
     { wch: 18 }, // Monto de Productos
     { wch: 12 }, // Descuentos
+    { wch: 12 }, // Recargos
     { wch: 10 }, // Envío
     { wch: 16 }, // Total de la Venta
     { wch: 14 }, // Devoluciones
