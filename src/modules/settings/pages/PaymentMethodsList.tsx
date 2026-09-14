@@ -5,6 +5,7 @@ import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import PaymentMethodsTable from '../components/paymentMethods/PaymentMethodsTable';
 import usePaymentMethods from '../hooks/usePaymentMethods';
 import { PaymentMethodFormDialog } from '../components/paymentMethods/PaymentMethodFormDialog';
+import { PaymentMethodDeleteDialog } from '../components/paymentMethods/PaymentMethodDeleteDialog';
 import { ComponentPermission } from '@/shared/components/component-permission';
 
 const PaymentMethodsList = () => {
@@ -12,12 +13,16 @@ const PaymentMethodsList = () => {
         paymentMethods,
         loading,
         saving,
+        isDeleting,
         editingItem,
+        itemToDelete,
         openFormModal,
         pagination,
         handleEditItemChange,
+        setItemToDelete,
         handleOpenChange,
         savePaymentMethod,
+        deletePaymentMethod,
         handlePageChange,
         handleSizeChange,
     } = usePaymentMethods();
@@ -55,6 +60,9 @@ const PaymentMethodsList = () => {
                     <PaymentMethodsTable
                         paymentMethods={paymentMethods}
                         loading={loading}
+                        onEditItem={handleEditItemChange}
+                        onOpenChange={handleOpenChange}
+                        onDeleteClick={setItemToDelete}
                     />
                 </CardContent>
                 <CardFooter className="!p-0">
@@ -73,6 +81,14 @@ const PaymentMethodsList = () => {
                 saving={saving}
                 onSaved={savePaymentMethod}
                 onOpenChange={handleOpenChange}
+            />
+
+            <PaymentMethodDeleteDialog
+                open={!!itemToDelete}
+                onOpenChange={(open) => !open && setItemToDelete(null)}
+                item={itemToDelete}
+                onConfirm={() => itemToDelete && deletePaymentMethod(itemToDelete.id)}
+                isDeleting={isDeleting}
             />
         </div>
     );

@@ -45,6 +45,13 @@ export function SalesDashboard({ filters }: SalesDashboardProps) {
           title="Descuentos Totales"
           value={kpis ? formatCurrency(kpis.total_discount) : '—'}
           loading={dash.kpis.isLoading}
+          // Los recargos no son descuentos, pero salen del mismo ajuste del
+          // pedido: se muestran al lado y solo cuando existen.
+          subtitle={
+            kpis && kpis.total_surcharge > 0
+              ? `+ ${formatCurrency(kpis.total_surcharge)} en recargos`
+              : undefined
+          }
         />
       </div>
 
