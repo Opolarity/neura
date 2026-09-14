@@ -549,10 +549,16 @@ export interface SalesReportRow {
   customer_name: string;
   sale_type: string | null;
   seller: string | null;
-  /** Desglose del total (migración 31000911183000): productos − descuento + envío = total. */
+  /**
+   * Desglose del total (migraciones 31000911183000 y 31000914154324):
+   * productos − descuento + recargo + envío = total, en todas las filas.
+   * El descuento y el recargo se deducen de la aritmética del pedido, no del
+   * campo discount, que en el ERP guarda los dos con signo inconsistente.
+   */
   products_amount: number;
-  /** Siempre positivo, aunque el ERP lo guarde con signo. */
   discount_amount: number;
+  /** Recargo del pedido (el 5 % de Mercado Pago, sobre todo). Siempre positivo. */
+  surcharge_amount: number;
   shipping_amount: number;
   total: number;
   // Cobrado NETO de devoluciones confirmadas, para que la hoja cierre con la
