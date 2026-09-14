@@ -39,11 +39,15 @@ export const PaymentMethodFormDialog = ({
   const [businessAccounts, setBusinessAccounts] = useState<{ id: number; name: string }[]>([]);
   const [optionsLoading, setOptionsLoading] = useState(false);
 
+  // En edición solo se cambian nombre y `active`; la cuenta de negocio queda
+  // fija (y no se manda en el payload). `is_active` es el borrado virtual y
+  // no se toca desde aquí.
+  const isEditing = !!item;
+
   const { register, handleSubmit, control, reset } = useForm<PaymentMethodPayload>({
     defaultValues: item
       ? {
           name: item.name,
-          business_account_id: item.business_account_id,
           active: item.active,
         }
       : {
@@ -54,28 +58,23 @@ export const PaymentMethodFormDialog = ({
   });
 
   useEffect(() => {
-    if (!open) return;
+    // El selector de cuentas solo existe al crear: en edición no hace falta
+    // cargarlo.
+    if (!open || isEditing) return;
     setOptionsLoading(true);
     BusinessAccountsApi()
       .then(setBusinessAccounts)
       .catch(console.error)
       .finally(() => setOptionsLoading(false));
-  }, [open]);
+  }, [open, isEditing]);
 
   const onSubmit = async (data: PaymentMethodPayload) => {
-    const payload: PaymentMethodPayload = {
-      name: data.name,
-      business_account_id: data.business_account_id,
-      active: data.active,
-    };
-    if (item?.id) {
-      payload.id = item.id;
-    }
+    const payload: PaymentMethodPayload = isEditing
+      ? { id: item.id, name: data.name, active: data.active }
+      : { name: data.name, business_account_id: data.business_account_id, active: data.active };
     await onSaved(payload);
     reset({ name: "", business_account_id: null, active: true });
   };
-
-  const isEditing = !!item;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -101,35 +100,47 @@ export const PaymentMethodFormDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Cuenta de Negocio</Label>
-            <Controller
-              name="business_account_id"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value?.toString() ?? ""}
-                  onValueChange={(val) => field.onChange(Number(val))}
-                  disabled={optionsLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        optionsLoading
-                          ? "Cargando..."
-                          : "Seleccionar cuenta de negocio"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {businessAccounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id.toString()}>
-                        {account.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
+            <Label htmlFor="pm-business-account">Cuenta de Negocio</Label>
+            {isEditing ? (
+              // El listado ya trae el nombre de la cuenta en
+              // `business_account_id` (así lo devuelve sp_get_payments_methods),
+              // por eso se muestra tal cual y no se resuelve contra el selector.
+              <Input
+                id="pm-business-account"
+                value={item.business_account_id ?? ""}
+                disabled
+                readOnly
+              />
+            ) : (
+              <Controller
+                name="business_account_id"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value?.toString() ?? ""}
+                    onValueChange={(val) => field.onChange(Number(val))}
+                    disabled={optionsLoading}
+                  >
+                    <SelectTrigger id="pm-business-account">
+                      <SelectValue
+                        placeholder={
+                          optionsLoading
+                            ? "Cargando..."
+                            : "Seleccionar cuenta de negocio"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {businessAccounts.map((account) => (
+                        <SelectItem key={account.id} value={account.id.toString()}>
+                          {account.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            )}
           </div>
 
           <div className="flex items-center justify-between">
@@ -139,6 +150,7 @@ export const PaymentMethodFormDialog = ({
               control={control}
               render={({ field }) => (
                 <Switch
+                  id="pm-active"
                   checked={field.value}
                   onCheckedChange={field.onChange}
                 />
@@ -160,7 +172,7 @@ export const PaymentMethodFormDialog = ({
             form="payment-method-form"
             disabled={saving || optionsLoading}
           >
-            {isEditing ? "Actualizar" : saving ? "Guardando..." : "Guardar"}
+            {saving ? "Guardando..." : isEditing ? "Actualizar" : "Guardar"}
           </Button>
         </DialogFooter>
       </DialogContent>

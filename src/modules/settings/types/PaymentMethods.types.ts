@@ -25,6 +25,7 @@ export interface PaymentMethodsFilters {
 export interface PaymentMethodPayload {
     id?: number;
     name: string;
-    business_account_id: number | null;
+    // Opcional: en edición no viaja (la cuenta no se cambia desde el listado).
+    business_account_id?: number | null;
     active: boolean;
 }

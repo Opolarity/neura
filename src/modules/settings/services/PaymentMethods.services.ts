@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { PaymentMethodsApiResponse, PaymentMethodsFilters, PaymentMethod } from "../types/PaymentMethods.types";
+import type { PaymentMethodsApiResponse, PaymentMethodsFilters, PaymentMethod, PaymentMethodPayload } from "../types/PaymentMethods.types";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const PaymentMethodsApi = async (
@@ -48,10 +48,22 @@ export const CreatePaymentMethod = async (paymentMethod: Omit<PaymentMethod, 'id
     return data;
 };
 
-export const UpdatePaymentMethod = async (paymentMethod: PaymentMethod): Promise<any> => {
+// Solo viajan id, name y active: la cuenta de negocio no es editable desde el
+// listado y la edge function la ignora.
+export const UpdatePaymentMethod = async (paymentMethod: PaymentMethodPayload): Promise<unknown> => {
     const data = await invokeFunction("update-payments-methods", {
         method: "PUT",
-        body: paymentMethod,
+        body: { id: paymentMethod.id, name: paymentMethod.name, active: paymentMethod.active },
+    });
+    return data;
+};
+
+// Borrado virtual: sp_delete_payment_method pone is_active = false. Distinto
+// de `active`, que es el estado que se edita desde el formulario.
+export const DeletePaymentMethod = async (id: number): Promise<unknown> => {
+    const data = await invokeFunction("delete-payments-methods", {
+        method: "POST",
+        body: { id },
     });
     return data;
 };

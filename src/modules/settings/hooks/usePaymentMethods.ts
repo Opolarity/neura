@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { PaymentMethod, PaymentMethodPayload, PaymentMethodsFilters } from '../types/PaymentMethods.types';
-import { CreatePaymentMethod, getActivePaymentMethods, PaymentMethodsApi, UpdatePaymentMethod } from '../services/PaymentMethods.services';
+import { CreatePaymentMethod, DeletePaymentMethod, getActivePaymentMethods, PaymentMethodsApi, UpdatePaymentMethod } from '../services/PaymentMethods.services';
 import { PaymentMethodsAdapter } from '../adapters/PaymentMethods.adapter';
 import { useToast } from '@/hooks/use-toast';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
@@ -11,7 +11,9 @@ const usePaymentMethods = () => {
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [editingItem, setEditingItem] = useState<PaymentMethod | null>(null);
+    const [itemToDelete, setItemToDelete] = useState<PaymentMethod | null>(null);
     const [openFormModal, setOpenFormModal] = useState(false);
     const [filters, setFilters] = useState<PaymentMethodsFilters>({
         page: 1,
@@ -62,7 +64,7 @@ const usePaymentMethods = () => {
         try {
             const isUpdate = payload.id != null;
             if (isUpdate) {
-                await UpdatePaymentMethod(payload as PaymentMethod);
+                await UpdatePaymentMethod(payload);
             } else {
                 await CreatePaymentMethod(payload as Omit<PaymentMethod, 'id'>);
             }
@@ -78,6 +80,25 @@ const usePaymentMethods = () => {
         } finally {
             setSaving(false);
             setOpenFormModal(false);
+        }
+    };
+
+    const deletePaymentMethod = async (id: number) => {
+        setIsDeleting(true);
+        try {
+            await DeletePaymentMethod(id);
+            await load();
+            toast({
+                title: "Éxito",
+                description: "Método de pago eliminado",
+                variant: "success",
+            });
+        } catch (error) {
+            console.error("Error deleting payment method:", error);
+            toastError(error, "Error al eliminar el método de pago");
+        } finally {
+            setIsDeleting(false);
+            setItemToDelete(null);
         }
     };
 
@@ -99,12 +120,16 @@ const usePaymentMethods = () => {
         paymentMethods,
         loading,
         saving,
+        isDeleting,
         editingItem,
+        itemToDelete,
         openFormModal,
         pagination,
         handleEditItemChange,
+        setItemToDelete,
         handleOpenChange,
         savePaymentMethod,
+        deletePaymentMethod,
         handlePageChange,
         handleSizeChange,
     };
