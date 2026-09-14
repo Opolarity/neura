@@ -67,6 +67,20 @@ import { useAuth, useUserProfile } from "@/modules/auth";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import { toastError } from "@/shared/utils/toastError";
 
+// Clave con la que se empareja un descuento devuelto por el motor de reglas contra la fila
+// que ya está guardada en order_discounts. Se usa (code, name) porque los codes del motor son
+// fallbacks compartidos (SHIPPING_FIXED, FREE_GIFT, …): el code solo no identifica la regla.
+const ruleKey = (code?: string | null, name?: string | null) =>
+  `${(code ?? "").trim().toLowerCase()}||${(name ?? "").trim().toLowerCase()}`;
+
+const normalizeName = (name?: string | null) => (name ?? "").trim().toLowerCase();
+
+// Filas escritas por sp_fch_apply_franchise_sale (promos de consignación). Ahí la repetición es
+// legítima —una fila por venta reportada del franquiciado— así que nunca se emparejan ni se
+// pisan con lo que devuelve el motor de reglas del ERP.
+const isFranchiseRow = (code?: string | null) =>
+  (code ?? "").toUpperCase().startsWith("FCH-PROMO");
+
 const INITIAL_FORM_DATA: SaleFormData = {
   documentType: "",
   documentNumber: "",
@@ -198,7 +212,8 @@ export const useCreateSale = () => {
   const [orderDiscounts, setOrderDiscounts] = useState<OrderDiscount[]>([]);
   const [orderReturns, setOrderReturns] = useState<import("../types/Sales.types").SaleReturn[]>([]);
   const [customerPoints, setCustomerPoints] = useState<{ lvl: string; points: number } | null>(null);
-  const [savedPriceRules, setSavedPriceRules] = useState<Array<{ id: number; code: string; name: string; discount_amount: number }>>([]);
+  // id null = regla que el motor aplicó en esta sesión y todavía no está en order_discounts.
+  const [savedPriceRules, setSavedPriceRules] = useState<Array<{ id: number | null; code: string; name: string; discount_amount: number }>>([]);
 
   // History modal state
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -323,21 +338,17 @@ export const useCreateSale = () => {
     () => calculateDiscountAmount(products),
     [products],
   );
-  // Reglas ya guardadas en la orden que NO estén también en orderDiscounts. Al editar una orden
-  // y agregar productos, el motor de reglas vuelve a correr y mezcla sus descuentos en
-  // orderDiscounts (por nombre); sin este filtro la misma regla se contaría dos veces.
-  const priceRulesNotInOrderDiscounts = useMemo(
-    () => savedPriceRules.filter((r) => !orderDiscounts.some((d) => d.name === r.name)),
-    [savedPriceRules, orderDiscounts],
-  );
+  // Las dos listas son disjuntas por construcción: sp_get_sale_by_id devuelve en `discounts`
+  // solo las filas CUSTOM (manuales) y en `pricerules` todo lo que escribió el motor de reglas,
+  // y el motor mergea en savedPriceRules, nunca en orderDiscounts. Por eso se suman directo.
   // Los descuentos de regla a nivel de subtotal (percent/fixed_discount_subtotal) y el recargo
   // por método de pago traen monto real y deben afectar el total. Los que descuentan sobre el
   // precio de línea guardan 0, así que sumarlos no altera nada.
   const extraDiscountsAmount = useMemo(
     () =>
       orderDiscounts.reduce((sum, d) => sum + d.amount, 0) +
-      priceRulesNotInOrderDiscounts.reduce((sum, r) => sum + r.discount_amount, 0),
-    [orderDiscounts, priceRulesNotInOrderDiscounts],
+      savedPriceRules.reduce((sum, r) => sum + r.discount_amount, 0),
+    [orderDiscounts, savedPriceRules],
   );
   const discountAmount = extraDiscountsAmount;
   const shippingCostValue = formData.shippingCost
@@ -380,6 +391,9 @@ export const useCreateSale = () => {
     if (regularItems.length === 0 || !formData.priceListId) {
       if (products.some(i => i.isGift)) setProducts(regularItems);
       setCartGifts([]);
+      // Sin carrito no hay regla que aplicar: se sueltan las que el motor había devuelto en
+      // esta sesión (id null). Las ya persistidas son historial de la venta y se conservan.
+      setSavedPriceRules((prev) => (prev.some((r) => r.id == null) ? prev.filter((r) => r.id != null) : prev));
       return;
     }
 
@@ -414,21 +428,46 @@ export const useCreateSale = () => {
         gifts = result.gifts;
         setAppliedRules(result.appliedRules.map(r => ({ message: r.message, rule_name: r.rule_name })));
 
-        // Merge discounts returned by price rules — update existing by name, add new ones
-        if (result.discounts.length > 0) {
-          setOrderDiscounts((prev) => {
-            const merged = [...prev];
-            for (const disc of result.discounts) {
-              const idx = merged.findIndex((d) => d.name === disc.name);
-              if (idx >= 0) {
-                merged[idx] = { ...merged[idx], amount: disc.amount };
-              } else {
-                merged.push({ id: crypto.randomUUID(), name: disc.name, amount: disc.amount, code: disc.code });
+        // Los descuentos del motor se mergean contra savedPriceRules, NUNCA contra
+        // orderDiscounts: esa lista es solo de descuentos manuales (CUSTOM) y las filas del
+        // motor viven en pricerules. Mezclarlas hacía que el merge nunca encontrara la fila ya
+        // guardada, la reenviara sin id y update-order insertara una fila nueva en cada
+        // guardado (venta 177544: 105 filas de "DELIVERY + S/.2").
+        setSavedPriceRules((prev) => {
+          const merged = [...prev];
+          const used = new Set<number>();
+
+          for (const disc of result.discounts) {
+            if (isFranchiseRow(disc.code)) continue;
+
+            const matchable = (r: typeof merged[number], i: number) => !used.has(i) && !isFranchiseRow(r.code);
+            let idx = merged.findIndex((r, i) => matchable(r, i) && ruleKey(r.code, r.name) === ruleKey(disc.code, disc.name));
+            // Segundo pase por nombre: cubre la regla que se guardó con un code fallback y
+            // después recibió el suyo propio (o al revés).
+            if (idx < 0) idx = merged.findIndex((r, i) => matchable(r, i) && normalizeName(r.name) === normalizeName(disc.name));
+
+            if (idx >= 0) {
+              used.add(idx);
+              // A las filas ya persistidas no se les toca el monto: el motor corrió solo sobre
+              // newItems, así que su monto es el del delta y no el de la venta completa, y
+              // update-order tampoco lo actualizaría. Limitación conocida y preexistente: un
+              // descuento de subtotal no se re-escala al agregar productos a una venta ya creada.
+              if (merged[idx].id == null) {
+                merged[idx] = { ...merged[idx], discount_amount: disc.amount, code: disc.code || merged[idx].code };
               }
+            } else {
+              merged.push({ id: null, name: disc.name, discount_amount: disc.amount, code: disc.code });
             }
-            return merged;
-          });
-        }
+          }
+
+          // Las reglas de esta sesión que el motor dejó de devolver (se quitó el producto que
+          // las disparaba) se caen; las persistidas se quedan.
+          const stillReturned = new Set(result.discounts.map((d) => ruleKey(d.code, d.name)));
+          return merged.filter((r) => r.id != null || stillReturned.has(ruleKey(r.code, r.name)));
+        });
+      } else {
+        // Ningún producto nuevo que evaluar: se sueltan las reglas no persistidas de la sesión.
+        setSavedPriceRules((prev) => (prev.some((r) => r.id == null) ? prev.filter((r) => r.id != null) : prev));
       }
 
       const defaultStockTypeId = regularItems[0]?.stockTypeId ?? 1;
@@ -673,7 +712,7 @@ export const useCreateSale = () => {
       setOrderDiscounts(adapted.orderDiscounts || []);
       setOrderReturns(adapted.returns || []);
       setCustomerPoints(adapted.customerPoints ?? null);
-      setSavedPriceRules(adapted.pricerules || "");
+      setSavedPriceRules(adapted.pricerules || []);
       setIsConsignment(adapted.isConsignment);
       setSendedToFranchiseAt(adapted.sendedToFranchiseAt);
       setSendedToFranchiseBy(adapted.sendedToFranchiseBy);
@@ -2082,7 +2121,10 @@ export const useCreateSale = () => {
               discount_amount: d.amount,
               code: d.code || "CUSTOM",
             })),
-            ...(orderId && savedPriceRules.length > 0
+            // Reglas del motor: las persistidas viajan con su id (update-order las deja
+            // intactas) y las de esta sesión con id null. También en ventas nuevas, porque
+            // ya no llegan dentro de orderDiscounts; sp_create_order ignora el id e inserta.
+            ...(savedPriceRules.length > 0
               ? savedPriceRules.map((r) => ({
                   id: r.id,
                   name: r.name,
