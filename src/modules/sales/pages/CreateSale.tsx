@@ -1773,8 +1773,10 @@ const CreateSale = () => {
 
                 {savedPriceRules.length > 0 && (
                   <div className="flex flex-col gap-1">
-                    {savedPriceRules.map((r) => (
-                      <div key={r.id} className="flex justify-between text-xs text-muted-foreground">
+                    {savedPriceRules.map((r, i) => (
+                      // Las reglas que el motor acaba de aplicar aún no tienen id (se les asigna
+                      // al guardar), así que la key cae al código+nombre+posición.
+                      <div key={r.id ?? `${r.code}-${r.name}-${i}`} className="flex justify-between text-xs text-muted-foreground">
                         <span>{r.name}</span>
                         {
                           // Monto 0 = el descuento ya viene aplicado al precio de cada línea.
