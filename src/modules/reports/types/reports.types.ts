@@ -147,7 +147,10 @@ export interface SalesKpis {
   total_revenue: number;
   order_count: number;
   avg_ticket: number;
+  /** Solo la parte del ajuste que resta. El recargo va en total_surcharge. */
   total_discount: number;
+  /** Parte del ajuste que suma (p. ej. el 5 % de Mercado Pago). 0 si no hay. */
+  total_surcharge: number;
   total_shipping: number;
   units_sold: number;
   avg_products_per_order: number;

@@ -106,8 +106,8 @@ export const salesGuide: ReportGuide = {
     },
     {
       title: 'Descuentos Totales',
-      what: 'Suma del descuento de cada pedido. No incluye los descuentos por unidad dentro de las líneas.',
-      source: 'Campo descuento del pedido.',
+      what: 'Suma de lo que el ajuste del pedido descuenta. No incluye los descuentos por unidad dentro de las líneas. Si hay recargos (por ejemplo el de Mercado Pago), se muestran aparte debajo: son el mismo ajuste, pero sumando.',
+      source: 'Aritmética del pedido: productos + envío − total.',
     },
   ],
   charts: [
