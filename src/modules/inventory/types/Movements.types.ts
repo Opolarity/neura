@@ -11,7 +11,9 @@ export interface MovementsApiResponse {
             quantity: number | null;
             variation: string;
             warehouse: string;
-            stock_type: string;
+            // Nullable desde que sp_get_stock_movements une types con LEFT JOIN:
+            // un movimiento sin tipo de inventario ya no desaparece del listado.
+            stock_type: string | null;
             movements_id: number;
             movement_type: string;
             vinc_warehouse: string | null;

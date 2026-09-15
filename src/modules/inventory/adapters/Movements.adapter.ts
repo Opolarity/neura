@@ -18,7 +18,10 @@ export const movementsAdapter = (response: MovementsApiResponse) => {
       date: item.date,
       user: item.user,
       vinc_id: item.vinc_id,
-      stock_type: item.stock_type,
+      // stock_movements.stock_type_id es NULLABLE y el SP pasó a unir types con
+      // LEFT JOIN para no perder la fila: un movimiento sin tipo de inventario
+      // llega en null y se muestra como "—", igual que en el detalle.
+      stock_type: item.stock_type ?? "—",
       warehouse: item.warehouse,
       quantity: item.quantity,
       variation: item.variation,
