@@ -26,13 +26,15 @@ import { Calendar } from "@/components/ui/calendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarIcon, Check, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
-import { MultiSelect } from "@/modules/movements/components/movements/MultiSelect";
+import {
+  FranchiseeMultiSelect,
+  type FranchiseeMultiSelectOption,
+} from "./FranchiseeMultiSelect";
 import {
   CategorySelector,
   type CategoryOption,
 } from "@/shared/components/category-selector";
 import type {
-  FranchiseeOption,
   FranchisePaymentStatus,
   FranchiseSalesStatus,
   FranchiseStockStatus,
@@ -111,8 +113,11 @@ const parseDateFilter = (value: string | undefined): Date | undefined => {
 interface FranchiseFilterModalProps {
   isOpen: boolean;
   values: FranchiseFilterValues;
-  /** Franquiciados con consignaciones; los trae el propio listado. */
-  franchisees: FranchiseeOption[];
+  /**
+   * Franquiciados con consignaciones. Los trae el propio listado, ya cruzados
+   * en la página con su tenant para poder mostrar tienda, dueño y provincia.
+   */
+  franchisees: FranchiseeMultiSelectOption[];
   onClose: () => void;
   onApply: (values: FranchiseFilterValues) => void;
   onClear: () => void;
@@ -217,18 +222,10 @@ const FranchiseFilterModal = ({
             <div className="grid gap-4 py-4 pl-1 pr-4 sm:grid-cols-2">
               <div className="grid gap-2 sm:col-span-2">
                 <Label>Franquiciado</Label>
-                <MultiSelect
-                  options={franchisees.map((franchisee) => ({
-                    label: franchisee.name,
-                    value: String(franchisee.id),
-                  }))}
-                  value={selectedAccountIds.map(String)}
-                  onChange={(selected) =>
-                    setSelectedAccountIds(selected.map(Number))
-                  }
-                  placeholder="Todos los franquiciados"
-                  showSearch
-                  showClear
+                <FranchiseeMultiSelect
+                  options={franchisees}
+                  value={selectedAccountIds}
+                  onChange={setSelectedAccountIds}
                 />
               </div>
 
