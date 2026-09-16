@@ -4,6 +4,7 @@
 // =============================================
 
 import { useState, useEffect, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
   openPOSSession,
@@ -18,9 +19,11 @@ import type {
 } from "../types/POS.types";
 import { toastError } from "@/shared/utils/toastError";
 import { measure } from "@/lib/rum";
+import { invalidatePOSSessionStatus } from "@/modules/pos/hooks/usePOSSessionStatus";
 
 export const usePOSSession = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [session, setSession] = useState<POSSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [opening, setOpening] = useState(false);
@@ -51,6 +54,7 @@ export const usePOSSession = () => {
         const data = await measure("caja_abrir", () => openPOSSession(request));
         const adapted = adaptPOSSession(data.session);
         setSession(adapted);
+        void invalidatePOSSessionStatus(queryClient);
         toast({
           title: "Sesion iniciada",
           description: `Caja abierta con S/ ${request.openingAmount.toFixed(2)}`,
@@ -67,7 +71,7 @@ export const usePOSSession = () => {
         setOpening(false);
       }
     },
-    [toast]
+    [toast, queryClient]
   );
 
   const handleCloseSession = useCallback(
@@ -77,6 +81,7 @@ export const usePOSSession = () => {
         const data = await measure("caja_cerrar", () => closePOSSession(request));
         const result = data.session;
         setSession(null);
+        void invalidatePOSSessionStatus(queryClient);
         toast({
           title: "Sesion cerrada",
           description: `Caja cerrada. Diferencia: S/ ${result.difference?.toFixed(2) || "0.00"}`,
@@ -93,7 +98,7 @@ export const usePOSSession = () => {
         setClosing(false);
       }
     },
-    [toast]
+    [toast, queryClient]
   );
 
   return {
