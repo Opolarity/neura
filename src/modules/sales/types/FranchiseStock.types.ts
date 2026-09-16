@@ -20,6 +20,18 @@ export interface FranchiseeTenant {
   code: string;
   /** Nombre comercial: "Bultiger Club", "Bunker Clothing". */
   name: string;
+  /**
+   * Nombre del franquiciado como CLIENTE de Overtake ("GARB CORP SAC"), sacado
+   * de `accounts` de este ERP cruzando `code` con `accounts.tenant_reference`.
+   * null si el tenant todavía no tiene cuenta local.
+   */
+  account_name: string | null;
+  /**
+   * Provincia de esa cuenta. En este ERP `cities` ES la provincia (states =
+   * departamento, neighborhoods = distrito) y la ubicación cuelga del perfil de
+   * la cuenta, no de `accounts`. null si la cuenta no tiene perfil ubicado.
+   */
+  province_name: string | null;
 }
 
 /** Categoría del franquiciado; el árbol cambia con cada franquiciado. */
