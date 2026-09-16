@@ -63,7 +63,6 @@ const PriceRulesPage = () => {
           <PriceRulesTable
             rules={rules}
             loading={loading}
-            onEdit={(rule) => navigate(`/discounts/price-rules/edit/${rule.id}`)}
             onDelete={openDeleteDialog}
             selectedIds={selectedIds}
             onToggleAll={toggleSelectAll}
