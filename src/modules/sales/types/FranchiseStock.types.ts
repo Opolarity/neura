@@ -21,6 +21,14 @@ export interface FranchiseeTenant {
   /** Nombre comercial: "Bultiger Club", "Bunker Clothing". */
   name: string;
   /**
+   * id de la cuenta en `accounts`. Es la única llave que comparte este listado
+   * con los que el ERP arma por su cuenta: `sp_get_franchise_products` lista a
+   * sus franquiciados por `account.id` y no expone `tenant_reference`, así que
+   * sin esto no hay forma de cruzar las dos listas. null si el tenant todavía
+   * no tiene cuenta local.
+   */
+  account_id: number | null;
+  /**
    * Nombre del franquiciado como CLIENTE de Overtake ("GARB CORP SAC"), sacado
    * de `accounts` de este ERP cruzando `code` con `accounts.tenant_reference`.
    * null si el tenant todavía no tiene cuenta local.

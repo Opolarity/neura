@@ -9,14 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Loader2, Store } from "lucide-react";
+import FranchiseeSelect from "./FranchiseeSelect";
 import { FranchiseeTenant } from "../../types/FranchiseStock.types";
 
 interface FranchiseeEntryModalProps {
@@ -26,11 +20,6 @@ interface FranchiseeEntryModalProps {
   /** Se llama al Aceptar, con el code del tenant elegido. */
   onAccept: (tenantReference: string) => void;
 }
-
-// name es NOT NULL en tenants, pero si llegara vacío el code deja el selector
-// utilizable en vez de una fila en blanco.
-const franchiseeLabel = (tenant: FranchiseeTenant) =>
-  tenant.name?.trim() || tenant.code;
 
 /**
  * Modal de entrada de /stock/products/franchise: la pantalla no tiene nada que
@@ -97,18 +86,11 @@ export default function FranchiseeEntryModal({
           ) : (
             <div className="space-y-1">
               <Label>Franquiciado</Label>
-              <Select value={tempTenant} onValueChange={setTempTenant}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccione un franquiciado" />
-                </SelectTrigger>
-                <SelectContent>
-                  {franchisees.map((tenant) => (
-                    <SelectItem key={tenant.code} value={tenant.code}>
-                      {franchiseeLabel(tenant)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FranchiseeSelect
+                franchisees={franchisees}
+                value={tempTenant}
+                onValueChange={setTempTenant}
+              />
             </div>
           )}
         </div>

@@ -18,6 +18,9 @@ import {
   type FranchiseStockStatus,
   type FranchiseSummary,
 } from "../services/FranchiseProducts.service";
+import { fetchFranchiseTenants } from "../services/FranchiseStock.service";
+import type { FranchiseeTenant } from "../types/FranchiseStock.types";
+import type { FranchiseeMultiSelectOption } from "../components/FranchiseeMultiSelect";
 import type { CategoryOption } from "@/shared/components/category-selector";
 import {
   Card,
@@ -109,6 +112,10 @@ const FranchiseProducts = () => {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [summary, setSummary] = useState<FranchiseSummary | null>(null);
   const [franchisees, setFranchisees] = useState<FranchiseeOption[]>([]);
+  // Los tenants del backend de franquiciados: son los únicos que saben el
+  // nombre comercial de la tienda y la provincia. El SP del listado solo
+  // devuelve la cuenta, así que el filtro los cruza por account_id.
+  const [tenants, setTenants] = useState<FranchiseeTenant[]>([]);
   // Los ids filtrados viven en `filters`; acá se guardan los objetos solo para
   // conservar el nombre de cada categoría (el modal y el Excel lo necesitan).
   const [selectedCategories, setSelectedCategories] = useState<CategoryOption[]>(
@@ -139,6 +146,17 @@ const FranchiseProducts = () => {
 
   useEffect(() => {
     loadProducts(filters);
+  }, []);
+
+  // Se cargan aparte del listado y sin bloquearlo: si el puente hacia
+  // franquiciados falla, el filtro se queda con el nombre de la cuenta (lo que
+  // mostraba antes) en vez de quedarse vacío.
+  useEffect(() => {
+    fetchFranchiseTenants()
+      .then(setTenants)
+      .catch((err) => {
+        console.error("Error loading franchise tenants:", err);
+      });
   }, []);
 
   const handleSearchChange = (value: string) => {
@@ -285,6 +303,38 @@ const FranchiseProducts = () => {
     () => franchisees.filter((franchisee) => franchisee.isFranchisee),
     [franchisees],
   );
+
+  /**
+   * Opciones del filtro: la cuenta del SP cruzada con su tenant por account_id,
+   * la única llave que comparten (el SP lista por account.id y no expone
+   * tenant_reference).
+   *
+   * Sin tenant que cruzar —o si la carga falló— la opción cae en el nombre de
+   * la cuenta como etiqueta y sin dueño debajo, que es exactamente lo que se
+   * veía antes. `franchiseeOptions` se deja como estaba porque de ahí sale el
+   * rótulo del Excel, que no cambia.
+   */
+  const franchiseeFilterOptions = useMemo<FranchiseeMultiSelectOption[]>(() => {
+    const byAccountId = new Map(
+      tenants
+        .filter((tenant) => tenant.account_id !== null)
+        .map((tenant) => [tenant.account_id as number, tenant]),
+    );
+
+    return franchiseeOptions.map((franchisee) => {
+      const tenant = byAccountId.get(franchisee.id);
+      const storeName = tenant?.name?.trim();
+
+      return {
+        id: franchisee.id,
+        storeName: storeName || franchisee.name,
+        // Si no hay tienda que mostrar arriba, el nombre de la cuenta ya está
+        // haciendo de etiqueta: repetirlo debajo sería ruido.
+        accountName: storeName ? franchisee.name : null,
+        provinceName: tenant?.province_name ?? null,
+      };
+    });
+  }, [franchiseeOptions, tenants]);
 
   const selectedFranchiseeNames = useMemo(
     () =>
@@ -599,7 +649,7 @@ const FranchiseProducts = () => {
       <FranchiseFilterModal
         isOpen={filterModalOpen}
         values={filterValues}
-        franchisees={franchiseeOptions}
+        franchisees={franchiseeFilterOptions}
         onClose={() => setFilterModalOpen(false)}
         onApply={handleApplyFilters}
         onClear={handleClearFilters}

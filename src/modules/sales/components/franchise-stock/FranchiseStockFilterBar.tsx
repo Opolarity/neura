@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ListFilter, Search } from "lucide-react";
+import FranchiseeSelect from "./FranchiseeSelect";
 import { FranchiseeTenant } from "../../types/FranchiseStock.types";
 
 interface FranchiseStockFilterBarProps {
@@ -21,9 +22,6 @@ interface FranchiseStockFilterBarProps {
   onOrderChange: (value: string) => void;
   hasActiveFilters?: boolean;
 }
-
-const franchiseeLabel = (tenant: FranchiseeTenant) =>
-  tenant.name?.trim() || tenant.code;
 
 export default function FranchiseStockFilterBar({
   franchisees,
@@ -43,28 +41,20 @@ export default function FranchiseStockFilterBar({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Select
+      {/* El mismo selector del modal de entrada: una sola forma de listar
+          franquiciados en toda la pantalla. */}
+      <FranchiseeSelect
+        franchisees={franchisees}
         value={tenantReference ?? ""}
         onValueChange={onSelectFranchisee}
         disabled={loadingFranchisees}
-      >
-        <SelectTrigger className="w-[240px]">
-          <SelectValue
-            placeholder={
-              loadingFranchisees
-                ? "Cargando franquiciados..."
-                : "Selecciona un franquiciado"
-            }
-          />
-        </SelectTrigger>
-        <SelectContent>
-          {franchisees.map((tenant) => (
-            <SelectItem key={tenant.code} value={tenant.code}>
-              {franchiseeLabel(tenant)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        placeholder={
+          loadingFranchisees
+            ? "Cargando franquiciados..."
+            : "Selecciona un franquiciado"
+        }
+        triggerClassName="w-[240px]"
+      />
 
       <div className="relative">
         <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
