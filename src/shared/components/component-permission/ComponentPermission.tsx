@@ -13,7 +13,7 @@ export function ComponentPermission({
   codeEqual,
   children,
 }: ComponentPermissionProps) {
-  const { permissionCodes, permissionsLoading, isAdmin } = useAuth();
+  const { permissionCodes, permissionsLoading } = useAuth();
 
   // Los códigos llegan por RPC: sin esto la acción se vería antes de saber si
   // el usuario la tiene concedida.
@@ -21,12 +21,10 @@ export function ComponentPermission({
     return null;
   }
 
-  // Un rol admin ya recibe TODOS los codes activos desde la RPC, así que
-  // recorrerlos daría siempre true: se corta antes y se ahorra el includes por
-  // cada acción renderizada (una tabla tiene una por fila).
-  if (isAdmin) {
-    return children;
-  }
+  // Antes un rol admin devolvía `children` sin mirar los codes. Ya no: desde
+  // el recorte por plan (sp_get_user_permissions, 31000917120300) el admin
+  // recibe solo los codes que el plan contratado incluye, así que una acción
+  // fuera del plan tampoco debe verse para él. Se evalúa igual para todos.
 
   // codeIn manda si se envían los dos. Sin ninguno de los dos no se muestra
   // nada: un prop mal escrito no debe abrir la acción a todos.
