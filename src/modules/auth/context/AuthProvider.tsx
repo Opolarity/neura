@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { setUser as setRumUser } from "@/lib/rum";
 import { getHeaderUserData } from "@/shared/services/service";
 import { getParameter } from "@/modules/settings/services/Parameters.service";
-import { AppUser } from "../types";
+import { AppUser, TenantSubscription } from "../types";
 
 // sp_get_user_permissions está tipado como Json: puede llegar como array plano
 // de códigos, como array de objetos ({ code }) o envuelto en un objeto
@@ -33,6 +33,19 @@ function toIsAdmin(data: unknown): boolean {
   return (data as { isAdmin?: unknown })?.isAdmin === true;
 }
 
+// `plan` lo agrega la RPC desde el recorte por suscripción. Si no viene (backend
+// viejo) se devuelve null y el ERP simplemente no muestra el plan.
+function toSubscription(data: unknown): TenantSubscription | null {
+  const plan = (data as { plan?: unknown })?.plan;
+  if (!plan || typeof plan !== "object") return null;
+  const p = plan as Record<string, unknown>;
+  return {
+    code: typeof p.code === "string" ? p.code : null,
+    name: typeof p.name === "string" ? p.name : null,
+    number: typeof p.number === "number" ? p.number : null,
+  };
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -41,6 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const [permissionCodes, setPermissionCodes] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [subscription, setSubscription] = useState<TenantSubscription | null>(null);
   const [permissionsLoading, setPermissionsLoading] = useState(true);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [appUserLoading, setAppUserLoading] = useState(true);
@@ -54,6 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!currentUser) {
       setPermissionCodes([]);
       setIsAdmin(false);
+      setSubscription(null);
       setPermissionsLoading(false);
       return;
     }
@@ -68,14 +83,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         console.error('[AuthProvider] sp_get_user_permissions falló:', error);
         setPermissionCodes([]);
         setIsAdmin(false);
+        setSubscription(null);
         return;
       }
       setPermissionCodes(toPermissionCodes(data));
       setIsAdmin(toIsAdmin(data));
+      setSubscription(toSubscription(data));
     } catch (error) {
       console.error('[AuthProvider] sp_get_user_permissions lanzó:', error);
       setPermissionCodes([]);
       setIsAdmin(false);
+      setSubscription(null);
     } finally {
       setPermissionsLoading(false);
     }
@@ -235,6 +253,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       loading,
       permissionCodes,
       isAdmin,
+      subscription,
       permissionsLoading,
       appUser,
       appUserLoading,
@@ -251,6 +270,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       loading,
       permissionCodes,
       isAdmin,
+      subscription,
       permissionsLoading,
       appUser,
       appUserLoading,
