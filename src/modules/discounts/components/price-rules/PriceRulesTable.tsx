@@ -1,4 +1,5 @@
 import { SquarePen, Trash, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,7 +30,6 @@ const BULK_CODES = ["price_rules.edit", "price_rules.delete"];
 interface PriceRulesTableProps {
   rules: PriceRule[];
   loading: boolean;
-  onEdit: (rule: PriceRule) => void;
   onDelete: (rule: PriceRule) => void;
   selectedIds: Set<number>;
   onToggleAll: (checked: boolean) => void;
@@ -39,7 +39,6 @@ interface PriceRulesTableProps {
 export const PriceRulesTable = ({
   rules,
   loading,
-  onEdit,
   onDelete,
   selectedIds,
   onToggleAll,
@@ -154,9 +153,11 @@ export const PriceRulesTable = ({
                       variant="outline"
                       size="sm"
                       title="Editar la regla de precio"
-                      onClick={() => onEdit(rule)}
+                      asChild
                     >
-                      <SquarePen className="w-4 h-4" />
+                      <Link to={`/discounts/price-rules/edit/${rule.id}`}>
+                        <SquarePen className="w-4 h-4" />
+                      </Link>
                     </Button>
                   </ComponentPermission>
                   <ComponentPermission codeIn={["price_rules.delete"]}>
