@@ -140,6 +140,9 @@ export interface PriceRule {
   name: string;
   description: string | null;
   code: string | null;
+  // T-718: link de la pagina publica de la promocion. El chatbot lo manda en
+  // vez del link de categoria cuando el cliente pregunta por esta promo.
+  landing_url: string | null;
   rule_type: "automatic" | "coupon";
   priority: number;
   is_stackable: boolean;
@@ -202,6 +205,7 @@ export interface PriceRuleFormData {
   name: string;
   description: string;
   code: string;
+  landing_url: string;
   rule_type: "automatic" | "coupon";
   priority: number;
   is_stackable: boolean;

@@ -156,6 +156,25 @@ export const RuleBasicInfoSection = ({
           toolbar="basic"
         />
 
+        {/* T-718: el chatbot manda este link cuando el cliente pregunta por
+            esta promoción, en vez del link de la categoría —que muestra todo
+            el rubro y no solo los productos de la oferta. Vacío = sigue
+            mandando el de categoría, como hasta ahora. */}
+        <div className="space-y-2">
+          <Label htmlFor="landing_url">Página de la promoción</Label>
+          <Input
+            id="landing_url"
+            placeholder="Ej: https://overtake.com.pe/p/3-x-99"
+            value={formData.landing_url}
+            onChange={(e) => updateField("landing_url", e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Pega el link de la página de esta oferta. El chatbot de WhatsApp lo
+            enviará cuando pregunten por esta promoción; si lo dejas vacío,
+            enviará el link de la categoría.
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Tipo de regla *</Label>
