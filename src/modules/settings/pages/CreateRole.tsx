@@ -7,10 +7,12 @@ import { ArrowLeft, Save } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import useCreateRole from "../hooks/useCreateRole";
 import PermissionTreeSelector from "../components/roles/PermissionTreeSelector";
+import { useAuth } from "@/modules/auth";
 
 const CreateRole = () => {
   const { id } = useParams();
   const roleId = id ? parseInt(id, 10) : undefined;
+  const { subscription } = useAuth();
 
   const {
     isEdit,
@@ -83,7 +85,8 @@ const CreateRole = () => {
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Un rol administrador recibe automáticamente todos los permisos
-                  del sistema, incluidos los que se agreguen más adelante.
+                  incluidos en el plan contratado, incluidos los que se agreguen
+                  más adelante.
                 </p>
               </CardContent>
             </Card>
@@ -105,6 +108,9 @@ const CreateRole = () => {
                 />
                 <p className="text-sm text-muted-foreground mt-4">
                   Vistas y rutas del sistema a las que este rol tendrá acceso.
+                  {subscription?.name && (
+                    <> Se muestran solo los permisos incluidos en el plan <span className="font-medium text-foreground">{subscription.name}</span>.</>
+                  )}
                 </p>
               </CardContent>
             </Card>

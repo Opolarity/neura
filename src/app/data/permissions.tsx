@@ -20,6 +20,7 @@ import BarcodesPage from "@/modules/barcodes/pages/BarcodesPage";
 import AccountsList from "@/modules/customers/pages/AccountsList";
 import CustomerPoints from "@/modules/customers/pages/CustomerPoints";
 import CustomerPointsMovements from "@/modules/customers/pages/CustomerPointsMovements";
+import CustomerLevels from "@/modules/customers/pages/CustomerLevels";
 
 import Sales from "@/modules/sales/pages/Sales";
 import FranchiseProducts from "@/modules/sales/pages/FranchiseProducts";
@@ -159,6 +160,7 @@ export const APP_PERMISSIONS_CONFIG = [
           { name: "Lista de clientes", path: "/customers/list", code: "customers.list", element: <AccountsList />, showSidebar: true, node: [] },
           { name: "Puntajes de clientes", path: "/customers/points", code: "customer_points.list", element: <CustomerPoints />, showSidebar: true, node: [] },
           { name: "Movimientos de puntos", path: "/customers/points/movements", code: "customer_points_movements.list", element: <CustomerPointsMovements />, showSidebar: true, node: [] },
+          { name: "Niveles", path: "/customers/levels", code: "customer_levels.list", element: <CustomerLevels />, showSidebar: true, node: [] },
         ]
       },
 

@@ -247,6 +247,7 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
     companyShortNameLoading,
     appUser,
     appUserLoading,
+    subscription,
     signOut,
   } = useAuth();
   const { state, isMobile, toggleSidebar } = useSidebar();
@@ -278,8 +279,9 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
               <span className="truncate font-semibold text-white">
                 {companyShortNameLoading ? "ERP" : (companyShortName.toUpperCase() || "ERP")}
               </span>
+              {/* El plan contratado es lo que decide qué módulos aparecen abajo. */}
               <span className="truncate text-xs text-sidebar-foreground">
-                ERP System
+                {subscription?.name ? `Plan ${subscription.name}` : "ERP System"}
               </span>
             </div>
 
