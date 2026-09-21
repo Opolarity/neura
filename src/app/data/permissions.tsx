@@ -82,6 +82,26 @@ import CrmInboxPage from "@/modules/crm/pages/InboxPage";
 import CrmBoardPage from "@/modules/crm/pages/BoardPage";
 import CrmChannelsPage from "@/modules/crm/pages/ChannelsPage";
 import CrmCostsPage from "@/modules/crm/pages/CostsPage";
+// Modulo Produccion. El `code` del grupo se queda en "suppliers" igual que en
+// el origen: es estructural --no se compara contra los permisos-- y cambiarlo
+// solo seria ruido.
+import ExplosionsList from "@/modules/suppliers/pages/ExplosionsList";
+import ExplosionDetail from "@/modules/suppliers/pages/ExplosionDetail";
+import ProductionOrdersList from "@/modules/suppliers/pages/ProductionOrdersList";
+import ProductionOrderDetail from "@/modules/suppliers/pages/ProductionOrderDetail";
+import ProductionPlanList from "@/modules/suppliers/pages/ProductionPlanList";
+import SupplierPayments from "@/modules/suppliers/pages/SupplierPayments";
+import MaterialsList from "@/modules/suppliers/pages/MaterialsList";
+import MaterialDetail from "@/modules/suppliers/pages/MaterialDetail";
+import MaterialInventory from "@/modules/suppliers/pages/MaterialInventory";
+import MaterialMovements from "@/modules/suppliers/pages/MaterialMovements";
+import MaterialDispatchCreate from "@/modules/suppliers/pages/MaterialDispatchCreate";
+import ProcessesList from "@/modules/suppliers/pages/ProcessesList";
+import MaterialClassesList from "@/modules/suppliers/pages/MaterialClassesList";
+import SuppliersList from "@/modules/suppliers/pages/SuppliersList";
+import Quotations from "@/modules/quotations/pages/Quotations";
+import NewQuotation from "@/modules/quotations/pages/NewQuotation";
+import QuotationDetail from "@/modules/quotations/pages/QuotationDetail";
 import {
   LayoutGrid,
   Tag,
@@ -93,6 +113,7 @@ import {
   Contact,
   Bot,
   MessagesSquare,
+  Factory,
   type LucideIcon,
 } from "lucide-react";
 
@@ -204,6 +225,73 @@ export const APP_PERMISSIONS_CONFIG = [
   },
 
 ],
+  },
+  {
+    // El modulo no es sobre proveedores: dentro viven el desarrollo de
+    // producto, las ordenes y los procesos, y tambien las cotizaciones, que son
+    // el documento del que salen los servicios de una orden.
+    //
+    // Los grupos separan lo que se MIRA a diario de lo que se CONFIGURA una
+    // vez. El orden del menu es el del TRABAJO, no el alfabetico: primero se
+    // desarrolla el producto, con eso se lanza la orden, de la orden salen las
+    // cotizaciones y el plan maestro es la vista de todo lo que esta en marcha.
+    name: "Producción",
+    icon: Factory,
+    code: "suppliers",
+    node: [
+      {
+        code: "production.group", name: "Fabricación", node: [
+          // Abre el grupo porque es donde empieza todo: sin receta no hay orden
+          // que lanzar.
+          { name: "Desarrollo de producto", path: "/suppliers/explosions", code: "explosions.list", element: <ExplosionsList />, showSidebar: true, node: [] },
+          // ":id" acepta también "new" para el alta, por eso cubre crear y editar.
+          { name: "Detalle de desarrollo", path: "/suppliers/explosions/:id", code: "explosions.edit", element: <ExplosionDetail />, showSidebar: false, node: [] },
+          { name: "Órdenes de producción", path: "/suppliers/production-orders", code: "production_orders.list", element: <ProductionOrdersList />, showSidebar: true, node: [] },
+          { name: "Detalle de orden de producción", path: "/suppliers/production-orders/:id", code: "production_orders.edit", element: <ProductionOrderDetail />, showSidebar: false, node: [] },
+          { name: "Lista de cotizaciones", path: "/quotations", code: "quotations.list", element: <Quotations />, showSidebar: true, node: [] },
+          { name: "Nueva cotización", path: "/quotations/new", code: "quotations.create", element: <NewQuotation />, showSidebar: false, node: [] },
+          { name: "Ver cotización", path: "/quotations/view/:id", code: "quotations.view", element: <QuotationDetail viewOnly />, showSidebar: false, node: [] },
+          { name: "Editar cotización", path: "/quotations/edit/:id", code: "quotations.edit", element: <QuotationDetail />, showSidebar: false, node: [] },
+          // Solo lectura: pulsar una fila abre su orden, que es donde estan las
+          // reglas de bloqueo.
+          { name: "Plan maestro", path: "/suppliers/production-plan", code: "production_plan.list", element: <ProductionPlanList />, showSidebar: true, node: [] },
+          // Lo que se le debe a cada taller por trabajo ya recibido. Va aqui y
+          // no en Movimientos porque la pregunta se hace desde produccion: se
+          // paga por servicio, y el servicio vive en una cotizacion.
+          { name: "Pagos a proveedores", path: "/suppliers/payments", code: "supplier_payments.list", element: <SupplierPayments />, showSidebar: true, node: [] },
+        ]
+      },
+      // De que se hace. La receta se fue a Fabricacion --nace ahi el flujo-- y
+      // este grupo se queda con el material: su catalogo, donde esta y por que
+      // se movio.
+      {
+        code: "development.group", name: "Desarrollo", node: [
+          { name: "Almacén materiales", path: "/suppliers/materials", code: "supplier_materials.list", element: <MaterialsList />, showSidebar: true, node: [] },
+          { name: "Ficha de material", path: "/suppliers/materials/:id", code: "supplier_materials.edit", element: <MaterialDetail />, showSidebar: false, node: [] },
+          // Donde ESTA el material, que no es lo mismo que cuanto hay: la lista
+          // de Materiales suma todos los almacenes.
+          { name: "Lista de inventario", path: "/suppliers/material-inventory", code: "material_inventory.list", element: <MaterialInventory />, showSidebar: true, node: [] },
+          { name: "Movimientos de materiales", path: "/suppliers/material-movements", code: "material_movements.list", element: <MaterialMovements />, showSidebar: true, node: [] },
+          { name: "Enviar material a servicio", path: "/suppliers/material-movements/create", code: "material_movements.create", element: <MaterialDispatchCreate />, showSidebar: false, node: [] },
+        ]
+      },
+      // Se configura una vez y no se vuelve a tocar.
+      //
+      // FALTA "Almacén proveedores" (supplier_warehouses.*), que en el origen
+      // es la misma pantalla de Configuracion > Almacenes con el proveedor
+      // obligatorio. Aqui esa pantalla lee por edge function y no por tabla,
+      // asi que darle el filtro por proveedor exige tocar el flujo de almacenes
+      // de personalizado --frontend Y su edge function--, que no es parte de
+      // este modulo. Sus permisos ya estan sembrados y quedan inertes hasta que
+      // exista la ruta.
+      {
+        code: "catalogs.group", name: "Catálogos", node: [
+          { name: "Procesos", path: "/suppliers/processes", code: "processes.list", element: <ProcessesList />, showSidebar: true, node: [] },
+          { name: "Clases de materiales", path: "/suppliers/material-classes", code: "material_classes.list", element: <MaterialClassesList />, showSidebar: true, node: [] },
+          { name: "Lista de proveedores", path: "/suppliers", code: "suppliers.list", element: <SuppliersList />, showSidebar: true, node: [] },
+        ]
+      },
+    ],
   },
 {
   name: "Movimientos",
