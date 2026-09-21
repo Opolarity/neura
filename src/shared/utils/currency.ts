@@ -32,3 +32,31 @@ export const parseCurrency = (value: string): number => {
   const cleaned = value.replace(/[^\d.-]/g, "");
   return parseFloat(cleaned) || 0;
 };
+
+const SIMBOLOS: Record<string, string> = {
+  PEN: "S/",
+  USD: "$",
+  EUR: "€",
+};
+
+export const currencySymbol = (currency: string | null | undefined): string => {
+  const codigo = (currency ?? "PEN").toUpperCase();
+  return SIMBOLOS[codigo] ?? codigo;
+};
+
+/**
+ * Un importe con su moneda, para los papeles del proveedor.
+ *
+ * Vive aqui y no en cada documento para que la Orden de Servicio y la de
+ * Compra no puedan discrepar: al mismo proveedor se le mandan las dos.
+ */
+export const formatDocumentMoney = (
+  value: number | null | undefined,
+  currency: string | null | undefined,
+): string =>
+  value === null || value === undefined
+    ? "—"
+    : `${currencySymbol(currency)} ${new Intl.NumberFormat("es-PE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value)}`;

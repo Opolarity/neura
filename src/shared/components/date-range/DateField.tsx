@@ -27,6 +27,11 @@ export interface DateFieldProps {
   /** Muestra una X para volver a "sin fecha". */
   showClear?: boolean;
   className?: string;
+  /**
+   * Se pasa al boton que abre el calendario, para poder asociarle un <label>.
+   * Lo agrega el port del modulo de Produccion, que lo usa en sus formularios.
+   */
+  id?: string;
 }
 
 /**
@@ -42,6 +47,7 @@ const DateField = ({
   disabled = false,
   showClear = false,
   className,
+  id,
 }: DateFieldProps) => {
   const selected = value ? parseLocalDate(value) : undefined;
 
@@ -56,6 +62,7 @@ const DateField = ({
       <Popover>
         <PopoverTrigger asChild>
           <Button
+            id={id}
             type="button"
             variant="outline"
             disabled={disabled}
