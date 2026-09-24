@@ -45,6 +45,11 @@ interface ProductsFilterModalProps {
    * y el modal queda igual que antes para el listado de productos.
    */
   terms?: TermOption[];
+  /**
+   * Muestra el filtro "Imagen promocional". Solo lo activa la pestaña de
+   * productos de Edición masiva, que es donde se asigna esa imagen.
+   */
+  showPromotionalImageFilter?: boolean;
   filters: ProductFilters;
   isOpen: boolean;
   onClose?: () => void;
@@ -63,6 +68,7 @@ const ProductsFilterModal = ({
   tags = [],
   brands = [],
   terms = [],
+  showPromotionalImageFilter = false,
   filters,
   isOpen,
   onClose,
@@ -132,6 +138,13 @@ const ProductsFilterModal = ({
     }));
   };
 
+  const handlePromotionalImageChange = (value: string) => {
+    setInternalFilters((prev) => ({
+      ...prev,
+      has_promotional_img: value === "none" ? null : value === "true",
+    }));
+  };
+
   const handleClear = () => {
     setInternalCategories([]);
     setInternalFilters({
@@ -149,6 +162,7 @@ const ProductsFilterModal = ({
       tag: null,
       brand: null,
       term: null,
+      has_promotional_img: null,
     });
   };
 
@@ -338,6 +352,32 @@ const ProductsFilterModal = ({
                   </Select>
                 </div>
               </div>
+              {showPromotionalImageFilter && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Imagen promocional
+                  </Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={
+                        internalFilters.has_promotional_img == null
+                          ? "none"
+                          : String(internalFilters.has_promotional_img)
+                      }
+                      onValueChange={handlePromotionalImageChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Todas</SelectItem>
+                        <SelectItem value="true">Con imagen</SelectItem>
+                        <SelectItem value="false">Sin imagen</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
             </div>
           </ScrollArea>
         </div>

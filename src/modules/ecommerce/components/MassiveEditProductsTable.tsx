@@ -31,11 +31,12 @@ interface MassiveEditProductsTableProps {
   onToggleAllProductsSelection: () => void;
 }
 
-// Checkbox, ID, Imagen, Producto, Categoría, Precio. Si el rol no puede editar
-// productos, la columna de selección no se pinta y este número queda uno largo:
-// solo afecta a las filas de "cargando" y "no hay productos", y la columna
-// sobrante colapsa a 0px porque ninguna otra fila la ocupa.
-const COL_SPAN = 6;
+// Checkbox, ID, Imagen, Producto, Categoría, Precio, Imagen promocional. Si el
+// rol no puede editar productos, la columna de selección no se pinta y este
+// número queda uno largo: solo afecta a las filas de "cargando" y "no hay
+// productos", y la columna sobrante colapsa a 0px porque ninguna otra fila la
+// ocupa.
+const COL_SPAN = 7;
 
 // La selección solo alimenta el menú de edición masiva, que escribe propiedades
 // del producto: sin products.edit no hay nada que hacer con lo seleccionado.
@@ -77,6 +78,7 @@ const MassiveEditProductsTable = ({
             <TableHead>Producto</TableHead>
             <TableHead>Categoría</TableHead>
             <TableHead>Precio</TableHead>
+            <TableHead>Imagen promocional</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -124,6 +126,28 @@ const MassiveEditProductsTable = ({
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.categories}</TableCell>
                 <TableCell>S/ {product.price}</TableCell>
+                <TableCell>
+                  {product.promotionalImage ? (
+                    <a
+                      href={product.promotionalImage}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Ver imagen promocional"
+                      className="flex items-center gap-2 hover:underline"
+                    >
+                      <img
+                        src={product.promotionalImage}
+                        alt={`Imagen promocional de ${product.name}`}
+                        className="w-10 h-12 object-cover rounded border"
+                      />
+                      <span className="text-sm">Con imagen</span>
+                    </a>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      Sin imagen
+                    </span>
+                  )}
+                </TableCell>
               </TableRow>
             ))
           )}

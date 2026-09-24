@@ -18,6 +18,8 @@ import {
   updateSalesChannelsApi,
   updateLargeDescriptionApi,
   updatePromotionalImageApi,
+  countProductsWithPromotionalImageApi,
+  removePromotionalImageApi,
   updateOtherDescriptionMinApi,
   updateOtherDescriptionMayApi,
   assignMassiveTagsApi,
@@ -72,6 +74,9 @@ const PromotionalTextPage = () => {
   const [isShortDescModalOpen, setIsShortDescModalOpen] = useState(false);
   const [isShortDesMayModalOpen, setIsShortDesMayModalOpen] = useState(false);
   const [isPromotionalImageModal, setIsPromotionalImageModal] = useState(false);
+  const [promoWithImageCount, setPromoWithImageCount] = useState<
+    number | null
+  >(null);
   const [isOtherDescMinModalOpen, setIsOtherDescMinModalOpen] = useState(false);
   const [isOtherDescMayModalOpen, setIsOtherDescMayModalOpen] = useState(false);
   const [isSalesChannelsModalOpen, setIsSalesChannelsModalOpen] =
@@ -106,6 +111,7 @@ const PromotionalTextPage = () => {
     onPageChange,
     onSearchChange,
     onOrderChange,
+    reloadProducts,
   } = useProducts();
 
   const {
@@ -201,6 +207,49 @@ const PromotionalTextPage = () => {
       description: `Imagen promocional actualizada en ${plural(selectedProducts.length)}.`,
       variant: "success",
     });
+    reloadProducts();
+  };
+
+  // El conteo alimenta el aviso de reemplazo y el botón "Quitar imagen". Se
+  // pide a la base y no a la tabla: la selección puede incluir productos de
+  // otras páginas que la tabla ya no tiene cargados.
+  const openPromotionalImageModal = async () => {
+    setPromoWithImageCount(null);
+    setIsPromotionalImageModal(true);
+    try {
+      setPromoWithImageCount(
+        await countProductsWithPromotionalImageApi(selectedProducts),
+      );
+    } catch (error) {
+      toastError(error, "No se pudo consultar las imágenes promocionales");
+    }
+  };
+
+  const handleRemovePromotionalImage = async () => {
+    try {
+      const { removed, skipped } =
+        await removePromotionalImageApi(selectedProducts);
+      toast(
+        removed === 0
+          ? {
+              title: "Sin cambios",
+              description:
+                "Ninguno de los productos seleccionados tenía imagen promocional.",
+              variant: "info",
+            }
+          : {
+              title: "Imagen promocional quitada",
+              description:
+                `Se quitó de ${plural(removed)}.` +
+                (skipped > 0 ? ` ${plural(skipped)} no tenían imagen.` : ""),
+              variant: "success",
+            },
+      );
+      reloadProducts();
+    } catch (error) {
+      toastError(error, "No se pudo quitar la imagen promocional");
+      throw error;
+    }
   };
 
   const handleSaveShortDescription = async (shortDescription: string) => {
@@ -468,7 +517,7 @@ const PromotionalTextPage = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="gap-2"
-                  onClick={() => setIsPromotionalImageModal(true)}
+                  onClick={openPromotionalImageModal}
                 >
                   <Image className="w-4 h-4" />
                   Imágenes Promocionales
@@ -636,6 +685,7 @@ const PromotionalTextPage = () => {
         onChangeSelectedCategories={setSelectedCategories}
         tags={tags}
         brands={brands}
+        showPromotionalImageFilter
         filters={filters}
         onClose={onCloseFilterModal}
         onApply={onApplyFilter}
@@ -679,7 +729,9 @@ const PromotionalTextPage = () => {
         isOpen={isPromotionalImageModal}
         onClose={() => setIsPromotionalImageModal(false)}
         selectedCount={selectedProducts.length}
+        withImageCount={promoWithImageCount}
         onSave={handleSavePromotionalImage}
+        onRemove={handleRemovePromotionalImage}
       />
       <ShortDescriptionMayModal
         isOpen={isShortDesMayModalOpen}

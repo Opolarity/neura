@@ -6,27 +6,50 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, X } from "lucide-react";
+import { AlertTriangle, Trash2, Upload, X } from "lucide-react";
 
 interface PromotionalImageModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedCount: number;
+  /** Cuántos de los seleccionados ya tienen imagen; null mientras se consulta. */
+  withImageCount: number | null;
   onSave: (PromotionalImageUrl: string | null) => Promise<void>;
+  onRemove: () => Promise<void>;
 }
+
+const plural = (n: number) => `${n} producto${n === 1 ? "" : "s"}`;
 
 const PromotionalImageModal = ({
   isOpen,
   onClose,
   selectedCount,
+  withImageCount,
   onSave,
+  onRemove,
 }: PromotionalImageModalProps) => {
   const [PromotionalImage, setPromotionalImage] = useState<{
     file: File;
     preview: string;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [isConfirmRemoveOpen, setIsConfirmRemoveOpen] = useState(false);
+  const isBusy = isSaving || isRemoving;
+  const withoutImageCount =
+    withImageCount === null ? 0 : selectedCount - withImageCount;
 
   const sizesInputRef = useRef<HTMLInputElement>(null);
   const sizesRefInputRef = useRef<HTMLInputElement>(null);
@@ -70,6 +93,20 @@ const PromotionalImageModal = ({
       onClose();
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    setIsRemoving(true);
+    try {
+      await onRemove();
+      setIsConfirmRemoveOpen(false);
+      setPromotionalImage(null);
+      onClose();
+    } catch {
+      // El error ya lo muestra quien llama; el modal queda abierto.
+    } finally {
+      setIsRemoving(false);
     }
   };
 
@@ -131,10 +168,21 @@ const PromotionalImageModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg" hideClose>
         <DialogHeader>
-          <DialogTitle>Promotional Image</DialogTitle>
+          <DialogTitle>Imagen promocional</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
+          {withImageCount !== null && withImageCount > 0 && (
+            <Alert className="border-amber-300 bg-amber-50 text-amber-900">
+              <AlertTriangle className="h-4 w-4 !text-amber-600" />
+              <AlertDescription>
+                {withImageCount} de los {plural(selectedCount)} seleccionados
+                ya {withImageCount === 1 ? "tiene" : "tienen"} imagen
+                promocional. Si guardas una nueva, se reemplazará.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <DropZone
             label="Imagen "
             value={PromotionalImage}
@@ -143,22 +191,62 @@ const PromotionalImageModal = ({
             inputRef={sizesRefInputRef}
           />
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={onClose} disabled={isSaving}>
-              Cancelar
-            </Button>
+          <div className="flex flex-wrap justify-between gap-2 pt-2">
             <Button
-              onClick={handleSave}
-              disabled={isSaving || (!PromotionalImage && !PromotionalImage)}
-              className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-60"
+              variant="outline"
+              onClick={() => setIsConfirmRemoveOpen(true)}
+              disabled={isBusy || !withImageCount}
+              className="gap-2 text-destructive hover:text-destructive"
             >
-              {isSaving
-                ? "Guardando..."
-                : `Guardar${selectedCount > 0 ? ` (${selectedCount})` : ""}`}
+              <Trash2 className="h-4 w-4" />
+              Quitar imagen
             </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onClose} disabled={isBusy}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={isBusy || (!PromotionalImage && !PromotionalImage)}
+                className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-60"
+              >
+                {isSaving
+                  ? "Guardando..."
+                  : `Guardar${selectedCount > 0 ? ` (${selectedCount})` : ""}`}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
+
+      <AlertDialog
+        open={isConfirmRemoveOpen}
+        onOpenChange={(open) => !isRemoving && setIsConfirmRemoveOpen(open)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Quitar imagen promocional?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se quitará la imagen promocional de {plural(withImageCount ?? 0)}.
+              {withoutImageCount > 0 &&
+                ` ${plural(withoutImageCount)} de la selección no ${withoutImageCount === 1 ? "tiene" : "tienen"} imagen y no ${withoutImageCount === 1 ? "cambia" : "cambian"}.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRemoving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemove();
+              }}
+              disabled={isRemoving}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isRemoving ? "Quitando..." : "Quitar imagen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

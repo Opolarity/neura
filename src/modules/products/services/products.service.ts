@@ -100,6 +100,37 @@ export const updatePromotionalImageApi = async (
   if (error) throw error;
 };
 
+// Una URL vacía cuenta como "sin imagen", igual que en get_products_list.
+export const countProductsWithPromotionalImageApi = async (
+  productIds: number[],
+): Promise<number> => {
+  const { count, error } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .in("id", productIds)
+    .not("promotional_img_url", "is", null)
+    .neq("promotional_img_url", "");
+  if (error) throw error;
+  return count ?? 0;
+};
+
+// Solo toca los que tienen imagen, para poder decir cuántos cambiaron de
+// verdad y cuántos se omitieron por no tenerla.
+export const removePromotionalImageApi = async (
+  productIds: number[],
+): Promise<{ removed: number; skipped: number }> => {
+  const { data, error } = await supabase
+    .from("products")
+    .update({ promotional_img_url: null })
+    .in("id", productIds)
+    .not("promotional_img_url", "is", null)
+    .neq("promotional_img_url", "")
+    .select("id");
+  if (error) throw error;
+  const removed = data?.length ?? 0;
+  return { removed, skipped: productIds.length - removed };
+};
+
 export const updateLargeDescriptionApi = async (
   productIds: number[],
   description: string,

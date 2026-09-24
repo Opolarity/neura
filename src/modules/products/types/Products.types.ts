@@ -11,6 +11,7 @@ interface ProductsData {
     stock: number;
     /** T-269 · Variaciones del producto bajo el umbral global (definición única). */
     low_stock_variations?: number | null;
+    promotional_img_url?: string | null;
   }>;
   page: {
     p_page: number;
@@ -40,6 +41,8 @@ export interface Product {
   stock: number;
   /** T-269 · Cuántas variaciones de este producto están bajo el umbral global. */
   lowStockVariations: number;
+  /** Flyer del botón "Ver Promoción" del ecommerce; null si no tiene. */
+  promotionalImage: string | null;
 }
 
 export interface ProductFilters {
@@ -63,6 +66,8 @@ export interface ProductFilters {
    * productos lo ignora.
    */
   term?: number | null;
+  /** Con (true) / sin (false) imagen promocional; null = todas. */
+  has_promotional_img?: boolean | null;
   /** Nombres que espera la edge function; se derivan de tag/brand al enviar. */
   tag_id?: number;
   brand_id?: number;

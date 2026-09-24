@@ -23,6 +23,7 @@ export const productAdapter = (response: ProductApiResponse) => {
       terms: item.terminos,
       stock: item.stock,
       lowStockVariations: item.low_stock_variations ?? 0,
+      promotionalImage: item.promotional_img_url ?? null,
     })
   );
 
