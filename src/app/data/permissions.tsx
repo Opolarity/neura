@@ -41,6 +41,7 @@ import PriceRuleFormPage from "@/modules/discounts/pages/PriceRuleFormPage";
 import BirthdayNotification from "@/modules/discounts/pages/BirthdayNotification";
 
 import MovementsPage from "@/modules/movements/pages/MovementsPage";
+import AuditLogPage from "@/modules/audit/pages/AuditLogPage";
 import AddMovementPage from "@/modules/movements/pages/AddMovementPage";
 
 import Invoices from "@/modules/invoices/pages/Invoices";
@@ -365,6 +366,7 @@ export const APP_PERMISSIONS_CONFIG = [
               { name: "Sucursales", path: "/settings/branches", code: "branches.list", element: <BranchesList />, showSidebar: true, node: [] },
               { name: "Crear sucursal", path: "/settings/branches/create", code: "branches.create", element: <CreateBranch />, showSidebar: false, node: [] },
               { name: "Editar sucursal", path: "/settings/branches/edit/:id", code: "branches.edit", element: <CreateBranch />, showSidebar: false, node: [] },
+              { name: "Auditoría", path: "/settings/audit", code: "audit_log.list", element: <AuditLogPage />, showSidebar: true, node: [] },
             ]
           },
           {
