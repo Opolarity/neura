@@ -37,6 +37,9 @@ export const AddSupplierModal = ({
   const {
     documentTypes,
     classes,
+    supplierTypes,
+    supplierTypeId,
+    setSupplierTypeId,
     searchDocTypeId,
     setSearchDocTypeId,
     searchDocNumber,
@@ -214,6 +217,26 @@ export const AddSupplierModal = ({
             <div className="space-y-4 pt-4 border-t">
               <p className="text-sm font-medium">Paso 2 — Datos del proveedor</p>
 
+              {/* Obligatorio en la base (`suppliers_profile.supplier_type_id`)
+                  y hasta ahora no se pedía, que es lo que tenía el alta rota.
+                  Nace en "Todo servicio", que es el que vale mientras no se
+                  sepa si vende material o hace servicio. */}
+              <div className="space-y-2">
+                <Label>Tipo de proveedor *</Label>
+                <Select value={supplierTypeId} onValueChange={setSupplierTypeId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {supplierTypes.map((t) => (
+                      <SelectItem key={t.id} value={t.id.toString()}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
                 <Label>Teléfono *</Label>
                 <Input
@@ -227,7 +250,7 @@ export const AddSupplierModal = ({
               </div>
 
               <div className="space-y-2">
-                <Label>Email</Label>
+                <Label>Email (opcional)</Label>
                 <Input
                   type="email"
                   value={formSupplier.email}

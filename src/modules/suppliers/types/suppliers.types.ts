@@ -38,20 +38,28 @@ export interface AccountSearchResult {
   document_number: string;
 }
 
-export interface CreateAccountData {
-  name: string;
-  middle_name?: string;
-  last_name: string;
-  last_name2?: string;
+/**
+ * Lo que necesita `sp_create_supplier` para dar de alta un proveedor entero.
+ *
+ * Es UNA sola llamada a propósito: la cuenta, el perfil y las clases entran en
+ * la misma transacción, y si el documento ya está registrado el SP reutiliza
+ * esa cuenta en vez de intentar crearla otra vez.
+ */
+export interface CreateSupplierData {
   document_type_id: number;
   document_number: string;
-}
-
-export interface CreateSupplierProfileData {
-  id: number;
-  email?: string;
+  name: string;
+  /** `suppliers_profile.phone` es numérico en la base. */
   phone: number;
+  last_name?: string;
+  middle_name?: string;
+  last_name2?: string;
+  /** Opcional: no todo proveedor tiene correo. */
+  email?: string;
   address?: string;
+  /** Type del módulo SPL: Materia prima, Taller o Todo servicio. */
+  supplier_type_id?: number | null;
+  class_ids: number[];
 }
 
 /**

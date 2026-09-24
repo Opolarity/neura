@@ -7,13 +7,12 @@ import {
 } from "../types/suppliers.types";
 import {
   findAccountByDocumentApi,
-  createAccountApi,
-  createSupplierProfileApi,
+  createSupplierApi,
   supplierClassesApi,
   createSupplierClassOptionApi,
-  createSupplierClassesApi,
   documentTypesApi,
 } from "../services/suppliers.service";
+import { typesByModuleCode } from "@/shared/services/service";
 
 interface DocumentType {
   id: number;
@@ -32,6 +31,13 @@ export const useAddSupplier = ({ onSuccess }: UseAddSupplierOptions = {}) => {
 
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
   const [classes, setClasses] = useState<SupplierClass[]>([]);
+  /**
+   * Los tipos de proveedor del módulo SPL: Materia prima, Taller y Todo
+   * servicio. `suppliers_profile.supplier_type_id` es obligatorio en la base y
+   * hasta ahora nadie lo mandaba, que es lo que tenía el alta rota.
+   */
+  const [supplierTypes, setSupplierTypes] = useState<{ id: number; name: string; code: string }[]>([]);
+  const [supplierTypeId, setSupplierTypeId] = useState<string>("");
 
   const [searchDocTypeId, setSearchDocTypeId] = useState<string>("");
   const [searchDocNumber, setSearchDocNumber] = useState<string>("");
@@ -61,12 +67,18 @@ export const useAddSupplier = ({ onSuccess }: UseAddSupplierOptions = {}) => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const [docTypes, supClasses] = await Promise.all([
+        const [docTypes, supClasses, types] = await Promise.all([
           documentTypesApi(),
           supplierClassesApi(),
+          typesByModuleCode("SPL"),
         ]);
         setDocumentTypes(docTypes);
         setClasses(supClasses);
+        setSupplierTypes(types as any);
+        // "Todo servicio" por defecto: es el que sirve cuando todavía no se
+        // sabe si el proveedor vende material o hace servicio.
+        const todoServicio = (types as any[]).find((t) => t.code === "ALL");
+        setSupplierTypeId(String(todoServicio?.id ?? (types as any[])[0]?.id ?? ""));
       } catch (error: any) {
         toast({ title: "Error al cargar datos iniciales", variant: "destructive" });
       }
@@ -146,6 +158,10 @@ export const useAddSupplier = ({ onSuccess }: UseAddSupplierOptions = {}) => {
       toast({ title: "Debes asignar al menos una clase al proveedor", variant: "destructive" });
       return;
     }
+    if (!supplierTypeId) {
+      toast({ title: "Elige el tipo de proveedor", variant: "destructive" });
+      return;
+    }
     if (!existingAccount) {
       if (!formAccount.name || !formAccount.last_name) {
         toast({ title: "Nombre y primer apellido son obligatorios", variant: "destructive" });
@@ -156,33 +172,35 @@ export const useAddSupplier = ({ onSuccess }: UseAddSupplierOptions = {}) => {
     try {
       setSubmitting(true);
 
-      let accountId: number;
-
-      if (existingAccount) {
-        accountId = existingAccount.id;
-      } else {
-        accountId = await createAccountApi({
-          name: formAccount.name,
-          middle_name: formAccount.middle_name || undefined,
-          last_name: formAccount.last_name,
-          last_name2: formAccount.last_name2 || undefined,
-          document_type_id: parseInt(searchDocTypeId),
-          document_number: searchDocNumber.trim(),
-        });
-      }
-
-      await createSupplierProfileApi({
-        id: accountId,
-        email: formSupplier.email || undefined,
+      // Una sola llamada: el SP resuelve la cuenta --la reutiliza si el
+      // documento ya existe-- y crea perfil y clases en la misma transacción.
+      // Cuando esto eran tres inserts sueltos, fallar en el segundo dejaba la
+      // cuenta creada y el reintento moría con un "duplicate key".
+      const { id: supplierId } = await createSupplierApi({
+        document_type_id: parseInt(searchDocTypeId),
+        document_number: searchDocNumber.trim(),
+        // Con cuenta existente se mandan sus datos: el SP no los pisa, pero
+        // son los obligatorios de la firma.
+        name: existingAccount ? existingAccount.name : formAccount.name,
+        middle_name: existingAccount
+          ? existingAccount.middle_name || undefined
+          : formAccount.middle_name || undefined,
+        last_name: existingAccount
+          ? existingAccount.last_name || undefined
+          : formAccount.last_name,
+        last_name2: existingAccount
+          ? existingAccount.last_name2 || undefined
+          : formAccount.last_name2 || undefined,
         phone: parseInt(formSupplier.phone),
+        email: formSupplier.email || undefined,
         address: formSupplier.address || undefined,
+        supplier_type_id: supplierTypeId ? parseInt(supplierTypeId) : null,
+        class_ids: selectedClassIds,
       });
-
-      await createSupplierClassesApi(accountId, selectedClassIds);
 
       toast({ title: "Proveedor creado exitosamente", variant: "success" });
       if (onSuccess) {
-        onSuccess(accountId);
+        onSuccess(supplierId);
       } else {
         navigate("/suppliers");
       }
@@ -196,6 +214,9 @@ export const useAddSupplier = ({ onSuccess }: UseAddSupplierOptions = {}) => {
   return {
     documentTypes,
     classes,
+    supplierTypes,
+    supplierTypeId,
+    setSupplierTypeId,
     searchDocTypeId,
     setSearchDocTypeId,
     searchDocNumber,
