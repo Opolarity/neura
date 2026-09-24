@@ -57,7 +57,7 @@ const SalesChannelsModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md" hideClose>
         <DialogHeader>
-          <DialogTitle>Canales de Venta</DialogTitle>
+          <DialogTitle>Canales de venta</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">

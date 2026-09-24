@@ -97,7 +97,7 @@ const AssignBrandsModal = ({
       <DialogContent className="sm:max-w-md" hideClose>
         <DialogHeader>
           <DialogTitle>
-            {isUnassign ? "Desasignar Marcas" : "Asignar Marcas"}
+            {isUnassign ? "Desasignar marcas" : "Asignar marcas"}
           </DialogTitle>
         </DialogHeader>
 

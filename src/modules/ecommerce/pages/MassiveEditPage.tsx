@@ -496,7 +496,7 @@ const PromotionalTextPage = () => {
                   disabled={selectedProducts.length === 0}
                 >
                   <Plus className="w-4 h-4" />
-                  Edicion masiva
+                  Edición masiva
                   <ChevronDown className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -506,35 +506,35 @@ const PromotionalTextPage = () => {
                   onClick={() => setIsModalOpen(true)}
                 >
                   <Tag className="w-4 h-4" />
-                  Texto Promocional
+                  Texto promocional
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="gap-2"
                   onClick={() => setIsSizeImagesModalOpen(true)}
                 >
                   <Ruler className="w-4 h-4" />
-                  Imágenes de Tallas
+                  Imágenes de tallas
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="gap-2"
                   onClick={openPromotionalImageModal}
                 >
                   <Image className="w-4 h-4" />
-                  Imágenes Promocionales
+                  Imágenes promocionales
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="gap-2"
                   onClick={() => setIsShortDesMayModalOpen(true)}
                 >
                   <AlignLeft className="w-4 h-4" />
-                  Descripción Mayorista
+                  Descripción mayorista
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="gap-2"
                   onClick={() => setIsShortDescModalOpen(true)}
                 >
                   <AlignRight className="w-4 h-4" />
-                  Descripción Minorista
+                  Descripción minorista
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="gap-2"
@@ -555,7 +555,7 @@ const PromotionalTextPage = () => {
                   onClick={() => setIsSalesChannelsModalOpen(true)}
                 >
                   <Radio className="w-4 h-4" />
-                  Canales de Venta
+                  Canales de venta
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="gap-2"

@@ -132,12 +132,12 @@ const SizeImagesModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg" hideClose>
         <DialogHeader>
-          <DialogTitle>Imágenes de Tallas</DialogTitle>
+          <DialogTitle>Imágenes de tallas</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
           <DropZone
-            label="Imagen de Tallas"
+            label="Imagen de tallas"
             value={sizesImage}
             onSelect={(file) => handleFileSelect(file, setSizesImage)}
             onClear={() => setSizesImage(null)}
@@ -145,7 +145,7 @@ const SizeImagesModal = ({
           />
 
           <DropZone
-            label="Imagen de Referencia de Tallas"
+            label="Imagen de referencia de tallas"
             value={sizesRefImage}
             onSelect={(file) => handleFileSelect(file, setSizesRefImage)}
             onClear={() => setSizesRefImage(null)}

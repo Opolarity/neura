@@ -40,7 +40,7 @@ const ShortDescriptionMayModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl" hideClose>
         <DialogHeader>
-          <DialogTitle>Descripción Mayorista</DialogTitle>
+          <DialogTitle>Descripción mayorista</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
