@@ -2,8 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildEndpoint } from "@/shared/utils/query";
 import {
   AccountSearchResult,
-  CreateAccountData,
-  CreateSupplierProfileData,
+  CreateSupplierData,
   Supplier,
   SupplierClass,
   SuppliersFilters,
@@ -75,35 +74,43 @@ export const findAccountByDocumentApi = async (
   return data ?? null;
 };
 
-export const createAccountApi = async (accountData: CreateAccountData): Promise<number> => {
-  const { data, error } = await (supabase as any)
-    .from("accounts")
-    .insert({
-      name: accountData.name,
-      middle_name: accountData.middle_name || null,
-      last_name: accountData.last_name,
-      last_name2: accountData.last_name2 || null,
-      document_type_id: accountData.document_type_id,
-      document_number: accountData.document_number,
-    })
-    .select("id")
-    .single();
-
-  if (error) throw error;
-  return data.id;
-};
-
-export const createSupplierProfileApi = async (
-  profileData: CreateSupplierProfileData
-): Promise<void> => {
-  const { error } = await (supabase as any).from("suppliers_profile").insert({
-    id: profileData.id,
-    email: profileData.email || null,
-    phone: profileData.phone,
-    address: profileData.address || null,
+/**
+ * Alta de proveedor: cuenta, perfil y clases en UNA transaccion.
+ *
+ * Antes eran tres inserts sueltos desde aqui, y era una trampa: el de la cuenta
+ * pasaba, el del perfil fallaba siempre --suppliers_profile.supplier_type_id es
+ * NOT NULL y no se mandaba-- y la cuenta se quedaba creada. Al reintentar, el
+ * formulario volvia a crearla y chocaba contra unique_document_type_number_clients
+ * con un "duplicate key" que no explicaba nada.
+ *
+ * El SP ademas REUTILIZA la cuenta cuando el documento ya esta registrado, que
+ * es lo que recupera las cuentas que dejaron aquellos intentos a medias.
+ */
+export const createSupplierApi = async (
+  supplier: CreateSupplierData
+): Promise<{ id: number; reusedAccount: boolean }> => {
+  // `as any` como el resto del fichero: los tipos generados de Supabase se
+  // regeneran contra la base desplegada y todavía no conocen este SP.
+  const { data, error } = await (supabase as any).rpc("sp_create_supplier", {
+    p_document_type_id: supplier.document_type_id,
+    p_document_number: supplier.document_number,
+    p_name: supplier.name,
+    p_phone: supplier.phone,
+    p_last_name: supplier.last_name ?? null,
+    p_middle_name: supplier.middle_name ?? null,
+    p_last_name2: supplier.last_name2 ?? null,
+    p_email: supplier.email ?? null,
+    p_address: supplier.address ?? null,
+    p_supplier_type_id: supplier.supplier_type_id ?? null,
+    p_class_ids: supplier.class_ids,
   });
 
   if (error) throw error;
+
+  const result = data as { id: number; reused_account?: boolean } | null;
+  if (!result?.id) throw new Error("El alta no devolvio el proveedor creado");
+
+  return { id: result.id, reusedAccount: result.reused_account ?? false };
 };
 
 /**
@@ -183,19 +190,6 @@ export const createSupplierClassOptionApi = async (name: string): Promise<Suppli
 
   if (error) throw error;
   return data;
-};
-
-export const createSupplierClassesApi = async (
-  supplierId: number,
-  classIds: number[]
-): Promise<void> => {
-  const rows = classIds.map((classId) => ({
-    supplier_id: supplierId,
-    supplier_class_id: classId,
-  }));
-
-  const { error } = await (supabase as any).from("supplier_classes").insert(rows);
-  if (error) throw error;
 };
 
 export const documentTypesApi = async () => {
