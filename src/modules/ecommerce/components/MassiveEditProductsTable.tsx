@@ -9,6 +9,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { ComponentPermission } from "@/shared/components/component-permission";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { VoucherPreviewModal } from "@/modules/sales/components/sales/VoucherPreviewModal";
 import placeholderImage from "@/assets/product-placeholder.png";
 import { Product } from "@/modules/products/types/Products.types";
 
@@ -50,6 +52,8 @@ const MassiveEditProductsTable = ({
   onToggleAllProductsSelection,
   onToggleProductSelection,
 }: MassiveEditProductsTableProps) => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
   return (
     <div className="relative h-full">
       {loading && products.length > 0 && (
@@ -128,20 +132,14 @@ const MassiveEditProductsTable = ({
                 <TableCell>S/ {product.price}</TableCell>
                 <TableCell>
                   {product.promotionalImage ? (
-                    <a
-                      href={product.promotionalImage}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => setPreviewUrl(product.promotionalImage)}
                       title="Ver imagen promocional"
-                      className="flex items-center gap-2 hover:underline"
+                      className="text-sm text-primary hover:underline"
                     >
-                      <img
-                        src={product.promotionalImage}
-                        alt={`Imagen promocional de ${product.name}`}
-                        className="w-10 h-12 object-cover rounded border"
-                      />
-                      <span className="text-sm">Con imagen</span>
-                    </a>
+                      Con imagen
+                    </button>
                   ) : (
                     <span className="text-sm text-muted-foreground">
                       Sin imagen
@@ -153,6 +151,17 @@ const MassiveEditProductsTable = ({
           )}
         </TableBody>
       </Table>
+
+      {/* Mismo visor que los comprobantes de pago; `completed` oculta
+          "Confirmar pago", que aquí no aplica. */}
+      <VoucherPreviewModal
+        open={previewUrl !== null}
+        onOpenChange={(open) => !open && setPreviewUrl(null)}
+        voucherSrc={previewUrl ?? ""}
+        voucherName="imagen-promocional"
+        title="Imagen promocional"
+        completed
+      />
     </div>
   );
 };

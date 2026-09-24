@@ -16,6 +16,8 @@ interface VoucherPreviewModalProps {
   // Acepta una sola URL (retrocompat) o varias (hasta 3)
   voucherSrc: string | string[];
   voucherName?: string;
+  /** Título del modal; por defecto el de comprobante. */
+  title?: string;
   completed?: boolean;
   paymentId?: string | null;
   onConfirmPayment?: (paymentId: string) => Promise<void>;
@@ -26,6 +28,7 @@ export const VoucherPreviewModal = ({
   onOpenChange,
   voucherSrc,
   voucherName = "comprobante",
+  title = "Vista previa del comprobante",
   completed = false,
   paymentId,
   onConfirmPayment,
@@ -83,7 +86,7 @@ export const VoucherPreviewModal = ({
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle>
-              Vista previa del comprobante
+              {title}
               {sources.length > 1
                 ? ` (${activeIndex + 1}/${sources.length})`
                 : ""}
