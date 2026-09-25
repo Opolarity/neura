@@ -173,6 +173,56 @@ const PromotionalTextPage = () => {
 
   const plural = (n: number) => `${n} producto${n > 1 ? "s" : ""}`;
 
+  // Un solo texto para etiquetas y marcas: el mensaje depende del resultado
+  // (algo cambió o nada), no de cuál de las dos se asigna.
+  //   changed: asignaciones agregadas (assign) o quitadas (unassign).
+  //   omitted: pares que ya existían (assign) o que no estaban (unassign).
+  const toastAssignmentResult = (
+    label: "etiquetas" | "marcas",
+    mode: "assign" | "unassign",
+    changed: number,
+    omitted: number,
+  ) => {
+    const products = selectedProducts.length;
+    const tenian = products === 1 ? "tenía" : "tenían";
+    const assignments = (n: number) =>
+      `${n} asignaci${n === 1 ? "ón" : "ones"}`;
+    const Label = label.charAt(0).toUpperCase() + label.slice(1);
+
+    if (changed === 0) {
+      toast({
+        title: "Sin cambios",
+        description:
+          mode === "assign"
+            ? `${plural(products)} ya ${tenian} esas ${label}.`
+            : `${plural(products)} no ${tenian} esas ${label} asignadas.`,
+        variant: "info",
+      });
+      return;
+    }
+
+    const verb =
+      mode === "assign"
+        ? changed === 1 ? "Se agregó" : "Se agregaron"
+        : changed === 1 ? "Se quitó" : "Se quitaron";
+    const omittedText =
+      omitted === 0
+        ? ""
+        : mode === "assign"
+          ? omitted === 1
+            ? " 1 ya existía y se omitió."
+            : ` ${omitted} ya existían y se omitieron.`
+          : omitted === 1
+            ? " 1 no estaba asignada y se omitió."
+            : ` ${omitted} no estaban asignadas y se omitieron.`;
+
+    toast({
+      title: `${Label} ${mode === "assign" ? "asignadas" : "desasignadas"}`,
+      description: `${verb} ${assignments(changed)} en ${plural(products)}.${omittedText}`,
+      variant: "success",
+    });
+  };
+
   // La selección se conserva entre páginas: lo borrado mientras tanto lo
   // omite el backend, y aquí se avisa aparte del resultado.
   const warnSkipped = (
@@ -357,45 +407,11 @@ const PromotionalTextPage = () => {
       if (isUnassign) {
         const result = await unassignMassiveTagsApi(selectedProducts, tagIds);
         warnSkipped(result.skippedProductIds, "producto", "productos");
-
-        if (result.deleted === 0) {
-          toast({
-            title: "Sin cambios",
-            description: `${plural(selectedProducts.length)} no tenían esas etiquetas asignadas.`,
-            variant: "info",
-          });
-        } else {
-          toast({
-            title: "Etiquetas desasignadas",
-            description:
-              `Se quitaron ${result.deleted} asignación${result.deleted === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.` +
-              (result.notFound > 0
-                ? ` ${result.notFound} no existían y se omitieron.`
-                : ""),
-            variant: "success",
-          });
-        }
+        toastAssignmentResult("etiquetas", "unassign", result.deleted, result.notFound);
       } else {
         const result = await assignMassiveTagsApi(selectedProducts, tagIds);
         warnSkipped(result.skippedProductIds, "producto", "productos");
-
-        if (result.created === 0) {
-          toast({
-            title: "Sin cambios",
-            description: `${plural(selectedProducts.length)} ya tenían esas etiquetas (${result.skipped} asignación${result.skipped === 1 ? "" : "es"} omitida${result.skipped === 1 ? "" : "s"}).`,
-            variant: "info",
-          });
-        } else {
-          toast({
-            title: "Etiquetas asignadas",
-            description:
-              `Se agregaron ${result.created} asignación${result.created === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.` +
-              (result.skipped > 0
-                ? ` ${result.skipped} ya existían y se omitieron.`
-                : ""),
-            variant: "success",
-          });
-        }
+        toastAssignmentResult("etiquetas", "assign", result.created, result.skipped);
       }
     } catch (error) {
       toastError(error, "Error desconocido");
@@ -419,35 +435,16 @@ const PromotionalTextPage = () => {
       warnSkipped(result.skippedProductIds, "producto", "productos");
 
       if (isUnassign) {
-        if (result.removed === 0) {
-          toast({
-            title: "Sin cambios",
-            description: `${plural(selectedProducts.length)} no tenían esas marcas asignadas.`,
-            variant: "info",
-          });
-        } else {
-          toast({
-            title: "Marcas desasignadas",
-            description: `Se quitaron ${result.removed} asignación${result.removed === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.`,
-            variant: "success",
-          });
-        }
-      } else if (result.created === 0) {
-        toast({
-          title: "Sin cambios",
-          description: `${plural(selectedProducts.length)} ya tenían esas marcas (${result.skipped} asignación${result.skipped === 1 ? "" : "es"} omitida${result.skipped === 1 ? "" : "s"}).`,
-          variant: "info",
-        });
+        // El backend de marcas no devuelve notFound: son los pares pedidos
+        // que no estaban asignados.
+        toastAssignmentResult(
+          "marcas",
+          "unassign",
+          result.removed,
+          result.requestedPairs - result.removed,
+        );
       } else {
-        toast({
-          title: "Marcas asignadas",
-          description:
-            `Se agregaron ${result.created} asignación${result.created === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.` +
-            (result.skipped > 0
-              ? ` ${result.skipped} ya existían y se omitieron.`
-              : ""),
-          variant: "success",
-        });
+        toastAssignmentResult("marcas", "assign", result.created, result.skipped);
       }
     } catch (error) {
       toastError(error, "Error desconocido");
@@ -475,8 +472,10 @@ const PromotionalTextPage = () => {
         title: minStock === null ? "Stock mínimo restablecido" : "Stock mínimo guardado",
         description:
           minStock === null
-            ? `${result.cleared} variación${result.cleared === 1 ? "" : "es"} vuelve${result.cleared === 1 ? "" : "n"} al valor por defecto.`
-            : `Se reservan ${minStock} unidad${minStock === 1 ? "" : "es"} en ${result.upserted} variación${result.upserted === 1 ? "" : "es"}.`,
+            ? result.cleared === 1
+              ? "1 variación vuelve al valor por defecto."
+              : `${result.cleared} variaciones vuelven al valor por defecto.`
+            : `${minStock === 1 ? "Se reserva 1 unidad" : `Se reservan ${minStock} unidades`} en ${result.upserted === 1 ? "1 variación" : `${result.upserted} variaciones`}.`,
         variant: "success",
       });
     } catch (error) {
