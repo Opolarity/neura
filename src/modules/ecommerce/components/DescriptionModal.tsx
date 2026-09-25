@@ -41,7 +41,7 @@ const ShortDescriptionModal = ({
     
       <DialogContent className="sm:max-w-3xl" hideClose>
         <DialogHeader>
-          <DialogTitle>Descripción Minorista</DialogTitle>
+          <DialogTitle>Descripción minorista</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">

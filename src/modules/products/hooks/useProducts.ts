@@ -46,6 +46,7 @@ export const useProducts = () => {
     search: null,
     tag: null,
     brand: null,
+    has_promotional_img: null,
     page: 1,
     size: 20,
   });
@@ -184,6 +185,8 @@ export const useProducts = () => {
     );
   };
 
+  const reloadProducts = () => loadData(filters);
+
   const onOpenFilterModal = () => {
     setIsOpenFilterModal(true);
   };
@@ -207,7 +210,8 @@ export const useProducts = () => {
     filters.minstock !== null ||
     filters.maxstock !== null ||
     filters.tag !== null ||
-    filters.brand !== null;
+    filters.brand !== null ||
+    (filters.has_promotional_img ?? null) !== null;
   return {
     products,
     selectedCategories,
@@ -236,5 +240,6 @@ export const useProducts = () => {
     onCloseFilterModal,
     onApplyFilter,
     onOrderChange,
+    reloadProducts,
   };
 };

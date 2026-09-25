@@ -98,7 +98,7 @@ const AssignTagsModal = ({
       <DialogContent className="sm:max-w-md" hideClose>
         <DialogHeader>
           <DialogTitle>
-            {isUnassign ? "Desasignar Etiquetas" : "Asignar Etiquetas"}
+            {isUnassign ? "Desasignar etiquetas" : "Asignar etiquetas"}
           </DialogTitle>
         </DialogHeader>
 

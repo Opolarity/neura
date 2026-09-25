@@ -9,6 +9,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { ComponentPermission } from "@/shared/components/component-permission";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { VoucherPreviewModal } from "@/modules/sales/components/sales/VoucherPreviewModal";
 import placeholderImage from "@/assets/product-placeholder.png";
 import { Product } from "@/modules/products/types/Products.types";
 
@@ -31,11 +33,12 @@ interface MassiveEditProductsTableProps {
   onToggleAllProductsSelection: () => void;
 }
 
-// Checkbox, ID, Imagen, Producto, Categoría, Precio. Si el rol no puede editar
-// productos, la columna de selección no se pinta y este número queda uno largo:
-// solo afecta a las filas de "cargando" y "no hay productos", y la columna
-// sobrante colapsa a 0px porque ninguna otra fila la ocupa.
-const COL_SPAN = 6;
+// Checkbox, ID, Imagen, Producto, Categoría, Precio, Imagen promocional. Si el
+// rol no puede editar productos, la columna de selección no se pinta y este
+// número queda uno largo: solo afecta a las filas de "cargando" y "no hay
+// productos", y la columna sobrante colapsa a 0px porque ninguna otra fila la
+// ocupa.
+const COL_SPAN = 7;
 
 // La selección solo alimenta el menú de edición masiva, que escribe propiedades
 // del producto: sin products.edit no hay nada que hacer con lo seleccionado.
@@ -49,6 +52,8 @@ const MassiveEditProductsTable = ({
   onToggleAllProductsSelection,
   onToggleProductSelection,
 }: MassiveEditProductsTableProps) => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
   return (
     <div className="relative h-full">
       {loading && products.length > 0 && (
@@ -77,6 +82,7 @@ const MassiveEditProductsTable = ({
             <TableHead>Producto</TableHead>
             <TableHead>Categoría</TableHead>
             <TableHead>Precio</TableHead>
+            <TableHead>Imagen promocional</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -124,11 +130,38 @@ const MassiveEditProductsTable = ({
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.categories}</TableCell>
                 <TableCell>S/ {product.price}</TableCell>
+                <TableCell>
+                  {product.promotionalImage ? (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewUrl(product.promotionalImage)}
+                      title="Ver imagen promocional"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Con imagen
+                    </button>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      Sin imagen
+                    </span>
+                  )}
+                </TableCell>
               </TableRow>
             ))
           )}
         </TableBody>
       </Table>
+
+      {/* Mismo visor que los comprobantes de pago; `completed` oculta
+          "Confirmar pago", que aquí no aplica. */}
+      <VoucherPreviewModal
+        open={previewUrl !== null}
+        onOpenChange={(open) => !open && setPreviewUrl(null)}
+        voucherSrc={previewUrl ?? ""}
+        voucherName="imagen-promocional"
+        title="Imagen promocional"
+        completed
+      />
     </div>
   );
 };
