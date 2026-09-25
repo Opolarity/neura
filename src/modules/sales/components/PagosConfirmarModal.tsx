@@ -35,7 +35,6 @@ import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useToast } from "@/hooks/use-toast";
 import {
   fetchPendingPayments,
-  fetchPendingPaymentFranchises,
   confirmPendingPayment,
   isFullyCoveredByCredit,
   type PendingPaymentFilter,
@@ -95,7 +94,7 @@ export const PagosConfirmarModal = ({
     const requestId = ++requestIdRef.current;
     setLoading(true);
     try {
-      const { rows, total: count } = await fetchPendingPayments({
+      const { rows, total: count, franchises } = await fetchPendingPayments({
         status: filter,
         page,
         size,
@@ -107,6 +106,9 @@ export const PagosConfirmarModal = ({
       if (requestId !== requestIdRef.current) return;
       setPayments(rows);
       setTotal(count);
+      // Llegan con cada consulta: un franquiciado nuevo aparece en el filtro
+      // en cuanto manda su primer pago.
+      setFranchiseOptions(franchises);
     } catch (err) {
       if (requestId !== requestIdRef.current) return;
       console.error("Error cargando pagos:", err);
@@ -119,17 +121,6 @@ export const PagosConfirmarModal = ({
   useEffect(() => {
     if (open) loadPayments();
   }, [open, filter, page, size, search, franchiseNames, dateRange]);
-
-  // Las tiendas se recargan en cada apertura: un franquiciado nuevo aparece
-  // en el filtro en cuanto manda su primer pago.
-  useEffect(() => {
-    if (!open) return;
-    fetchPendingPaymentFranchises()
-      .then(setFranchiseOptions)
-      .catch((err) => {
-        console.error("Error cargando franquiciados de pagos:", err);
-      });
-  }, [open]);
 
   useEffect(
     () => () => {

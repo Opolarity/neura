@@ -1,6 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
-import { limaDateRangeToIsoBounds } from "@/shared/utils/date";
+import { buildEndpoint } from "@/shared/utils/query";
 
 export type PendingPaymentStatus = "pending" | "approved";
 
@@ -83,14 +82,20 @@ export type FetchPendingPaymentsParams = {
   endDate?: string | null;
 };
 
-const PAYMENTS_FROM_FN = "fch-update-order-payments";
-
-// % y _ son comodines de ILIKE: se escapan para buscar el texto tal cual.
-const escapeLike = (value: string): string => value.replace(/[\\%_]/g, "\\$&");
-
 export type FetchPendingPaymentsResult = {
   rows: PendingPaymentRow[];
   total: number;
+  /**
+   * Tiendas que han enviado algún pago (sin repetir, ordenadas): las opciones
+   * del filtro de franquiciado. No dependen de los filtros aplicados.
+   */
+  franchises: string[];
+};
+
+type RawPendingPaymentsResponse = {
+  data: RawPendingRequest[] | null;
+  page: { p_page: number; p_size: number; total: number } | null;
+  franchises: string[] | null;
 };
 
 export const fetchPendingPayments = async ({
@@ -102,43 +107,26 @@ export const fetchPendingPayments = async ({
   startDate,
   endDate,
 }: FetchPendingPaymentsParams = {}): Promise<FetchPendingPaymentsResult> => {
-  const from = (page - 1) * size;
-  const to = from + size - 1;
+  // El filtrado y la paginación los hace sp_get_franchise_pending_payments;
+  // buildEndpoint omite los parámetros vacíos.
+  const endpoint = buildEndpoint("get-franchise-pending-payments", {
+    page,
+    size,
+    status,
+    search: search?.trim() || undefined,
+    franchise_names: franchiseNames?.length
+      ? franchiseNames.join(",")
+      : undefined,
+    date_from: startDate ?? undefined,
+    date_to: endDate ?? undefined,
+  });
 
-  let query = (supabase as any)
-    .from("pending_requests")
-    .select("id, created_at, processed_at, status, payload", {
-      count: "exact",
-    })
-    .eq("from_fn", PAYMENTS_FROM_FN);
-
-  query =
-    status === "all"
-      ? query.in("status", ["pending", "approved"])
-      : query.eq("status", status);
-
-  const term = search?.trim();
-  if (term) {
-    query = query.ilike("payload->>movement_code", `%${escapeLike(term)}%`);
-  }
-
-  if (franchiseNames && franchiseNames.length > 0) {
-    query = query.in("payload->>franchise_name", franchiseNames);
-  }
-
-  const { start } = limaDateRangeToIsoBounds(startDate);
-  const { end } = limaDateRangeToIsoBounds(endDate);
-  if (start) query = query.gte("created_at", start);
-  if (end) query = query.lte("created_at", end);
-
-  const { data, error, count } = await query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) throw error;
+  const response = (await invokeFunction(endpoint, {
+    method: "GET",
+  })) as RawPendingPaymentsResponse | null;
 
   return {
-    rows: ((data ?? []) as RawPendingRequest[]).map((row) => {
+    rows: (response?.data ?? []).map((row) => {
       const totalAmount = toNumber(row.payload.total_amount);
       const creditAmount = Math.max(0, toNumber(row.payload.credit_amount));
       return {
@@ -163,30 +151,9 @@ export const fetchPendingPayments = async ({
         orderProducts: row.payload.order_products ?? [],
       };
     }),
-    total: count ?? 0,
+    total: toNumber(response?.page?.total),
+    franchises: response?.franchises ?? [],
   };
-};
-
-/**
- * Tiendas que han enviado algún pago, para el filtro de franquiciado. Sale de
- * los mismos pagos (y no del listado de cuentas) porque el filtro compara
- * contra payload.franchise_name.
- */
-export const fetchPendingPaymentFranchises = async (): Promise<string[]> => {
-  const { data, error } = await (supabase as any)
-    .from("pending_requests")
-    .select("franchise_name:payload->>franchise_name")
-    .eq("from_fn", PAYMENTS_FROM_FN)
-    .in("status", ["pending", "approved"]);
-
-  if (error) throw error;
-
-  const names = new Set<string>();
-  for (const row of (data ?? []) as Array<{ franchise_name: string | null }>) {
-    const name = row.franchise_name?.trim();
-    if (name) names.add(name);
-  }
-  return [...names].sort((a, b) => a.localeCompare(b, "es"));
 };
 
 export const confirmPendingPayment = async (
