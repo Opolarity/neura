@@ -63,6 +63,10 @@ const conditionError = (condition: Condition): string | null => {
       return idsOf(condition, "tag_ids").length
         ? null
         : "elige al menos una etiqueta";
+    case "customer_level":
+      return idsOf(condition, "level_ids").length
+        ? null
+        : "elige al menos un nivel";
     default:
       return null;
   }

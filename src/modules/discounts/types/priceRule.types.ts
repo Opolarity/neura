@@ -250,7 +250,7 @@ export const CONDITION_TYPE_LABELS: Record<ConditionType, string> = {
   tag_in_cart: "Etiqueta en el carrito",
   min_total_quantity: "Cantidad mínima total",
   min_category_quantity: "Cantidad mínima por categoría",
-  customer_level: "Nivel del cliente (puntos)",
+  customer_level: "Nivel del cliente",
   payment_method: "Método de pago",
   new_customer: "Cliente nuevo",
   customer_birthday: "Cumpleaños del cliente",

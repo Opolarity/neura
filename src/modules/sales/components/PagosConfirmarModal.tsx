@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ExternalLink, Loader2, Search } from "lucide-react";
 import { formatDateTime } from "@/shared/utils/date";
 import {
   Dialog,
@@ -18,6 +18,19 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MultiSelect } from "@/shared/components/MultiSelect";
+import {
+  DateRangeFilter,
+  type DateRangeValue,
+} from "@/shared/components/date-range";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -47,6 +60,10 @@ const EMPTY_MESSAGE: Record<PendingPaymentFilter, string> = {
   approved: "Todavía no hay pagos confirmados.",
 };
 
+const FILTERED_EMPTY_MESSAGE = "No hay pagos que coincidan con los filtros.";
+
+const SEARCH_DEBOUNCE_MS = 500;
+
 export const PagosConfirmarModal = ({
   open,
   onOpenChange,
@@ -54,39 +71,98 @@ export const PagosConfirmarModal = ({
   const { toast } = useToast();
   const [payments, setPayments] = useState<PendingPaymentRow[]>([]);
   const [total, setTotal] = useState(0);
-  const [filter, setFilter] = useState<PendingPaymentFilter>("pending");
+  const [filter, setFilter] = useState<PendingPaymentFilter>("all");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [franchiseNames, setFranchiseNames] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRangeValue>({
+    startDate: null,
+    endDate: null,
+  });
+  const [franchiseOptions, setFranchiseOptions] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(20);
   const [loading, setLoading] = useState(false);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [invoicesPayment, setInvoicesPayment] = useState<PendingPaymentRow | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Con el buscador salen varias consultas seguidas: solo se pinta la última,
+  // para que una respuesta lenta no pise a la más reciente.
+  const requestIdRef = useRef(0);
 
   const loadPayments = async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     try {
-      const { rows, total: count } = await fetchPendingPayments({
+      const { rows, total: count, franchises } = await fetchPendingPayments({
         status: filter,
         page,
         size,
+        search,
+        franchiseNames,
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
       });
+      if (requestId !== requestIdRef.current) return;
       setPayments(rows);
       setTotal(count);
+      // Llegan con cada consulta: un franquiciado nuevo aparece en el filtro
+      // en cuanto manda su primer pago.
+      setFranchiseOptions(franchises);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error("Error cargando pagos:", err);
       toastError(err, "No se pudo cargar los pagos.");
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   };
 
   useEffect(() => {
     if (open) loadPayments();
-  }, [open, filter, page, size]);
+  }, [open, filter, page, size, search, franchiseNames, dateRange]);
+
+  useEffect(
+    () => () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    },
+    [],
+  );
+
+  const franchiseSelectOptions = useMemo(
+    () => franchiseOptions.map((name) => ({ label: name, value: name })),
+    [franchiseOptions],
+  );
+
+  const hasActiveFilters =
+    search !== "" ||
+    franchiseNames.length > 0 ||
+    dateRange.startDate !== null ||
+    dateRange.endDate !== null;
 
   const handleFilterChange = (value: PendingPaymentFilter) => {
     if (value === filter) return;
     setPage(1);
     setFilter(value);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setPage(1);
+      setSearch(value.trim());
+    }, SEARCH_DEBOUNCE_MS);
+  };
+
+  const handleFranchiseChange = (value: string[]) => {
+    setPage(1);
+    setFranchiseNames(value);
+  };
+
+  const handleDateChange = (range: DateRangeValue) => {
+    setPage(1);
+    setDateRange(range);
   };
 
   const handleConfirm = async (payment: PendingPaymentRow) => {
@@ -118,17 +194,54 @@ export const PagosConfirmarModal = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-wrap gap-2">
-          {FILTERS.map((option) => (
-            <Button
-              key={option.value}
-              size="sm"
-              variant={filter === option.value ? "default" : "outline"}
-              onClick={() => handleFilterChange(option.value)}
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative min-w-[200px] flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por código..."
+                value={searchInput}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <MultiSelect
+              options={franchiseSelectOptions}
+              value={franchiseNames}
+              onChange={handleFranchiseChange}
+              placeholder="Franquiciados"
+              showSearch
+              showClear
+              maxVisible={1}
+              className="w-[240px]"
+            />
+            <Select
+              value={filter}
+              onValueChange={(value) =>
+                handleFilterChange(value as PendingPaymentFilter)
+              }
             >
-              {option.label}
-            </Button>
-          ))}
+              <SelectTrigger className="w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FILTERS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <DateRangeFilter
+            startDate={dateRange.startDate}
+            endDate={dateRange.endDate}
+            onChange={handleDateChange}
+            startLabel="Desde"
+            endLabel="Hasta"
+            layout="inline"
+          />
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col">
@@ -139,7 +252,7 @@ export const PagosConfirmarModal = ({
             </div>
           ) : payments.length === 0 ? (
             <p className="py-10 text-center text-muted-foreground">
-              {EMPTY_MESSAGE[filter]}
+              {hasActiveFilters ? FILTERED_EMPTY_MESSAGE : EMPTY_MESSAGE[filter]}
             </p>
           ) : (
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border">

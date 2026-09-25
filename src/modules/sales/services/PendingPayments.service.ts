@@ -1,5 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { buildEndpoint } from "@/shared/utils/query";
 
 export type PendingPaymentStatus = "pending" | "approved";
 
@@ -69,41 +69,64 @@ export type FetchPendingPaymentsParams = {
   status?: PendingPaymentFilter;
   page?: number;
   size?: number;
+  /** Parte del código del movimiento (payload.movement_code). */
+  search?: string;
+  /**
+   * Nombres de tienda (payload.franchise_name). Se filtra por nombre y no por
+   * cuenta: el payload no guarda account_id y su document_number no es fiable
+   * (hay pagos de una misma tienda con documentos distintos).
+   */
+  franchiseNames?: string[];
+  /** Días "YYYY-MM-DD" en Lima, sobre created_at. */
+  startDate?: string | null;
+  endDate?: string | null;
 };
 
 export type FetchPendingPaymentsResult = {
   rows: PendingPaymentRow[];
   total: number;
+  /**
+   * Tiendas que han enviado algún pago (sin repetir, ordenadas): las opciones
+   * del filtro de franquiciado. No dependen de los filtros aplicados.
+   */
+  franchises: string[];
+};
+
+type RawPendingPaymentsResponse = {
+  data: RawPendingRequest[] | null;
+  page: { p_page: number; p_size: number; total: number } | null;
+  franchises: string[] | null;
 };
 
 export const fetchPendingPayments = async ({
   status = "pending",
   page = 1,
   size = 20,
+  search,
+  franchiseNames,
+  startDate,
+  endDate,
 }: FetchPendingPaymentsParams = {}): Promise<FetchPendingPaymentsResult> => {
-  const from = (page - 1) * size;
-  const to = from + size - 1;
+  // El filtrado y la paginación los hace sp_get_franchise_pending_payments;
+  // buildEndpoint omite los parámetros vacíos.
+  const endpoint = buildEndpoint("get-franchise-pending-payments", {
+    page,
+    size,
+    status,
+    search: search?.trim() || undefined,
+    franchise_names: franchiseNames?.length
+      ? franchiseNames.join(",")
+      : undefined,
+    date_from: startDate ?? undefined,
+    date_to: endDate ?? undefined,
+  });
 
-  let query = (supabase as any)
-    .from("pending_requests")
-    .select("id, created_at, processed_at, status, payload", {
-      count: "exact",
-    })
-    .eq("from_fn", "fch-update-order-payments");
-
-  query =
-    status === "all"
-      ? query.in("status", ["pending", "approved"])
-      : query.eq("status", status);
-
-  const { data, error, count } = await query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) throw error;
+  const response = (await invokeFunction(endpoint, {
+    method: "GET",
+  })) as RawPendingPaymentsResponse | null;
 
   return {
-    rows: ((data ?? []) as RawPendingRequest[]).map((row) => {
+    rows: (response?.data ?? []).map((row) => {
       const totalAmount = toNumber(row.payload.total_amount);
       const creditAmount = Math.max(0, toNumber(row.payload.credit_amount));
       return {
@@ -128,7 +151,8 @@ export const fetchPendingPayments = async ({
         orderProducts: row.payload.order_products ?? [],
       };
     }),
-    total: count ?? 0,
+    total: toNumber(response?.page?.total),
+    franchises: response?.franchises ?? [],
   };
 };
 

@@ -84,32 +84,17 @@ export const CustomerLevelFormDialog = ({ open, onOpenChange, onSave, editLevel 
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label htmlFor="discountPct">Descuento (%)</Label>
-                    <Input
-                      id="discountPct"
-                      type="number"
-                      step="1"
-                      min="0"
-                      max="100"
-                      value={form.discountPct}
-                      onChange={(e) => setField("discountPct", e.target.value)}
-                    />
-                    {errors.discountPct && <span className="text-xs text-destructive">{errors.discountPct}</span>}
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="sortOrder">Orden</Label>
-                    <Input
-                      id="sortOrder"
-                      type="number"
-                      step="1"
-                      min="0"
-                      placeholder="Auto"
-                      value={form.sortOrder}
-                      onChange={(e) => setField("sortOrder", e.target.value)}
-                    />
-                  </div>
+                <div className="space-y-1">
+                  <Label htmlFor="sortOrder">Orden</Label>
+                  <Input
+                    id="sortOrder"
+                    type="number"
+                    step="1"
+                    min="0"
+                    placeholder="Auto"
+                    value={form.sortOrder}
+                    onChange={(e) => setField("sortOrder", e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-1">
