@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import { limaDateRangeToIsoBounds } from "@/shared/utils/date";
 
 export type PendingPaymentStatus = "pending" | "approved";
 
@@ -69,7 +70,23 @@ export type FetchPendingPaymentsParams = {
   status?: PendingPaymentFilter;
   page?: number;
   size?: number;
+  /** Parte del código del movimiento (payload.movement_code). */
+  search?: string;
+  /**
+   * Nombres de tienda (payload.franchise_name). Se filtra por nombre y no por
+   * cuenta: el payload no guarda account_id y su document_number no es fiable
+   * (hay pagos de una misma tienda con documentos distintos).
+   */
+  franchiseNames?: string[];
+  /** Días "YYYY-MM-DD" en Lima, sobre created_at. */
+  startDate?: string | null;
+  endDate?: string | null;
 };
+
+const PAYMENTS_FROM_FN = "fch-update-order-payments";
+
+// % y _ son comodines de ILIKE: se escapan para buscar el texto tal cual.
+const escapeLike = (value: string): string => value.replace(/[\\%_]/g, "\\$&");
 
 export type FetchPendingPaymentsResult = {
   rows: PendingPaymentRow[];
@@ -80,6 +97,10 @@ export const fetchPendingPayments = async ({
   status = "pending",
   page = 1,
   size = 20,
+  search,
+  franchiseNames,
+  startDate,
+  endDate,
 }: FetchPendingPaymentsParams = {}): Promise<FetchPendingPaymentsResult> => {
   const from = (page - 1) * size;
   const to = from + size - 1;
@@ -89,12 +110,26 @@ export const fetchPendingPayments = async ({
     .select("id, created_at, processed_at, status, payload", {
       count: "exact",
     })
-    .eq("from_fn", "fch-update-order-payments");
+    .eq("from_fn", PAYMENTS_FROM_FN);
 
   query =
     status === "all"
       ? query.in("status", ["pending", "approved"])
       : query.eq("status", status);
+
+  const term = search?.trim();
+  if (term) {
+    query = query.ilike("payload->>movement_code", `%${escapeLike(term)}%`);
+  }
+
+  if (franchiseNames && franchiseNames.length > 0) {
+    query = query.in("payload->>franchise_name", franchiseNames);
+  }
+
+  const { start } = limaDateRangeToIsoBounds(startDate);
+  const { end } = limaDateRangeToIsoBounds(endDate);
+  if (start) query = query.gte("created_at", start);
+  if (end) query = query.lte("created_at", end);
 
   const { data, error, count } = await query
     .order("created_at", { ascending: false })
@@ -130,6 +165,28 @@ export const fetchPendingPayments = async ({
     }),
     total: count ?? 0,
   };
+};
+
+/**
+ * Tiendas que han enviado algún pago, para el filtro de franquiciado. Sale de
+ * los mismos pagos (y no del listado de cuentas) porque el filtro compara
+ * contra payload.franchise_name.
+ */
+export const fetchPendingPaymentFranchises = async (): Promise<string[]> => {
+  const { data, error } = await (supabase as any)
+    .from("pending_requests")
+    .select("franchise_name:payload->>franchise_name")
+    .eq("from_fn", PAYMENTS_FROM_FN)
+    .in("status", ["pending", "approved"]);
+
+  if (error) throw error;
+
+  const names = new Set<string>();
+  for (const row of (data ?? []) as Array<{ franchise_name: string | null }>) {
+    const name = row.franchise_name?.trim();
+    if (name) names.add(name);
+  }
+  return [...names].sort((a, b) => a.localeCompare(b, "es"));
 };
 
 export const confirmPendingPayment = async (
