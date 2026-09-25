@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useActivePaymentMethods } from "@/modules/settings/hooks/usePaymentMethods";
+import { useCustomerLevels } from "@/modules/customers/hooks/useCustomerLevels";
+import { formatCustomerLevelRange } from "@/modules/customers/adapters/customerLevels.adapter";
 import type { Condition, ConditionType } from "../../types/priceRule.types";
 import {
   CONDITION_TYPE_LABELS,
@@ -115,6 +117,88 @@ const PaymentMethodSelect = ({
   );
 };
 
+// Niveles de "Niveles OVTK Crew" (customer_levels). La condición guarda sus ids;
+// el motor aplica la regla si el nivel actual del cliente está entre ellos.
+const CustomerLevelSelect = ({
+  condition,
+  updateField,
+}: {
+  condition: Condition;
+  updateField: (key: string, value: unknown) => void;
+}) => {
+  const { levels, isLoading } = useCustomerLevels();
+  const selectedIds: number[] = (condition as any).level_ids ?? [];
+  const activeLevels = levels.filter((l) => l.active);
+
+  const toggleId = (id: number) => {
+    const next = selectedIds.includes(id)
+      ? selectedIds.filter((x) => x !== id)
+      : [...selectedIds, id];
+    updateField("level_ids", next);
+  };
+
+  return (
+    <div className="space-y-1 flex-1">
+      <Label className="text-xs">Niveles</Label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-full justify-between font-normal"
+            disabled={isLoading}
+          >
+            {selectedIds.length > 0 ? (
+              <div className="flex gap-1 flex-wrap">
+                {selectedIds.map((id) => {
+                  const level = levels.find((l) => l.id === id);
+                  return (
+                    <Badge key={id} variant="secondary" className="text-xs">
+                      {level ? `${level.name}${level.active ? "" : " (inactivo)"}` : `Nivel #${id}`}
+                    </Badge>
+                  );
+                })}
+              </div>
+            ) : (
+              <span className="text-muted-foreground">
+                {isLoading ? "Cargando..." : "Seleccionar niveles"}
+              </span>
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[300px] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Buscar nivel..." />
+            <CommandList>
+              <CommandEmpty>No se encontraron niveles</CommandEmpty>
+              <CommandGroup>
+                {activeLevels.map((level) => (
+                  <CommandItem
+                    key={level.id}
+                    value={level.name}
+                    onSelect={() => toggleId(level.id)}
+                  >
+                    <Checkbox
+                      checked={selectedIds.includes(level.id)}
+                      className="mr-2"
+                    />
+                    <div className="flex flex-col">
+                      <span>{level.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatCustomerLevelRange(level)} puntos
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
+
 interface ConditionRowProps {
   condition: Condition;
   onChange: (condition: Condition) => void;
@@ -159,7 +243,7 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
         });
         break;
       case "customer_level":
-        Object.assign(base, { min_points: 0, max_points: undefined });
+        Object.assign(base, { level_ids: [] });
         break;
       case "payment_method":
         Object.assign(base, { payment_method_codes: [] });
@@ -387,31 +471,7 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
         );
 
       case "customer_level":
-        return (
-          <div className="flex gap-2 items-end">
-            <div className="space-y-1">
-              <Label className="text-xs">Puntos mín.</Label>
-              <Input
-                type="number"
-                className="w-[120px]"
-                value={(condition as any).min_points ?? 0}
-                onChange={(e) => updateField("min_points", parseFloat(e.target.value) || 0)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Puntos máx.</Label>
-              <Input
-                type="number"
-                className="w-[120px]"
-                placeholder="Sin límite"
-                value={(condition as any).max_points ?? ""}
-                onChange={(e) =>
-                  updateField("max_points", e.target.value ? parseFloat(e.target.value) : undefined)
-                }
-              />
-            </div>
-          </div>
-        );
+        return <CustomerLevelSelect condition={condition} updateField={updateField} />;
 
       case "payment_method":
         return <PaymentMethodSelect condition={condition} updateField={updateField} />;

@@ -5,21 +5,20 @@ export interface CustomerLevelRow {
   name: string;
   min_points: number;
   max_points: number | null;
-  discount: number; // fraccion 0..1 (0.05 = 5%)
   color: string | null;
   image_url: string | null;
   subtitle: string | null;
   active: boolean;
 }
 
-// Tipo de UI (camelCase). discountPct en 0..100 para mostrarlo como porcentaje.
+// Tipo de UI (camelCase). El descuento no vive aqui: lo pone la regla de precio
+// que elige el nivel.
 export interface CustomerLevel {
   id: number;
   sortOrder: number;
   name: string;
   minPoints: number;
   maxPoints: number | null; // null = nivel mas alto (sin tope)
-  discountPct: number;
   color: string | null;
   imageUrl: string | null;
   subtitle: string | null;
@@ -32,7 +31,6 @@ export interface CustomerLevelPayload {
   name: string;
   minPoints: number;
   maxPoints: number | null;
-  discountPct: number;
   color: string | null;
   imageUrl: string | null;
   subtitle: string | null;

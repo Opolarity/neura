@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -36,13 +36,13 @@ const CustomerPointsMovements = () => {
           <h1 className="text-3xl font-bold">Movimientos de puntos</h1>
           <p className="text-muted-foreground">Historial de movimientos de puntos por cliente</p>
         </div>
-        {/* Sumar puntos es acreditar saldo al cliente, así que se concede
-            aparte de poder consultar el historial. El diálogo no se envuelve
-            por separado: solo se abre desde este botón. */}
+        {/* Ajustar puntos (sumar o restar) cambia el saldo del cliente, así que
+            se concede aparte de poder consultar el historial. El diálogo no se
+            envuelve por separado: solo se abre desde este botón. */}
         <ComponentPermission codeIn={["customer_points_movements.create"]}>
           <Button onClick={() => setAddDialogOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Sumar Puntos
+            <ArrowUpDown className="w-4 h-4 mr-2" />
+            Ajustar puntos
           </Button>
         </ComponentPermission>
       </div>

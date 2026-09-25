@@ -10,6 +10,7 @@ import {
 import { Edit, Loader2, Trash } from "lucide-react";
 import { ComponentPermission } from "@/shared/components/component-permission";
 import type { CustomerLevel } from "@/modules/customers/types/customerLevels.types";
+import { formatCustomerLevelRange } from "@/modules/customers/adapters/customerLevels.adapter";
 
 // Codes de la columna Acciones. En una constante para que la cabecera y las
 // celdas no puedan quedar con listas distintas y aparezca un th sin td.
@@ -23,19 +24,12 @@ interface CustomerLevelsTableProps {
   onDelete: (level: CustomerLevel) => void;
 }
 
-// El rango se muestra inclusivo (0 – 149), aunque en la BD el tope se guarda
-// exclusivo ([min, max)): de ahi el max_points - 1. Sin tope => infinito.
-const formatRange = (level: CustomerLevel): string => {
-  const to = level.maxPoints === null ? "∞" : String(level.maxPoints - 1);
-  return `${level.minPoints} – ${to}`;
-};
-
 export default function CustomerLevelsTable({ levels, isLoading, error, onEdit, onDelete }: CustomerLevelsTableProps) {
   const renderBody = () => {
     if (isLoading) {
       return (
         <TableRow>
-          <TableCell colSpan={6} className="text-center py-8">
+          <TableCell colSpan={5} className="text-center py-8">
             <div className="flex justify-center items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
               Cargando niveles...
@@ -48,7 +42,7 @@ export default function CustomerLevelsTable({ levels, isLoading, error, onEdit, 
     if (error) {
       return (
         <TableRow>
-          <TableCell colSpan={6} className="text-center py-8 text-destructive">
+          <TableCell colSpan={5} className="text-center py-8 text-destructive">
             No se pudieron cargar los niveles.
           </TableCell>
         </TableRow>
@@ -58,7 +52,7 @@ export default function CustomerLevelsTable({ levels, isLoading, error, onEdit, 
     if (levels.length === 0) {
       return (
         <TableRow>
-          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
             No hay niveles registrados.
           </TableCell>
         </TableRow>
@@ -77,8 +71,7 @@ export default function CustomerLevelsTable({ levels, isLoading, error, onEdit, 
             {level.name}
           </div>
         </TableCell>
-        <TableCell className="whitespace-nowrap">{formatRange(level)}</TableCell>
-        <TableCell>{level.discountPct}%</TableCell>
+        <TableCell className="whitespace-nowrap">{formatCustomerLevelRange(level)}</TableCell>
         <TableCell>{level.active ? "Activo" : "Inactivo"}</TableCell>
         {/* Se envuelve la celda entera, no su contenido: un th/td vacío sigue
             ocupando ancho. Basta una de las dos acciones para que la columna
@@ -110,7 +103,6 @@ export default function CustomerLevelsTable({ levels, isLoading, error, onEdit, 
           <TableHead className="w-16">Orden</TableHead>
           <TableHead>Nombre</TableHead>
           <TableHead>Rango de puntos</TableHead>
-          <TableHead>Descuento</TableHead>
           <TableHead>Estado</TableHead>
           <ComponentPermission codeIn={ACTION_CODES}>
             <TableHead>Acciones</TableHead>
