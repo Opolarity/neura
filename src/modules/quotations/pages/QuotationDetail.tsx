@@ -87,6 +87,10 @@ import { cn } from "@/shared/utils/utils";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { AddQuotationServiceDialog } from "../components/AddQuotationServiceDialog";
 import { toastError } from "@/shared/utils/toastError";
+import {
+  DeselectConfirmDialog,
+  useDeselectGuard,
+} from "@/shared/components/selection-guard";
 
 interface QuotationDetailProps {
   viewOnly?: boolean;
@@ -275,10 +279,19 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
   // pagina en servidor, y repartirla aquí daría una pestaña con tres filas y
   // un paginador anunciando veinte.
 
-  // Bulk selection state
-  const [selectedServiceIds, setSelectedServiceIds] = useState<Set<number>>(
-    new Set(),
-  );
+  // Bulk selection state. La selección se conserva al paginar, así que se
+  // guarda la fila y no solo el id: las acciones masivas necesitan
+  // last_situation, module_id y code de filas que ya no están en la página.
+  const [selectedServiceRows, setSelectedServiceRows] = useState<
+    Map<number, QuotationServiceApi>
+  >(new Map());
+  const selectedServicesList = Array.from(selectedServiceRows.values());
+
+  // Buscar o cambiar de pestaña con líneas seleccionadas pide confirmación y
+  // deselecciona; paginar conserva la selección.
+  const { guard, dialogProps: deselectDialogProps } = useDeselectGuard();
+  const guardSelection = (action: () => void) =>
+    guard(selectedServiceRows.size, () => setSelectedServiceRows(new Map()), action);
 
   // Bulk situation modal state
   const [bulkSituationModalOpen, setBulkSituationModalOpen] = useState(false);
@@ -327,31 +340,30 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
     BulkStockEntryResult[]
   >([]);
 
-  const toggleServiceSelection = (id: number) => {
-    setSelectedServiceIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+  const toggleServiceSelection = (service: QuotationServiceApi) => {
+    setSelectedServiceRows((prev) => {
+      const next = new Map(prev);
+      if (next.has(service.id)) next.delete(service.id);
+      else next.set(service.id, service);
       return next;
     });
   };
 
+  const allPageServicesSelected =
+    services.length > 0 && services.every((s) => selectedServiceRows.has(s.id));
+
+  // Solo actúa sobre la página visible: lo seleccionado en otras páginas se
+  // conserva. Si la página está a medias, la completa.
   const toggleAllServices = () => {
-    if (
-      selectedServiceIds.size === services.length &&
-      services.length > 0
-    ) {
-      setSelectedServiceIds(new Set());
-    } else {
-      setSelectedServiceIds(new Set(services.map((s) => s.id)));
-    }
+    setSelectedServiceRows((prev) => {
+      const next = new Map(prev);
+      services.forEach((s) =>
+        allPageServicesSelected ? next.delete(s.id) : next.set(s.id, s),
+      );
+      return next;
+    });
   };
 
-  /**
-   * Cambiar de pestaña limpia la selección: las acciones masivas trabajan
-   * sobre `selectedServiceIds`, y sin limpiar se actuaría sobre filas que ya
-   * no están a la vista.
-   */
   const [printingOrder, setPrintingOrder] = useState(false);
 
   /**
@@ -499,13 +511,13 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
     }
   };
 
-  const handleServiceTabChange = (value: string) => {
-    onServiceKindChange(value as ServiceTab);
-    setSelectedServiceIds(new Set());
-  };
+  // Cambiar de pestaña cambia el tipo de fila (maquila o material): la
+  // selección de una no vale en la otra.
+  const handleServiceTabChange = (value: string) =>
+    guardSelection(() => onServiceKindChange(value as ServiceTab));
 
   const openBulkSituationModal = async () => {
-    const firstSelected = services.find((s) => selectedServiceIds.has(s.id));
+    const firstSelected = selectedServicesList[0];
     if (!firstSelected) return;
     setBulkSituationId("");
     setBulkSituationModalOpen(true);
@@ -524,14 +536,11 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
 
   const openBulkIngresoModal = async () => {
     // Captura sincrónicamente antes de cualquier await para evitar stale closure
-    const selectedIds = new Set(Array.from(selectedServiceIds).map(Number));
-    const bulkServices: BulkServiceItem[] = services
-      .filter((s) => selectedIds.has(Number(s.id)))
-      .map((s) => ({
-        supplier_service_id: Number(s.id),
-        code: s.code,
-        production_order_id: s.production_order_id,
-      }));
+    const bulkServices: BulkServiceItem[] = selectedServicesList.map((s) => ({
+      supplier_service_id: Number(s.id),
+      code: s.code,
+      production_order_id: s.production_order_id,
+    }));
 
     if (bulkServices.length === 0) {
       toast({ title: "No hay servicios seleccionados", variant: "destructive" });
@@ -588,14 +597,11 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
     if (!bulkIngresoStockTypeId || !userWarehouse || !quotation) return;
     setIsBulkIngresoLoading(true);
     try {
-      const selectedIds = new Set(Array.from(selectedServiceIds).map(Number));
-      const bulkServices: BulkServiceItem[] = services
-        .filter((s) => selectedIds.has(Number(s.id)))
-        .map((s) => ({
-          supplier_service_id: Number(s.id),
-          code: s.code,
-          production_order_id: s.production_order_id,
-        }));
+      const bulkServices: BulkServiceItem[] = selectedServicesList.map((s) => ({
+        supplier_service_id: Number(s.id),
+        code: s.code,
+        production_order_id: s.production_order_id,
+      }));
 
       const result = await bulkServiceStockEntry(
         {
@@ -607,10 +613,20 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
         false,
       );
       toast({ title: `${result.summary.will_process} ingreso(s) creado(s) exitosamente`, variant: "success" });
-      if (result.summary.skipped > 0)
-        toast({ title: `${result.summary.skipped} servicio(s) omitido(s)`, variant: "info" });
+      // El backend cuenta los errores dentro de "skipped": se separan para no
+      // presentar un fallo como una omisión normal (stock ya completo, etc.).
+      const errors = result.results.filter((r) => r.status === "error");
+      const skipped = result.summary.skipped - errors.length;
+      if (skipped > 0)
+        toast({ title: `${skipped} servicio(s) omitido(s)`, variant: "info" });
+      if (errors.length > 0)
+        toast({
+          title: `${errors.length} servicio(s) no se pudieron ingresar`,
+          description: errors[0].reason,
+          variant: "destructive",
+        });
       setBulkIngresoOpen(false);
-      setSelectedServiceIds(new Set());
+      setSelectedServiceRows(new Map());
       await refetch();
     } catch (err) {
       toastError(err, "Error al crear ingresos");
@@ -649,13 +665,51 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
     }
   };
 
+  /**
+   * Un avance por servicio, cada uno en su transacción: con Promise.all el
+   * primer error escondía los que sí se guardaron. Ahora se informa cuántos
+   * fallaron (p. ej. porque otro usuario los avanzó mientras tanto: la
+   * selección se conserva entre páginas) y se recarga siempre, para que lo
+   * que quede por hacer se vuelva a elegir con datos frescos.
+   */
+  const runBulkSituationUpdates = async (
+    allParams: UpdateServiceSituationParams[],
+  ) => {
+    const results = await Promise.allSettled(
+      allParams.map((p) => updateServiceSituation(p)),
+    );
+    const failed = results.filter(
+      (r): r is PromiseRejectedResult => r.status === "rejected",
+    );
+    const okIndexes = results.flatMap((r, i) =>
+      r.status === "fulfilled" ? [i] : [],
+    );
+
+    if (failed.length === 0) {
+      toast({ title: "Servicios actualizados correctamente", variant: "success" });
+    } else if (okIndexes.length === 0) {
+      toastError(failed[0].reason, "No se pudo actualizar ningún servicio");
+    } else {
+      toast({
+        title: `Se actualizaron ${okIndexes.length} de ${results.length} servicios`,
+        description:
+          `${failed.length} no se actualizaron: ` +
+          (failed[0].reason instanceof Error
+            ? failed[0].reason.message
+            : "error desconocido"),
+        variant: "warning",
+      });
+    }
+
+    return okIndexes;
+  };
+
   const executeBulkSave = async (allParams: UpdateServiceSituationParams[]) => {
     setIsBulkSaving(true);
     try {
-      await Promise.all(allParams.map((p) => updateServiceSituation(p)));
-      toast({ title: "Servicios actualizados correctamente", variant: "success" });
+      await runBulkSituationUpdates(allParams);
       setBulkSituationModalOpen(false);
-      setSelectedServiceIds(new Set());
+      setSelectedServiceRows(new Map());
       await refetch();
     } catch (err) {
       toastError(err, "Error al actualizar");
@@ -672,9 +726,7 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
     );
     if (!chosenSituation) return;
 
-    const selectedServices = services.filter((s) =>
-      selectedServiceIds.has(s.id),
-    );
+    const selectedServices = selectedServicesList;
     const allParams: UpdateServiceSituationParams[] = selectedServices.map(
       (service) => {
         const sit = service.last_situation!;
@@ -716,14 +768,14 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
     if (!pendingBulkParams) return;
     setIsBulkSaving(true);
     try {
-      await Promise.all(
-        pendingBulkParams.params.map((p) => updateServiceSituation(p)),
+      const okIndexes = await runBulkSituationUpdates(pendingBulkParams.params);
+      // La confirmación externa solo de los que sí quedaron recibidos.
+      await callFchConfirmReceivedBulk(
+        okIndexes.map((i) => pendingBulkParams.services[i]),
       );
-      await callFchConfirmReceivedBulk(pendingBulkParams.services);
-      toast({ title: "Servicios actualizados correctamente", variant: "success" });
       setBulkRecvConfirmOpen(false);
       setPendingBulkParams(null);
-      setSelectedServiceIds(new Set());
+      setSelectedServiceRows(new Map());
       await refetch();
     } catch (err) {
       toastError(err, "Error al actualizar");
@@ -1463,7 +1515,8 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") onSearchChange(searchInput);
+                      if (e.key === "Enter")
+                        guardSelection(() => onSearchChange(searchInput));
                     }}
                   />
                   <Button
@@ -1471,15 +1524,17 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
                     size="icon"
                     variant="outline"
                     type="button"
-                    onClick={() => onSearchChange(searchInput)}
+                    onClick={() =>
+                      guardSelection(() => onSearchChange(searchInput))
+                    }
                   >
                     <Search />
                   </Button>
                 </div>
-                {!viewOnly && selectedServiceIds.size > 0 && (
+                {!viewOnly && selectedServiceRows.size > 0 && (
                   <>
                     <span className="text-sm text-muted-foreground">
-                      {selectedServiceIds.size} seleccionado(s)
+                      {selectedServiceRows.size} seleccionado(s)
                     </span>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -1506,10 +1561,7 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
                     {!viewOnly && (
                       <TableHead className="w-10">
                         <Checkbox
-                          checked={
-                            services.length > 0 &&
-                            selectedServiceIds.size === services.length
-                          }
+                          checked={allPageServicesSelected}
                           onCheckedChange={toggleAllServices}
                         />
                       </TableHead>
@@ -1555,9 +1607,9 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
                           {!viewOnly && (
                             <TableCell>
                               <Checkbox
-                                checked={selectedServiceIds.has(service.id)}
+                                checked={selectedServiceRows.has(service.id)}
                                 onCheckedChange={() =>
-                                  toggleServiceSelection(service.id)
+                                  toggleServiceSelection(service)
                                 }
                               />
                             </TableCell>
@@ -2348,7 +2400,7 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
             <p className="text-sm text-muted-foreground">
               Se cambiará el estado de{" "}
               <span className="font-semibold text-foreground">
-                {selectedServiceIds.size}
+                {selectedServiceRows.size}
               </span>{" "}
               servicio(s) seleccionado(s).
             </p>
@@ -2636,6 +2688,8 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
         quotationId={quotation?.id ?? null}
         quotationLabel={quotation?.code ?? null}
       />
+
+      <DeselectConfirmDialog {...deselectDialogProps} />
     </div>
   );
 };

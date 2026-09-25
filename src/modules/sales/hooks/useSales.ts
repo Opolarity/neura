@@ -135,13 +135,20 @@ export const useSales = () => {
     loadData(newFilters);
   };
 
+  // Solo actúa sobre la página visible: lo seleccionado en otras páginas se
+  // conserva. Si la página está a medias, la completa.
   const toggleSelectAll = () => {
-    if (selectedSales.length === sales.length) {
-      setSelectedSales([]);
-    } else {
-      setSelectedSales(sales.map((sale) => sale.id));
-    }
+    const pageIds = sales.map((sale) => sale.id);
+    const allPageSelected =
+      pageIds.length > 0 && pageIds.every((id) => selectedSales.includes(id));
+    setSelectedSales((prev) =>
+      allPageSelected
+        ? prev.filter((id) => !pageIds.includes(id))
+        : [...prev, ...pageIds.filter((id) => !prev.includes(id))],
+    );
   };
+
+  const clearSelection = () => setSelectedSales([]);
 
   const toggleSaleSelection = (saleId: number) => {
     setSelectedSales((prev) =>
@@ -223,6 +230,7 @@ export const useSales = () => {
     handlePageSizeChange,
     toggleSelectAll,
     toggleSaleSelection,
+    clearSelection,
     onOpenFilterModal,
     onCloseFilterModal,
     onApplyFilter,

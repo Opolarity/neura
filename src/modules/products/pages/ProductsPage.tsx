@@ -1,4 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { CategoryOption } from "@/shared/components/category-selector";
+import {
+  DeselectConfirmDialog,
+  SelectedCount,
+  useDeselectGuard,
+} from "@/shared/components/selection-guard";
 import ProductHeader from "../components/products/ProductHeader";
 import ProductsTable from "../components/products/ProductsTable";
 import ProductsFilterModal from "../components/products/ProductsFilterModal";
@@ -34,6 +40,7 @@ const Products = () => {
     handlePageSizeChange,
     toggleSelectAll,
     toggleProductSelection,
+    clearSelection,
     deleteSelectedsProduct,
     deleteSelectedProduct,
     onOpenFilterModal,
@@ -45,6 +52,16 @@ const Products = () => {
     onSearchChange,
     onOrderChange,
   } = useProducts();
+
+  // Buscar, ordenar o filtrar con líneas seleccionadas pide confirmación y
+  // deselecciona; paginar conserva la selección.
+  const { guard, dialogProps: deselectDialogProps } = useDeselectGuard();
+  const guardSelection = (action: () => void) =>
+    guard(selectedProducts.length, clearSelection, action);
+
+  // El modal de filtros entrega las categorías justo antes de onApply: se
+  // retienen hasta confirmar para que cancelar no deje los filtros a medias.
+  const pendingCategories = useRef<CategoryOption[]>([]);
 
   const handleDeleteClick = (product: Product) => {
     setProductToDelete(product);
@@ -67,15 +84,22 @@ const Products = () => {
       />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader className="!p-4">
-          <ProductsFilterBar
-            search={search}
-            onSearchChange={onSearchChange}
-            onOpen={onOpenFilterModal}
-            order={filters.order}
-            onOrderChange={onOrderChange}
-            hasActiveFilters={hasActiveFilters}
-          />
+        <CardHeader className="!p-4 space-y-0 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ProductsFilterBar
+              search={search}
+              onSearchChange={(value) =>
+                guardSelection(() => onSearchChange(value))
+              }
+              onOpen={onOpenFilterModal}
+              order={filters.order}
+              onOrderChange={(order) =>
+                guardSelection(() => onOrderChange(order))
+              }
+              hasActiveFilters={hasActiveFilters}
+            />
+          </div>
+          <SelectedCount count={selectedProducts.length} />
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <ProductsTable
@@ -101,13 +125,22 @@ const Products = () => {
       <ProductsFilterModal
         isOpen={isOpenFilterModal}
         selectedCategories={selectedCategories}
-        onChangeSelectedCategories={setSelectedCategories}
+        onChangeSelectedCategories={(items) => {
+          pendingCategories.current = items;
+        }}
         tags={tags}
         brands={brands}
         filters={filters}
         onClose={onCloseFilterModal}
-        onApply={onApplyFilter}
+        onApply={(newFilters) =>
+          guardSelection(() => {
+            setSelectedCategories(pendingCategories.current);
+            onApplyFilter(newFilters);
+          })
+        }
       />
+
+      <DeselectConfirmDialog {...deselectDialogProps} />
 
       <ProductDeleteDialog
         open={!!productToDelete}

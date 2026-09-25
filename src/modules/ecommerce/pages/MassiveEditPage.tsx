@@ -1,16 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import type { CategoryOption } from "@/shared/components/category-selector";
+import {
+  DeselectConfirmDialog,
+  SelectedCount,
+  useDeselectGuard,
+} from "@/shared/components/selection-guard";
 import MassiveEditProductsTable from "@/modules/ecommerce/components/MassiveEditProductsTable";
 import ProductsFilterModal from "@/modules/products/components/products/ProductsFilterModal";
 import { useProducts } from "@/modules/products/hooks/useProducts";
@@ -155,40 +150,18 @@ const PromotionalTextPage = () => {
     saveMinStock,
   } = useVariationsMinStock();
 
-  // La selección se conserva al paginar, pero buscar, ordenar o filtrar cambia
-  // el listado: se pide confirmación y, si se acepta, se deselecciona todo en
-  // esa pestaña. Cada pestaña tiene su propia selección.
-  const [pendingAction, setPendingAction] = useState<(() => void) | null>(
-    null,
-  );
-
-  const confirmDeselect = (
-    selectedCount: number,
-    clear: () => void,
-    action: () => void,
-  ) => {
-    if (selectedCount === 0) {
-      action();
-      return;
-    }
-    setPendingAction(() => () => {
-      clear();
-      action();
-    });
-  };
-
+  // Buscar, ordenar o filtrar con líneas seleccionadas pide confirmación y
+  // deselecciona solo esa pestaña: cada una tiene su propia selección.
+  const { guard, dialogProps: deselectDialogProps } = useDeselectGuard();
   const guardProducts = (action: () => void) =>
-    confirmDeselect(selectedProducts.length, clearProductSelection, action);
+    guard(selectedProducts.length, clearProductSelection, action);
   const guardVariations = (action: () => void) =>
-    confirmDeselect(selectedVariations.length, clearVariationSelection, action);
+    guard(selectedVariations.length, clearVariationSelection, action);
 
   // El modal de filtros entrega las categorías justo antes de onApply: se
   // retienen hasta confirmar para que cancelar no deje los filtros a medias.
   const pendingProductCategories = useRef<CategoryOption[]>([]);
   const pendingVariationCategories = useRef<CategoryOption[]>([]);
-
-  const selectedCountLabel = (n: number) =>
-    `${n} seleccionado${n === 1 ? "" : "s"}`;
 
   const noSelectionToast = (label: string) => {
     toast({
@@ -199,6 +172,25 @@ const PromotionalTextPage = () => {
   };
 
   const plural = (n: number) => `${n} producto${n > 1 ? "s" : ""}`;
+
+  // La selección se conserva entre páginas: lo borrado mientras tanto lo
+  // omite el backend, y aquí se avisa aparte del resultado.
+  const warnSkipped = (
+    skippedIds: number[] | undefined,
+    singular: string,
+    pluralLabel: string,
+  ) => {
+    const n = skippedIds?.length ?? 0;
+    if (n === 0) return;
+    toast({
+      title:
+        n === 1
+          ? `Se omitió 1 ${singular}`
+          : `Se omitieron ${n} ${pluralLabel}`,
+      description: "Ya no existían o fueron eliminados después de seleccionarlos.",
+      variant: "warning",
+    });
+  };
 
   const handleSavePromo = async (
     promoText: string,
@@ -364,6 +356,7 @@ const PromotionalTextPage = () => {
     try {
       if (isUnassign) {
         const result = await unassignMassiveTagsApi(selectedProducts, tagIds);
+        warnSkipped(result.skippedProductIds, "producto", "productos");
 
         if (result.deleted === 0) {
           toast({
@@ -384,6 +377,7 @@ const PromotionalTextPage = () => {
         }
       } else {
         const result = await assignMassiveTagsApi(selectedProducts, tagIds);
+        warnSkipped(result.skippedProductIds, "producto", "productos");
 
         if (result.created === 0) {
           toast({
@@ -422,6 +416,7 @@ const PromotionalTextPage = () => {
 
     try {
       const result = await assignMassiveBrandsApi(selectedProducts, brandIds, mode);
+      warnSkipped(result.skippedProductIds, "producto", "productos");
 
       if (isUnassign) {
         if (result.removed === 0) {
@@ -474,6 +469,7 @@ const PromotionalTextPage = () => {
 
     try {
       const result = await saveMinStock(minStock);
+      warnSkipped(result.skippedIds, "variación", "variaciones");
 
       toast({
         title: minStock === null ? "Stock mínimo restablecido" : "Stock mínimo guardado",
@@ -644,7 +640,7 @@ const PromotionalTextPage = () => {
           className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
         >
           <Card className="flex flex-col h-full min-h-0 overflow-hidden">
-            <CardHeader className="!p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <CardHeader className="!p-4 space-y-0 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <div className="flex items-center gap-2">
                 <ProductsFilterBar
                   search={search}
@@ -659,11 +655,7 @@ const PromotionalTextPage = () => {
                   hasActiveFilters={hasActiveFilters}
                 />
               </div>
-              {selectedProducts.length > 0 && (
-                <p className="text-sm text-muted-foreground">
-                  {selectedCountLabel(selectedProducts.length)}
-                </p>
-              )}
+              <SelectedCount count={selectedProducts.length} />
             </CardHeader>
 
             <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
@@ -692,7 +684,7 @@ const PromotionalTextPage = () => {
           className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
         >
           <Card className="flex flex-col h-full min-h-0 overflow-hidden">
-            <CardHeader className="!p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <CardHeader className="!p-4 space-y-0 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <div className="flex items-center gap-2">
                 <ProductsFilterBar
                   search={variationSearch}
@@ -707,11 +699,7 @@ const PromotionalTextPage = () => {
                   hasActiveFilters={hasActiveVariationFilters}
                 />
               </div>
-              {selectedVariations.length > 0 && (
-                <p className="text-sm text-muted-foreground">
-                  {selectedCountLabel(selectedVariations.length)}
-                </p>
-              )}
+              <SelectedCount count={selectedVariations.length} />
             </CardHeader>
 
             <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
@@ -777,33 +765,7 @@ const PromotionalTextPage = () => {
         }
       />
 
-      <AlertDialog
-        open={pendingAction !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingAction(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cambiar el listado</AlertDialogTitle>
-            <AlertDialogDescription>
-              Las líneas seleccionadas serán deseleccionadas, ¿quieres
-              continuar?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                pendingAction?.();
-                setPendingAction(null);
-              }}
-            >
-              Continuar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeselectConfirmDialog {...deselectDialogProps} />
 
       <MinimumStockModal
         isOpen={isMinimumStockOpen}
