@@ -30,7 +30,7 @@ const ProductHeader = ({
               className="gap-2"
             >
               <Trash className="w-4 h-4" />
-              Eliminar {selectedProducts.length} seleccionados
+              {`Eliminar ${selectedProducts.length} seleccionado${selectedProducts.length === 1 ? "" : "s"}`}
             </Button>
           </ComponentPermission>
         )}
