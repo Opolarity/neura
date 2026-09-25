@@ -169,13 +169,20 @@ export const useProducts = () => {
     loadData(newFilters);
   };
 
+  // Solo actúa sobre la página visible: lo seleccionado en otras páginas se
+  // conserva. Si la página está a medias, la completa.
   const toggleSelectAll = () => {
-    if (selectedProducts.length === products.length) {
-      setSelectedProducts([]);
-    } else {
-      setSelectedProducts(products.map((product) => product.id));
-    }
+    const pageIds = products.map((product) => product.id);
+    const allPageSelected =
+      pageIds.length > 0 && pageIds.every((id) => selectedProducts.includes(id));
+    setSelectedProducts((prev) =>
+      allPageSelected
+        ? prev.filter((id) => !pageIds.includes(id))
+        : [...prev, ...pageIds.filter((id) => !prev.includes(id))]
+    );
   };
+
+  const clearSelection = () => setSelectedProducts([]);
 
   const toggleProductSelection = (productId: number) => {
     setSelectedProducts((prev) =>
@@ -228,6 +235,7 @@ export const useProducts = () => {
     hasActiveFilters,
     toggleSelectAll,
     toggleProductSelection,
+    clearSelection,
     deleteSelectedsProduct,
     deleteSelectedProduct,
     onPageChange,

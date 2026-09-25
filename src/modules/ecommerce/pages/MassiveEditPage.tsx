@@ -1,5 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import type { CategoryOption } from "@/shared/components/category-selector";
 import MassiveEditProductsTable from "@/modules/ecommerce/components/MassiveEditProductsTable";
 import ProductsFilterModal from "@/modules/products/components/products/ProductsFilterModal";
 import { useProducts } from "@/modules/products/hooks/useProducts";
@@ -105,6 +116,7 @@ const PromotionalTextPage = () => {
     handlePageSizeChange,
     toggleSelectAll,
     toggleProductSelection,
+    clearSelection: clearProductSelection,
     onOpenFilterModal,
     onCloseFilterModal,
     onApplyFilter,
@@ -139,8 +151,44 @@ const PromotionalTextPage = () => {
     onApplyFilter: onApplyVariationFilter,
     toggleSelectAll: toggleAllVariations,
     toggleVariationSelection,
+    clearSelection: clearVariationSelection,
     saveMinStock,
   } = useVariationsMinStock();
+
+  // La selección se conserva al paginar, pero buscar, ordenar o filtrar cambia
+  // el listado: se pide confirmación y, si se acepta, se deselecciona todo en
+  // esa pestaña. Cada pestaña tiene su propia selección.
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(
+    null,
+  );
+
+  const confirmDeselect = (
+    selectedCount: number,
+    clear: () => void,
+    action: () => void,
+  ) => {
+    if (selectedCount === 0) {
+      action();
+      return;
+    }
+    setPendingAction(() => () => {
+      clear();
+      action();
+    });
+  };
+
+  const guardProducts = (action: () => void) =>
+    confirmDeselect(selectedProducts.length, clearProductSelection, action);
+  const guardVariations = (action: () => void) =>
+    confirmDeselect(selectedVariations.length, clearVariationSelection, action);
+
+  // El modal de filtros entrega las categorías justo antes de onApply: se
+  // retienen hasta confirmar para que cancelar no deje los filtros a medias.
+  const pendingProductCategories = useRef<CategoryOption[]>([]);
+  const pendingVariationCategories = useRef<CategoryOption[]>([]);
+
+  const selectedCountLabel = (n: number) =>
+    `${n} seleccionado${n === 1 ? "" : "s"}`;
 
   const noSelectionToast = (label: string) => {
     toast({
@@ -600,13 +648,22 @@ const PromotionalTextPage = () => {
               <div className="flex items-center gap-2">
                 <ProductsFilterBar
                   search={search}
-                  onSearchChange={onSearchChange}
+                  onSearchChange={(value) =>
+                    guardProducts(() => onSearchChange(value))
+                  }
                   onOpen={onOpenFilterModal}
                   order={filters.order}
-                  onOrderChange={onOrderChange}
+                  onOrderChange={(order) =>
+                    guardProducts(() => onOrderChange(order))
+                  }
                   hasActiveFilters={hasActiveFilters}
                 />
               </div>
+              {selectedProducts.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {selectedCountLabel(selectedProducts.length)}
+                </p>
+              )}
             </CardHeader>
 
             <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
@@ -639,21 +696,22 @@ const PromotionalTextPage = () => {
               <div className="flex items-center gap-2">
                 <ProductsFilterBar
                   search={variationSearch}
-                  onSearchChange={onVariationSearchChange}
+                  onSearchChange={(value) =>
+                    guardVariations(() => onVariationSearchChange(value))
+                  }
                   onOpen={onOpenVariationFilterModal}
                   order={variationFilters.order}
-                  onOrderChange={onVariationOrderChange}
+                  onOrderChange={(order) =>
+                    guardVariations(() => onVariationOrderChange(order))
+                  }
                   hasActiveFilters={hasActiveVariationFilters}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                {wholesaleChannel
-                  ? `Stock mínimo de ${wholesaleChannel.name}`
-                  : "Canal de la web mayorista no encontrado"}
-                {defaultMinStock !== null
-                  ? ` · por defecto ${defaultMinStock} unidades`
-                  : " · sin valor por defecto"}
-              </p>
+              {selectedVariations.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {selectedCountLabel(selectedVariations.length)}
+                </p>
+              )}
             </CardHeader>
 
             <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
@@ -682,13 +740,20 @@ const PromotionalTextPage = () => {
       <ProductsFilterModal
         isOpen={isOpenFilterModal}
         selectedCategories={selectedCategories}
-        onChangeSelectedCategories={setSelectedCategories}
+        onChangeSelectedCategories={(items) => {
+          pendingProductCategories.current = items;
+        }}
         tags={tags}
         brands={brands}
         showPromotionalImageFilter
         filters={filters}
         onClose={onCloseFilterModal}
-        onApply={onApplyFilter}
+        onApply={(newFilters) =>
+          guardProducts(() => {
+            setSelectedCategories(pendingProductCategories.current);
+            onApplyFilter(newFilters);
+          })
+        }
       />
 
       {/* Mismo modal de filtros, con el select de atributo que solo se pinta
@@ -696,14 +761,49 @@ const PromotionalTextPage = () => {
       <ProductsFilterModal
         isOpen={isOpenVariationFilterModal}
         selectedCategories={variationCategories}
-        onChangeSelectedCategories={setVariationCategories}
+        onChangeSelectedCategories={(items) => {
+          pendingVariationCategories.current = items;
+        }}
         tags={variationTags}
         brands={variationBrands}
         terms={terms}
         filters={variationFilters}
         onClose={onCloseVariationFilterModal}
-        onApply={onApplyVariationFilter}
+        onApply={(newFilters) =>
+          guardVariations(() => {
+            setVariationCategories(pendingVariationCategories.current);
+            onApplyVariationFilter(newFilters);
+          })
+        }
       />
+
+      <AlertDialog
+        open={pendingAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingAction(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cambiar el listado</AlertDialogTitle>
+            <AlertDialogDescription>
+              Las líneas seleccionadas serán deseleccionadas, ¿quieres
+              continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                pendingAction?.();
+                setPendingAction(null);
+              }}
+            >
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <MinimumStockModal
         isOpen={isMinimumStockOpen}

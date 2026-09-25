@@ -62,9 +62,11 @@ const ProductsTable = ({
             <ComponentPermission codeIn={["products.delete"]}>
               <TableHead className="w-12">
                 <Checkbox
+                  // La selección acumula productos de otras páginas: la
+                  // cabecera solo mira las filas visibles.
                   checked={
-                    selectedProducts.length === products.length &&
-                    products.length > 0
+                    products.length > 0 &&
+                    products.every((p) => selectedProducts.includes(p.id))
                   }
                   onCheckedChange={() => onToggleAllProductsSelection()}
                 />
