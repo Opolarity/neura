@@ -179,13 +179,21 @@ export const useMovements = () => {
     loadMovements(clearedFilters);
   };
 
+  // Solo actúa sobre la página visible: lo seleccionado en otras páginas se
+  // conserva. Si la página está a medias, la completa.
   const toggleSelectAll = () => {
-    if (selectedMovements.length === movements.length) {
-      setSelectedMovements([]);
-    } else {
-      setSelectedMovements(movements.map((m) => m.id));
-    }
+    const pageIds = movements.map((m) => m.id);
+    const allPageSelected =
+      pageIds.length > 0 &&
+      pageIds.every((id) => selectedMovements.includes(id));
+    setSelectedMovements((prev) =>
+      allPageSelected
+        ? prev.filter((id) => !pageIds.includes(id))
+        : [...prev, ...pageIds.filter((id) => !prev.includes(id))],
+    );
   };
+
+  const clearSelection = () => setSelectedMovements([]);
 
   const toggleMovementSelection = (movementId: number) => {
     setSelectedMovements((prev) =>
@@ -240,6 +248,7 @@ export const useMovements = () => {
     salesChannels,
 
     selectedMovements,
+    clearSelection,
 
     onSearchChange,
     onOpenFilterModal,

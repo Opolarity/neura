@@ -25,6 +25,11 @@ import { formatDateDisplay } from "@/shared/utils/date";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useNavigate } from "react-router-dom";
 import { ComponentPermission } from "@/shared/components/component-permission";
+import {
+  DeselectConfirmDialog,
+  SelectedCount,
+  useDeselectGuard,
+} from "@/shared/components/selection-guard";
 
 const getStatusClassName = (statusCode: string): string => {
   switch (statusCode.toLowerCase()) {
@@ -72,6 +77,7 @@ const Sales = () => {
     handlePageSizeChange,
     toggleSelectAll,
     toggleSaleSelection,
+    clearSelection,
     onOpenFilterModal,
     onCloseFilterModal,
     onApplyFilter,
@@ -80,20 +86,31 @@ const Sales = () => {
     goToSaleDetail,
   } = useSales();
 
+  // Buscar, ordenar o filtrar con líneas seleccionadas pide confirmación y
+  // deselecciona; paginar conserva la selección.
+  const { guard, dialogProps: deselectDialogProps } = useDeselectGuard();
+  const guardSelection = (action: () => void) =>
+    guard(selectedSales.length, clearSelection, action);
+
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       <SalesHeader selectedSales={selectedSales} handleNewSale={goToNewSale} />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader className="!p-4">
+        <CardHeader className="!p-4 space-y-0 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <SalesFilterBar
             search={search}
-            onSearchChange={onSearchChange}
+            onSearchChange={(value) =>
+              guardSelection(() => onSearchChange(value))
+            }
             onOpen={onOpenFilterModal}
             order={filters.order}
-            onOrderChange={onOrderChange}
+            onOrderChange={(order) =>
+              guardSelection(() => onOrderChange(order))
+            }
             hasActiveFilters={hasActiveFilters}
           />
+          <SelectedCount count={selectedSales.length} />
         </CardHeader>
 
         <CardContent className="p-0 relative flex-1 min-h-0 overflow-hidden">
@@ -107,8 +124,11 @@ const Sales = () => {
               <TableRow>
                 <TableHead className="w-12">
                   <Checkbox
+                    // La selección acumula ventas de otras páginas: la
+                    // cabecera solo mira las filas visibles.
                     checked={
-                      selectedSales.length === sales.length && sales.length > 0
+                      sales.length > 0 &&
+                      sales.every((sale) => selectedSales.includes(sale.id))
                     }
                     onCheckedChange={toggleSelectAll}
                   />
@@ -226,9 +246,13 @@ const Sales = () => {
         saleTypes={saleTypes}
         saleSituations={saleSituations}
         onClose={onCloseFilterModal}
-        onApply={onApplyFilter}
-        onClear={onClearFilters}
+        onApply={(newFilters) =>
+          guardSelection(() => onApplyFilter(newFilters))
+        }
+        onClear={() => guardSelection(onClearFilters)}
       />
+
+      <DeselectConfirmDialog {...deselectDialogProps} />
     </div>
   );
 };

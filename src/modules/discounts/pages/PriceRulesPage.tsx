@@ -6,6 +6,11 @@ import { PriceRulesFilterBar } from "../components/price-rules/PriceRulesFilterB
 import { PriceRulesTable } from "../components/price-rules/PriceRulesTable";
 import { PriceRuleDeleteDialog } from "../components/price-rules/PriceRuleDeleteDialog";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
+import {
+  DeselectConfirmDialog,
+  SelectedCount,
+  useDeselectGuard,
+} from "@/shared/components/selection-guard";
 
 const PriceRulesPage = () => {
   const navigate = useNavigate();
@@ -35,8 +40,15 @@ const PriceRulesPage = () => {
     isApplyingBulk,
     toggleSelectAll,
     toggleSelectRow,
+    clearSelection,
     applyBulkStatus,
   } = usePriceRules();
+
+  // Buscar o filtrar con líneas seleccionadas pide confirmación y
+  // deselecciona; paginar conserva la selección.
+  const { guard, dialogProps: deselectDialogProps } = useDeselectGuard();
+  const guardSelection = (action: () => void) =>
+    guard(selectedIds.size, clearSelection, action);
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
@@ -52,12 +64,19 @@ const PriceRulesPage = () => {
       />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
-        <CardHeader className="!p-4">
-          <PriceRulesFilterBar
-            filters={filters}
-            onSearchChange={onSearchChange}
-            onFilterChange={onFilterChange}
-          />
+        <CardHeader className="!p-4 space-y-0 flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+          <div className="flex-1 min-w-0">
+            <PriceRulesFilterBar
+              filters={filters}
+              onSearchChange={(search) =>
+                guardSelection(() => onSearchChange(search))
+              }
+              onFilterChange={(key, value) =>
+                guardSelection(() => onFilterChange(key, value))
+              }
+            />
+          </div>
+          <SelectedCount count={selectedIds.size} />
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <PriceRulesTable
@@ -93,6 +112,8 @@ const PriceRulesPage = () => {
         onConfirm={handleBulkDelete}
         isDeleting={isBulkDeleting}
       />
+
+      <DeselectConfirmDialog {...deselectDialogProps} />
     </div>
   );
 };

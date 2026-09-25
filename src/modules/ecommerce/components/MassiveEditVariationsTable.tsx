@@ -55,9 +55,13 @@ const MassiveEditVariationsTable = ({
             <ComponentPermission codeIn={SELECTION_CODES}>
               <TableHead className="w-12">
                 <Checkbox
+                  // La selección acumula variaciones de otras páginas: la
+                  // cabecera solo mira las filas visibles.
                   checked={
-                    selectedVariations.length === variations.length &&
-                    variations.length > 0
+                    variations.length > 0 &&
+                    variations.every((v) =>
+                      selectedVariations.includes(v.variationId),
+                    )
                   }
                   onCheckedChange={() => onToggleAllVariationsSelection()}
                 />

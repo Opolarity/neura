@@ -137,12 +137,21 @@ export function usePriceRules() {
       const result = await deletePriceRulesBulk(ids);
       const deleted = result?.deleted ?? ids.length;
 
-      toast({
-        title: deleted === 1
-          ? "Regla de precios eliminada"
-          : `${deleted} reglas de precios eliminadas`,
-        variant: "success",
-      });
+      // La selección se conserva entre páginas: alguna regla pudo eliminarse
+      // mientras tanto, y el backend la omite.
+      toast(
+        deleted < ids.length
+          ? {
+              title: `Se eliminaron ${deleted} de ${ids.length} reglas. El resto ya no existe o ya estaba eliminado.`,
+              variant: "warning",
+            }
+          : {
+              title: deleted === 1
+                ? "Regla de precios eliminada"
+                : `${deleted} reglas de precios eliminadas`,
+              variant: "success",
+            },
+      );
       setBulkDeleteDialogOpen(false);
       setSelectedIds(new Set());
       reloadAfterDelete(ids.length);
@@ -154,9 +163,17 @@ export function usePriceRules() {
     }
   };
 
+  // Solo actúa sobre la página visible: lo seleccionado en otras páginas se
+  // conserva. Desde el estado "a medias" llega checked=true y la completa.
   const toggleSelectAll = (checked: boolean) => {
-    setSelectedIds(checked ? new Set(rules.map((r) => r.id)) : new Set());
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      rules.forEach((r) => (checked ? next.add(r.id) : next.delete(r.id)));
+      return next;
+    });
   };
+
+  const clearSelection = () => setSelectedIds(new Set());
 
   const toggleSelectRow = (id: number, checked: boolean) => {
     setSelectedIds((prev) => {
@@ -232,6 +249,7 @@ export function usePriceRules() {
     isApplyingBulk,
     toggleSelectAll,
     toggleSelectRow,
+    clearSelection,
     applyBulkStatus,
   };
 }

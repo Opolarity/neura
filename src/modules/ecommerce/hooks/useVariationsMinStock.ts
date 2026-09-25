@@ -156,13 +156,21 @@ export const useVariationsMinStock = () => {
     setIsOpenFilterModal(false);
   };
 
+  // Solo actúa sobre la página visible: lo seleccionado en otras páginas se
+  // conserva. Si la página está a medias, la completa.
   const toggleSelectAll = () => {
-    if (selectedVariations.length === variations.length) {
-      setSelectedVariations([]);
-    } else {
-      setSelectedVariations(variations.map((v) => v.variationId));
-    }
+    const pageIds = variations.map((v) => v.variationId);
+    const allPageSelected =
+      pageIds.length > 0 &&
+      pageIds.every((id) => selectedVariations.includes(id));
+    setSelectedVariations((prev) =>
+      allPageSelected
+        ? prev.filter((id) => !pageIds.includes(id))
+        : [...prev, ...pageIds.filter((id) => !prev.includes(id))],
+    );
   };
+
+  const clearSelection = () => setSelectedVariations([]);
 
   const toggleVariationSelection = (variationId: number) => {
     setSelectedVariations((prev) =>
@@ -228,6 +236,7 @@ export const useVariationsMinStock = () => {
     onApplyFilter,
     toggleSelectAll,
     toggleVariationSelection,
+    clearSelection,
     saveMinStock,
   };
 };

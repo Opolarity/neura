@@ -44,6 +44,8 @@ export interface SaveMassiveMinStockResult {
   upserted: number;
   cleared: number;
   variations: number;
+  /** Variaciones borradas entre la selección y el guardado; no se tocaron. */
+  skippedIds?: number[];
   channelId: number;
   minStock: number | null;
 }

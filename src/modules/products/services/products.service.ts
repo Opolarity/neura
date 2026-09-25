@@ -213,6 +213,8 @@ export interface AssignTagsResult {
   skipped: number;
   requestedPairs: number;
   products: number;
+  /** Productos borrados entre la selección y el guardado; no se tocaron. */
+  skippedProductIds?: number[];
   tags: number;
 }
 
@@ -235,6 +237,8 @@ export interface UnassignTagsResult {
   notFound: number;
   requestedPairs: number;
   products: number;
+  /** Productos borrados entre la selección y el guardado; no se tocaron. */
+  skippedProductIds?: number[];
   tags: number;
 }
 
@@ -260,6 +264,8 @@ export interface AssignBrandsResult {
   removed: number;
   requestedPairs: number;
   products: number;
+  /** Productos borrados entre la selección y el guardado; no se tocaron. */
+  skippedProductIds?: number[];
   brands: number;
 }
 

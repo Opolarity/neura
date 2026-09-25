@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { CategoryOption } from "@/shared/components/category-selector";
+import {
+  DeselectConfirmDialog,
+  SelectedCount,
+  useDeselectGuard,
+} from "@/shared/components/selection-guard";
 import MassiveEditProductsTable from "@/modules/ecommerce/components/MassiveEditProductsTable";
 import ProductsFilterModal from "@/modules/products/components/products/ProductsFilterModal";
 import { useProducts } from "@/modules/products/hooks/useProducts";
@@ -105,6 +111,7 @@ const PromotionalTextPage = () => {
     handlePageSizeChange,
     toggleSelectAll,
     toggleProductSelection,
+    clearSelection: clearProductSelection,
     onOpenFilterModal,
     onCloseFilterModal,
     onApplyFilter,
@@ -139,8 +146,22 @@ const PromotionalTextPage = () => {
     onApplyFilter: onApplyVariationFilter,
     toggleSelectAll: toggleAllVariations,
     toggleVariationSelection,
+    clearSelection: clearVariationSelection,
     saveMinStock,
   } = useVariationsMinStock();
+
+  // Buscar, ordenar o filtrar con líneas seleccionadas pide confirmación y
+  // deselecciona solo esa pestaña: cada una tiene su propia selección.
+  const { guard, dialogProps: deselectDialogProps } = useDeselectGuard();
+  const guardProducts = (action: () => void) =>
+    guard(selectedProducts.length, clearProductSelection, action);
+  const guardVariations = (action: () => void) =>
+    guard(selectedVariations.length, clearVariationSelection, action);
+
+  // El modal de filtros entrega las categorías justo antes de onApply: se
+  // retienen hasta confirmar para que cancelar no deje los filtros a medias.
+  const pendingProductCategories = useRef<CategoryOption[]>([]);
+  const pendingVariationCategories = useRef<CategoryOption[]>([]);
 
   const noSelectionToast = (label: string) => {
     toast({
@@ -151,6 +172,75 @@ const PromotionalTextPage = () => {
   };
 
   const plural = (n: number) => `${n} producto${n > 1 ? "s" : ""}`;
+
+  // Un solo texto para etiquetas y marcas: el mensaje depende del resultado
+  // (algo cambió o nada), no de cuál de las dos se asigna.
+  //   changed: asignaciones agregadas (assign) o quitadas (unassign).
+  //   omitted: pares que ya existían (assign) o que no estaban (unassign).
+  const toastAssignmentResult = (
+    label: "etiquetas" | "marcas",
+    mode: "assign" | "unassign",
+    changed: number,
+    omitted: number,
+  ) => {
+    const products = selectedProducts.length;
+    const tenian = products === 1 ? "tenía" : "tenían";
+    const assignments = (n: number) =>
+      `${n} asignaci${n === 1 ? "ón" : "ones"}`;
+    const Label = label.charAt(0).toUpperCase() + label.slice(1);
+
+    if (changed === 0) {
+      toast({
+        title: "Sin cambios",
+        description:
+          mode === "assign"
+            ? `${plural(products)} ya ${tenian} esas ${label}.`
+            : `${plural(products)} no ${tenian} esas ${label} asignadas.`,
+        variant: "info",
+      });
+      return;
+    }
+
+    const verb =
+      mode === "assign"
+        ? changed === 1 ? "Se agregó" : "Se agregaron"
+        : changed === 1 ? "Se quitó" : "Se quitaron";
+    const omittedText =
+      omitted === 0
+        ? ""
+        : mode === "assign"
+          ? omitted === 1
+            ? " 1 ya existía y se omitió."
+            : ` ${omitted} ya existían y se omitieron.`
+          : omitted === 1
+            ? " 1 no estaba asignada y se omitió."
+            : ` ${omitted} no estaban asignadas y se omitieron.`;
+
+    toast({
+      title: `${Label} ${mode === "assign" ? "asignadas" : "desasignadas"}`,
+      description: `${verb} ${assignments(changed)} en ${plural(products)}.${omittedText}`,
+      variant: "success",
+    });
+  };
+
+  // La selección se conserva entre páginas: lo borrado mientras tanto lo
+  // omite el backend, y aquí se avisa aparte del resultado.
+  const warnSkipped = (
+    skippedIds: number[] | undefined,
+    singular: string,
+    pluralLabel: string,
+  ) => {
+    const n = skippedIds?.length ?? 0;
+    if (n === 0) return;
+    toast({
+      title:
+        n === 1
+          ? `Se omitió 1 ${singular}`
+          : `Se omitieron ${n} ${pluralLabel}`,
+      description: "Ya no existían o fueron eliminados después de seleccionarlos.",
+      variant: "warning",
+    });
+  };
 
   const handleSavePromo = async (
     promoText: string,
@@ -316,44 +406,12 @@ const PromotionalTextPage = () => {
     try {
       if (isUnassign) {
         const result = await unassignMassiveTagsApi(selectedProducts, tagIds);
-
-        if (result.deleted === 0) {
-          toast({
-            title: "Sin cambios",
-            description: `${plural(selectedProducts.length)} no tenían esas etiquetas asignadas.`,
-            variant: "info",
-          });
-        } else {
-          toast({
-            title: "Etiquetas desasignadas",
-            description:
-              `Se quitaron ${result.deleted} asignación${result.deleted === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.` +
-              (result.notFound > 0
-                ? ` ${result.notFound} no existían y se omitieron.`
-                : ""),
-            variant: "success",
-          });
-        }
+        warnSkipped(result.skippedProductIds, "producto", "productos");
+        toastAssignmentResult("etiquetas", "unassign", result.deleted, result.notFound);
       } else {
         const result = await assignMassiveTagsApi(selectedProducts, tagIds);
-
-        if (result.created === 0) {
-          toast({
-            title: "Sin cambios",
-            description: `${plural(selectedProducts.length)} ya tenían esas etiquetas (${result.skipped} asignación${result.skipped === 1 ? "" : "es"} omitida${result.skipped === 1 ? "" : "s"}).`,
-            variant: "info",
-          });
-        } else {
-          toast({
-            title: "Etiquetas asignadas",
-            description:
-              `Se agregaron ${result.created} asignación${result.created === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.` +
-              (result.skipped > 0
-                ? ` ${result.skipped} ya existían y se omitieron.`
-                : ""),
-            variant: "success",
-          });
-        }
+        warnSkipped(result.skippedProductIds, "producto", "productos");
+        toastAssignmentResult("etiquetas", "assign", result.created, result.skipped);
       }
     } catch (error) {
       toastError(error, "Error desconocido");
@@ -374,37 +432,19 @@ const PromotionalTextPage = () => {
 
     try {
       const result = await assignMassiveBrandsApi(selectedProducts, brandIds, mode);
+      warnSkipped(result.skippedProductIds, "producto", "productos");
 
       if (isUnassign) {
-        if (result.removed === 0) {
-          toast({
-            title: "Sin cambios",
-            description: `${plural(selectedProducts.length)} no tenían esas marcas asignadas.`,
-            variant: "info",
-          });
-        } else {
-          toast({
-            title: "Marcas desasignadas",
-            description: `Se quitaron ${result.removed} asignación${result.removed === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.`,
-            variant: "success",
-          });
-        }
-      } else if (result.created === 0) {
-        toast({
-          title: "Sin cambios",
-          description: `${plural(selectedProducts.length)} ya tenían esas marcas (${result.skipped} asignación${result.skipped === 1 ? "" : "es"} omitida${result.skipped === 1 ? "" : "s"}).`,
-          variant: "info",
-        });
+        // El backend de marcas no devuelve notFound: son los pares pedidos
+        // que no estaban asignados.
+        toastAssignmentResult(
+          "marcas",
+          "unassign",
+          result.removed,
+          result.requestedPairs - result.removed,
+        );
       } else {
-        toast({
-          title: "Marcas asignadas",
-          description:
-            `Se agregaron ${result.created} asignación${result.created === 1 ? "" : "es"} en ${plural(selectedProducts.length)}.` +
-            (result.skipped > 0
-              ? ` ${result.skipped} ya existían y se omitieron.`
-              : ""),
-          variant: "success",
-        });
+        toastAssignmentResult("marcas", "assign", result.created, result.skipped);
       }
     } catch (error) {
       toastError(error, "Error desconocido");
@@ -426,13 +466,16 @@ const PromotionalTextPage = () => {
 
     try {
       const result = await saveMinStock(minStock);
+      warnSkipped(result.skippedIds, "variación", "variaciones");
 
       toast({
         title: minStock === null ? "Stock mínimo restablecido" : "Stock mínimo guardado",
         description:
           minStock === null
-            ? `${result.cleared} variación${result.cleared === 1 ? "" : "es"} vuelve${result.cleared === 1 ? "" : "n"} al valor por defecto.`
-            : `Se reservan ${minStock} unidad${minStock === 1 ? "" : "es"} en ${result.upserted} variación${result.upserted === 1 ? "" : "es"}.`,
+            ? result.cleared === 1
+              ? "1 variación vuelve al valor por defecto."
+              : `${result.cleared} variaciones vuelven al valor por defecto.`
+            : `${minStock === 1 ? "Se reserva 1 unidad" : `Se reservan ${minStock} unidades`} en ${result.upserted === 1 ? "1 variación" : `${result.upserted} variaciones`}.`,
         variant: "success",
       });
     } catch (error) {
@@ -596,17 +639,22 @@ const PromotionalTextPage = () => {
           className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
         >
           <Card className="flex flex-col h-full min-h-0 overflow-hidden">
-            <CardHeader className="!p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <CardHeader className="!p-4 space-y-0 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <div className="flex items-center gap-2">
                 <ProductsFilterBar
                   search={search}
-                  onSearchChange={onSearchChange}
+                  onSearchChange={(value) =>
+                    guardProducts(() => onSearchChange(value))
+                  }
                   onOpen={onOpenFilterModal}
                   order={filters.order}
-                  onOrderChange={onOrderChange}
+                  onOrderChange={(order) =>
+                    guardProducts(() => onOrderChange(order))
+                  }
                   hasActiveFilters={hasActiveFilters}
                 />
               </div>
+              <SelectedCount count={selectedProducts.length} />
             </CardHeader>
 
             <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
@@ -635,25 +683,22 @@ const PromotionalTextPage = () => {
           className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
         >
           <Card className="flex flex-col h-full min-h-0 overflow-hidden">
-            <CardHeader className="!p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <CardHeader className="!p-4 space-y-0 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <div className="flex items-center gap-2">
                 <ProductsFilterBar
                   search={variationSearch}
-                  onSearchChange={onVariationSearchChange}
+                  onSearchChange={(value) =>
+                    guardVariations(() => onVariationSearchChange(value))
+                  }
                   onOpen={onOpenVariationFilterModal}
                   order={variationFilters.order}
-                  onOrderChange={onVariationOrderChange}
+                  onOrderChange={(order) =>
+                    guardVariations(() => onVariationOrderChange(order))
+                  }
                   hasActiveFilters={hasActiveVariationFilters}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                {wholesaleChannel
-                  ? `Stock mínimo de ${wholesaleChannel.name}`
-                  : "Canal de la web mayorista no encontrado"}
-                {defaultMinStock !== null
-                  ? ` · por defecto ${defaultMinStock} unidades`
-                  : " · sin valor por defecto"}
-              </p>
+              <SelectedCount count={selectedVariations.length} />
             </CardHeader>
 
             <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
@@ -682,13 +727,20 @@ const PromotionalTextPage = () => {
       <ProductsFilterModal
         isOpen={isOpenFilterModal}
         selectedCategories={selectedCategories}
-        onChangeSelectedCategories={setSelectedCategories}
+        onChangeSelectedCategories={(items) => {
+          pendingProductCategories.current = items;
+        }}
         tags={tags}
         brands={brands}
         showPromotionalImageFilter
         filters={filters}
         onClose={onCloseFilterModal}
-        onApply={onApplyFilter}
+        onApply={(newFilters) =>
+          guardProducts(() => {
+            setSelectedCategories(pendingProductCategories.current);
+            onApplyFilter(newFilters);
+          })
+        }
       />
 
       {/* Mismo modal de filtros, con el select de atributo que solo se pinta
@@ -696,14 +748,23 @@ const PromotionalTextPage = () => {
       <ProductsFilterModal
         isOpen={isOpenVariationFilterModal}
         selectedCategories={variationCategories}
-        onChangeSelectedCategories={setVariationCategories}
+        onChangeSelectedCategories={(items) => {
+          pendingVariationCategories.current = items;
+        }}
         tags={variationTags}
         brands={variationBrands}
         terms={terms}
         filters={variationFilters}
         onClose={onCloseVariationFilterModal}
-        onApply={onApplyVariationFilter}
+        onApply={(newFilters) =>
+          guardVariations(() => {
+            setVariationCategories(pendingVariationCategories.current);
+            onApplyVariationFilter(newFilters);
+          })
+        }
       />
+
+      <DeselectConfirmDialog {...deselectDialogProps} />
 
       <MinimumStockModal
         isOpen={isMinimumStockOpen}

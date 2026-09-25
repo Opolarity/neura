@@ -54,9 +54,11 @@ const MovementsTable = ({
           <TableRow>
             <TableHead className="w-12">
               <Checkbox
+                // La selección acumula movimientos de otras páginas: la
+                // cabecera solo mira las filas visibles.
                 checked={
-                  selectedMovements.length === movements.length &&
-                  movements.length > 0
+                  movements.length > 0 &&
+                  movements.every((m) => selectedMovements.includes(m.id))
                 }
                 onCheckedChange={() => onToggleAllMovementsSelection()}
               />
