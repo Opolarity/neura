@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Loader2,
   SquarePen,
+  Trash,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ interface MaterialClassesTableProps {
   onToggle: (id: number) => void;
   loading: boolean;
   onEdit: (materialClass: MaterialClassNode) => void;
+  onDelete: (materialClass: MaterialClassNode) => void;
 }
 
 /** El código marca las raíces canónicas del módulo; se lee, no se edita. */
@@ -51,6 +53,7 @@ export const MaterialClassesTable = ({
   onToggle,
   loading,
   onEdit,
+  onDelete,
 }: MaterialClassesTableProps) => (
   <Table>
     <TableHeader>
@@ -58,7 +61,7 @@ export const MaterialClassesTable = ({
         <TableHead>Clase</TableHead>
         <TableHead className="w-40">Código</TableHead>
         <TableHead className="w-40">Contenido</TableHead>
-        <TableHead className="w-[100px]">Acciones</TableHead>
+        <TableHead className="w-[120px]">Acciones</TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
@@ -113,15 +116,26 @@ export const MaterialClassesTable = ({
                     : `${dentro.length} ${dentro.length === 1 ? "clase" : "clases"}`}
                 </TableCell>
                 <TableCell onClick={(event) => event.stopPropagation()}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(familia)}
-                    title={`Editar ${familia.name}`}
-                    aria-label={`Editar ${familia.name}`}
-                  >
-                    <SquarePen className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEdit(familia)}
+                      title={`Editar ${familia.name}`}
+                      aria-label={`Editar ${familia.name}`}
+                    >
+                      <SquarePen className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => onDelete(familia)}
+                      title={`Eliminar ${familia.name}`}
+                      aria-label={`Eliminar ${familia.name}`}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
 
@@ -147,15 +161,26 @@ export const MaterialClassesTable = ({
                       —
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onEdit(clase)}
-                        title={`Editar ${clase.name}`}
-                        aria-label={`Editar ${clase.name}`}
-                      >
-                        <SquarePen className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onEdit(clase)}
+                          title={`Editar ${clase.name}`}
+                          aria-label={`Editar ${clase.name}`}
+                        >
+                          <SquarePen className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => onDelete(clase)}
+                          title={`Eliminar ${clase.name}`}
+                          aria-label={`Eliminar ${clase.name}`}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -4,6 +4,7 @@ import { useMaterialClasses } from "../hooks/useMaterialClasses";
 import { MaterialClassesHeader } from "../components/material-classes/MaterialClassesHeader";
 import { MaterialClassesTable } from "../components/material-classes/MaterialClassesTable";
 import { MaterialClassFormDialog } from "../components/material-classes/MaterialClassFormDialog";
+import { MaterialClassDeleteDialog } from "../components/material-classes/MaterialClassDeleteDialog";
 
 /**
  * El catálogo de clases de materiales.
@@ -36,6 +37,10 @@ const MaterialClassesList = () => {
     openCreate,
     openEdit,
     save,
+    deleteTarget,
+    setDeleteTarget,
+    deleting,
+    confirmDelete,
   } = useMaterialClasses();
 
   return (
@@ -51,6 +56,7 @@ const MaterialClassesList = () => {
             onToggle={toggle}
             loading={loading}
             onEdit={openEdit}
+            onDelete={setDeleteTarget}
           />
         </CardContent>
 
@@ -70,6 +76,13 @@ const MaterialClassesList = () => {
         tree={tree}
         saving={saving}
         onSave={save}
+      />
+
+      <MaterialClassDeleteDialog
+        target={deleteTarget}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        deleting={deleting}
       />
     </div>
   );

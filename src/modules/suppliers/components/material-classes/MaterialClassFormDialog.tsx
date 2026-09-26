@@ -84,7 +84,7 @@ export const MaterialClassFormDialog = ({
             {editing ? "Editar clase" : "Nueva clase de material"}
           </DialogTitle>
           <DialogDescription>
-            De qué familia cuelga decide dónde se ve en el catálogo y cómo se
+            De qué clase cuelga decide dónde se ve en el catálogo y cómo se
             agrupan las líneas en el papel del taller. Los colores, tallas y
             medidas no son clases: van como términos en Atributos de materiales.
           </DialogDescription>
@@ -108,19 +108,19 @@ export const MaterialClassFormDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Familia</Label>
+            <Label>Clase padre</Label>
             <Select value={parentId} onValueChange={setParentId}>
               <SelectTrigger>
-                <SelectValue placeholder="Ninguna (es una familia)" />
+                <SelectValue placeholder="Sin clase padre" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Ninguna (es una familia)</SelectItem>
-                {/* Solo FAMILIAS (las raíces): las clases tienen dos niveles,
-                    Familia › Clase. El tercero era donde se colaban colores y
-                    tallas, que ahora son términos de las variaciones. La base lo
-                    impide también (trg_classes_mat_max_depth). */}
+                <SelectItem value="none">Sin clase padre</SelectItem>
+                {/* CUALQUIER clase puede ser padre, a cualquier profundidad
+                    (AVIOS › Cierre › YKK), menos ella misma y sus descendientes:
+                    colgarla de una de ellas cerraría un ciclo. Los colores y
+                    tallas no van aquí: son términos de las variaciones. */}
                 {tree
-                  .filter((nodo) => nodo.level === 0 && !descendientes.has(nodo.id))
+                  .filter((nodo) => !descendientes.has(nodo.id))
                   .map((nodo) => (
                     <SelectItem key={nodo.id} value={String(nodo.id)}>
                       <span style={{ paddingLeft: `${nodo.level * 12}px` }}>
