@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import { buildEndpoint } from "@/shared/utils/query";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { toProcessCatalogItem } from "../adapters/processes.adapter";
@@ -68,13 +69,32 @@ const invokePost = async (endpointName: string, body: unknown): Promise<void> =>
   if (error) throw error;
 };
 
+/**
+ * Como `invokePost`, pero devolviendo el id de lo recién creado.
+ *
+ * Las edge functions de alta responden `{ success, data: { id } }` y hasta
+ * ahora se tiraba a la basura, así que quien creaba un proceso desde otra
+ * pantalla --la receta, la ruta de una orden-- no podía usarlo sin recargar y
+ * adivinar cuál era. Mismo motivo por el que `createExplosionApi` devuelve el
+ * suyo.
+ */
+const invokePostReturningId = async (
+  endpointName: string,
+  body: unknown
+): Promise<number | null> => {
+  const data = await invokeFunction(endpointName, { method: "POST", body });
+
+  const id = data?.data?.id;
+  return id === undefined || id === null ? null : Number(id);
+};
+
 // ── Procesos ────────────────────────────────────────────────────────────
 
 export const processesListApi = (filters: ProcessCatalogFilters) =>
   listCatalog("get-processes", "processesdata", filters);
 
 export const createProcessApi = (payload: SaveProcessCatalogData) =>
-  invokePost("create-process", payload);
+  invokePostReturningId("create-process", payload);
 
 export const updateProcessApi = (payload: SaveProcessCatalogData) =>
   invokePost("update-process", payload);
@@ -88,7 +108,7 @@ export const processGroupsListApi = (filters: ProcessCatalogFilters) =>
   listCatalog("get-process-groups", "groupsdata", filters);
 
 export const createProcessGroupApi = (payload: SaveProcessCatalogData) =>
-  invokePost("create-process-group", payload);
+  invokePostReturningId("create-process-group", payload);
 
 export const updateProcessGroupApi = (payload: SaveProcessCatalogData) =>
   invokePost("update-process-group", payload);

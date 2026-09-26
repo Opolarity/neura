@@ -28,15 +28,67 @@ export interface ExplosionVariations {
   categories: ExplosionCategory[];
 }
 
+/** El producto al que pertenece una receta (una por producto). */
+export interface ExplosionProduct {
+  id: number;
+  title: string;
+  code: string | null;
+}
+
+/**
+ * Receta antigua "por unificar": el producto al que podría pertenecer (todas
+ * sus prendas son de él) y con qué otras recetas compite por ese producto.
+ */
+export interface ExplosionUnify {
+  productId: number;
+  productTitle: string | null;
+  /** El producto ya tiene su receta: esta ya no se puede unificar a él. */
+  hasRecipe: boolean;
+  competitors: number[];
+}
+
 /** Fila del listado de explosiones. */
 export interface Explosion extends ExplosionVariations {
   id: number;
+  /** null = receta antigua (por unificar) o genérica. */
+  productId: number | null;
+  productTitle: string | null;
   description: string;
   /** Código del molde. Texto libre; null sin él. */
   modelCode: string | null;
   /** Calculado en el backend: SUM(cantidad × costo unitario). */
   total: number;
+  /** Cuántas etapas declara el molde. 0 = la orden armará su ruta a mano. */
+  processesCount: number;
   createdAt: string;
+}
+
+/**
+ * Una etapa de la ruta de la receta.
+ *
+ * La receta dice por dónde PASA el molde -- Corte, Confección, Acabados -- y
+ * no baja a la operación concreta: con qué operación se resuelve cada etapa se
+ * decide en la orden, que es donde hay taller, fechas y cotización.
+ *
+ * Es opcional: una receta puede tener solo materiales, solo etapas o las dos
+ * cosas.
+ */
+export interface ExplosionProcessOperation {
+  processId: number;
+  processName: string | null;
+}
+
+export interface ExplosionProcess {
+  processGroupId: number;
+  processGroupName: string | null;
+  /**
+   * Las operaciones de ESTA etapa que se hacen. Vacío = la etapa va completa,
+   * sin bajar al detalle.
+   *
+   * No son etapas seguidas: comparten la posición de su etapa, y por eso la
+   * orden las lee como un solo paso con N sub-pasos ("Corte 0/2").
+   */
+  operations: ExplosionProcessOperation[];
 }
 
 /** Línea de materiales dentro del detalle de una explosión. */
@@ -77,12 +129,18 @@ export interface ExplosionMaterial {
 
 export interface ExplosionDetail extends ExplosionVariations {
   id: number;
+  /** Con producto la receta cubre todas sus variaciones. */
+  product: ExplosionProduct | null;
+  /** Solo en recetas antiguas sin producto; null si no hay a cuál unificarla. */
+  unify: ExplosionUnify | null;
   description: string;
   /** Código del molde. Texto libre; null sin él. */
   modelCode: string | null;
   total: number;
   createdAt: string;
   materials: ExplosionMaterial[];
+  /** En el orden en que se recorren. Vacío = la receta no declara ruta. */
+  processes: ExplosionProcess[];
 }
 
 export interface ExplosionsFilters {
@@ -121,4 +179,20 @@ export interface SaveExplosionData {
    * dos casos eran indistinguibles.
    */
   variation_ids?: number[];
+  /**
+   * El producto de la receta. Con él la receta cubre TODAS sus variaciones (el
+   * backend las pone) y ya no se mandan `variation_ids`. Una segunda receta
+   * para el mismo producto la rechaza el backend.
+   */
+  product_id?: number | null;
+  /**
+   * Las etapas, EN ORDEN: la posición en el array es la secuencia, no se manda
+   * un número de paso. Se manda siempre, también vacío -- vacío quita la ruta
+   * y la clave ausente la dejaría como está.
+   */
+  processes?: Array<{
+    process_group_id: number;
+    /** Vacío = proceso completo. */
+    operations: Array<{ process_id: number }>;
+  }>;
 }

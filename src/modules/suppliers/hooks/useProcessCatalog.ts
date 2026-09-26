@@ -10,28 +10,42 @@ import {
 } from "../types/processes.types";
 
 /**
- * Orquestación de un catálogo de procesos.
+ * Orquestación de un catálogo de fabricación.
  *
- * `processes` y `process_group` tienen exactamente la misma forma y la misma
- * pantalla, así que comparten hook y solo se parametrizan las llamadas y los
- * textos. Es el mismo criterio de Atributos, donde un único `useAttributes`
- * gobierna grupos y términos.
+ * Son dos pantallas -- "Procesos" (`process_group`) y "Operaciones"
+ * (`processes`) -- y las dos tablas tienen exactamente la misma forma, así que
+ * comparten hook y solo se parametrizan las llamadas y los textos. Es el mismo
+ * criterio de Atributos, donde un único `useAttributes` gobierna grupos y
+ * términos.
  */
 interface ProcessCatalogConfig {
-  /** Para los toasts: "proceso" / "grupo". */
+  /** Para los toasts: "Proceso" / "Operación". */
   entityLabel: string;
+  /** Plural para los mensajes del listado. Por defecto, `entityLabel` + "s". */
+  entityLabelPlural?: string;
+  /**
+   * Concordancia de los participios de los toasts: "creada" en vez de
+   * "creado". Lo necesita "Operación", que es femenino.
+   */
+  isFeminine?: boolean;
   listApi: (filters: ProcessCatalogFilters) => Promise<{
     data: ProcessCatalogItem[];
     pagination: PaginationState;
   }>;
-  createApi: (payload: SaveProcessCatalogData) => Promise<void>;
-  updateApi: (payload: SaveProcessCatalogData) => Promise<void>;
-  deleteApi: (id: number) => Promise<void>;
   /**
-   * Solo procesos: la lista de GRUPOS (etapas) a las que puede pertenecer una
-   * operación. Si se pasa, el hook carga `groupOptions` para el selector de
-   * grupo del formulario. El catálogo de grupos no lo pasa: un grupo no cuelga
-   * de otro.
+   * `Promise<unknown>` y no `Promise<void>`: el alta devuelve el id de lo
+   * creado --lo necesita quien crea un proceso desde otra pantalla-- y aquí no
+   * se usa. Con `void` no compila: dentro de un genérico, TS no aplica la
+   * regla de "el retorno se puede ignorar".
+   */
+  createApi: (payload: SaveProcessCatalogData) => Promise<unknown>;
+  updateApi: (payload: SaveProcessCatalogData) => Promise<unknown>;
+  deleteApi: (id: number) => Promise<unknown>;
+  /**
+   * Solo Operaciones: la lista de PROCESOS (`process_group`) a los que puede
+   * pertenecer una operación. Si se pasa, el hook carga `groupOptions` para el
+   * selector del formulario. La pantalla de Procesos no lo pasa: un proceso no
+   * cuelga de otro.
    */
   groupListApi?: (filters: ProcessCatalogFilters) => Promise<{
     data: ProcessCatalogItem[];
@@ -41,12 +55,18 @@ interface ProcessCatalogConfig {
 
 export const useProcessCatalog = ({
   entityLabel,
+  entityLabelPlural,
+  isFeminine = false,
   listApi,
   createApi,
   updateApi,
   deleteApi,
   groupListApi,
 }: ProcessCatalogConfig) => {
+  // Concordancia de los toasts: "creado" / "creada".
+  const o = isFeminine ? "a" : "o";
+  const plural = entityLabelPlural ?? `${entityLabel}s`;
+
   const [items, setItems] = useState<ProcessCatalogItem[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     p_page: 1,
@@ -101,13 +121,13 @@ export const useProcessCatalog = ({
       setPagination(response.pagination);
     } catch (error: any) {
       console.error(error);
-      toast({ title: `Error al cargar ${entityLabel}s`, variant: "destructive" });
+      toast({ title: `Error al cargar ${plural}`, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   }, [
     listApi,
-    entityLabel,
+    plural,
     debouncedSearch,
     isActive,
     pagination.p_page,
@@ -154,10 +174,10 @@ export const useProcessCatalog = ({
 
       if (editingItem) {
         await updateApi({ ...values, id: editingItem.id });
-        toast({ title: `${entityLabel} actualizado exitosamente`, variant: "success" });
+        toast({ title: `${entityLabel} actualizad${o} exitosamente`, variant: "success" });
       } else {
         await createApi(values);
-        toast({ title: `${entityLabel} creado exitosamente`, variant: "success" });
+        toast({ title: `${entityLabel} cread${o} exitosamente`, variant: "success" });
       }
 
       setIsOpenFormModal(false);
@@ -178,7 +198,7 @@ export const useProcessCatalog = ({
     try {
       setDeleting(true);
       await deleteApi(deletingItem.id);
-      toast({ title: `${entityLabel} desactivado`, variant: "success" });
+      toast({ title: `${entityLabel} desactivad${o}`, variant: "success" });
       setDeletingItem(null);
       fetchItems();
     } catch (error: any) {

@@ -238,13 +238,16 @@ export const RouteConfigDialog = ({
   const handleCreate = async (values: SaveProcessCatalogData) => {
     try {
       setCreating(true);
-      const created = await createProcessGroupApi(values);
+      const createdId = await createProcessGroupApi(values);
       // Se añade a la ruta sin salir de la pantalla: crear un grupo aquí es
       // para usarlo aquí.
-      addGroup({
-        id: (created as any)?.id ?? (created as any)?.data?.id,
-        label: values.name,
-      });
+      //
+      // Antes se leia `created.id` de una respuesta que la funcion tiraba a la
+      // basura, asi que el grupo entraba en la ruta con id `undefined` y no
+      // se podia guardar. Ahora createProcessGroupApi devuelve el id.
+      if (createdId !== null) {
+        addGroup({ id: createdId, label: values.name });
+      }
       setCreateOpen(false);
       toast({ title: "Grupo creado", variant: "success" });
     } catch (error: any) {

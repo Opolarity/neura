@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/shared/hooks/use-toast";
 import { deleteServiceLinkApi } from "../services/productionOrderServices.service";
@@ -73,6 +73,14 @@ export const useProductionOrderDetail = ({
   const [explosionsByVariation, setExplosionsByVariation] = useState<
     Record<number, ExplosionOption[]>
   >({});
+
+  /**
+   * Prendas recién puestas en un ítem nuevo cuya receta todavía hay que
+   * PRESELECCIONAR. Desde que hay una receta por producto, la prenda ya dice
+   * cuál es: elegirla a mano era un paso de más. Solo al poner la prenda --no
+   * en cada render--, para que quitarla a propósito no la vuelva a poner.
+   */
+  const autoPickVariations = useRef<Set<number>>(new Set());
 
   const [name, setName] = useState("");
   const [classId, setClassId] = useState("");
@@ -176,6 +184,39 @@ export const useProductionOrderDetail = ({
     };
   }, [items, explosionsByVariation]);
 
+  // La preselección: en cuanto se conocen las recetas de una prenda recién
+  // puesta, si es UNA sola (la de su producto) se asigna a los ítems nuevos que
+  // la lleven sin receta. Con varias (recetas antiguas por unificar) se deja
+  // elegir, como siempre.
+  useEffect(() => {
+    if (autoPickVariations.current.size === 0) return;
+
+    const listas = [...autoPickVariations.current].filter(
+      (variationId) => explosionsByVariation[variationId] !== undefined,
+    );
+    if (listas.length === 0) return;
+    listas.forEach((variationId) => autoPickVariations.current.delete(variationId));
+
+    setItems((prev) => {
+      let cambio = false;
+      const siguiente = prev.map((item) => {
+        if (
+          item.id !== undefined ||
+          item.explosionId !== null ||
+          item.variationId === null ||
+          !listas.includes(item.variationId)
+        ) {
+          return item;
+        }
+        const suyas = explosionsByVariation[item.variationId] ?? [];
+        if (suyas.length !== 1) return item;
+        cambio = true;
+        return { ...item, explosionId: suyas[0].id, explosionDescription: suyas[0].label };
+      });
+      return cambio ? siguiente : prev;
+    });
+  }, [items, explosionsByVariation]);
+
   useEffect(() => {
     if (debouncedExplosionSearch === "") return;
 
@@ -271,6 +312,7 @@ export const useProductionOrderDetail = ({
 
   /** Producto final del ítem: se elige o se crea desde el diálogo. */
   const setItemVariation = (index: number, variation: ItemVariation | null) => {
+    if (variation) autoPickVariations.current.add(variation.id);
     setItems((prev) =>
       prev.map((item, i) => (i === index ? withVariation(item, variation) : item))
     );
@@ -286,6 +328,7 @@ export const useProductionOrderDetail = ({
    */
   const setItemVariations = (index: number, variations: ItemVariation[]) => {
     if (variations.length === 0) return;
+    variations.forEach((v) => autoPickVariations.current.add(v.id));
     setItems((prev) => {
       const base = prev[index];
       if (!base) return prev;

@@ -2,6 +2,7 @@ import {
   Explosion,
   ExplosionDetail,
   ExplosionMaterial,
+  ExplosionProcess,
   ExplosionVariations,
 } from "../types/explosions.types";
 
@@ -33,6 +34,8 @@ const toExplosionVariations = (row: any): ExplosionVariations => ({
 /** Fila de sp_get_explosions → modelo de UI. */
 export const toExplosion = (row: any): Explosion => ({
   id: row.id,
+  productId: toNumberOrNull(row.product_id),
+  productTitle: toTextOrNull(row.product_title),
   description: row.description ?? "",
   modelCode: toTextOrNull(row.model_code),
   total: Number(row.total ?? 0),
@@ -40,8 +43,23 @@ export const toExplosion = (row: any): Explosion => ({
   // retiro de la tabla --cuantos materiales lleva una receta no es una
   // pregunta que se haga desde el listado-- y dejarlo aqui era arrastrar un
   // campo que nadie lee.
+  processesCount: Number(row.processes_count ?? 0),
   createdAt: row.created_at ?? "",
   ...toExplosionVariations(row),
+});
+
+/**
+ * Etapa de la ruta → modelo de UI. Llega ya ordenada por el SP, y con sus
+ * operaciones dentro: en la tabla cada operación es una fila, pero el SP las
+ * agrupa por etapa porque todas comparten su posición.
+ */
+export const toExplosionProcess = (row: any): ExplosionProcess => ({
+  processGroupId: Number(row.process_group_id),
+  processGroupName: toTextOrNull(row.process_group_name),
+  operations: (row.operations ?? []).map((operacion: any) => ({
+    processId: Number(operacion.process_id),
+    processName: toTextOrNull(operacion.process_name),
+  })),
 });
 
 export const toExplosionMaterial = (row: any): ExplosionMaterial => ({
@@ -64,10 +82,26 @@ export const toExplosionMaterial = (row: any): ExplosionMaterial => ({
 /** Respuesta de sp_get_explosion_by_id → detalle de UI. */
 export const toExplosionDetail = (row: any): ExplosionDetail => ({
   id: row.id,
+  product: row.product
+    ? {
+        id: Number(row.product.id),
+        title: row.product.title ?? "",
+        code: toTextOrNull(row.product.code),
+      }
+    : null,
+  unify: row.unify?.product_id
+    ? {
+        productId: Number(row.unify.product_id),
+        productTitle: toTextOrNull(row.unify.product_title),
+        hasRecipe: Boolean(row.unify.has_recipe),
+        competitors: (row.unify.competitors ?? []).map(Number),
+      }
+    : null,
   description: row.description ?? "",
   modelCode: toTextOrNull(row.model_code),
   total: Number(row.total ?? 0),
   createdAt: row.created_at ?? "",
   materials: (row.materials ?? []).map(toExplosionMaterial),
+  processes: (row.processes ?? []).map(toExplosionProcess),
   ...toExplosionVariations(row),
 });

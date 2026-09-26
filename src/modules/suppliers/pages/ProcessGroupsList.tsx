@@ -1,21 +1,24 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
-import { useProcesses } from "../hooks/useProcesses";
+import { useProcessGroups } from "../hooks/useProcessGroups";
 import { ProcessCatalogTable } from "../components/processes/ProcessCatalogTable";
 import { CatalogFilterBar } from "../components/CatalogFilterBar";
 import { CatalogFilterModal } from "../components/CatalogFilterModal";
 import { ProcessCatalogFormDialog } from "../components/processes/ProcessCatalogFormDialog";
 import { ProcessCatalogDeleteDialog } from "../components/processes/ProcessCatalogDeleteDialog";
-import ProcessesHeader from "../components/processes/ProcessesHeader";
+import ProcessGroupsHeader from "../components/processes/ProcessGroupsHeader";
 
 /**
- * Catálogo de OPERACIONES (tabla `processes`).
+ * Catálogo de PROCESOS (tabla `process_group`).
  *
- * La operación es el trabajo concreto -- tender, trazar, remallar -- y cuelga
- * de un PROCESO (`process_group`), que tiene su propia pantalla. De ahí la
- * columna "Proceso" del listado y el selector del formulario.
+ * El proceso es la etapa de fabricación -- Corte, Confección, Acabados -- que
+ * agrupa operaciones. El backend existía desde el primer día del módulo; lo que
+ * faltaba era esta pantalla, así que los procesos solo se podían elegir, nunca
+ * administrar.
+ *
+ * Sin columna de agrupación: un proceso no cuelga de otro.
  */
-const ProcessesList = () => {
+const ProcessGroupsList = () => {
   const {
     items,
     pagination,
@@ -40,12 +43,11 @@ const ProcessesList = () => {
     setDeletingItem,
     deleting,
     handleDelete,
-    groupOptions,
-  } = useProcesses();
+  } = useProcessGroups();
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
-      <ProcessesHeader onCreate={openCreate} />
+      <ProcessGroupsHeader onCreate={openCreate} />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="!p-4">
@@ -54,7 +56,7 @@ const ProcessesList = () => {
             onSearchChange={handleSearchChange}
             onOpen={() => setIsOpenFilterModal(true)}
             hasActiveFilters={hasActiveFilters}
-            placeholder="Buscar operación por nombre o código..."
+            placeholder="Buscar proceso por nombre o código..."
           />
         </CardHeader>
 
@@ -62,8 +64,7 @@ const ProcessesList = () => {
           <ProcessCatalogTable
             items={items}
             loading={loading}
-            entityLabel="operación"
-            showGroup
+            entityLabel="proceso"
             onEdit={openEdit}
             onDelete={setDeletingItem}
           />
@@ -83,7 +84,7 @@ const ProcessesList = () => {
         onClose={() => setIsOpenFilterModal(false)}
         onApply={handleApplyFilters}
         isActive={isActive}
-        title="Filtrar Operaciones"
+        title="Filtrar Procesos"
       />
 
       {/* Se monta al abrir para partir siempre del formulario correcto */}
@@ -94,11 +95,9 @@ const ProcessesList = () => {
           item={editingItem}
           saving={saving}
           onSave={handleSave}
-          entityLabel="Operación"
-          isFeminine
-          namePlaceholder="ej: Tendido"
-          codePlaceholder="ej: TEN"
-          groupOptions={groupOptions}
+          entityLabel="Proceso"
+          namePlaceholder="ej: Corte"
+          codePlaceholder="ej: COR"
         />
       )}
 
@@ -107,11 +106,10 @@ const ProcessesList = () => {
         isDeleting={deleting}
         onCancel={() => setDeletingItem(null)}
         onConfirm={handleDelete}
-        entityLabel="operación"
-        isFeminine
+        entityLabel="proceso"
       />
     </div>
   );
 };
 
-export default ProcessesList;
+export default ProcessGroupsList;

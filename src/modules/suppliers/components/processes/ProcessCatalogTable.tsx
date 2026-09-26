@@ -15,11 +15,11 @@ import { ProcessCatalogItem } from "../../types/processes.types";
 interface ProcessCatalogTableProps {
   items: ProcessCatalogItem[];
   loading: boolean;
-  /** "proceso" / "grupo", para los textos de estado vacío y aria-labels. */
+  /** "proceso" / "operación", para los aria-labels de las acciones. */
   entityLabel: string;
   /**
-   * Solo procesos: pinta la columna "Grupo" (la etapa a la que pertenece la
-   * operación). Los grupos no la pasan, así que no se filtra a su tabla.
+   * Solo Operaciones: pinta la columna "Proceso" (la etapa a la que pertenece
+   * la operación). La pantalla de Procesos no la pasa.
    */
   showGroup?: boolean;
   onEdit: (item: ProcessCatalogItem) => void;
@@ -46,7 +46,7 @@ export const ProcessCatalogTable = ({
           <TableHead className="w-16">ID</TableHead>
           <TableHead>Nombre</TableHead>
           <TableHead>Código</TableHead>
-          {showGroup && <TableHead>Grupo</TableHead>}
+          {showGroup && <TableHead>Proceso</TableHead>}
           <TableHead>Estado</TableHead>
           <TableHead>Creado</TableHead>
           <TableHead className="w-[100px]" />
@@ -76,7 +76,7 @@ export const ProcessCatalogTable = ({
               <TableCell>
                 {item.code ?? <span className="text-muted-foreground text-sm">—</span>}
               </TableCell>
-              {/* La etapa a la que pertenece la operación. */}
+              {/* El proceso (etapa) al que pertenece la operación. */}
               {showGroup && (
                 <TableCell>
                   {item.processGroupName ? (

@@ -33,7 +33,7 @@ import {
   SaveProcessCatalogData,
 } from "../../types/processes.types";
 
-// Valor centinela del selector de grupo: Radix Select no admite "" como value.
+// Valor centinela del selector de proceso: Radix Select no admite "" como value.
 const NO_GROUP = "none";
 
 // El codigo es opcional en la BD (`code text` nullable), asi que aqui
@@ -53,13 +53,15 @@ interface ProcessCatalogFormDialogProps {
   item?: ProcessCatalogItem | null;
   saving: boolean;
   onSave: (values: SaveProcessCatalogData) => void;
-  /** "Proceso" / "Grupo de proceso". */
+  /** "Proceso" / "Operación". */
   entityLabel: string;
+  /** Concordancia de los textos: "Nueva Operación" en vez de "Nuevo". */
+  isFeminine?: boolean;
   namePlaceholder?: string;
   codePlaceholder?: string;
    /**
    * Solo procesos: grupos (etapas) disponibles. Si se pasa, aparece el selector
-   * "Grupo" y este catálogo cuelga cada operación de un grupo. El catálogo de
+   * "Proceso" y este catálogo cuelga cada operación de un proceso. El de
    * grupos no lo pasa, así que el campo no se filtra a su pantalla.
    */
   groupOptions?: ProcessCatalogItem[];
@@ -72,11 +74,14 @@ export const ProcessCatalogFormDialog = ({
   saving,
   onSave,
   entityLabel,
+  isFeminine = false,
   namePlaceholder = "ej: Lavado",
   codePlaceholder = "ej: LAV",
   groupOptions,
 }: ProcessCatalogFormDialogProps) => {
   const isEditing = !!item?.id;
+  // Concordancia: "Nuevo Proceso" / "Nueva Operación".
+  const o = isFeminine ? "a" : "o";
   const showGroup = Array.isArray(groupOptions);
   const availableGroups = groupOptions ?? [];
 
@@ -111,12 +116,12 @@ export const ProcessCatalogFormDialog = ({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? `Editar ${entityLabel}` : `Nuevo ${entityLabel}`}
+            {isEditing ? `Editar ${entityLabel}` : `Nuev${o} ${entityLabel}`}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? `Modifica los datos del ${entityLabel.toLowerCase()}.`
-              : `Registra un nuevo ${entityLabel.toLowerCase()}.`}
+              ? `Modifica los datos ${isFeminine ? "de la" : "del"} ${entityLabel.toLowerCase()}.`
+              : `Registra un${o} nuev${o} ${entityLabel.toLowerCase()}.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -154,15 +159,14 @@ export const ProcessCatalogFormDialog = ({
               )}
             />
 
-            {/* Solo en el catálogo de procesos: a qué GRUPO (etapa) pertenece
-                esta operación. */}
+            {/* Solo en Operaciones: a qué PROCESO (etapa) pertenece. */}
             {showGroup && (
               <FormField
                 control={form.control}
                 name="processGroupId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Grupo</FormLabel>
+                    <FormLabel>Proceso</FormLabel>
                     <Select
                       value={field.value ? String(field.value) : NO_GROUP}
                       onValueChange={(value) =>
@@ -171,11 +175,11 @@ export const ProcessCatalogFormDialog = ({
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Sin grupo" />
+                          <SelectValue placeholder="Sin proceso" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={NO_GROUP}>Sin grupo</SelectItem>
+                        <SelectItem value={NO_GROUP}>Sin proceso</SelectItem>
                         {availableGroups.map((group) => (
                           <SelectItem key={group.id} value={String(group.id)}>
                             {group.name}

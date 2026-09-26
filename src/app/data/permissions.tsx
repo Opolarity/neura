@@ -98,6 +98,7 @@ import MaterialInventory from "@/modules/suppliers/pages/MaterialInventory";
 import MaterialMovements from "@/modules/suppliers/pages/MaterialMovements";
 import MaterialDispatchCreate from "@/modules/suppliers/pages/MaterialDispatchCreate";
 import ProcessesList from "@/modules/suppliers/pages/ProcessesList";
+import ProcessGroupsList from "@/modules/suppliers/pages/ProcessGroupsList";
 import MaterialClassesList from "@/modules/suppliers/pages/MaterialClassesList";
 import MaterialAttributesList from "@/modules/suppliers/pages/MaterialAttributesList";
 import SuppliersList from "@/modules/suppliers/pages/SuppliersList";
@@ -245,7 +246,7 @@ export const APP_PERMISSIONS_CONFIG = [
         code: "production.group", name: "Fabricación", node: [
           // Abre el grupo porque es donde empieza todo: sin receta no hay orden
           // que lanzar.
-          { name: "Desarrollo de producto", path: "/suppliers/explosions", code: "explosions.list", element: <ExplosionsList />, showSidebar: true, node: [] },
+          { name: "Recetas", path: "/suppliers/explosions", code: "explosions.list", element: <ExplosionsList />, showSidebar: true, node: [] },
           // ":id" acepta también "new" para el alta, por eso cubre crear y editar.
           { name: "Detalle de desarrollo", path: "/suppliers/explosions/:id", code: "explosions.edit", element: <ExplosionDetail />, showSidebar: false, node: [] },
           { name: "Órdenes de producción", path: "/suppliers/production-orders", code: "production_orders.list", element: <ProductionOrdersList />, showSidebar: true, node: [] },
@@ -288,7 +289,11 @@ export const APP_PERMISSIONS_CONFIG = [
       // exista la ruta.
       {
         code: "catalogs.group", name: "Catálogos", node: [
-          { name: "Procesos", path: "/suppliers/processes", code: "processes.list", element: <ProcessesList />, showSidebar: true, node: [] },
+          // Los nombres son los de multicliente: process_group = proceso
+          // (Corte, Confeccion), processes = operacion. Las rutas y los codigos
+          // siguen nombrando la tabla, por eso "Procesos" apunta a /process-groups.
+          { name: "Procesos", path: "/suppliers/process-groups", code: "process_groups.list", element: <ProcessGroupsList />, showSidebar: true, node: [] },
+          { name: "Operaciones", path: "/suppliers/processes", code: "processes.list", element: <ProcessesList />, showSidebar: true, node: [] },
           { name: "Clases de materiales", path: "/suppliers/material-classes", code: "material_classes.list", element: <MaterialClassesList />, showSidebar: true, node: [] },
           { name: "Atributos de materiales", path: "/suppliers/material-attributes", code: "material_attributes.list", element: <MaterialAttributesList />, showSidebar: true, node: [] },
           { name: "Lista de proveedores", path: "/suppliers", code: "suppliers.list", element: <SuppliersList />, showSidebar: true, node: [] },

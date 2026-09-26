@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, FileText, Loader2, Pencil, Plus, Search } from "lucide-react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ArrowLeft, FileText, Loader2, Package, Save, SquarePen, Workflow } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,14 +20,15 @@ import { openRecipePdf } from "../utils/recipePdf";
 import { materialByIdApi } from "../services/materials.service";
 import { Material } from "../types/materials.types";
 import { useExplosionDetail } from "../hooks/useExplosionDetail";
+import { ExplosionProcessesDialog } from "../components/explosions/ExplosionProcessesDialog";
 import { ExplosionMaterialsEditor } from "../components/explosions/ExplosionMaterialsEditor";
 import { AddMaterialModal } from "../components/materials/AddMaterialModal";
 import { ItemProductDialog } from "../components/production-orders/ItemProductDialog";
-import { ProductVariationSelector } from "@/shared/components/product-variation-selector";
 
 const ExplosionDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
 
   const [printing, setPrinting] = useState(false);
   /**
@@ -40,13 +41,10 @@ const ExplosionDetail = () => {
    */
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   /**
-   * El alta de prenda desde la receta.
+   * Elegir (o crear) el producto de la receta.
    *
-   * Es el MISMO diálogo de la orden de producción: busca una variación, crea
-   * el producto entero, o le añade una talla a uno que ya existe. Aquí hacía
-   * falta por lo mismo que allí — al armar la receta el producto puede no
-   * estar creado todavía, y salir a Productos y volver era el único motivo
-   * para abandonarla a medias.
+   * Es el MISMO diálogo de la orden de producción. Solo hace falta cuando la
+   * receta llega sin producto: desde "Recetas" ya viene con él.
    */
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   /**
@@ -58,6 +56,8 @@ const ExplosionDetail = () => {
    * En el alta no hay nada que leer todavía, así que nace en edición.
    */
   const [editing, setEditing] = useState(false);
+  /** La ruta se edita en su propio modal, no en la ficha. */
+  const [processesDialogOpen, setProcessesDialogOpen] = useState(false);
 
   const {
     createdAt,
@@ -70,11 +70,25 @@ const ExplosionDetail = () => {
     modelCode,
     setModelCode,
     variations,
-    addVariations,
-    pickVariation,
-    pickingVariation,
-    removeVariation,
+    product,
+    pickProduct,
+    pickingProduct,
+    unify,
+    unifying,
+    handleUnify,
     lines,
+    processes,
+    processGroups,
+    operationCatalog,
+    addProcess,
+    removeProcess,
+    moveProcess,
+    addOperation,
+    removeOperation,
+    replaceOperation,
+    clearOperations,
+    createOperation,
+    creatingOperation,
     addLine,
     removeLine,
     setLineMaterial,
@@ -90,7 +104,7 @@ const ExplosionDetail = () => {
     setMaterialSearch,
     previewTotal,
     handleSubmit,
-  } = useExplosionDetail({ idParam: id });
+  } = useExplosionDetail({ idParam: id, productParam: searchParams.get("product") });
 
   // La ficha del material que se va a editar. Se descarta al cerrar para que
   // la siguiente edición no abra con los datos del material anterior.
@@ -178,6 +192,23 @@ const ExplosionDetail = () => {
 
   const canEdit = isNew || editing;
 
+  /**
+   * Lo que se lee sin abrir el modal: los procesos en orden y cuántas
+   * operaciones cuelgan de cada uno. "Corte (2 operaciones) → Confección".
+   */
+  const resumenProcesos =
+    processes.length === 0
+      ? "Sin procesos"
+      : processes
+          .map((paso) => {
+            const nombre = paso.processGroupName ?? "Proceso";
+            if (paso.operations.length === 0) return nombre;
+            return `${nombre} (${paso.operations.length} ${
+              paso.operations.length === 1 ? "operación" : "operaciones"
+            })`;
+          })
+          .join(" → ");
+
   /** Cancelar no solo sale del modo edición: descarta lo tecleado. */
   const cancelEditing = async () => {
     setEditing(false);
@@ -191,7 +222,7 @@ const ExplosionDetail = () => {
           variant="ghost"
           size="icon"
           onClick={() => navigate("/suppliers/explosions")}
-          aria-label="Volver a Desarrollo de Producto"
+          aria-label="Volver a Recetas"
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
@@ -199,16 +230,16 @@ const ExplosionDetail = () => {
           <h1 className="text-2xl font-bold text-foreground">
             {isNew ? "Nueva receta de producto" : `Receta de producto #${id}`}
           </h1>
-          {!isNew && !editing && (
-            <Button
-              variant="outline"
-              className="ml-auto gap-2"
-              onClick={() => setEditing(true)}
-            >
-              <Pencil className="h-4 w-4" />
-              Editar
-            </Button>
-          )}
+          {/* La ruta del molde. Se abre leyendo o editando: en lectura es
+              para consultarla, y el propio modal trae su botón de editar. */}
+          <Button
+            variant="outline"
+            className="ml-auto gap-2"
+            onClick={() => setProcessesDialogOpen(true)}
+          >
+            <Workflow className="h-4 w-4" />
+            Vincular procesos
+          </Button>
           {/* En el alta no: una receta sin guardar no tiene número con el que
               encabezar el papel.
 
@@ -218,7 +249,7 @@ const ExplosionDetail = () => {
           {!isNew && (
             <Button
               variant="outline"
-              className={editing ? "ml-auto gap-2" : "gap-2"}
+              className="gap-2"
               onClick={handlePrint}
               disabled={printing}
             >
@@ -228,6 +259,36 @@ const ExplosionDetail = () => {
                 <FileText className="h-4 w-4" />
               )}
               Imprimir receta
+            </Button>
+          )}
+          {/* La acción principal, al final y en morado: leyendo es «Editar», y
+              al editar el MISMO sitio pasa a «Guardar», con «Cancelar» al lado
+              para descartar. Así no hay que bajar al final de la ficha para
+              guardar. */}
+          {canEdit ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={
+                  isNew ? () => navigate("/suppliers/explosions") : cancelEditing
+                }
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleSubmit} disabled={submitting} className="gap-2">
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {submitting ? "Guardando..." : "Guardar"}
+              </Button>
+            </>
+          ) : (
+            <Button className="gap-2" onClick={() => setEditing(true)}>
+              <SquarePen className="h-4 w-4" />
+              Editar
             </Button>
           )}
         </div>
@@ -252,87 +313,101 @@ const ExplosionDetail = () => {
             />
           </div>
 
-          {/* Las prendas son opcionales: una receta puede escribirse antes de
-              saber a qué va, y las anteriores a este campo no tienen ninguna.
-              Y pueden ser varias — la misma receta suele valer para las tres
-              tallas de la prenda. */}
+          {/* El PRODUCTO, no prendas sueltas: una receta por producto, que cubre
+              todas sus variaciones. Lo que cambia por prenda se ajusta en los
+              materiales (la excepción por prenda), no con otra receta. */}
           <div className="space-y-2 sm:col-span-2">
-            <Label>Prendas</Label>
+            <Label>Producto</Label>
 
-            {variations.length > 0 && (
-              <div className="flex flex-col gap-2">
-                {variations.map((v) => (
-                  <div
-                    key={v.id}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-border p-3"
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-sm">{v.label}</span>
-                      {v.sku && (
-                        <span className="text-xs text-muted-foreground">
-                          {v.sku}
-                        </span>
-                      )}
-                    </div>
-                    {canEdit && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeVariation(v.id)}
-                      >
-                        Quitar
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {canEdit && (
-              <div className="flex gap-2">
-                {/* El mismo buscador que el pop-up de «crear prenda» en su
-                    modo «ya existe», sin stock: la prenda no se elige por lo
-                    que hay en almacén. Cada elección se suma a la lista. */}
-                <div className="flex-1">
-                  <ProductVariationSelector
-                    showStock={false}
-                    onSelect={(picked) => pickVariation(picked.id)}
-                    trigger={
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-start overflow-hidden font-normal"
-                        disabled={pickingVariation}
-                      >
-                        {pickingVariation ? (
-                          <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" />
-                        ) : (
-                          <Search className="mr-2 h-4 w-4 shrink-0" />
-                        )}
-                        <span className="truncate">Buscar por nombre o SKU...</span>
-                      </Button>
-                    }
-                  />
+            {product ? (
+              <div className="space-y-2 rounded-lg border border-border p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  <span className="font-medium">{product.title}</span>
+                  <Badge variant="secondary">
+                    Aplica a {variations.length === 1 ? "su única variación" : `sus ${variations.length} variaciones`}
+                  </Badge>
                 </div>
-                {/* El buscador es el camino rápido cuando la prenda existe;
-                    esto es para cuando no. */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="shrink-0 gap-2"
-                  onClick={() => setProductDialogOpen(true)}
-                >
-                  <Plus className="h-4 w-4" />
-                  Crear prenda
-                </Button>
+                {variations.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {variations.map((v) => (
+                      <Badge key={v.id} variant="outline" title={v.sku ?? undefined}>
+                        {v.label || v.sku || `#${v.id}`}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Si una talla lleva otra cantidad de algún material, se indica en esa
+                  línea de materiales como excepción por prenda.
+                </p>
+              </div>
+            ) : unify ? (
+              /* Receta antigua: hay que elegir cuál queda como la del producto. */
+              <div className="space-y-2 rounded-lg bg-warning-soft p-3 text-warning-soft-foreground">
+                <p className="text-sm">
+                  Esta receta es anterior a la regla de «una receta por producto» y
+                  todavía no tiene producto.
+                  {unify.hasRecipe
+                    ? ` ${unify.productTitle ?? "Su producto"} ya tiene su receta: esta queda solo como histórica para las órdenes que la usan.`
+                    : unify.competitors.length > 0
+                      ? ` Compite con ${unify.competitors.map((c) => `#${c}`).join(", ")} por ${unify.productTitle ?? "el producto"}: elige cuál queda.`
+                      : ` Pertenece a ${unify.productTitle ?? "un producto"}.`}
+                </p>
+                {!unify.hasRecipe && (
+                  <Button size="sm" onClick={handleUnify} disabled={unifying} className="gap-2">
+                    {unifying && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Usar esta como receta de {unify.productTitle ?? "el producto"}
+                  </Button>
+                )}
+                {variations.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {variations.map((v) => (
+                      <Badge key={v.id} variant="outline">
+                        {v.label || v.sku || `#${v.id}`}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {isNew
+                    ? "Elige el producto de esta receta: cubrirá todas sus variaciones."
+                    : "Receta genérica, sin producto."}
+                </span>
+                {canEdit && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => setProductDialogOpen(true)}
+                    disabled={pickingProduct}
+                  >
+                    {pickingProduct ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Package className="h-4 w-4" />
+                    )}
+                    Elegir producto
+                  </Button>
+                )}
               </div>
             )}
+          </div>
 
-            {variations.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                Sin prendas asignadas. Es válido: la receta queda como genérica.
-              </p>
-            )}
+          {/* Solo el resumen: por dónde pasa el molde se lee aquí sin abrir
+              nada, y se toca desde el botón del header. Esta pantalla es la de
+              los MATERIALES, y un editor de ruta entero dentro tapaba de qué
+              está hecha la prenda. */}
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Procesos</Label>
+            <div className="rounded-lg border border-border p-3">
+              <span className="text-sm" title={resumenProcesos}>
+                {resumenProcesos}
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -358,13 +433,46 @@ const ExplosionDetail = () => {
         </CardContent>
       </Card>
 
+      {/* Se monta al abrir, como los demás: los buscadores de dentro nacen
+          limpios. */}
+      {processesDialogOpen && (
+        <ExplosionProcessesDialog
+          open
+          onOpenChange={setProcessesDialogOpen}
+          processes={processes}
+          processGroups={processGroups}
+          operationCatalog={operationCatalog}
+          onAdd={addProcess}
+          onRemove={removeProcess}
+          onMove={moveProcess}
+          onAddOperation={addOperation}
+          onRemoveOperation={removeOperation}
+          onReplaceOperation={replaceOperation}
+          onClearOperations={clearOperations}
+          onCreateOperation={createOperation}
+          creatingOperation={creatingOperation}
+          readOnly={!canEdit}
+          // El mismo `setEditing` del lápiz: se edita la receta entera, que es
+          // lo que se guarda. La ruta no se guarda por su cuenta.
+          onEdit={() => setEditing(true)}
+        />
+      )}
+
       {/* Se monta al abrir, como el alta de material: así nace limpio y no
           arrastra lo tecleado en un intento anterior que se canceló. */}
       {productDialogOpen && (
         <ItemProductDialog
           open
           onOpenChange={setProductDialogOpen}
-          onSelected={addVariations}
+          onSelected={(elegidas) => {
+            setProductDialogOpen(false);
+            const productId = elegidas[0]?.productId ?? null;
+            if (productId === null) {
+              toast({ title: "No se pudo identificar el producto", variant: "destructive" });
+              return;
+            }
+            pickProduct(productId);
+          }}
         />
       )}
 
@@ -399,33 +507,6 @@ const ExplosionDetail = () => {
         />
       )}
 
-      {/* Leyendo no hay barra: sin cambios que descartar «Cancelar» no
-          significaría nada, un «Guardar» ahí invitaría a tocar, y para volver
-          está la flecha del título. */}
-      {canEdit && (
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={
-              isNew ? () => navigate("/suppliers/explosions") : cancelEditing
-            }
-          >
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
-            {submitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Guardando...
-              </>
-            ) : isNew ? (
-              "Guardar receta"
-            ) : (
-              "Guardar cambios"
-            )}
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

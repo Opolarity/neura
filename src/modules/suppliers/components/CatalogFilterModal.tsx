@@ -16,37 +16,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ActiveFilter,
-  ProcessCatalogFilters,
-} from "../../types/processes.types";
+/**
+ * Filtro de los catálogos del módulo: activo / inactivo / todos.
+ *
+ * `true` solo activos, `false` solo inactivos, `null` todos. Es la misma forma
+ * que el `ActiveFilter` de cada catálogo, así que encajan sin convertir nada y
+ * el modal no depende de los tipos de ninguno en concreto.
+ */
+type CatalogActiveFilter = boolean | null;
 
 // El Select maneja strings; el filtro real es boolean | null.
 const ACTIVE = "active";
 const INACTIVE = "inactive";
 const ALL = "all";
 
-const toOption = (value: ActiveFilter): string =>
+const toOption = (value: CatalogActiveFilter): string =>
   value === null ? ALL : value ? ACTIVE : INACTIVE;
 
-const fromOption = (value: string): ActiveFilter =>
+const fromOption = (value: string): CatalogActiveFilter =>
   value === ALL ? null : value === ACTIVE;
 
-interface ProcessCatalogFilterModalProps {
+interface CatalogFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onApply: (filters: ProcessCatalogFilters) => void;
-  isActive: ActiveFilter;
+  onApply: (filters: { is_active: CatalogActiveFilter }) => void;
+  isActive: CatalogActiveFilter;
   title: string;
 }
 
-export const ProcessCatalogFilterModal = ({
+export const CatalogFilterModal = ({
   isOpen,
   onClose,
   onApply,
   isActive,
   title,
-}: ProcessCatalogFilterModalProps) => {
+}: CatalogFilterModalProps) => {
   const [localValue, setLocalValue] = useState<string>(toOption(isActive));
 
   useEffect(() => {
