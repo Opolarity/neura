@@ -86,6 +86,7 @@ export const materialDispatchPlanApi = async (
     itemsCovered: Number(row.items_covered ?? 0),
     materials: ((row.materials ?? []) as Row[]).map((m) => ({
       materialId: Number(m.material_id),
+      materialVariationId: Number(m.material_variation_id),
       materialName: str(m.material_name) ?? "",
       measurementUnit: str(m.measurement_unit) ?? "",
       required: Number(m.required ?? 0),

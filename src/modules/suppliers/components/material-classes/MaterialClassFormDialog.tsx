@@ -85,7 +85,8 @@ export const MaterialClassFormDialog = ({
           </DialogTitle>
           <DialogDescription>
             De qué familia cuelga decide dónde se ve en el catálogo y cómo se
-            agrupan las líneas en el papel del taller.
+            agrupan las líneas en el papel del taller. Los colores, tallas y
+            medidas no son clases: van como términos en Atributos de materiales.
           </DialogDescription>
         </DialogHeader>
 
@@ -107,17 +108,19 @@ export const MaterialClassFormDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Clase padre</Label>
+            <Label>Familia</Label>
             <Select value={parentId} onValueChange={setParentId}>
               <SelectTrigger>
-                <SelectValue placeholder="Sin clase padre" />
+                <SelectValue placeholder="Ninguna (es una familia)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Sin clase padre</SelectItem>
-                {/* CUALQUIER clase puede ser padre, no solo las raíces: es lo
-                    que permite montar TELA › JERSEY › color. */}
+                <SelectItem value="none">Ninguna (es una familia)</SelectItem>
+                {/* Solo FAMILIAS (las raíces): las clases tienen dos niveles,
+                    Familia › Clase. El tercero era donde se colaban colores y
+                    tallas, que ahora son términos de las variaciones. La base lo
+                    impide también (trg_classes_mat_max_depth). */}
                 {tree
-                  .filter((nodo) => !descendientes.has(nodo.id))
+                  .filter((nodo) => nodo.level === 0 && !descendientes.has(nodo.id))
                   .map((nodo) => (
                     <SelectItem key={nodo.id} value={String(nodo.id)}>
                       <span style={{ paddingLeft: `${nodo.level * 12}px` }}>

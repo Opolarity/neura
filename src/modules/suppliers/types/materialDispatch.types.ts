@@ -47,6 +47,8 @@ export interface MaterialDispatchSource {
 /** Un material del plan: cuánto hace falta y cuánto de eso ya está puesto. */
 export interface MaterialDispatchPlanRow {
   materialId: number;
+  /** El plan va por VARIACIÓN: el Negro y el Blanco se envían por separado. */
+  materialVariationId: number;
   materialName: string;
   measurementUnit: string;
   /** Lo que consumen las prendas que cubre el servicio elegido. */
@@ -66,7 +68,11 @@ export interface MaterialDispatchPlan {
 
 /** Una línea del envío: el material y cuánto sale. */
 export interface MaterialDispatchLine {
+  /** Identidad de la línea: `v<variación>`. */
+  lineKey: string;
   materialId: number;
+  /** La variación que sale. */
+  materialVariationId: number | null;
   materialName: string;
   measurementUnit: string;
   /**
@@ -104,7 +110,7 @@ export interface CreateMaterialDispatchPayload {
   warehouse_id?: number | null;
   /** El almacén del proveedor donde entra la tela. */
   destination_warehouse_id: number;
-  items: Array<{ material_id: number; quantity: number }>;
+  items: Array<{ material_id: number; material_variation_id?: number | null; quantity: number }>;
 }
 
 /** La guía de remisión de un envío, tal como la arma el backend. */

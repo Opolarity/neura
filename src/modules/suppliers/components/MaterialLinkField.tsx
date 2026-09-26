@@ -230,8 +230,10 @@ export const MaterialLinkField = ({
                   <CommandGroup>
                     {materials.map((material) => (
                       <CommandItem
-                        key={material.id}
-                        value={material.name}
+                        // Una opción por VARIACIÓN: dos colores del mismo
+                        // material comparten id de material.
+                        key={material.materialVariationId ?? `m${material.id}`}
+                        value={`${material.name} ${material.materialVariationId ?? material.id}`}
                         onSelect={() => {
                           onChange(selectExistingMaterial(material));
                           setPopoverOpen(false);
@@ -241,7 +243,11 @@ export const MaterialLinkField = ({
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4 shrink-0",
-                            value.materialId === material.id ? "opacity-100" : "opacity-0"
+                            (material.materialVariationId
+                              ? value.materialVariationId === material.materialVariationId
+                              : value.materialId === material.id)
+                              ? "opacity-100"
+                              : "opacity-0"
                           )}
                         />
                         <span className="truncate">{material.name}</span>

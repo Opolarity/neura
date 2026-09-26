@@ -99,6 +99,7 @@ import MaterialMovements from "@/modules/suppliers/pages/MaterialMovements";
 import MaterialDispatchCreate from "@/modules/suppliers/pages/MaterialDispatchCreate";
 import ProcessesList from "@/modules/suppliers/pages/ProcessesList";
 import MaterialClassesList from "@/modules/suppliers/pages/MaterialClassesList";
+import MaterialAttributesList from "@/modules/suppliers/pages/MaterialAttributesList";
 import SuppliersList from "@/modules/suppliers/pages/SuppliersList";
 import Quotations from "@/modules/quotations/pages/Quotations";
 import NewQuotation from "@/modules/quotations/pages/NewQuotation";
@@ -289,6 +290,7 @@ export const APP_PERMISSIONS_CONFIG = [
         code: "catalogs.group", name: "Catálogos", node: [
           { name: "Procesos", path: "/suppliers/processes", code: "processes.list", element: <ProcessesList />, showSidebar: true, node: [] },
           { name: "Clases de materiales", path: "/suppliers/material-classes", code: "material_classes.list", element: <MaterialClassesList />, showSidebar: true, node: [] },
+          { name: "Atributos de materiales", path: "/suppliers/material-attributes", code: "material_attributes.list", element: <MaterialAttributesList />, showSidebar: true, node: [] },
           { name: "Lista de proveedores", path: "/suppliers", code: "suppliers.list", element: <SuppliersList />, showSidebar: true, node: [] },
         ]
       },

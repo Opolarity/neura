@@ -205,7 +205,7 @@ export const MaterialRequirementPanel = ({
                   // información de una sola columna, y pintar la línea entera
                   // de rojo leía como error de la fila -- el material está bien
                   // cargado, solo hay que comprar más.
-                  <TableRow key={material.materialId}>
+                  <TableRow key={material.materialVariationId}>
                     <TableCell className="font-medium">
                       {material.materialName}
                     </TableCell>

@@ -26,11 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createSupplierQuotationApi } from "@/modules/quotations/services/Quotations.service";
-import {
-  MaterialSupplier,
-  materialSuppliersApi,
-  supplierOptionsApi,
-} from "../../services/materials.service";
+import { supplierOptionsApi } from "../../services/materials.service";
 import { SupplierOption } from "../../types/materials.types";
 import { MaterialRequirementRow } from "../../types/materialRequirement.types";
 import { TaxIncludedSelect } from "./TaxIncludedSelect";
@@ -194,11 +190,11 @@ export const MaterialPurchaseDialog = ({
     let cancelado = false;
     setLoading(true);
 
-    Promise.all([
-      materialSuppliersApi(comprables.map((material) => material.materialId)),
-      supplierOptionsApi(null),
-    ])
-      .then(([porMaterial, lista]: [MaterialSupplier[], SupplierOption[]]) => {
+    // El proveedor y el precio que se proponen son los de la VARIACIÓN, que ya
+    // vienen en el requerimiento: el Negro y el Blanco pueden venir de sitios
+    // distintos.
+    supplierOptionsApi(null)
+      .then((lista: SupplierOption[]) => {
         if (cancelado) return;
         setSuppliers(lista);
         setPaso("materiales");
@@ -207,7 +203,7 @@ export const MaterialPurchaseDialog = ({
         setLineas(
           Object.fromEntries(
             comprables.map((material) => [
-              material.materialId,
+              material.materialVariationId,
               {
                 // Marcado solo lo que falta: el diálogo se abre para cubrir el
                 // faltante, y lo demás está ahí por si de paso hace falta.
@@ -215,12 +211,12 @@ export const MaterialPurchaseDialog = ({
                 // Lo que falta, y si no falta nada la cantidad la pone quien
                 // compra: reponer no tiene un numero evidente.
                 cantidad: material.missing > 0 ? String(material.missing) : "",
-                precio:
-                  material.unitCost === null ? "" : String(material.unitCost),
+                precio: (() => {
+                  const precio = material.currentUnitCost ?? material.unitCost;
+                  return precio === null ? "" : String(precio);
+                })(),
                 igv: TAX_UNSET,
-                supplierId:
-                  porMaterial.find((p) => p.materialId === material.materialId)
-                    ?.supplierId ?? null,
+                supplierId: material.supplierId,
               },
             ])
           )
@@ -255,21 +251,21 @@ export const MaterialPurchaseDialog = ({
       [supplierId]: { ...(prev[supplierId] ?? PACTO_NUEVO), ...cambio },
     }));
 
-  const setLinea = (materialId: number, cambio: Partial<Linea>) =>
+  const setLinea = (variationId: number, cambio: Partial<Linea>) =>
     setLineas((prev) => ({
       ...prev,
-      [materialId]: { ...prev[materialId], ...cambio },
+      [variationId]: { ...prev[variationId], ...cambio },
     }));
 
   const elegidas = comprables.filter(
-    (material) => lineas[material.materialId]?.marcado
+    (material) => lineas[material.materialVariationId]?.marcado
   );
 
   /** Cuántas cotizaciones van a salir: una por proveedor distinto. */
   const porProveedor = useMemo(() => {
     const mapa = new Map<number, MaterialRequirementRow[]>();
     elegidas.forEach((material) => {
-      const supplierId = lineas[material.materialId]?.supplierId;
+      const supplierId = lineas[material.materialVariationId]?.supplierId;
       if (supplierId == null) return;
       const grupo = mapa.get(supplierId);
       if (grupo) grupo.push(material);
@@ -279,7 +275,7 @@ export const MaterialPurchaseDialog = ({
   }, [elegidas, lineas]);
 
   const sinProveedor = elegidas.filter(
-    (material) => lineas[material.materialId]?.supplierId == null
+    (material) => lineas[material.materialVariationId]?.supplierId == null
   );
 
   /** Las órdenes que van a salir, en el orden en que se van a pactar. */
@@ -316,14 +312,15 @@ export const MaterialPurchaseDialog = ({
             description: material.materialName,
             supplier_class_id: null,
             material_id: material.materialId,
+            material_variation_id: material.materialVariationId,
             production_order_id: productionOrderId,
-            quantity: Number(lineas[material.materialId]?.cantidad || 0),
+            quantity: Number(lineas[material.materialVariationId]?.cantidad || 0),
             // El total de la línea, que es lo que guarda `price`.
-            price: lineTotal(lineas[material.materialId]),
+            price: lineTotal(lineas[material.materialVariationId]),
             price_includes_tax:
-              lineTotal(lineas[material.materialId]) === null
+              lineTotal(lineas[material.materialVariationId]) === null
                 ? null
-                : toIncludesTax(lineas[material.materialId]?.igv ?? TAX_UNSET),
+                : toIncludesTax(lineas[material.materialVariationId]?.igv ?? TAX_UNSET),
             measurement_unit: material.measurementUnit || null,
             // La fecha vive POR LÍNEA en la base (supplier_services), pero se
             // pacta una sola vez con el proveedor, así que aquí va la misma a
@@ -411,16 +408,16 @@ export const MaterialPurchaseDialog = ({
                 </div>
 
                 {comprables.map((material) => {
-                  const linea = lineas[material.materialId];
+                  const linea = lineas[material.materialVariationId];
                   return (
                     <div
-                      key={material.materialId}
+                      key={material.materialVariationId}
                       className="grid grid-cols-[1.5rem_1fr_6rem_6rem_7rem_9rem_13rem] items-center gap-3 px-3 py-2"
                     >
                       <Checkbox
                         checked={linea?.marcado ?? false}
                         onCheckedChange={(value) =>
-                          setLinea(material.materialId, {
+                          setLinea(material.materialVariationId, {
                             marcado: value === true,
                           })
                         }
@@ -458,7 +455,7 @@ export const MaterialPurchaseDialog = ({
                         className="h-8 text-right"
                         value={linea?.cantidad ?? ""}
                         onChange={(e) =>
-                          setLinea(material.materialId, {
+                          setLinea(material.materialVariationId, {
                             cantidad: e.target.value,
                           })
                         }
@@ -472,7 +469,7 @@ export const MaterialPurchaseDialog = ({
                         className="h-8 text-right"
                         value={linea?.precio ?? ""}
                         onChange={(e) =>
-                          setLinea(material.materialId, {
+                          setLinea(material.materialVariationId, {
                             precio: e.target.value,
                           })
                         }
@@ -497,7 +494,7 @@ export const MaterialPurchaseDialog = ({
                         compact
                         value={linea?.igv ?? TAX_UNSET}
                         onValueChange={(value) =>
-                          setLinea(material.materialId, { igv: value })
+                          setLinea(material.materialVariationId, { igv: value })
                         }
                         disabled={lineTotal(linea) === null}
                         aria-label={`IGV de ${material.materialName}`}
@@ -510,7 +507,7 @@ export const MaterialPurchaseDialog = ({
                             : ""
                         }
                         onValueChange={(value) =>
-                          setLinea(material.materialId, {
+                          setLinea(material.materialVariationId, {
                             supplierId: Number(value),
                           })
                         }
@@ -595,7 +592,7 @@ export const MaterialPurchaseDialog = ({
                 `Proveedor #${supplierId}`;
               const total = delProveedor.reduce(
                 (suma, material) =>
-                  suma + (lineTotal(lineas[material.materialId]) ?? 0),
+                  suma + (lineTotal(lineas[material.materialVariationId]) ?? 0),
                 0
               );
 

@@ -111,6 +111,12 @@ export interface QuotationOption {
 /** Opción del combobox de materiales. */
 export interface MaterialOption {
   id: number;
+  /**
+   * La variación concreta ("Jersey 30/1 · Negro") cuando la opción viene del
+   * buscador de variaciones; `id` sigue siendo el del material. Sin ella el
+   * backend usa la única variación del material.
+   */
+  materialVariationId?: number | null;
   name: string;
   /** Necesarios para calcular el total en vivo de una explosión. */
   unitCost: number | null;

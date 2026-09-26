@@ -137,16 +137,16 @@ export const QuotationConsumptionsDialog = ({
           ) : (
             <ul className="divide-y">
               {materials.map((m) => {
-                const marcado = selected.has(m.materialId);
+                const marcado = selected.has(m.materialVariationId);
                 return (
                   <li
-                    key={m.materialId}
+                    key={m.materialVariationId}
                     className="hover:bg-muted/50 flex items-center gap-3 px-4 py-3"
                   >
                     <Checkbox
                       id={`mat-${m.materialId}`}
                       checked={marcado}
-                      onCheckedChange={() => toggle(m.materialId)}
+                      onCheckedChange={() => toggle(m.materialVariationId)}
                     />
                     <label
                       htmlFor={`mat-${m.materialId}`}

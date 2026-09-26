@@ -3,6 +3,7 @@ import { buildEndpoint } from "@/shared/utils/query";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import {
   CreateMaterialData,
+  MaterialStockPayload,
   Material,
   MaterialClass,
   MaterialsFilters,
@@ -12,6 +13,7 @@ import {
   MeasurementUnit,
   UpdateMaterialData,
 } from "../types/materials.types";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import { MaterialOption } from "../types/services.types";
 
 /**
@@ -62,6 +64,32 @@ export const materialsListApi = async (
     quantity: Number(row.quantity ?? 0),
     measurementUnit: row.measurement_unit ?? "",
     unitCost: row.unit_cost === null || row.unit_cost === undefined ? null : Number(row.unit_cost),
+    unitCostMax:
+      row.unit_cost_max === null || row.unit_cost_max === undefined ? null : Number(row.unit_cost_max),
+    variationsCount: Number(row.variations_count ?? 0),
+    suppliersCount: Number(row.suppliers_count ?? 0),
+    variations: (Array.isArray(row.variations) ? row.variations : []).map((v: any) => ({
+      id: Number(v.id),
+      code: v.code ?? "",
+      label: v.label ?? row.name ?? "",
+      termsLabel: v.terms_label ?? null,
+      terms: (Array.isArray(v.terms) ? v.terms : []).map((t: any) => ({
+        id: Number(t.id),
+        name: t.name ?? "",
+        groupId: Number(t.material_term_group_id),
+        groupName: t.material_term_group_name ?? "",
+      })),
+      unitCost: v.unit_cost === null || v.unit_cost === undefined ? null : Number(v.unit_cost),
+      supplierId: v.supplier_id ?? null,
+      supplierName: v.supplier_name ?? null,
+      isActive: v.is_active !== false,
+      stock: Number(v.stock ?? 0),
+      stockEntries: (Array.isArray(v.stock_entries) ? v.stock_entries : []).map((e: any) => ({
+        warehouseId: Number(e.warehouse_id),
+        stockTypeId: Number(e.stock_type_id),
+        stock: Number(e.stock ?? 0),
+      })),
+    })),
     materialClassId: row.material_class_id,
     materialClassName: row.material_class_name ?? "",
     materialRootClassId: row.material_root_class_id ?? row.material_class_id,
@@ -106,6 +134,43 @@ export const createMaterialApi = async (
     materialClassId: row.material_class_id ?? materialData.material_class_id ?? null,
     materialClassName: row.material_class_name ?? null,
   };
+};
+
+/** Lo que manda la ficha: el material y, si se editaron, sus variaciones. */
+export interface SaveMaterialPayload {
+  material: {
+    id?: number;
+    name: string;
+    material_class_id: number;
+    measurement_unit: string;
+    images?: string[];
+  };
+  /**
+   * La lista completa de variaciones: las que falten se desactivan. Null =
+   * no tocarlas (solo se guarda el material).
+   */
+  variations: Array<{
+    id?: number | null;
+    term_ids: number[];
+    unit_cost: number | null;
+    supplier_id: number | null;
+    stock?: MaterialStockPayload[];
+  }> | null;
+}
+
+/**
+ * Guarda la ficha entera en una transacción (sp_save_material): el material,
+ * sus variaciones con términos, costo y proveedor, y el stock de cada una.
+ */
+export const saveMaterialApi = async (
+  payload: SaveMaterialPayload
+): Promise<{ id: number; variations: Array<{ id: number; code: string; label: string; is_active: boolean }> }> => {
+  const response = await invokeFunction<{ data?: { id: number; variations: Array<{ id: number; code: string; label: string; is_active: boolean }> } }>(
+    "save-material",
+    { method: "POST", body: payload }
+  );
+  if (!response?.data) throw new Error("No se pudo guardar el material");
+  return response.data;
 };
 
 export const updateMaterialApi = async (

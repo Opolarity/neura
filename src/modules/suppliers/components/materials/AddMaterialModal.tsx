@@ -42,6 +42,9 @@ export const AddMaterialModal = ({
 }: AddMaterialModalProps) => {
   const hook = useAddMaterial({
     material,
+    // Alta en línea: sin atributos ni stock, y sin tocar las variaciones de
+    // un material que ya tiene varias.
+    compact: true,
     onSuccess: (created) => {
       onSaved?.(created);
       onOpenChange(false);

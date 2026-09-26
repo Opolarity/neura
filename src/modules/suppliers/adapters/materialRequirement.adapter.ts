@@ -22,7 +22,11 @@ const numOrNull = (value: unknown): number | null => {
 
 const toRow = (row: any): MaterialRequirementRow => ({
   materialId: row.material_id,
+  materialVariationId: num(row.material_variation_id),
+  variationCode: row.material_variation_code ?? "",
   materialName: row.material_name ?? "",
+  supplierId: numOrNull(row.supplier_id),
+  currentUnitCost: numOrNull(row.current_unit_cost),
   measurementUnit: row.measurement_unit ?? "",
   materialClassId: numOrNull(row.material_class_id),
   materialClassName: textOrNull(row.material_class_name),
@@ -53,6 +57,7 @@ const toItem = (row: any): MaterialRequirementItem => ({
   hasShortage: row.has_shortage === true,
   materials: (row.materials ?? []).map((m: any) => ({
     materialId: m.material_id,
+    materialVariationId: num(m.material_variation_id),
     materialName: m.material_name ?? "",
     measurementUnit: m.measurement_unit ?? "",
     materialClassId: numOrNull(m.material_class_id),

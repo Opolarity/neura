@@ -15,7 +15,7 @@ import {
   explosionByIdApi,
   updateExplosionApi,
 } from "../services/explosions.service";
-import { materialOptionsApi } from "../services/supplierServices.service";
+import { materialVariationLinkOptionsApi } from "../services/supplierServices.service";
 
 interface UseExplosionDetailOptions {
   /** `undefined` o "new" abren el formulario en modo creación. */
@@ -23,8 +23,17 @@ interface UseExplosionDetailOptions {
 }
 
 /** Línea vacía que se añade al pulsar "Añadir material". */
+/**
+ * Identidad de una opción del selector de material: la variación, o el
+ * material (en negativo, para no chocar con ids de variación) si aún no se
+ * resolvió cuál.
+ */
+export const optionKey = (option: { id: number; materialVariationId?: number | null }) =>
+  option.materialVariationId ?? -option.id;
+
 const emptyLine = (): ExplosionMaterial => ({
   materialId: 0,
+  materialVariationId: null,
   materialName: "",
   materialClassId: null,
   materialClassName: null,
@@ -86,7 +95,7 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
   useEffect(() => {
     const loadCatalogs = async () => {
       try {
-        setMaterials(await materialOptionsApi());
+        setMaterials(await materialVariationLinkOptionsApi());
       } catch (error: any) {
         toast({ title: "Error al cargar datos iniciales", variant: "destructive" });
       }
@@ -98,7 +107,7 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
   useEffect(() => {
     if (debouncedMaterialSearch === "") return;
 
-    materialOptionsApi(debouncedMaterialSearch)
+    materialVariationLinkOptionsApi(debouncedMaterialSearch)
       .then(setMaterials)
       .catch(() => toast({ title: "Error al buscar materiales", variant: "destructive" }));
   }, [debouncedMaterialSearch]);
@@ -191,14 +200,25 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
    * a esa línea. No se recarga el catálogo entero -- el alta ya devuelve la
    * fila con su id, y recargar perdería el término de búsqueda tecleado.
    */
-  const materialCreated = (material: MaterialOption) => {
-    setMaterials((prev) =>
-      prev.some((m) => m.id === material.id) ? prev : [...prev, material]
-    );
-    if (creatingMaterialFor !== null) {
-      setLineMaterial(creatingMaterialFor, material);
-    }
+  const materialCreated = async (material: MaterialOption) => {
+    // El alta devuelve el material; la línea necesita su VARIACIÓN, que nace
+    // con él. Se lee de vuelta como opción; si fallara, la línea se queda con
+    // el material y el backend usa su única variación.
+    const target = creatingMaterialFor;
     setCreatingMaterialFor(null);
+    let option = material;
+    try {
+      const [variacion] = await materialVariationLinkOptionsApi(null, { materialId: material.id });
+      if (variacion) option = variacion;
+    } catch {
+      // Sin la variación la línea sigue valiendo: ver arriba.
+    }
+    setMaterials((prev) =>
+      prev.some((m) => optionKey(m) === optionKey(option)) ? prev : [...prev, option]
+    );
+    if (target !== null) {
+      setLineMaterial(target, option);
+    }
   };
 
   /**
@@ -212,6 +232,7 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
   ): ExplosionMaterial => ({
     ...line,
     materialId: material.id,
+    materialVariationId: material.materialVariationId ?? null,
     materialName: material.name,
     materialClassId: material.materialClassId,
     materialClassName: material.materialClassName,
@@ -230,16 +251,38 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
    * que lo use. Sin recargar nada -- el guardado ya sabe con qué valores se
    * quedó, y recargar perdería el término de búsqueda tecleado.
    */
-  const materialUpdated = (material: MaterialOption) => {
-    setMaterials((prev) =>
-      prev.map((m) => (m.id === material.id ? material : m))
+  const materialUpdated = async (material: MaterialOption) => {
+    setEditingMaterialId(null);
+    // Lo editado es el MATERIAL; cada línea consume una de sus variaciones, y
+    // su etiqueta, costo y unidad salen de ahí. Se releen esas variaciones en
+    // vez de pisar la línea con el material, que le quitaría cuál es.
+    let variaciones: MaterialOption[] = [];
+    try {
+      variaciones = await materialVariationLinkOptionsApi(null, { materialId: material.id });
+    } catch {
+      variaciones = [];
+    }
+    const porVariacion = new Map(
+      variaciones.map((v) => [v.materialVariationId ?? 0, v] as const)
     );
-    setLines((prev) =>
-      prev.map((line) =>
-        line.materialId === material.id ? applyMaterial(line, material) : line
+    setMaterials((prev) =>
+      prev.map((m) =>
+        m.materialVariationId && porVariacion.has(m.materialVariationId)
+          ? (porVariacion.get(m.materialVariationId) as MaterialOption)
+          : m.id === material.id && !m.materialVariationId
+            ? material
+            : m
       )
     );
-    setEditingMaterialId(null);
+    setLines((prev) =>
+      prev.map((line) => {
+        if (line.materialId !== material.id) return line;
+        const variacion = line.materialVariationId
+          ? porVariacion.get(line.materialVariationId)
+          : undefined;
+        return applyMaterial(line, variacion ?? { ...material, materialVariationId: line.materialVariationId });
+      })
+    );
   };
 
   const setLineQuantity = (index: number, value: string) => {
@@ -308,6 +351,7 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
       model_code: modelCode.trim(),
       materials: lines.map((line) => ({
         material_id: line.materialId,
+        material_variation_id: line.materialVariationId,
         quantity: line.quantity,
         // Solo lo que DIFIERE de la cantidad general, y solo de prendas que
         // siguen en la receta: quitar una prenda tiene que llevarse sus

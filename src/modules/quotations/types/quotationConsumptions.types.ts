@@ -14,6 +14,9 @@
 /** Un material de la receta, con si este paso lo consume. */
 export interface QuotationConsumptionMaterial {
   materialId: number;
+  /** La casilla es por VARIACIÓN: el paso puede consumir el Negro y no el Blanco. */
+  materialVariationId: number;
+  /** Etiqueta de la variación ("Jersey 30/1 · Negro"). */
   name: string;
   /** Código de la unidad (KG, MTR, UND). Nulo si el material no la declara. */
   measurementUnit: string | null;
