@@ -1,9 +1,44 @@
+/** Un término de una variación: Negro (Color), 14 cm (Largo). */
+export interface MaterialVariationTerm {
+  id: number;
+  name: string;
+  groupId: number;
+  groupName: string;
+}
+
+/**
+ * Una variación del material: lo que se compra, se guarda y se consume
+ * ("Jersey 30/1 · Negro"). Lleva su costo, su proveedor y su stock.
+ */
+export interface MaterialVariationRow {
+  id: number;
+  code: string;
+  /** Material y términos: "Jersey 30/1 · Negro". */
+  label: string;
+  /** Solo los términos: "Negro". Null en la variación de un material simple. */
+  termsLabel: string | null;
+  terms: MaterialVariationTerm[];
+  unitCost: number | null;
+  supplierId: number | null;
+  supplierName: string | null;
+  isActive: boolean;
+  stock: number;
+  stockEntries: MaterialStockEntry[];
+}
+
 export interface Material {
   id: number;
   name: string;
   quantity: number;
   measurementUnit: string;
+  /** Con una variación, su costo; con varias, el menor ("desde"). */
   unitCost: number | null;
+  /** El mayor de sus variaciones activas. */
+  unitCostMax: number | null;
+  variationsCount: number;
+  suppliersCount: number;
+  /** Activas primero. */
+  variations: MaterialVariationRow[];
   /** La HOJA: de la que cuelga el material. Con el árbol, el color. */
   materialClassId: number;
   materialClassName: string;
@@ -97,6 +132,8 @@ export interface MaterialStockEntry {
 
 /** Lo que se manda al backend por cada linea. */
 export interface MaterialStockPayload {
+  /** De qué variación es el saldo. Sin ella, el backend usa la única del material. */
+  material_variation_id?: number | null;
   warehouse_id: number;
   stock_type_id: number | null;
   /** El saldo QUE DEBE QUEDAR en ese almacen; el backend guarda la diferencia. */

@@ -70,7 +70,7 @@ export const useMaterialInventory = () => {
   // ---- Edición en la rejilla, como en el inventario de productos ----------
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  /** Lo tecleado, por `materialId:warehouseId`. Vacío = sin tocar. */
+  /** Lo tecleado, por `variaciónId:warehouseId`. Vacío = sin tocar. */
   const [edits, setEdits] = useState<Record<string, string>>({});
 
   const { toast } = useToast();
@@ -160,16 +160,18 @@ export const useMaterialInventory = () => {
   // el backend apunta la diferencia como movimiento, que es la única forma en
   // que este stock se mueve (ver el comentario de material_stock).
 
-  const claveCelda = (materialId: number, warehouseId: number) =>
-    `${materialId}:${warehouseId}`;
+  // Por VARIACIÓN: dos colores del mismo material son dos filas y no pueden
+  // compartir casilla.
+  const claveCelda = (variationId: number, warehouseId: number) =>
+    `${variationId}:${warehouseId}`;
 
   /** Lo tecleado si se tocó; si no, el saldo que vino. */
   const getStockValue = (
-    materialId: number,
+    variationId: number,
     warehouseId: number,
     base: number | undefined,
   ): string => {
-    const tecleado = edits[claveCelda(materialId, warehouseId)];
+    const tecleado = edits[claveCelda(variationId, warehouseId)];
     if (tecleado !== undefined) return tecleado;
     // Sin fila en material_stock el saldo es CERO, y así se dice. El guion
     // dejaba la duda de si era cero o «no se sabe», y aquí siempre se sabe.
@@ -177,13 +179,13 @@ export const useMaterialInventory = () => {
   };
 
   const handleStockChange = (
-    materialId: number,
+    variationId: number,
     warehouseId: number,
     value: string,
   ) =>
     setEdits((prev) => ({
       ...prev,
-      [claveCelda(materialId, warehouseId)]: value,
+      [claveCelda(variationId, warehouseId)]: value,
     }));
 
   const handleEdit = () => setIsEditing(true);
@@ -195,14 +197,15 @@ export const useMaterialInventory = () => {
 
   /** Solo lo que de verdad cambió: un número igual al que había no es un ajuste. */
   const cambios = Object.entries(edits).flatMap(([clave, valor]) => {
-    const [materialId, warehouseId] = clave.split(":").map(Number);
+    const [variationId, warehouseId] = clave.split(":").map(Number);
     if (valor.trim() === "") return [];
     const cantidad = Number(valor);
     if (!Number.isFinite(cantidad)) return [];
-    const fila = rows.find((row) => row.materialId === materialId);
-    const actual = fila?.stockByWarehouse[warehouseId] ?? 0;
+    const fila = rows.find((row) => row.materialVariationId === variationId);
+    if (!fila) return [];
+    const actual = fila.stockByWarehouse[warehouseId] ?? 0;
     if (cantidad === actual) return [];
-    return [{ materialId, warehouseId, cantidad }];
+    return [{ materialId: fila.materialId, variationId, warehouseId, cantidad }];
   });
 
   const hasChanges = cambios.length > 0;
@@ -229,6 +232,7 @@ export const useMaterialInventory = () => {
         await updateMaterialApi({
           id: materialId,
           stock: lineas.map((linea) => ({
+            material_variation_id: linea.variationId,
             warehouse_id: linea.warehouseId,
             stock_type_id: filters.stock_type_id ?? null,
             quantity: linea.cantidad,

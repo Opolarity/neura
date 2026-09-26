@@ -21,12 +21,12 @@ interface MaterialInventoryTableProps {
   /** Con las casillas abiertas se teclea; cerradas, solo se lee. */
   isEditing: boolean;
   getStockValue: (
-    materialId: number,
+    variationId: number,
     warehouseId: number,
     base: number | undefined,
   ) => string;
   handleStockChange: (
-    materialId: number,
+    variationId: number,
     warehouseId: number,
     value: string,
   ) => void;
@@ -103,7 +103,7 @@ const MaterialInventoryTable = ({
             const total = columns.reduce((suma, warehouse) => {
               const valor = Number(
                 getStockValue(
-                  row.materialId,
+                  row.materialVariationId,
                   warehouse.id,
                   row.stockByWarehouse[warehouse.id],
                 ),
@@ -112,8 +112,13 @@ const MaterialInventoryTable = ({
             }, 0);
 
             return (
-            <TableRow key={row.materialId}>
-              <TableCell className="font-medium">{row.materialName}</TableCell>
+            <TableRow key={row.materialVariationId}>
+              <TableCell>
+                <div className="font-medium">{row.materialName}</div>
+                {row.variationCode && (
+                  <div className="text-muted-foreground text-xs tabular-nums">{row.variationCode}</div>
+                )}
+              </TableCell>
               <TableCell>
                 {row.materialClassName ? (
                   <Badge variant="secondary">{row.materialClassName}</Badge>
@@ -140,10 +145,10 @@ const MaterialInventoryTable = ({
                       type="number"
                       step="0.001"
                       className="h-8 text-right tabular-nums"
-                      value={getStockValue(row.materialId, warehouse.id, stock)}
+                      value={getStockValue(row.materialVariationId, warehouse.id, stock)}
                       onChange={(event) =>
                         handleStockChange(
-                          row.materialId,
+                          row.materialVariationId,
                           warehouse.id,
                           event.target.value,
                         )

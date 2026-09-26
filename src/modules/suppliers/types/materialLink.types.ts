@@ -7,6 +7,8 @@ import { MaterialOption } from "./services.types";
 export interface MaterialLinkValue {
   linked: boolean;
   materialId: number | null;
+  /** La variación que se compra. Null = la única del material. */
+  materialVariationId: number | null;
   materialName: string | null;
   /** Unidad del material vinculado: manda sobre la del servicio. */
   materialUnit: string | null;
@@ -15,6 +17,7 @@ export interface MaterialLinkValue {
 export const emptyMaterialLink = (): MaterialLinkValue => ({
   linked: false,
   materialId: null,
+  materialVariationId: null,
   materialName: null,
   materialUnit: null,
 });
@@ -23,17 +26,19 @@ export const emptyMaterialLink = (): MaterialLinkValue => ({
 export const materialLinkFromExisting = (
   materialId: number | null,
   materialName: string | null,
-  materialUnit: string | null
+  materialUnit: string | null,
+  materialVariationId: number | null = null
 ): MaterialLinkValue =>
   materialId === null
     ? emptyMaterialLink()
-    : { linked: true, materialId, materialName, materialUnit };
+    : { linked: true, materialId, materialVariationId, materialName, materialUnit };
 
 export const selectExistingMaterial = (
   material: MaterialOption
 ): MaterialLinkValue => ({
   linked: true,
   materialId: material.id,
+  materialVariationId: material.materialVariationId ?? null,
   materialName: material.name,
   materialUnit: material.measurementUnit,
 });
@@ -53,7 +58,8 @@ export const materialLinkError = (value: MaterialLinkValue): string | null => {
   return null;
 };
 
-/** Parte del payload que entiende el backend (`material_id`). */
+/** Parte del payload que entiende el backend (`material_id` y su variación). */
 export const materialLinkPayload = (value: MaterialLinkValue) => ({
   material_id: value.linked ? value.materialId : null,
+  material_variation_id: value.linked ? value.materialVariationId : null,
 });

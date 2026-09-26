@@ -30,7 +30,10 @@ export interface MaterialInventoryApiResponse {
     }>;
     data: Array<{
       material_id: number;
+      /** Etiqueta de la variación ("Jersey 30/1 · Negro"). */
       material_name: string;
+      material_variation_id: number;
+      material_variation_code: string | null;
       measurement_unit: string | null;
       material_class_id: number | null;
       material_class_name: string | null;
@@ -41,9 +44,15 @@ export interface MaterialInventoryApiResponse {
   };
 }
 
-/** Una fila: un material, con su saldo en cada almacén. */
+/**
+ * Una fila: una VARIACIÓN de material, con su saldo en cada almacén. Dos
+ * colores del mismo jersey son dos filas: son dos existencias distintas.
+ */
 export interface MaterialInventoryRow {
   materialId: number;
+  materialVariationId: number;
+  variationCode: string;
+  /** Etiqueta de la variación ("Jersey 30/1 · Negro"). */
   materialName: string;
   measurementUnit: string;
   materialClassId: number | null;

@@ -33,13 +33,16 @@ import { AddMaterialModal } from "../materials/AddMaterialModal";
 import {
   createExplosionApi,
 } from "../../services/explosions.service";
-import { materialOptionsApi } from "../../services/supplierServices.service";
+import { materialVariationLinkOptionsApi } from "../../services/supplierServices.service";
+import { optionKey } from "../../hooks/useExplosionDetail";
 import { MaterialOption } from "../../types/services.types";
 import { ExplosionOption } from "../../types/productionOrders.types";
 
 /** Línea de material mientras se edita en el diálogo. */
 interface DraftLine {
   materialId: number;
+  /** La variación que consume ("Jersey 30/1 · Negro"). */
+  materialVariationId: number | null;
   materialName: string;
   measurementUnit: string | null;
   unitCost: number | null;
@@ -48,6 +51,7 @@ interface DraftLine {
 
 const emptyLine = (): DraftLine => ({
   materialId: 0,
+  materialVariationId: null,
   materialName: "",
   measurementUnit: null,
   unitCost: null,
@@ -112,7 +116,7 @@ export const ExplosionQuickCreateDialog = ({
     setLines([emptyLine()]);
     setModelCode("");
 
-    materialOptionsApi()
+    materialVariationLinkOptionsApi()
       .then(setMaterials)
       .catch(() => toast({ title: "Error al cargar los materiales", variant: "destructive" }));
   }, [open, suggestedDescription]);
@@ -121,7 +125,7 @@ export const ExplosionQuickCreateDialog = ({
   useEffect(() => {
     if (debouncedMaterialSearch === "") return;
 
-    materialOptionsApi(debouncedMaterialSearch)
+    materialVariationLinkOptionsApi(debouncedMaterialSearch)
       .then(setMaterials)
       .catch(() => toast({ title: "Error al buscar materiales", variant: "destructive" }));
   }, [debouncedMaterialSearch]);
@@ -140,6 +144,7 @@ export const ExplosionQuickCreateDialog = ({
           ? {
               ...line,
               materialId: material.id,
+              materialVariationId: material.materialVariationId ?? null,
               materialName: material.name,
               unitCost: material.unitCost,
               measurementUnit: material.measurementUnit,
@@ -183,6 +188,7 @@ export const ExplosionQuickCreateDialog = ({
         model_code: modelCode.trim(),
         materials: filled.map((line) => ({
           material_id: line.materialId,
+          material_variation_id: line.materialVariationId,
           quantity: Number(line.quantity),
         })),
         // La receta nace cubriendo la prenda del item. Podra cubrir mas desde
@@ -270,14 +276,19 @@ export const ExplosionQuickCreateDialog = ({
                     <div className="flex min-w-0 gap-2">
                       <EntityCombobox
                         className="min-w-0 flex-1"
+                        // Una opción por variación de material.
                         options={materials.map((m) => ({
-                          id: m.id,
+                          id: optionKey(m),
                           label: m.name,
                         }))}
-                        value={line.materialId || null}
+                        value={
+                          line.materialId
+                            ? optionKey({ id: line.materialId, materialVariationId: line.materialVariationId })
+                            : null
+                        }
                         onSelect={(option) => {
                           const material = materials.find(
-                            (m) => m.id === option.id
+                            (m) => optionKey(m) === option.id
                           );
                           if (material) setLineMaterial(index, material);
                         }}
@@ -378,13 +389,22 @@ export const ExplosionQuickCreateDialog = ({
           onOpenChange={(value) => {
             if (!value) setCreatingMaterialFor(null);
           }}
-          onSaved={(created) => {
+          onSaved={async (created) => {
             if (!created) return;
-            setMaterials((prev) =>
-              prev.some((m) => m.id === created.id) ? prev : [...prev, created]
-            );
-            setLineMaterial(creatingMaterialFor, created);
+            const target = creatingMaterialFor;
             setCreatingMaterialFor(null);
+            // El material nace con su variación: la línea se queda con ella.
+            let option = created;
+            try {
+              const [variacion] = await materialVariationLinkOptionsApi(null, { materialId: created.id });
+              if (variacion) option = variacion;
+            } catch {
+              // Sin ella la línea va por material y el backend usa su única variación.
+            }
+            setMaterials((prev) =>
+              prev.some((m) => optionKey(m) === optionKey(option)) ? prev : [...prev, option]
+            );
+            setLineMaterial(target, option);
           }}
         />
       )}

@@ -86,7 +86,7 @@ const MaterialDispatchCreate = () => {
     loadingMaterials,
     selectedMaterial,
     setSelectedMaterial,
-    selectedMaterialIds,
+    isOptionTaken,
     originOptions,
     originWarehouseId,
     setOriginWarehouseId,
@@ -379,7 +379,7 @@ const MaterialDispatchCreate = () => {
                   className="w-full justify-between font-normal"
                 >
                   <span className="truncate">
-                    {selectedMaterial?.name ?? "Buscar material..."}
+                    {selectedMaterial?.label ?? "Buscar material..."}
                   </span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -402,7 +402,7 @@ const MaterialDispatchCreate = () => {
                     <CommandGroup>
                       {materials
                         // Los ya agregados no se vuelven a ofrecer.
-                        .filter((m) => !selectedMaterialIds.has(m.id))
+                        .filter((m) => !isOptionTaken(m))
                         .map((material) => (
                           <CommandItem
                             key={material.id}
@@ -419,9 +419,9 @@ const MaterialDispatchCreate = () => {
                               )}
                             />
                             <div className="flex min-w-0 flex-col">
-                              <span className="truncate">{material.name}</span>
+                              <span className="truncate">{material.label}</span>
                               <span className="text-muted-foreground text-xs">
-                                {material.materialClassName} · {material.measurementUnit}
+                                {material.code} · {material.materialClassName} · {material.measurementUnit}
                               </span>
                             </div>
                           </CommandItem>
@@ -479,7 +479,7 @@ const MaterialDispatchCreate = () => {
                 </TableRow>
               ) : (
                 lines.map((line) => (
-                  <TableRow key={line.materialId}>
+                  <TableRow key={line.lineKey}>
                     <TableCell>
                       <div>{line.materialName}</div>
                       {/* Dónde MÁS hay. Solo los almacenes de otros talleres y
@@ -525,7 +525,7 @@ const MaterialDispatchCreate = () => {
                         max={line.stock}
                         className="h-8 text-right"
                         value={line.quantity ?? ""}
-                        onChange={(e) => setLineQuantity(line.materialId, e.target.value)}
+                        onChange={(e) => setLineQuantity(line.lineKey, e.target.value)}
                         disabled={line.stock <= 0}
                         aria-label={`Cantidad de ${line.materialName}`}
                       />
@@ -547,7 +547,7 @@ const MaterialDispatchCreate = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => removeLine(line.materialId)}
+                        onClick={() => removeLine(line.lineKey)}
                         aria-label="Quitar"
                       >
                         <Trash2 className="h-4 w-4" />

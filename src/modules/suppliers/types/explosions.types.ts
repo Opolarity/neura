@@ -51,6 +51,13 @@ export interface ExplosionMaterial {
   /** Ausente en las líneas que aún no se han guardado. */
   id?: number;
   materialId: number;
+  /**
+   * La variación que consume la línea ("Jersey 30/1 · Negro"). Null solo en
+   * una línea recién puesta con un material que aún no se resolvió; el
+   * backend usa entonces la única variación del material.
+   */
+  materialVariationId: number | null;
+  /** Etiqueta de la variación. */
   materialName: string;
   /** TELA, AVIOS… Es el «Tipo:» por el que se agrupa el requerimiento impreso. */
   materialClassId: number | null;

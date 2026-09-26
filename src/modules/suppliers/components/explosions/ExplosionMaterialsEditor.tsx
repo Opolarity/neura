@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { optionKey } from "../../hooks/useExplosionDetail";
 import { Label } from "@/components/ui/label";
 
 interface ExplosionMaterialsEditorProps {
@@ -78,8 +79,10 @@ export const ExplosionMaterialsEditor = ({
   previewTotal,
   readOnly = false,
 }: ExplosionMaterialsEditorProps) => {
+  // Una opción por VARIACIÓN ("Jersey 30/1 · Negro"): dos colores del mismo
+  // material son dos opciones.
   const options = materials.map((material) => ({
-    id: material.id,
+    id: optionKey(material),
     label: material.name,
   }));
 
@@ -144,9 +147,13 @@ export const ExplosionMaterialsEditor = ({
                     <EntityCombobox
                       className="min-w-0 flex-1"
                       options={options}
-                      value={line.materialId || null}
+                      value={
+                        line.materialId
+                          ? optionKey({ id: line.materialId, materialVariationId: line.materialVariationId })
+                          : null
+                      }
                       onSelect={(option) => {
-                        const material = materials.find((m) => m.id === option.id);
+                        const material = materials.find((m) => optionKey(m) === option.id);
                         if (material) onSelectMaterial(index, material);
                       }}
                       search={search}

@@ -7,6 +7,7 @@ import {
   toSupplierService,
   toVariationOption,
 } from "../adapters/supplierServices.adapter";
+import { materialVariationOptionsApi } from "./materialVariations.service";
 import {
   MaterialOption,
   QuotationOption,
@@ -59,6 +60,32 @@ export const quotationOptionsApi = async (
   if (error) throw error;
 
   return (data?.data?.data ?? []).map(toQuotationOption);
+};
+
+/**
+ * Variaciones de material para vincular a una línea de compra: una opción por
+ * variación ("Jersey 30/1 · Negro"), con el costo de la variación. `id` es el
+ * del material y `materialVariationId` el de la variación.
+ */
+export const materialVariationLinkOptionsApi = async (
+  search?: string | null,
+  extra: { materialId?: number | null; ids?: number[] } = {}
+): Promise<MaterialOption[]> => {
+  const opciones = await materialVariationOptionsApi({
+    search,
+    size: OPTIONS_PAGE_SIZE,
+    materialId: extra.materialId ?? null,
+    ids: extra.ids,
+  });
+  return opciones.map((opcion) => ({
+    id: opcion.materialId,
+    materialVariationId: opcion.id,
+    name: opcion.label,
+    unitCost: opcion.unitCost,
+    measurementUnit: opcion.measurementUnit || null,
+    materialClassId: opcion.materialClassId,
+    materialClassName: opcion.materialClassName || null,
+  }));
 };
 
 /** Materiales para el combobox. Reutiliza get-materials. */

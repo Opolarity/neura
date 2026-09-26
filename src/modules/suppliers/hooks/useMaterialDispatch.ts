@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/shared/hooks/use-toast";
 import { toastError } from "@/shared/utils/toastError";
@@ -13,7 +13,10 @@ import { getUserWarehouse } from "@/modules/inventory/services/Movements.service
 import { getUserWarehouseAdapter } from "@/modules/inventory/adapters/Movements.adapter";
 import type { UserSummary, UserSummaryApiResponse } from "@/modules/inventory/types/Movements.types";
 import { productionOrdersListApi } from "../services/productionOrders.service";
-import { materialStockApi, materialsListApi } from "../services/materials.service";
+import {
+  materialVariationOptionsApi,
+  materialVariationStockApi,
+} from "../services/materialVariations.service";
 import {
   createMaterialDispatchApi,
   materialDispatchPlanApi,
@@ -21,7 +24,7 @@ import {
   supplierWarehouseOptionsApi,
 } from "../services/materialDispatch.service";
 import type { ProductionOrder } from "../types/productionOrders.types";
-import type { Material } from "../types/materials.types";
+import type { MaterialVariationOption } from "../types/materialVariations.types";
 import type {
   MaterialDispatchLine,
   MaterialDispatchPlan,
@@ -84,9 +87,10 @@ export const useMaterialDispatch = () => {
 
   // Qué va: materiales.
   const [materialSearch, setMaterialSearch] = useState("");
-  const [materials, setMaterials] = useState<Material[]>([]);
+  // Lo que se agrega a mano es una VARIACIÓN: "Jersey 30/1 · Negro".
+  const [materials, setMaterials] = useState<MaterialVariationOption[]>([]);
   const [loadingMaterials, setLoadingMaterials] = useState(false);
-  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
+  const [selectedMaterial, setSelectedMaterial] = useState<MaterialVariationOption | null>(null);
   const [lines, setLines] = useState<MaterialDispatchLine[]>([]);
 
   // Lo que hace falta y lo que el taller ya tiene.
@@ -229,9 +233,10 @@ export const useMaterialDispatch = () => {
         setPlan(resultado);
         setLines((prev) => {
           const aMano = prev.filter((line) => !line.fromPlan);
-          const yaAMano = new Set(aMano.map((line) => line.materialId));
+          // Por variación: el plan ya trae el Negro y el Blanco por separado.
+          const yaAMano = new Set(aMano.map((line) => line.materialVariationId));
           const delPlan = resultado.materials
-            .filter((material) => !yaAMano.has(material.materialId))
+            .filter((material) => !yaAMano.has(material.materialVariationId))
             .map((material) => {
               const stockByWarehouse: Record<number, number> = {};
               material.sources.forEach((source) => {
@@ -241,7 +246,9 @@ export const useMaterialDispatch = () => {
                 ? (stockByWarehouse[originWarehouseId] ?? 0)
                 : 0;
               return {
+                lineKey: `v${material.materialVariationId}`,
                 materialId: material.materialId,
+                materialVariationId: material.materialVariationId,
                 materialName: material.materialName,
                 measurementUnit: material.measurementUnit,
                 stock,
@@ -307,9 +314,9 @@ export const useMaterialDispatch = () => {
   useEffect(() => {
     let cancelado = false;
     setLoadingMaterials(true);
-    materialsListApi({ search: debouncedMaterialSearch || null, page: 1, size: 20 })
-      .then((res) => {
-        if (!cancelado) setMaterials(res.data);
+    materialVariationOptionsApi({ search: debouncedMaterialSearch || null, size: 20 })
+      .then((opciones) => {
+        if (!cancelado) setMaterials(opciones);
       })
       .catch(() => {
         if (!cancelado) setMaterials([]);
@@ -322,8 +329,10 @@ export const useMaterialDispatch = () => {
     };
   }, [debouncedMaterialSearch]);
 
-  const selectedMaterialIds = useMemo(
-    () => new Set(lines.map((line) => line.materialId)),
+  /** Si una variación ya está en el envío, del plan o agregada a mano. */
+  const isOptionTaken = useCallback(
+    (option: MaterialVariationOption) =>
+      lines.some((line) => line.materialVariationId === option.id),
     [lines]
   );
 
@@ -335,9 +344,9 @@ export const useMaterialDispatch = () => {
    * que en las líneas que vienen del plan.
    */
   const addMaterial = async () => {
-    if (!selectedMaterial || selectedMaterialIds.has(selectedMaterial.id)) return;
+    if (!selectedMaterial || isOptionTaken(selectedMaterial)) return;
     try {
-      const entries = await materialStockApi(selectedMaterial.id);
+      const entries = await materialVariationStockApi(selectedMaterial.id);
       const stockByWarehouse: Record<number, number> = {};
       entries
         .filter((e) => stockTypeId === null || e.stockTypeId === stockTypeId)
@@ -349,8 +358,10 @@ export const useMaterialDispatch = () => {
       setLines((prev) => [
         ...prev,
         {
-          materialId: selectedMaterial.id,
-          materialName: selectedMaterial.name,
+          lineKey: `v${selectedMaterial.id}`,
+          materialId: selectedMaterial.materialId,
+          materialVariationId: selectedMaterial.id,
+          materialName: selectedMaterial.label,
           measurementUnit: selectedMaterial.measurementUnit,
           stock: originWarehouseId ? (stockByWarehouse[originWarehouseId] ?? 0) : 0,
           stockByWarehouse,
@@ -372,14 +383,14 @@ export const useMaterialDispatch = () => {
     }
   };
 
-  const removeLine = (materialId: number) =>
-    setLines((prev) => prev.filter((line) => line.materialId !== materialId));
+  const removeLine = (lineKey: string) =>
+    setLines((prev) => prev.filter((line) => line.lineKey !== lineKey));
 
   /** La cantidad, acotada al stock: no se puede mandar lo que no hay. */
-  const setLineQuantity = (materialId: number, raw: string) => {
+  const setLineQuantity = (lineKey: string, raw: string) => {
     setLines((prev) =>
       prev.map((line) => {
-        if (line.materialId !== materialId) return line;
+        if (line.lineKey !== lineKey) return line;
         if (raw.trim() === "") return { ...line, quantity: null };
         const value = Number(raw);
         if (!Number.isFinite(value) || value <= 0) return { ...line, quantity: null };
@@ -459,6 +470,7 @@ export const useMaterialDispatch = () => {
         destination_warehouse_id: selectedSupplierWarehouse.warehouseId,
         items: aEnviar.map((line) => ({
           material_id: line.materialId,
+          material_variation_id: line.materialVariationId,
           quantity: line.quantity as number,
         })),
       });
@@ -502,7 +514,7 @@ export const useMaterialDispatch = () => {
     loadingMaterials,
     selectedMaterial,
     setSelectedMaterial,
-    selectedMaterialIds,
+    isOptionTaken,
     lines,
     addMaterial,
     removeLine,

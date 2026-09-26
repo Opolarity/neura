@@ -21,6 +21,7 @@ interface QuotationConsumptionsApi {
   warehouses: Array<{ id: number; name: string }>;
   materials: Array<{
     material_id: number;
+    material_variation_id: number;
     name: string | null;
     measurement_unit: string | null;
     required: number | string | null;
@@ -43,6 +44,7 @@ const adaptar = (data: QuotationConsumptionsApi): QuotationConsumptions => ({
   materials: (data?.materials ?? []).map(
     (m): QuotationConsumptionMaterial => ({
       materialId: Number(m.material_id),
+      materialVariationId: Number(m.material_variation_id),
       name: m.name ?? "",
       measurementUnit: m.measurement_unit ?? null,
       required: Number(m.required ?? 0),
@@ -63,8 +65,8 @@ export const fetchQuotationConsumptionsApi = async (
 
 export interface SaveQuotationConsumptionsParams {
   quotationId: number;
-  /** El estado final. Vacío es válido: «este paso no consume nada». */
-  materialIds: number[];
+  /** El estado final, por variación. Vacío es válido: «este paso no consume nada». */
+  materialVariationIds: number[];
   /** Omitido o null, el backend no toca el almacén que ya hubiera. */
   warehouseId?: number | null;
 }
@@ -76,7 +78,7 @@ export const saveQuotationConsumptionsApi = async (
     method: "POST",
     body: {
       quotation_id: params.quotationId,
-      material_ids: params.materialIds,
+      material_variation_ids: params.materialVariationIds,
       warehouse_id: params.warehouseId ?? null,
     },
   });

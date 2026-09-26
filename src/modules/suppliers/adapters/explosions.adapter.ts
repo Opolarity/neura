@@ -47,6 +47,7 @@ export const toExplosion = (row: any): Explosion => ({
 export const toExplosionMaterial = (row: any): ExplosionMaterial => ({
   id: row.id,
   materialId: row.material_id,
+  materialVariationId: toNumberOrNull(row.material_variation_id),
   materialName: row.material_name ?? "",
   materialClassId: toNumberOrNull(row.material_class_id),
   materialClassName: toTextOrNull(row.material_class_name),

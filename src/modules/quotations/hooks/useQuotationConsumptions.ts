@@ -56,7 +56,7 @@ export const useQuotationConsumptions = ({
 
       const marcados = consumos.materials
         .filter((m) => m.consumedHere)
-        .map((m) => m.materialId);
+        .map((m) => m.materialVariationId);
 
       setSelected(new Set(marcados));
       setWarehouseId(consumos.warehouseId);
@@ -108,7 +108,7 @@ export const useQuotationConsumptions = ({
     try {
       await saveQuotationConsumptionsApi({
         quotationId,
-        materialIds: [...selected],
+        materialVariationIds: [...selected],
         warehouseId,
       });
       toast({ title: "Consumo guardado", variant: "success" });

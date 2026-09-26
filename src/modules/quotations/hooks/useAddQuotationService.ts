@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import {
-  materialOptionsApi,
+  materialVariationLinkOptionsApi,
   supplierClassesApi,
 } from "@/modules/suppliers/services/supplierServices.service";
 import { materialClassesApi } from "@/modules/suppliers/services/materials.service";
@@ -126,7 +126,7 @@ export const useAddQuotationService = ({
         setLoadingCatalogs(true);
         const [classList, materialList, materialClassList] = await Promise.all([
           supplierClassesApi(),
-          materialOptionsApi(),
+          materialVariationLinkOptionsApi(),
           materialClassesApi(),
         ]);
         setClasses(classList);
@@ -143,7 +143,7 @@ export const useAddQuotationService = ({
 
   useEffect(() => {
     if (debouncedMaterialSearch === "") return;
-    materialOptionsApi(debouncedMaterialSearch)
+    materialVariationLinkOptionsApi(debouncedMaterialSearch)
       .then(setMaterials)
       .catch(() => toast({ title: "Error al buscar materiales", variant: "destructive" }));
   }, [debouncedMaterialSearch]);

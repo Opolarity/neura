@@ -18,7 +18,15 @@ export interface MaterialRequirementBreakdown {
 
 export interface MaterialRequirementRow {
   materialId: number;
+  /** Una fila por VARIACIÓN: el Negro y el Blanco se compran por separado. */
+  materialVariationId: number;
+  variationCode: string;
+  /** Etiqueta de la variación ("Jersey 30/1 · Negro"). */
   materialName: string;
+  /** A quién se le compra hoy esa variación: lo que propone la compra. */
+  supplierId: number | null;
+  /** Lo que cuesta hoy la variación (el `unitCost` es el de la foto). */
+  currentUnitCost: number | null;
   measurementUnit: string;
   /**
    * La clase del material — TELA, AVIOS. Es el «Tipo:» por el que el papel del
@@ -47,6 +55,7 @@ export interface MaterialRequirementRow {
 /** Un material dentro del requerimiento de UNA prenda. */
 export interface MaterialRequirementItemMaterial {
   materialId: number;
+  materialVariationId: number;
   materialName: string;
   measurementUnit: string;
   materialClassId: number | null;

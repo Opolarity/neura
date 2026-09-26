@@ -79,7 +79,16 @@ export const MaterialsTable = ({
                   className="w-12 h-12 object-cover rounded"
                 />
               </TableCell>
-              <TableCell>{material.name}</TableCell>
+              <TableCell>
+                <div>{material.name}</div>
+                {/* Cuántas variaciones tiene: con una sola es un material
+                    simple y no hace falta decirlo. */}
+                {material.variationsCount > 1 && (
+                  <div className="text-muted-foreground text-xs">
+                    {material.variationsCount} variaciones
+                  </div>
+                )}
+              </TableCell>
               <TableCell>
                 {material.materialRootClassName ? (
                   <Badge variant="secondary">
@@ -100,7 +109,11 @@ export const MaterialsTable = ({
                   <span className="text-muted-foreground text-sm">—</span>
                 )}
               </TableCell>
-              <TableCell>{material.supplierName || "—"}</TableCell>
+              <TableCell>
+                {material.suppliersCount > 1
+                  ? `${material.suppliersCount} proveedores`
+                  : material.supplierName || "—"}
+              </TableCell>
               <TableCell className="text-right">
                 {/* El stock ya no es una columna de materials: sale de sumar
                     material_stock. Se enlaza a sus movimientos porque desde
@@ -115,7 +128,12 @@ export const MaterialsTable = ({
               </TableCell>
               <TableCell>{material.measurementUnit || "—"}</TableCell>
               <TableCell className="text-right">
-                {formatCost(material.unitCost)}
+                {/* Con variaciones de precio distinto, el rango. */}
+                {material.unitCostMax !== null &&
+                material.unitCost !== null &&
+                material.unitCostMax !== material.unitCost
+                  ? `${formatCost(material.unitCost)} – ${formatCost(material.unitCostMax)}`
+                  : formatCost(material.unitCost)}
               </TableCell>
               <TableCell>{formatDate(material.createdAt)}</TableCell>
               <TableCell>

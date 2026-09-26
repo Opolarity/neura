@@ -37,6 +37,8 @@ export const materialInventoryAdapter = (
 
       return {
         materialId: Number(row.material_id),
+        materialVariationId: Number(row.material_variation_id),
+        variationCode: row.material_variation_code ?? "",
         materialName: row.material_name ?? "",
         measurementUnit: row.measurement_unit ?? "",
         materialClassId: row.material_class_id ?? null,
