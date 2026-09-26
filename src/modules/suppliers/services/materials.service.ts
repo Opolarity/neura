@@ -198,6 +198,10 @@ export const materialClassesApi = async (): Promise<MaterialClass[]> => {
     .from("classes")
     .select("id, name, code, parent_class_id")
     .eq("module_id", moduleData.id)
+    // Una clase eliminada es una baja logica: no se ofrece en ningun selector.
+    // Los materiales viejos no pueden colgar de ella (sp_delete_material_class
+    // no deja eliminar una clase con materiales).
+    .eq("is_active", true)
     .order("name");
 
   if (error) throw error;
@@ -269,6 +273,20 @@ export const updateMaterialClassApi = async (
   if (error) throw new Error(error.message);
   if (!data) throw new Error("La clase no se pudo guardar");
   return data;
+};
+
+/**
+ * Eliminar una clase de material: baja logica (`classes.is_active = false`).
+ *
+ * La valida la base: si aun tiene materiales o clases activas dentro, el SP la
+ * rechaza con un mensaje que dice que mover primero.
+ */
+export const deleteMaterialClassApi = async (id: number): Promise<void> => {
+  const { error } = await (supabase as any).rpc("sp_delete_material_class", {
+    p_class_id: id,
+  });
+
+  if (error) throw new Error(error.message);
 };
 
 /** Proveedores disponibles para asignar al material. */

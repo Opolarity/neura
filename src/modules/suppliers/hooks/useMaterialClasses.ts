@@ -4,6 +4,7 @@ import { toast } from "@/shared/hooks/use-toast";
 import { toastError } from "@/shared/utils/toastError";
 import {
   createMaterialClassApi,
+  deleteMaterialClassApi,
   materialClassesApi,
   updateMaterialClassApi,
 } from "../services/materials.service";
@@ -43,6 +44,10 @@ export const useMaterialClasses = () => {
   /** La clase que se está editando, o null si se está creando. */
   const [editing, setEditing] = useState<MaterialClass | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  /** La clase que se va a eliminar, o null si no hay confirmación abierta. */
+  const [deleteTarget, setDeleteTarget] = useState<MaterialClass | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [pagination, setPagination] = useState<PaginationState>({
     p_page: 1,
@@ -150,6 +155,23 @@ export const useMaterialClasses = () => {
     }
   };
 
+  // ---- Eliminar (baja lógica) ---------------------------------------------
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleting(true);
+      await deleteMaterialClassApi(deleteTarget.id);
+      toast({ title: "Clase eliminada", variant: "success" });
+      setDeleteTarget(null);
+      await load();
+    } catch (error) {
+      toastError(error, "No se pudo eliminar la clase");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return {
     tree,
     pageRoots,
@@ -169,6 +191,10 @@ export const useMaterialClasses = () => {
     openCreate,
     openEdit,
     save,
+    deleteTarget,
+    setDeleteTarget,
+    deleting,
+    confirmDelete,
     reload: load,
   };
 };
