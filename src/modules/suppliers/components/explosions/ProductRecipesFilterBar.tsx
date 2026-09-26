@@ -3,28 +3,28 @@ import { Search, ListFilter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-interface ExplosionsFilterBarProps {
+interface ProductRecipesFilterBarProps {
   search: string;
   onSearchChange: (text: string) => void;
   onOpen: () => void;
+  /** Hay un filtro del pop-up aplicado (receta o categoría). */
   hasActiveFilters?: boolean;
 }
 
-export const ExplosionsFilterBar = ({
+/** Búsqueda + el botón del pop-up, donde van el estado de receta y la categoría. */
+export const ProductRecipesFilterBar = ({
   search,
   onSearchChange,
   onOpen,
   hasActiveFilters,
-}: ExplosionsFilterBarProps) => {
+}: ProductRecipesFilterBarProps) => {
   const [inputValue, setInputValue] = useState(search);
 
   useEffect(() => {
     setInputValue(search);
   }, [search]);
 
-  const handleSearch = () => {
-    onSearchChange(inputValue);
-  };
+  const handleSearch = () => onSearchChange(inputValue);
 
   return (
     <div className="flex items-center gap-2">
@@ -34,8 +34,8 @@ export const ExplosionsFilterBar = ({
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           type="text"
-          placeholder="Buscar por descripción o tipo..."
-          className="px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+          placeholder="Buscar por producto, código, SKU o modelo..."
+          className="w-72"
         />
         <Button variant="outline" onClick={handleSearch}>
           <Search className="w-4 h-4" />

@@ -7,6 +7,7 @@ import ExplosionDetail from "./pages/ExplosionDetail";
 import ProductionOrdersList from "./pages/ProductionOrdersList";
 import ProductionOrderDetail from "./pages/ProductionOrderDetail";
 import ProcessesList from "./pages/ProcessesList";
+import ProcessGroupsList from "./pages/ProcessGroupsList";
 
 export const suppliersRoutes: RouteObject[] = [
   {
@@ -21,7 +22,11 @@ export const suppliersRoutes: RouteObject[] = [
       { path: "production-orders", element: <ProductionOrdersList /> },
       { path: "production-orders/:id", element: <ProductionOrderDetail /> },
       // Catalogos planos: alta y edicion por modal, sin ruta de detalle.
+      // "processes" es la pantalla de OPERACIONES y "process-groups" la de
+      // PROCESOS: las rutas siguen nombrando la tabla, el menu nombra el
+      // negocio.
       { path: "processes", element: <ProcessesList /> },
+      { path: "process-groups", element: <ProcessGroupsList /> },
     ],
   },
 ];

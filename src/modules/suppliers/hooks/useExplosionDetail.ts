@@ -3,26 +3,43 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import {
-  variationByIdApi,
+  productByIdApi,
+  variationsOfProductApi,
   VariationOption,
 } from "../services/productionOrders.service";
 import {
   ExplosionMaterial,
+  ExplosionProcess,
+  ExplosionProduct,
+  ExplosionUnify,
 } from "../types/explosions.types";
+import { ProcessGroupOption } from "../components/explosions/ExplosionProcessesEditor";
+import {
+  createProcessApi,
+  processGroupsListApi,
+  processesListApi,
+} from "../services/processes.service";
+import { SaveProcessCatalogData } from "../types/processes.types";
 import { MaterialOption } from "../types/services.types";
 import {
   createExplosionApi,
   explosionByIdApi,
+  explosionsListApi,
   updateExplosionApi,
 } from "../services/explosions.service";
+import { unifyExplosionApi } from "../services/productRecipes.service";
 import { materialVariationLinkOptionsApi } from "../services/supplierServices.service";
 
 interface UseExplosionDetailOptions {
   /** `undefined` o "new" abren el formulario en modo creación. */
   idParam?: string;
+  /**
+   * `?product=` de la URL: el producto cuya receta se crea. Llega desde
+   * "Recetas" (Crear receta / Nuevo producto).
+   */
+  productParam?: string | null;
 }
 
-/** Línea vacía que se añade al pulsar "Añadir material". */
 /**
  * Identidad de una opción del selector de material: la variación, o el
  * material (en negativo, para no chocar con ids de variación) si aún no se
@@ -31,6 +48,7 @@ interface UseExplosionDetailOptions {
 export const optionKey = (option: { id: number; materialVariationId?: number | null }) =>
   option.materialVariationId ?? -option.id;
 
+/** Línea vacía que se añade al pulsar "Añadir material". */
 const emptyLine = (): ExplosionMaterial => ({
   materialId: 0,
   materialVariationId: null,
@@ -44,12 +62,14 @@ const emptyLine = (): ExplosionMaterial => ({
   variations: [],
 });
 
-export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
+export const useExplosionDetail = ({ idParam, productParam }: UseExplosionDetailOptions) => {
   const navigate = useNavigate();
   const isNew = !idParam || idParam === "new";
   const explosionId = isNew ? null : Number(idParam);
+  const productFromUrl =
+    isNew && productParam && Number(productParam) > 0 ? Number(productParam) : null;
 
-  const [loading, setLoading] = useState(!isNew);
+  const [loading, setLoading] = useState(!isNew || productFromUrl !== null);
   const [submitting, setSubmitting] = useState(false);
 
   /** Cuándo se registró la receta. Solo se lee: lo pone el backend al crear. */
@@ -79,14 +99,41 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
   /** Código del molde. Texto libre; se guarda tal cual. */
   const [modelCode, setModelCode] = useState("");
   const [lines, setLines] = useState<ExplosionMaterial[]>([]);
+  /**
+   * La ruta del molde, EN ORDEN. La posición manda: al guardar, el backend
+   * numera los pasos por la posición en el array.
+   */
+  const [processes, setProcesses] = useState<ExplosionProcess[]>([]);
+  /** El catálogo de etapas (`process_group`) para el selector. */
+  const [processGroups, setProcessGroups] = useState<ProcessGroupOption[]>([]);
+  /**
+   * El catálogo de operaciones, con la etapa a la que pertenece cada una: el
+   * editor reparte por etapa en cliente en vez de pedirlas una por una.
+   */
+  const [operationCatalog, setOperationCatalog] = useState<
+    Array<{
+      processId: number;
+      processName: string;
+      processGroupId: number | null;
+    }>
+  >([]);
   const [savedTotal, setSavedTotal] = useState(0);
 
-  // Las prendas que cubre la receta. Se buscan con el mismo selector
-  // compartido que usa el pop-up de «crear prenda», para que la prenda se
-  // busque igual en los dos sitios.
+  /**
+   * El producto de la receta. Una receta por producto: cubre TODAS sus
+   * variaciones, y lo que cambia por prenda va como excepción en los
+   * materiales. null = receta antigua o genérica, todavía sin producto.
+   */
+  const [product, setProduct] = useState<ExplosionProduct | null>(null);
+  /** Receta antigua "por unificar": a qué producto podría pertenecer. */
+  const [unify, setUnify] = useState<ExplosionUnify | null>(null);
+  const [unifying, setUnifying] = useState(false);
+
+  // Las prendas que cubre la receta: con producto, todas las suyas (solo se
+  // leen). Son las columnas de las excepciones por prenda.
   const [variations, setVariations] = useState<VariationOption[]>([]);
-  /** Se está hidratando la prenda recién elegida en el selector. */
-  const [pickingVariation, setPickingVariation] = useState(false);
+  /** Se están cargando las variaciones del producto elegido. */
+  const [pickingProduct, setPickingProduct] = useState(false);
 
   const [materialSearch, setMaterialSearch] = useState("");
   const debouncedMaterialSearch = useDebounce(materialSearch, 300);
@@ -112,6 +159,223 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
       .catch(() => toast({ title: "Error al buscar materiales", variant: "destructive" }));
   }, [debouncedMaterialSearch]);
 
+  // Las etapas activas del catálogo. Se piden una vez: son pocas y no cambian
+  // mientras se escribe una receta. Un fallo aquí deja el selector vacío sin
+  // impedir guardar los materiales.
+  useEffect(() => {
+    processGroupsListApi({ is_active: true, size: 100 })
+      .then((response) =>
+        setProcessGroups(
+          response.data.map((grupo) => ({
+            processGroupId: grupo.id,
+            processGroupName: grupo.name,
+          }))
+        )
+      )
+      .catch(() =>
+        toast({ title: "Error al cargar los procesos", variant: "destructive" })
+      );
+  }, []);
+
+  // Las operaciones activas, con su etapa. Misma idea que las etapas: una
+  // consulta al abrir, y el reparto por etapa se hace en memoria.
+  useEffect(() => {
+    processesListApi({ is_active: true, size: 200 })
+      .then((response) =>
+        setOperationCatalog(
+          response.data.map((operacion) => ({
+            processId: operacion.id,
+            processName: operacion.name,
+            processGroupId: operacion.processGroupId,
+          }))
+        )
+      )
+      .catch(() =>
+        toast({ title: "Error al cargar las operaciones", variant: "destructive" })
+      );
+  }, []);
+
+  const addProcess = (processGroupId: number) =>
+    setProcesses((prev) =>
+      // Una etapa no se repite en la misma receta: el índice único de
+      // explosion_processes lo impide, así que aquí no se ofrece siquiera.
+      prev.some((paso) => paso.processGroupId === processGroupId)
+        ? prev
+        : [
+            ...prev,
+            {
+              processGroupId,
+              processGroupName:
+                processGroups.find((g) => g.processGroupId === processGroupId)
+                  ?.processGroupName ?? null,
+              // Nace completo: detallarlo en operaciones es opcional.
+              operations: [],
+            },
+          ]
+    );
+
+  /** Añade una operación a la etapa de esa posición. */
+  const addOperation = (indiceEtapa: number, processId: number) =>
+    setProcesses((prev) =>
+      prev.map((paso, i) => {
+        if (i !== indiceEtapa) return paso;
+        if (paso.operations.some((o) => o.processId === processId)) return paso;
+
+        const operacion = operationCatalog.find((o) => o.processId === processId);
+        return {
+          ...paso,
+          operations: [
+            ...paso.operations,
+            {
+              processId,
+              processName: operacion?.processName ?? null,
+            },
+          ],
+        };
+      })
+    );
+
+  const [creatingOperation, setCreatingOperation] = useState(false);
+
+  /**
+   * Da de alta una operación DESDE la receta y la deja puesta en ese paso.
+   *
+   * El catálogo de operaciones nace vacío, así que sin esto la receta era un
+   * callejón sin salida: había que salir a Catálogos > Operaciones, crearlas y
+   * volver. Mismo criterio que el "Crear grupo" de la ruta de una orden.
+   */
+  const createOperation = async (
+    indiceEtapa: number,
+    values: SaveProcessCatalogData
+  ): Promise<boolean> => {
+    const paso = processes[indiceEtapa];
+    if (!paso) return false;
+
+    try {
+      setCreatingOperation(true);
+      const createdId = await createProcessApi({
+        ...values,
+        // La operación nace colgada del proceso de esta fila: por eso el modal
+        // no pregunta a cuál va.
+        process_group_id: paso.processGroupId,
+      });
+
+      if (createdId === null) {
+        toast({
+          title: "La operación se creó pero no se pudo añadir al paso",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Al catálogo, para que se ofrezca en los demás pasos de ese proceso...
+      setOperationCatalog((prev) => [
+        ...prev,
+        {
+          processId: createdId,
+          processName: values.name,
+          processGroupId: paso.processGroupId,
+        },
+      ]);
+
+      // ...y al paso, que es a lo que se venía.
+      setProcesses((prev) =>
+        prev.map((item, i) =>
+          i === indiceEtapa
+            ? {
+                ...item,
+                operations: [
+                  ...item.operations,
+                  {
+                    processId: createdId,
+                    processName: values.name,
+                  },
+                ],
+              }
+            : item
+        )
+      );
+
+      toast({ title: "Operación creada exitosamente", variant: "success" });
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error al crear la operación: " + error.message,
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setCreatingOperation(false);
+    }
+  };
+
+  /**
+   * Cambia una operación por otra del mismo proceso, conservando su sitio.
+   *
+   * La línea es un selector, no una etiqueta: elegir mal y tener que quitar y
+   * volver a añadir era un paso de más.
+   */
+  const replaceOperation = (
+    indiceEtapa: number,
+    processIdViejo: number,
+    processIdNuevo: number
+  ) =>
+    setProcesses((prev) =>
+      prev.map((paso, i) => {
+        if (i !== indiceEtapa) return paso;
+        // Si ya está puesta, no se duplica: se deja como estaba.
+        if (paso.operations.some((o) => o.processId === processIdNuevo)) return paso;
+
+        const operacion = operationCatalog.find((o) => o.processId === processIdNuevo);
+        return {
+          ...paso,
+          operations: paso.operations.map((o) =>
+            o.processId === processIdViejo
+              ? {
+                  processId: processIdNuevo,
+                  processName: operacion?.processName ?? null,
+                }
+              : o
+          ),
+        };
+      })
+    );
+
+  /**
+   * Pasa un proceso a "completo": se queda sin operaciones.
+   *
+   * El modelo siempre fue excluyente --un proceso está suelto o detallado--,
+   * solo que antes se deducía de una lista vacía. Ahora es un botón.
+   */
+  const clearOperations = (indiceEtapa: number) =>
+    setProcesses((prev) =>
+      prev.map((paso, i) => (i === indiceEtapa ? { ...paso, operations: [] } : paso))
+    );
+
+  /** La quita. Sin ninguna, la etapa vuelve a ir completa. */
+  const removeOperation = (indiceEtapa: number, processId: number) =>
+    setProcesses((prev) =>
+      prev.map((paso, i) =>
+        i === indiceEtapa
+          ? { ...paso, operations: paso.operations.filter((o) => o.processId !== processId) }
+          : paso
+      )
+    );
+
+  const removeProcess = (index: number) =>
+    setProcesses((prev) => prev.filter((_, i) => i !== index));
+
+  /** Mueve un paso una posición: `delta` es -1 (sube) o +1 (baja). */
+  const moveProcess = (index: number, delta: number) =>
+    setProcesses((prev) => {
+      const destino = index + delta;
+      if (destino < 0 || destino >= prev.length) return prev;
+
+      const siguiente = [...prev];
+      [siguiente[index], siguiente[destino]] = [siguiente[destino], siguiente[index]];
+      return siguiente;
+    });
+
   const loadExplosion = useCallback(async () => {
     if (explosionId === null) return;
 
@@ -121,8 +385,11 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
       setDescription(detail.description);
       setModelCode(detail.modelCode ?? "");
       setLines(detail.materials);
+      setProcesses(detail.processes);
       setSavedTotal(detail.total);
       setCreatedAt(detail.createdAt);
+      setProduct(detail.product);
+      setUnify(detail.unify);
       setVariations(
         detail.variations.map((v) => ({
           id: v.variationId,
@@ -151,42 +418,77 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
     loadExplosion();
   }, [loadExplosion]);
 
-  const addVariation = (option: VariationOption) => addVariations([option]);
+  /**
+   * Fija el producto de la receta y trae TODAS sus variaciones.
+   *
+   * Antes de dejar escribir se mira si el producto ya tiene receta (o recetas
+   * antiguas por unificar): una receta por producto, así que en ese caso se
+   * abre la que hay en vez de dejar escribir otra que el backend rechazaría
+   * al guardar.
+   */
+  const pickProduct = useCallback(
+    async (productId: number) => {
+      setPickingProduct(true);
+      try {
+        const existentes = await explosionsListApi({ product_id: productId, size: 20 });
+        const suya = existentes.data.find((e) => e.productId === productId);
+        const antigua = existentes.data.find((e) => e.productId === null);
+        if (suya || antigua) {
+          const destino = (suya ?? antigua)!;
+          toast({
+            title: suya
+              ? `Este producto ya tiene su receta (#${destino.id})`
+              : `Este producto tiene recetas por unificar: se abre la #${destino.id}`,
+          });
+          navigate(`/suppliers/explosions/${destino.id}`, { replace: true });
+          return;
+        }
 
-  /** Varias de golpe: el diálogo creó S, M, L y XL en una sola pasada. */
-  const addVariations = (options: VariationOption[]) =>
-    setVariations((prev) =>
-      // Vincular dos veces la misma prenda no significa nada, y el UNIQUE de
-      // la puente lo rechazaria igualmente.
-      [...prev, ...options.filter((o) => !prev.some((v) => v.id === o.id))],
-    );
+        const [producto, tallas] = await Promise.all([
+          productByIdApi(productId),
+          variationsOfProductApi(productId),
+        ]);
+        if (!producto) {
+          toast({ title: "No se encontró el producto", variant: "destructive" });
+          return;
+        }
+        setProduct({ id: producto.id, title: producto.title, code: null });
+        setVariations(tallas);
+      } catch (error: any) {
+        toast({
+          title: "Error al cargar el producto: " + error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setPickingProduct(false);
+        setLoading(false);
+      }
+    },
+    [navigate]
+  );
+
+  useEffect(() => {
+    if (productFromUrl !== null) pickProduct(productFromUrl);
+  }, [productFromUrl, pickProduct]);
 
   /**
-   * Lo elegido en el selector compartido. Ese selector solo da id y título,
-   * así que la prenda se relee entera -- SKU, etiqueta, clasificación -- que
-   * es lo que la lista muestra y lo que viaja al guardar.
+   * Receta antigua: queda como LA receta de su producto. Las demás recetas
+   * antiguas de ese producto sueltan sus tallas (no se borran: las órdenes que
+   * ya las usan siguen igual).
    */
-  const pickVariation = async (variationId: number) => {
-    setPickingVariation(true);
+  const handleUnify = async () => {
+    if (explosionId === null || !unify) return;
     try {
-      const full = await variationByIdApi(variationId);
-      if (!full) {
-        toast({ title: "No se encontró esa prenda", variant: "destructive" });
-        return;
-      }
-      addVariation(full);
+      setUnifying(true);
+      await unifyExplosionApi(explosionId, unify.productId);
+      toast({ title: "Receta asignada al producto", variant: "success" });
+      await loadExplosion();
     } catch (error: any) {
-      toast({
-        title: "Error al cargar la prenda: " + error.message,
-        variant: "destructive",
-      });
+      toast({ title: "No se pudo unificar: " + error.message, variant: "destructive" });
     } finally {
-      setPickingVariation(false);
+      setUnifying(false);
     }
   };
-
-  const removeVariation = (variationId: number) =>
-    setVariations((prev) => prev.filter((v) => v.id !== variationId));
 
   const addLine = () => setLines((prev) => [...prev, emptyLine()]);
 
@@ -337,6 +639,13 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
   );
 
   const handleSubmit = async () => {
+    // Toda receta nueva nace con su producto: es lo que la hace aparecer en
+    // "Recetas" y lo que la ofrece sola en la orden.
+    if (isNew && !product) {
+      toast({ title: "Elige el producto de la receta", variant: "destructive" });
+      return;
+    }
+
     const incomplete = lines.some((line) => !line.materialId);
     if (incomplete) {
       toast({ title: "Hay líneas sin material seleccionado", variant: "destructive" });
@@ -367,9 +676,20 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
             quantity: excepcion.quantity,
           })),
       })),
-      // Siempre presente, incluso vacio: un array vacio quita todas las
-      // prendas, y la clave ausente las dejaria como estan.
-      variation_ids: variations.map((v) => v.id),
+      // El producto, no las prendas: la receta cubre todas las suyas y el
+      // backend las pone. Sin producto (receta antigua por unificar) no se
+      // manda nada y sus prendas se quedan como están.
+      ...(product ? { product_id: product.id } : {}),
+      // Misma regla para la ruta. El ORDEN del array es la secuencia: el
+      // backend numera los pasos por la posicion, no por un campo.
+      processes: processes.map((paso) => ({
+        process_group_id: paso.processGroupId,
+        // Vacío = proceso completo. El backend lo guarda como una sola fila
+        // sin operación, que es como se guardaba todo antes.
+        operations: paso.operations.map((o) => ({
+          process_id: o.processId,
+        })),
+      })),
     };
 
     try {
@@ -409,6 +729,18 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
     lines,
     addLine,
     removeLine,
+    processes,
+    processGroups,
+    operationCatalog,
+    addProcess,
+    removeProcess,
+    moveProcess,
+    addOperation,
+    removeOperation,
+    replaceOperation,
+    clearOperations,
+    createOperation,
+    creatingOperation,
     setLineMaterial,
     creatingMaterialFor,
     setCreatingMaterialFor,
@@ -419,11 +751,12 @@ export const useExplosionDetail = ({ idParam }: UseExplosionDetailOptions) => {
     setLineQuantity,
     setLineVariationQuantity,
     variations,
-    addVariation,
-    addVariations,
-    pickVariation,
-    pickingVariation,
-    removeVariation,
+    product,
+    pickProduct,
+    pickingProduct,
+    unify,
+    unifying,
+    handleUnify,
     materialSearch,
     setMaterialSearch,
     previewTotal,

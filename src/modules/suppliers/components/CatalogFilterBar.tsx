@@ -3,7 +3,7 @@ import { Search, ListFilter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-interface ProcessCatalogFilterBarProps {
+interface CatalogFilterBarProps {
   search: string;
   onSearchChange: (text: string) => void;
   onOpen: () => void;
@@ -11,13 +11,13 @@ interface ProcessCatalogFilterBarProps {
   placeholder?: string;
 }
 
-export const ProcessCatalogFilterBar = ({
+export const CatalogFilterBar = ({
   search,
   onSearchChange,
   onOpen,
   hasActiveFilters,
   placeholder = "Buscar por nombre o código...",
-}: ProcessCatalogFilterBarProps) => {
+}: CatalogFilterBarProps) => {
   const [inputValue, setInputValue] = useState(search);
 
   useEffect(() => {

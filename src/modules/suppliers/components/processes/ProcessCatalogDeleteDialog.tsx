@@ -16,8 +16,10 @@ interface ProcessCatalogDeleteDialogProps {
   isDeleting: boolean;
   onCancel: () => void;
   onConfirm: () => void;
-  /** "proceso" / "grupo de proceso". */
+  /** "proceso" / "operación". */
   entityLabel: string;
+  /** Concordancia: "La operación ... la conservan". */
+  isFeminine?: boolean;
 }
 
 export const ProcessCatalogDeleteDialog = ({
@@ -26,8 +28,13 @@ export const ProcessCatalogDeleteDialog = ({
   onCancel,
   onConfirm,
   entityLabel,
+  isFeminine = false,
 }: ProcessCatalogDeleteDialogProps) => {
   if (!item) return null;
+
+  // Concordancia: "El proceso ... lo usan" / "La operación ... la usan".
+  const el = isFeminine ? "La" : "El";
+  const lo = isFeminine ? "la" : "lo";
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
@@ -35,9 +42,9 @@ export const ProcessCatalogDeleteDialog = ({
         <DialogHeader>
           <DialogTitle>¿Desactivar {entityLabel}?</DialogTitle>
           <DialogDescription>
-            El {entityLabel} <strong>"{item.name}"</strong> dejará de aparecer en
-            los listados, pero <strong>no se elimina</strong>: las órdenes de
-            producción que ya lo usan lo conservan.
+            {el} {entityLabel} <strong>"{item.name}"</strong> dejará de aparecer
+            en los listados, pero <strong>no se elimina</strong>: las órdenes de
+            producción que ya {lo} usan {lo} conservan.
             {item.usageCount > 0 && (
               <>
                 {" "}
