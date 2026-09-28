@@ -425,6 +425,28 @@ export const fetchSaleProducts = async (
   return data;
 };
 
+// Sube el ticket PDF de un comprobante y devuelve su link publico (para
+// enviarlo por WhatsApp). Se sobrescribe en cada envio: el `?v=` evita que el
+// cliente reciba una copia vieja cacheada.
+export const uploadInvoiceTicketPdf = async (
+  invoiceId: number,
+  pdf: Blob,
+): Promise<string> => {
+  const filePath = `invoices/${invoiceId}.pdf`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("sales")
+    .upload(filePath, pdf, { upsert: true, contentType: "application/pdf" });
+
+  if (uploadError) throw uploadError;
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("sales").getPublicUrl(filePath);
+
+  return `${publicUrl}?v=${Date.now()}`;
+};
+
 // Upload note image to storage
 export const uploadNoteImage = async (
   orderId: number,

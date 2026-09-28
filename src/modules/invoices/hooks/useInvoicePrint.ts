@@ -95,7 +95,8 @@ async function loadImage(url: string): Promise<{ dataUrl: string; width: number;
   });
 }
 
-async function generateInvoicePdf(invoiceId: number): Promise<string> {
+/** El ticket del comprobante como PDF: el mismo que se imprime. */
+export async function generateInvoicePdfBlob(invoiceId: number): Promise<Blob> {
   const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes, companyParams] =
     await Promise.all([
       supabase
@@ -322,8 +323,11 @@ async function generateInvoicePdf(invoiceId: number): Promise<string> {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pageWidth, finalY + 4] });
   drawContent(doc);
 
-  const url = URL.createObjectURL(doc.output("blob"));
-  return url;
+  return doc.output("blob");
+}
+
+async function generateInvoicePdf(invoiceId: number): Promise<string> {
+  return URL.createObjectURL(await generateInvoicePdfBlob(invoiceId));
 }
 
 export function useInvoicePrint() {

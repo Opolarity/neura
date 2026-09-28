@@ -31,7 +31,7 @@ import {
   calcShippingAmounts,
 } from "@/modules/invoices/utils/shippingItem";
 import { formatDateDisplay } from "@/shared/utils/date";
-import { ArrowUp, ChevronDown, Code, Eye, FileText, Loader2, Printer } from "lucide-react";
+import { ArrowUp, ChevronDown, Eye, FileText, Loader2, Printer } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -45,6 +45,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import GuiaRemisionModal, { type GuiaRemisionData } from "./GuiaRemisionModal";
 import { useInvoicePrint } from "@/modules/invoices/hooks/useInvoicePrint";
+import { useInvoiceWhatsApp } from "../hooks/useInvoiceWhatsApp";
+import { WhatsAppIcon } from "@/shared/components/WhatsAppIcon";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import { toastError } from "@/shared/utils/toastError";
 
@@ -59,7 +61,6 @@ interface Invoice {
   declared: boolean;
   invoice_number: string | null;
   pdf_url: string | null;
-  xml_url: string | null;
 }
 
 interface InvoiceType {
@@ -103,6 +104,9 @@ export const SalesInvoicesModal = ({
   const [guiaModalOpen, setGuiaModalOpen] = useState(false);
   const [pendingGuiaInvoiceType, setPendingGuiaInvoiceType] = useState<InvoiceType | null>(null);
   const { printInvoice, printingId } = useInvoicePrint();
+  const { sendInvoiceWhatsApp, sendingWhatsAppId } = useInvoiceWhatsApp();
+  // WhatsApp de la orden; si no hay, su celular.
+  const [orderPhone, setOrderPhone] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && orderId) {
@@ -112,13 +116,14 @@ export const SalesInvoicesModal = ({
       // Resolve sale_type_id directly from the order to avoid stale formData
       supabase
         .from("orders")
-        .select("sale_type_id")
+        .select("sale_type_id, phone, phone_whatsapp")
         .eq("id", orderId)
         .single()
         .then(({ data }) => {
           if (data?.sale_type_id) {
             setResolvedSaleTypeId(data.sale_type_id);
           }
+          setOrderPhone(data?.phone_whatsapp || data?.phone || null);
         });
     }
   }, [open, orderId]);
@@ -141,7 +146,7 @@ export const SalesInvoicesModal = ({
 
       const { data: invoicesData, error: invoicesError } = await supabase
         .from("invoices")
-        .select("id, tax_serie, total_amount, client_name, customer_document_number, created_at, invoice_type_id, declared, invoice_number, pdf_url, xml_url")
+        .select("id, tax_serie, total_amount, client_name, customer_document_number, created_at, invoice_type_id, declared, invoice_number, pdf_url")
         .in("id", invoiceIds);
 
       if (invoicesError || !invoicesData) {
@@ -629,6 +634,21 @@ export const SalesInvoicesModal = ({
                 {invoices.map((inv, index) => {
                   const typeCode = getInvoiceTypeCode(inv);
                   const showEmitAction = typeCode !== "INV" && typeCode !== null && !inv.declared;
+                  const typeName = invoiceTypes.find(t => t.id === inv.invoice_type_id)?.name || "Comprobante";
+                  // Solo se renderiza en las ramas de emitido y de Comprobante (INV).
+                  const whatsAppButton = (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      title="Enviar por WhatsApp"
+                      disabled={sendingWhatsAppId === inv.id}
+                      onClick={() => sendInvoiceWhatsApp(inv, typeName, orderPhone)}
+                    >
+                      {sendingWhatsAppId === inv.id
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : <WhatsAppIcon />}
+                    </Button>
+                  );
                   return (
                     <TableRow key={inv.id}>
                       <TableCell>{index + 1}</TableCell>
@@ -675,21 +695,7 @@ export const SalesInvoicesModal = ({
                                   <FileText className="h-4 w-4" />
                                 </Button>
                               )}
-                              {inv.xml_url && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  title="Descargar XML"
-                                  onClick={() => {
-                                    const link = document.createElement("a");
-                                    link.href = inv.xml_url!;
-                                    link.download = `comprobante-${inv.invoice_number || inv.id}.xml`;
-                                    link.click();
-                                  }}
-                                >
-                                  <Code className="h-4 w-4" />
-                                </Button>
-                              )}
+                              {whatsAppButton}
                             </>
                           ) : showEmitAction ? (
                             <>
@@ -735,6 +741,7 @@ export const SalesInvoicesModal = ({
                                   ? <Loader2 className="h-4 w-4 animate-spin" />
                                   : <Printer className="h-4 w-4" />}
                               </Button>
+                              {whatsAppButton}
                             </>
                           ) : (
                             "-"
