@@ -7,8 +7,10 @@
  * Soporta los dos formatos que puede tener una etiqueta:
  *  - NUEVO: el SKU de la variación (ej. "CAM-001-M").
  *  - ANTERIOR: "<variationId>-<lote>" (ej. "4826-1"). En este caso se ignora
- *    el lote (todo lo que sigue después del primer "-") y se busca por el id
- *    de la variación.
+ *    el lote (todo lo que sigue después del primer caracter no numérico) y se
+ *    busca por el id de la variación. El separador puede llegar distinto al
+ *    "-" si el escáner y el sistema tienen distinto idioma de teclado (ej.
+ *    "4826'1"), igual que lo acepta el backend.
  *
  * El backend (`sp_get_sale_products`) ya resuelve el código escaneado hacia
  * `variation_id` (dígitos iniciales) y hace `sku ILIKE`, por lo que el fetch
@@ -32,8 +34,9 @@ export function findExactScanMatch<
   if (bySku.length > 1) return null;
 
   // 2) Formato ANTERIOR "<variationId>-<lote>": se ignora el lote (lo que
-  //    sigue después del primer "-") y se busca por id de variación.
-  const idPart = q.split("-")[0].trim();
+  //    sigue después del primer caracter no numérico) y se busca por id de
+  //    variación.
+  const idPart = q.split(/\D/)[0];
   if (/^\d+$/.test(idPart)) {
     const byId = results.filter((r) => r.variationId === Number(idPart));
     if (byId.length === 1) return byId[0];
