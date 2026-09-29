@@ -92,28 +92,28 @@ export default function FranchiseeSelect({
               {/* El nombre de la tienda va como texto normal y en su propia
                   línea: es la etiqueta de la opción, no un dato más. */}
               <span className="truncate">{storeName(tenant)}</span>
-              {(tenant.account_name || tenant.district_name) && (
-                <span className="flex w-full min-w-0 items-center gap-1.5">
-                  {/* El franquiciado tampoco es un badge: es texto secundario
-                      que acompaña al nombre de la tienda. El único badge es el
-                      distrito.
+              {/* Esta línea se pinta SIEMPRE, aunque no haya ningún dato: los
+                  tenants sin cuenta local (OPO, OVTK, YANFRA-SHOP) quedaban de
+                  una sola línea y el desplegable alternaba alturas de fila. El
+                  guión ocupa el sitio del franquiciado y todas miden igual. */}
+              <span className="flex w-full min-w-0 items-center gap-1.5">
+                {/* El franquiciado tampoco es un badge: es texto secundario
+                    que acompaña al nombre de la tienda. El único badge es el
+                    distrito.
 
-                      Se trunca por CSS (el texto completo sigue en el DOM) y
-                      el distrito va `shrink-0`: de los dos, el que cede
-                      espacio es siempre el franquiciado, porque el distrito
-                      tiene que verse entero. */}
-                  {tenant.account_name && (
-                    <span className="min-w-0 truncate text-xs text-muted-foreground">
-                      {tenant.account_name}
-                    </span>
-                  )}
-                  {tenant.district_name && (
-                    <span className={cn(badgeOutline, "shrink-0")}>
-                      {tenant.district_name}
-                    </span>
-                  )}
+                    Se trunca por CSS (el texto completo sigue en el DOM) y
+                    el distrito va `shrink-0`: de los dos, el que cede
+                    espacio es siempre el franquiciado, porque el distrito
+                    tiene que verse entero. */}
+                <span className="min-w-0 truncate text-xs text-muted-foreground">
+                  {tenant.account_name || "—"}
                 </span>
-              )}
+                {tenant.district_name && (
+                  <span className={cn(badgeOutline, "shrink-0")}>
+                    {tenant.district_name}
+                  </span>
+                )}
+              </span>
             </span>
           </SelectItem>
         ))}

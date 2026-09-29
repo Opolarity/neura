@@ -132,24 +132,24 @@ export function FranchiseeMultiSelect({
                 />
                 <span className="flex w-full min-w-0 flex-col gap-1">
                   <span className="truncate">{option.storeName}</span>
-                  {(option.accountName || option.districtName) && (
-                    <span className="flex w-full min-w-0 items-center gap-1.5">
-                      {/* El dueño cede espacio y el distrito no (`shrink-0`):
-                          el distrito siempre tiene que verse entero. El
-                          truncado es por CSS, el texto completo sigue en el
-                          DOM. */}
-                      {option.accountName && (
-                        <span className="min-w-0 truncate text-xs text-muted-foreground">
-                          {option.accountName}
-                        </span>
-                      )}
-                      {option.districtName && (
-                        <span className={cn(badgeOutline, "shrink-0")}>
-                          {option.districtName}
-                        </span>
-                      )}
+                  {/* Esta línea se pinta SIEMPRE, aunque no haya ningún dato:
+                      una opción sin dueño quedaba de una sola línea y la lista
+                      alternaba alturas de fila. El guión ocupa el sitio del
+                      dueño y todas miden igual. */}
+                  <span className="flex w-full min-w-0 items-center gap-1.5">
+                    {/* El dueño cede espacio y el distrito no (`shrink-0`):
+                        el distrito siempre tiene que verse entero. El
+                        truncado es por CSS, el texto completo sigue en el
+                        DOM. */}
+                    <span className="min-w-0 truncate text-xs text-muted-foreground">
+                      {option.accountName || "—"}
                     </span>
-                  )}
+                    {option.districtName && (
+                      <span className={cn(badgeOutline, "shrink-0")}>
+                        {option.districtName}
+                      </span>
+                    )}
+                  </span>
                 </span>
               </CommandItem>
             ))}
