@@ -30,3 +30,19 @@ export function isValidLocalPhone(raw: string | null | undefined): boolean {
   const digits = String(raw ?? "").replace(/\D/g, "");
   return digits.length === PHONE_LOCAL_LENGTH;
 }
+
+/**
+ * Número listo para un enlace de WhatsApp: el canónico `51XXXXXXXXX`.
+ *
+ *   987654321       -> "51987654321"  (dato viejo de 9 dígitos)
+ *   51987654321     -> "51987654321"
+ *   +51 987 654 321 -> "51987654321"
+ *   otra cosa       -> sus dígitos tal cual (p. ej. un número extranjero)
+ *   vacío           -> null
+ */
+export function toWhatsAppPhone(raw: string | number | null | undefined): string | null {
+  const digits = String(raw ?? "").replace(/\D/g, "");
+  if (!digits) return null;
+  if (digits.length === PHONE_LOCAL_LENGTH) return `51${digits}`;
+  return digits;
+}
