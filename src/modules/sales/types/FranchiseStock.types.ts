@@ -40,6 +40,12 @@ export interface FranchiseeTenant {
    * la cuenta, no de `accounts`. null si la cuenta no tiene perfil ubicado.
    */
   province_name: string | null;
+  /**
+   * Distrito de esa cuenta (`neighborhoods.name` del perfil). Los selectores
+   * pintan la provincia; este viaja para poder mostrarlo sin tocar
+   * get-franchise-tenants. null si el perfil no tiene distrito cargado.
+   */
+  district_name: string | null;
 }
 
 /** Categoría del franquiciado; el árbol cambia con cada franquiciado. */
