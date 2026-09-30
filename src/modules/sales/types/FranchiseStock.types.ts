@@ -35,12 +35,11 @@ export interface FranchiseeTenant {
    */
   account_name: string | null;
   /**
-   * Distrito de esa cuenta. En este ERP `neighborhoods` ES el distrito (states =
-   * departamento, cities = provincia) y la ubicación cuelga del perfil de la
-   * cuenta, no de `accounts`. null si el perfil no tiene distrito cargado: no
-   * se cae a la provincia, se muestra el distrito o nada.
+   * Provincia de esa cuenta. En este ERP `cities` ES la provincia (states =
+   * departamento, neighborhoods = distrito) y la ubicación cuelga del perfil de
+   * la cuenta, no de `accounts`. null si la cuenta no tiene perfil ubicado.
    */
-  district_name: string | null;
+  province_name: string | null;
 }
 
 /** Categoría del franquiciado; el árbol cambia con cada franquiciado. */
