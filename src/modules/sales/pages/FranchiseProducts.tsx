@@ -331,7 +331,7 @@ const FranchiseProducts = () => {
         // Si no hay tienda que mostrar arriba, el nombre de la cuenta ya está
         // haciendo de etiqueta: repetirlo debajo sería ruido.
         accountName: storeName ? franchisee.name : null,
-        districtName: tenant?.district_name ?? null,
+        provinceName: tenant?.province_name ?? null,
       };
     });
   }, [franchiseeOptions, tenants]);

@@ -25,8 +25,8 @@ export interface FranchiseeMultiSelectOption {
   storeName: string;
   /** El franquiciado como cliente de Overtake ("GARB CORP SAC"). */
   accountName: string | null;
-  /** Distrito del perfil de la cuenta ("Juanjui"). null si no lo tiene cargado. */
-  districtName: string | null;
+  /** Provincia del perfil de la cuenta ("Mariscal Caceres"). null si no la tiene cargada. */
+  provinceName: string | null;
 }
 
 interface FranchiseeMultiSelectProps {
@@ -43,7 +43,7 @@ interface FranchiseeMultiSelectProps {
  * Es una copia propia del MultiSelect de movements y no ese mismo componente:
  * aquel tipa la opción como `{ label: string; value: string }`, y aquí la
  * opción no es una línea de texto sino un bloque (tienda + dueño + badge de
- * distrito). Tocar el compartido habría cambiado el contrato a todos los
+ * provincia). Tocar el compartido habría cambiado el contrato a todos los
  * módulos que lo usan, así que la variante rica vive aquí.
  *
  * Mismo diseño de opción que FranchiseeSelect (el de "Stock de franquicias"),
@@ -118,8 +118,8 @@ export function FranchiseeMultiSelect({
               <CommandItem
                 key={option.id}
                 // cmdk filtra por este value. Se le dan los tres datos para
-                // poder buscar por tienda, por dueño o por distrito.
-                value={[option.storeName, option.accountName, option.districtName]
+                // poder buscar por tienda, por dueño o por provincia.
+                value={[option.storeName, option.accountName, option.provinceName]
                   .filter(Boolean)
                   .join(" ")}
                 onSelect={() => toggle(option.id)}
@@ -137,16 +137,16 @@ export function FranchiseeMultiSelect({
                       alternaba alturas de fila. El guión ocupa el sitio del
                       dueño y todas miden igual. */}
                   <span className="flex w-full min-w-0 items-center gap-1.5">
-                    {/* El dueño cede espacio y el distrito no (`shrink-0`):
-                        el distrito siempre tiene que verse entero. El
+                    {/* El dueño cede espacio y la provincia no (`shrink-0`):
+                        la provincia siempre tiene que verse entera. El
                         truncado es por CSS, el texto completo sigue en el
                         DOM. */}
                     <span className="min-w-0 truncate text-xs text-muted-foreground">
                       {option.accountName || "—"}
                     </span>
-                    {option.districtName && (
+                    {option.provinceName && (
                       <span className={cn(badgeOutline, "shrink-0")}>
-                        {option.districtName}
+                        {option.provinceName}
                       </span>
                     )}
                   </span>

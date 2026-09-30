@@ -25,13 +25,13 @@ interface FranchiseeSelectProps {
  * Vive aparte del modal porque lo que tiene de propio no es el Select —ese es
  * el compartido de `ui/select`, que usa todo el ERP y no se toca— sino cómo se
  * pinta cada opción: el nombre de la tienda como etiqueta y, debajo, el
- * franquiciado en texto secundario junto al badge del distrito, en vez de
+ * franquiciado en texto secundario junto al badge de la provincia, en vez de
  * los tres datos apelmazados en una línea.
  *
  * Los tres vienen de get-franchise-tenants: `name` es el nombre comercial del
  * tenant y los otros dos salen de `accounts` de este ERP cruzando por
- * `tenant_reference`. `district_name` y `account_name` son nullables a
- * propósito (hay tenants sin cuenta local y perfiles sin distrito cargado): el
+ * `tenant_reference`. `province_name` y `account_name` son nullables a
+ * propósito (hay tenants sin cuenta local y cuentas sin perfil ubicado): el
  * badge que no tiene dato simplemente no se pinta, y el franquiciado sigue
  * siendo seleccionable.
  */
@@ -98,19 +98,19 @@ export default function FranchiseeSelect({
                   guión ocupa el sitio del franquiciado y todas miden igual. */}
               <span className="flex w-full min-w-0 items-center gap-1.5">
                 {/* El franquiciado tampoco es un badge: es texto secundario
-                    que acompaña al nombre de la tienda. El único badge es el
-                    distrito.
+                    que acompaña al nombre de la tienda. El único badge es la
+                    provincia.
 
                     Se trunca por CSS (el texto completo sigue en el DOM) y
-                    el distrito va `shrink-0`: de los dos, el que cede
-                    espacio es siempre el franquiciado, porque el distrito
-                    tiene que verse entero. */}
+                    la provincia va `shrink-0`: de los dos, el que cede
+                    espacio es siempre el franquiciado, porque la provincia
+                    tiene que verse entera. */}
                 <span className="min-w-0 truncate text-xs text-muted-foreground">
                   {tenant.account_name || "—"}
                 </span>
-                {tenant.district_name && (
+                {tenant.province_name && (
                   <span className={cn(badgeOutline, "shrink-0")}>
-                    {tenant.district_name}
+                    {tenant.province_name}
                   </span>
                 )}
               </span>

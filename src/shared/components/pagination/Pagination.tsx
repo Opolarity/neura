@@ -29,6 +29,7 @@ function Pagination({ pagination, onPageChange }: PaginationProps) {
     return (
         <div className="flex flex-row items-center gap-1">
             <Button
+                type="button"
                 onClick={() => onPageChange(1)}
                 disabled={!canGoPrevious}
                 variant="ghost"
@@ -37,6 +38,7 @@ function Pagination({ pagination, onPageChange }: PaginationProps) {
                 <ChevronsLeft className="w-4 h-4" />
             </Button>
             <Button
+                type="button"
                 onClick={() => onPageChange(p_page - 1)}
                 disabled={!canGoPrevious}
                 variant="ghost"
@@ -48,6 +50,7 @@ function Pagination({ pagination, onPageChange }: PaginationProps) {
                 {startItem} a {endItem} de {total}
             </span>
             <Button
+                type="button"
                 onClick={() => onPageChange(p_page + 1)}
                 disabled={!canGoNext}
                 variant="ghost"
@@ -56,6 +59,7 @@ function Pagination({ pagination, onPageChange }: PaginationProps) {
                 <ChevronRight className="w-4 h-4" />
             </Button>
             <Button
+                type="button"
                 onClick={() => onPageChange(totalPages)}
                 disabled={!canGoNext}
                 variant="ghost"
