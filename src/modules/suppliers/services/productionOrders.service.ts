@@ -740,6 +740,10 @@ export const variationsOfProductApi = async (
     .from("variations")
     .select(VARIATION_SELECT)
     .eq("product_id", productId)
+    // Solo las activas: una talla dada de baja no se fabrica ni entra en la
+    // receta. Las recien creadas nacen activas, asi que la relectura tras
+    // crear un producto sigue encontrandolas.
+    .eq("is_active", true)
     .order("id", { ascending: true });
 
   if (error) throw error;

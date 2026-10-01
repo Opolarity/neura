@@ -48,6 +48,23 @@ interface UseExplosionDetailOptions {
 export const optionKey = (option: { id: number; materialVariationId?: number | null }) =>
   option.materialVariationId ?? -option.id;
 
+/**
+ * Las excepciones por prenda que de verdad cuentan: las de prendas que siguen
+ * en la receta y con una cantidad DISTINTA de la general. Mientras se edita,
+ * la línea guarda tal cual lo tecleado (una talla con el mismo número que la
+ * general, una prenda que ya no está); contar eso inflaba el badge. Es la
+ * misma regla con la que se arma el payload al guardar.
+ */
+export const effectiveExceptions = (
+  line: Pick<ExplosionMaterial, "quantity" | "variations">,
+  variations: { id: number }[],
+) =>
+  line.variations.filter(
+    (excepcion) =>
+      variations.some((v) => v.id === excepcion.variationId) &&
+      excepcion.quantity !== (line.quantity ?? 0),
+  );
+
 /** Línea vacía que se añade al pulsar "Añadir material". */
 const emptyLine = (): ExplosionMaterial => ({
   materialId: 0,
@@ -665,12 +682,7 @@ export const useExplosionDetail = ({ idParam, productParam }: UseExplosionDetail
         // Solo lo que DIFIERE de la cantidad general, y solo de prendas que
         // siguen en la receta: quitar una prenda tiene que llevarse sus
         // excepciones, no dejarlas apuntando a algo que ya no cubre.
-        variations: line.variations
-          .filter(
-            (excepcion) =>
-              variations.some((v) => v.id === excepcion.variationId) &&
-              excepcion.quantity !== (line.quantity ?? 0),
-          )
+        variations: effectiveExceptions(line, variations)
           .map((excepcion) => ({
             variation_id: excepcion.variationId,
             quantity: excepcion.quantity,

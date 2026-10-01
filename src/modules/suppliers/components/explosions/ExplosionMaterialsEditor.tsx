@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { optionKey } from "../../hooks/useExplosionDetail";
+import { effectiveExceptions, optionKey } from "../../hooks/useExplosionDetail";
 import { Label } from "@/components/ui/label";
 
 interface ExplosionMaterialsEditorProps {
@@ -85,6 +85,13 @@ export const ExplosionMaterialsEditor = ({
     id: optionKey(material),
     label: material.name,
   }));
+
+  // Por línea, las excepciones que cuentan: las mismas que se guardarían.
+  // `line.variations` a secas incluye lo tecleado igual a la general y
+  // prendas que ya no están, y el badge marcaba de más.
+  const excepcionesPorLinea = lines.map(
+    (line) => effectiveExceptions(line, variations).length,
+  );
 
   return (
     <div className="space-y-3">
@@ -232,12 +239,10 @@ export const ExplosionMaterialsEditor = ({
                       lo que no existe. */}
                   {readOnly && (
                     <span className="text-muted-foreground text-xs">
-                      {line.variations.length === 0
+                      {excepcionesPorLinea[index] === 0
                         ? "Igual en todas"
-                        : `${line.variations.length} ${
-                            line.variations.length === 1
-                              ? "excepción"
-                              : "excepciones"
+                        : `${excepcionesPorLinea[index]} ${
+                            excepcionesPorLinea[index] === 1 ? "excepción" : "excepciones"
                           }`}
                     </span>
                   )}
@@ -256,9 +261,9 @@ export const ExplosionMaterialsEditor = ({
                           title="Cantidad distinta para alguna prenda"
                         >
                           <Layers className="h-3.5 w-3.5" />
-                          {line.variations.length > 0 ? (
+                          {excepcionesPorLinea[index] > 0 ? (
                             <Badge variant="secondary" className="px-1.5 py-0">
-                              {line.variations.length}
+                              {excepcionesPorLinea[index]}
                             </Badge>
                           ) : (
                             "Por prenda"
@@ -328,6 +333,24 @@ export const ExplosionMaterialsEditor = ({
                                         e.target.value,
                                       )
                                     }
+                                    /* Teclear la cantidad general es volver a
+                                       ella: al salir del campo se quita la
+                                       excepcion, como si se hubiera vaciado.
+                                       Al salir y no en cada tecla, porque con
+                                       general 1 escribir «1.6» pasa por «1» y
+                                       el campo se vaciaria a medio escribir. */
+                                    onBlur={() => {
+                                      if (
+                                        excepcion &&
+                                        excepcion.quantity === (line.quantity ?? 0)
+                                      ) {
+                                        onChangeVariationQuantity(
+                                          index,
+                                          variation.id,
+                                          "",
+                                        );
+                                      }
+                                    }}
                                   />
                                 </div>
                               );
