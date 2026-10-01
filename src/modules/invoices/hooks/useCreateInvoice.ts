@@ -528,7 +528,7 @@ export const useCreateInvoice = () => {
         .eq("document_number", doc)
         .eq("document_type_id", parseInt(docTypeId))
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (account) {
         setFormData((prev) => ({
@@ -544,31 +544,29 @@ export const useCreateInvoice = () => {
         // Consulta externa best-effort: si falla, se cae al "Cliente no
         // encontrado" de abajo en vez de cortar la búsqueda.
         let lookupData: {
-          razon_social?: string;
+          found?: boolean;
+          razonSocial?: string;
           nombres?: string;
           apellidoPaterno?: string;
           apellidoMaterno?: string;
         } | null = null;
         try {
-          lookupData = await invokeFunction(
-            `document-lookup?document_type=${selectedDocType.code}&document_number=${doc}`,
-            { method: "GET" }
-          );
+          lookupData = await invokeFunction("document-lookup", {
+            method: "POST",
+            body: { documentType: selectedDocType.code, documentNumber: doc },
+          });
         } catch (lookupError) {
           console.error("document-lookup:", lookupError);
         }
 
-        if (lookupData) {
-          const name = lookupData.razon_social ||
+        if (lookupData?.found) {
+          const name = lookupData.razonSocial ||
             [lookupData.nombres, lookupData.apellidoPaterno, lookupData.apellidoMaterno].filter(Boolean).join(" ");
-          setFormData((prev) => ({
-            ...prev,
-            clientName: name || "No encontrado",
-          }));
           if (name) {
+            setFormData((prev) => ({ ...prev, clientName: name }));
             toast({ title: "Cliente encontrado vía consulta externa (no registrado en sistema)", variant: "warning" });
+            return;
           }
-          return;
         }
       }
 
