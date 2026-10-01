@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +19,10 @@ import {
   toFriendlyText,
   validateFriendlyText,
 } from "../../adapters/chatbotTemplates.adapter";
+import { toggleInline, toggleLines, type Edit } from "../../adapters/whatsappFormat";
 import type { ChatbotTemplate } from "../../types/chatbotTemplates.types";
+import FormatToolbar, { type FormatAction } from "./FormatToolbar";
+import WhatsAppPreview from "./WhatsAppPreview";
 
 interface ChatbotTemplateFormDialogProps {
   template: ChatbotTemplate | null;
@@ -71,6 +74,37 @@ export default function ChatbotTemplateFormDialog({
     });
   };
 
+  /** Aplica un formato de WhatsApp a la selección y la deja seleccionada. */
+  const applyFormat = (action: FormatAction) => {
+    const el = textareaRef.current;
+    const start = el?.selectionStart ?? text.length;
+    const end = el?.selectionEnd ?? text.length;
+    const edit: Edit =
+      action.type === "inline" ? toggleInline(text, start, end, action.mark) : toggleLines(text, start, end, action.mark);
+    setText(edit.text);
+    setTouched(true);
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(edit.selectionStart, edit.selectionEnd);
+    });
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    const key = e.key.toLowerCase();
+    const action: FormatAction | null =
+      key === "b" && !e.shiftKey
+        ? { type: "inline", mark: "*" }
+        : key === "i" && !e.shiftKey
+          ? { type: "inline", mark: "_" }
+          : key === "x" && e.shiftKey
+            ? { type: "inline", mark: "~" }
+            : null;
+    if (!action) return;
+    e.preventDefault();
+    applyFormat(action);
+  };
+
   const handleSave = async () => {
     setTouched(true);
     if (error) return;
@@ -90,6 +124,7 @@ export default function ChatbotTemplateFormDialog({
             <Label htmlFor="tpl-content" required>
               Texto
             </Label>
+            <FormatToolbar onApply={applyFormat} />
             <Textarea
               id="tpl-content"
               ref={textareaRef}
@@ -98,19 +133,21 @@ export default function ChatbotTemplateFormDialog({
               aria-required
               aria-invalid={touched && !!error}
               className={touched && error ? "border-destructive focus-visible:ring-destructive" : undefined}
+              onKeyDown={handleKeyDown}
               onChange={(e) => {
                 setText(e.target.value);
                 setTouched(true);
               }}
             />
+            <p className="text-xs text-muted-foreground">
+              Selecciona texto y usa la barra, o escribe como en WhatsApp: *negrita*, _cursiva_, ~tachado~.
+            </p>
             {touched && error && <p className="text-sm text-destructive">{error}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
             <Label>Vista previa</Label>
-            <div className="min-h-[200px] rounded-md border bg-muted p-3 text-sm whitespace-pre-wrap break-words">
-              {previewFriendlyText(text, vars)}
-            </div>
+            <WhatsAppPreview text={previewFriendlyText(text, vars)} />
             {vars.length > 0 && (
               <p className="text-xs text-muted-foreground">Los datos se muestran con un ejemplo.</p>
             )}
