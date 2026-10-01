@@ -13,6 +13,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -607,153 +608,174 @@ export const SalesInvoicesModal = ({
             </DropdownMenu>
           </div>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : invoices.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No hay comprobantes vinculados a esta orden.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>#</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>N. Comprobante</TableHead>
-                  <TableHead>Serie</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((inv, index) => {
-                  const typeCode = getInvoiceTypeCode(inv);
-                  const showEmitAction = typeCode !== "INV" && typeCode !== null && !inv.declared;
-                  const typeName = invoiceTypes.find(t => t.id === inv.invoice_type_id)?.name || "Comprobante";
-                  // Solo se renderiza en las ramas de emitido y de Comprobante (INV).
-                  const whatsAppButton = (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      title="Enviar por WhatsApp"
-                      disabled={sendingWhatsAppId === inv.id}
-                      onClick={() => sendInvoiceWhatsApp(inv, typeName, orderPhone)}
-                    >
-                      {sendingWhatsAppId === inv.id
-                        ? <Loader2 className="h-4 w-4 animate-spin" />
-                        : <WhatsAppIcon />}
-                    </Button>
-                  );
-                  return (
-                    <TableRow key={inv.id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>{invoiceTypes.find(t => t.id === inv.invoice_type_id)?.name || "-"}</TableCell>
-                      <TableCell>{inv.invoice_number || "-"}</TableCell>
-                      <TableCell>{inv.tax_serie || "-"}</TableCell>
-                      <TableCell>{inv.client_name || "-"}</TableCell>
-                      <TableCell>S/ {inv.total_amount.toFixed(2)}</TableCell>
-                      <TableCell>
-                        {formatDateDisplay(inv.created_at)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {inv.declared ? (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                title="Imprimir ticket"
-                                disabled={printingId === inv.id}
-                                onClick={() => printInvoice(inv.id)}
-                              >
-                                {printingId === inv.id
-                                  ? <Loader2 className="h-4 w-4 animate-spin" />
-                                  : <Printer className="h-4 w-4" />}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                title="Ver comprobante"
-                                onClick={() => {
-                                  window.open(`/invoices/edit/${inv.id}`, "_blank");
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              {inv.pdf_url && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  title="Ver PDF"
-                                  onClick={() => window.open(inv.pdf_url!, "_blank")}
-                                >
-                                  <FileText className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {whatsAppButton}
-                            </>
-                          ) : showEmitAction ? (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                title="Emitir a SUNAT"
-                                onClick={() => setPendingEmitInvoice(inv)}
-                              >
-                                <ArrowUp className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                title="Ver comprobante"
-                                onClick={() => {
-                                  window.open(`/invoices/edit/${inv.id}`, "_blank");
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </>
-                          ) : typeCode === "INV" ? (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                title="Ver comprobante"
-                                onClick={() => {
-                                  window.open(`/invoices/edit/${inv.id}`, "_blank");
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                title="Imprimir ticket"
-                                disabled={printingId === inv.id}
-                                onClick={() => printInvoice(inv.id)}
-                              >
-                                {printingId === inv.id
-                                  ? <Loader2 className="h-4 w-4 animate-spin" />
-                                  : <Printer className="h-4 w-4" />}
-                              </Button>
-                              {whatsAppButton}
-                            </>
-                          ) : (
-                            "-"
-                          )}
-                        </div>
-                      </TableCell>
+        {/* Tope de altura + scroll interno, mismo patrón que los modales de
+            filtro: los comprobantes de una venta se acumulan y sin esto el
+            modal se estiraba hasta salirse de la pantalla. El max-h va en un
+            contenedor propio, no en el ScrollArea. El pr-4 aparta la tabla de
+            la barra de scroll. */}
+        <div className="max-h-[50vh]">
+          {/* El viewport de Radix envuelve el contenido en un div con
+              display: table, que deja a la tabla crecer a su ancho natural y
+              la recorta: el ScrollArea solo trae barra vertical. En block, el
+              ancho vuelve a estar limitado y el overflow-auto de Table recupera
+              el scroll horizontal.
+
+              type="always" deja la barra siempre visible: el default "hover"
+              la oculta si el puntero no está encima. El thumb solo aparece si
+              el contenido desborda. */}
+          <ScrollArea
+            type="always"
+            className="h-full [&>[data-radix-scroll-area-viewport]>div]:!block"
+          >
+            <div className="space-y-4 py-4 pl-1 pr-4">
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : invoices.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No hay comprobantes vinculados a esta orden.
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>#</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>N. Comprobante</TableHead>
+                      <TableHead>Serie</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map((inv, index) => {
+                      const typeCode = getInvoiceTypeCode(inv);
+                      const showEmitAction = typeCode !== "INV" && typeCode !== null && !inv.declared;
+                      const typeName = invoiceTypes.find(t => t.id === inv.invoice_type_id)?.name || "Comprobante";
+                      // Solo se renderiza en las ramas de emitido y de Comprobante (INV).
+                      const whatsAppButton = (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          title="Enviar por WhatsApp"
+                          disabled={sendingWhatsAppId === inv.id}
+                          onClick={() => sendInvoiceWhatsApp(inv, typeName, orderPhone)}
+                        >
+                          {sendingWhatsAppId === inv.id
+                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                            : <WhatsAppIcon />}
+                        </Button>
+                      );
+                      return (
+                        <TableRow key={inv.id}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell>{invoiceTypes.find(t => t.id === inv.invoice_type_id)?.name || "-"}</TableCell>
+                          <TableCell>{inv.invoice_number || "-"}</TableCell>
+                          <TableCell>{inv.tax_serie || "-"}</TableCell>
+                          <TableCell>{inv.client_name || "-"}</TableCell>
+                          <TableCell>S/ {inv.total_amount.toFixed(2)}</TableCell>
+                          <TableCell>
+                            {formatDateDisplay(inv.created_at)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {inv.declared ? (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title="Imprimir ticket"
+                                    disabled={printingId === inv.id}
+                                    onClick={() => printInvoice(inv.id)}
+                                  >
+                                    {printingId === inv.id
+                                      ? <Loader2 className="h-4 w-4 animate-spin" />
+                                      : <Printer className="h-4 w-4" />}
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title="Ver comprobante"
+                                    onClick={() => {
+                                      window.open(`/invoices/edit/${inv.id}`, "_blank");
+                                    }}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  {inv.pdf_url && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      title="Ver PDF"
+                                      onClick={() => window.open(inv.pdf_url!, "_blank")}
+                                    >
+                                      <FileText className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  {whatsAppButton}
+                                </>
+                              ) : showEmitAction ? (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title="Emitir a SUNAT"
+                                    onClick={() => setPendingEmitInvoice(inv)}
+                                  >
+                                    <ArrowUp className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title="Ver comprobante"
+                                    onClick={() => {
+                                      window.open(`/invoices/edit/${inv.id}`, "_blank");
+                                    }}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              ) : typeCode === "INV" ? (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title="Ver comprobante"
+                                    onClick={() => {
+                                      window.open(`/invoices/edit/${inv.id}`, "_blank");
+                                    }}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title="Imprimir ticket"
+                                    disabled={printingId === inv.id}
+                                    onClick={() => printInvoice(inv.id)}
+                                  >
+                                    {printingId === inv.id
+                                      ? <Loader2 className="h-4 w-4 animate-spin" />
+                                      : <Printer className="h-4 w-4" />}
+                                  </Button>
+                                  {whatsAppButton}
+                                </>
+                              ) : (
+                                "-"
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </ScrollArea>
         </div>
       </DialogContent>
 
