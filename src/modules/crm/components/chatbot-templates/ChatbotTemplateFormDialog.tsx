@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,9 +9,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { previewTemplate, validateTemplateContent } from "../../adapters/chatbotTemplates.adapter";
+import {
+  fromFriendlyText,
+  previewFriendlyText,
+  templateVariables,
+  toFriendlyText,
+  validateFriendlyText,
+} from "../../adapters/chatbotTemplates.adapter";
 import type { ChatbotTemplate } from "../../types/chatbotTemplates.types";
 
 interface ChatbotTemplateFormDialogProps {
@@ -22,35 +28,42 @@ interface ChatbotTemplateFormDialogProps {
   onSave: (template: ChatbotTemplate, content: string) => Promise<boolean>;
 }
 
+/**
+ * Editor de una plantilla. Los datos que llena el bot se muestran como
+ * [Nombre] y se convierten a la sintaxis del bot ({clave}) recién al guardar.
+ */
 export default function ChatbotTemplateFormDialog({
   template,
   saving,
   onOpenChange,
   onSave,
 }: ChatbotTemplateFormDialogProps) {
-  const [content, setContent] = useState("");
+  const [text, setText] = useState("");
+  const [fallbacks, setFallbacks] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    setContent(template?.content ?? "");
-    setTouched(false);
-  }, [template]);
+  const vars = useMemo(() => (template ? templateVariables(template) : []), [template]);
 
-  const error = useMemo(
-    () => (template ? validateTemplateContent(template, content) : null),
-    [template, content]
-  );
+  useEffect(() => {
+    setText(template ? toFriendlyText(template.content) : "");
+    setFallbacks(Object.fromEntries(vars.filter((v) => v.fallback != null).map((v) => [v.key, v.fallback as string])));
+    setTouched(false);
+  }, [template, vars]);
+
+  const error = useMemo(() => validateFriendlyText(text, vars, fallbacks), [text, vars, fallbacks]);
 
   if (!template) return null;
 
-  /** Inserta {dato} donde está el cursor. */
-  const insertPlaceholder = (key: string) => {
+  const withFallback = vars.filter((v) => v.fallback != null);
+
+  /** Inserta [Nombre] donde está el cursor. */
+  const insertVariable = (label: string) => {
     const el = textareaRef.current;
-    const token = `{${key}}`;
-    const start = el?.selectionStart ?? content.length;
-    const end = el?.selectionEnd ?? content.length;
-    setContent(content.slice(0, start) + token + content.slice(end));
+    const token = `[${label}]`;
+    const start = el?.selectionStart ?? text.length;
+    const end = el?.selectionEnd ?? text.length;
+    setText(text.slice(0, start) + token + text.slice(end));
     setTouched(true);
     requestAnimationFrame(() => {
       el?.focus();
@@ -61,7 +74,7 @@ export default function ChatbotTemplateFormDialog({
   const handleSave = async () => {
     setTouched(true);
     if (error) return;
-    if (await onSave(template, content)) onOpenChange(false);
+    if (await onSave(template, fromFriendlyText(text, vars, fallbacks))) onOpenChange(false);
   };
 
   return (
@@ -80,13 +93,13 @@ export default function ChatbotTemplateFormDialog({
             <Textarea
               id="tpl-content"
               ref={textareaRef}
-              value={content}
+              value={text}
               rows={14}
               aria-required
               aria-invalid={touched && !!error}
               className={touched && error ? "border-destructive focus-visible:ring-destructive" : undefined}
               onChange={(e) => {
-                setContent(e.target.value);
+                setText(e.target.value);
                 setTouched(true);
               }}
             />
@@ -96,38 +109,56 @@ export default function ChatbotTemplateFormDialog({
           <div className="flex flex-col gap-2">
             <Label>Vista previa</Label>
             <div className="min-h-[200px] rounded-md border bg-muted p-3 text-sm whitespace-pre-wrap break-words">
-              {previewTemplate(content)}
+              {previewFriendlyText(text, vars)}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Los datos entre corchetes los completa el bot con la información de cada cliente.
-            </p>
+            {vars.length > 0 && (
+              <p className="text-xs text-muted-foreground">Los datos se muestran con un ejemplo.</p>
+            )}
           </div>
         </div>
 
-        {template.placeholders.length > 0 && (
+        {vars.length > 0 && (
           <div className="flex flex-col gap-2">
-            <Label>Datos disponibles</Label>
+            <Label>Insertar dato</Label>
+            <p className="text-xs text-muted-foreground">
+              El bot reemplaza cada dato entre corchetes por la información del cliente. Los obligatorios no se
+              pueden quitar del texto.
+            </p>
             <div className="flex flex-wrap gap-2">
-              {template.placeholders.map((key) => (
-                <button
-                  key={key}
+              {vars.map((v) => (
+                <Button
+                  key={v.key}
                   type="button"
-                  onClick={() => insertPlaceholder(key)}
+                  variant="outline"
+                  size="sm"
                   title="Insertar en el texto"
+                  onClick={() => insertVariable(v.label)}
                 >
-                  <Badge variant={template.requiredPlaceholders.includes(key) ? "info" : "secondary"} className="font-mono">
-                    {`{${key}}`}
-                  </Badge>
-                </button>
+                  <Plus className="w-4 h-4" />
+                  {v.label}
+                  {v.required && <span className="text-xs font-normal text-muted-foreground">· obligatorio</span>}
+                </Button>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Los datos en azul son obligatorios: no se pueden quitar del texto. Si un dato llega vacío, el bot no
-              envía la línea donde está. Escribe <span className="font-mono">{"{dato?}"}</span> para enviar la línea
-              igual, o <span className="font-mono">{"{dato|texto}"}</span> para usar un texto por defecto.
-            </p>
           </div>
         )}
+
+        {withFallback.map((v) => (
+          <div key={v.key} className="flex flex-col gap-2">
+            <Label htmlFor={`tpl-fallback-${v.key}`} required>
+              Si el bot no tiene [{v.label}], escribir
+            </Label>
+            <Input
+              id={`tpl-fallback-${v.key}`}
+              value={fallbacks[v.key] ?? ""}
+              aria-required
+              onChange={(e) => {
+                setFallbacks({ ...fallbacks, [v.key]: e.target.value });
+                setTouched(true);
+              }}
+            />
+          </div>
+        ))}
 
         <DialogFooter>
           <Button variant="outline" disabled={saving} onClick={() => onOpenChange(false)}>

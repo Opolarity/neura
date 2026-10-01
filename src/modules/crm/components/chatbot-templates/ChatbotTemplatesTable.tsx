@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/shared/utils/date";
+import { toFriendlyText } from "../../adapters/chatbotTemplates.adapter";
 import type { ChatbotTemplate } from "../../types/chatbotTemplates.types";
 
 interface ChatbotTemplatesTableProps {
@@ -41,7 +42,7 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit }: Chatb
             <TableRow key={t.id}>
               <TableCell className="font-mono text-xs">{t.name}</TableCell>
               <TableCell>
-                <p className="line-clamp-2 whitespace-pre-line text-sm">{t.content}</p>
+                <p className="line-clamp-2 whitespace-pre-line text-sm">{toFriendlyText(t.content)}</p>
               </TableCell>
               <TableCell className="text-sm">
                 {t.edited ? (

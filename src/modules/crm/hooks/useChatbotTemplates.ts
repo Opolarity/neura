@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "@/shared/hooks/use-toast";
 import { toastError } from "@/shared/utils/toastError";
 import { getChatbotTemplatesApi, updateChatbotTemplateApi } from "../services/crm.service";
-import { toChatbotTemplate } from "../adapters/chatbotTemplates.adapter";
+import { toChatbotTemplate, toFriendlyText } from "../adapters/chatbotTemplates.adapter";
 import type { ChatbotTemplate } from "../types/chatbotTemplates.types";
 
 /**
@@ -39,7 +39,7 @@ export const useChatbotTemplates = (enabled: boolean) => {
     const q = search.trim().toLowerCase();
     if (!q) return templates;
     return templates.filter(
-      (t) => t.name.toLowerCase().includes(q) || t.content.toLowerCase().includes(q)
+      (t) => t.name.toLowerCase().includes(q) || toFriendlyText(t.content).toLowerCase().includes(q)
     );
   }, [templates, search]);
 
