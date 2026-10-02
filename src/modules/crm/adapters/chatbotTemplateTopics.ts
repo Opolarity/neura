@@ -1,8 +1,10 @@
-import type { ChatbotTemplateStatus, ChatbotTemplateTopic } from "../types/chatbotTemplates.types";
+import type { ChatbotTemplateTopic } from "../types/chatbotTemplates.types";
 
 /**
- * T-917. Los temas de Jev con su nombre para el ERP, en el orden en que se
- * muestran. La clave es la que devuelve Jev: el bot filtra por ella.
+ * T-917. Las 11 etiquetas de Jev (las que pueden ser principales) con su nombre
+ * y una ayuda, en el orden en que se muestran. La clave es la que devuelve
+ * Jev: el bot filtra por ella. Los nombres son los mismos que siembra la
+ * migración en chatbot_template_tags.
  */
 export const TEMPLATE_TOPICS: { value: ChatbotTemplateTopic; label: string; hint: string }[] = [
   { value: "vender", label: "Vender", hint: "Productos, tallas, precios, promos, envío, carrito y datos de entrega." },
@@ -21,7 +23,16 @@ export const TEMPLATE_TOPICS: { value: ChatbotTemplateTopic; label: string; hint
 export const topicLabel = (topic: string | null): string =>
   TEMPLATE_TOPICS.find((t) => t.value === topic)?.label ?? "Sin tema";
 
-export const TEMPLATE_STATUSES: { value: ChatbotTemplateStatus; label: string }[] = [
-  { value: "consulting_information", label: "Sigue la conversación (consulta de información)" },
-  { value: "other", label: "Cierra el tema o deriva a una persona" },
-];
+/**
+ * Mismo normalizado que fn_chatbot_template_slug: "Cambio de Talla" →
+ * cambio_de_talla. Es el nombre con que se guarda la plantilla.
+ */
+export const templateSlug = (text: string): string =>
+  text
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "");

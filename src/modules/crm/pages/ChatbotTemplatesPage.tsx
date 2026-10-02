@@ -2,15 +2,22 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/modules/auth";
 import { PageLoader } from "@/shared/components/page-loader";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import ChatbotTemplatesHeader from "../components/chatbot-templates/ChatbotTemplatesHeader";
 import ChatbotTemplatesTable from "../components/chatbot-templates/ChatbotTemplatesTable";
 import ChatbotTemplateFormDialog from "../components/chatbot-templates/ChatbotTemplateFormDialog";
-import { TEMPLATE_TOPICS } from "../adapters/chatbotTemplateTopics";
-import { useChatbotTemplates, type TopicFilter } from "../hooks/useChatbotTemplates";
+import { useChatbotTemplates } from "../hooks/useChatbotTemplates";
 import type { ChatbotTemplate } from "../types/chatbotTemplates.types";
 
 /** Valor del Select para "todos": Radix no admite un SelectItem con value "". */
@@ -18,9 +25,9 @@ const ALL = "__all__";
 
 /**
  * T-902. Los textos fijos del chatbot de WhatsApp. En las del sistema solo se
- * edita el texto: los nombres los usa el código del bot. T-917: filtro por
- * tema de Jev y plantillas nuevas creadas desde acá. Solo admin (lo exigen
- * también los SP).
+ * edita el texto: los nombres los usa el código del bot. T-917: etiquetas (una
+ * principal de Jev y extras), filtro por etiqueta y plantillas nuevas creadas
+ * desde acá. Solo admin (lo exigen también los SP).
  */
 export default function ChatbotTemplatesPage() {
   const { isAdmin } = useAuth();
@@ -30,9 +37,10 @@ export default function ChatbotTemplatesPage() {
     rows,
     search,
     onSearchChange,
-    topic,
-    onTopicChange,
-    topicCounts,
+    tags,
+    tagFilter,
+    onTagFilterChange,
+    withoutTopic,
     pagination,
     onPageChange,
     onPageSizeChange,
@@ -73,24 +81,41 @@ export default function ChatbotTemplatesPage() {
                 className="pl-9"
               />
             </div>
-            <Select value={topic || ALL} onValueChange={(v) => onTopicChange(v === ALL ? "" : (v as TopicFilter))}>
-              <SelectTrigger className="w-full sm:w-[240px]" aria-label="Filtrar por tema">
-                <SelectValue placeholder="Todos los temas" />
+            <Select value={tagFilter || ALL} onValueChange={(v) => onTagFilterChange(v === ALL ? "" : v)}>
+              <SelectTrigger className="w-full sm:w-[260px]" aria-label="Filtrar por etiqueta">
+                <SelectValue placeholder="Todas las etiquetas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL}>Todos los temas</SelectItem>
-                {TEMPLATE_TOPICS.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label} ({topicCounts[t.value] ?? 0})
-                  </SelectItem>
-                ))}
-                {topicCounts.none ? <SelectItem value="none">Sin tema ({topicCounts.none})</SelectItem> : null}
+                <SelectItem value={ALL}>Todas las etiquetas</SelectItem>
+                <SelectGroup>
+                  <SelectLabel>Principales</SelectLabel>
+                  {tags
+                    .filter((g) => g.is_jev)
+                    .map((g) => (
+                      <SelectItem key={g.id} value={String(g.id)}>
+                        {g.name} ({g.templates_count})
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
+                {tags.some((g) => !g.is_jev) && (
+                  <SelectGroup>
+                    <SelectLabel>Otras</SelectLabel>
+                    {tags
+                      .filter((g) => !g.is_jev)
+                      .map((g) => (
+                        <SelectItem key={g.id} value={String(g.id)}>
+                          {g.name} ({g.templates_count})
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                )}
+                {withoutTopic ? <SelectItem value="none">Sin etiqueta principal ({withoutTopic})</SelectItem> : null}
               </SelectContent>
             </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
-          <ChatbotTemplatesTable rows={rows} searching={!!search.trim() || !!topic} onEdit={setEditing} />
+          <ChatbotTemplatesTable rows={rows} searching={!!search.trim() || !!tagFilter} onEdit={setEditing} />
         </CardContent>
         <CardFooter className="!p-0">
           <PaginationBar pagination={pagination} onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} />
@@ -101,6 +126,7 @@ export default function ChatbotTemplatesPage() {
         template={editing}
         creating={creating}
         saving={saving}
+        tagOptions={tags.map((g) => g.name)}
         onOpenChange={(open) => {
           if (open) return;
           setEditing(null);

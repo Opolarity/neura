@@ -1,36 +1,47 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "@/shared/hooks/use-toast";
 import { toastError } from "@/shared/utils/toastError";
-import { createChatbotTemplateApi, getChatbotTemplatesApi, updateChatbotTemplateApi } from "../services/crm.service";
+import {
+  createChatbotTemplateApi,
+  getChatbotTagsApi,
+  getChatbotTemplatesApi,
+  updateChatbotTemplateApi,
+} from "../services/crm.service";
 import { toChatbotTemplate, toFriendlyText } from "../adapters/chatbotTemplates.adapter";
 import type {
+  ChatbotTagApi,
   ChatbotTemplate,
   ChatbotTemplateCreateInput,
   ChatbotTemplateMeta,
-  ChatbotTemplateTopic,
 } from "../types/chatbotTemplates.types";
 
-/** Filtro de tema: uno de Jev, las que no tienen ("none") o todas (""). */
-export type TopicFilter = ChatbotTemplateTopic | "none" | "";
+/**
+ * Filtro por etiqueta (T-917): el id de una etiqueta, "none" (sin etiqueta
+ * principal) o "" (todas). Una plantilla entra si la etiqueta es su principal
+ * o una de sus extra.
+ */
+export type TagFilter = string;
 
 /**
- * Las ~80 plantillas llegan de una sola vez; la búsqueda, el filtro por tema
- * (T-917) y la paginación son locales.
+ * Las ~80 plantillas llegan de una sola vez; la búsqueda, el filtro por
+ * etiqueta (T-917) y la paginación son locales.
  */
 export const useChatbotTemplates = (enabled: boolean) => {
   const [templates, setTemplates] = useState<ChatbotTemplate[]>([]);
+  const [tags, setTags] = useState<ChatbotTagApi[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
-  const [topic, setTopic] = useState<TopicFilter>("");
+  const [tagFilter, setTagFilter] = useState<TagFilter>("");
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(20);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getChatbotTemplatesApi();
+      const [res, tagsRes] = await Promise.all([getChatbotTemplatesApi(), getChatbotTagsApi()]);
       setTemplates((res.data ?? []).map(toChatbotTemplate));
+      setTags(tagsRes.data ?? []);
     } catch (error) {
       console.error(error);
       toastError(error, undefined, "Error al cargar las plantillas del chatbot");
@@ -46,19 +57,19 @@ export const useChatbotTemplates = (enabled: boolean) => {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const tag = tags.find((g) => String(g.id) === tagFilter);
     return templates.filter((t) => {
-      if (topic === "none" ? t.topic != null : topic && t.topic !== topic) return false;
+      if (tagFilter === "none" && t.topic != null) return false;
+      if (tag && !(tag.is_jev && t.topic === tag.code) && !t.tags.some((n) => n.toLowerCase() === tag.name.toLowerCase())) {
+        return false;
+      }
       if (!q) return true;
       return t.name.toLowerCase().includes(q) || toFriendlyText(t.content).toLowerCase().includes(q);
     });
-  }, [templates, search, topic]);
+  }, [templates, tags, search, tagFilter]);
 
-  /** Cuántas hay por tema, para el filtro. */
-  const topicCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const t of templates) counts[t.topic ?? "none"] = (counts[t.topic ?? "none"] ?? 0) + 1;
-    return counts;
-  }, [templates]);
+  /** Plantillas sin etiqueta principal (filas viejas): solo para ofrecer el filtro si hay. */
+  const withoutTopic = useMemo(() => templates.filter((t) => t.topic == null).length, [templates]);
 
   const rows = useMemo(() => filtered.slice((page - 1) * size, page * size), [filtered, page, size]);
 
@@ -67,8 +78,8 @@ export const useChatbotTemplates = (enabled: boolean) => {
     setPage(1);
   };
 
-  const onTopicChange = (value: TopicFilter) => {
-    setTopic(value);
+  const onTagFilterChange = (value: TagFilter) => {
+    setTagFilter(value);
     setPage(1);
   };
 
@@ -79,7 +90,7 @@ export const useChatbotTemplates = (enabled: boolean) => {
 
   /**
    * Devuelve true si se guardó (o no había cambios), para cerrar el editor.
-   * `meta` solo va en las creadas desde el ERP.
+   * `meta` (etiquetas) no va en las especiales.
    */
   const save = async (template: ChatbotTemplate, content: string, meta?: ChatbotTemplateMeta): Promise<boolean> => {
     setSaving(true);
@@ -109,7 +120,7 @@ export const useChatbotTemplates = (enabled: boolean) => {
       await createChatbotTemplateApi(input);
       toast({
         title: "Plantilla creada",
-        description: "El bot empieza a usarla en menos de un minuto, cuando el cliente pida lo que dice «Cuándo usarla».",
+        description: "El bot empieza a usarla en menos de un minuto.",
       });
       await load();
       return true;
@@ -128,9 +139,10 @@ export const useChatbotTemplates = (enabled: boolean) => {
     rows,
     search,
     onSearchChange,
-    topic,
-    onTopicChange,
-    topicCounts,
+    tags,
+    tagFilter,
+    onTagFilterChange,
+    withoutTopic,
     pagination: { p_page: page, p_size: size, total: filtered.length },
     onPageChange: setPage,
     onPageSizeChange,

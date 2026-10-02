@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Lock, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,16 +21,16 @@ import {
   toFriendlyText,
   validateFriendlyText,
 } from "../../adapters/chatbotTemplates.adapter";
-import { TEMPLATE_STATUSES, TEMPLATE_TOPICS, topicLabel } from "../../adapters/chatbotTemplateTopics";
+import { TEMPLATE_TOPICS, templateSlug, topicLabel } from "../../adapters/chatbotTemplateTopics";
 import { toggleInline, toggleLines, type Edit } from "../../adapters/whatsappFormat";
 import type {
   ChatbotTemplate,
   ChatbotTemplateCreateInput,
   ChatbotTemplateMeta,
-  ChatbotTemplateStatus,
   ChatbotTemplateTopic,
 } from "../../types/chatbotTemplates.types";
 import FormatToolbar, { type FormatAction } from "./FormatToolbar";
+import TagPicker from "./TagPicker";
 import WhatsAppPreview from "./WhatsAppPreview";
 
 interface ChatbotTemplateFormDialogProps {
@@ -39,46 +39,38 @@ interface ChatbotTemplateFormDialogProps {
   /** T-917: true = crear una plantilla nueva. */
   creating: boolean;
   saving: boolean;
+  /** T-917: nombres de las etiquetas que ya existen. */
+  tagOptions: string[];
   onOpenChange: (open: boolean) => void;
   onSave: (template: ChatbotTemplate, content: string, meta?: ChatbotTemplateMeta) => Promise<boolean>;
   onCreate: (input: ChatbotTemplateCreateInput) => Promise<boolean>;
 }
 
-/** Mismas reglas que sp_crm_chatbot_template_create / _update (T-917). */
+/** Mismas reglas que sp_crm_chatbot_template_create (T-917). */
 const NAME_RE = /^[a-z][a-z0-9_]{2,59}$/;
 const RESERVED_NAMES = new Set(["resumen_confirmacion", "cambio_confirmado", "ubicacion_sede", "datos_para_derivar"]);
 
-const validateMeta = (
-  creating: boolean,
-  name: string,
-  topic: ChatbotTemplateTopic | "",
-  description: string
-): string | null => {
+const validateMeta = (creating: boolean, slug: string, topic: ChatbotTemplateTopic | ""): string | null => {
   if (creating) {
-    const n = name.trim();
-    if (!NAME_RE.test(n)) {
-      return "El nombre va en minúsculas, sin espacios ni tildes, con guion bajo entre palabras (por ejemplo: cambio_de_talla).";
-    }
-    if (RESERVED_NAMES.has(n)) return "Ese nombre ya lo usa el bot. Elige otro.";
+    if (!NAME_RE.test(slug)) return "El nombre tiene que empezar con una letra y tener entre 3 y 60 caracteres.";
+    if (RESERVED_NAMES.has(slug)) return "Ese nombre ya lo usa el bot. Elige otro.";
   }
-  if (!topic) return "Elige el tema de la plantilla.";
-  const d = description.replace(/\s+/g, " ").trim();
-  if (d.length < 10) return "Explica cuándo debe usarla el bot (al menos 10 caracteres).";
-  if (d.length > 300) return "«Cuándo usarla» admite hasta 300 caracteres.";
+  if (!topic) return "Elige la etiqueta principal.";
   return null;
 };
 
 /**
  * Editor de una plantilla. Los datos que llena el bot se muestran como
  * [Nombre] y se convierten a la sintaxis del bot ({clave}) recién al guardar.
- * T-917: también crea plantillas nuevas. Las creadas desde el ERP no llevan
- * datos y en ellas se editan tema, «Cuándo usarla» y estado; en las del
- * sistema solo el texto.
+ * T-917: también crea plantillas nuevas (nombre, etiquetas y texto). Las
+ * etiquetas se editan en todas menos en las especiales; las creadas desde el
+ * ERP no llevan datos.
  */
 export default function ChatbotTemplateFormDialog({
   template,
   creating,
   saving,
+  tagOptions,
   onOpenChange,
   onSave,
   onCreate,
@@ -87,32 +79,35 @@ export default function ChatbotTemplateFormDialog({
   const [fallbacks, setFallbacks] = useState<Record<string, string>>({});
   const [name, setName] = useState("");
   const [topic, setTopic] = useState<ChatbotTemplateTopic | "">("");
-  const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<ChatbotTemplateStatus>("consulting_information");
+  const [tags, setTags] = useState<string[]>([]);
   const [touched, setTouched] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const vars = useMemo(() => (template ? templateVariables(template) : []), [template]);
-  const editableMeta = creating || !!template?.fromErp;
+  /** Sin datos variables: las nuevas y las creadas desde el ERP. */
+  const noVars = creating || !!template?.fromErp;
+  /** Etiquetas editables: todas menos las especiales. */
+  const tagsEditable = creating || !template?.locked;
+  const slug = templateSlug(name);
+  const topicName = topic ? topicLabel(topic) : null;
 
   useEffect(() => {
     setText(template ? toFriendlyText(template.content) : "");
     setFallbacks(Object.fromEntries(vars.filter((v) => v.fallback != null).map((v) => [v.key, v.fallback as string])));
     setName("");
     setTopic(template?.topic ?? "");
-    setDescription(template?.description ?? "");
-    setStatus(template?.status === "other" ? "other" : "consulting_information");
+    setTags(template?.tags ?? []);
     setTouched(false);
   }, [template, vars, creating]);
 
   const textError = useMemo(
     () =>
-      editableMeta && /\{[A-Za-z0-9_]+(\?|\|[^}]*)?\}/.test(text)
+      noVars && /\{[A-Za-z0-9_]+(\?|\|[^}]*)?\}/.test(text)
         ? "Las plantillas creadas desde el ERP no llevan datos variables entre llaves: escribe el texto completo."
         : validateFriendlyText(text, vars, fallbacks),
-    [editableMeta, text, vars, fallbacks]
+    [noVars, text, vars, fallbacks]
   );
-  const metaError = editableMeta ? validateMeta(creating, name, topic, description) : null;
+  const metaError = tagsEditable ? validateMeta(creating, slug, topic) : null;
   const error = metaError ?? textError;
 
   if (!template && !creating) return null;
@@ -168,8 +163,7 @@ export default function ChatbotTemplateFormDialog({
     setTouched(true);
     if (error) return;
     const content = fromFriendlyText(text, vars, fallbacks);
-    const meta: ChatbotTemplateMeta | undefined =
-      editableMeta && topic ? { topic, description: description.replace(/\s+/g, " ").trim(), status } : undefined;
+    const meta: ChatbotTemplateMeta | undefined = tagsEditable && topic ? { topic, tags } : undefined;
     const ok = creating
       ? await onCreate({ name: name.trim(), content, ...(meta as ChatbotTemplateMeta) })
       : await onSave(template!, content, meta);
@@ -184,46 +178,52 @@ export default function ChatbotTemplateFormDialog({
             <>
               <DialogTitle>Nueva plantilla</DialogTitle>
               <DialogDescription>
-                El bot la usa cuando el cliente pide lo que dice «Cuándo usarla». Va tal cual, sin datos del cliente.
+                El bot la reconoce por su nombre, sus etiquetas y su texto. Va tal cual, sin datos del cliente.
               </DialogDescription>
             </>
           ) : (
             <>
               <DialogTitle className="font-mono text-base">{template!.name}</DialogTitle>
-              {!editableMeta && (
-                <DialogDescription className="flex flex-wrap items-center gap-2">
-                  <Badge variant={template!.topic ? "secondary" : "outline"}>{topicLabel(template!.topic)}</Badge>
-                  {template!.description}
-                </DialogDescription>
+              {template!.description && !template!.fromErp && (
+                <DialogDescription>{template!.description}</DialogDescription>
               )}
             </>
           )}
         </DialogHeader>
 
-        {editableMeta && (
+        {creating && (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="tpl-name" required>
+              Nombre
+            </Label>
+            <Input
+              id="tpl-name"
+              value={name}
+              aria-required
+              maxLength={80}
+              placeholder="Cambio de talla"
+              onChange={(e) => {
+                setName(e.target.value);
+                setTouched(true);
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              {slug ? (
+                <>
+                  Se guarda como <span className="font-mono text-foreground">{slug}</span>. No se puede cambiar después.
+                </>
+              ) : (
+                "Puedes escribirlo con espacios: se guarda en minúsculas y con guion bajo. No se puede cambiar después."
+              )}
+            </p>
+          </div>
+        )}
+
+        {tagsEditable ? (
           <div className="grid gap-4 md:grid-cols-2">
-            {creating && (
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="tpl-name" required>
-                  Nombre
-                </Label>
-                <Input
-                  id="tpl-name"
-                  value={name}
-                  aria-required
-                  placeholder="cambio_de_talla"
-                  className="font-mono"
-                  onChange={(e) => {
-                    setName(e.target.value.toLowerCase());
-                    setTouched(true);
-                  }}
-                />
-                <p className="text-xs text-muted-foreground">No se puede cambiar después.</p>
-              </div>
-            )}
             <div className="flex flex-col gap-2">
               <Label htmlFor="tpl-topic" required>
-                Tema
+                Etiqueta principal
               </Label>
               <Select
                 value={topic}
@@ -233,7 +233,7 @@ export default function ChatbotTemplateFormDialog({
                 }}
               >
                 <SelectTrigger id="tpl-topic" aria-required>
-                  <SelectValue placeholder="Elige el tema" />
+                  <SelectValue placeholder="Elige la etiqueta principal" />
                 </SelectTrigger>
                 <SelectContent>
                   {TEMPLATE_TOPICS.map((t) => (
@@ -243,48 +243,43 @@ export default function ChatbotTemplateFormDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {topic && (
-                <p className="text-xs text-muted-foreground">
-                  {TEMPLATE_TOPICS.find((t) => t.value === topic)?.hint}
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground">
+                {topic
+                  ? TEMPLATE_TOPICS.find((t) => t.value === topic)?.hint
+                  : "Una de las 11 con que el bot clasifica cada mensaje del cliente."}
+              </p>
             </div>
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <Label htmlFor="tpl-when" required>
-                Cuándo usarla
-              </Label>
-              <Textarea
-                id="tpl-when"
-                value={description}
-                rows={2}
-                maxLength={300}
-                aria-required
-                placeholder="El cliente pregunta si puede cambiar la talla de una prenda que ya recibió."
-                onChange={(e) => {
-                  setDescription(e.target.value);
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="tpl-tags">Otras etiquetas</Label>
+              <TagPicker
+                id="tpl-tags"
+                value={tags}
+                options={tagOptions}
+                exclude={topicName}
+                onChange={(v) => {
+                  setTags(v);
                   setTouched(true);
                 }}
               />
-              <p className="text-xs text-muted-foreground">
-                Es lo que lee el bot para decidir cuándo mandarla. Descríbelo como lo pediría el cliente.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <Label htmlFor="tpl-status">Después de mandarla</Label>
-              <Select value={status} onValueChange={(v) => setStatus(v as ChatbotTemplateStatus)}>
-                <SelectTrigger id="tpl-status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TEMPLATE_STATUSES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <p className="text-xs text-muted-foreground">Opcionales. Elige las que ya existen o escribe una nueva.</p>
             </div>
             {touched && metaError && <p className="text-sm text-destructive md:col-span-2">{metaError}</p>}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <Label>Etiquetas</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant={template!.topic ? "secondary" : "outline"}>{topicLabel(template!.topic)}</Badge>
+              {template!.tags.map((t) => (
+                <Badge key={t} variant="outline">
+                  {t}
+                </Badge>
+              ))}
+            </div>
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Lock className="w-3 h-3" />
+              Plantilla especial: la arma el bot en un flujo fijo, así que sus etiquetas no se cambian. El texto sí.
+            </p>
           </div>
         )}
 
