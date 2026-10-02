@@ -143,6 +143,9 @@ export interface PriceRule {
   // T-718: link de la pagina publica de la promocion. El chatbot lo manda en
   // vez del link de categoria cuando el cliente pregunta por esta promo.
   landing_url: string | null;
+  // S-186: solo cupones. HTML que el carrito del ecommerce muestra para invitar
+  // a usar el cupón mientras todavía no está aplicado.
+  cart_message: string | null;
   rule_type: "automatic" | "coupon";
   priority: number;
   is_stackable: boolean;
@@ -206,6 +209,7 @@ export interface PriceRuleFormData {
   description: string;
   code: string;
   landing_url: string;
+  cart_message: string;
   rule_type: "automatic" | "coupon";
   priority: number;
   is_stackable: boolean;

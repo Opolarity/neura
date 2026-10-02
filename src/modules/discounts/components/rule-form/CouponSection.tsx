@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import WysiwygEditor from "@/components/ui/wysiwyg-editor";
 import type { PriceRuleFormData } from "../../types/priceRule.types";
 
 interface CouponSectionProps {
@@ -59,6 +60,25 @@ export const CouponSection = ({ formData, updateField }: CouponSectionProps) => 
               }
             />
           </div>
+        </div>
+
+        {/* S-186: la descripción solo se ve cuando el cupón ya está aplicado.
+            Este texto se muestra antes, en el carrito del ecommerce, a los
+            clientes que cumplen las condiciones de la regla. */}
+        <div className="space-y-2">
+          <WysiwygEditor
+            label="Mensaje en el carrito"
+            value={formData.cart_message}
+            onChange={(val) => updateField("cart_message", val)}
+            placeholder="Ej: Usa el código VERANO2026 al finalizar tu compra y obtén 8% de descuento"
+            height="120px"
+            toolbar="basic"
+          />
+          <p className="text-xs text-muted-foreground">
+            Opcional. Se muestra en el carrito mientras el cupón no está
+            aplicado, solo a los clientes que cumplen las condiciones de la
+            regla. Una vez aplicado, se muestra la descripción.
+          </p>
         </div>
       </CardContent>
     </Card>
