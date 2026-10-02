@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { formatDateTime } from "@/shared/utils/date";
 import { toFriendlyText } from "../../adapters/chatbotTemplates.adapter";
+import { topicLabel } from "../../adapters/chatbotTemplateTopics";
 import type { ChatbotTemplate } from "../../types/chatbotTemplates.types";
 
 interface ChatbotTemplatesTableProps {
@@ -25,6 +26,7 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit }: Chatb
       <TableHeader>
         <TableRow>
           <TableHead className="w-[260px]">Plantilla</TableHead>
+          <TableHead className="w-[170px]">Tema</TableHead>
           <TableHead>Texto</TableHead>
           <TableHead className="w-[200px]">Última edición</TableHead>
           <TableHead className="w-[80px]">Acciones</TableHead>
@@ -33,14 +35,22 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit }: Chatb
       <TableBody>
         {rows.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-              {searching ? "Ninguna plantilla coincide con la búsqueda." : "No hay plantillas cargadas."}
+            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+              {searching ? "Ninguna plantilla coincide con la búsqueda o el tema." : "No hay plantillas cargadas."}
             </TableCell>
           </TableRow>
         ) : (
           rows.map((t) => (
             <TableRow key={t.id}>
-              <TableCell className="font-mono text-xs">{t.name}</TableCell>
+              <TableCell>
+                <div className="flex flex-col items-start gap-1">
+                  <span className="font-mono text-xs">{t.name}</span>
+                  {t.fromErp && <Badge variant="info">Creada en el ERP</Badge>}
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant={t.topic ? "secondary" : "outline"}>{topicLabel(t.topic)}</Badge>
+              </TableCell>
               <TableCell>
                 <p className="line-clamp-2 whitespace-pre-line text-sm">{toFriendlyText(t.content)}</p>
               </TableCell>
