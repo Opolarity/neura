@@ -2,18 +2,25 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/modules/auth";
 import { PageLoader } from "@/shared/components/page-loader";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import ChatbotTemplatesHeader from "../components/chatbot-templates/ChatbotTemplatesHeader";
 import ChatbotTemplatesTable from "../components/chatbot-templates/ChatbotTemplatesTable";
 import ChatbotTemplateFormDialog from "../components/chatbot-templates/ChatbotTemplateFormDialog";
-import { useChatbotTemplates } from "../hooks/useChatbotTemplates";
+import { TEMPLATE_TOPICS } from "../adapters/chatbotTemplateTopics";
+import { useChatbotTemplates, type TopicFilter } from "../hooks/useChatbotTemplates";
 import type { ChatbotTemplate } from "../types/chatbotTemplates.types";
 
+/** Valor del Select para "todos": Radix no admite un SelectItem con value "". */
+const ALL = "__all__";
+
 /**
- * T-902. Los textos fijos del chatbot de WhatsApp. Solo se edita el texto: los
- * nombres los usa el código del bot. Solo admin (lo exigen también los SP).
+ * T-902. Los textos fijos del chatbot de WhatsApp. En las del sistema solo se
+ * edita el texto: los nombres los usa el código del bot. T-917: filtro por
+ * tema de Jev y plantillas nuevas creadas desde acá. Solo admin (lo exigen
+ * también los SP).
  */
 export default function ChatbotTemplatesPage() {
   const { isAdmin } = useAuth();
@@ -23,12 +30,17 @@ export default function ChatbotTemplatesPage() {
     rows,
     search,
     onSearchChange,
+    topic,
+    onTopicChange,
+    topicCounts,
     pagination,
     onPageChange,
     onPageSizeChange,
     save,
+    create,
   } = useChatbotTemplates(isAdmin);
   const [editing, setEditing] = useState<ChatbotTemplate | null>(null);
+  const [creating, setCreating] = useState(false);
 
   if (!isAdmin) {
     return (
@@ -47,22 +59,38 @@ export default function ChatbotTemplatesPage() {
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
-      <ChatbotTemplatesHeader />
+      <ChatbotTemplatesHeader onCreate={() => setCreating(true)} />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="!p-4">
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Buscar por nombre o texto..."
-              className="pl-9"
-            />
+          <div className="flex flex-wrap gap-2">
+            <div className="relative w-full max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Buscar por nombre o texto..."
+                className="pl-9"
+              />
+            </div>
+            <Select value={topic || ALL} onValueChange={(v) => onTopicChange(v === ALL ? "" : (v as TopicFilter))}>
+              <SelectTrigger className="w-full sm:w-[240px]" aria-label="Filtrar por tema">
+                <SelectValue placeholder="Todos los temas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Todos los temas</SelectItem>
+                {TEMPLATE_TOPICS.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label} ({topicCounts[t.value] ?? 0})
+                  </SelectItem>
+                ))}
+                {topicCounts.none ? <SelectItem value="none">Sin tema ({topicCounts.none})</SelectItem> : null}
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
-          <ChatbotTemplatesTable rows={rows} searching={!!search.trim()} onEdit={setEditing} />
+          <ChatbotTemplatesTable rows={rows} searching={!!search.trim() || !!topic} onEdit={setEditing} />
         </CardContent>
         <CardFooter className="!p-0">
           <PaginationBar pagination={pagination} onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} />
@@ -71,9 +99,15 @@ export default function ChatbotTemplatesPage() {
 
       <ChatbotTemplateFormDialog
         template={editing}
+        creating={creating}
         saving={saving}
-        onOpenChange={(open) => !open && setEditing(null)}
+        onOpenChange={(open) => {
+          if (open) return;
+          setEditing(null);
+          setCreating(false);
+        }}
         onSave={save}
+        onCreate={create}
       />
     </div>
   );

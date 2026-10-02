@@ -12,6 +12,9 @@ import type {
   ChannelCostsResponse,
 } from "../types/crm.types";
 import type {
+  ChatbotTemplateCreateInput,
+  ChatbotTemplateCreateResponse,
+  ChatbotTemplateMeta,
   ChatbotTemplatesListResponse,
   ChatbotTemplateUpdateResponse,
 } from "../types/chatbotTemplates.types";
@@ -424,22 +427,44 @@ export const getChatbotTemplatesApi = async (): Promise<ChatbotTemplatesListResp
 
 /**
  * Guarda el texto de una plantilla. `expectedUpdatedAt` evita pisar lo que
- * otro admin guardó mientras el editor estaba abierto.
+ * otro admin guardó mientras el editor estaba abierto. `meta` (tema, cuándo
+ * usarla, estado) solo va en las creadas desde el ERP (T-917).
  */
 export const updateChatbotTemplateApi = async (
   id: number,
   content: string,
-  expectedUpdatedAt: string
+  expectedUpdatedAt: string,
+  meta?: ChatbotTemplateMeta
 ): Promise<ChatbotTemplateUpdateResponse> => {
   const { data, error } = await db.rpc("sp_crm_chatbot_template_update", {
     p_id: id,
     p_content: content,
     p_expected_updated_at: expectedUpdatedAt,
+    ...(meta ? { p_topic: meta.topic, p_description: meta.description, p_status: meta.status } : {}),
   });
 
   return unwrap(
     data as ChatbotTemplateUpdateResponse | null,
     error,
     "No se pudo guardar la plantilla."
+  );
+};
+
+/** T-917: crea una plantilla nueva. El bot la agrega solo al índice de su prompt. */
+export const createChatbotTemplateApi = async (
+  input: ChatbotTemplateCreateInput
+): Promise<ChatbotTemplateCreateResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_template_create", {
+    p_name: input.name,
+    p_content: input.content,
+    p_topic: input.topic,
+    p_description: input.description,
+    p_status: input.status,
+  });
+
+  return unwrap(
+    data as ChatbotTemplateCreateResponse | null,
+    error,
+    "No se pudo crear la plantilla."
   );
 };
