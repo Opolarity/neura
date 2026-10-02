@@ -11,6 +11,10 @@ import type {
   ChannelProductsResponse,
   ChannelCostsResponse,
 } from "../types/crm.types";
+import type {
+  ChatbotTemplatesListResponse,
+  ChatbotTemplateUpdateResponse,
+} from "../types/chatbotTemplates.types";
 
 // Canal por defecto. Hoy la bandeja comparte número con el chatbot, así que lee
 // el mismo canal en el que el bot ya registra todos los mensajes. Cuando el ERP
@@ -404,5 +408,38 @@ export const getChannelCostsApi = async (
     data as ChannelCostsResponse | null,
     error,
     "No se pudieron cargar los costos por canal."
+  );
+};
+
+/** T-902: plantillas de texto del chatbot. Solo admin (lo exige el SP). */
+export const getChatbotTemplatesApi = async (): Promise<ChatbotTemplatesListResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_templates_list");
+
+  return unwrap(
+    data as ChatbotTemplatesListResponse | null,
+    error,
+    "No se pudieron cargar las plantillas del chatbot."
+  );
+};
+
+/**
+ * Guarda el texto de una plantilla. `expectedUpdatedAt` evita pisar lo que
+ * otro admin guardó mientras el editor estaba abierto.
+ */
+export const updateChatbotTemplateApi = async (
+  id: number,
+  content: string,
+  expectedUpdatedAt: string
+): Promise<ChatbotTemplateUpdateResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_template_update", {
+    p_id: id,
+    p_content: content,
+    p_expected_updated_at: expectedUpdatedAt,
+  });
+
+  return unwrap(
+    data as ChatbotTemplateUpdateResponse | null,
+    error,
+    "No se pudo guardar la plantilla."
   );
 };

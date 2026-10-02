@@ -83,6 +83,7 @@ import CrmInboxPage from "@/modules/crm/pages/InboxPage";
 import CrmBoardPage from "@/modules/crm/pages/BoardPage";
 import CrmChannelsPage from "@/modules/crm/pages/ChannelsPage";
 import CrmCostsPage from "@/modules/crm/pages/CostsPage";
+import CrmChatbotTemplatesPage from "@/modules/crm/pages/ChatbotTemplatesPage";
 // Modulo Produccion. El `code` del grupo se queda en "suppliers" igual que en
 // el origen: es estructural --no se compara contra los permisos-- y cambiarlo
 // solo seria ruido.
@@ -443,6 +444,13 @@ export const APP_PERMISSIONS_CONFIG = [
               // Los costos son egresos normales en movements: esta pantalla los
               // lee y cruza, y el alta manda al formulario de gastos que ya existe.
               { name: "Costos por canal", path: "/crm/costs", code: "crm_costs.list", element: <CrmCostsPage />, showSidebar: true, node: [] },
+            ]
+          },
+          {
+            code: "crm_chatbot.group", name: "Chatbot", node: [
+              // T-902: los textos fijos que manda el bot. La pantalla y los SP
+              // exigen ademas rol admin (no basta con tener el permiso).
+              { name: "Plantillas", path: "/crm/chatbot/templates", code: "crm_chatbot_templates.list", element: <CrmChatbotTemplatesPage />, showSidebar: true, node: [] },
             ]
           },
 
