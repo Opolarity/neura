@@ -575,39 +575,45 @@ export const SalesInvoicesModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px]">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle>Comprobantes vinculados</DialogTitle>
-              <DialogDescription>
-                Comprobantes asociados a esta orden.
-              </DialogDescription>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  disabled={creating}
-                >
-                  {creating ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                  ) : null}
-                  Crear
-                  <ChevronDown className="h-4 w-4 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {invoiceTypes.map((type) => (
-                  <DropdownMenuItem
-                    key={type.id}
-                    onClick={() => handleSelectInvoiceType(type)}
-                  >
-                    {type.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <DialogTitle>Comprobantes vinculados</DialogTitle>
+          <DialogDescription>
+            Comprobantes asociados a esta orden.
+          </DialogDescription>
         </DialogHeader>
+        {/* La accion va sobre la tabla y no en la cabecera: ahi la X del
+            dialog ocupa la esquina y no reserva espacio. Fuera del ScrollArea
+            para que siga visible con la tabla desplazada; el pr-4 la alinea
+            con el borde derecho de la tabla. */}
+        <div className="flex items-center justify-between gap-4 pr-4">
+          <span className="text-sm text-muted-foreground">
+            {loading
+              ? null
+              : invoices.length === 0
+                ? "Sin comprobantes"
+                : `${invoices.length} ${invoices.length === 1 ? "comprobante" : "comprobantes"}`}
+          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" disabled={creating}>
+                {creating ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                ) : null}
+                Crear
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {invoiceTypes.map((type) => (
+                <DropdownMenuItem
+                  key={type.id}
+                  onClick={() => handleSelectInvoiceType(type)}
+                >
+                  {type.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         {/* Tope de altura + scroll interno, mismo patrón que los modales de
             filtro: los comprobantes de una venta se acumulan y sin esto el
             modal se estiraba hasta salirse de la pantalla. El max-h va en un
@@ -627,7 +633,7 @@ export const SalesInvoicesModal = ({
             type="always"
             className="h-full [&>[data-radix-scroll-area-viewport]>div]:!block"
           >
-            <div className="space-y-4 py-4 pl-1 pr-4">
+            <div className="space-y-4 pt-1 pb-4 pl-1 pr-4">
               {loading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

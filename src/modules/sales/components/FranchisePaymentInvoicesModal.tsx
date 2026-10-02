@@ -183,36 +183,43 @@ export const FranchisePaymentInvoicesModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-[780px]">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle>Comprobantes del pago {payment.movementCode}</DialogTitle>
-              <DialogDescription>
-                Comprobantes asociados a los {orderIds.length} pedidos de este pago.
-              </DialogDescription>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" disabled={orderIds.length === 0}>
-                  Crear
-                  <ChevronDown className="h-4 w-4 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {invoiceTypes
-                  .filter((type) => CREATABLE_TYPE_CODES.includes(type.code))
-                  .map((type) => (
-                    <DropdownMenuItem
-                      key={type.id}
-                      onClick={() => handleSelectType(type)}
-                    >
-                      {type.name}
-                    </DropdownMenuItem>
-                  ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <DialogTitle>Comprobantes del pago {payment.movementCode}</DialogTitle>
+          <DialogDescription>
+            Comprobantes asociados a los {orderIds.length} pedidos de este pago.
+          </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        {/* La accion va sobre la tabla y no en la cabecera: ahi la X del
+            dialog ocupa la esquina y no reserva espacio. */}
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-sm text-muted-foreground">
+            {loading
+              ? null
+              : invoices.length === 0
+                ? "Sin comprobantes"
+                : `${invoices.length} ${invoices.length === 1 ? "comprobante" : "comprobantes"}`}
+          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" disabled={orderIds.length === 0}>
+                Crear
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {invoiceTypes
+                .filter((type) => CREATABLE_TYPE_CODES.includes(type.code))
+                .map((type) => (
+                  <DropdownMenuItem
+                    key={type.id}
+                    onClick={() => handleSelectType(type)}
+                  >
+                    {type.name}
+                  </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="grid gap-4 pb-4">
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" />
