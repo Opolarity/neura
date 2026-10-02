@@ -15,6 +15,7 @@ import type {
   ChatbotTemplateCreateInput,
   ChatbotTemplateCreateResponse,
   ChatbotTemplateMeta,
+  ChatbotTagsListResponse,
   ChatbotTemplatesListResponse,
   ChatbotTemplateUpdateResponse,
 } from "../types/chatbotTemplates.types";
@@ -427,8 +428,8 @@ export const getChatbotTemplatesApi = async (): Promise<ChatbotTemplatesListResp
 
 /**
  * Guarda el texto de una plantilla. `expectedUpdatedAt` evita pisar lo que
- * otro admin guardó mientras el editor estaba abierto. `meta` (tema, cuándo
- * usarla, estado) solo va en las creadas desde el ERP (T-917).
+ * otro admin guardó mientras el editor estaba abierto. `meta` (etiqueta
+ * principal y extras, T-917) no va en las especiales.
  */
 export const updateChatbotTemplateApi = async (
   id: number,
@@ -440,13 +441,24 @@ export const updateChatbotTemplateApi = async (
     p_id: id,
     p_content: content,
     p_expected_updated_at: expectedUpdatedAt,
-    ...(meta ? { p_topic: meta.topic, p_description: meta.description, p_status: meta.status } : {}),
+    ...(meta ? { p_topic: meta.topic, p_tags: meta.tags } : {}),
   });
 
   return unwrap(
     data as ChatbotTemplateUpdateResponse | null,
     error,
     "No se pudo guardar la plantilla."
+  );
+};
+
+/** T-917: las etiquetas de las plantillas, con cuántas plantillas usan cada una. */
+export const getChatbotTagsApi = async (): Promise<ChatbotTagsListResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_tags_list");
+
+  return unwrap(
+    data as ChatbotTagsListResponse | null,
+    error,
+    "No se pudieron cargar las etiquetas del chatbot."
   );
 };
 
@@ -458,8 +470,7 @@ export const createChatbotTemplateApi = async (
     p_name: input.name,
     p_content: input.content,
     p_topic: input.topic,
-    p_description: input.description,
-    p_status: input.status,
+    p_tags: input.tags,
   });
 
   return unwrap(
