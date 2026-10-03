@@ -228,10 +228,11 @@ export async function generateInvoicePdfBlob(invoiceId: number): Promise<Blob> {
 
     y += 1; doc.setLineWidth(0.2); doc.line(margin, y, pageWidth - margin, y); y += 3;
 
-    const col = { cant: margin, desc: margin + 10, pu: pageWidth - margin - 12 };
+    const col = { cant: margin, desc: margin + 10, pu: pageWidth - margin - 14, dsct: pageWidth - margin };
     doc.setFontSize(fontSize.small); doc.setFont("helvetica", "bold");
     doc.text("CANT.", col.cant, y); doc.text("DESCRIPCIÓN", col.desc, y);
     doc.text("P.U.", col.pu, y, { align: "right" });
+    doc.text("DESC.", col.dsct, y, { align: "right" });
     y += 2; doc.setLineWidth(0.1); doc.line(margin, y, pageWidth - margin, y); y += 2.5;
 
     doc.setFont("helvetica", "normal");
@@ -241,6 +242,8 @@ export async function generateInvoicePdfBlob(invoiceId: number): Promise<Blob> {
       const dLines = doc.splitTextToSize(item.description, dw > 0 ? dw : 30);
       for (let i = 0; i < dLines.length; i++) doc.text(dLines[i], col.desc, y + i * 2.5);
       doc.text(item.unit_price.toFixed(2), col.pu, y, { align: "right" });
+      // Descuento de la linea completa (no por unidad): total = cant x P.U. - descuento.
+      doc.text(item.discount ? item.discount.toFixed(2) : "—", col.dsct, y, { align: "right" });
       y += Math.max(dLines.length * 2.5, 3) + 0.5;
     }
 

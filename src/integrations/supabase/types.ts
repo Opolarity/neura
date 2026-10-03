@@ -4249,6 +4249,7 @@ export type Database = {
       price_rules: {
         Row: {
           actions: Json
+          cart_message: string | null
           code: string | null
           conditions: Json
           created_at: string
@@ -4271,6 +4272,7 @@ export type Database = {
         }
         Insert: {
           actions?: Json
+          cart_message?: string | null
           code?: string | null
           conditions?: Json
           created_at?: string
@@ -4293,6 +4295,7 @@ export type Database = {
         }
         Update: {
           actions?: Json
+          cart_message?: string | null
           code?: string | null
           conditions?: Json
           created_at?: string

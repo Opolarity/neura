@@ -370,13 +370,14 @@ export function InvoicePrintModal({ invoiceId, open, onOpenChange }: InvoicePrin
         const col = {
           cant: margin,
           desc: margin + 10,
-          pu: pageWidth - margin - 12,
-          total: pageWidth - margin,
+          pu: pageWidth - margin - 14,
+          dsct: pageWidth - margin,
         };
 
         doc.text("CANT.", col.cant, y);
         doc.text("DESCRIPCIÓN", col.desc, y);
         doc.text("P.U.", col.pu, y, { align: "right" });
+        doc.text("DESC.", col.dsct, y, { align: "right" });
 
         y += 2;
         doc.setLineWidth(0.1);
@@ -397,6 +398,8 @@ export function InvoicePrintModal({ invoiceId, open, onOpenChange }: InvoicePrin
           }
 
           doc.text(item.unit_price.toFixed(2), col.pu, y, { align: "right" });
+          // Descuento de la linea completa (no por unidad): total = cant x P.U. - descuento.
+          doc.text(item.discount ? item.discount.toFixed(2) : "—", col.dsct, y, { align: "right" });
           y += Math.max(descLines.length * 2.5, 3) + 0.5;
         }
 
