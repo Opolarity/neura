@@ -180,7 +180,14 @@ export const BusinessAccountFormDialog = ({
       name: data.name,
       bank: data.bank,
       account_number: data.account_number,
-      total_amount: data.total_amount,
+      // Al editar, el saldo solo viaja si el usuario lo cambió: sin enviarlo el
+      // SP no lo toca. Reenviar el de la cuenta no sirve porque llega
+      // redondeado por JavaScript (463181.45 en vez de 463181.449999999999954)
+      // y el SP registraba un ajuste de esa diferencia.
+      total_amount:
+        item && data.total_amount === item.total_amount
+          ? undefined
+          : data.total_amount,
       business_account_type_id: data.business_account_type_id,
       account_id: data.account_id,
       branch_id: data.branch_id ?? null,
