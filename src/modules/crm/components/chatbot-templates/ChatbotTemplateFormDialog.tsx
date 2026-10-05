@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { Loader2, Lock, Plus } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ import {
   templateVariables,
   toFriendlyText,
   validateFriendlyText,
+  variablesInText,
 } from "../../adapters/chatbotTemplates.adapter";
 import { TEMPLATE_TOPICS, jevTagError, jevTagFor, templateSlug, topicLabel } from "../../adapters/chatbotTemplateTopics";
 import { toggleInline, toggleLines, type Edit } from "../../adapters/whatsappFormat";
@@ -73,8 +74,9 @@ const validateMeta = (creating: boolean, slug: string, topic: ChatbotTemplateTop
  * Editor de una plantilla. Los datos que llena el bot se muestran como
  * [Nombre] y se convierten a la sintaxis del bot ({clave}) recién al guardar.
  * T-917: también crea plantillas nuevas (nombre, etiquetas y texto). Las
- * etiquetas se editan en todas menos en las especiales; las creadas desde el
- * ERP no llevan datos.
+ * etiquetas se editan en todas menos en las especiales. Desde el 05/10/2026
+ * cualquier [dato] se puede agregar o quitar, también en las creadas desde el
+ * ERP: el bot llena los que puede y no muestra los que no.
  */
 export default function ChatbotTemplateFormDialog({
   template,
@@ -94,8 +96,6 @@ export default function ChatbotTemplateFormDialog({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const vars = useMemo(() => (template ? templateVariables(template) : []), [template]);
-  /** Sin datos variables: las nuevas y las creadas desde el ERP. */
-  const noVars = creating || !!template?.fromErp;
   /** Etiquetas editables: todas menos las especiales. */
   const tagsEditable = creating || !template?.locked;
   const slug = templateSlug(name);
@@ -109,33 +109,15 @@ export default function ChatbotTemplateFormDialog({
     setTouched(false);
   }, [template, vars, creating]);
 
-  const textError = useMemo(
-    () =>
-      noVars && /\{[A-Za-z0-9_]+(\?|\|[^}]*)?\}/.test(text)
-        ? "Las plantillas creadas desde el ERP no llevan datos variables entre llaves: escribe el texto completo."
-        : validateFriendlyText(text, vars, fallbacks),
-    [noVars, text, vars, fallbacks]
-  );
+  const textError = useMemo(() => validateFriendlyText(text, vars, fallbacks), [text, vars, fallbacks]);
   const metaError = tagsEditable ? validateMeta(creating, slug, topic, tags) : null;
   const error = metaError ?? textError;
 
   if (!template && !creating) return null;
 
-  const withFallback = vars.filter((v) => v.fallback != null);
-
-  /** Inserta [Nombre] donde está el cursor. */
-  const insertVariable = (label: string) => {
-    const el = textareaRef.current;
-    const token = `[${label}]`;
-    const start = el?.selectionStart ?? text.length;
-    const end = el?.selectionEnd ?? text.length;
-    setText(text.slice(0, start) + token + text.slice(end));
-    setTouched(true);
-    requestAnimationFrame(() => {
-      el?.focus();
-      el?.setSelectionRange(start + token.length, start + token.length);
-    });
-  };
+  /** El texto para cuando falta el dato, solo de los que siguen en el texto. */
+  const withFallback = variablesInText(text, vars).filter((v) => v.fallback != null);
+  const hasData = /\[[^[\]\n]+\]/.test(text);
 
   /** Aplica un formato de WhatsApp a la selección y la deja seleccionada. */
   const applyFormat = (action: FormatAction) => {
@@ -317,43 +299,23 @@ export default function ChatbotTemplateFormDialog({
             <p className="text-xs text-muted-foreground">
               Selecciona texto y usa la barra, o escribe como en WhatsApp: *negrita*, _cursiva_, ~tachado~.
             </p>
+            <p className="text-xs text-muted-foreground">
+              Para que el bot ponga un dato del cliente o del pedido, escríbelo entre corchetes, por ejemplo [Ciudad]
+              o [Número de pedido]. Si el bot no lo tiene, no lo muestra.
+            </p>
             {touched && textError && <p className="text-sm text-destructive">{textError}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
             <Label>Vista previa</Label>
             <WhatsAppPreview text={previewFriendlyText(text, vars)} />
-            {vars.length > 0 && (
-              <p className="text-xs text-muted-foreground">Los datos se muestran con un ejemplo.</p>
+            {hasData && (
+              <p className="text-xs text-muted-foreground">
+                Los datos conocidos se muestran con un ejemplo; los demás, tal como los escribiste.
+              </p>
             )}
           </div>
         </div>
-
-        {vars.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <Label>Insertar dato</Label>
-            <p className="text-xs text-muted-foreground">
-              El bot reemplaza cada dato entre corchetes por la información del cliente. Los obligatorios no se
-              pueden quitar del texto.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {vars.map((v) => (
-                <Button
-                  key={v.key}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  title="Insertar en el texto"
-                  onClick={() => insertVariable(v.label)}
-                >
-                  <Plus className="w-4 h-4" />
-                  {v.label}
-                  {v.required && <span className="text-xs font-normal text-muted-foreground">· obligatorio</span>}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {withFallback.map((v) => (
           <div key={v.key} className="flex flex-col gap-2">

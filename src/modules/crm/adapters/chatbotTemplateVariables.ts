@@ -75,5 +75,20 @@ export const variableLabel = (key: string): string => TEMPLATE_VARIABLES[key]?.l
 
 export const variableExample = (key: string): string => TEMPLATE_VARIABLES[key]?.example ?? variableLabel(key);
 
-/** Todos los nombres legibles conocidos (en minúsculas), para detectar un dato de otra plantilla. */
-export const KNOWN_LABELS = new Set(Object.values(TEMPLATE_VARIABLES).map((v) => v.label.toLowerCase()));
+/**
+ * [Nombre] del editor → clave del bot (T-917, 05/10/2026): la de un dato
+ * conocido ("Ciudad" → ciudad) o una armada con el nombre ("Talla del cliente"
+ * → talla_del_cliente). "" si el nombre no tiene letras ni números.
+ */
+export const variableKeyForLabel = (label: string): string => {
+  const wanted = label.trim().toLowerCase();
+  const known = Object.entries(TEMPLATE_VARIABLES).find(([, v]) => v.label.toLowerCase() === wanted);
+  if (known) return known[0];
+  return label
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 60);
+};

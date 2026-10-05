@@ -1,5 +1,5 @@
 import type { ChatbotTemplate, ChatbotTemplateApi } from "../types/chatbotTemplates.types";
-import { KNOWN_LABELS, variableExample, variableLabel } from "./chatbotTemplateVariables";
+import { variableExample, variableKeyForLabel, variableLabel } from "./chatbotTemplateVariables";
 
 export const toChatbotTemplate = (t: ChatbotTemplateApi): ChatbotTemplate => ({
   id: t.id,
@@ -62,9 +62,18 @@ const findVariable = (vars: TemplateVariable[], label: string) => {
   return vars.find((v) => v.label.toLowerCase() === wanted);
 };
 
+/** Los datos de esta plantilla que siguen en el texto del editor. */
+export const variablesInText = (text: string, vars: TemplateVariable[]): TemplateVariable[] => {
+  const used = Array.from(text.matchAll(LABEL_RE), (m) => m[1]);
+  return vars.filter((v) => used.some((l) => findVariable([v], l)));
+};
+
 /**
- * Texto del editor → texto de la base. Un [Nombre] que no es un dato de esta
- * plantilla se deja tal cual (lo frena la validación si es un dato de otra).
+ * Texto del editor → texto de la base. T-917 (05/10/2026): cualquier [Nombre]
+ * es un dato.
+ * - Uno que esta plantilla ya tenía conserva su forma ({x}, {x?} o {x|texto}):
+ *   hay plantillas que a propósito pierden la línea entera si el dato no llega.
+ * - Uno nuevo va como {clave?}: el bot lo llena si puede y, si no, no lo muestra.
  */
 export const fromFriendlyText = (
   text: string,
@@ -73,12 +82,18 @@ export const fromFriendlyText = (
 ): string =>
   text.replace(LABEL_RE, (whole, label: string) => {
     const v = findVariable(vars, label);
-    if (!v) return whole;
-    if (v.fallback != null) return `{${v.key}|${(fallbacks[v.key] ?? v.fallback).replace(/[{}]/g, "").trim()}}`;
-    return `{${v.key}${v.optional ? "?" : ""}}`;
+    if (v) {
+      if (v.fallback != null) return `{${v.key}|${(fallbacks[v.key] ?? v.fallback).replace(/[{}]/g, "").trim()}}`;
+      return `{${v.key}${v.optional ? "?" : ""}}`;
+    }
+    const key = variableKeyForLabel(label);
+    return key ? `{${key}?}` : whole;
   });
 
-/** Mismas reglas que sp_crm_chatbot_template_update, dichas con los nombres del editor. */
+/**
+ * Mismas reglas que sp_crm_chatbot_template_update, dichas con los nombres del
+ * editor. Desde T-917 (05/10/2026) los datos se agregan y se quitan libremente.
+ */
 export const validateFriendlyText = (
   text: string,
   vars: TemplateVariable[],
@@ -86,23 +101,21 @@ export const validateFriendlyText = (
 ): string | null => {
   if (!text.trim()) return "El texto no puede quedar vacío.";
   if (/\{[A-Za-z0-9_]+(\?|\|[^}]*)?\}/.test(text)) {
-    return "Para agregar un dato usa los botones de «Insertar dato», no las llaves { }.";
+    return "Para agregar un dato escríbelo entre corchetes, por ejemplo [Ciudad], no entre llaves { }.";
   }
-  const used = Array.from(text.matchAll(LABEL_RE), (m) => m[1]);
-  const ajeno = used.find((l) => !findVariable(vars, l) && KNOWN_LABELS.has(l.trim().toLowerCase()));
-  if (ajeno) return `El dato [${ajeno.trim()}] no está disponible en esta plantilla.`;
-  const falta = vars.filter((v) => v.required && !used.some((l) => findVariable([v], l)));
-  if (falta.length) {
-    return `Falta ${falta.map((v) => `[${v.label}]`).join(", ")}. El bot necesita ese dato para armar este mensaje.`;
-  }
-  const sinTexto = vars.find((v) => v.fallback != null && !(fallbacks[v.key] ?? v.fallback).replace(/[{}]/g, "").trim());
+  const sinTexto = variablesInText(text, vars).find(
+    (v) => v.fallback != null && !(fallbacks[v.key] ?? v.fallback).replace(/[{}]/g, "").trim()
+  );
   if (sinTexto) return `Escribe qué decir cuando el bot no tiene [${sinTexto.label}].`;
   return null;
 };
 
-/** Vista previa: cada dato reemplazado por un ejemplo real. */
+/** Vista previa: cada dato conocido con un ejemplo; uno nuevo se ve tal como se escribió. */
 export const previewFriendlyText = (text: string, vars: TemplateVariable[]): string =>
   text.replace(LABEL_RE, (whole, label: string) => {
     const v = findVariable(vars, label);
-    return v ? variableExample(v.key) : whole;
+    if (v) return variableExample(v.key);
+    // Solo los datos conocidos tienen ejemplo; para los demás variableExample devuelve el nombre.
+    const key = variableKeyForLabel(label);
+    return key && variableExample(key) !== variableLabel(key) ? variableExample(key) : whole;
   });
