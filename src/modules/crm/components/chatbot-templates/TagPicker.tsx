@@ -10,26 +10,28 @@ interface TagPickerProps {
   /** Nombres de las etiquetas elegidas. */
   value: string[];
   onChange: (value: string[]) => void;
-  /** Nombres de las etiquetas que ya existen. */
+  /** Nombres de las etiquetas externas que ya existen (las creadas desde el ERP). */
   options: string[];
-  /** Nombre que no se puede elegir (la etiqueta principal, que ya va aparte). */
-  exclude?: string | null;
+  /** Por qué no se puede usar ese nombre como extra (una etiqueta de Jev), o null. */
+  blocked?: (name: string) => string | null;
   max?: number;
 }
 
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /**
- * T-917. Etiquetas extra de una plantilla: se eligen de las existentes o se
- * crea una escribiéndola. La etiqueta nueva recién se guarda con la plantilla.
+ * T-917. Etiquetas extra de una plantilla: solo externas. Se eligen de las
+ * creadas desde el ERP o se crea una escribiéndola; una de Jev no se puede
+ * (solo va como principal). La etiqueta nueva recién se guarda con la plantilla.
  */
-export default function TagPicker({ id, value, onChange, options, exclude, max = 10 }: TagPickerProps) {
+export default function TagPicker({ id, value, onChange, options, blocked, max = 10 }: TagPickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
   const text = query.replace(/\s+/g, " ").trim();
-  const available = options.filter((o) => !(exclude && same(o, exclude)));
-  const exists = available.some((o) => same(o, text)) || value.some((v) => same(v, text)) || (!!exclude && same(exclude, text));
+  const available = options.filter((o) => !blocked?.(o));
+  const exists = available.some((o) => same(o, text)) || value.some((v) => same(v, text));
+  const blockedReason = text ? (blocked?.(text) ?? null) : null;
   const full = value.length >= max;
 
   const toggle = (name: string) => {
@@ -38,7 +40,7 @@ export default function TagPicker({ id, value, onChange, options, exclude, max =
   };
 
   const create = () => {
-    if (!text || exists || full || text.length > 40) return;
+    if (!text || exists || blockedReason || full || text.length > 40) return;
     onChange([...value, text]);
     setQuery("");
   };
@@ -81,8 +83,12 @@ export default function TagPicker({ id, value, onChange, options, exclude, max =
                 }}
               />
               <CommandList>
-                <CommandEmpty>{text ? "No existe todavía." : "No hay etiquetas."}</CommandEmpty>
-                {text && !exists && (
+                {blockedReason ? (
+                  <p className="px-3 py-2 text-xs text-destructive">{blockedReason}</p>
+                ) : (
+                  <CommandEmpty>{text ? "No existe todavía." : "No hay etiquetas."}</CommandEmpty>
+                )}
+                {text && !exists && !blockedReason && (
                   <CommandGroup>
                     <CommandItem value={`__crear__${text}`} onSelect={create}>
                       <Plus className="w-4 h-4" />

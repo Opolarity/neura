@@ -16,7 +16,7 @@ export const TEMPLATE_TOPICS: { value: ChatbotTemplateTopic; label: string; hint
   { value: "reclamo", label: "Reclamo", hint: "Mala atención en una sede, producto dañado o equivocado." },
   { value: "pedir_asesor", label: "Pedir asesor", hint: "Quiere hablar con una persona. El bot la tiene siempre a mano." },
   { value: "propuesta_comercial", label: "Propuesta comercial", hint: "Auspicios, colaboraciones, agencias, proveedores." },
-  { value: "info_tienda", label: "Info tienda", hint: "Sedes, horarios, contacto, redes y políticas." },
+  { value: "info_tienda", label: "Info tienda", hint: "Sedes, horarios, contacto, redes, políticas, cuidado de prendas y wallpapers." },
   { value: "otro", label: "Otro", hint: "Nada de lo anterior." },
 ];
 
@@ -36,3 +36,18 @@ export const templateSlug = (text: string): string =>
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/_+/g, "_")
     .replace(/^_|_$/g, "");
+
+/**
+ * T-917. Si el nombre es una etiqueta de Jev (por nombre, "Otro", o por clave,
+ * "info-tienda"), devuelve su nombre; si es una externa, null. Misma regla que
+ * fn_chatbot_template_set_tags: una de Jev solo puede ser la principal.
+ */
+export const jevTagFor = (name: string): string | null => {
+  const lower = name.replace(/\s+/g, " ").trim().toLowerCase();
+  const slug = templateSlug(name);
+  return TEMPLATE_TOPICS.find((t) => t.label.toLowerCase() === lower || t.value === slug)?.label ?? null;
+};
+
+/** Mismo mensaje que devuelve el backend. */
+export const jevTagError = (label: string): string =>
+  `«${label}» es una etiqueta principal: elígela como principal, no como etiqueta extra.`;

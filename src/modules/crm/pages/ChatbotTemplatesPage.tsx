@@ -126,7 +126,7 @@ export default function ChatbotTemplatesPage() {
         template={editing}
         creating={creating}
         saving={saving}
-        tagOptions={tags.map((g) => g.name)}
+        tagOptions={tags.filter((g) => !g.is_jev).map((g) => g.name)}
         onOpenChange={(open) => {
           if (open) return;
           setEditing(null);

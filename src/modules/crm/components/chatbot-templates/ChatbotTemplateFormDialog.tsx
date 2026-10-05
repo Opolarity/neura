@@ -21,7 +21,7 @@ import {
   toFriendlyText,
   validateFriendlyText,
 } from "../../adapters/chatbotTemplates.adapter";
-import { TEMPLATE_TOPICS, templateSlug, topicLabel } from "../../adapters/chatbotTemplateTopics";
+import { TEMPLATE_TOPICS, jevTagError, jevTagFor, templateSlug, topicLabel } from "../../adapters/chatbotTemplateTopics";
 import { toggleInline, toggleLines, type Edit } from "../../adapters/whatsappFormat";
 import type {
   ChatbotTemplate,
@@ -39,7 +39,7 @@ interface ChatbotTemplateFormDialogProps {
   /** T-917: true = crear una plantilla nueva. */
   creating: boolean;
   saving: boolean;
-  /** T-917: nombres de las etiquetas que ya existen. */
+  /** T-917: nombres de las etiquetas externas (creadas desde el ERP) que ya existen. */
   tagOptions: string[];
   onOpenChange: (open: boolean) => void;
   onSave: (template: ChatbotTemplate, content: string, meta?: ChatbotTemplateMeta) => Promise<boolean>;
@@ -50,12 +50,22 @@ interface ChatbotTemplateFormDialogProps {
 const NAME_RE = /^[a-z][a-z0-9_]{2,59}$/;
 const RESERVED_NAMES = new Set(["resumen_confirmacion", "cambio_confirmado", "ubicacion_sede", "datos_para_derivar"]);
 
-const validateMeta = (creating: boolean, slug: string, topic: ChatbotTemplateTopic | ""): string | null => {
+/** Una etiqueta de Jev no va como extra: solo como principal (fn_chatbot_template_set_tags). */
+const extraBloqueada = (name: string): string | null => {
+  const jev = jevTagFor(name);
+  return jev ? jevTagError(jev) : null;
+};
+
+const validateMeta = (creating: boolean, slug: string, topic: ChatbotTemplateTopic | "", tags: string[]): string | null => {
   if (creating) {
     if (!NAME_RE.test(slug)) return "El nombre tiene que empezar con una letra y tener entre 3 y 60 caracteres.";
     if (RESERVED_NAMES.has(slug)) return "Ese nombre ya lo usa el bot. Elige otro.";
   }
   if (!topic) return "Elige la etiqueta principal.";
+  for (const t of tags) {
+    const motivo = extraBloqueada(t);
+    if (motivo) return motivo;
+  }
   return null;
 };
 
@@ -89,7 +99,6 @@ export default function ChatbotTemplateFormDialog({
   /** Etiquetas editables: todas menos las especiales. */
   const tagsEditable = creating || !template?.locked;
   const slug = templateSlug(name);
-  const topicName = topic ? topicLabel(topic) : null;
 
   useEffect(() => {
     setText(template ? toFriendlyText(template.content) : "");
@@ -107,7 +116,7 @@ export default function ChatbotTemplateFormDialog({
         : validateFriendlyText(text, vars, fallbacks),
     [noVars, text, vars, fallbacks]
   );
-  const metaError = tagsEditable ? validateMeta(creating, slug, topic) : null;
+  const metaError = tagsEditable ? validateMeta(creating, slug, topic, tags) : null;
   const error = metaError ?? textError;
 
   if (!template && !creating) return null;
@@ -255,13 +264,15 @@ export default function ChatbotTemplateFormDialog({
                 id="tpl-tags"
                 value={tags}
                 options={tagOptions}
-                exclude={topicName}
+                blocked={extraBloqueada}
                 onChange={(v) => {
                   setTags(v);
                   setTouched(true);
                 }}
               />
-              <p className="text-xs text-muted-foreground">Opcionales. Elige las que ya existen o escribe una nueva.</p>
+              <p className="text-xs text-muted-foreground">
+                Opcionales. Elige las creadas desde el ERP o escribe una nueva. Las etiquetas principales no van acá.
+              </p>
             </div>
             {touched && metaError && <p className="text-sm text-destructive md:col-span-2">{metaError}</p>}
           </div>
