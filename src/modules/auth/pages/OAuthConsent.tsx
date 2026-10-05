@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, Lock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,28 +9,44 @@ import { useAuth } from "../hooks/useAuth";
 import { useOAuthConsent } from "../hooks/useOAuthConsent";
 import { loginUrlWithNext } from "../utils/safeNext";
 
+// Marca en la URL de vuelta del login: el usuario acaba de elegir su cuenta,
+// así que no hace falta volver a confirmarla.
+const ACCOUNT_CHOSEN = "cuenta";
+
 // Pantalla de consentimiento OAuth. Supabase Auth manda aquí al usuario
-// (GOTRUE_OAUTH_SERVER_AUTHORIZATION_PATH) cuando una app como Claude pide
-// acceso a su cuenta del ERP a través del MCP de ventas (neura-mcp).
+// (GOTRUE_OAUTH_SERVER_AUTHORIZATION_PATH) cuando una app como Claude o ChatGPT
+// pide acceso a su cuenta del ERP a través del MCP de ventas (neura-mcp).
+//
+// Auth asocia la solicitud al primer usuario que lee su detalle y no la cambia.
+// Por eso, si el navegador ya tenía una sesión abierta, primero se confirma
+// esa cuenta y solo después se lee la solicitud: "Usar otra cuenta" cierra la
+// sesión antes de que quede asociada a la equivocada.
 const OAuthConsent = () => {
   const { user, loading, signOut } = useAuth();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
   const authorizationId = searchParams.get("authorization_id");
-  const here = `${location.pathname}${location.search}`;
+  const [accountConfirmed, setAccountConfirmed] = useState(searchParams.get(ACCOUNT_CHOSEN) === "1");
+
+  const chosenUrl = () => {
+    const params = new URLSearchParams(location.search);
+    params.set(ACCOUNT_CHOSEN, "1");
+    return `${location.pathname}?${params.toString()}`;
+  };
 
   const { status, details, error, approve, deny } = useOAuthConsent(
     authorizationId,
-    !loading && !!user
+    !loading && !!user && accountConfirmed
   );
 
   if (loading) return <SplashPage />;
-  if (!user) return <Navigate to={loginUrlWithNext(here)} replace />;
+  // Sin sesión: el login elige la cuenta, la vuelta ya llega confirmada.
+  if (!user) return <Navigate to={loginUrlWithNext(chosenUrl())} replace />;
 
   const switchAccount = async () => {
     await signOut();
-    navigate(loginUrlWithNext(here), { replace: true });
+    navigate(loginUrlWithNext(chosenUrl()), { replace: true });
   };
 
   const clientName = details?.client.name || "Una aplicación";
@@ -43,7 +60,27 @@ const OAuthConsent = () => {
             <img src="/logo-neura-color.png" alt="Neura" className="h-8 w-auto" />
           </div>
 
-          {status === "error" && (
+          {!accountConfirmed && (
+            <>
+              <div className="mt-6 text-center">
+                <h1 className="text-xl font-bold text-foreground">¿Con qué cuenta quieres conectar?</h1>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Una aplicación (Claude o ChatGPT) quiere consultar tus ventas. Vas a conectar con:
+                </p>
+                <p className="mt-3 text-base font-semibold text-foreground break-all">{user.email}</p>
+              </div>
+              <div className="mt-8 grid grid-cols-2 gap-3">
+                <Button variant="outline" className="h-11" onClick={switchAccount}>
+                  Usar otra cuenta
+                </Button>
+                <Button className="h-11 font-semibold" onClick={() => setAccountConfirmed(true)}>
+                  Continuar
+                </Button>
+              </div>
+            </>
+          )}
+
+          {accountConfirmed && status === "error" && (
             <div className="mt-8 space-y-5">
               <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-md">
                 {error}
@@ -54,7 +91,7 @@ const OAuthConsent = () => {
             </div>
           )}
 
-          {(status === "loading" || status === "redirecting") && (
+          {accountConfirmed && (status === "loading" || status === "redirecting") && (
             <div className="mt-8 py-6">
               <LoaderContent
                 message={status === "loading" ? "Cargando solicitud..." : "Volviendo a la aplicación..."}
@@ -62,7 +99,7 @@ const OAuthConsent = () => {
             </div>
           )}
 
-          {(status === "ready" || status === "submitting") && details && (
+          {accountConfirmed && (status === "ready" || status === "submitting") && details && (
             <>
               <div className="mt-6 text-center">
                 <h1 className="text-xl font-bold text-foreground">
@@ -103,18 +140,6 @@ const OAuthConsent = () => {
                   {status === "submitting" ? "Procesando..." : "Permitir"}
                 </Button>
               </div>
-
-              <p className="mt-6 text-center text-xs text-muted-foreground">
-                ¿No eres tú?{" "}
-                <button
-                  type="button"
-                  className="font-semibold text-foreground hover:underline"
-                  disabled={busy}
-                  onClick={switchAccount}
-                >
-                  Cambiar de cuenta
-                </button>
-              </p>
             </>
           )}
         </CardContent>
