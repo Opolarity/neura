@@ -16,13 +16,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronsUpDown, Check, Search, Loader2 } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import {
   BusinessAccount,
   BusinessAccountPayload,
 } from "../../types/BusinessAccount.types";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, FieldErrors } from "react-hook-form";
+import { toast } from "@/shared/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
 import {
   CREDIT_BUSINESS_ACCOUNT_TYPE_CODE,
@@ -38,6 +40,36 @@ const buildAccountLabel = (a: AccountOption) => {
   return parts.length > 0
     ? parts.join(" ") + (a.document_number ? ` (${a.document_number})` : "")
     : (a.document_number ?? `Cuenta #${a.id}`);
+};
+
+const formValuesFrom = (item: BusinessAccount | null): BusinessAccountPayload =>
+  item
+    ? {
+        name: item.name,
+        bank: item.bank,
+        account_number: item.account_number,
+        total_amount: item.total_amount,
+        business_account_type_id: item.business_account_type_id,
+        account_id: item.account_id,
+        branch_id: item.branch_id ?? undefined,
+      }
+    : {
+        name: "",
+        bank: "",
+        account_number: undefined,
+        total_amount: 0,
+        business_account_type_id: undefined,
+        account_id: undefined,
+        branch_id: undefined,
+      };
+
+const FIELD_LABELS: Partial<Record<keyof BusinessAccountPayload, string>> = {
+  name: "Nombre",
+  bank: "Banco",
+  account_number: "Número de Cuenta",
+  business_account_type_id: "Tipo de Cuenta",
+  branch_id: "Sucursal",
+  account_id: "Cuenta",
 };
 
 interface BusinessAccountFormDialogProps {
@@ -71,27 +103,14 @@ export const BusinessAccountFormDialog = ({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { register, handleSubmit, control, reset, watch } =
-    useForm<BusinessAccountPayload>({
-      defaultValues: item
-        ? {
-            name: item.name,
-            bank: item.bank,
-            account_number: item.account_number,
-            total_amount: item.total_amount,
-            business_account_type_id: item.business_account_type_id,
-            account_id: item.account_id,
-            branch_id: item.branch_id ?? undefined,
-          }
-        : {
-            name: "",
-            bank: "",
-            account_number: undefined,
-            total_amount: 0,
-            business_account_type_id: undefined,
-            account_id: undefined,
-            branch_id: undefined,
-          },
-    });
+    useForm<BusinessAccountPayload>({ defaultValues: formValuesFrom(item) });
+
+  // El diálogo no se desmonta entre ediciones de la misma cuenta (su key es el
+  // id) y onSubmit lo deja en blanco: sin esto, la segunda edición abría el
+  // formulario vacío y no pasaba la validación.
+  useEffect(() => {
+    if (open) reset(formValuesFrom(item));
+  }, [open, item, reset]);
 
   // Load account types on open
   useEffect(() => {
@@ -170,14 +189,18 @@ export const BusinessAccountFormDialog = ({
       payload.id = item.id;
     }
     await onSaved(payload);
-    reset({
-      name: "",
-      bank: "",
-      account_number: undefined,
-      total_amount: 0,
-      business_account_type_id: undefined,
-      account_id: undefined,
-      branch_id: undefined,
+    reset(formValuesFrom(null));
+  };
+
+  // Sin esto, un campo obligatorio vacío bloqueaba el envío sin ningún aviso.
+  const onInvalid = (errors: FieldErrors<BusinessAccountPayload>) => {
+    const missing = (Object.keys(errors) as (keyof BusinessAccountPayload)[])
+      .map((key) => FIELD_LABELS[key] ?? key)
+      .join(", ");
+    toast({
+      title: "Faltan datos obligatorios",
+      description: missing,
+      variant: "destructive",
     });
   };
 
@@ -190,6 +213,12 @@ export const BusinessAccountFormDialog = ({
     (t) => t.id === Number(selectedTypeId),
   )?.code;
   const isCashAccount = selectedTypeCode === "CHR";
+  // Al editar, una Caja que ya no tenía sucursal (JM Caja 1 / 2, NULL a
+  // propósito por T-274) se puede guardar sin asignarle una. Se exige al crear
+  // una Caja o al convertir otra cuenta en Caja, igual que en los SP.
+  const isBranchRequired =
+    isCashAccount &&
+    !(isEditing && item?.business_account_type_id === Number(selectedTypeId));
   // Cuenta de crédito de franquicia ("Crédito <franquiciado>"): su saldo lo
   // escriben las devoluciones de prendas ya pagadas y los pagos que las
   // consumen, nunca este formulario.
@@ -204,211 +233,229 @@ export const BusinessAccountFormDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        <form
-          id="business-account-form"
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4 py-2"
-        >
-          <div className="space-y-2">
-            <Label htmlFor="ba-name">Nombre</Label>
-            <Input
-              id="ba-name"
-              placeholder="Ej: Cuenta Principal"
-              {...register("name", { required: true })}
-            />
-          </div>
+        {/* Tope de altura + scroll interno, igual que ProductsFilterModal: con
+            las ayudas de Sucursal y Monto el formulario no cabía en pantallas
+            bajas y dejaba el footer fuera de alcance. El max-h va en un
+            contenedor propio, no en el ScrollArea, y el pr-4 aparta los campos
+            de la barra de scroll. El botón Guardar queda fuera del scroll y
+            envía el form por su id. */}
+        <div className="max-h-[50vh]">
+          <ScrollArea className="h-full">
+            <form
+              id="business-account-form"
+              onSubmit={handleSubmit(onSubmit, onInvalid)}
+              className="space-y-4 py-4 pl-1 pr-4"
+            >
+              <div className="space-y-2">
+                <Label htmlFor="ba-name">Nombre</Label>
+                <Input
+                  id="ba-name"
+                  placeholder="Ej: Cuenta Principal"
+                  {...register("name", { required: true })}
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="ba-bank">Banco</Label>
-            <Input
-              id="ba-bank"
-              placeholder="Ej: Bancolombia"
-              {...register("bank", { required: true })}
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="ba-bank">Banco</Label>
+                <Input
+                  id="ba-bank"
+                  placeholder="Ej: Bancolombia"
+                  {...register("bank", { required: !isEditing, disabled: isEditing })}
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="ba-account-number">Número de Cuenta</Label>
-            <Input
-              id="ba-account-number"
-              type="number"
-              placeholder="Ej: 1234567890"
-              {...register("account_number", {
-                required: true,
-                valueAsNumber: true,
-              })}
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="ba-account-number">Número de Cuenta</Label>
+                <Input
+                  id="ba-account-number"
+                  type="number"
+                  placeholder="Ej: 1234567890"
+                  {...register("account_number", {
+                    valueAsNumber: true,
+                    disabled: isEditing,
+                  })}
+                />
+                {/* Opcional: la columna es nullable y la mayoría de cuentas (cajas,
+                    crédito) no tiene número. Banco y número no se editan por
+                    integridad contable (sp_update_business_account los rechaza). */}
+                {isEditing && (
+                  <p className="text-xs text-muted-foreground">
+                    El banco y el número de cuenta no se pueden modificar.
+                  </p>
+                )}
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="ba-total-amount">Monto Total</Label>
-            <Input
-              id="ba-total-amount"
-              type="number"
-              step="0.01"
-              placeholder="Ej: 10000.00"
-              disabled={!isEditing || isCreditAccount}
-              {...register("total_amount", { valueAsNumber: true })}
-            />
-            {isCreditAccount && (
-              <p className="text-xs text-muted-foreground">
-                El saldo lo mueven las devoluciones y los pagos de franquicia.
-              </p>
-            )}
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="ba-total-amount">Monto Total</Label>
+                <Input
+                  id="ba-total-amount"
+                  type="number"
+                  step="0.01"
+                  placeholder="Ej: 10000.00"
+                  disabled={!isEditing || isCreditAccount}
+                  {...register("total_amount", { valueAsNumber: true })}
+                />
+                {isCreditAccount && (
+                  <p className="text-xs text-muted-foreground">
+                    El saldo lo mueven las devoluciones y los pagos de franquicia.
+                  </p>
+                )}
+              </div>
 
-          <div className="space-y-2">
-            <Label>Tipo de Cuenta</Label>
-            <Controller
-              name="business_account_type_id"
-              control={control}
-              rules={{ required: true }}
-              render={({ field }) => (
-                <Select
-                  value={field.value?.toString() ?? ""}
-                  onValueChange={(val) => field.onChange(Number(val))}
-                  disabled={typesLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        typesLoading ? "Cargando..." : "Seleccionar tipo"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accountTypes.map((type) => (
-                      <SelectItem key={type.id} value={type.id.toString()}>
-                        {type.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Sucursal{isCashAccount ? " *" : ""}</Label>
-            <Controller
-              name="branch_id"
-              control={control}
-              rules={{ required: isCashAccount }}
-              render={({ field }) => (
-                <Select
-                  value={field.value ? field.value.toString() : ""}
-                  onValueChange={(val) => field.onChange(Number(val))}
-                  disabled={branchesLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        branchesLoading ? "Cargando..." : "Seleccionar sucursal"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {branches.map((branch) => (
-                      <SelectItem key={branch.id} value={branch.id.toString()}>
-                        {branch.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            <p className="text-xs text-muted-foreground">
-              {isCashAccount
-                ? "Las cuentas de tipo Caja pertenecen a una sucursal: solo los usuarios de esa sucursal podrán usarlas al registrar movimientos en efectivo."
-                : "Opcional. Las cuentas bancarias y corporativas no pertenecen a una sucursal."}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Cuenta</Label>
-            <Controller
-              name="account_id"
-              control={control}
-              rules={{ required: true }}
-              render={({ field }) => {
-                const displayLabel = selectedAccount
-                  ? buildAccountLabel(selectedAccount)
-                  : field.value
-                  ? `Cuenta #${field.value}`
-                  : null;
-                return (
-                  <Popover
-                    open={accountPopoverOpen}
-                    onOpenChange={(o) => {
-                      setAccountPopoverOpen(o);
-                      if (!o) { setAccountSearch(""); setSearchResults([]); }
-                    }}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-between font-normal"
-                      >
-                        <span className="truncate">{displayLabel ?? "Buscar cuenta..."}</span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }} align="start">
-                      {/* Search input */}
-                      <div className="flex items-center border-b px-3">
-                        {searchLoading
-                          ? <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
-                          : <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                        }
-                        <input
-                          className="flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
-                          placeholder="Buscar por nombre, apellido o documento..."
-                          value={accountSearch}
-                          onChange={(e) => setAccountSearch(e.target.value)}
-                          autoFocus
-                          autoComplete="off"
+              <div className="space-y-2">
+                <Label>Tipo de Cuenta</Label>
+                <Controller
+                  name="business_account_type_id"
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value?.toString() ?? ""}
+                      onValueChange={(val) => field.onChange(Number(val))}
+                      disabled={typesLoading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            typesLoading ? "Cargando..." : "Seleccionar tipo"
+                          }
                         />
-                      </div>
-                      {/* Results list */}
-                      <div className="max-h-60 overflow-auto p-1">
-                        {!accountSearch.trim() ? (
-                          <p className="py-6 text-center text-sm text-muted-foreground">Escribe para buscar cuentas.</p>
-                        ) : searchResults.length === 0 && !searchLoading ? (
-                          <p className="py-6 text-center text-sm text-muted-foreground">No se encontraron cuentas.</p>
-                        ) : (
-                          searchResults.map((account) => {
-                            const label = buildAccountLabel(account);
-                            const isSelected = field.value === account.id;
-                            return (
-                              <div
-                                key={account.id}
-                                className={cn(
-                                  "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
-                                  isSelected && "bg-accent text-accent-foreground"
-                                )}
-                                onClick={() => {
-                                  field.onChange(account.id);
-                                  setSelectedAccount(account);
-                                  setAccountPopoverOpen(false);
-                                  setAccountSearch("");
-                                  setSearchResults([]);
-                                }}
-                              >
-                                <Check className={cn("mr-2 h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
-                                {label}
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                );
-              }}
-            />
-          </div>
-        </form>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {accountTypes.map((type) => (
+                          <SelectItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Sucursal{isBranchRequired ? " *" : ""}</Label>
+                <Controller
+                  name="branch_id"
+                  control={control}
+                  rules={{ required: isBranchRequired }}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ? field.value.toString() : ""}
+                      onValueChange={(val) => field.onChange(Number(val))}
+                      disabled={branchesLoading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            branchesLoading ? "Cargando..." : "Seleccionar sucursal"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {branches.map((branch) => (
+                          <SelectItem key={branch.id} value={branch.id.toString()}>
+                            {branch.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {isCashAccount
+                    ? "Las cuentas de tipo Caja pertenecen a una sucursal: solo los usuarios de esa sucursal podrán usarlas al registrar movimientos en efectivo. Una Caja sin sucursal no la ven los usuarios que tienen una asignada."
+                    : "Opcional. Las cuentas bancarias y corporativas no pertenecen a una sucursal."}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Cuenta</Label>
+                <Controller
+                  name="account_id"
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => {
+                    const displayLabel = selectedAccount
+                      ? buildAccountLabel(selectedAccount)
+                      : field.value
+                      ? `Cuenta #${field.value}`
+                      : null;
+                    return (
+                      <Popover
+                        open={accountPopoverOpen}
+                        onOpenChange={(o) => {
+                          setAccountPopoverOpen(o);
+                          if (!o) { setAccountSearch(""); setSearchResults([]); }
+                        }}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className="w-full justify-between font-normal"
+                          >
+                            <span className="truncate">{displayLabel ?? "Buscar cuenta..."}</span>
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }} align="start">
+                          {/* Search input */}
+                          <div className="flex items-center border-b px-3">
+                            {searchLoading
+                              ? <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
+                              : <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                            }
+                            <input
+                              className="flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                              placeholder="Buscar por nombre, apellido o documento..."
+                              value={accountSearch}
+                              onChange={(e) => setAccountSearch(e.target.value)}
+                              autoFocus
+                              autoComplete="off"
+                            />
+                          </div>
+                          {/* Results list */}
+                          <div className="max-h-60 overflow-auto p-1">
+                            {!accountSearch.trim() ? (
+                              <p className="py-6 text-center text-sm text-muted-foreground">Escribe para buscar cuentas.</p>
+                            ) : searchResults.length === 0 && !searchLoading ? (
+                              <p className="py-6 text-center text-sm text-muted-foreground">No se encontraron cuentas.</p>
+                            ) : (
+                              searchResults.map((account) => {
+                                const label = buildAccountLabel(account);
+                                const isSelected = field.value === account.id;
+                                return (
+                                  <div
+                                    key={account.id}
+                                    className={cn(
+                                      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
+                                      isSelected && "bg-accent text-accent-foreground"
+                                    )}
+                                    onClick={() => {
+                                      field.onChange(account.id);
+                                      setSelectedAccount(account);
+                                      setAccountPopoverOpen(false);
+                                      setAccountSearch("");
+                                      setSearchResults([]);
+                                    }}
+                                  >
+                                    <Check className={cn("mr-2 h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
+                                    {label}
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    );
+                  }}
+                />
+              </div>
+            </form>
+          </ScrollArea>
+        </div>
 
         <DialogFooter>
           <Button
