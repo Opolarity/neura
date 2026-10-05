@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import Dashboard from "@/modules/dashboard/pages/Dashboard";
 import Login from "@/modules/auth/pages/Login";
+import OAuthConsent from "@/modules/auth/pages/OAuthConsent";
 import NotFound from "@/shared/components/NotFound";
 import RouteError from "@/shared/components/RouteError";
 import PublicRoute from "./PublicRoute";
@@ -38,6 +39,13 @@ export const router = createBrowserRouter([
         <Login />
       </PublicRoute>
     ),
+  },
+  // Consentimiento OAuth del MCP de ventas (Claude, vía neura-mcp). Fuera de
+  // PublicRoute y del layout: resuelve su propia sesión y, sin ella, manda a
+  // /login?next=….
+  {
+    path: "/oauth/consent",
+    element: <OAuthConsent />,
   },
   {
     errorElement: <RouteError />,
