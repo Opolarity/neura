@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { safeNext } from "../utils/safeNext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +16,9 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Vuelta a la pantalla que mandó al login (p. ej. /oauth/consent).
+  const next = safeNext(searchParams.get("next"));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +34,7 @@ const Login = () => {
           : "Credenciales inválidas. Por favor, verifica tu email y contraseña."
       );
     } else {
-      navigate("/");
+      navigate(next ?? "/", { replace: !!next });
     }
 
     setLoading(false);
