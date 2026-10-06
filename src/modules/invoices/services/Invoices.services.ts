@@ -3,8 +3,18 @@ import { buildEndpoint } from "@/shared/utils/query";
 import { InvoiceFilters, CreateInvoicePayload, UpdateInvoicePayload, InvoicesResponse } from "../types/Invoices.types";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
-export const getInvoicesApi = async (filters: InvoiceFilters): Promise<InvoicesResponse> => {
-  const endpoint = buildEndpoint("get-invoices", filters);
+/**
+ * La edge function get-invoices lee la paginación como `page` y `size`, y los
+ * tipos de comprobante como lista separada por comas (`types=1,2`); el resto
+ * de los filtros viaja con el mismo nombre.
+ */
+export const getInvoicesApi = async ({ p_page, p_size, types, ...filters }: InvoiceFilters): Promise<InvoicesResponse> => {
+  const endpoint = buildEndpoint("get-invoices", {
+    page: p_page,
+    size: p_size,
+    types: types?.length ? types.join(",") : null,
+    ...filters,
+  });
   const data = await invokeFunction(endpoint, {
     method: "GET",
   });

@@ -7,7 +7,8 @@ export interface InvoiceFilters {
   declared?: boolean | null;
   min_mount?: number | null;
   max_mount?: number | null;
-  type?: number | null;
+  /** Ids de tipos de comprobante; el service los manda como "1,2,3". */
+  types?: number[] | null;
   start_date?: string | null;
   end_date?: string | null;
 }
