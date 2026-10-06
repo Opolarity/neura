@@ -69,6 +69,7 @@ const InboxPage = () => {
   const hasFilters =
     filters.search !== "" ||
     filters.situationId !== null ||
+    filters.assignedTo !== null ||
     filters.unassigned ||
     filters.taken !== null;
 
