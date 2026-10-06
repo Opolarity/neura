@@ -1,4 +1,4 @@
-import { Lock, SquarePen } from "lucide-react";
+import { Lock, SquarePen, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,9 +18,11 @@ interface ChatbotTemplatesTableProps {
   rows: ChatbotTemplate[];
   searching: boolean;
   onEdit: (template: ChatbotTemplate) => void;
+  /** T-917: solo para las creadas desde el ERP. */
+  onDelete: (template: ChatbotTemplate) => void;
 }
 
-export default function ChatbotTemplatesTable({ rows, searching, onEdit }: ChatbotTemplatesTableProps) {
+export default function ChatbotTemplatesTable({ rows, searching, onEdit, onDelete }: ChatbotTemplatesTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -29,7 +31,7 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit }: Chatb
           <TableHead className="w-[220px]">Etiquetas</TableHead>
           <TableHead>Texto</TableHead>
           <TableHead className="w-[200px]">Última edición</TableHead>
-          <TableHead className="w-[80px]">Acciones</TableHead>
+          <TableHead className="w-[110px]">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -85,6 +87,18 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit }: Chatb
                   <Button variant="outline" size="sm" title="Editar plantilla" onClick={() => onEdit(t)}>
                     <SquarePen className="w-4 h-4" />
                   </Button>
+                  {t.fromErp && !t.locked && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      title="Eliminar plantilla"
+                      aria-label={`Eliminar la plantilla ${t.name}`}
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => onDelete(t)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>

@@ -3,6 +3,7 @@ import { toast } from "@/shared/hooks/use-toast";
 import { toastError } from "@/shared/utils/toastError";
 import {
   createChatbotTemplateApi,
+  deleteChatbotTemplateApi,
   getChatbotTagsApi,
   getChatbotTemplatesApi,
   updateChatbotTemplateApi,
@@ -133,6 +134,26 @@ export const useChatbotTemplates = (enabled: boolean) => {
     }
   };
 
+  /** T-917. Solo las creadas desde el ERP. Devuelve true si se eliminó, para cerrar la confirmación. */
+  const remove = async (template: ChatbotTemplate): Promise<boolean> => {
+    setSaving(true);
+    try {
+      await deleteChatbotTemplateApi(template.id);
+      toast({
+        title: "Plantilla eliminada",
+        description: "El bot deja de usarla en menos de un minuto.",
+      });
+      await load();
+      return true;
+    } catch (error) {
+      console.error(error);
+      toastError(error, undefined, "No se pudo eliminar la plantilla");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return {
     loading,
     saving,
@@ -148,5 +169,6 @@ export const useChatbotTemplates = (enabled: boolean) => {
     onPageSizeChange,
     save,
     create,
+    remove,
   };
 };

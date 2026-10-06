@@ -14,6 +14,7 @@ import type {
 import type {
   ChatbotTemplateCreateInput,
   ChatbotTemplateCreateResponse,
+  ChatbotTemplateDeleteResponse,
   ChatbotTemplateMeta,
   ChatbotTagsListResponse,
   ChatbotTemplatesListResponse,
@@ -477,5 +478,16 @@ export const createChatbotTemplateApi = async (
     data as ChatbotTemplateCreateResponse | null,
     error,
     "No se pudo crear la plantilla."
+  );
+};
+
+/** T-917: elimina una plantilla creada desde el ERP (las del sistema las rechaza el SP). */
+export const deleteChatbotTemplateApi = async (id: number): Promise<ChatbotTemplateDeleteResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_template_delete", { p_id: id });
+
+  return unwrap(
+    data as ChatbotTemplateDeleteResponse | null,
+    error,
+    "No se pudo eliminar la plantilla."
   );
 };

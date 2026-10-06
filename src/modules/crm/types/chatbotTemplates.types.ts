@@ -70,6 +70,14 @@ export interface ChatbotTemplateCreateResponse {
   name?: string;
 }
 
+/** T-917: solo se eliminan las creadas desde el ERP. */
+export interface ChatbotTemplateDeleteResponse {
+  success: boolean;
+  error?: string;
+  id?: number;
+  name?: string;
+}
+
 export interface ChatbotTemplate {
   id: number;
   name: string;
