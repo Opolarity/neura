@@ -1,6 +1,6 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
-import { Bot, Clock, Hand, Lock, RotateCcw } from "lucide-react";
+import { Clock, Hand, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -70,35 +70,30 @@ export const ConversationHeader = ({
       })
     : null;
 
+  // Una sola fila: nombre a la izquierda, ventana y controles a la derecha.
+  // Sin pastilla de bot: si responde o no ya lo dicen "Tomar el control" y el
+  // pie de la caja de respuesta, que también avisa quién tiene el control.
   return (
-    <header className="flex flex-col gap-2 border-b px-4 py-2">
-      <div className="flex min-w-0 items-center gap-2">
-        {/* Dos renglones y no uno: en una sola línea el nombre y los datos
-            competían por el mismo ancho contra las pastillas, y el documento
-            terminaba cortado. Con leading-tight ocupa casi lo mismo. */}
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[13px] font-semibold leading-tight">
-            {conversation.displayName}
-          </h2>
-          <p className="truncate text-[10.5px] leading-tight text-muted-foreground">
-            {[conversation.subtitle, conversation.assignedToName]
-              .filter(Boolean)
-              .join(" · ") || " "}
-          </p>
-        </div>
+    <header className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b px-4 py-2">
+      {/* Nombre y datos en dos renglones: en uno solo competían por el ancho
+          y el documento terminaba cortado. */}
+      <div className="min-w-[140px] flex-1">
+        <h2 className="truncate text-[13px] font-semibold leading-tight">
+          {conversation.displayName}
+        </h2>
+        <p className="truncate text-[10.5px] leading-tight text-muted-foreground">
+          {[conversation.subtitle, conversation.assignedToName]
+            .filter(Boolean)
+            .join(" · ") || " "}
+        </p>
+      </div>
 
-        <Pill>
-          <Bot className="h-3 w-3" />
-          {conversation.botAnswers ? "Bot activo" : "Bot en silencio"}
-        </Pill>
-
+      <div className="flex flex-wrap items-center gap-1.5">
         <Pill tone={conversation.windowOpen ? "neutral" : "warn"}>
           <Clock className="h-3 w-3" />
           {conversation.windowOpen ? `Vence ${windowLabel}` : "Ventana vencida"}
         </Pill>
-      </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
         <ComponentPermission codeIn={["crm_conversations.stage"]}>
           <Select
             value={conversation.situation ? String(conversation.situation.id) : undefined}
@@ -118,59 +113,46 @@ export const ConversationHeader = ({
           </Select>
         </ComponentPermission>
 
-        <div className="ml-auto flex flex-wrap items-center gap-1.5">
-          <ComponentPermission codeIn={["crm_conversations.assign", "crm_conversations.assign_any"]}>
-            <AssignMenu
-              assignedTo={conversation.assignedTo}
+        <ComponentPermission codeIn={["crm_conversations.assign", "crm_conversations.assign_any"]}>
+          <AssignMenu
+            assignedTo={conversation.assignedTo}
+            disabled={busy}
+            onAssign={onAssign}
+          />
+        </ComponentPermission>
+
+        <ComponentPermission codeIn={["crm_conversations.take"]}>
+          {canRelease ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={onRelease}
               disabled={busy}
-              onAssign={onAssign}
-            />
-          </ComponentPermission>
-
-          <ComponentPermission codeIn={["crm_conversations.take"]}>
-            {canRelease ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={onRelease}
-                disabled={busy}
-              >
-                <RotateCcw className="mr-1 h-3.5 w-3.5" />
-                {conversation.assignedTo
-                  ? `Devolver a ${conversation.assignedToName || "su asesor"}`
-                  : "Devolver al bot"}
-              </Button>
-            ) : takenByMe ? null : (
-              <Button
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={onTake}
-                disabled={busy}
-                title={
-                  takenBySomeoneElse
-                    ? `Le vas a quitar el control a ${conversation.takenByName || "otro asesor"}`
-                    : undefined
-                }
-              >
-                <Hand className="mr-1 h-3.5 w-3.5" />
-                {takenBySomeoneElse ? "Quitarle el control" : "Tomar el control"}
-              </Button>
-            )}
-          </ComponentPermission>
-        </div>
+            >
+              <RotateCcw className="mr-1 h-3.5 w-3.5" />
+              {conversation.assignedTo
+                ? `Devolver a ${conversation.assignedToName || "su asesor"}`
+                : "Devolver al bot"}
+            </Button>
+          ) : takenByMe ? null : (
+            <Button
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={onTake}
+              disabled={busy}
+              title={
+                takenBySomeoneElse
+                  ? `Le vas a quitar el control a ${conversation.takenByName || "otro asesor"}`
+                  : undefined
+              }
+            >
+              <Hand className="mr-1 h-3.5 w-3.5" />
+              {takenBySomeoneElse ? "Quitarle el control" : "Tomar el control"}
+            </Button>
+          )}
+        </ComponentPermission>
       </div>
-
-      {takenBySomeoneElse && (
-        <p className="flex items-center gap-1 text-[11px] text-destructive-soft-foreground">
-          <Lock className="h-3 w-3" />
-          <strong className="font-medium">
-            {conversation.takenByName || "Otro asesor"}
-          </strong>
-          tomó el control de esta conversación. No podés escribir hasta que lo
-          tomes vos.
-        </p>
-      )}
     </header>
   );
 };

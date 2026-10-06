@@ -1,6 +1,6 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
-import { Bot, Clock, MessageSquare, User } from "lucide-react";
+import { Clock, MessageSquare, User } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import type { Conversation } from "../types/crm.types";
 
@@ -77,6 +77,11 @@ export const ConversationList = ({
       <ul className="flex flex-col gap-1 p-2">
         {conversations.map((c) => {
           const selected = c.identity === selectedIdentity;
+          // La fila de etiquetas solo se pinta si tiene algo que decir: así la
+          // mayoría de los chats (sin etapa, atendidos por el bot) ocupan dos
+          // renglones en vez de tres.
+          const hasChips =
+            !!c.situation || !!c.takenBy || !!c.assignedTo || !c.windowOpen;
 
           return (
             <li key={c.identity}>
@@ -122,48 +127,43 @@ export const ConversationList = ({
                   {c.lastMessage || "—"}
                 </p>
 
-                <div className="flex min-w-0 flex-wrap items-center gap-1">
-                  {c.situation && (
-                    <Chip selected={selected} tone="stage">
-                      {c.situation.name}
-                    </Chip>
-                  )}
+                {hasChips && (
+                  <div className="flex min-w-0 flex-wrap items-center gap-1">
+                    {c.situation && (
+                      <Chip selected={selected} tone="stage">
+                        {c.situation.name}
+                      </Chip>
+                    )}
 
-                  {/* Quién la tiene ahora pesa más que de quién es. */}
-                  {c.takenBy && (
-                    <Chip selected={selected} tone="info">
-                      <User className="h-3 w-3" />
-                      <span className="max-w-[110px] truncate">
-                        {c.takenByName || "Tomada"}
-                      </span>
-                    </Chip>
-                  )}
+                    {/* Quién la tiene ahora pesa más que de quién es. */}
+                    {c.takenBy && (
+                      <Chip selected={selected} tone="info">
+                        <User className="h-3 w-3" />
+                        <span className="max-w-[110px] truncate">
+                          {c.takenByName || "Tomada"}
+                        </span>
+                      </Chip>
+                    )}
 
-                  {!c.takenBy && c.assignedTo && (
-                    <Chip selected={selected}>
-                      <User className="h-3 w-3" />
-                      <span className="max-w-[110px] truncate">
-                        {c.assignedToName || "Asignada"}
-                      </span>
-                    </Chip>
-                  )}
+                    {!c.takenBy && c.assignedTo && (
+                      <Chip selected={selected}>
+                        <User className="h-3 w-3" />
+                        <span className="max-w-[110px] truncate">
+                          {c.assignedToName || "Asignada"}
+                        </span>
+                      </Chip>
+                    )}
 
-                  {c.botAnswers && (
-                    <Chip selected={selected}>
-                      <Bot className="h-3 w-3" />
-                      Bot
-                    </Chip>
-                  )}
-
-                  {/* La ventana solo se avisa cuando está cerrada: es cuando
-                      cambia lo que se puede hacer. */}
-                  {!c.windowOpen && (
-                    <Chip selected={selected} tone="warn">
-                      <Clock className="h-3 w-3" />
-                      Vencida
-                    </Chip>
-                  )}
-                </div>
+                    {/* La ventana solo se avisa cuando está cerrada: es cuando
+                        cambia lo que se puede hacer. */}
+                    {!c.windowOpen && (
+                      <Chip selected={selected} tone="warn">
+                        <Clock className="h-3 w-3" />
+                        Vencida
+                      </Chip>
+                    )}
+                  </div>
+                )}
               </button>
             </li>
           );

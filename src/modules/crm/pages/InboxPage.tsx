@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Filter, MessageSquare, RefreshCw, Search, X } from "lucide-react";
+import { Filter, MessageSquare, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,7 +34,6 @@ const InboxPage = () => {
     filters,
     updateFilters,
     clearFilters,
-    reload,
     setSituation,
     assign,
     takeControl,
@@ -75,106 +74,97 @@ const InboxPage = () => {
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
+      {/* Título y filtros en una sola fila. Sin botón de actualizar: la lista
+          y el chat abierto ya se refrescan solos (poll). */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-lg font-semibold leading-tight">Chats</h1>
-          <p className="text-sm text-muted-foreground">
-            Los chats de WhatsApp del negocio, con su etapa y su responsable.
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">Chats</h1>
 
-        <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs" onClick={reload} disabled={loading}>
-          <RefreshCw className="mr-1 h-3.5 w-3.5" />
-          Actualizar
-        </Button>
-      </div>
-
-      {/* Filtros */}
-      <div className="flex flex-wrap items-center gap-2">
-        <form
-          className="relative"
-          onSubmit={(e) => {
-            e.preventDefault();
-            updateFilters({ search: searchDraft });
-          }}
-        >
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={searchDraft}
-            onChange={(e) => setSearchDraft(e.target.value)}
-            placeholder="Buscar cliente, teléfono o texto…"
-            className="h-8 w-[230px] pl-8 text-xs"
-          />
-        </form>
-
-        <Select
-          value={filters.situationId ? String(filters.situationId) : ALL}
-          onValueChange={(v) =>
-            updateFilters({ situationId: v === ALL ? null : Number(v) })
-          }
-        >
-          <SelectTrigger className="h-8 w-[170px] text-xs">
-            <SelectValue placeholder="Todas las etapas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Todas las etapas</SelectItem>
-            {situations.map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>
-                {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Button
-          variant={filters.assignedTo ? "default" : "outline"}
-          size="sm"
-          className="h-8 px-2.5 text-xs"
-          onClick={() =>
-            updateFilters({
-              assignedTo: filters.assignedTo ? null : user?.id ?? null,
-              unassigned: false,
-            })
-          }
-        >
-          Mías
-        </Button>
-
-        <Button
-          variant={filters.unassigned ? "default" : "outline"}
-          size="sm"
-          className="h-8 px-2.5 text-xs"
-          onClick={() =>
-            updateFilters({ unassigned: !filters.unassigned, assignedTo: null })
-          }
-        >
-          Sin asignar
-        </Button>
-
-        <Button
-          variant={filters.taken === true ? "default" : "outline"}
-          size="sm"
-          className="h-8 px-2.5 text-xs"
-          onClick={() => updateFilters({ taken: filters.taken === true ? null : true })}
-        >
-          <Filter className="mr-1 h-3.5 w-3.5" />
-          Tomadas
-        </Button>
-
-        {hasFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-          className="h-8 px-2.5 text-xs"
-            onClick={() => {
-              setSearchDraft("");
-              clearFilters();
+        <div className="flex flex-wrap items-center gap-2">
+          <form
+            className="relative"
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateFilters({ search: searchDraft });
             }}
           >
-            <X className="mr-1 h-3.5 w-3.5" />
-            Limpiar
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchDraft}
+              onChange={(e) => setSearchDraft(e.target.value)}
+              placeholder="Buscar cliente, teléfono o texto…"
+              className="h-8 w-[230px] pl-8 text-xs"
+            />
+          </form>
+
+          <Select
+            value={filters.situationId ? String(filters.situationId) : ALL}
+            onValueChange={(v) =>
+              updateFilters({ situationId: v === ALL ? null : Number(v) })
+            }
+          >
+            <SelectTrigger className="h-8 w-[170px] text-xs">
+              <SelectValue placeholder="Todas las etapas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Todas las etapas</SelectItem>
+              {situations.map((s) => (
+                <SelectItem key={s.id} value={String(s.id)}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant={filters.assignedTo ? "default" : "outline"}
+            size="sm"
+            className="h-8 px-2.5 text-xs"
+            onClick={() =>
+              updateFilters({
+                assignedTo: filters.assignedTo ? null : user?.id ?? null,
+                unassigned: false,
+              })
+            }
+          >
+            Mías
           </Button>
-        )}
+
+          <Button
+            variant={filters.unassigned ? "default" : "outline"}
+            size="sm"
+            className="h-8 px-2.5 text-xs"
+            onClick={() =>
+              updateFilters({ unassigned: !filters.unassigned, assignedTo: null })
+            }
+          >
+            Sin asignar
+          </Button>
+
+          <Button
+            variant={filters.taken === true ? "default" : "outline"}
+            size="sm"
+            className="h-8 px-2.5 text-xs"
+            onClick={() => updateFilters({ taken: filters.taken === true ? null : true })}
+          >
+            <Filter className="mr-1 h-3.5 w-3.5" />
+            Tomadas
+          </Button>
+
+          {hasFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2.5 text-xs"
+              onClick={() => {
+                setSearchDraft("");
+                clearFilters();
+              }}
+            >
+              <X className="mr-1 h-3.5 w-3.5" />
+              Limpiar
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Bandeja: lista fija a la izquierda, hilo a la derecha. Alto fijo con
