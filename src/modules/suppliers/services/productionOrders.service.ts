@@ -18,11 +18,13 @@ import {
 /** Código del módulo del que cuelgan las clases de orden de producción. */
 const SUPPLIERS_MODULE_CODE = "SPL";
 /**
- * Catálogo de clases de ORDEN DE PRODUCCIÓN. Es su propio módulo, no el de
- * proveedores: 202609200002 lo creó precisamente porque `SPL` describe al
- * proveedor y no al proceso, y dejó escrito que el ERP pasaría a leer de aquí.
+ * Catálogo de clases de ORDEN DE PRODUCCIÓN (Produccion OPR-PRD, Muestra
+ * OPR-SAM). Es su propio módulo, no el de proveedores: `SPL` describe al
+ * proveedor y no al proceso. En personalizado ese módulo es `ORP` ("Órdenes de
+ * producto", sembrado en 31000921130000); multicliente lo llama `OPR`, y
+ * copiar ese código dejaba el selector vacío y sin poder crear órdenes.
  */
-const PRODUCTION_ORDER_MODULE_CODE = "OPR";
+const PRODUCTION_ORDER_MODULE_CODE = "ORP";
 
 /** Tamaño del catálogo que alimenta el combobox de explosiones. */
 const OPTIONS_PAGE_SIZE = 100;
