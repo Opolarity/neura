@@ -1,4 +1,4 @@
-import { Lock, SquarePen, Trash2 } from "lucide-react";
+import { Bot, Lock, SquarePen, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/shared/utils/date";
-import { toFriendlyText } from "../../adapters/chatbotTemplates.adapter";
+import { rolLabel, toFriendlyText } from "../../adapters/chatbotTemplates.adapter";
 import { topicLabel } from "../../adapters/chatbotTemplateTopics";
 import type { ChatbotTemplate } from "../../types/chatbotTemplates.types";
 
@@ -18,7 +18,7 @@ interface ChatbotTemplatesTableProps {
   rows: ChatbotTemplate[];
   searching: boolean;
   onEdit: (template: ChatbotTemplate) => void;
-  /** T-917: solo para las creadas desde el ERP. */
+  /** T-922: para todas las que no están bloqueadas. */
   onDelete: (template: ChatbotTemplate) => void;
 }
 
@@ -48,14 +48,24 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit, onDelet
                 <div className="flex flex-col items-start gap-1">
                   <span className="font-mono text-xs">{t.name}</span>
                   {t.fromErp && <Badge variant="info">Creada en el ERP</Badge>}
-                  {t.locked && (
+                  {t.locked ? (
                     <span
                       className="flex items-center gap-1 text-xs text-muted-foreground"
-                      title="La arma el bot en un flujo fijo: sus etiquetas no se cambian"
+                      title="Parte de un flujo fijo del bot (pedido, pago o comprobantes): solo se edita el texto"
                     >
                       <Lock className="w-3 h-3" />
-                      Especial
+                      Bloqueada
                     </span>
+                  ) : (
+                    t.rol && (
+                      <span
+                        className="flex items-center gap-1 text-xs text-muted-foreground"
+                        title={`El bot la usa para: ${rolLabel(t.rol)}. Si la eliminas, ese mensaje lo redacta el bot.`}
+                      >
+                        <Bot className="w-3 h-3" />
+                        Usada por el bot
+                      </span>
+                    )
                   )}
                 </div>
               </TableCell>
@@ -87,7 +97,7 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit, onDelet
                   <Button variant="outline" size="sm" title="Editar plantilla" onClick={() => onEdit(t)}>
                     <SquarePen className="w-4 h-4" />
                   </Button>
-                  {t.fromErp && !t.locked && (
+                  {!t.locked && (
                     <Button
                       variant="outline"
                       size="sm"

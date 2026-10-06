@@ -10,6 +10,8 @@ export const toChatbotTemplate = (t: ChatbotTemplateApi): ChatbotTemplate => ({
   tags: t.tags ?? [],
   fromErp: t.origin === "erp",
   locked: t.locked === true,
+  rol: t.rol ?? null,
+  saleSola: t.sale_sola !== false,
   placeholders: t.placeholders ?? [],
   requiredPlaceholders: t.required_placeholders ?? [],
   updatedAt: t.updated_at,
@@ -119,3 +121,9 @@ export const previewFriendlyText = (text: string, vars: TemplateVariable[]): str
     const key = variableKeyForLabel(label);
     return key && variableExample(key) !== variableLabel(key) ? variableExample(key) : whole;
   });
+
+/** T-922: "derivacion_asesor_resumen" → "Derivacion asesor resumen". El rol lo carga una migración del bot. */
+export const rolLabel = (rol: string): string => {
+  const s = rol.replace(/_/g, " ").trim();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};

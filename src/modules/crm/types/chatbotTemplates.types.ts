@@ -27,6 +27,10 @@ export interface ChatbotTemplateApi {
   topic: ChatbotTemplateTopic | null;
   origin: "system" | "erp";
   locked: boolean;
+  /** T-922: para qué la usa el bot (el código la pide por rol). null = libre. */
+  rol: string | null;
+  /** T-922: si Jev puede mandarla sin pasar por el modelo. */
+  sale_sola: boolean;
   /** Etiquetas extra (nombres); la principal es `topic`. */
   tags: string[];
   placeholders: string[];
@@ -70,12 +74,13 @@ export interface ChatbotTemplateCreateResponse {
   name?: string;
 }
 
-/** T-917: solo se eliminan las creadas desde el ERP. */
+/** T-922: se elimina cualquiera que no esté bloqueada. */
 export interface ChatbotTemplateDeleteResponse {
   success: boolean;
   error?: string;
   id?: number;
   name?: string;
+  rol?: string | null;
 }
 
 export interface ChatbotTemplate {
@@ -89,8 +94,12 @@ export interface ChatbotTemplate {
   tags: string[];
   /** true si la creó un admin desde el ERP. */
   fromErp: boolean;
-  /** Especial: la arma el bot en un flujo fijo; sus etiquetas no se editan. */
+  /** Bloqueada: la arma el bot en un flujo fijo (pedido, pago, comprobantes); solo se edita el texto. */
   locked: boolean;
+  /** T-922: para qué la usa el bot. Con rol y sin bloquear se puede eliminar: el bot redacta ese mensaje solo. */
+  rol: string | null;
+  /** T-922: Jev puede mandarla sin pasar por el modelo. */
+  saleSola: boolean;
   /** Datos que el bot sabe rellenar en esta plantilla. */
   placeholders: string[];
   /** Datos que el texto no puede perder. */

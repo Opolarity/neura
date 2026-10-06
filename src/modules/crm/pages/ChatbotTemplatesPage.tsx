@@ -28,8 +28,8 @@ const ALL = "__all__";
  * T-902. Los textos fijos del chatbot de WhatsApp. En las del sistema solo se
  * edita el texto: los nombres los usa el código del bot. T-917: etiquetas (una
  * principal de Jev y extras), filtro por etiqueta y plantillas nuevas creadas
- * desde acá, que también se pueden eliminar (las del sistema no: las nombran
- * las reglas del bot). Solo admin (lo exigen también los SP).
+ * desde acá. T-922: se elimina cualquiera que no esté bloqueada; si el bot la
+ * usaba para algo (rol), ese mensaje lo redacta él. Solo admin (lo exigen también los SP).
  */
 export default function ChatbotTemplatesPage() {
   const { isAdmin } = useAuth();

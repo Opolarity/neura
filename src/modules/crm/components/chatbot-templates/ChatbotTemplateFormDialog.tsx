@@ -13,10 +13,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   fromFriendlyText,
   previewFriendlyText,
+  rolLabel,
   templateVariables,
   toFriendlyText,
   validateFriendlyText,
@@ -43,7 +45,7 @@ interface ChatbotTemplateFormDialogProps {
   /** T-917: nombres de las etiquetas externas (creadas desde el ERP) que ya existen. */
   tagOptions: string[];
   onOpenChange: (open: boolean) => void;
-  onSave: (template: ChatbotTemplate, content: string, meta?: ChatbotTemplateMeta) => Promise<boolean>;
+  onSave: (template: ChatbotTemplate, content: string, meta?: ChatbotTemplateMeta, saleSola?: boolean) => Promise<boolean>;
   onCreate: (input: ChatbotTemplateCreateInput) => Promise<boolean>;
 }
 
@@ -92,6 +94,7 @@ export default function ChatbotTemplateFormDialog({
   const [name, setName] = useState("");
   const [topic, setTopic] = useState<ChatbotTemplateTopic | "">("");
   const [tags, setTags] = useState<string[]>([]);
+  const [saleSola, setSaleSola] = useState(true);
   const [touched, setTouched] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -106,6 +109,7 @@ export default function ChatbotTemplateFormDialog({
     setName("");
     setTopic(template?.topic ?? "");
     setTags(template?.tags ?? []);
+    setSaleSola(template?.saleSola ?? true);
     setTouched(false);
   }, [template, vars, creating]);
 
@@ -157,7 +161,7 @@ export default function ChatbotTemplateFormDialog({
     const meta: ChatbotTemplateMeta | undefined = tagsEditable && topic ? { topic, tags } : undefined;
     const ok = creating
       ? await onCreate({ name: name.trim(), content, ...(meta as ChatbotTemplateMeta) })
-      : await onSave(template!, content, meta);
+      : await onSave(template!, content, meta, template!.locked ? undefined : saleSola);
     if (ok) onOpenChange(false);
   };
 
@@ -271,8 +275,30 @@ export default function ChatbotTemplateFormDialog({
             </div>
             <p className="flex items-center gap-1 text-xs text-muted-foreground">
               <Lock className="w-3 h-3" />
-              Plantilla especial: la arma el bot en un flujo fijo, así que sus etiquetas no se cambian. El texto sí.
+              Plantilla bloqueada: es parte de un flujo fijo del bot (pedido, pago o comprobantes), así que sus
+              etiquetas no se cambian y no se puede eliminar. El texto sí.
             </p>
+          </div>
+        )}
+
+        {!creating && !template!.locked && (
+          <div className="flex items-start justify-between gap-4 rounded-md border p-3">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="tpl-sale-sola">Jev puede mandarla sola</Label>
+              <p className="text-xs text-muted-foreground">
+                Si está activo y Jev está seguro de que responde el mensaje, la manda sin pasar por el modelo. Apágalo si
+                la respuesta depende de la cuenta, del pedido o de algo que el cliente dijo antes.
+                {template!.rol && ` El bot la usa para: ${rolLabel(template!.rol)}.`}
+              </p>
+            </div>
+            <Switch
+              id="tpl-sale-sola"
+              checked={saleSola}
+              onCheckedChange={(v) => {
+                setSaleSola(v);
+                setTouched(true);
+              }}
+            />
           </div>
         )}
 
