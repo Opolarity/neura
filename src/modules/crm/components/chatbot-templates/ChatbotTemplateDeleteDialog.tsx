@@ -10,7 +10,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
-import { rolLabel } from "../../adapters/chatbotTemplates.adapter";
 import type { ChatbotTemplate } from "../../types/chatbotTemplates.types";
 
 interface ChatbotTemplateDeleteDialogProps {
@@ -37,12 +36,6 @@ export default function ChatbotTemplateDeleteDialog({
             ¿Eliminar la plantilla <span className="font-mono">{template?.name}</span>? El bot deja de usarla en menos de
             un minuto y no se puede recuperar desde el ERP. Sus etiquetas siguen disponibles para otras plantillas.
           </AlertDialogDescription>
-          {template?.rol && (
-            <p className="text-sm text-muted-foreground">
-              El bot la usa para: <strong>{rolLabel(template.rol)}</strong>. Si la eliminas, ese mensaje lo redacta el
-              bot con sus propias palabras.
-            </p>
-          )}
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>

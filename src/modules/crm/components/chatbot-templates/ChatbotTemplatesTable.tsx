@@ -1,4 +1,4 @@
-import { Bot, Lock, SquarePen, Trash2 } from "lucide-react";
+import { Lock, SquarePen, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,24 +48,14 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit, onDelet
                 <div className="flex flex-col items-start gap-1">
                   <span className="font-mono text-xs">{t.name}</span>
                   {t.fromErp && <Badge variant="info">Creada en el ERP</Badge>}
-                  {t.locked ? (
+                  {t.locked && (
                     <span
                       className="flex items-center gap-1 text-xs text-muted-foreground"
                       title="Parte de un flujo fijo del bot (pedido, pago o comprobantes): solo se edita el texto"
                     >
                       <Lock className="w-3 h-3" />
-                      Bloqueada
+                      {t.rol ? `Bloqueada · ${rolLabel(t.rol)}` : "Bloqueada"}
                     </span>
-                  ) : (
-                    t.rol && (
-                      <span
-                        className="flex items-center gap-1 text-xs text-muted-foreground"
-                        title={`El bot la usa para: ${rolLabel(t.rol)}. Si la eliminas, ese mensaje lo redacta el bot.`}
-                      >
-                        <Bot className="w-3 h-3" />
-                        Usada por el bot
-                      </span>
-                    )
                   )}
                 </div>
               </TableCell>

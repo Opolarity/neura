@@ -96,7 +96,7 @@ export interface ChatbotTemplate {
   fromErp: boolean;
   /** Bloqueada: la arma el bot en un flujo fijo (pedido, pago, comprobantes); solo se edita el texto. */
   locked: boolean;
-  /** T-922: para qué la usa el bot. Con rol y sin bloquear se puede eliminar: el bot redacta ese mensaje solo. */
+  /** T-922: el paso del flujo que cumple (solo las bloqueadas tienen rol; el bot la pide por él). */
   rol: string | null;
   /** T-922: Jev puede mandarla sin pasar por el modelo. */
   saleSola: boolean;

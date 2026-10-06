@@ -275,8 +275,8 @@ export default function ChatbotTemplateFormDialog({
             </div>
             <p className="flex items-center gap-1 text-xs text-muted-foreground">
               <Lock className="w-3 h-3" />
-              Plantilla bloqueada: es parte de un flujo fijo del bot (pedido, pago o comprobantes), así que sus
-              etiquetas no se cambian y no se puede eliminar. El texto sí.
+              Plantilla bloqueada{template!.rol ? ` (${rolLabel(template!.rol)})` : ""}: es parte de un flujo fijo del
+              bot (pedido, pago o comprobantes), así que sus etiquetas no se cambian y no se puede eliminar. El texto sí.
             </p>
           </div>
         )}
@@ -288,7 +288,6 @@ export default function ChatbotTemplateFormDialog({
               <p className="text-xs text-muted-foreground">
                 Si está activo y Jev está seguro de que responde el mensaje, la manda sin pasar por el modelo. Apágalo si
                 la respuesta depende de la cuenta, del pedido o de algo que el cliente dijo antes.
-                {template!.rol && ` El bot la usa para: ${rolLabel(template!.rol)}.`}
               </p>
             </div>
             <Switch
