@@ -37,6 +37,7 @@ import {
   SHIPPING_MEASUREMENT_UNIT,
   calcShippingAmounts,
 } from "@/modules/invoices/utils/shippingItem";
+import { prorateGlobalDiscount, sumGlobalOrderDiscounts } from "@/modules/invoices/utils/orderDiscounts";
 import { useToast } from "@/hooks/use-toast";
 import { formatDateDisplay } from "@/shared/utils/date";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
@@ -412,6 +413,11 @@ export default function InvoicingStep({
         return;
       }
 
+      const { data: orderDiscounts } = await supabase
+        .from("order_discounts")
+        .select("code, discount_amount")
+        .eq("order_id", orderId);
+
       let customerDocumentEstateCode: string | null = null;
       if (isNonInv) {
         const { data: docType } = await supabase
@@ -425,7 +431,7 @@ export default function InvoicingStep({
       const totalAmount = Number(order.total);
       const totalTaxes = totalAmount - (totalAmount / 1.18);
 
-      const items = orderProducts.map((op: any) => {
+      const productItems = orderProducts.map((op: any) => {
         // T-630: order_products.product_discount es el descuento POR UNIDAD; el
         // campo discount del comprobante es el de la linea entera.
         const lineDiscount = Number(op.product_discount || 0) * Number(op.quantity);
@@ -442,6 +448,14 @@ export default function InvoicingStep({
           total: Math.round(lineTotal * 100) / 100,
         };
       });
+
+      // Descuentos globales de la venta (order_discounts) repartidos en las líneas,
+      // para que la suma de líneas cuadre con orders.total (y con total_amount).
+      const items = prorateGlobalDiscount(
+        productItems,
+        (i) => i.unit_price,
+        sumGlobalOrderDiscounts(orderDiscounts),
+      );
 
       // Add shipping cost as line item if applicable
       if (order.shipping_cost && Number(order.shipping_cost) > 0) {
@@ -560,6 +574,11 @@ export default function InvoicingStep({
         return;
       }
 
+      const { data: orderDiscounts } = await supabase
+        .from("order_discounts")
+        .select("code, discount_amount")
+        .eq("order_id", orderId);
+
       let customerDocumentEstateCode: string | null = null;
       if (typeCode !== "INV") {
         const { data: docType } = await supabase
@@ -573,7 +592,7 @@ export default function InvoicingStep({
       const totalAmount = Number(order.total);
       const totalTaxes = totalAmount - (totalAmount / 1.18);
 
-      const items = orderProducts.map((op: any) => {
+      const productItems = orderProducts.map((op: any) => {
         // T-630: order_products.product_discount es el descuento POR UNIDAD; el
         // campo discount del comprobante es el de la linea entera.
         const lineDiscount = Number(op.product_discount || 0) * Number(op.quantity);
@@ -590,6 +609,14 @@ export default function InvoicingStep({
           total: Math.round(lineTotal * 100) / 100,
         };
       });
+
+      // Descuentos globales de la venta (order_discounts) repartidos en las líneas,
+      // para que la suma de líneas cuadre con orders.total (y con total_amount).
+      const items = prorateGlobalDiscount(
+        productItems,
+        (i) => i.unit_price,
+        sumGlobalOrderDiscounts(orderDiscounts),
+      );
 
       if (order.shipping_cost && Number(order.shipping_cost) > 0) {
         const shippingCost = Number(order.shipping_cost);

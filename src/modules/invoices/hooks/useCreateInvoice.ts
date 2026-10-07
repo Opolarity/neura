@@ -8,6 +8,7 @@ import { getTypesAdapter } from "@/shared/adapters/adapter";
 import type { Types } from "@/shared/types/type";
 import type { InvoiceItemForm, InvoiceFormData, DocumentType, InvoiceProvider, InvoiceSerie } from "../types/Invoices.types";
 import { buildShippingFormItem } from "../utils/shippingItem";
+import { prorateGlobalDiscount, sumGlobalOrderDiscounts } from "../utils/orderDiscounts";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import { toastError } from "@/shared/utils/toastError";
 
@@ -229,7 +230,7 @@ export const useCreateInvoice = () => {
             // Match document type ID locally once loaded
           }));
 
-          const orderItems: InvoiceItemForm[] = orderProducts.map((p: any) => {
+          const productItems: InvoiceItemForm[] = orderProducts.map((p: any) => {
             const unitPrice = parseFloat(p.product_price) || 0;
             const quantity = p.quantity || 1;
             // T-630: order_products.product_discount es el descuento POR UNIDAD;
@@ -251,6 +252,14 @@ export const useCreateInvoice = () => {
               total,
             };
           });
+
+          // Descuentos globales de la venta (order_discounts) repartidos en las líneas
+          // de productos, para que el comprobante cuadre con el total de la venta.
+          const orderItems = prorateGlobalDiscount(
+            productItems,
+            (i) => i.unitPrice,
+            sumGlobalOrderDiscounts(data.orderDiscounts),
+          );
 
           const shippingItem = buildShippingFormItem(order.shipping_cost);
           if (shippingItem) orderItems.push(shippingItem);
@@ -473,7 +482,7 @@ export const useCreateInvoice = () => {
       }));
 
       // Populate items
-      const orderItems: InvoiceItemForm[] = orderProducts.map((p: any) => {
+      const productItems: InvoiceItemForm[] = orderProducts.map((p: any) => {
         const unitPrice = p.price || 0;
         const quantity = p.quantity || 1;
         // T-630: sp_get_sale_by_id_products devuelve discount_amount POR UNIDAD;
@@ -495,6 +504,14 @@ export const useCreateInvoice = () => {
           total,
         };
       });
+
+      // Descuentos globales de la venta (order_discounts) repartidos en las líneas
+      // de productos, para que el comprobante cuadre con el total de la venta.
+      const orderItems = prorateGlobalDiscount(
+        productItems,
+        (i) => i.unitPrice,
+        sumGlobalOrderDiscounts(data.orderDiscounts),
+      );
 
       const shippingItem = buildShippingFormItem(order.shipping_cost);
       if (shippingItem) orderItems.push(shippingItem);

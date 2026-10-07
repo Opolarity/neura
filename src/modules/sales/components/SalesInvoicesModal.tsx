@@ -31,6 +31,7 @@ import {
   SHIPPING_MEASUREMENT_UNIT,
   calcShippingAmounts,
 } from "@/modules/invoices/utils/shippingItem";
+import { prorateGlobalDiscount, sumGlobalOrderDiscounts } from "@/modules/invoices/utils/orderDiscounts";
 import { formatDateDisplay } from "@/shared/utils/date";
 import { ArrowUp, ChevronDown, Eye, FileText, Loader2, Printer } from "lucide-react";
 import {
@@ -456,6 +457,11 @@ export const SalesInvoicesModal = ({
         return;
       }
 
+      const { data: orderDiscounts } = await supabase
+        .from("order_discounts")
+        .select("code, discount_amount")
+        .eq("order_id", orderId);
+
       let customerDocumentEstateCode: string | null = null;
       if (isNonInv) {
         const { data: docType } = await supabase
@@ -469,7 +475,7 @@ export const SalesInvoicesModal = ({
       const totalAmount = Number(order.total);
       const totalTaxes = totalAmount - (totalAmount / 1.18);
 
-      const items = orderProducts.map((op: any) => {
+      const productItems = orderProducts.map((op: any) => {
         // T-630: order_products.product_discount es el descuento POR UNIDAD; el
         // campo discount del comprobante es el de la linea entera.
         const lineDiscount = Number(op.product_discount || 0) * Number(op.quantity);
@@ -486,6 +492,14 @@ export const SalesInvoicesModal = ({
           total: Math.round(lineTotal * 100) / 100,
         };
       });
+
+      // Descuentos globales de la venta (order_discounts) repartidos en las líneas,
+      // para que la suma de líneas cuadre con orders.total (y con total_amount).
+      const items = prorateGlobalDiscount(
+        productItems,
+        (i) => i.unit_price,
+        sumGlobalOrderDiscounts(orderDiscounts),
+      );
 
       // Add shipping cost as line item if applicable
       if (order.shipping_cost && Number(order.shipping_cost) > 0) {
