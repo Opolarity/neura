@@ -97,6 +97,8 @@ export default function ChatbotTemplateFormDialog({
   const [saleSola, setSaleSola] = useState(true);
   const [touched, setTouched] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  /** Cuándo se abrió el editor: el interruptor ignora los clics de ese primer momento. */
+  const abiertoEn = useRef(0);
 
   const vars = useMemo(() => (template ? templateVariables(template) : []), [template]);
   /** Etiquetas editables: todas menos las especiales. */
@@ -111,6 +113,7 @@ export default function ChatbotTemplateFormDialog({
     setTags(template?.tags ?? []);
     setSaleSola(template?.saleSola ?? true);
     setTouched(false);
+    abiertoEn.current = Date.now();
   }, [template, vars, creating]);
 
   const textError = useMemo(() => validateFriendlyText(text, vars, fallbacks), [text, vars, fallbacks]);
@@ -122,6 +125,8 @@ export default function ChatbotTemplateFormDialog({
   /** El texto para cuando falta el dato, solo de los que siguen en el texto. */
   const withFallback = variablesInText(text, vars).filter((v) => v.fallback != null);
   const hasData = /\[[^[\]\n]+\]/.test(text);
+  /** T-922: el interruptor quedó distinto de lo guardado (se avisa antes de guardar). */
+  const cambiaSola = !creating && !template!.locked && saleSola !== template!.saleSola;
 
   /** Aplica un formato de WhatsApp a la selección y la deja seleccionada. */
   const applyFormat = (action: FormatAction) => {
@@ -289,11 +294,19 @@ export default function ChatbotTemplateFormDialog({
                 Si está activo y Jev está seguro de que responde el mensaje, la manda sin pasar por el modelo. Apágalo si
                 la respuesta depende de la cuenta, del pedido o de algo que el cliente dijo antes.
               </p>
+              {cambiaSola && (
+                <p className="text-xs font-medium text-warning" role="status">
+                  {saleSola ? "Al guardar, Jev podrá mandarla sola." : "Al guardar, Jev ya no la manda sola."}
+                </p>
+              )}
             </div>
             <Switch
               id="tpl-sale-sola"
               checked={saleSola}
               onCheckedChange={(v) => {
+                // Un doble clic en "Editar" cae justo donde aparece el interruptor (07/10/2026):
+                // el segundo clic lo cambiaba sin que se notara.
+                if (Date.now() - abiertoEn.current < 500) return;
                 setSaleSola(v);
                 setTouched(true);
               }}

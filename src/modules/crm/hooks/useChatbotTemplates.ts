@@ -107,9 +107,11 @@ export const useChatbotTemplates = (enabled: boolean) => {
       const cambioSola = !template.locked && saleSola != null && saleSola !== template.saleSola;
       if (cambioSola) await setChatbotTemplateSaleSolaApi(template.id, saleSola);
       if (res.changed || cambioSola) {
+        // T-922: el cambio del interruptor se dice siempre, para que no pase desapercibido.
+        const sola = !cambioSola ? "" : saleSola ? " Jev ya puede mandarla sola." : " Jev ya no la manda sola.";
         toast({
           title: "Plantilla guardada",
-          description: "El bot empieza a usar el texto nuevo en menos de un minuto.",
+          description: `${res.changed ? "El bot empieza a usar el texto nuevo en menos de un minuto." : "Listo."}${sola}`,
         });
         await load();
       }
