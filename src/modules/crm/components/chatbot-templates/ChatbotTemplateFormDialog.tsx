@@ -182,12 +182,9 @@ export default function ChatbotTemplateFormDialog({
               </DialogDescription>
             </>
           ) : (
-            <>
-              <DialogTitle className="font-mono text-base">{template!.name}</DialogTitle>
-              {template!.description && !template!.fromErp && (
-                <DialogDescription>{template!.description}</DialogDescription>
-              )}
-            </>
+            // T-922: sin la descripción. En las del sistema eran notas internas para el bot
+            // ("T-771: la manda el SERVICIO…") y desde el ERP no se pueden llenar.
+            <DialogTitle className="font-mono text-base">{template!.name}</DialogTitle>
           )}
         </DialogHeader>
 
