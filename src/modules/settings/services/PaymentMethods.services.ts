@@ -48,14 +48,51 @@ export const CreatePaymentMethod = async (paymentMethod: Omit<PaymentMethod, 'id
     return data;
 };
 
-// Solo viajan id, name y active: la cuenta de negocio no es editable desde el
-// listado y la edge function la ignora.
+// La cuenta de negocio no viaja: no es editable desde el listado y la edge
+// function la ignora. description / image_url en "" limpian el campo.
 export const UpdatePaymentMethod = async (paymentMethod: PaymentMethodPayload): Promise<unknown> => {
     const data = await invokeFunction("update-payments-methods", {
         method: "PUT",
-        body: { id: paymentMethod.id, name: paymentMethod.name, active: paymentMethod.active },
+        body: {
+            id: paymentMethod.id,
+            name: paymentMethod.name,
+            active: paymentMethod.active,
+            description: paymentMethod.description,
+            image_url: paymentMethod.image_url,
+            requires_voucher: paymentMethod.requires_voucher,
+        },
     });
     return data;
+};
+
+const PAYMENT_METHODS_BUCKET = "payment-methods";
+
+export const UploadPaymentMethodImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split(".").pop();
+    const filePath = `${crypto.randomUUID()}.${fileExt}`;
+
+    const { error } = await supabase.storage
+        .from(PAYMENT_METHODS_BUCKET)
+        .upload(filePath, file);
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+        .from(PAYMENT_METHODS_BUCKET)
+        .getPublicUrl(filePath);
+    return publicUrl;
+};
+
+// Solo borra archivos del bucket propio: las filas antiguas apuntan a
+// placehold.co o al bucket `ecommerce`, y esas no se tocan.
+export const RemovePaymentMethodImage = async (url: string | null | undefined): Promise<void> => {
+    const marker = `/${PAYMENT_METHODS_BUCKET}/`;
+    const index = url?.indexOf(marker) ?? -1;
+    if (!url || index === -1) return;
+    const path = decodeURIComponent(url.slice(index + marker.length));
+    const { error } = await supabase.storage
+        .from(PAYMENT_METHODS_BUCKET)
+        .remove([path]);
+    if (error) console.error("No se pudo borrar la imagen anterior:", error);
 };
 
 // Borrado virtual: sp_delete_payment_method pone is_active = false. Distinto

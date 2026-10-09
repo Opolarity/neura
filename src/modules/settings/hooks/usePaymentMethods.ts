@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { PaymentMethod, PaymentMethodPayload, PaymentMethodsFilters } from '../types/PaymentMethods.types';
-import { CreatePaymentMethod, DeletePaymentMethod, getActivePaymentMethods, PaymentMethodsApi, UpdatePaymentMethod } from '../services/PaymentMethods.services';
+import { CreatePaymentMethod, DeletePaymentMethod, getActivePaymentMethods, PaymentMethodsApi, RemovePaymentMethodImage, UpdatePaymentMethod, UploadPaymentMethodImage } from '../services/PaymentMethods.services';
 import { PaymentMethodsAdapter } from '../adapters/PaymentMethods.adapter';
 import { useToast } from '@/hooks/use-toast';
 import { PaginationState } from '@/shared/components/pagination/Pagination';
@@ -59,15 +59,28 @@ const usePaymentMethods = () => {
         setOpenFormModal(isOpen);
     };
 
-    const savePaymentMethod = async (payload: PaymentMethodPayload) => {
+    const savePaymentMethod = async ({ image, ...payload }: PaymentMethodPayload) => {
         setSaving(true);
+        // Si el guardado falla, la imagen recién subida se borra para no dejar
+        // archivos sueltos en el bucket.
+        let uploadedUrl: string | null = null;
         try {
             const isUpdate = payload.id != null;
+            if (image) {
+                uploadedUrl = await UploadPaymentMethodImage(image);
+                payload.image_url = uploadedUrl;
+            }
             if (isUpdate) {
                 await UpdatePaymentMethod(payload);
             } else {
                 await CreatePaymentMethod(payload as Omit<PaymentMethod, 'id'>);
             }
+            // La imagen anterior sobra si se reemplazó o se quitó.
+            const previousUrl = editingItem?.image_url;
+            if (isUpdate && previousUrl && payload.image_url !== undefined && payload.image_url !== previousUrl) {
+                await RemovePaymentMethodImage(previousUrl);
+            }
+            uploadedUrl = null;
             await load();
             toast({
                 title: "Éxito",
@@ -77,6 +90,7 @@ const usePaymentMethods = () => {
         } catch (error: any) {
             console.error("Error saving payment method:", error);
             toastError(error, "Error al guardar");
+            if (uploadedUrl) await RemovePaymentMethodImage(uploadedUrl);
         } finally {
             setSaving(false);
             setOpenFormModal(false);
