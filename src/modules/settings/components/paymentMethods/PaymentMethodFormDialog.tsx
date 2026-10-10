@@ -23,6 +23,7 @@ import { PaymentMethod, PaymentMethodPayload } from "../../types/PaymentMethods.
 import { useForm, Controller } from "react-hook-form";
 import { useEffect, useRef, useState } from "react";
 import { BusinessAccountsApi } from "../../services/PaymentMethods.services";
+import { isEmptyRichText, plainTextToHtml } from "@/shared/utils/richText";
 
 interface PaymentMethodFormDialogProps {
   open: boolean;
@@ -31,10 +32,6 @@ interface PaymentMethodFormDialogProps {
   saving: boolean;
   onSaved: (payload: PaymentMethodPayload) => Promise<void>;
 }
-
-// Tiptap deja "<p></p>" cuando se borra todo el texto: eso es "sin descripción".
-const normalizeDescription = (html: string | undefined) =>
-  html && html.replace(/<[^>]+>/g, "").trim() !== "" ? html : "";
 
 export const PaymentMethodFormDialog = ({
   open,
@@ -57,7 +54,9 @@ export const PaymentMethodFormDialog = ({
       ? {
           name: item.name,
           active: item.active,
-          description: item.description ?? "",
+          // Las descripciones antiguas son texto plano: se pasan a párrafos
+          // para que el editor no junte sus saltos de línea.
+          description: plainTextToHtml(item.description),
           image_url: item.image_url ?? "",
           requires_voucher: item.requires_voucher ?? false,
           image: null,
@@ -103,7 +102,8 @@ export const PaymentMethodFormDialog = ({
 
   const onSubmit = async (data: PaymentMethodPayload) => {
     const extra = {
-      description: normalizeDescription(data.description),
+      // Tiptap deja "<p></p>" al borrar todo el texto: eso es "sin descripción".
+      description: isEmptyRichText(data.description) ? "" : data.description ?? "",
       image_url: data.image_url ?? "",
       requires_voucher: data.requires_voucher ?? false,
       image: data.image ?? null,
