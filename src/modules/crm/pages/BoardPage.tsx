@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
-import { Hand, RefreshCw, Search, User, X } from "lucide-react";
+import { ChevronsLeft, Hand, Search, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageLoader from "@/shared/components/page-loader/PageLoader";
@@ -34,10 +34,13 @@ const relative = (iso: string) => {
 
 const BoardPage = () => {
   const { user } = useAuth();
-  const { columns, loading, search, onlyMine, setSearch, setOnlyMine, reload, moveCard } =
+  const { columns, loading, search, onlyMine, setSearch, setOnlyMine, moveCard } =
     useConversationsBoard();
 
   const [searchDraft, setSearchDraft] = useState("");
+  // "Sin etapa" arranca plegada: junta cientos de chats contra uno o dos por
+  // etapa y tapaba el embudo, que es lo que el tablero existe para mostrar.
+  const [showUnstaged, setShowUnstaged] = useState(false);
   // Qué se está arrastrando y sobre qué columna está encima. dragOver se guarda
   // aparte para poder resaltar el destino sin tocar los datos.
   const [dragging, setDragging] = useState<{ card: BoardCard; from: number | null } | null>(
@@ -62,67 +65,53 @@ const BoardPage = () => {
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
+      {/* Sin botón de actualizar: el tablero ya se refresca solo (poll) y al
+          mover una tarjeta. */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-lg font-semibold leading-tight">Chats Status</h1>
-          <p className="text-sm text-muted-foreground">
-            Arrastrá un chat a otra columna para cambiarle la etapa.
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">Chats Status</h1>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 px-2.5 text-xs"
-          onClick={reload}
-          disabled={loading}
-        >
-          <RefreshCw className="mr-1 h-3.5 w-3.5" />
-          Actualizar
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <form
-          className="relative"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setSearch(searchDraft);
-          }}
-        >
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={searchDraft}
-            onChange={(e) => setSearchDraft(e.target.value)}
-            placeholder="Buscar cliente, teléfono o documento…"
-            className="h-8 w-[250px] pl-8 text-xs"
-          />
-        </form>
-
-        <Button
-          variant={onlyMine ? "default" : "outline"}
-          size="sm"
-          className="h-8 px-2.5 text-xs"
-          onClick={() => setOnlyMine(onlyMine ? null : user?.id ?? null)}
-        >
-          Mías
-        </Button>
-
-        {(search || onlyMine) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2.5 text-xs"
-            onClick={() => {
-              setSearchDraft("");
-              setSearch("");
-              setOnlyMine(null);
+        <div className="flex flex-wrap items-center gap-2">
+          <form
+            className="relative"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setSearch(searchDraft);
             }}
           >
-            <X className="mr-1 h-3.5 w-3.5" />
-            Limpiar
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchDraft}
+              onChange={(e) => setSearchDraft(e.target.value)}
+              placeholder="Buscar cliente, teléfono o documento…"
+              className="h-8 w-[250px] pl-8 text-xs"
+            />
+          </form>
+
+          <Button
+            variant={onlyMine ? "default" : "outline"}
+            size="sm"
+            className="h-8 px-2.5 text-xs"
+            onClick={() => setOnlyMine(onlyMine ? null : user?.id ?? null)}
+          >
+            Mías
           </Button>
-        )}
+
+          {(search || onlyMine) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2.5 text-xs"
+              onClick={() => {
+                setSearchDraft("");
+                setSearch("");
+                setOnlyMine(null);
+              }}
+            >
+              <X className="mr-1 h-3.5 w-3.5" />
+              Limpiar
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* El tablero scrollea en horizontal; cada columna en vertical. */}
@@ -133,6 +122,26 @@ const BoardPage = () => {
           {columns.map((column) => {
             const isOver = dragOver === column.situationId;
             const isDropTarget = column.situationId !== null;
+            const isUnstaged = column.situationId === null;
+
+            if (isUnstaged && !showUnstaged) {
+              return (
+                <button
+                  key="sin-etapa"
+                  type="button"
+                  onClick={() => setShowUnstaged(true)}
+                  title={`Mostrar los chats sin etapa (${column.total})`}
+                  className="flex w-10 shrink-0 flex-col items-center gap-2 rounded-lg border bg-card py-2 text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span className="rounded-full bg-muted px-1.5 text-[10.5px] font-medium tabular-nums">
+                    {column.total}
+                  </span>
+                  <span className="rotate-180 text-xs font-semibold [writing-mode:vertical-rl]">
+                    {column.name}
+                  </span>
+                </button>
+              );
+            }
 
             return (
               <section
@@ -156,9 +165,21 @@ const BoardPage = () => {
                   )}
                 >
                   <h2 className="truncate text-xs font-semibold">{column.name}</h2>
-                  <span className="shrink-0 rounded-full bg-background/60 px-1.5 text-[10.5px] font-medium tabular-nums">
-                    {column.total}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <span className="rounded-full bg-background/60 px-1.5 text-[10.5px] font-medium tabular-nums">
+                      {column.total}
+                    </span>
+                    {isUnstaged && (
+                      <button
+                        type="button"
+                        onClick={() => setShowUnstaged(false)}
+                        title="Plegar la columna"
+                        className="rounded p-0.5 hover:bg-background/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <ChevronsLeft className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </header>
 
                 <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
@@ -194,7 +215,7 @@ const BoardPage = () => {
                         </p>
                       )}
 
-                      <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                      <p className="mt-1 truncate text-[11px] leading-snug text-muted-foreground">
                         {card.lastMessage || "—"}
                       </p>
 

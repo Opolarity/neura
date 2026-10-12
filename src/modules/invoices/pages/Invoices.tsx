@@ -13,7 +13,10 @@ import OrderSelectionModal from "../components/invoices/OrderSelectionModal";
 import InvoicesHeader from "../components/invoices/InvoicesHeader.tsx";
 
 const Invoices = () => {
-  const { invoices, loading, pagination, onPageChange, onPageSizeChange, activeFilters, applyFilters, clearFilters, invoiceTypes } = useInvoices();
+  const {
+    invoices, loading, pagination, onPageChange, onPageSizeChange, activeFilters, applyFilters, clearFilters,
+    invoiceTypes, search, setSearch, exportToExcel, exportLoading,
+  } = useInvoices();
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
 
   return (
@@ -27,7 +30,17 @@ const Invoices = () => {
       />
       <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="!p-4">
-          <InvoicesFilterBar activeFilters={activeFilters} onApply={applyFilters} onClear={clearFilters} invoiceTypes={invoiceTypes} />
+          <InvoicesFilterBar
+            activeFilters={activeFilters}
+            onApply={applyFilters}
+            onClear={clearFilters}
+            invoiceTypes={invoiceTypes}
+            search={search}
+            onSearchChange={setSearch}
+            onExport={exportToExcel}
+            exportLoading={exportLoading}
+            exportDisabled={loading || pagination.total === 0}
+          />
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <InvoicesTable invoices={invoices} loading={loading} invoiceTypes={invoiceTypes} />

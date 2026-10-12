@@ -22,6 +22,7 @@ import { DialogTrigger } from "@radix-ui/react-dialog";
 import { ListFilter } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DateRangeFilter, DateRangeValue } from "@/shared/components/date-range";
+import { MultiSelect } from "@/shared/components/MultiSelect";
 
 interface InvoicesFilterModalProps {
   activeFilters?: ActiveInvoiceFilters | null;
@@ -32,7 +33,7 @@ interface InvoicesFilterModalProps {
 
 interface ModalFilters {
   declared: string;
-  type: string;
+  types: string[];
   min_mount: string;
   max_mount: string;
   start_date: string;
@@ -41,7 +42,7 @@ interface ModalFilters {
 
 const defaultModalFilters: ModalFilters = {
   declared: "all",
-  type: "",
+  types: [],
   min_mount: "",
   max_mount: "",
   start_date: "",
@@ -51,7 +52,7 @@ const defaultModalFilters: ModalFilters = {
 const toModalFilters = (filters: ActiveInvoiceFilters): ModalFilters => ({
   declared:
     filters.declared === true ? "true" : filters.declared === false ? "false" : "all",
-  type: filters.type != null ? String(filters.type) : "",
+  types: (filters.types ?? []).map(String),
   min_mount: filters.min_mount != null ? String(filters.min_mount) : "",
   max_mount: filters.max_mount != null ? String(filters.max_mount) : "",
   start_date: filters.start_date ?? "",
@@ -60,7 +61,7 @@ const toModalFilters = (filters: ActiveInvoiceFilters): ModalFilters => ({
 
 const toActiveFilters = (modal: ModalFilters): ActiveInvoiceFilters => ({
   declared: modal.declared === "all" ? null : modal.declared === "true",
-  type: modal.type !== "" ? Number(modal.type) : null,
+  types: modal.types.length > 0 ? modal.types.map(Number) : null,
   min_mount: modal.min_mount !== "" ? Number(modal.min_mount) : null,
   max_mount: modal.max_mount !== "" ? Number(modal.max_mount) : null,
   start_date: modal.start_date || null,
@@ -84,7 +85,7 @@ const InvoicesFilterModal = ({ activeFilters, onApply, onClear, invoiceTypes = [
     }));
   };
 
-  const handleChange = (field: keyof ModalFilters, value: string) => {
+  const handleChange = (field: Exclude<keyof ModalFilters, "types">, value: string) => {
     setLocalFilters((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -108,7 +109,7 @@ const InvoicesFilterModal = ({ activeFilters, onApply, onClear, invoiceTypes = [
       </DialogTrigger>
       <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
-          <DialogTitle>Filtrar Facturas</DialogTitle>
+          <DialogTitle>Filtrar comprobantes</DialogTitle>
         </DialogHeader>
 
         {/* Tope de altura + scroll interno: los filtros crecen (tipos de
@@ -138,22 +139,17 @@ const InvoicesFilterModal = ({ activeFilters, onApply, onClear, invoiceTypes = [
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="type">Tipo de factura</Label>
-                <Select
-                  value={localFilters.type}
-                  onValueChange={(v) => handleChange("type", v)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {invoiceTypes.map((t) => (
-                      <SelectItem key={t.id} value={String(t.id)}>
-                        {t.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Tipo de comprobante</Label>
+                <MultiSelect
+                  options={invoiceTypes.map((t) => ({
+                    label: t.name,
+                    value: String(t.id),
+                  }))}
+                  value={localFilters.types}
+                  onChange={(types) => setLocalFilters((prev) => ({ ...prev, types }))}
+                  placeholder="Todos los tipos"
+                  showClear
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

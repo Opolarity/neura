@@ -14,6 +14,7 @@ import type {
 import type {
   ChatbotTemplateCreateInput,
   ChatbotTemplateCreateResponse,
+  ChatbotTemplateDeleteResponse,
   ChatbotTemplateMeta,
   ChatbotTagsListResponse,
   ChatbotTemplatesListResponse,
@@ -477,5 +478,27 @@ export const createChatbotTemplateApi = async (
     data as ChatbotTemplateCreateResponse | null,
     error,
     "No se pudo crear la plantilla."
+  );
+};
+
+/** T-922: si Jev puede mandarla sola, sin el modelo (las bloqueadas las rechaza el SP). */
+export const setChatbotTemplateSaleSolaApi = async (id: number, saleSola: boolean): Promise<ChatbotTemplateUpdateResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_template_set_sale_sola", { p_id: id, p_sale_sola: saleSola });
+
+  return unwrap(
+    data as ChatbotTemplateUpdateResponse | null,
+    error,
+    "No se pudo cambiar si Jev manda la plantilla sola."
+  );
+};
+
+/** Elimina una plantilla. T-922: cualquiera que no esté bloqueada (las bloqueadas las rechaza el SP). */
+export const deleteChatbotTemplateApi = async (id: number): Promise<ChatbotTemplateDeleteResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_template_delete", { p_id: id });
+
+  return unwrap(
+    data as ChatbotTemplateDeleteResponse | null,
+    error,
+    "No se pudo eliminar la plantilla."
   );
 };

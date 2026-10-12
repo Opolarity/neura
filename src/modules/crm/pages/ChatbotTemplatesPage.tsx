@@ -17,6 +17,7 @@ import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import ChatbotTemplatesHeader from "../components/chatbot-templates/ChatbotTemplatesHeader";
 import ChatbotTemplatesTable from "../components/chatbot-templates/ChatbotTemplatesTable";
 import ChatbotTemplateFormDialog from "../components/chatbot-templates/ChatbotTemplateFormDialog";
+import ChatbotTemplateDeleteDialog from "../components/chatbot-templates/ChatbotTemplateDeleteDialog";
 import { useChatbotTemplates } from "../hooks/useChatbotTemplates";
 import type { ChatbotTemplate } from "../types/chatbotTemplates.types";
 
@@ -27,7 +28,8 @@ const ALL = "__all__";
  * T-902. Los textos fijos del chatbot de WhatsApp. En las del sistema solo se
  * edita el texto: los nombres los usa el código del bot. T-917: etiquetas (una
  * principal de Jev y extras), filtro por etiqueta y plantillas nuevas creadas
- * desde acá. Solo admin (lo exigen también los SP).
+ * desde acá. T-922: se elimina cualquiera que no esté bloqueada; si el bot la
+ * usaba para algo (rol), ese mensaje lo redacta él. Solo admin (lo exigen también los SP).
  */
 export default function ChatbotTemplatesPage() {
   const { isAdmin } = useAuth();
@@ -46,9 +48,11 @@ export default function ChatbotTemplatesPage() {
     onPageSizeChange,
     save,
     create,
+    remove,
   } = useChatbotTemplates(isAdmin);
   const [editing, setEditing] = useState<ChatbotTemplate | null>(null);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<ChatbotTemplate | null>(null);
 
   if (!isAdmin) {
     return (
@@ -115,7 +119,12 @@ export default function ChatbotTemplatesPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
-          <ChatbotTemplatesTable rows={rows} searching={!!search.trim() || !!tagFilter} onEdit={setEditing} />
+          <ChatbotTemplatesTable
+            rows={rows}
+            searching={!!search.trim() || !!tagFilter}
+            onEdit={setEditing}
+            onDelete={setDeleting}
+          />
         </CardContent>
         <CardFooter className="!p-0">
           <PaginationBar pagination={pagination} onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} />
@@ -126,7 +135,7 @@ export default function ChatbotTemplatesPage() {
         template={editing}
         creating={creating}
         saving={saving}
-        tagOptions={tags.map((g) => g.name)}
+        tagOptions={tags.filter((g) => !g.is_jev).map((g) => g.name)}
         onOpenChange={(open) => {
           if (open) return;
           setEditing(null);
@@ -134,6 +143,15 @@ export default function ChatbotTemplatesPage() {
         }}
         onSave={save}
         onCreate={create}
+      />
+
+      <ChatbotTemplateDeleteDialog
+        template={deleting}
+        deleting={saving}
+        onOpenChange={(open) => !open && setDeleting(null)}
+        onConfirm={async () => {
+          if (deleting && (await remove(deleting))) setDeleting(null);
+        }}
       />
     </div>
   );

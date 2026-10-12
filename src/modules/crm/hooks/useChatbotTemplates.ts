@@ -3,8 +3,10 @@ import { toast } from "@/shared/hooks/use-toast";
 import { toastError } from "@/shared/utils/toastError";
 import {
   createChatbotTemplateApi,
+  deleteChatbotTemplateApi,
   getChatbotTagsApi,
   getChatbotTemplatesApi,
+  setChatbotTemplateSaleSolaApi,
   updateChatbotTemplateApi,
 } from "../services/crm.service";
 import { toChatbotTemplate, toFriendlyText } from "../adapters/chatbotTemplates.adapter";
@@ -92,14 +94,24 @@ export const useChatbotTemplates = (enabled: boolean) => {
    * Devuelve true si se guardó (o no había cambios), para cerrar el editor.
    * `meta` (etiquetas) no va en las especiales.
    */
-  const save = async (template: ChatbotTemplate, content: string, meta?: ChatbotTemplateMeta): Promise<boolean> => {
+  const save = async (
+    template: ChatbotTemplate,
+    content: string,
+    meta?: ChatbotTemplateMeta,
+    saleSola?: boolean
+  ): Promise<boolean> => {
     setSaving(true);
     try {
       const res = await updateChatbotTemplateApi(template.id, content, template.updatedAt, meta);
-      if (res.changed) {
+      // T-922: "Jev puede mandarla sola" va por su propio SP (no aplica a las bloqueadas).
+      const cambioSola = !template.locked && saleSola != null && saleSola !== template.saleSola;
+      if (cambioSola) await setChatbotTemplateSaleSolaApi(template.id, saleSola);
+      if (res.changed || cambioSola) {
+        // T-922: el cambio del interruptor se dice siempre, para que no pase desapercibido.
+        const sola = !cambioSola ? "" : saleSola ? " Jev ya puede mandarla sola." : " Jev ya no la manda sola.";
         toast({
           title: "Plantilla guardada",
-          description: "El bot empieza a usar el texto nuevo en menos de un minuto.",
+          description: `${res.changed ? "El bot empieza a usar el texto nuevo en menos de un minuto." : "Listo."}${sola}`,
         });
         await load();
       }
@@ -133,6 +145,26 @@ export const useChatbotTemplates = (enabled: boolean) => {
     }
   };
 
+  /** T-922: cualquiera que no esté bloqueada. Devuelve true si se eliminó, para cerrar la confirmación. */
+  const remove = async (template: ChatbotTemplate): Promise<boolean> => {
+    setSaving(true);
+    try {
+      await deleteChatbotTemplateApi(template.id);
+      toast({
+        title: "Plantilla eliminada",
+        description: "El bot deja de usarla en menos de un minuto.",
+      });
+      await load();
+      return true;
+    } catch (error) {
+      console.error(error);
+      toastError(error, undefined, "No se pudo eliminar la plantilla");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return {
     loading,
     saving,
@@ -148,5 +180,6 @@ export const useChatbotTemplates = (enabled: boolean) => {
     onPageSizeChange,
     save,
     create,
+    remove,
   };
 };

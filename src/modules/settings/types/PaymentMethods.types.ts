@@ -14,6 +14,11 @@ export interface PaymentMethod {
     active: boolean;
     is_active: boolean;
     code: string | null;
+    // HTML del WysiwygEditor; las filas antiguas pueden traer texto plano.
+    description?: string | null;
+    // URL pública del bucket `payment-methods` (o externa en filas antiguas).
+    image_url?: string | null;
+    requires_voucher?: boolean;
 }
 
 export interface PaymentMethodsFilters {
@@ -28,4 +33,10 @@ export interface PaymentMethodPayload {
     // Opcional: en edición no viaja (la cuenta no se cambia desde el listado).
     business_account_id?: number | null;
     active: boolean;
+    description?: string;
+    // "" limpia la imagen; undefined la deja como está.
+    image_url?: string;
+    requires_voucher?: boolean;
+    // Archivo nuevo elegido en el formulario: el hook lo sube antes de guardar.
+    image?: File | null;
 }

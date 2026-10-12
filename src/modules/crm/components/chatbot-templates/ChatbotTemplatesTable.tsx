@@ -1,4 +1,4 @@
-import { Lock, SquarePen } from "lucide-react";
+import { Lock, SquarePen, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/shared/utils/date";
-import { toFriendlyText } from "../../adapters/chatbotTemplates.adapter";
+import { rolLabel, toFriendlyText } from "../../adapters/chatbotTemplates.adapter";
 import { topicLabel } from "../../adapters/chatbotTemplateTopics";
 import type { ChatbotTemplate } from "../../types/chatbotTemplates.types";
 
@@ -18,9 +18,11 @@ interface ChatbotTemplatesTableProps {
   rows: ChatbotTemplate[];
   searching: boolean;
   onEdit: (template: ChatbotTemplate) => void;
+  /** T-922: para todas las que no están bloqueadas. */
+  onDelete: (template: ChatbotTemplate) => void;
 }
 
-export default function ChatbotTemplatesTable({ rows, searching, onEdit }: ChatbotTemplatesTableProps) {
+export default function ChatbotTemplatesTable({ rows, searching, onEdit, onDelete }: ChatbotTemplatesTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -29,7 +31,7 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit }: Chatb
           <TableHead className="w-[220px]">Etiquetas</TableHead>
           <TableHead>Texto</TableHead>
           <TableHead className="w-[200px]">Última edición</TableHead>
-          <TableHead className="w-[80px]">Acciones</TableHead>
+          <TableHead className="w-[110px]">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -49,10 +51,10 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit }: Chatb
                   {t.locked && (
                     <span
                       className="flex items-center gap-1 text-xs text-muted-foreground"
-                      title="La arma el bot en un flujo fijo: sus etiquetas no se cambian"
+                      title="Parte de un flujo fijo del bot (pedido, pago o comprobantes): solo se edita el texto"
                     >
                       <Lock className="w-3 h-3" />
-                      Especial
+                      {t.rol ? `Bloqueada · ${rolLabel(t.rol)}` : "Bloqueada"}
                     </span>
                   )}
                 </div>
@@ -85,6 +87,18 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit }: Chatb
                   <Button variant="outline" size="sm" title="Editar plantilla" onClick={() => onEdit(t)}>
                     <SquarePen className="w-4 h-4" />
                   </Button>
+                  {!t.locked && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      title="Eliminar plantilla"
+                      aria-label={`Eliminar la plantilla ${t.name}`}
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => onDelete(t)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
