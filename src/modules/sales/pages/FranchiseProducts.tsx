@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/shared/hooks/use-toast";
 import { PagosConfirmarModal } from "../components/PagosConfirmarModal";
 import { CantidadesConfirmarModal } from "../components/CantidadesConfirmarModal";
+import { ErroresDespachoModal } from "../components/ErroresDespachoModal";
+import { fetchQuantityAdjustments } from "../services/PendingQuantityAdjustments.service";
 import FranchiseFilterModal, {
   type FranchiseFilterValues,
 } from "../components/FranchiseFilterModal";
@@ -28,6 +30,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -109,6 +112,9 @@ const FranchiseProducts = () => {
   const [error, setError] = useState<string | null>(null);
   const [pagosModalOpen, setPagosModalOpen] = useState(false);
   const [cantidadesModalOpen, setCantidadesModalOpen] = useState(false);
+  const [erroresModalOpen, setErroresModalOpen] = useState(false);
+  // Diferencias de cantidad que esperan la confirmación del proveedor.
+  const [pendingAdjustments, setPendingAdjustments] = useState(0);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [summary, setSummary] = useState<FranchiseSummary | null>(null);
   const [franchisees, setFranchisees] = useState<FranchiseeOption[]>([]);
@@ -373,17 +379,30 @@ const FranchiseProducts = () => {
     [products],
   );
 
+  const loadPendingAdjustments = useCallback(async () => {
+    try {
+      const { pendingCount } = await fetchQuantityAdjustments({
+        status: "pending",
+        page: 1,
+        size: 1,
+      });
+      setPendingAdjustments(pendingCount);
+    } catch (err) {
+      // El contador es informativo: si falla, la bandeja sigue disponible.
+      console.error("Error contando cantidades por confirmar:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPendingAdjustments();
+  }, [loadPendingAdjustments]);
+
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Productos de franquicia
-          </h1>
-          <p className="text-muted-foreground">
-            Order products recibidos por franquicia.
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">
+          Productos de franquicia
+        </h1>
         <div className="flex gap-2">
           <ComponentPermission codeIn={["franchise_stock.list"]}>
             <Button
@@ -405,6 +424,17 @@ const FranchiseProducts = () => {
             onClick={() => setCantidadesModalOpen(true)}
           >
             Cantidades por confirmar
+            {pendingAdjustments > 0 && (
+              <Badge variant="warning" className="ml-2">
+                {pendingAdjustments}
+              </Badge>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setErroresModalOpen(true)}
+          >
+            Errores de despacho
           </Button>
           <Button variant="outline" onClick={handleRefresh} disabled={loading}>
             {loading ? (
@@ -644,6 +674,12 @@ const FranchiseProducts = () => {
       <CantidadesConfirmarModal
         open={cantidadesModalOpen}
         onOpenChange={setCantidadesModalOpen}
+        onChanged={loadPendingAdjustments}
+      />
+
+      <ErroresDespachoModal
+        open={erroresModalOpen}
+        onOpenChange={setErroresModalOpen}
       />
 
       <FranchiseFilterModal
