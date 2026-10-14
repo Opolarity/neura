@@ -41,19 +41,22 @@ const adaptOrigin = (origin: string | null | undefined): SupportMessageOrigin =>
   return "internal";
 };
 
+/** Un mensaje del hilo. También adapta el que devuelve la API al crearlo. */
+export const adaptSupportMessage = (message: SupportMessageApi): SupportMessage => ({
+  id: message.id,
+  origin: adaptOrigin(message.origin),
+  authorName: message.author_name?.trim() || null,
+  event: message.event ?? null,
+  content: message.content?.trim() || "",
+  createdAt: message.created_at,
+  attachments: adaptAttachments(message.attachments),
+});
+
 const adaptMessages = (
   messages: SupportMessageApi[] | null | undefined,
 ): SupportMessage[] =>
   (messages ?? [])
-    .map((message) => ({
-      id: message.id,
-      origin: adaptOrigin(message.origin),
-      authorName: message.author_name?.trim() || null,
-      event: message.event ?? null,
-      content: message.content?.trim() || "",
-      createdAt: message.created_at,
-      attachments: adaptAttachments(message.attachments),
-    }))
+    .map(adaptSupportMessage)
     // Un mensaje sin texto ni adjuntos no tiene nada que pintar
     .filter((message) => message.content !== "" || message.attachments.length > 0)
     // Ya vienen del más antiguo al más reciente, pero no se da por sentado
