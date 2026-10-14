@@ -57,6 +57,17 @@ export default tseslint.config(
     },
   },
   {
+    // Editor visual del ecommerce: sus componentes son copia de
+    // ecommerce-multicliente (components/editor), y los bloques editable-* tienen
+    // que seguir iguales en los dos repos (son los que pinta la tienda). Se
+    // admite el `any` que traen de allí en vez de reescribirlos aquí y que los
+    // dos lados diverjan.
+    files: ["src/modules/ecommerce/editor/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  {
     files: ["supabase/functions/**/*.ts"],
     languageOptions: {
       ecmaVersion: 2022,

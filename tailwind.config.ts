@@ -13,7 +13,19 @@ export default {
       },
     },
     extend: {
+      // Familias de la tienda que usan los bloques del editor visual del
+      // ecommerce. Las variables solo existen dentro de .editor-ecommerce
+      // (modules/ecommerce/editor/editor.css).
+      fontFamily: {
+        display: ["var(--font-bebas-neue)"],
+        "open-sans": ["var(--font-open-sans)"],
+      },
       colors: {
+        // Precio de oferta de los bloques de la tienda; --sale vive en .store-canvas.
+        sale: {
+          DEFAULT: "hsl(var(--sale))",
+          foreground: "hsl(var(--sale-foreground))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

@@ -75,6 +75,7 @@ import OrderChannelTypesList from "@/modules/settings/pages/OrderChannelTypesLis
 import CreateOrderChannelType from "@/modules/settings/pages/CreateOrderChannelType";
 
 import MediaGalleryPage from "@/modules/ecommerce/pages/MediaGalleryPage";
+import EditorDashboardPage from "@/modules/ecommerce/editor/pages/EditorDashboardPage";
 import MassiveEditPage from "@/modules/ecommerce/pages/MassiveEditPage";
 import ReclamacionesPage from "@/modules/ecommerce/pages/ReclamacionesPage";
 import ReclamacionViewPage from "@/modules/ecommerce/pages/ReclamacionViewPage";
@@ -401,6 +402,9 @@ export const APP_PERMISSIONS_CONFIG = [
         node: [
           {
             code: "ecommerce.group", name: "Ecommerce", node: [
+              // Listado del editor visual. El editor de cada página va a pantalla
+              // completa, fuera del DashboardLayout: está en app/routes/index.tsx.
+              { name: "Editor de sitio", path: "/ecommerce/editor", code: "ecommerce_editor.list", element: <EditorDashboardPage />, showSidebar: true, node: [] },
               { name: "Galería de medios", path: "/ecommerce/medios", code: "ecommerce_media.list", element: <MediaGalleryPage />, showSidebar: true, node: [] },
               { name: "Edición masiva", path: "/ecommerce/edit", code: "ecommerce_bulk_edit.view", element: <MassiveEditPage />, showSidebar: true, node: [] },
               { name: "Reclamaciones", path: "/ecommerce/reclamaciones", code: "ecommerce_claims.list", element: <ReclamacionesPage />, showSidebar: true, node: [] },
