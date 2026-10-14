@@ -132,7 +132,9 @@ export const SupportDialog = ({ open, onOpenChange }: SupportDialogProps) => {
           <DialogTitle>Solicitud de soporte</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        {/* min-w-0: el modal es un grid y, sin esto, una palabra larga sin
+            espacios ensancha la columna y el modal gana scroll horizontal */}
+        <div className="min-w-0 space-y-4 py-2">
           <div className="space-y-1.5">
             <Label>Tipo de solicitud</Label>
             <Select
@@ -160,15 +162,20 @@ export const SupportDialog = ({ open, onOpenChange }: SupportDialogProps) => {
             />
           </div>
 
-          <WysiwygEditor
-            label="Descripción"
-            value={description}
-            onChange={setDescription}
-            placeholder="Cuéntanos qué pasó o qué te gustaría mejorar..."
-            height="140px"
-            toolbar="basic"
-            allowImages
-          />
+          {/* El editor corta con `break-word`, que no achica el ancho mínimo:
+              `anywhere` hace que palabras y URLs largas bajen de línea dentro
+              de la caja (el editor compartido no se toca) */}
+          <div className="min-w-0 [&_.ProseMirror]:[overflow-wrap:anywhere]">
+            <WysiwygEditor
+              label="Descripción"
+              value={description}
+              onChange={setDescription}
+              placeholder="Cuéntanos qué pasó o qué te gustaría mejorar..."
+              height="140px"
+              toolbar="basic"
+              allowImages
+            />
+          </div>
 
           {/* Attachments */}
           <div className="space-y-1.5">
