@@ -131,12 +131,15 @@ const SupportRequestsPage = () => {
       <SupportRequestDetailSheet
         open={detail.isOpen}
         detail={detail.detail}
+        messages={detail.messages}
         loading={detail.loading}
-        sending={detail.sending}
         errorState={detail.errorState}
+        refreshError={detail.refreshError}
         onClose={detail.close}
         onRetry={detail.retry}
         onSendMessage={detail.sendMessage}
+        onRetryMessage={detail.retryMessage}
+        onDiscardMessage={detail.discardMessage}
       />
     </div>
   );
