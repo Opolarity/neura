@@ -97,7 +97,11 @@ const DetailBody = ({ detail }: { detail: SupportRequestDetail }) => {
       <div className="space-y-2">
         <SectionTitle>Descripción</SectionTitle>
         {detail.descriptionHtml ? (
-          <SupportRichText html={detail.descriptionHtml} />
+          // Una palabra o URL larga baja de línea en vez de dar scroll horizontal
+          <SupportRichText
+            html={detail.descriptionHtml}
+            className="[overflow-wrap:anywhere]"
+          />
         ) : (
           <p className="text-sm text-muted-foreground">Sin descripción.</p>
         )}
