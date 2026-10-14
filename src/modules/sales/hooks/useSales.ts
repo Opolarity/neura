@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { SALES_SITUATION_PARAM } from "../utils/salesDeepLinks";
 import {
   SaleListItem,
   SalesFilters,
@@ -30,9 +31,13 @@ export const useSales = () => {
     total: 0,
   });
   const [isOpenFilterModal, setIsOpenFilterModal] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Las alertas del dashboard llegan con ?situation_id=<id>: la primera carga
+  // ya sale con ese estado filtrado, igual que si se eligiera en el modal.
+  const initialSituationId = Number(searchParams.get(SALES_SITUATION_PARAM)) || null;
   const [filters, setFilters] = useState<SalesFilters>({
     search: null,
-    situationId: null,
+    situationId: initialSituationId,
     saleType: null,
     startDate: null,
     endDate: null,
@@ -112,6 +117,15 @@ export const useSales = () => {
   useEffect(() => {
     loadData(filters);
   }, []);
+
+  // El filtro ya quedó en el estado: se quita de la URL para que "Limpiar
+  // filtros" seguido de recargar no lo vuelva a aplicar.
+  useEffect(() => {
+    if (!searchParams.has(SALES_SITUATION_PARAM)) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete(SALES_SITUATION_PARAM);
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const onSearchChange = (value: string) => {
     setSearch(value);
