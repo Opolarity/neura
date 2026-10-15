@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -86,6 +87,9 @@ const EditReturn = () => {
     removeExchangeProduct,
     updateExchangeProduct,
     isReadOnly,
+    productsReadOnly,
+    isFranchiseReturn,
+    franchiseCode,
     displayOrderId,
     orderTotal,
     calculateReturnTotal,
@@ -109,7 +113,12 @@ const EditReturn = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Editar devolución/cambio</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">Editar devolución/cambio</h1>
+              {isFranchiseReturn && (
+                <Badge variant="secondary">Franquiciado · {franchiseCode}</Badge>
+              )}
+            </div>
             <p className="text-muted-foreground mt-1">
               Modifica la información de la devolución o cambio
             </p>
@@ -129,7 +138,7 @@ const EditReturn = () => {
       <div className="grid gap-6">
         {/* Top row: payment (left, narrow) + info básica (right) */}
         <div
-          className={`grid gap-6 items-start ${!orderSituationCode.includes("VIR") ? "grid-cols-[700px_1fr]" : "grid-cols-1"}`}
+          className={`grid gap-6 items-start ${!orderSituationCode.includes("VIR") && !isFranchiseReturn ? "grid-cols-[700px_1fr]" : "grid-cols-1"}`}
         >
           {/* ── Información Básica ────────────────────────────────────── */}
           <Card>
@@ -156,7 +165,7 @@ const EditReturn = () => {
                   <Select
                     value={documentType}
                     onValueChange={setDocumentType}
-                    disabled={isReadOnly}
+                    disabled={productsReadOnly}
                   >
                     <SelectTrigger id="documentType">
                       <SelectValue placeholder="Seleccionar tipo" />
@@ -176,7 +185,7 @@ const EditReturn = () => {
                     id="documentNumber"
                     value={documentNumber}
                     onChange={(e) => setDocumentNumber(e.target.value)}
-                    disabled={isReadOnly}
+                    disabled={productsReadOnly}
                   />
                 </div>
               </div>
@@ -237,7 +246,7 @@ const EditReturn = () => {
                     id="shippingReturn"
                     checked={shippingReturn}
                     onCheckedChange={setShippingReturn}
-                    disabled={isReadOnly}
+                    disabled={productsReadOnly}
                   />
                   <Label htmlFor="shippingReturn">Envío a devolver</Label>
                 </div>
@@ -260,7 +269,7 @@ const EditReturn = () => {
           </Card>
 
           {/* ── Métodos de Pago ───────────────────────────────────────── */}
-          {!orderSituationCode.includes("VIR") && (
+          {!orderSituationCode.includes("VIR") && !isFranchiseReturn && (
             <Card>
               <CardHeader>
                 <CardTitle>Métodos de Pago</CardTitle>
@@ -435,6 +444,13 @@ const EditReturn = () => {
                   returnTypeCode === "DVP" ||
                   returnTypeCode === "CAM") && (
                   <>
+                    {isFranchiseReturn ? (
+                      <p className="text-sm text-muted-foreground">
+                        Devolución registrada por el franquiciado. Las cantidades solo
+                        se cambian desde su sistema; aquí se registra la nota y se
+                        acepta o se anula.
+                      </p>
+                    ) : (
                     <div>
                       <Label>Productos de la Orden</Label>
                       <div className="mt-2">
@@ -454,6 +470,7 @@ const EditReturn = () => {
                         )}
                       </div>
                     </div>
+                    )}
 
                     {returnProducts.length > 0 && (
                       <div>
@@ -468,7 +485,7 @@ const EditReturn = () => {
                                 <TableHead>Cantidad</TableHead>
                                 <TableHead>Precio Unitario</TableHead>
                                 <TableHead>Total</TableHead>
-                                {!isReadOnly && (
+                                {!productsReadOnly && (
                                   <TableHead className="text-right">
                                     Acción
                                   </TableHead>
@@ -484,7 +501,7 @@ const EditReturn = () => {
                                   </TableCell>
                                   <TableCell>{product.sku}</TableCell>
                                   <TableCell>
-                                    {isReadOnly ? (
+                                    {productsReadOnly ? (
                                       product.quantity
                                     ) : (
                                       <Input
@@ -509,7 +526,7 @@ const EditReturn = () => {
                                       product.price * product.quantity,
                                     )}
                                   </TableCell>
-                                  {!isReadOnly && (
+                                  {!productsReadOnly && (
                                     <TableCell className="text-right">
                                       <Button
                                         variant="ghost"
@@ -549,6 +566,7 @@ const EditReturn = () => {
           />
         )}
 
+        {!isFranchiseReturn && (
         <ReturnSummary
           isCAM={returnTypeCode === "CAM"}
           orderTotal={orderTotal}
@@ -558,6 +576,7 @@ const EditReturn = () => {
           shippingCost={shippingCost}
           formatCurrency={formatCurrency}
         />
+        )}
       </div>
       <VoucherPreviewModal
         open={voucherModalOpen}

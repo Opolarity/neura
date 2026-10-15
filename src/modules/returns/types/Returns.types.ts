@@ -97,6 +97,8 @@ export interface ReturnItem {
     status?: {
         code: string;
     };
+    // Devolución del franquiciado (F-T<tenant>-<id>); null en las propias.
+    code?: string | null;
 }
 
 export interface SearchProduct {

@@ -171,7 +171,8 @@ export const returnsService = {
             types: { name: item.return_name },
             situations: { name: item.situation_name, code: item.situation_code },
             total_exchange_difference: item.otal_exchange_difference ?? item.total_exchange_difference ?? 0,
-            status: { code: item.status_code }
+            status: { code: item.status_code },
+            code: item.code ?? null,
         })) as ReturnItem[];
 
         return { data: mappedReturns, total: totalRows };

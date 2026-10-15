@@ -99,7 +99,18 @@ export const ReturnsTable = ({ returns, loading, formatDate, formatCurrency, sea
                             </TableRow>
                         ) : returns.map((returnItem) => (
                             <TableRow key={returnItem.id}>
-                                <TableCell className="font-medium">#{returnItem.id}</TableCell>
+                                <TableCell className="font-medium">
+                                    <div className="flex flex-col gap-1">
+                                        <span>#{returnItem.id}</span>
+                                        {/* Devolución del franquiciado: llega por la API y
+                                            se identifica por su code en los dos ERP. */}
+                                        {returnItem.code && (
+                                            <Badge variant="secondary" className="w-fit whitespace-nowrap">
+                                                Franquiciado · {returnItem.code}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </TableCell>
                                 <TableCell>#{returnItem.order_id}</TableCell>
                                 <TableCell>{returnItem.customer_document_number?.trim() || '-'}</TableCell>
                                 <TableCell>
