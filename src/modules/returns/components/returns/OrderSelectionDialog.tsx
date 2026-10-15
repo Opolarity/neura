@@ -4,6 +4,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -73,6 +74,11 @@ export const OrderSelectionDialog = ({
             <DialogContent className="max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>Seleccionar Orden y Tipo de Devolución</DialogTitle>
+                    {/* Los pedidos de consignación no se listan: sus devoluciones
+                        solo las registra el franquiciado desde su sistema. */}
+                    <DialogDescription>
+                        Los pedidos de consignación no aparecen: sus devoluciones las registra el franquiciado.
+                    </DialogDescription>
                 </DialogHeader>
 
                 {/* Tope de altura + scroll interno: la tabla de órdenes crece con

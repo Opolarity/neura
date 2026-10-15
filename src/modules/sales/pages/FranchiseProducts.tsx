@@ -597,6 +597,16 @@ const FranchiseProducts = () => {
                     <TableCell>#{item.orderId}</TableCell>
                     <TableCell className="text-right">
                       {formatNumber(item.quantity)}
+                      {/* Enviado neto: lo devuelto a Overtake ya está descontado. */}
+                      {(item.returnedToSupplier > 0 || item.inTransitToSupplier > 0) && (
+                        <div className="whitespace-nowrap text-xs text-muted-foreground">
+                          {item.returnedToSupplier > 0 &&
+                            `${formatNumber(item.returnedToSupplier)} devueltas`}
+                          {item.returnedToSupplier > 0 && item.inTransitToSupplier > 0 && " · "}
+                          {item.inTransitToSupplier > 0 &&
+                            `${formatNumber(item.inTransitToSupplier)} en tránsito`}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right">
                       {formatSoldWithReturns(
