@@ -9,10 +9,7 @@ interface MediaGalleryHeaderProps {
 const MediaGalleryHeader = ({ onOpenFilters, hasActiveFilters }: MediaGalleryHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Galería de medios</h1>
-        <p className="text-muted-foreground">Gestión de imágenes y videos</p>
-      </div>
+      <h1 className="text-2xl font-bold text-foreground">Galería de medios</h1>
       <Button
         variant={hasActiveFilters ? "default" : "outline"}
         onClick={onOpenFilters}

@@ -34,12 +34,7 @@ const Movements = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Movimientos de inventario</h1>
-          <p className="text-muted-foreground">
-            Historial completo de movimientos de stock
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">Movimientos de inventario</h1>
       </div>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">

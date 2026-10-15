@@ -18,10 +18,7 @@ const CustomerPoints = () => {
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
-      <div>
-        <h1 className="text-3xl font-bold">Puntos de clientes</h1>
-        <p className="text-muted-foreground">Ranking de puntos por cliente</p>
-      </div>
+      <h1 className="text-2xl font-bold text-foreground">Puntos de clientes</h1>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="!p-4">

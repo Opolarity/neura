@@ -36,7 +36,7 @@ const CreatePaymentMethod = () => {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                 </Link>
-                <h1 className="text-2xl font-bold">
+                <h1 className="text-2xl font-bold text-foreground">
                     {isEdit ? 'Editar método de pago' : 'Crear método de pago'}
                 </h1>
             </div>

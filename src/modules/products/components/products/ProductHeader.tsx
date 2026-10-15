@@ -15,12 +15,9 @@ const ProductHeader = ({
 }: ProductsHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Gestión de productos
-        </h1>
-        <p className="text-gray-600">Administra tu catálogo de productos</p>
-      </div>
+      <h1 className="text-2xl font-bold text-foreground">
+        Gestión de productos
+      </h1>
       <div className="flex gap-2">
         {selectedProducts.length > 0 && (
           <ComponentPermission codeIn={["products.delete"]}>

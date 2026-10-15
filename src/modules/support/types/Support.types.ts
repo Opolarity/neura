@@ -186,6 +186,26 @@ export interface SupportMessage {
   content: string;
   createdAt: string;
   attachments: SupportAttachmentFile[];
+  /**
+   * Solo en los mensajes que todavía no confirma el servidor (envío optimista).
+   * Los que llegan de la API no lo traen.
+   */
+  delivery?: SupportMessageDelivery;
+}
+
+/**
+ * Estado de un mensaje propio mientras no tiene id del servidor.
+ * `ambiguous`: el envío falló de una forma en la que el servidor PUDO haberlo
+ * guardado (red, timeout, 5xx); antes de reenviarlo hay que mirar el hilo.
+ */
+export interface SupportMessageDelivery {
+  localId: string;
+  status: "sending" | "failed";
+  failureKind: "definitive" | "ambiguous" | null;
+  /** true mientras se revisa el hilo antes de un reintento ambiguo. */
+  verifying: boolean;
+  /** Adjuntos aún sin URL del servidor: solo nombre y, si es imagen, vista previa. */
+  files: { name: string; previewUrl: string | null }[];
 }
 
 /** Máximo por mensaje según la API externa. */
@@ -303,6 +323,11 @@ export interface TicketProtocolApiResponse {
   content_html: string;
   version: number;
   updated_at: string;
+}
+
+/** Lo que responde `get-support-protocol`: el documento envuelto en `data`. */
+export interface TicketProtocolEnvelope {
+  data: TicketProtocolApiResponse | null;
 }
 
 /** El mismo documento ya normalizado para la vista. */

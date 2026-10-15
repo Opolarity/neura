@@ -71,7 +71,7 @@ const CreateUser = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold text-foreground">
             {isEdit ? "Editar usuario" : "Crear nuevo usuario"}
           </h1>
         </div>

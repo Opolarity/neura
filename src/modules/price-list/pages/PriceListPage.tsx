@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Loader2, SquarePen, Trash } from "lucide-react";
+import { Loader2, SquarePen, Trash } from "lucide-react";
 import { usePriceList } from "../hooks/usePriceList";
 import { PriceListEditDialog } from "../components/PriceListEditDialog";
 import type { PriceListItem } from "../types/PriceList.types";
@@ -27,17 +27,7 @@ const PriceListPage = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
-          <DollarSign className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold">Listas de precios</h1>
-          <p className="text-sm text-muted-foreground">
-            Gestiona las listas de precios del sistema
-          </p>
-        </div>
-      </div>
+      <h1 className="text-2xl font-bold text-foreground mb-6">Listas de precios</h1>
 
       <Card>
         <CardHeader>

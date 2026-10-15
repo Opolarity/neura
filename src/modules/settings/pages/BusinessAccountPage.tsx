@@ -30,15 +30,10 @@ const BusinessAccountPage = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Cuentas de negocio
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Administra las cuentas de negocio del sistema
-          </p>
-        </div>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-foreground">
+          Cuentas de negocio
+        </h1>
         {/* Aquí no hay ruta de creación que reutilizar: el alta se hace en el
             mismo listado, abriendo BusinessAccountFormDialog en blanco. */}
         <ComponentPermission codeIn={["business_accounts.create"]}>

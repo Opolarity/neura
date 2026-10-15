@@ -96,6 +96,9 @@ export const useTicketProtocol = (enabled: boolean): UseTicketProtocolResult => 
     void (async () => {
       try {
         const doc = adaptTicketProtocol(await getTicketProtocol());
+        // Un documento sin contenido no reemplaza lo que ya se ve: se trata
+        // como un fallo para no dejar el diálogo en blanco si cambia el contrato.
+        if (!doc.html.trim()) throw new Error("Protocolo de tickets vacío");
         if (cancelled || !activeRef.current) return;
         cached = { doc, fetchedAt: Date.now() };
         writeStored(doc);

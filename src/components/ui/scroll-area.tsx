@@ -5,17 +5,34 @@ import { cn } from "@/shared/utils/utils";
 
 const ScrollArea = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & {
+    /** Monta también la barra horizontal. Por defecto solo la vertical. */
+    horizontal?: boolean;
+    /**
+     * El elemento que de verdad scrollea (el `ref` apunta al Root, que no).
+     * Lo usa el canvas del editor del ecommerce: su cámara coloca la vista
+     * escribiendo scrollLeft/scrollTop.
+     */
+    viewportRef?: React.Ref<HTMLDivElement>;
+    /** Clases para el viewport, por si hay que tocar cómo recorta. */
+    viewportClassName?: string;
+    /** Clases para el tirador de las barras (el editor las tiñe de primary). */
+    thumbClassName?: string;
+  }
+>(({ className, children, horizontal, viewportRef, viewportClassName, thumbClassName, ...props }, ref) => (
   <ScrollAreaPrimitive.Root
     ref={ref}
     className={cn("relative overflow-hidden", className)}
     {...props}
   >
-    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+    <ScrollAreaPrimitive.Viewport
+      ref={viewportRef}
+      className={cn("h-full w-full rounded-[inherit]", viewportClassName)}
+    >
       {children}
     </ScrollAreaPrimitive.Viewport>
-    <ScrollBar />
+    <ScrollBar thumbClassName={thumbClassName} />
+    {horizontal && <ScrollBar orientation="horizontal" thumbClassName={thumbClassName} />}
     <ScrollAreaPrimitive.Corner />
   </ScrollAreaPrimitive.Root>
 ));
@@ -23,8 +40,11 @@ ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
 
 const ScrollBar = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
->(({ className, orientation = "vertical", ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar> & {
+    /** Clases para el tirador, que es la parte que se ve moverse. */
+    thumbClassName?: string;
+  }
+>(({ className, orientation = "vertical", thumbClassName, ...props }, ref) => (
   <ScrollAreaPrimitive.ScrollAreaScrollbar
     ref={ref}
     orientation={orientation}
@@ -38,7 +58,7 @@ const ScrollBar = React.forwardRef<
     )}
     {...props}
   >
-    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
+    <ScrollAreaPrimitive.ScrollAreaThumb className={cn("relative flex-1 rounded-full bg-border", thumbClassName)} />
   </ScrollAreaPrimitive.ScrollAreaScrollbar>
 ));
 ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName;

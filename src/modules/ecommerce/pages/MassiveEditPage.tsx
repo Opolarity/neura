@@ -501,10 +501,7 @@ const PromotionalTextPage = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex flex-wrap gap-4 justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Edición masiva</h1>
-          <p className="text-gray-600">Gestiona y actualiza los productos del ecommerce</p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">Edición masiva</h1>
         <div className="flex gap-2 flex-wrap justify-end">
           {/* Abre el editor de la tienda pública vía SSO, en otra pestaña: es
               otra herramienta, no una edición de productos, de ahí su propio

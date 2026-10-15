@@ -1,4 +1,4 @@
-import { Tags, Plus, Trash } from "lucide-react";
+import { Plus, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -32,15 +32,7 @@ export const PriceRulesHeader = ({
 }: PriceRulesHeaderProps) => {
   return (
     <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <Tags className="w-8 h-8" />
-        <div>
-          <h1 className="text-3xl font-bold">Reglas de precios</h1>
-          <p className="text-muted-foreground">
-            Gestiona las reglas de precios y cupones
-          </p>
-        </div>
-      </div>
+      <h1 className="text-2xl font-bold text-foreground">Reglas de precios</h1>
       <div className="flex items-center gap-2">
         {selectedCount > 0 && (
           <>

@@ -55,13 +55,8 @@ const POSSessions = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold">Sesiones de punto de venta</h1>
-          <p className="text-muted-foreground mt-1">
-            Historial de sesiones del punto de venta
-          </p>
-        </div>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-foreground">Sesiones de punto de venta</h1>
         <Button onClick={goToOpenPOS}>Ir a Punto de Venta</Button>
       </div>
 

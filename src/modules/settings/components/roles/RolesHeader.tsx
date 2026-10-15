@@ -5,13 +5,8 @@ import { ComponentPermission } from '@/shared/components/component-permission'
 
 export default function RolesHeader() {
     return (
-        <div className="flex justify-between items-start">
-            <div>
-                <h1 className="text-2xl font-bold text-foreground">Listado de roles</h1>
-                <p className="text-muted-foreground">
-                    Administra los roles del sistema y sus funciones asignadas
-                </p>
-            </div>
+        <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-foreground">Listado de roles</h1>
 
             {/* El botón lleva a /settings/roles/create, ya protegida con
                 roles.create: se reutiliza ese code para no ofrecer un botón que

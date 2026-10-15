@@ -47,10 +47,7 @@ const AccountsList = () => {
             />
             {/* Header */}
             <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold">Lista de clientes</h1>
-                    <p className="text-muted-foreground">Administra tus cuentas</p>
-                </div>
+                <h1 className="text-2xl font-bold text-foreground">Lista de clientes</h1>
             </div>
 
             {/* Tabla */}

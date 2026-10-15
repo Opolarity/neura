@@ -6,13 +6,8 @@ interface TrainingsHeaderProps {
 }
 
 export const TrainingsHeader = ({ onSchedule }: TrainingsHeaderProps) => (
-  <div className="flex justify-between items-start">
-    <div>
-      <h1 className="text-3xl font-bold">Capacitaciones</h1>
-      <p className="text-muted-foreground mt-1">
-        Reuniones agendadas con el equipo de OPOLARITY
-      </p>
-    </div>
+  <div className="flex justify-between items-center">
+    <h1 className="text-2xl font-bold text-foreground">Capacitaciones</h1>
     <div className="flex gap-2">
       <Button onClick={onSchedule}>
         <Plus className="w-4 h-4 mr-2" />

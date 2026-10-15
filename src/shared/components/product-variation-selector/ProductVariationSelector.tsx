@@ -13,8 +13,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, Image as ImageIcon, Loader2, Search } from "lucide-react";
+import { Check, Image as ImageIcon, Search } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
+import { PopoverListSkeleton } from "@/shared/components/popover-list/PopoverListSkeleton";
+import {
+  POPOVER_LIST_COLLISION_PADDING,
+  POPOVER_LIST_CONTENT_CLASS,
+} from "@/shared/components/popover-list/popoverList";
+import { usePopoverListSide } from "@/shared/components/popover-list/usePopoverListSide";
 import {
   fetchProductVariations,
   fetchProducts,
@@ -68,6 +74,10 @@ interface ProductVariationSelectorProps {
 
 const PAGE_SIZE = 10;
 
+// Alto del buscador con la lista llena: buscador 45 + lista 300 + paginación 45
+// + bordes.
+const ALTURA_POPOVER = 392;
+
 export default function ProductVariationSelector({
   selectedVariation = null,
   onSelect,
@@ -84,6 +94,7 @@ export default function ProductVariationSelector({
   onScan,
 }: ProductVariationSelectorProps) {
   const [open, setOpen] = useState(false);
+  const { triggerRef, side } = usePopoverListSide(open, ALTURA_POPOVER);
   const [search, setSearch] = useState("");
   const [variations, setVariations] = useState<ProductVariationOption[]>([]);
   const [page, setPage] = useState(1);
@@ -184,9 +195,15 @@ export default function ProductVariationSelector({
 
   return (
     <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
-      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0 bg-popover">
-        <Command shouldFilter={false}>
+      <PopoverTrigger asChild ref={triggerRef}>{trigger}</PopoverTrigger>
+      {/* No se corta: reserva espacio arriba y su alto se limita al que queda en
+          pantalla; solo se recorta la lista. */}
+      <PopoverContent
+        side={side}
+        collisionPadding={POPOVER_LIST_COLLISION_PADDING}
+        className={cn(POPOVER_LIST_CONTENT_CLASS, "w-[400px] bg-popover")}
+      >
+        <Command shouldFilter={false} className="min-h-0 flex-1">
           <CommandInput
             placeholder="Buscar producto o SKU..."
             value={search}
@@ -206,10 +223,19 @@ export default function ProductVariationSelector({
             }
           />
 
-          <CommandList>
+          <CommandList className="min-h-0 flex-1">
             {loading ? (
-              <div className="flex justify-center py-6">
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              // Mismas filas que los resultados (y el mismo p-1 del CommandGroup):
+              // el popover no cambia de alto al cargar.
+              <div className="p-1">
+                <PopoverListSkeleton
+                  count={pagination.size}
+                  lead="check"
+                  secondary="sm"
+                  badge={showStockColumn}
+                  rowClassName="px-2 py-2"
+                  thumbClassName="rounded-md"
+                />
               </div>
             ) : (
               <>
@@ -281,38 +307,38 @@ export default function ProductVariationSelector({
               </>
             )}
           </CommandList>
-          {/* Pagination controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
-              <span className="text-xs text-muted-foreground">
-                {(page - 1) * pagination.size + 1}-
-                {Math.min(page * pagination.size, pagination.total)}{" "}
-                de {pagination.total}
-              </span>
-              <div className="flex gap-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2 text-xs"
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page <= 1 || loading}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2 text-xs"
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={page >= totalPages || loading}
-                >
-                  Siguiente
-                </Button>
-              </div>
+          {/* Paginación siempre visible (con una sola página los botones quedan
+              desactivados): si apareciera y desapareciera, el popover cambiaría
+              de alto al buscar. */}
+          <div className="flex shrink-0 items-center justify-between px-3 py-2 border-t bg-muted/50">
+            <span className="text-xs text-muted-foreground">
+              {pagination.total === 0 ? 0 : (page - 1) * pagination.size + 1}-
+              {Math.min(page * pagination.size, pagination.total)}{" "}
+              de {pagination.total}
+            </span>
+            <div className="flex gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page <= 1 || loading}
+              >
+                Anterior
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page >= totalPages || loading}
+              >
+                Siguiente
+              </Button>
             </div>
-          )}
+          </div>
         </Command>
       </PopoverContent>
     </Popover>

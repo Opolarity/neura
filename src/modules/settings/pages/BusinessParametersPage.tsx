@@ -145,13 +145,8 @@ const BusinessParametersPage = () => {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Negocio</h1>
-                    <p className="text-muted-foreground mt-2">
-                        Configuración general de la empresa usada por el ERP, el ecommerce y los comprobantes.
-                    </p>
-                </div>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <h1 className="text-2xl font-bold text-foreground">Negocio</h1>
                 <Button type="submit" disabled={saving}>
                     <Save className="mr-2 h-4 w-4" />
                     {saving ? 'Guardando...' : 'Guardar cambios'}

@@ -38,13 +38,8 @@ const OrderChannelTypesList = () => {
     return (
         <div className="h-full min-h-0 flex flex-col gap-4">
             {/* Header */}
-            <div className="flex justify-between items-start">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Canales de venta</h1>
-                    <p className="text-muted-foreground mt-2">
-                        Administra los tipos de canales de pedido del sistema
-                    </p>
-                </div>
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-foreground">Canales de venta</h1>
                 <ComponentPermission codeIn={["sales_channels.create"]}>
                     <Button asChild className="gap-2">
                         <Link to="/settings/order-channel-types/create">

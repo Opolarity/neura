@@ -30,13 +30,8 @@ const PaymentMethodsList = () => {
     return (
         <div className="h-full min-h-0 flex flex-col gap-4">
             {/* Header */}
-            <div className="flex justify-between items-start">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Listado de métodos de pago</h1>
-                    <p className="text-muted-foreground mt-2">
-                        Administra los métodos de pago del sistema
-                    </p>
-                </div>
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-foreground">Listado de métodos de pago</h1>
                 {/* Aquí no hay ruta de creación que reutilizar: el alta se hace
                     en el mismo listado, abriendo PaymentMethodFormDialog en
                     blanco. */}

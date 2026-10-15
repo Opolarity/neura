@@ -60,14 +60,9 @@ const FranchiseStock = () => {
         }}
       />
 
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Stock de franquicias
-        </h1>
-        <p className="text-muted-foreground">
-          Mercadería de Overtake disponible en los almacenes del franquiciado
-        </p>
-      </div>
+      <h1 className="text-2xl font-bold text-foreground">
+        Stock de franquicias
+      </h1>
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="!p-4">

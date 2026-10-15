@@ -43,16 +43,9 @@ const CreateOrderChannelType = () => {
                         <ArrowLeft className="w-4 h-4" />
                     </Link>
                 </Button>
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">
-                        {isEdit ? 'Editar canal de venta' : 'Crear canal de venta'}
-                    </h1>
-                    <p className="text-muted-foreground mt-2">
-                        {isEdit
-                            ? 'Modifica la información del canal de venta'
-                            : 'Completa la información para crear un nuevo canal de venta'}
-                    </p>
-                </div>
+                <h1 className="text-2xl font-bold text-foreground">
+                    {isEdit ? 'Editar canal de venta' : 'Crear canal de venta'}
+                </h1>
             </div>
 
             <form onSubmit={handleSubmit}>

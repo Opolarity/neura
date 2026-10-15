@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import Dashboard from "@/modules/dashboard/pages/Dashboard";
@@ -12,6 +13,11 @@ import { APP_PERMISSIONS_CONFIG, getRoutes } from "@/app/data/permissions";
 import { supportRoutes } from "@/modules/support";
 import { trainingRoutes } from "@/modules/training";
 import ReportsLayout from "@/modules/reports/pages/ReportsLayout";
+import SplashPage from "@/shared/components/splash/SplashPage";
+
+// El editor visual del ecommerce va aparte: trae craft.js, CodeMirror y los
+// iconos de Font Awesome, que no tienen por qué cargarse con el resto del ERP.
+const EditorPage = lazy(() => import("@/modules/ecommerce/editor/pages/EditorPage"));
 
 // Único archivo de rutas. La navegación del sidebar es data aparte
 // (`src/app/data/permissions.tsx`); un enlace del sidebar puede apuntar a un
@@ -46,6 +52,21 @@ export const router = createBrowserRouter([
   {
     path: "/oauth/consent",
     element: <OAuthConsent />,
+  },
+  // Editor visual de una página del ecommerce: a pantalla completa, con sesión
+  // pero sin el DashboardLayout (el editor trae su propia barra y paneles).
+  {
+    path: "/ecommerce/editor/:slug",
+    errorElement: <RouteError />,
+    element: (
+      <ProtectedLayout>
+        <ProtectedRoute code="ecommerce_editor.edit">
+          <Suspense fallback={<SplashPage message="Cargando editor..." />}>
+            <EditorPage />
+          </Suspense>
+        </ProtectedRoute>
+      </ProtectedLayout>
+    ),
   },
   {
     errorElement: <RouteError />,

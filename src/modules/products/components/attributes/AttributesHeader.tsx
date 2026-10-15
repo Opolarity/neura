@@ -13,14 +13,9 @@ const AttributesHeader = ({
 }: AttributesHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Listado de atributos
-        </h1>
-        <p className="text-muted-foreground">
-          Administra los atributos y sus valores
-        </p>
-      </div>
+      <h1 className="text-2xl font-bold text-foreground">
+        Listado de atributos
+      </h1>
       {/* Los dos botones van con codes distintos: la pantalla es una, pero
           crear un atributo y crear un término se conceden por separado. Si el
           rol no tiene ninguno de los dos, el contenedor queda vacío y no

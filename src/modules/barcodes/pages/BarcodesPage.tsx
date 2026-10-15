@@ -38,12 +38,7 @@ const BarcodesPage = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Código de barras</h1>
-          <p className="text-muted-foreground">
-            Genera e imprime etiquetas de código de barras para tus productos
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">Código de barras</h1>
         <ComponentPermission codeIn={["barcodes.create"]}>
           <Button onClick={handleNewBarcode}>
             <Plus className="mr-2 h-4 w-4" />

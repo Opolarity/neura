@@ -41,16 +41,9 @@ const CreateRole = () => {
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {isEdit ? "Editar rol" : "Crear rol"}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            {isEdit
-              ? "Modifica la información del rol y los permisos que tiene asignados"
-              : "Completa la información para crear un nuevo rol"}
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">
+          {isEdit ? "Editar rol" : "Crear rol"}
+        </h1>
       </div>
 
       <form onSubmit={handleSubmit}>

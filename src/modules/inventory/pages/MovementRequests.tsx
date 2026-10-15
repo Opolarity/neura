@@ -31,12 +31,7 @@ const MovementRequests = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Solicitudes de traspaso</h1>
-          <p className="text-muted-foreground">
-            Listado de solicitudes de movimiento de inventario entre almacenes
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">Solicitudes de traspaso</h1>
         {/* Cada botón con el code de la ruta a la que lleva: son dos flujos
             distintos y se conceden por separado. Los codes ya existían para
             proteger sus rutas con ProtectedRoute; esto solo evita ofrecer un

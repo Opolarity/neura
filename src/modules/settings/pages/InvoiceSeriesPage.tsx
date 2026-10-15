@@ -12,15 +12,10 @@ const InvoiceSeriesPage = () => {
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Series de facturación
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Administra las series de comprobantes electrónicos
-          </p>
-        </div>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-foreground">
+          Series de facturación
+        </h1>
         {/* El botón lleva a /invoices/series/add, ya protegida con
             invoice_series.create: se reutiliza ese code para no ofrecer un
             botón que acaba en una pantalla bloqueada. */}

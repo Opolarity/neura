@@ -72,11 +72,8 @@ export default function StockPage() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Reportes de inventario</h1>
-          <p className="text-muted-foreground text-sm">Panel de análisis y métricas del negocio</p>
-        </div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-foreground">Reportes de inventario</h1>
         <ReportGuideSheet guide={inventoryGuide} />
       </div>
       <ReportsFilterBar

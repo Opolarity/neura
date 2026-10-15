@@ -47,14 +47,9 @@ const ProductCosts = () => {
     <div className="h-full min-h-0 flex flex-col gap-4">
       {/* ProductCostsHeader */}
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Costos de productos
-          </h1>
-          <p className="text-muted-foreground">
-            Gestiona el costo de cada variación de producto
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">
+          Costos de productos
+        </h1>
         {/* Un solo envoltorio para los tres botones: son el mismo flujo de
             edición, y Cancelar/Actualizar ni siquiera existen hasta entrar en
             modo edición. Sin el code no se puede entrar, y los inputs de costo

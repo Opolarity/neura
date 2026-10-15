@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Boxes, Download, Filter, Loader2, RefreshCw, Search } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "@/shared/hooks/use-toast";
+import { FRANCHISE_MODAL_PARAM, type FranchiseModal } from "../utils/salesDeepLinks";
 import { PagosConfirmarModal } from "../components/PagosConfirmarModal";
 import { CantidadesConfirmarModal } from "../components/CantidadesConfirmarModal";
 import { ErroresDespachoModal } from "../components/ErroresDespachoModal";
@@ -101,6 +102,7 @@ const hasDefaultPaymentStatuses = (
 
 const FranchiseProducts = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<FranchiseProductRow[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     p_page: 1,
@@ -153,6 +155,19 @@ const FranchiseProducts = () => {
   useEffect(() => {
     loadProducts(filters);
   }, []);
+
+  // Las alertas del dashboard llegan con ?modal=cantidades|pagos para abrir
+  // directamente esa bandeja. Se quita de la URL al usarlo: recargar o volver
+  // atrás no debe abrirla otra vez.
+  useEffect(() => {
+    const modal = searchParams.get(FRANCHISE_MODAL_PARAM) as FranchiseModal | null;
+    if (!modal) return;
+    if (modal === "cantidades") setCantidadesModalOpen(true);
+    if (modal === "pagos") setPagosModalOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete(FRANCHISE_MODAL_PARAM);
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // Se cargan aparte del listado y sin bloquearlo: si el puente hacia
   // franquiciados falla, el filtro se queda con el nombre de la cuenta (lo que

@@ -25,6 +25,7 @@ import CustomerLevels from "@/modules/customers/pages/CustomerLevels";
 import Sales from "@/modules/sales/pages/Sales";
 import FranchiseProducts from "@/modules/sales/pages/FranchiseProducts";
 import FranchiseStock from "@/modules/sales/pages/FranchiseStock";
+import FranchisePendingReception from "@/modules/sales/pages/FranchisePendingReception";
 import CreateSale from "@/modules/sales/pages/CreateSale";
 import SalesPOS from "@/modules/sales/pages/POS";
 import Shipping from "@/modules/sales/pages/Shipping";
@@ -75,6 +76,7 @@ import OrderChannelTypesList from "@/modules/settings/pages/OrderChannelTypesLis
 import CreateOrderChannelType from "@/modules/settings/pages/CreateOrderChannelType";
 
 import MediaGalleryPage from "@/modules/ecommerce/pages/MediaGalleryPage";
+import EditorDashboardPage from "@/modules/ecommerce/editor/pages/EditorDashboardPage";
 import MassiveEditPage from "@/modules/ecommerce/pages/MassiveEditPage";
 import ReclamacionesPage from "@/modules/ecommerce/pages/ReclamacionesPage";
 import ReclamacionViewPage from "@/modules/ecommerce/pages/ReclamacionViewPage";
@@ -200,6 +202,7 @@ export const APP_PERMISSIONS_CONFIG = [
         code: "sales.group", name: "Ventas", node: [
           { name: "Lista de ventas", path: "/sales", code: "sales.list", element: <Sales />, showSidebar: true, node: [] },
           { name: "Ventas de franquiciados", path: "/sales/products/franchise", code: "sales_franchise.list", element: <FranchiseProducts />, showSidebar: true, node: [] },
+          { name: "Pendientes de aceptar", path: "/sales/products/franchise/pending", code: "franchise_pending_reception.list", element: <FranchisePendingReception />, showSidebar: true, node: [] },
           { name: "Stock de franquicias", path: "/stock/products/franchise", code: "franchise_stock.list", element: <FranchiseStock />, showSidebar: false, node: [] },
           { name: "Añadir venta", path: "/sales/create", code: "sales.create", element: <CreateSale />, showSidebar: true, node: [] },
           { name: "Editar venta", path: "/sales/edit/:id", code: "sales.edit", element: <CreateSale />, showSidebar: false, node: [] },
@@ -401,6 +404,9 @@ export const APP_PERMISSIONS_CONFIG = [
         node: [
           {
             code: "ecommerce.group", name: "Ecommerce", node: [
+              // Listado del editor visual. El editor de cada página va a pantalla
+              // completa, fuera del DashboardLayout: está en app/routes/index.tsx.
+              { name: "Editor de sitio", path: "/ecommerce/editor", code: "ecommerce_editor.list", element: <EditorDashboardPage />, showSidebar: true, node: [] },
               { name: "Galería de medios", path: "/ecommerce/medios", code: "ecommerce_media.list", element: <MediaGalleryPage />, showSidebar: true, node: [] },
               { name: "Edición masiva", path: "/ecommerce/edit", code: "ecommerce_bulk_edit.view", element: <MassiveEditPage />, showSidebar: true, node: [] },
               { name: "Reclamaciones", path: "/ecommerce/reclamaciones", code: "ecommerce_claims.list", element: <ReclamacionesPage />, showSidebar: true, node: [] },
