@@ -14,14 +14,9 @@ interface InventoryHeaderProps {
 const InventoryHeader = ({ isEditing, handleEdit, handleCancel, handleSave, hasChanges, isSaving }: InventoryHeaderProps) => {
     return (
         <div className="flex justify-between items-center">
-            <div>
-                <h1 className="text-2xl font-bold text-foreground">
-                    Inventario por almacén
-                </h1>
-                <p className="text-muted-foreground">
-                    Gestiona el stock de todas las variaciones
-                </p>
-            </div>
+            <h1 className="text-2xl font-bold text-foreground">
+                Inventario por almacén
+            </h1>
             {/* Un solo envoltorio para los tres botones: son el mismo flujo de
                 edición, y Cancelar/Actualizar ni siquiera existen hasta entrar
                 en modo edición. Sin el code no se puede entrar, y los inputs de

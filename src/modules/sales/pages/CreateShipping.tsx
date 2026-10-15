@@ -277,7 +277,7 @@ const CreateShipping = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-foreground">
+        <h1 className="text-2xl font-bold text-foreground">
           {id ? "Actualizar método de envío" : "Crear método de envío"}
         </h1>
         <div className="flex gap-3">

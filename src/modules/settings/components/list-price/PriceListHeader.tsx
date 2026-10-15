@@ -9,15 +9,10 @@ interface PriceListHeaderProps {
 
 const PriceListHeader = ({ onOpenDialog }: PriceListHeaderProps) => {
   return (
-    <div className="flex justify-between items-start mb-2">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Listas de precios
-        </h1>
-        <p className="text-muted-foreground">
-          Gestiona las listas de precios del sistema
-        </p>
-      </div>
+    <div className="flex justify-between items-center mb-2">
+      <h1 className="text-2xl font-bold text-foreground">
+        Listas de precios
+      </h1>
 
       {/* Aquí no hay ruta de creación que reutilizar: el alta se hace en el
           mismo listado, abriendo PriceListFormDialog en blanco. */}

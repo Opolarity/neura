@@ -78,12 +78,7 @@ const ChannelsPage = () => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-lg font-semibold leading-tight">Rendimiento por canal</h1>
-          <p className="text-sm text-muted-foreground">
-            WhatsApp, Instagram y Facebook: cuánto vende cada uno y cuánto se cobró.
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">Rendimiento por canal</h1>
 
         <div className="flex items-center gap-2">
           <Select value={preset} onValueChange={(v) => setPreset(v as RangePreset)}>

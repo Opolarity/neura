@@ -26,13 +26,8 @@ const StockTypePage = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tipos de inventario de productos</h1>
-          <p className="text-muted-foreground mt-2">
-            Administra los tipos de stock del sistema
-          </p>
-        </div>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-foreground">Tipos de inventario de productos</h1>
         {/* Aquí no hay ruta de creación que reutilizar: el alta se hace en el
             mismo listado, abriendo StockTypeFormDialog en blanco. */}
         <ComponentPermission codeIn={["stock_types.create"]}>

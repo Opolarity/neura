@@ -163,14 +163,9 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
           <Button variant="outline" size="sm" onClick={() => navigate('/products')}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {viewOnly ? 'Ver producto' : (isEditMode ? 'Editar producto' : 'Añadir producto')}
-            </h1>
-            <p className="text-muted-foreground">
-              {viewOnly ? 'Información del producto (solo lectura)' : (isEditMode ? 'Actualizar la información del producto' : 'Crear un nuevo producto en el catálogo')}
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold text-foreground">
+            {viewOnly ? 'Ver producto' : (isEditMode ? 'Editar producto' : 'Añadir producto')}
+          </h1>
         </div>
         <div className="flex gap-3">
           {viewOnly && productId && (

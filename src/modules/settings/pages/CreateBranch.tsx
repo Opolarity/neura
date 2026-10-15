@@ -43,7 +43,7 @@ const CreateBranch = () => {
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                     </Link>
-                    <h1 className="text-2xl font-bold">Crear nueva sucursal</h1>
+                    <h1 className="text-2xl font-bold text-foreground">Crear nueva sucursal</h1>
                 </div>
             </div>
 

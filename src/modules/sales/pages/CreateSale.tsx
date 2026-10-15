@@ -511,7 +511,7 @@ const CreateSale = () => {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-2xl font-semibold text-foreground">
+          <h1 className="text-2xl font-bold text-foreground">
             {orderId ? "Editar venta" : "Crear venta"}
           </h1>
         </div>

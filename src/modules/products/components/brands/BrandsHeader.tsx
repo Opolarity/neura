@@ -8,11 +8,8 @@ interface BrandsHeaderProps {
 
 export default function BrandsHeader({ onOpen }: BrandsHeaderProps) {
   return (
-    <div className="flex flex-wrap justify-between gap-4">
-      <div className="flex flex-col">
-        <h1 className="text-2xl font-bold text-gray-900">Gestión de marcas</h1>
-        <p className="text-gray-600">Administra tu catálogo de marcas</p>
-      </div>
+    <div className="flex flex-wrap justify-between items-center gap-4">
+      <h1 className="text-2xl font-bold text-foreground">Gestión de marcas</h1>
 
       <ComponentPermission codeIn={["product_brands.create"]}>
         <Button onClick={onOpen}>

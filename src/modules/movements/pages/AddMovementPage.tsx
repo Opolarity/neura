@@ -116,10 +116,7 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
         <Button variant="ghost" size="icon" onClick={goBack}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold">{messages.title}</h1>
-          <p className="text-muted-foreground">{messages.subtitle}</p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">{messages.title}</h1>
       </div>
 
       <form

@@ -112,16 +112,11 @@ const EditReturn = () => {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">Editar devolución/cambio</h1>
-              {isFranchiseReturn && (
-                <Badge variant="secondary">Franquiciado · {franchiseCode}</Badge>
-              )}
-            </div>
-            <p className="text-muted-foreground mt-1">
-              Modifica la información de la devolución o cambio
-            </p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-foreground">Editar devolución/cambio</h1>
+            {isFranchiseReturn && (
+              <Badge variant="secondary">Franquiciado · {franchiseCode}</Badge>
+            )}
           </div>
         </div>
         <div className="flex gap-4">

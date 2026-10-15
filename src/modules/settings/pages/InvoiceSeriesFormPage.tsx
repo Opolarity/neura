@@ -72,16 +72,9 @@ const InvoiceSeriesFormPage = () => {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {isEditing ? "Editar serie" : "Nueva serie"}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {isEditing
-              ? "Modifica los datos de la serie de facturación"
-              : "Configura una nueva serie de comprobantes electrónicos"}
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">
+          {isEditing ? "Editar serie" : "Nueva serie"}
+        </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

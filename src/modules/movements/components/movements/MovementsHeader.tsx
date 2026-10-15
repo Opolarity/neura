@@ -27,12 +27,7 @@ const MovementsHeader = ({
 }: MovementsHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Lista de movimientos</h1>
-        <p className="text-gray-600">
-          Gestiona todos los ingresos y gastos del negocio
-        </p>
-      </div>
+      <h1 className="text-2xl font-bold text-foreground">Lista de movimientos</h1>
       <div className="flex gap-2">
         <ComponentPermission codeIn={NEW_MOVEMENT_CODES}>
           <DropdownMenu>

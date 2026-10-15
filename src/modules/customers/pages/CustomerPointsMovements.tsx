@@ -32,10 +32,7 @@ const CustomerPointsMovements = () => {
       />
 
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Movimientos de puntos</h1>
-          <p className="text-muted-foreground">Historial de movimientos de puntos por cliente</p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">Movimientos de puntos</h1>
         {/* Ajustar puntos (sumar o restar) cambia el saldo del cliente, así que
             se concede aparte de poder consultar el historial. El diálogo no se
             envuelve por separado: solo se abre desde este botón. */}

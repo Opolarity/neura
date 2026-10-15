@@ -12,12 +12,7 @@ const Returns = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Devoluciones</h1>
-          <p className="text-muted-foreground mt-1">
-            Gestiona las devoluciones y cambios de productos
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">Devoluciones</h1>
         {/* El botón lleva a /returns/add, que ya está protegida con
             returns.create. Se reutiliza ese mismo code aquí para no ofrecer un
             botón que acaba en una pantalla bloqueada. */}

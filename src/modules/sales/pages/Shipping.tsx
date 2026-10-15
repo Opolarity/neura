@@ -65,10 +65,7 @@ const Shipping = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Métodos de envío</h1>
-          <p className="text-muted-foreground">Gestiona los métodos de envío y sus costos por zona</p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">Métodos de envío</h1>
         <div>
           <ComponentPermission codeIn={["shipments.create"]}>
             <Link to="/shipping/create" >

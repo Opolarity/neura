@@ -14,13 +14,8 @@ const SalesHeader = ({
   handleBulkDelete,
 }: SalesHeaderProps) => {
   return (
-    <div className="flex justify-between items-start">
-      <div>
-        <h1 className="text-3xl font-bold">Gestión de ventas</h1>
-        <p className="text-muted-foreground mt-1">
-          Administra las ventas realizadas
-        </p>
-      </div>
+    <div className="flex justify-between items-center">
+      <h1 className="text-2xl font-bold text-foreground">Gestión de ventas</h1>
       <div className="flex gap-2">
         {/* El borrado masivo se queda SIN envolver a propósito: handleBulkDelete
             es opcional y hoy no lo pasa nadie, así que este botón no llega a

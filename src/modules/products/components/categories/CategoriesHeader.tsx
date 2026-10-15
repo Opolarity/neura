@@ -9,12 +9,9 @@ interface CategoriesHeaderProps {
 const CategoriesHeader = ({ onOpen }: CategoriesHeaderProps) => {
     return (
         <div className="flex justify-between items-center">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                    Listado de categorías
-                </h1>
-                <p className="text-gray-600">Administra tu catálogo de categorías</p>
-            </div>
+            <h1 className="text-2xl font-bold text-foreground">
+                Listado de categorías
+            </h1>
             <div className="flex gap-2">
                 <ComponentPermission codeIn={["product_categories.create"]}>
                     <Button onClick={() => onOpen()}>

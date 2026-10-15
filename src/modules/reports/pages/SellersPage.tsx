@@ -92,11 +92,8 @@ export default function SellersPage() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Reporte de ventas por usuarios</h1>
-          <p className="text-muted-foreground text-sm">Quién registró cada venta: vendedores por sucursal, ranking y evolución</p>
-        </div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-foreground">Reporte de ventas por usuarios</h1>
         <ReportGuideSheet guide={sellersGuide} />
       </div>
       <ReportsFilterBar

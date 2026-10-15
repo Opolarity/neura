@@ -49,13 +49,8 @@ const BranchesList = () => {
     return (
         <div className="h-full min-h-0 flex flex-col gap-4">
             {/* Header */}
-            <div className="flex justify-between items-start">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Listado de sucursales</h1>
-                    <p className="text-muted-foreground mt-2">
-                        Administra las sucursales del sistema
-                    </p>
-                </div>
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-foreground">Listado de sucursales</h1>
                 {/* El botón lleva a /settings/branches/create, ya protegida con
                     branches.create: se reutiliza ese code para no ofrecer un
                     botón que acaba en una pantalla bloqueada. */}
