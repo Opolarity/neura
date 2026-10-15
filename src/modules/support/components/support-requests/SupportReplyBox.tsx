@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, FileText, Loader2, Paperclip, Send, X } from "lucide-react";
 import { toast } from "@/shared/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/shared/utils/utils";
+import { SupportMessageEditor, type SupportMessageEditorHandle } from "./SupportMessageEditor";
 import {
   MAX_MESSAGE_ATTACHMENTS,
   MAX_MESSAGE_ATTACHMENTS_TOTAL_BYTES,
@@ -28,8 +28,6 @@ interface SupportReplyBoxProps {
 
 /** A partir de aquí se muestra el contador: antes solo estorbaría. */
 const COUNTER_THRESHOLD = MAX_MESSAGE_LENGTH - 500;
-/** Unas 6 líneas de text-sm/leading-6 más el padding vertical. */
-const MAX_TEXTAREA_HEIGHT_PX = 6 * 24 + 16;
 const DRAFT_KEY_PREFIX = "support-draft:";
 const DRAFT_SAVE_DELAY_MS = 400;
 
@@ -60,33 +58,32 @@ const writeDraft = (requestId: string, value: string) => {
 };
 
 export const SupportReplyBox = ({ requestId, onSend, droppedFiles }: SupportReplyBoxProps) => {
-  const [content, setContent] = useState(() => readDraft(requestId));
+  // El borrador y lo que se envía son el mismo texto: Markdown simple
+  const [initialDraft] = useState(() => readDraft(requestId));
+  const [content, setContent] = useState(initialDraft);
   const [files, setFiles] = useState<File[]>([]);
   const [preparing, setPreparing] = useState(false);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<SupportMessageEditorHandle>(null);
   const filesRef = useRef<File[]>(files);
   filesRef.current = files;
+  // Enter llega desde el editor: se lee lo último escrito, no el render anterior
+  const contentRef = useRef(content);
+
+  const handleContentChange = useCallback((markdown: string) => {
+    contentRef.current = markdown;
+    setContent(markdown);
+  }, []);
 
   const trimmed = content.trim();
   // Mismo criterio que la edge function: largo del texto recortado, en
-  // unidades de JS (un emoji cuenta 2). El servidor corta en 5000.
+  // unidades de JS (un emoji cuenta 2). Las marcas de formato (**, -, …)
+  // también cuentan: son parte del texto que se envía. El servidor corta en 5000.
   const length = trimmed.length;
   const overLimit = length > MAX_MESSAGE_LENGTH;
   // El texto es obligatorio aunque haya adjuntos: la API rechaza mensajes vacíos.
   const canSend = length > 0 && !overLimit && !preparing;
-
-  // La caja crece con el texto hasta ~6 líneas y luego hace scroll interno:
-  // el hilo y los botones no se mueven.
-  useLayoutEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    const next = Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT_PX);
-    el.style.height = `${next}px`;
-    el.style.overflowY = el.scrollHeight > MAX_TEXTAREA_HEIGHT_PX ? "auto" : "hidden";
-  }, [content]);
 
   // Borrador por solicitud, con un respiro para no escribir en cada tecla
   useEffect(() => {
@@ -146,7 +143,8 @@ export const SupportReplyBox = ({ requestId, onSend, droppedFiles }: SupportRepl
   };
 
   const handleSend = async () => {
-    if (!canSend) return;
+    const message = contentRef.current.trim();
+    if (!message || message.length > MAX_MESSAGE_LENGTH || preparing) return;
 
     let attachments: SupportAttachment[] | undefined;
 
@@ -168,22 +166,16 @@ export const SupportReplyBox = ({ requestId, onSend, droppedFiles }: SupportRepl
       }
     }
 
-    const queued = onSend(trimmed, attachments);
+    const queued = onSend(message, attachments);
     // Si no se pudo encolar se conserva lo escrito y los archivos
     if (queued) {
-      setContent("");
+      // clear() vacía el editor, deja el foco y dispara onChange con ""; se
+      // puede seguir escribiendo el siguiente mientras este se envía
+      editorRef.current?.clear();
+      handleContentChange("");
       setFiles([]);
       writeDraft(requestId, "");
-      // Se puede seguir escribiendo el siguiente mientras este se envía
-      requestAnimationFrame(() => textareaRef.current?.focus());
     }
-  };
-
-  const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const pasted = Array.from(event.clipboardData?.files ?? []);
-    if (pasted.length === 0) return; // texto normal: lo maneja el textarea
-    event.preventDefault();
-    handleAddFiles(pasted);
   };
 
   const hasFileDrag = (event: React.DragEvent) =>
@@ -212,28 +204,18 @@ export const SupportReplyBox = ({ requestId, onSend, droppedFiles }: SupportRepl
         handleAddFiles(event.dataTransfer.files);
       }}
     >
-      <Textarea
-        ref={textareaRef}
-        value={content}
-        onChange={(event) => setContent(event.target.value)}
-        onKeyDown={(event) => {
-          // Enter envía, Shift+Enter hace salto de línea. Mientras se compone
-          // un carácter (acentos, IME) Enter no envía.
-          if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-            event.preventDefault();
-            void handleSend();
-          }
-        }}
-        onPaste={handlePaste}
+      {/* Enter envía (dentro de una lista crea otro elemento), Shift+Enter
+          salta de línea y mientras se compone un carácter Enter no envía.
+          Crece hasta ~6 líneas y luego hace scroll interno. */}
+      <SupportMessageEditor
+        ref={editorRef}
+        initialMarkdown={initialDraft}
         placeholder="Escribe una respuesta…"
-        rows={1}
         disabled={preparing}
-        aria-invalid={overLimit || undefined}
-        className={cn(
-          "min-h-[40px] resize-none py-2 leading-6",
-          overLimit && "border-destructive focus-visible:ring-destructive",
-        )}
-        style={{ maxHeight: MAX_TEXTAREA_HEIGHT_PX }}
+        invalid={overLimit}
+        onChange={handleContentChange}
+        onSubmit={() => void handleSend()}
+        onPasteFiles={handleAddFiles}
       />
 
       <input
