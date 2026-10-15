@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowDown,
@@ -12,6 +12,7 @@ import { cn } from "@/shared/utils/utils";
 import { formatDateLong, formatDateTime, formatTime } from "@/shared/utils/date";
 import type { SupportAttachmentFile, SupportMessage } from "../../types/Support.types";
 import { SupportAttachmentLink } from "./SupportAttachmentLink";
+import { SupportMessageText } from "./SupportMessageText";
 
 interface SupportConversationProps {
   messages: SupportMessage[];
@@ -37,45 +38,6 @@ const BOTTOM_THRESHOLD_PX = 120;
 /** Desde aquí aparece el botón para bajar al último mensaje. */
 const JUMP_BUTTON_THRESHOLD_PX = 400;
 
-// Saltos de línea largos (URLs, palabras sin espacios) siempre bajan de línea:
-// sin `overflow-wrap:anywhere` una URL de 300 caracteres empuja la burbuja y
-// el panel entero gana scroll horizontal.
-const WRAP = "whitespace-pre-wrap break-words [overflow-wrap:anywhere]";
-
-const URL_RE = /(https?:\/\/[^\s<>"]+)/g;
-const TRAILING_PUNCTUATION = /[.,;:!?)\]}'"»]+$/;
-
-/**
- * El contenido es TEXTO PLANO: nunca se inserta como HTML. Las URLs se
- * convierten en enlaces armados como elementos de React.
- */
-const LinkifiedText = ({ text }: { text: string }) => {
-  const parts = text.split(URL_RE);
-
-  return (
-    <>
-      {parts.map((part, index) => {
-        if (index % 2 === 0) return <Fragment key={index}>{part}</Fragment>;
-        // El punto o el paréntesis que cierra la frase no son parte del enlace
-        const trailing = part.match(TRAILING_PUNCTUATION)?.[0] ?? "";
-        const href = trailing ? part.slice(0, -trailing.length) : part;
-        return (
-          <Fragment key={index}>
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2 [overflow-wrap:anywhere] hover:opacity-80"
-            >
-              {href}
-            </a>
-            {trailing}
-          </Fragment>
-        );
-      })}
-    </>
-  );
-};
 
 const isImage = (file: SupportAttachmentFile) =>
   (file.mimeType ?? "").toLowerCase().startsWith("image/");
@@ -243,11 +205,10 @@ const MessageBubble = ({
               sending && "opacity-70",
             )}
           >
-            {/* content es TEXTO PLANO: se respetan los saltos de línea y nunca
-                se inserta como HTML (a diferencia de la descripción) */}
-            <p className={WRAP}>
-              <LinkifiedText text={message.content} />
-            </p>
+            {/* content es texto plano con Markdown simple: se pinta con su
+                formato y nunca se inserta como HTML (a diferencia de la
+                descripción). Las palabras y URLs largas bajan de línea. */}
+            <SupportMessageText text={message.content} />
             <div className="mt-1 flex flex-wrap items-center justify-end gap-x-2 text-[11px] text-muted-foreground tabular-nums">
               {sending && (
                 <span className="flex items-center gap-1">
