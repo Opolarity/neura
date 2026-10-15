@@ -37,6 +37,11 @@ export const useEditReturn = () => {
     const [userProfile, setUserProfile] = useState<any>(null);
     const [orderTotal, setOrderTotal] = useState<number>(0);
     const [shippingCost, setShippingCost] = useState<number>(0);
+    // Devolución del franquiciado (returns.code): llega por la API, sin pagos, y
+    // sus cantidades solo se cambian desde el sistema del franquiciado. Aquí
+    // solo se registra la nota, se acepta o se anula.
+    const [franchiseCode, setFranchiseCode] = useState<string | null>(null);
+    const isFranchiseReturn = !!franchiseCode;
 
     // Multiple payments (same pattern as CreateReturn)
     const [payments, setPayments] = useState<ReturnPayment[]>([]);
@@ -107,6 +112,7 @@ export const useEditReturn = () => {
                 ? (situationsData || []).filter((s: any) => s.code === 'PHY' || s.code === 'HDN')
                 : (situationsData || []);
 
+            setFranchiseCode(details.code ?? null);
             setReason(details.reason || '');
             setDocumentType(details.customer_document_type_id?.toString() || '');
             setDocumentNumber(details.customer_document_number);
@@ -124,7 +130,9 @@ export const useEditReturn = () => {
 
             // output=false → prenda que ENTRA (devuelta a tienda)
             // output=true  → prenda que SALE (cambio al cliente)
-            if (details.return_type_code === 'DVT') {
+            // La DVT del franquiciado no devuelve el pedido completo (solo lo que
+            // le quedaba sin vender): se muestran sus propias líneas.
+            if (details.return_type_code === 'DVT' && !details.code) {
                 const allOrderProducts = orderProductsData?.map((op) => ({
                     product_variation_id: op.product_variation_id,
                     quantity: op.quantity,
@@ -170,7 +178,7 @@ export const useEditReturn = () => {
             }
 
             // Load existing payments from details
-            if (details.payment_methods && details.payment_methods.length > 0) {
+            if (!details.code && details.payment_methods && details.payment_methods.length > 0) {
                 const loadedPayments: ReturnPayment[] = details.payment_methods.map((pm: any) => ({
                     id: crypto.randomUUID(),
                     paymentMethodId: pm.payment_method_id.toString(),
@@ -308,7 +316,7 @@ export const useEditReturn = () => {
 
     // ── Totals ────────────────────────────────────────────────────────────────────
     const calculateReturnTotal = () => {
-        if (returnTypeCode === 'DVT') {
+        if (returnTypeCode === 'DVT' && !isFranchiseReturn) {
             return orderProducts.reduce((sum, p) => sum + p.product_price * p.quantity, 0);
         }
         return returnProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
@@ -365,7 +373,7 @@ export const useEditReturn = () => {
                 : -(productsTotal + (shippingReturn ? shippingCost : 0));
 
             let allReturnProducts: any[] = [];
-            if (returnTypeCode === 'DVT') {
+            if (returnTypeCode === 'DVT' && !isFranchiseReturn) {
                 allReturnProducts = orderProducts.map(p => ({
                     product_variation_id: p.product_variation_id,
                     quantity: p.quantity,
@@ -426,7 +434,9 @@ export const useEditReturn = () => {
                 // movement OUT (sale dinero) o INC (entra). Enviarlo siempre
                 // positivo hacía que una devolución SUMARA al saldo de la
                 // cuenta en vez de restarlo.
-                payment_methods: paymentsWithUrls.map(p => ({
+                // La devolución del franquiciado no lleva pagos (el backend los
+                // rechaza); sus cantidades las ignora el backend.
+                payment_methods: isFranchiseReturn ? [] : paymentsWithUrls.map(p => ({
                     payment_method_id: Number(p.paymentMethodId),
                     amount: parseFloat(p.amount) * (totalExchangeDifference < 0 ? -1 : 1),
                     voucher_url: p.voucherUrl || null,
@@ -450,11 +460,16 @@ export const useEditReturn = () => {
 
     const currentSituation = situations.find(s => s.id === Number(situationId));
     const isReadOnly = currentSituation?.code === 'PHY' || currentSituation?.code === 'HDN';
+    // Cantidades, documento y envío: fijos en las del franquiciado.
+    const productsReadOnly = isReadOnly || isFranchiseReturn;
 
     return {
         loading,
         saving,
         isReadOnly,
+        productsReadOnly,
+        isFranchiseReturn,
+        franchiseCode,
         displayOrderId,
         situations,
         documentTypes,

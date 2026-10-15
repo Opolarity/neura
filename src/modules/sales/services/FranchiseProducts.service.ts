@@ -6,7 +6,12 @@ export type FranchiseProductRow = {
   id: number;
   productName: string;
   orderId: number;
+  // Enviado NETO: el SP ya descuenta lo que el franquiciado devolvió a Overtake
+  // (devoluciones con code aceptadas).
   quantity: number;
+  // Devuelto a Overtake por el franquiciado (aceptado) y en tránsito.
+  returnedToSupplier: number;
+  inTransitToSupplier: number;
   // Neto: el SP ya descuenta las unidades devueltas por el cliente final.
   soldByFranchise: number | null;
   // Unidades devueltas de esta línea (eventos source='return' en
@@ -106,6 +111,8 @@ type RawFranchiseProduct = {
   product_name: string;
   product_price: number | string | null;
   quantity: number | string | null;
+  returned_to_supplier?: number | string | null;
+  in_transit_to_supplier?: number | string | null;
   sold_by_franchise: number | string | null;
   returned_units: number | string | null;
   paid_by_franchise: number | string | null;
@@ -187,6 +194,8 @@ export const fetchFranchiseProducts = async (
         productName: item.product_name ?? "-",
         orderId: item.order_id,
         quantity,
+        returnedToSupplier: toNumber(item.returned_to_supplier),
+        inTransitToSupplier: toNumber(item.in_transit_to_supplier),
         soldByFranchise: toNullableNumber(item.sold_by_franchise),
         returnedUnits: toNumber(item.returned_units),
         productPrice,
