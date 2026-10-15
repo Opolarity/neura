@@ -22,13 +22,13 @@ All colors MUST be HSL.
     --primary: 257.8 49% 44.1%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 9% 97.8%; /* #f8f9fa */
+    --secondary: 220 9% 97.8%;
     --secondary-foreground: 220 14% 13%;
 
-    --muted: 220 9% 97.8%; /* #f8f9fa */
+    --muted: 220 9% 97.8%;
     --muted-foreground: 220 6% 47%;
 
-    --accent: 220 9% 97.8%; /* #f8f9fa */
+    --accent: 220 9% 97.8%;
     --accent-foreground: 220 14% 13%;
 
     --destructive: 358.1 75.1% 59%; /* #e5484d */
@@ -49,11 +49,11 @@ All colors MUST be HSL.
     --info: 217.2 91.2% 59.8%;
     --info-foreground: 0 0% 100%;
 
-    --pending: 220 9% 97.8%; /* #f8f9fa */
+    --pending: 220 9% 97.8%;
     --pending-foreground: 220 12% 27%;
 
-    --border: 220 10% 92.5%; /* #e9eaee */
-    --input: 220 10% 92.5%; /* #e9eaee */
+    --border: 220 10% 92.5%;
+    --input: 220 10% 92.5%;
     --ring: 257.8 49% 60%;
 
     --radius: 0.5rem;
@@ -77,6 +77,8 @@ All colors MUST be HSL.
     --sidebar-ring: 257.8 49% 60%;
   }
 
+  /* Modo oscuro (inactivo: no hay ThemeProvider). Valores alineados a la
+     landing de neura.pe por si se activa en el futuro. */
   .dark {
     --background: 225 45% 5%;
     --foreground: 214 60% 97%;
@@ -208,7 +210,7 @@ All colors MUST be HSL.
 .sidebar-floating-panel {
   position: fixed;
   z-index: 50;
-  background-color: #0f172a;
+  background-color: hsl(var(--sidebar-background));
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.5rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -273,7 +275,7 @@ All colors MUST be HSL.
 
 .ProseMirror h1 { font-size: 1.5em; font-weight: 700; margin: 0.5em 0; }
 
-/* Recharts: mapear blue-500 → blue-600 (hsl(var(--primary))) del sistema */
+/* Recharts: mapear blue-500 -> el primary del sistema */
 [class~="fill-blue-500"] {
   fill: hsl(var(--primary)) !important;
 }
@@ -291,6 +293,7 @@ All colors MUST be HSL.
   fill: hsl(var(--primary)) !important;
   stroke: white !important;
 }
+
 
 .recharts-tooltip-wrapper .recharts-default-tooltip,
 .recharts-tooltip-wrapper {

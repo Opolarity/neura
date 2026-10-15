@@ -13,9 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { useDashboardAlerts, type DashboardAlert } from "../hooks/useDashboardAlerts";
 
 const alertIcon: Record<DashboardAlert["key"], JSX.Element> = {
-  quantities: <PackageCheck className="w-4 h-4 text-gray-500 shrink-0" />,
-  payments: <Wallet className="w-4 h-4 text-gray-500 shrink-0" />,
-  "in-progress": <Clock className="w-4 h-4 text-gray-500 shrink-0" />,
+  quantities: <PackageCheck className="w-4 h-4 text-muted-foreground shrink-0" />,
+  payments: <Wallet className="w-4 h-4 text-muted-foreground shrink-0" />,
+  "in-progress": <Clock className="w-4 h-4 text-muted-foreground shrink-0" />,
 };
 
 export function AlertsCard() {
@@ -26,17 +26,17 @@ export function AlertsCard() {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <TriangleAlert className="w-5 h-5 text-gray-600" />
+          <TriangleAlert className="w-5 h-5 text-muted-foreground" />
           <h3 className="text-lg font-semibold">Alertas</h3>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {loading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="w-6 h-6 animate-spin" />
           </div>
         ) : alerts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
             <ShieldCheck className="w-10 h-10 mb-3" />
             <p className="text-sm">No hay alertas disponibles</p>
           </div>
@@ -48,16 +48,16 @@ export function AlertsCard() {
                 type="button"
                 disabled={!alert.path}
                 onClick={() => alert.path && navigate(alert.path)}
-                className="w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0 disabled:cursor-default disabled:hover:bg-transparent"
+                className="w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-0 disabled:cursor-default disabled:hover:bg-transparent"
               >
                 {alertIcon[alert.key]}
-                <span className="flex-1 min-w-0 text-sm font-medium text-gray-700 truncate">
+                <span className="flex-1 min-w-0 text-sm font-medium text-foreground truncate">
                   {alert.label}
                 </span>
                 {alert.loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                 ) : alert.count === null ? (
-                  <span className="text-sm text-gray-400" title="No se pudo cargar">
+                  <span className="text-sm text-muted-foreground" title="No se pudo cargar">
                     —
                   </span>
                 ) : (
@@ -65,7 +65,7 @@ export function AlertsCard() {
                     {alert.count}
                   </Badge>
                 )}
-                {alert.path && <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
+                {alert.path && <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
               </button>
             ))}
           </div>
