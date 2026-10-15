@@ -73,6 +73,7 @@ const USER_POPOVER_CODE = "__user__";
 const SUPPORT_LINKS = [
   { to: "/support", label: "Tickets", icon: Ticket },
   { to: "/support/capacitaciones", label: "Capacitaciones", icon: GraduationCap },
+  { to: "/support/aprender", label: "Aprender", icon: BookOpen },
 ] as const;
 
 function SidebarModule({
@@ -403,18 +404,6 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
                     <span>{label}</span>
                   </Link>
                 ))}
-
-                {/* Aprender todavía no tiene contenido. Se muestra igualmente
-                    para que se sepa que viene, pero no navega a ninguna parte:
-                    un enlace a una pantalla vacía se lee como algo roto. */}
-                <div
-                  aria-disabled="true"
-                  className="flex w-full cursor-not-allowed items-center gap-2 rounded-md px-2 py-1.5 pl-4 text-sm text-sidebar-foreground/50"
-                >
-                  <BookOpen className="size-4" />
-                  <span>Aprender</span>
-                  <span className="ml-auto text-[10px] uppercase tracking-wide">Pronto</span>
-                </div>
 
                 <button
                   type="button"
