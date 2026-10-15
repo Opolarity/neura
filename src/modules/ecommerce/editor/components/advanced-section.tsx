@@ -7,12 +7,22 @@
 // Trae la clase CSS, un identificador opcional y un campo de CSS libre (un
 // editor de codigo con autocompletado, ver css-code-editor.tsx).
 
-import { useId, useRef, type ReactNode } from "react"
+import { lazy, Suspense, useId, useRef, type ReactNode } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FieldLabel } from "@/modules/ecommerce/editor/components/field-label"
-import { CssCodeEditor, type CssCodeEditorHandle } from "@/modules/ecommerce/editor/components/css-code-editor"
+import type { CssCodeEditorHandle } from "@/modules/ecommerce/editor/components/css-code-editor"
 import { SettingsSection } from "@/modules/ecommerce/editor/components/settings-section"
+
+// CodeMirror solo lo usa el panel, pero este archivo tambien lo importa el
+// listado del editor (por compileCustomCss, via popup-presets), que va en la
+// carga inicial del ERP. Cargado aparte, se descarga la primera vez que se abre
+// la seccion Avanzado. El hueco mientras carga mide lo mismo que el editor.
+const CssCodeEditor = lazy(() =>
+  import("@/modules/ecommerce/editor/components/css-code-editor").then((m) => ({
+    default: m.CssCodeEditor,
+  })),
+)
 
 /**
  * La palabra que, dentro del CSS libre, representa al propio componente. Es la
@@ -145,14 +155,18 @@ export function AdvancedSection({
           >
             CSS personalizado
           </FieldLabel>
-          <CssCodeEditor
-            ref={editorCss}
-            id={cssId}
-            value={customCss}
-            placeholder={`${CSS_SELECTOR_KEYWORD} { color: red; }`}
-            keyword={CSS_SELECTOR_KEYWORD}
-            onChange={onCustomCssChange}
-          />
+          <Suspense
+            fallback={<div className="h-24 w-full rounded-md border border-input bg-background" />}
+          >
+            <CssCodeEditor
+              ref={editorCss}
+              id={cssId}
+              value={customCss}
+              placeholder={`${CSS_SELECTOR_KEYWORD} { color: red; }`}
+              keyword={CSS_SELECTOR_KEYWORD}
+              onChange={onCustomCssChange}
+            />
+          </Suspense>
         </div>
 
         {children}
