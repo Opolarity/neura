@@ -325,6 +325,11 @@ export interface TicketProtocolApiResponse {
   updated_at: string;
 }
 
+/** Lo que responde `get-support-protocol`: el documento envuelto en `data`. */
+export interface TicketProtocolEnvelope {
+  data: TicketProtocolApiResponse | null;
+}
+
 /** El mismo documento ya normalizado para la vista. */
 export interface TicketProtocol {
   title: string;
