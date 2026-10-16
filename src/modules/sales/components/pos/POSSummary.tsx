@@ -2,12 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, User } from "lucide-react";
 import type { POSCartItem, POSCustomerData } from "../../types/POS.types";
 import { formatCurrency } from "../../adapters/POS.adapter";
+import type { OrderDiscountRule } from "../../rules/applyPriceRules";
 
 interface POSSummaryProps {
   cart: POSCartItem[];
   customer: POSCustomerData;
   subtotal: number;
   discountAmount: number;
+  ruleDiscounts: OrderDiscountRule[];
   shippingCost: number;
   total: number;
 
@@ -18,6 +20,7 @@ export default function POSSummary({
   customer,
   subtotal,
   discountAmount,
+  ruleDiscounts,
   shippingCost,
   total
 }: POSSummaryProps) {
@@ -46,9 +49,20 @@ export default function POSSummary({
             <span className="font-medium">S/ {formatCurrency(subtotal)}</span>
           </div>
 
+          {ruleDiscounts.map((r, i) =>
+          <div key={`${r.code}-${r.name}-${i}`} className="flex justify-between text-xs">
+              <span className="text-muted-foreground truncate max-w-[200px]">{r.name}</span>
+              <span className="text-muted-foreground">
+                {r.discount_amount !== 0 ?
+              `${r.discount_amount > 0 ? "+" : "-"} S/ ${formatCurrency(Math.abs(r.discount_amount))}` :
+              "Inc. en productos"}
+              </span>
+            </div>
+          )}
+
           {discountAmount !== 0 &&
           <div className="flex justify-between">
-              <span className="text-muted-foreground">Descuento Manual</span>
+              <span className="text-muted-foreground">Descuentos</span>
               <span className="font-medium">
                 {discountAmount > 0 ? "+" : "-"} S/ {formatCurrency(Math.abs(discountAmount))}
               </span>

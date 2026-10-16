@@ -4,7 +4,12 @@
 // =============================================
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { applyPriceRules, type GiftItem } from "../rules/applyPriceRules";
+import {
+  applyPriceRules,
+  isFranchiseRow,
+  type GiftItem,
+  type OrderDiscountRule,
+} from "../rules/applyPriceRules";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { measure } from "@/lib/rum";
@@ -129,6 +134,13 @@ export const usePOS = () => {
   // Gifts (from price rules)
   const [cartGifts, setCartGifts] = useState<GiftItem[]>([]);
 
+  // T-358: reglas que el motor aplicó y sus filas de descuento. Se guardan en la venta
+  // como order_discounts con el código de la regla, igual que en crear venta. Las reglas
+  // por línea traen monto 0 (el descuento ya está en el precio); las de subtotal y los
+  // recargos traen monto con signo y sí mueven el total.
+  const [appliedRules, setAppliedRules] = useState<{ message: string; rule_name: string }[]>([]);
+  const [ruleDiscounts, setRuleDiscounts] = useState<OrderDiscountRule[]>([]);
+
   // Customer (Step 3)
   const [customer, setCustomer] = useState<POSCustomerData>(DEFAULT_CUSTOMER);
   const [clientFound, setClientFound] = useState<boolean | null>(null);
@@ -196,15 +208,24 @@ export const usePOS = () => {
     if (regularItems.length === 0 || !configuration?.priceListId) {
       if (cart.some(i => i.isGift)) setCart(regularItems);
       setCartGifts([]);
+      setAppliedRules([]);
+      setRuleDiscounts([]);
       return;
     }
 
     const run = async () => {
-      const { items: updated, gifts } = await applyPriceRules(
+      const { items: updated, gifts, appliedRules: rules, discounts } = await applyPriceRules(
         regularItems,
         configuration.priceListId,
         customerUserId,
         customerAccountId
+      );
+
+      setAppliedRules(rules.map((r) => ({ message: r.message, rule_name: r.rule_name })));
+      setRuleDiscounts(
+        discounts
+          .filter((d) => !isFranchiseRow(d.code))
+          .map((d) => ({ name: d.name, code: d.code, discount_amount: d.amount })),
       );
 
       const defaultStockTypeId = regularItems[0]?.stockTypeId ?? parseInt(selectedStockTypeId) ?? 1;
@@ -876,12 +897,15 @@ export const usePOS = () => {
     );
   }, [cart]);
 
-  // Ajustes manuales de la orden, con signo: negativo resta del total y positivo
-  // suma. Misma convención que useCreateSale y que el recálculo del backend
-  // (total = Σ líneas + Σ order_discounts.discount_amount + envío).
+  // Ajustes de la orden (manuales + reglas del motor), con signo: negativo resta del
+  // total y positivo suma. Misma convención que useCreateSale y que el recálculo del
+  // backend (total = Σ líneas + Σ order_discounts.discount_amount + envío).
   const discountAmount = useMemo(() => {
-    return orderDiscounts.reduce((sum, d) => sum + d.amount, 0);
-  }, [orderDiscounts]);
+    return (
+      orderDiscounts.reduce((sum, d) => sum + d.amount, 0) +
+      ruleDiscounts.reduce((sum, r) => sum + r.discount_amount, 0)
+    );
+  }, [orderDiscounts, ruleDiscounts]);
 
   const productDiscountAmount = useMemo(() => {
     return cart.reduce(
@@ -1090,10 +1114,11 @@ export const usePOS = () => {
         initialSituationId: situationId,
         saleType: saleTypeId,
         discounts: [
-          // Solo los ajustes manuales: el descuento por producto ya se guarda por
-          // unidad en order_products.product_discount. Registrarlo además como fila
-          // PRO lo sumaba de vuelta en el recálculo del backend y anulaba la resta.
+          // Ajustes manuales y reglas del motor. Sin fila resumen PRO: el descuento por
+          // producto ya se guarda por unidad en order_products.product_discount, y
+          // registrarlo además lo sumaba de vuelta en el recálculo del backend.
           ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
+          ...ruleDiscounts.map((r) => ({ name: r.name, discount_amount: r.discount_amount, code: r.code })),
         ],
       };
 
@@ -1363,6 +1388,8 @@ export const usePOS = () => {
     removeOrderDiscount: (id: string) => {
       setOrderDiscounts((prev) => prev.filter((d) => d.id !== id));
     },
+    appliedRules,
+    ruleDiscounts,
     productDiscountAmount,
     handleProductPageChange: (page: number) => {
       setProductPage(page);

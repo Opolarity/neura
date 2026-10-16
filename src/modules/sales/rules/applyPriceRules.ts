@@ -35,6 +35,19 @@ export interface DiscountResult {
   note?: string;
 }
 
+// Fila de order_discounts escrita por el motor de reglas (con el código de la regla).
+export interface OrderDiscountRule {
+  name: string;
+  code: string;
+  discount_amount: number;
+}
+
+// Filas escritas por sp_fch_apply_franchise_sale (promos de consignación). Ahí la repetición es
+// legítima —una fila por venta reportada del franquiciado— así que nunca se emparejan ni se
+// pisan con lo que devuelve el motor de reglas del ERP.
+export const isFranchiseRow = (code?: string | null) =>
+  (code ?? "").toUpperCase().startsWith("FCH-PROMO");
+
 export async function applyPriceRules<T extends CartItemForRules>(
   items: T[],
   priceListId: number | string,

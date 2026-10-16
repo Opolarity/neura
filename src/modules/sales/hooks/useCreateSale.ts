@@ -4,7 +4,7 @@
 // =============================================
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { applyPriceRules, type GiftItem } from "../rules/applyPriceRules";
+import { applyPriceRules, isFranchiseRow, type GiftItem } from "../rules/applyPriceRules";
 import { getPriceListIsActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,12 +74,6 @@ const ruleKey = (code?: string | null, name?: string | null) =>
   `${(code ?? "").trim().toLowerCase()}||${(name ?? "").trim().toLowerCase()}`;
 
 const normalizeName = (name?: string | null) => (name ?? "").trim().toLowerCase();
-
-// Filas escritas por sp_fch_apply_franchise_sale (promos de consignación). Ahí la repetición es
-// legítima —una fila por venta reportada del franquiciado— así que nunca se emparejan ni se
-// pisan con lo que devuelve el motor de reglas del ERP.
-const isFranchiseRow = (code?: string | null) =>
-  (code ?? "").toUpperCase().startsWith("FCH-PROMO");
 
 const INITIAL_FORM_DATA: SaleFormData = {
   documentType: "",
