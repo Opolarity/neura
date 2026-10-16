@@ -59,6 +59,35 @@ export interface SupportRequestApiItem {
   /** Host ya normalizado por la API externa; "" cuando no hay origen. */
   origin_host: string | null;
   attachments_count: number | null;
+  /**
+   * Último mensaje del hilo que ve el cliente, sin contenido (T-990). Opcional:
+   * las versiones anteriores de la API externa no lo devuelven. null si la
+   * solicitud todavía no tiene conversación.
+   */
+  last_message?: SupportLastMessageApi | null;
+  /**
+   * Hay respuestas de soporte sin leer para el usuario de la sesión (T-991,
+   * lo calcula get-support-requests). Opcional: backend anterior no lo manda.
+   */
+  has_unread?: boolean;
+}
+
+/** Último mensaje del hilo tal como lo devuelve la API (sin contenido). */
+export interface SupportLastMessageApi {
+  id: string;
+  /** external | internal | system — conjunto ABIERTO. */
+  origin: string | null;
+  /** suggestion (hilo) | task (comentario compartido de la tarea). */
+  source?: string | null;
+  author_name?: string | null;
+  created_at: string;
+}
+
+/** Último mensaje adaptado: lo justo para marcar "leído hasta". */
+export interface SupportLastMessage {
+  id: string;
+  origin: string | null;
+  createdAt: string;
 }
 
 /**
@@ -120,6 +149,10 @@ export interface SupportRequestListItem {
   attachmentsCount: number;
   createdAt: string;
   updatedAt: string;
+  /** Hay respuestas de soporte sin leer (false si el backend no lo informa). */
+  hasUnread: boolean;
+  /** Último mensaje del hilo; null sin conversación o con API anterior. */
+  lastMessage: SupportLastMessage | null;
 }
 
 /* ------------------------------------------------------------------ *
@@ -277,6 +310,24 @@ export interface SupportRequestDetail extends SupportRequestListItem {
 /** Respuesta de la edge function que añade un mensaje al hilo. */
 export interface SupportMessageApiResponse {
   data: SupportMessageApi | null;
+}
+
+/** Respuesta de mark-support-request-read. */
+export interface SupportMarkReadApiResponse {
+  data: {
+    suggestion_id: string;
+    last_read_at: string;
+    last_read_message_id: string | null;
+  } | null;
+}
+
+/** Respuesta de get-support-unread-count. */
+export interface SupportUnreadCountApiResponse {
+  data: {
+    count: number;
+    /** true si había más solicitudes de las que se recorrieron. */
+    truncated: boolean;
+  } | null;
 }
 
 /**

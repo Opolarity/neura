@@ -1,10 +1,12 @@
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import type {
   SupportAttachment,
+  SupportMarkReadApiResponse,
   SupportMessageApiResponse,
   SupportRequestDetailApiResponse,
   SupportRequestsApiResponse,
   SupportRequestsFilters,
+  SupportUnreadCountApiResponse,
 } from "../types/Support.types";
 
 /**
@@ -76,4 +78,31 @@ export const createSupportRequestMessage = async (
             }))
           : undefined,
     },
+  });
+
+/**
+ * Marca la solicitud como leída para el usuario de la sesión, hasta el último
+ * mensaje que tiene a la vista (T-991). La marca nunca retrocede.
+ */
+export const markSupportRequestRead = async (
+  suggestionId: string,
+  messageId: string | null,
+  messageAt: string | null,
+): Promise<SupportMarkReadApiResponse> =>
+  invokeFunction<SupportMarkReadApiResponse>("mark-support-request-read", {
+    method: "POST",
+    networkMessage: NETWORK_MESSAGE,
+    body: {
+      id: suggestionId,
+      message_id: messageId ?? undefined,
+      message_at: messageAt ?? undefined,
+    },
+  });
+
+/** Cuántas solicitudes tienen respuestas sin leer: el número del menú "Tickets". */
+export const getSupportUnreadCount = async (): Promise<SupportUnreadCountApiResponse> =>
+  invokeFunction<SupportUnreadCountApiResponse>("get-support-unread-count", {
+    method: "POST",
+    networkMessage: NETWORK_MESSAGE,
+    body: {},
   });

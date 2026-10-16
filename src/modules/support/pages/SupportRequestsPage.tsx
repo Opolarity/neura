@@ -4,6 +4,7 @@ import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import WalkingBear from "@/shared/components/walking-bear/WalkingBear";
 import { useSupportRequests } from "../hooks/useSupportRequests";
 import { useSupportRequestDetail } from "../hooks/useSupportRequestDetail";
+import { useSupportUnread } from "../context/SupportUnreadProvider";
 import { SupportDialog } from "../components/SupportDialog";
 import { SupportRequestDetailSheet } from "../components/support-requests/SupportRequestDetailSheet";
 import { SupportRequestsHeader } from "../components/support-requests/SupportRequestsHeader";
@@ -33,11 +34,18 @@ const SupportRequestsPage = () => {
     onApplyFilter,
     clearFilters,
     refresh,
+    markRowRead,
     openNewRequest,
     onDialogOpenChange,
   } = useSupportRequests();
 
-  const detail = useSupportRequestDetail();
+  const { refresh: refreshUnreadCount } = useSupportUnread();
+  const detail = useSupportRequestDetail({
+    onMarkedRead: (id) => {
+      markRowRead(id);
+      refreshUnreadCount();
+    },
+  });
 
   // Estado puramente de UI: el protocolo es contenido estático, no pasa por el
   // hook de datos de la pantalla.

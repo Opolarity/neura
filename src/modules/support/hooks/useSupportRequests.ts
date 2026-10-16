@@ -142,6 +142,16 @@ export function useSupportRequests() {
 
   const refresh = () => load(filters);
 
+  // T-993: al leer una solicitud en el detalle, su fila deja de marcarse sin
+  // esperar a la próxima carga del listado.
+  const markRowRead = useCallback((id: string) => {
+    setRequests((prev) =>
+      prev.some((r) => r.id === id && r.hasUnread)
+        ? prev.map((r) => (r.id === id ? { ...r, hasUnread: false } : r))
+        : prev,
+    );
+  }, []);
+
   const openNewRequest = () => setDialogOpen(true);
 
   // El SupportDialog no expone onCreated: se cierra solo tras un envío exitoso
@@ -172,6 +182,7 @@ export function useSupportRequests() {
     onApplyFilter,
     clearFilters,
     refresh,
+    markRowRead,
     openNewRequest,
     onDialogOpenChange,
   };
