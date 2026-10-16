@@ -333,7 +333,7 @@ export const ProcessDetailDialog = ({
             Cargando el detalle...
           </div>
         ) : (
-          <div className="max-h-[62vh] space-y-5 overflow-y-auto pr-1">
+          <div className="max-h-[60vh] space-y-5 overflow-y-auto pr-1">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <Dato label="Se pidió">{num(pedido)}</Dato>
               <Dato label="Se recibió">{num(recibido)}</Dato>

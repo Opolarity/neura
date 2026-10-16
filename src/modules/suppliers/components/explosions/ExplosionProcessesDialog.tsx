@@ -76,7 +76,7 @@ export const ExplosionProcessesDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[70vh] overflow-y-auto pr-1">
+        <div className="max-h-[60vh] overflow-y-auto pr-1">
           <ExplosionProcessesEditor {...editorProps} readOnly={readOnly} />
         </div>
 
