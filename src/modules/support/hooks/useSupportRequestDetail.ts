@@ -16,6 +16,7 @@ import {
   adaptSupportRequestDetail,
 } from "../adapters/supportRequest.adapter";
 import { toastError } from "@/shared/utils/toastError";
+import { useSupportRealtime } from "../context/SupportRealtimeProvider";
 
 interface SupportDetailErrorState {
   message: string;
@@ -106,7 +107,7 @@ const nextLocalId = () => `local-${Date.now()}-${++localCounter}`;
  */
 interface UseSupportRequestDetailOptions {
   /** Se marcó como leída en el servidor (T-993): el listado y el menú se actualizan. */
-  onMarkedRead?: (id: string) => void;
+  onMarkedRead?: (id: string, lastMessageId: string) => void;
 }
 
 export function useSupportRequestDetail({ onMarkedRead }: UseSupportRequestDetailOptions = {}) {
@@ -537,6 +538,24 @@ export function useSupportRequestDetail({ onMarkedRead }: UseSupportRequestDetai
     };
   }, [fetchDetail, selectedId]);
 
+  // T-997: soporte respondió en tiempo real. Si es la solicitud abierta, se
+  // recarga ya, en silencio y con el mismo control de una petición en vuelo
+  // que el polling (que sigue como respaldo). No marca leído por sí solo:
+  // eso lo decide el efecto de abajo, que exige la pestaña visible.
+  const { subscribe, setOpenRequest } = useSupportRealtime();
+  useEffect(
+    () =>
+      subscribe((ids) => {
+        const id = selectedIdRef.current;
+        if (id && ids.includes(id)) void fetchDetail(id, true);
+      }),
+    [subscribe, fetchDetail],
+  );
+  useEffect(() => {
+    setOpenRequest(selectedId);
+    return () => setOpenRequest(null);
+  }, [selectedId, setOpenRequest]);
+
   // T-993: marcar como leída. Solo con la pestaña visible y solo cuando cambia
   // el último mensaje que se tiene a la vista: ni una llamada por cada poll ni
   // por recargas en segundo plano. Un fallo es silencioso (la marca se
@@ -565,7 +584,7 @@ export function useSupportRequestDetail({ onMarkedRead }: UseSupportRequestDetai
     markedRef.current[detailId] = lastMessageId;
 
     markSupportRequestRead(detailId, lastMessageId, lastMessageAt)
-      .then(() => onMarkedReadRef.current?.(detailId))
+      .then(() => onMarkedReadRef.current?.(detailId, lastMessageId))
       .catch((error) => {
         console.error("Error marking support request as read:", error);
         // Se olvida para que el próximo cambio o la próxima apertura lo reintente

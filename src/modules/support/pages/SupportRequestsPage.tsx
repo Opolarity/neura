@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import WalkingBear from "@/shared/components/walking-bear/WalkingBear";
@@ -41,11 +42,30 @@ const SupportRequestsPage = () => {
 
   const { refresh: refreshUnreadCount } = useSupportUnread();
   const detail = useSupportRequestDetail({
-    onMarkedRead: (id) => {
-      markRowRead(id);
+    onMarkedRead: (id, lastMessageId) => {
+      markRowRead(id, lastMessageId);
       refreshUnreadCount();
     },
   });
+
+  // T-997: el toast de "soporte respondió" trae aquí con ?open=<id>. Se abre
+  // esa solicitud una vez y se limpia el parámetro, para que recargar o volver
+  // atrás no la reabra.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const openParam = searchParams.get("open");
+  const openDetail = detail.open;
+  useEffect(() => {
+    if (!openParam) return;
+    openDetail(openParam);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("open");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [openParam, openDetail, setSearchParams]);
 
   // Estado puramente de UI: el protocolo es contenido estático, no pasa por el
   // hook de datos de la pantalla.

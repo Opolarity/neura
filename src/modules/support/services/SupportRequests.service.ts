@@ -106,3 +106,17 @@ export const getSupportUnreadCount = async (): Promise<SupportUnreadCountApiResp
     networkMessage: NETWORK_MESSAGE,
     body: {},
   });
+
+/**
+ * Solo esas solicitudes, con su has_unread (T-997): el aviso en tiempo real
+ * confirma contra el servidor antes de mostrar nada, porque el evento llega
+ * por un canal público y no se le cree.
+ */
+export const getSupportRequestsByIds = async (
+  ids: string[],
+): Promise<SupportRequestsApiResponse> =>
+  invokeFunction<SupportRequestsApiResponse>("get-support-requests", {
+    method: "POST",
+    networkMessage: NETWORK_MESSAGE,
+    body: { ids, page: 1, page_size: Math.min(Math.max(ids.length, 1), 100) },
+  });
