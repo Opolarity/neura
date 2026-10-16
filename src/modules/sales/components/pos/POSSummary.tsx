@@ -3,6 +3,7 @@ import { ShoppingCart, User } from "lucide-react";
 import type { POSCartItem, POSCustomerData } from "../../types/POS.types";
 import { formatCurrency } from "../../adapters/POS.adapter";
 import type { OrderDiscountRule } from "../../rules/applyPriceRules";
+import { shippingRuleName, type ShippingRule } from "../../rules/shippingRule";
 
 interface POSSummaryProps {
   cart: POSCartItem[];
@@ -10,6 +11,7 @@ interface POSSummaryProps {
   subtotal: number;
   discountAmount: number;
   ruleDiscounts: OrderDiscountRule[];
+  shippingRule: ShippingRule | null;
   shippingCost: number;
   total: number;
 
@@ -21,6 +23,7 @@ export default function POSSummary({
   subtotal,
   discountAmount,
   ruleDiscounts,
+  shippingRule,
   shippingCost,
   total
 }: POSSummaryProps) {
@@ -55,7 +58,7 @@ export default function POSSummary({
               <span className="text-muted-foreground">
                 {r.discount_amount !== 0 ?
               `${r.discount_amount > 0 ? "+" : "-"} S/ ${formatCurrency(Math.abs(r.discount_amount))}` :
-              "Inc. en productos"}
+              r.name === shippingRuleName(shippingRule) ? "Inc. en envío" : "Inc. en productos"}
               </span>
             </div>
           )}

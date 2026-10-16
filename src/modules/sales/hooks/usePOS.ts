@@ -10,6 +10,7 @@ import {
   type GiftItem,
   type OrderDiscountRule,
 } from "../rules/applyPriceRules";
+import { applyShippingRule, type ShippingRule } from "../rules/shippingRule";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { measure } from "@/lib/rum";
@@ -140,6 +141,8 @@ export const usePOS = () => {
   // recargos traen monto con signo y sí mueven el total.
   const [appliedRules, setAppliedRules] = useState<{ message: string; rule_name: string }[]>([]);
   const [ruleDiscounts, setRuleDiscounts] = useState<OrderDiscountRule[]>([]);
+  // T-360: regla de envío del motor; ajusta el costo del método elegido.
+  const [shippingRule, setShippingRule] = useState<ShippingRule | null>(null);
 
   // Customer (Step 3)
   const [customer, setCustomer] = useState<POSCustomerData>(DEFAULT_CUSTOMER);
@@ -210,11 +213,12 @@ export const usePOS = () => {
       setCartGifts([]);
       setAppliedRules([]);
       setRuleDiscounts([]);
+      setShippingRule(null);
       return;
     }
 
     const run = async () => {
-      const { items: updated, gifts, appliedRules: rules, discounts } = await applyPriceRules(
+      const { items: updated, gifts, appliedRules: rules, discounts, shippingRule: rule } = await applyPriceRules(
         regularItems,
         configuration.priceListId,
         customerUserId,
@@ -222,6 +226,7 @@ export const usePOS = () => {
       );
 
       setAppliedRules(rules.map((r) => ({ message: r.message, rule_name: r.rule_name })));
+      setShippingRule(rule);
       setRuleDiscounts(
         discounts
           .filter((d) => !isFranchiseRow(d.code))
@@ -914,7 +919,10 @@ export const usePOS = () => {
     );
   }, [cart]);
 
-  const shippingCostValue = customer.requiresShipping ? shipping.shippingCost : 0;
+  // shipping.shippingCost es el costo del método; el que se cobra pasa por la regla.
+  const shippingCostValue = customer.requiresShipping
+    ? applyShippingRule(shipping.shippingCost, shippingRule)
+    : 0;
 
   const total = useMemo(() => {
     return subtotal + discountAmount + shippingCostValue;
@@ -1072,7 +1080,7 @@ export const usePOS = () => {
         shippingMethod: customer.requiresShipping
           ? shipping.shippingMethodId
           : null,
-        shippingCost: customer.requiresShipping ? shipping.shippingCost : null,
+        shippingCost: customer.requiresShipping ? shippingCostValue : null,
         countryId: customer.requiresShipping ? shipping.countryId : null,
         stateId: customer.requiresShipping ? shipping.stateId : null,
         cityId: customer.requiresShipping ? shipping.cityId : null,
@@ -1390,6 +1398,7 @@ export const usePOS = () => {
     },
     appliedRules,
     ruleDiscounts,
+    shippingRule,
     productDiscountAmount,
     handleProductPageChange: (page: number) => {
       setProductPage(page);
@@ -1436,6 +1445,7 @@ export const usePOS = () => {
     // Computed
     subtotal,
     discountAmount,
+    shippingCostValue,
     total,
     totalPaid,
     changeAmount,

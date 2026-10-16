@@ -4,6 +4,7 @@
 // to get cart items with prices adjusted by rules.
 // =============================================
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import type { ShippingRule } from "./shippingRule";
 
 
 interface CartItemForRules {
@@ -55,9 +56,15 @@ export async function applyPriceRules<T extends CartItemForRules>(
   accountId?: number | null,
   paymentMethodCode?: string | null,
   couponCode?: string | null
-): Promise<{ items: T[]; gifts: GiftItem[]; appliedRules: AppliedRule[]; discounts: DiscountResult[] }> {
+): Promise<{
+  items: T[];
+  gifts: GiftItem[];
+  appliedRules: AppliedRule[];
+  discounts: DiscountResult[];
+  shippingRule: ShippingRule | null;
+}> {
   try {
-    if (items.length === 0) return { items, gifts: [], appliedRules: [], discounts: [] };
+    if (items.length === 0) return { items, gifts: [], appliedRules: [], discounts: [], shippingRule: null };
 
     // Mapear campos de Neura → formato que espera la EF
     const payloadItems = items.map((item) => ({
@@ -76,6 +83,7 @@ export async function applyPriceRules<T extends CartItemForRules>(
       appliedRules?: unknown[];
       gifts?: unknown[];
       discounts?: unknown[];
+      shippingRule?: { enabled?: boolean; operator?: string | null; value?: number | null; reason?: string };
     };
     try {
       data = await invokeFunction("process-price-rules", {
@@ -90,7 +98,7 @@ export async function applyPriceRules<T extends CartItemForRules>(
       });
     } catch (error) {
       console.error("Error calling process-price-rules:", error);
-      return { items, gifts: [], appliedRules: [], discounts: [] };
+      return { items, gifts: [], appliedRules: [], discounts: [], shippingRule: null };
     }
 
     const returnedItems = (data?.items || []) as any[];
@@ -126,10 +134,18 @@ export async function applyPriceRules<T extends CartItemForRules>(
       };
     });
 
-    return { items: updatedItems, gifts, appliedRules, discounts };
+    // T-360: regla de envío (envío gratis, descuento o precio fijo). Solo se
+    // devuelve si el motor la habilitó.
+    const sr = data?.shippingRule;
+    const shippingRule: ShippingRule | null =
+      sr?.enabled && sr.operator && sr.value !== null && sr.value !== undefined
+        ? { operator: sr.operator as ShippingRule["operator"], value: Number(sr.value), reason: sr.reason ?? "" }
+        : null;
+
+    return { items: updatedItems, gifts, appliedRules, discounts, shippingRule };
 
   } catch (err) {
     console.error("Error in applyPriceRules:", err);
-    return { items, gifts: [], appliedRules: [], discounts: [] };
+    return { items, gifts: [], appliedRules: [], discounts: [], shippingRule: null };
   }
 }

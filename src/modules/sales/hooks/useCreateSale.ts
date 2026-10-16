@@ -3,8 +3,9 @@
 // Main logic for Create/Edit Sale page
 // =============================================
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { applyPriceRules, isFranchiseRow, type GiftItem } from "../rules/applyPriceRules";
+import { applyShippingRule, sameShippingRule, type ShippingRule } from "../rules/shippingRule";
 import { getPriceListIsActiveTrue, getBusinessAccountIsActiveTrue } from "@/shared/services/service";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -192,6 +193,8 @@ export const useCreateSale = () => {
   const [customerAccountId, setCustomerAccountId] = useState<number | null>(null);
   const [cartGifts, setCartGifts] = useState<GiftItem[]>([]);
   const [appliedRules, setAppliedRules] = useState<{ message: string; rule_name: string }[]>([]);
+  // T-360: regla de envío del motor (envío gratis, descuento o precio fijo de envío).
+  const [shippingRule, setShippingRule] = useState<ShippingRule | null>(null);
   const [selectedVariation, setSelectedVariation] =
     useState<ProductVariation | null>(null);
   const [selectedStockTypeId, setSelectedStockTypeId] = useState<string>("");
@@ -385,6 +388,7 @@ export const useCreateSale = () => {
     if (regularItems.length === 0 || !formData.priceListId) {
       if (products.some(i => i.isGift)) setProducts(regularItems);
       setCartGifts([]);
+      setShippingRule(null);
       // Sin carrito no hay regla que aplicar: se sueltan las que el motor había devuelto en
       // esta sesión (id null). Las ya persistidas son historial de la venta y se conservan.
       setSavedPriceRules((prev) => (prev.some((r) => r.id == null) ? prev.filter((r) => r.id != null) : prev));
@@ -421,6 +425,7 @@ export const useCreateSale = () => {
         updatedNewItems = result.items;
         gifts = result.gifts;
         setAppliedRules(result.appliedRules.map(r => ({ message: r.message, rule_name: r.rule_name })));
+        setShippingRule((prev) => (sameShippingRule(prev, result.shippingRule) ? prev : result.shippingRule));
 
         // Los descuentos del motor se mergean contra savedPriceRules, NUNCA contra
         // orderDiscounts: esa lista es solo de descuentos manuales (CUSTOM) y las filas del
@@ -460,6 +465,7 @@ export const useCreateSale = () => {
           return merged.filter((r) => r.id != null || stillReturned.has(ruleKey(r.code, r.name)));
         });
       } else {
+        setShippingRule(null);
         // Ningún producto nuevo que evaluar: se sueltan las reglas no persistidas de la sesión.
         setSavedPriceRules((prev) => (prev.some((r) => r.id == null) ? prev.filter((r) => r.id != null) : prev));
       }
@@ -502,6 +508,28 @@ export const useCreateSale = () => {
 
     run();
   }, [products, formData.priceListId, customerUserId, customerAccountId]);
+
+  // T-360: el costo de envío de una venta nueva pasa por la regla de envío del motor,
+  // con la misma aritmética que el chatbot. Se re-aplica solo cuando cambia el método o
+  // la regla: si el usuario edita el costo a mano, su valor manda hasta el próximo
+  // cambio. Una venta ya creada conserva el envío guardado (el motor solo corre sobre
+  // productos nuevos).
+  const appliedShippingKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (orderId || !formData.shippingMethod) {
+      appliedShippingKey.current = null;
+      return;
+    }
+    const method = allShippingCosts.find((sc) => sc.id.toString() === formData.shippingMethod);
+    if (!method) return;
+
+    const key = `${formData.shippingMethod}|${shippingRule?.operator ?? ""}|${shippingRule?.value ?? ""}`;
+    if (appliedShippingKey.current === key) return;
+    appliedShippingKey.current = key;
+
+    const cost = applyShippingRule(Number(method.cost) || 0, shippingRule).toString();
+    setFormData((prev) => (prev.shippingCost === cost ? prev : { ...prev, shippingCost: cost }));
+  }, [orderId, formData.shippingMethod, shippingRule, allShippingCosts]);
 
   // Computed: Check if current status has COM code (completed - no payment edits allowed)
   const isComSituation = useMemo(() => {
@@ -2468,6 +2496,7 @@ export const useCreateSale = () => {
 
     // Applied price rules
     appliedRules,
+    shippingRule,
 
     // Is dirty
     isDirty,

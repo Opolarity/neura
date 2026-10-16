@@ -20,6 +20,7 @@ import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, Percent, ChevronDow
 import type { POSCartItem } from "../../../types/POS.types";
 import type { PaginatedProductVariation, PaginationMeta, OrderDiscount } from "../../../types";
 import type { OrderDiscountRule } from "../../../rules/applyPriceRules";
+import { shippingRuleName, type ShippingRule } from "../../../rules/shippingRule";
 import { formatCurrency } from "../../../adapters/POS.adapter";
 import { useState } from "react";
 import { cn } from "@/shared/utils/utils";
@@ -54,6 +55,7 @@ interface ProductsStepProps {
   onRemoveOrderDiscount: (id: string) => void;
   appliedRules: { message: string; rule_name: string }[];
   ruleDiscounts: OrderDiscountRule[];
+  shippingRule: ShippingRule | null;
   customerName?: string;
   customerLastname?: string;
   customerDocumentNumber?: string;
@@ -83,6 +85,7 @@ export default function ProductsStep({
   onRemoveOrderDiscount,
   appliedRules,
   ruleDiscounts,
+  shippingRule,
   customerName,
   customerLastname,
   customerDocumentNumber,
@@ -430,7 +433,9 @@ export default function ProductsStep({
                             {r.discount_amount >= 0 ? "+" : "-"}S/ {formatCurrency(Math.abs(r.discount_amount))}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">Inc. en productos</span>
+                          <span className="text-muted-foreground">
+                            {r.name === shippingRuleName(shippingRule) ? "Inc. en envío" : "Inc. en productos"}
+                          </span>
                         )
                       }
                     </div>

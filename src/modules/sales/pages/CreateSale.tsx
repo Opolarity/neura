@@ -87,6 +87,7 @@ import placeholderImage from "@/assets/product-placeholder.png";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useAuth } from "@/modules/auth";
 import { WhatsAppIcon } from "@/shared/components/WhatsAppIcon";
+import { shippingRuleName } from "../rules/shippingRule";
 
 const hasHtmlTags = (text: string) => /<\/?[a-z][\s\S]*>/i.test(text);
 
@@ -224,6 +225,7 @@ const CreateSale = () => {
     confirmPayment,
     // Applied price rules
     appliedRules,
+    shippingRule,
     isDirty,
     // Returns
     orderReturns,
@@ -1771,7 +1773,7 @@ const CreateSale = () => {
                             (
                               <span>{formatCurrency(r.discount_amount)}</span>
                             ) : (
-                              <span>Inc. en productos</span>
+                              <span>{r.name === shippingRuleName(shippingRule) ? "Inc. en envío" : "Inc. en productos"}</span>
                             )
                         }
                       </div>
