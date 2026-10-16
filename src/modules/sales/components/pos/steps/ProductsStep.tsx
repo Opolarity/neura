@@ -21,6 +21,7 @@ import type { POSCartItem } from "../../../types/POS.types";
 import type { PaginatedProductVariation, PaginationMeta, OrderDiscount } from "../../../types";
 import type { OrderDiscountRule } from "../../../rules/applyPriceRules";
 import { shippingRuleName, type ShippingRule } from "../../../rules/shippingRule";
+import { CouponInput } from "../../CouponInput";
 import { formatCurrency } from "../../../adapters/POS.adapter";
 import { useState } from "react";
 import { cn } from "@/shared/utils/utils";
@@ -56,6 +57,10 @@ interface ProductsStepProps {
   appliedRules: { message: string; rule_name: string }[];
   ruleDiscounts: OrderDiscountRule[];
   shippingRule: ShippingRule | null;
+  couponCode: string | null;
+  couponError: string | null;
+  onApplyCoupon: (code: string) => void;
+  onRemoveCoupon: () => void;
   customerName?: string;
   customerLastname?: string;
   customerDocumentNumber?: string;
@@ -86,6 +91,10 @@ export default function ProductsStep({
   appliedRules,
   ruleDiscounts,
   shippingRule,
+  couponCode,
+  couponError,
+  onApplyCoupon,
+  onRemoveCoupon,
   customerName,
   customerLastname,
   customerDocumentNumber,
@@ -421,6 +430,14 @@ export default function ProductsStep({
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>S/ {formatCurrency(subtotal)}</span>
                   </div>
+
+                  {/* Cupón (T-340): su regla vuelve del motor como cualquier otra */}
+                  <CouponInput
+                    appliedCode={couponCode}
+                    error={couponError}
+                    onApply={onApplyCoupon}
+                    onRemove={onRemoveCoupon}
+                  />
 
                   {/* Reglas de precio aplicadas por el motor (T-358) */}
                   {ruleDiscounts.map((r, i) => (

@@ -123,6 +123,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
       initial_situation_id: orderData.initialSituationId,
       consignament: orderData.isConsignment ?? false,
       discounts: orderData.discounts || [],
+      coupon_discount_id: orderData.couponDiscountId ?? null,
     },
   });
   return data;

@@ -62,9 +62,14 @@ export async function applyPriceRules<T extends CartItemForRules>(
   appliedRules: AppliedRule[];
   discounts: DiscountResult[];
   shippingRule: ShippingRule | null;
+  /** T-340: id del cupón válido (para registrar su uso al crear la orden). */
+  couponDiscountId: number | null;
+  /** T-340: motivo por el que el motor rechazó el cupón. */
+  couponError: string | null;
 }> {
+  const empty = { gifts: [], appliedRules: [], discounts: [], shippingRule: null, couponDiscountId: null, couponError: null };
   try {
-    if (items.length === 0) return { items, gifts: [], appliedRules: [], discounts: [], shippingRule: null };
+    if (items.length === 0) return { items, ...empty };
 
     // Mapear campos de Neura → formato que espera la EF
     const payloadItems = items.map((item) => ({
@@ -84,6 +89,8 @@ export async function applyPriceRules<T extends CartItemForRules>(
       gifts?: unknown[];
       discounts?: unknown[];
       shippingRule?: { enabled?: boolean; operator?: string | null; value?: number | null; reason?: string };
+      couponDiscountId?: number | null;
+      couponError?: string | null;
     };
     try {
       data = await invokeFunction("process-price-rules", {
@@ -98,7 +105,7 @@ export async function applyPriceRules<T extends CartItemForRules>(
       });
     } catch (error) {
       console.error("Error calling process-price-rules:", error);
-      return { items, gifts: [], appliedRules: [], discounts: [], shippingRule: null };
+      return { items, ...empty };
     }
 
     const returnedItems = (data?.items || []) as any[];
@@ -142,10 +149,18 @@ export async function applyPriceRules<T extends CartItemForRules>(
         ? { operator: sr.operator as ShippingRule["operator"], value: Number(sr.value), reason: sr.reason ?? "" }
         : null;
 
-    return { items: updatedItems, gifts, appliedRules, discounts, shippingRule };
+    return {
+      items: updatedItems,
+      gifts,
+      appliedRules,
+      discounts,
+      shippingRule,
+      couponDiscountId: data?.couponDiscountId ?? null,
+      couponError: data?.couponError ?? null,
+    };
 
   } catch (err) {
     console.error("Error in applyPriceRules:", err);
-    return { items, gifts: [], appliedRules: [], discounts: [], shippingRule: null };
+    return { items, ...empty };
   }
 }

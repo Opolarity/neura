@@ -88,6 +88,7 @@ import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useAuth } from "@/modules/auth";
 import { WhatsAppIcon } from "@/shared/components/WhatsAppIcon";
 import { shippingRuleName } from "../rules/shippingRule";
+import { CouponInput } from "../components/CouponInput";
 
 const hasHtmlTags = (text: string) => /<\/?[a-z][\s\S]*>/i.test(text);
 
@@ -226,6 +227,10 @@ const CreateSale = () => {
     // Applied price rules
     appliedRules,
     shippingRule,
+    couponCode,
+    couponError,
+    applyCoupon,
+    removeCoupon,
     isDirty,
     // Returns
     orderReturns,
@@ -1646,6 +1651,16 @@ const CreateSale = () => {
                     </div>
                   </div>
                 ))}
+
+                {/* Cupón (T-340): solo en ventas nuevas */}
+                {!orderId && (
+                  <CouponInput
+                    appliedCode={couponCode}
+                    error={couponError}
+                    onApply={applyCoupon}
+                    onRemove={removeCoupon}
+                  />
+                )}
 
                 {/* Add discount button/form */}
                 {!isPhySituation &&

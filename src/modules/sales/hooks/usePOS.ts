@@ -143,6 +143,10 @@ export const usePOS = () => {
   const [ruleDiscounts, setRuleDiscounts] = useState<OrderDiscountRule[]>([]);
   // T-360: regla de envío del motor; ajusta el costo del método elegido.
   const [shippingRule, setShippingRule] = useState<ShippingRule | null>(null);
+  // T-340: cupón aplicado (código que viaja al motor) y lo que el motor respondió.
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [couponDiscountId, setCouponDiscountId] = useState<number | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
 
   // Customer (Step 3)
   const [customer, setCustomer] = useState<POSCustomerData>(DEFAULT_CUSTOMER);
@@ -214,16 +218,31 @@ export const usePOS = () => {
       setAppliedRules([]);
       setRuleDiscounts([]);
       setShippingRule(null);
+      setCouponDiscountId(null);
+      setCouponError(null);
       return;
     }
 
     const run = async () => {
-      const { items: updated, gifts, appliedRules: rules, discounts, shippingRule: rule } = await applyPriceRules(
+      const {
+        items: updated,
+        gifts,
+        appliedRules: rules,
+        discounts,
+        shippingRule: rule,
+        couponDiscountId: couponId,
+        couponError: couponErr,
+      } = await applyPriceRules(
         regularItems,
         configuration.priceListId,
         customerUserId,
-        customerAccountId
+        customerAccountId,
+        null,
+        couponCode
       );
+
+      setCouponDiscountId(couponCode ? couponId : null);
+      setCouponError(couponCode ? couponErr : null);
 
       setAppliedRules(rules.map((r) => ({ message: r.message, rule_name: r.rule_name })));
       setShippingRule(rule);
@@ -264,7 +283,7 @@ export const usePOS = () => {
       }
     };
     run();
-  }, [cart, configuration?.priceListId, customerUserId, customerAccountId]);
+  }, [cart, configuration?.priceListId, customerUserId, customerAccountId, couponCode]);
 
   const loadInitialData = async () => {
     try {
@@ -1121,6 +1140,7 @@ export const usePOS = () => {
         change: changeAmount,
         initialSituationId: situationId,
         saleType: saleTypeId,
+        couponDiscountId: couponCode ? couponDiscountId : null,
         discounts: [
           // Ajustes manuales y reglas del motor. Sin fila resumen PRO: el descuento por
           // producto ya se guarda por unidad en order_products.product_discount, y
@@ -1194,6 +1214,7 @@ export const usePOS = () => {
     setCart([]);
     setCartGifts([]);
     setOrderDiscounts([]);
+    setCouponCode(null);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
@@ -1232,6 +1253,7 @@ export const usePOS = () => {
     setCart([]);
     setCartGifts([]);
     setOrderDiscounts([]);
+    setCouponCode(null);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
@@ -1399,6 +1421,10 @@ export const usePOS = () => {
     appliedRules,
     ruleDiscounts,
     shippingRule,
+    couponCode,
+    couponError,
+    applyCoupon: (code: string) => setCouponCode(code.trim().toUpperCase() || null),
+    removeCoupon: () => setCouponCode(null),
     productDiscountAmount,
     handleProductPageChange: (page: number) => {
       setProductPage(page);

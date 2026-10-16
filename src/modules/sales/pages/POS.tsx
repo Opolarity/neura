@@ -111,6 +111,10 @@ export default function POS() {
                 appliedRules={pos.appliedRules}
                 ruleDiscounts={pos.ruleDiscounts}
                 shippingRule={pos.shippingRule}
+                couponCode={pos.couponCode}
+                couponError={pos.couponError}
+                onApplyCoupon={pos.applyCoupon}
+                onRemoveCoupon={pos.removeCoupon}
                 customerName={pos.customer.customerName}
                 customerLastname={pos.customer.customerLastname}
                 customerDocumentNumber={pos.customer.documentNumber}

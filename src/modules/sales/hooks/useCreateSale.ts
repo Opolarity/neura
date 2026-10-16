@@ -195,6 +195,11 @@ export const useCreateSale = () => {
   const [appliedRules, setAppliedRules] = useState<{ message: string; rule_name: string }[]>([]);
   // T-360: regla de envío del motor (envío gratis, descuento o precio fijo de envío).
   const [shippingRule, setShippingRule] = useState<ShippingRule | null>(null);
+  // T-340: cupón aplicado (solo en ventas nuevas, decisión de Diego) y lo que el
+  // motor respondió: id para registrar el uso o motivo del rechazo.
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [couponDiscountId, setCouponDiscountId] = useState<number | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
   const [selectedVariation, setSelectedVariation] =
     useState<ProductVariation | null>(null);
   const [selectedStockTypeId, setSelectedStockTypeId] = useState<string>("");
@@ -389,6 +394,8 @@ export const useCreateSale = () => {
       if (products.some(i => i.isGift)) setProducts(regularItems);
       setCartGifts([]);
       setShippingRule(null);
+      setCouponDiscountId(null);
+      setCouponError(null);
       // Sin carrito no hay regla que aplicar: se sueltan las que el motor había devuelto en
       // esta sesión (id null). Las ya persistidas son historial de la venta y se conservan.
       setSavedPriceRules((prev) => (prev.some((r) => r.id == null) ? prev.filter((r) => r.id != null) : prev));
@@ -410,12 +417,18 @@ export const useCreateSale = () => {
           customerUserId,
           customerAccountId,
         });
+        // El cupón solo se ofrece en ventas nuevas: en una venta creada no viaja.
+        const activeCoupon = orderId ? null : couponCode;
         const result = await applyPriceRules(
           newItems,
           formData.priceListId,
           customerUserId,
-          customerAccountId
+          customerAccountId,
+          null,
+          activeCoupon
         );
+        setCouponDiscountId(activeCoupon ? result.couponDiscountId : null);
+        setCouponError(activeCoupon ? result.couponError : null);
         console.log('[useCreateSale] applyPriceRules result:', {
           appliedRules: result.appliedRules,
           discounts: result.discounts,
@@ -507,7 +520,7 @@ export const useCreateSale = () => {
     };
 
     run();
-  }, [products, formData.priceListId, customerUserId, customerAccountId]);
+  }, [products, formData.priceListId, customerUserId, customerAccountId, couponCode]);
 
   // T-360: el costo de envío de una venta nueva pasa por la regla de envío del motor,
   // con la misma aritmética que el chatbot. Se re-aplica solo cuando cambia el método o
@@ -2135,6 +2148,7 @@ export const useCreateSale = () => {
             })),
           initialSituationId: parseInt(orderSituation),
           isConsignment,
+          couponDiscountId: !orderId && couponCode ? couponDiscountId : null,
           discounts: [
             // Custom discounts only (product discounts are saved per-unit in order_products)
             ...orderDiscounts.map((d) => ({
@@ -2497,6 +2511,12 @@ export const useCreateSale = () => {
     // Applied price rules
     appliedRules,
     shippingRule,
+
+    // Coupon (T-340)
+    couponCode,
+    couponError,
+    applyCoupon: (code: string) => setCouponCode(code.trim().toUpperCase() || null),
+    removeCoupon: () => setCouponCode(null),
 
     // Is dirty
     isDirty,

@@ -258,6 +258,8 @@ export interface CreateOrderRequest {
   }>;
   initialSituationId: number;
   isConsignment?: boolean;
+  /** T-340: id en `discounts` del cupón canjeado; create-order registra su uso. */
+  couponDiscountId?: number | null;
   discounts?: Array<{
     name: string;
     discount_amount: number;
