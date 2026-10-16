@@ -16,6 +16,7 @@ import { ConversationHeader } from "../components/ConversationHeader";
 import { ConversationList } from "../components/ConversationList";
 import { ConversationThread } from "../components/ConversationThread";
 import { MessageComposer } from "../components/MessageComposer";
+import { useBotPause } from "../hooks/useBotPause";
 import { useConversationThread } from "../hooks/useConversationThread";
 import { useConversations } from "../hooks/useConversations";
 import type { Conversation } from "../types/crm.types";
@@ -52,6 +53,8 @@ const InboxPage = () => {
 
   const { messages, loading: threadLoading, reload: reloadThread } =
     useConversationThread(selected);
+
+  const botPause = useBotPause(channelId, selected);
 
   // Al entrar, abre la primera conversación: una pantalla partida con el lado
   // derecho vacío no comunica nada.
@@ -193,6 +196,10 @@ const InboxPage = () => {
                 onAssign={(userId) => runAndRefresh(assign(selected, userId))}
                 onTake={() => runAndRefresh(takeControl(selected, false))}
                 onRelease={() => runAndRefresh(takeControl(selected, true))}
+                botPause={botPause.state}
+                botPauseBusy={botPause.busy}
+                onPauseBot={(until) => void botPause.pause(until)}
+                onResumeBot={() => void botPause.resume()}
               />
 
               <div className="min-h-0 flex-1">

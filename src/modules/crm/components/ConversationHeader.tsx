@@ -12,8 +12,9 @@ import {
 import { ComponentPermission } from "@/shared/components/component-permission";
 import { useAuth } from "@/modules/auth";
 import { cn } from "@/shared/utils/utils";
-import type { Conversation, Situation } from "../types/crm.types";
+import type { BotPauseState, Conversation, Situation } from "../types/crm.types";
 import { AssignMenu } from "./AssignMenu";
+import { BotPauseControl } from "./BotPauseControl";
 
 interface Props {
   conversation: Conversation;
@@ -23,6 +24,11 @@ interface Props {
   onAssign: (userId: string | null) => void;
   onTake: () => void;
   onRelease: () => void;
+  /** T-983: pausa del bot en esta conversación. */
+  botPause: BotPauseState;
+  botPauseBusy: boolean;
+  onPauseBot: (until: string | null) => void;
+  onResumeBot: () => void;
 }
 
 /** Etiqueta de estado, más chica que Badge: acá el protagonista es el chat. */
@@ -52,6 +58,10 @@ export const ConversationHeader = ({
   onAssign,
   onTake,
   onRelease,
+  botPause,
+  botPauseBusy,
+  onPauseBot,
+  onResumeBot,
 }: Props) => {
   const { user } = useAuth();
 
@@ -120,6 +130,13 @@ export const ConversationHeader = ({
             onAssign={onAssign}
           />
         </ComponentPermission>
+
+        <BotPauseControl
+          state={botPause}
+          busy={busy || botPauseBusy}
+          onPause={onPauseBot}
+          onResume={onResumeBot}
+        />
 
         <ComponentPermission codeIn={["crm_conversations.take"]}>
           {canRelease ? (

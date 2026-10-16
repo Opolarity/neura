@@ -10,6 +10,7 @@ import type {
   ChannelOverTimeResponse,
   ChannelProductsResponse,
   ChannelCostsResponse,
+  BotPauseApi,
 } from "../types/crm.types";
 import type {
   ChatbotTemplateCreateInput,
@@ -502,3 +503,41 @@ export const deleteChatbotTemplateApi = async (id: number): Promise<ChatbotTempl
     "No se pudo eliminar la plantilla."
   );
 };
+
+/**
+ * T-983: estado, pausa y reactivación del bot en una conversación. Todo pasa
+ * por crm-bot-pause, que valida el permiso (crm_conversations.take) y habla
+ * con el servicio del chatbot; el navegador nunca ve su secreto.
+ */
+const botPauseCall = async (
+  action: "status" | "pause" | "resume",
+  channelId: number,
+  phoneNumber: number | null,
+  whatsappUserId: string | null,
+  until?: string | null
+): Promise<BotPauseApi> => {
+  const data = await invokeFunction<{ success: boolean; data: BotPauseApi }>("crm-bot-pause", {
+    body: {
+      action,
+      channelId,
+      phoneNumber,
+      whatsappUserId,
+      ...(action === "pause" ? { until: until ?? null } : {}),
+    },
+  });
+  return data.data;
+};
+
+export const getBotPauseApi = (channelId: number, phoneNumber: number | null, whatsappUserId: string | null) =>
+  botPauseCall("status", channelId, phoneNumber, whatsappUserId);
+
+/** `until` = ISO con zona, o null para "hasta que lo reactive". */
+export const pauseBotApi = (
+  channelId: number,
+  phoneNumber: number | null,
+  whatsappUserId: string | null,
+  until: string | null
+) => botPauseCall("pause", channelId, phoneNumber, whatsappUserId, until);
+
+export const resumeBotApi = (channelId: number, phoneNumber: number | null, whatsappUserId: string | null) =>
+  botPauseCall("resume", channelId, phoneNumber, whatsappUserId);

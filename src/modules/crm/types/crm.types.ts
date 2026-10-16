@@ -320,3 +320,26 @@ export interface ChannelCostsResponse {
   shared_total: number;
   direct_total: number;
 }
+
+/**
+ * T-983: pausa del bot en UNA conversación. Vive en el servicio del chatbot
+ * (no en este ERP) y se lee/escribe por la edge function crm-bot-pause.
+ * "Sin pausa" y "sin límite" nunca se confunden: `indefinite` lo dice.
+ */
+export interface BotPauseState {
+  paused: boolean;
+  /** ISO; null si no hay pausa o si es sin límite. */
+  until: string | null;
+  indefinite: boolean;
+  /** crm_manual (desde acá) u owner_reply (el dueño respondió desde la app). */
+  reason: string | null;
+  pausedBy: string | null;
+}
+
+export interface BotPauseApi {
+  paused: boolean;
+  until: string | null;
+  indefinite: boolean;
+  reason: string | null;
+  paused_by: string | null;
+}
