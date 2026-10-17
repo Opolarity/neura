@@ -90,13 +90,12 @@ export const closePOSSession = async (
   return data;
 };
 
+// T-715: el estado OPE lo resuelve la edge function; ya no se envia openTypeId.
 export const getActivePOSSession = async (): Promise<POSSessionApiResponse | null> => {
-  const openType = (await statussesByModuleCode('POS')).filter(t => t.code === 'OPE')[0];
-
   const data = await invokeFunction(
     "manage-pos-session",
     {
-      body: { action: "get-active", openTypeId: openType?.id },
+      body: { action: "get-active" },
     }
   );
   return data?.session || null;
