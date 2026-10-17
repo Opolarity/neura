@@ -15,12 +15,16 @@ export function invalidatePOSSessionStatus(queryClient: QueryClient) {
   return queryClient.invalidateQueries({ queryKey: ["pos-session-status"] });
 }
 
+// T-715: mismo criterio que manage-pos-session (get-active) y
+// sp_open_pos_session: caja del usuario con estado OPE, sin importar la
+// sucursal/almacen actual del perfil. Antes el chip miraba closed_at y la
+// pantalla de caja otra cosa, y podian contradecirse.
 async function fetchPOSSessionOpen(userId: string): Promise<boolean> {
   const { data, error } = await supabase
     .from("pos_sessions")
-    .select("id")
+    .select("id, status:statuses!inner(code)")
     .eq("user_id", userId)
-    .is("closed_at", null)
+    .eq("status.code", "OPE")
     .limit(1)
     .maybeSingle();
   if (error) throw error;
