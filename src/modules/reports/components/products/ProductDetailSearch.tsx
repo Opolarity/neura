@@ -17,15 +17,15 @@ import {
   formatNumber,
   reportChartColors,
 } from '../shared/reportChartUtils';
-import type { ProductDetailData } from '../../types/reports.types';
+import type { ProductDetailData, ProductSearchResult } from '../../types/reports.types';
 import type { ProductsDashboardState } from '../../hooks/useProductsDashboard';
 import { formatCurrency } from '@/shared/utils/currency';
 import { ProductPicker } from './ProductPicker';
 
 interface Props {
   dash: ProductsDashboardState;
-  selectedProductId: number | null;
-  selectedProductTitle: string;
+  /** Productos aplicados (T-560: uno o varios). */
+  appliedProducts: ProductSearchResult[];
   detail: ProductDetailData | null;
   detailLoading: boolean;
 }
@@ -102,11 +102,12 @@ function BreakdownDonut({ title, slices }: { title: string; slices: DonutSlice[]
 
 export function ProductDetailSearch({
   dash,
-  selectedProductId,
-  selectedProductTitle,
+  appliedProducts,
   detail,
   detailLoading,
 }: Props) {
+  const hasProducts = appliedProducts.length > 0;
+  const isMulti = appliedProducts.length > 1;
   const chartData = detail?.sales_over_time.map((d) => ({
     fecha: d.period,
     ventas: d.total_revenue,
@@ -131,7 +132,7 @@ export function ProductDetailSearch({
     })) ?? [];
 
   return (
-    <ReportCard info="Ficha de un solo producto: unidades y monto vendido en el rango, stock actual por almacén, participación por sede y por canal, evolución diaria y las variaciones (SKU) más vendidas. Respeta los filtros aplicados arriba. El buscador solo encuentra productos activos." title="Análisis de producto individual">
+    <ReportCard info="Ficha de uno o varios productos (se suman): unidades y monto vendido en el rango, stock actual por almacén, participación por sede y por canal, evolución diaria y las variaciones (SKU) más vendidas. Respeta los filtros aplicados arriba. El buscador solo encuentra productos activos." title="Análisis de producto individual">
       {/*
         El buscador y su Aplicar viven acá y no en la barra de filtros: solo
         afectan a esta tarjeta. Los filtros de arriba (fechas, sede, canal,
@@ -144,27 +145,31 @@ export function ProductDetailSearch({
         </p>
       </div>
 
-      {selectedProductId === null && (
+      {!hasProducts && (
         <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
           <PackageSearch className="w-10 h-10 text-muted-foreground/60" />
           <p className="text-sm text-muted-foreground">
-            Buscá un producto por nombre o SKU y da clic en <span className="font-medium">"Aplicar"</span> para ver su análisis individual.
+            Buscá uno o varios productos por nombre o SKU y da clic en <span className="font-medium">"Aplicar"</span> para ver su análisis individual.
           </p>
         </div>
       )}
 
-      {selectedProductId !== null && detailLoading && (
+      {hasProducts && detailLoading && (
         <ChartLoading />
       )}
 
-      {selectedProductId !== null && detail && !detailLoading && (
+      {hasProducts && detail && !detailLoading && (
         <div className="space-y-6">
           <div>
             <p className="text-base font-semibold">
-              {detail.product_info?.title ?? selectedProductTitle}
+              {isMulti
+                ? `${appliedProducts.length} productos (suma)`
+                : detail.product_info?.title ?? appliedProducts[0]?.title}
             </p>
             <p className="text-xs text-muted-foreground">
-              {detail.product_info?.variations?.map((v) => v.sku).join(', ')}
+              {isMulti
+                ? (detail.products ?? appliedProducts).map((p) => p.title).join(' · ')
+                : detail.product_info?.variations?.map((v) => v.sku).join(', ')}
             </p>
           </div>
 

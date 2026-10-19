@@ -43,18 +43,18 @@ export default function MovementsPage() {
 
   const extraActiveCount =
     [
-      draft.branchId,
+      draft.branchIds,
       draft.businessAccountId,
-      draft.paymentMethodId,
+      draft.paymentMethodIds,
       draft.movementClassId,
     ].filter((v) => v !== null && v !== undefined).length + (situationIsDefault ? 0 : 1);
 
   function handleClearExtra() {
     applyImmediate({
       ...draft,
-      branchId: null,
+      branchIds: null,
       businessAccountId: null,
-      paymentMethodId: null,
+      paymentMethodIds: null,
       movementClassId: null,
       situationIds: null,
     });

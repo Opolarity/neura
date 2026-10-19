@@ -66,15 +66,15 @@ function mapFilters(f: ReportsFilters) {
   return {
     p_start_date: f.startDate ?? undefined,
     p_end_date: f.endDate ?? undefined,
-    p_branch_id: f.branchId ?? undefined,
+    p_branch_ids: multi(f.branchIds),
     p_country_id: f.countryId ?? undefined,
     p_state_id: f.stateId ?? undefined,
     p_city_id: f.cityId ?? undefined,
     p_neighborhood_id: f.neighborhoodId ?? undefined,
-    p_sale_type_id: f.saleTypeId ?? undefined,
-    p_payment_method_id: f.paymentMethodId ?? undefined,
+    p_sale_type_ids: multi(f.saleTypeIds),
+    p_payment_method_ids: multi(f.paymentMethodIds),
     p_situation_ids: f.situationIds ?? undefined,
-    p_price_list_code: f.priceListCode ?? undefined,
+    p_price_list_codes: multi(f.priceListCodes),
   };
 }
 
@@ -94,16 +94,26 @@ function mapProductFilters(f: ReportsFilters, situationIds: number[]) {
   return {
     p_start_date: f.startDate ?? undefined,
     p_end_date: f.endDate ?? undefined,
-    p_branch_id: f.branchId ?? undefined,
-    p_sale_type_id: f.saleTypeId ?? undefined,
+    p_branch_ids: multi(f.branchIds),
+    p_sale_type_ids: multi(f.saleTypeIds),
     p_country_id: f.countryId ?? undefined,
     p_state_id: f.stateId ?? undefined,
     p_city_id: f.cityId ?? undefined,
     p_neighborhood_id: f.neighborhoodId ?? undefined,
-    p_payment_method_id: f.paymentMethodId ?? undefined,
-    p_price_list_code: f.priceListCode ?? undefined,
+    p_payment_method_ids: multi(f.paymentMethodIds),
+    p_price_list_codes: multi(f.priceListCodes),
     p_situation_ids: situationIds,
   };
+}
+
+/**
+ * T-560: filtros de selección múltiple. Los SP reciben arreglos (`p_branch_ids`,
+ * `p_sale_type_ids`, `p_payment_method_ids`, `p_price_list_codes`); vacío o
+ * null viaja como "sin filtro". Los escalares siguen existiendo en los SP para
+ * otros llamadores (MCP), pero el ERP ya no los usa.
+ */
+export function multi<T>(values: T[] | null | undefined): T[] | undefined {
+  return values && values.length > 0 ? values : undefined;
 }
 
 async function rpc<T>(fn: string, params?: Record<string, unknown>): Promise<T> {
@@ -183,10 +193,11 @@ export const productsService = {
       p_limit: limit,
     }),
 
-  getDetail: (productId: number, f: ReportsFilters, situationIds: number[]) =>
+  // T-560: uno o varios productos; el SP suma los elegidos.
+  getDetail: (productIds: number[], f: ReportsFilters, situationIds: number[]) =>
     rpc<ProductDetailData>('sp_rpt_product_detail', {
       ...mapProductFilters(f, situationIds),
-      p_product_id: productId,
+      p_product_ids: productIds,
     }),
 
   getPareto: (f: ReportsFilters, limit: ParetoLimit = 10, situationIds: number[] = []) =>
@@ -323,12 +334,12 @@ function mapReturnFilters(f: ReportsFilters) {
   return {
     p_start_date: f.startDate ?? undefined,
     p_end_date: f.endDate ?? undefined,
-    p_branch_id: f.branchId ?? undefined,
+    p_branch_ids: multi(f.branchIds),
     p_return_situation_ids: f.returnSituationIds ?? undefined,
     p_return_type_ids: f.returnTypeIds ?? undefined,
-    p_sale_type_id: f.saleTypeId ?? undefined,
-    p_payment_method_id: f.paymentMethodId ?? undefined,
-    p_price_list_code: f.priceListCode ?? undefined,
+    p_sale_type_ids: multi(f.saleTypeIds),
+    p_payment_method_ids: multi(f.paymentMethodIds),
+    p_price_list_codes: multi(f.priceListCodes),
     p_country_id: f.countryId ?? undefined,
     p_state_id: f.stateId ?? undefined,
     p_city_id: f.cityId ?? undefined,
@@ -390,9 +401,9 @@ function mapCashFilters(f: ReportsFilters) {
   return {
     p_start_date: f.startDate ?? undefined,
     p_end_date: f.endDate ?? undefined,
-    p_branch_id: f.branchId ?? undefined,
+    p_branch_ids: multi(f.branchIds),
     p_business_account: f.businessAccountId ?? undefined,
-    p_payment_method_id: f.paymentMethodId ?? undefined,
+    p_payment_method_ids: multi(f.paymentMethodIds),
     p_movement_class_id: f.movementClassId ?? undefined,
   };
 }
@@ -424,19 +435,19 @@ export const financialService = {
     rpc<FinancialProfitKpis>('sp_rpt_financial_profit_kpis', {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
+      p_branch_ids: multi(f.branchIds),
       p_situation_ids: situationIds,
-      p_payment_method_id: f.paymentMethodId ?? undefined,
+      p_payment_method_ids: multi(f.paymentMethodIds),
     }),
 
   getMarginByProduct: (f: ReportsFilters, situationIds: number[], limit = 20) =>
     rpc<MarginByProductItem[]>('sp_rpt_financial_margin_by_product', {
       p_start_date: f.startDate ?? undefined,
       p_end_date: f.endDate ?? undefined,
-      p_branch_id: f.branchId ?? undefined,
+      p_branch_ids: multi(f.branchIds),
       p_limit: limit,
       p_situation_ids: situationIds,
-      p_payment_method_id: f.paymentMethodId ?? undefined,
+      p_payment_method_ids: multi(f.paymentMethodIds),
     }),
 };
 
@@ -489,14 +500,14 @@ function mapCustomerFilters(f: ReportsFilters) {
   return {
     p_start_date: f.startDate ?? undefined,
     p_end_date: f.endDate ?? undefined,
-    p_branch_id: f.branchId ?? undefined,
-    p_sale_type_id: f.saleTypeId ?? undefined,
+    p_branch_ids: multi(f.branchIds),
+    p_sale_type_ids: multi(f.saleTypeIds),
     p_country_id: f.countryId ?? undefined,
     p_state_id: f.stateId ?? undefined,
     p_city_id: f.cityId ?? undefined,
     p_neighborhood_id: f.neighborhoodId ?? undefined,
-    p_payment_method_id: f.paymentMethodId ?? undefined,
-    p_price_list_code: f.priceListCode ?? undefined,
+    p_payment_method_ids: multi(f.paymentMethodIds),
+    p_price_list_codes: multi(f.priceListCodes),
     p_situation_ids: f.situationIds ?? undefined,
   };
 }

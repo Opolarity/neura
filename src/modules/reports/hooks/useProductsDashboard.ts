@@ -17,10 +17,9 @@ export function useProductsDashboard(filters: ReportsFilters) {
   // no al de la barra: el producto no afecta a los KPIs ni a los gráficos de
   // arriba, así que no tiene por qué pasar por el mismo botón. Los filtros de
   // la barra sí se le aplican, vía `filters` (los ya aplicados).
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
-  const [selectedProductTitle, setSelectedProductTitle] = useState<string>('');
-  const [appliedProductId, setAppliedProductId] = useState<number | null>(null);
-  const [appliedProductTitle, setAppliedProductTitle] = useState<string>('');
+  // T-560: varios productos a la vez; el detalle suma los elegidos.
+  const [selectedProducts, setSelectedProducts] = useState<ProductSearchResult[]>([]);
+  const [appliedProducts, setAppliedProducts] = useState<ProductSearchResult[]>([]);
 
   const debouncedSearch = useDebounce(productSearch, 400);
 
@@ -103,31 +102,34 @@ export function useProductsDashboard(filters: ReportsFilters) {
     staleTime: 1000 * 60 * 2,
   });
 
+  const appliedProductIds = useMemo(() => appliedProducts.map((p) => p.id), [appliedProducts]);
+
   const productDetail = useQuery({
-    queryKey: ['rpt_product_detail', appliedProductId, ...queryKey],
-    queryFn: () => productsService.getDetail(appliedProductId!, filters, situationIds),
-    enabled: ready && appliedProductId !== null,
+    queryKey: ['rpt_product_detail', appliedProductIds.join(','), ...queryKey],
+    queryFn: () => productsService.getDetail(appliedProductIds, filters, situationIds),
+    enabled: ready && appliedProductIds.length > 0,
     staleTime: 1000 * 60 * 5,
   });
 
-  const selectProduct = (product: ProductSearchResult | null) => {
+  /** Marca o desmarca un producto en el borrador; `null` limpia todo. */
+  const toggleProduct = (product: ProductSearchResult | null) => {
     if (!product) {
-      setSelectedProductId(null);
-      setSelectedProductTitle('');
+      setSelectedProducts([]);
       setProductSearch('');
-    } else {
-      setSelectedProductId(product.id);
-      setSelectedProductTitle(product.title);
+      return;
     }
+    setSelectedProducts((prev) =>
+      prev.some((p) => p.id === product.id) ? prev.filter((p) => p.id !== product.id) : [...prev, product],
+    );
   };
 
-  /** Aplica el producto elegido (o `null` para limpiar) a la sección de detalle. */
-  const applyProduct = (productId: number | null = selectedProductId) => {
-    setAppliedProductId(productId);
-    setAppliedProductTitle(productId === null ? '' : selectedProductTitle);
+  /** Aplica los productos elegidos (o ninguno, para limpiar) a la sección de detalle. */
+  const applyProducts = (products: ProductSearchResult[] = selectedProducts) => {
+    setAppliedProducts(products);
   };
 
-  const isProductDirty = selectedProductId !== appliedProductId;
+  const isProductDirty =
+    selectedProducts.map((p) => p.id).sort().join(',') !== [...appliedProductIds].sort().join(',');
 
   return {
     kpis,
@@ -149,12 +151,10 @@ export function useProductsDashboard(filters: ReportsFilters) {
     setSelectedCategoryId,
     productSearch,
     setProductSearch,
-    selectedProductId,
-    selectedProductTitle,
-    appliedProductId,
-    appliedProductTitle,
-    selectProduct,
-    applyProduct,
+    selectedProducts,
+    appliedProducts,
+    toggleProduct,
+    applyProducts,
     isProductDirty,
   };
 }

@@ -93,8 +93,7 @@ export function ProductsDashboard({ dash }: ProductsDashboardProps) {
 
       <ProductDetailSearch
         dash={dash}
-        selectedProductId={dash.appliedProductId}
-        selectedProductTitle={dash.appliedProductTitle}
+        appliedProducts={dash.appliedProducts}
         detail={dash.productDetail.data ?? null}
         detailLoading={dash.productDetail.isLoading}
       />

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check, ChevronsUpDown, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Command,
@@ -31,15 +32,20 @@ export function ProductPicker({ dash }: Props) {
     productSearch,
     setProductSearch,
     searchResults,
-    selectedProductId,
-    selectedProductTitle,
-    appliedProductId,
-    selectProduct,
-    applyProduct,
+    selectedProducts,
+    appliedProducts,
+    toggleProduct,
+    applyProducts,
     isProductDirty,
   } = dash;
 
-  const hasSelectedProduct = selectedProductId !== null;
+  const hasSelectedProduct = selectedProducts.length > 0;
+  const triggerLabel =
+    selectedProducts.length === 0
+      ? 'Buscar producto…'
+      : selectedProducts.length === 1
+        ? selectedProducts[0].title
+        : `${selectedProducts.length} productos`;
   const results = searchResults.data ?? [];
   const isSearching = searchResults.isFetching && productSearch.length >= 2;
 
@@ -56,7 +62,7 @@ export function ProductPicker({ dash }: Props) {
               className="h-9 w-[320px] justify-between font-normal"
             >
               <span className="truncate">
-                {hasSelectedProduct ? selectedProductTitle : 'Buscar producto…'}
+                {triggerLabel}
               </span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -84,15 +90,13 @@ export function ProductPicker({ dash }: Props) {
                       <CommandItem
                         key={r.id}
                         value={`${r.id}`}
-                        onSelect={() => {
-                          selectProduct(r);
-                          setComboOpen(false);
-                        }}
+                        // T-560: se pueden marcar varios; el popover queda abierto.
+                        onSelect={() => toggleProduct(r)}
                       >
                         <Check
                           className={cn(
                             'mr-2 h-4 w-4',
-                            selectedProductId === r.id ? 'opacity-100' : 'opacity-0',
+                            selectedProducts.some((p) => p.id === r.id) ? 'opacity-100' : 'opacity-0',
                           )}
                         />
                         <div className="flex flex-col min-w-0">
@@ -110,13 +114,13 @@ export function ProductPicker({ dash }: Props) {
       </div>
 
       <div className="flex items-center gap-2">
-        {(hasSelectedProduct || appliedProductId !== null) && (
+        {(hasSelectedProduct || appliedProducts.length > 0) && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
-              selectProduct(null);
-              applyProduct(null);
+              toggleProduct(null);
+              applyProducts([]);
             }}
             className="gap-1.5 text-muted-foreground hover:text-foreground"
           >
@@ -124,11 +128,30 @@ export function ProductPicker({ dash }: Props) {
             Limpiar
           </Button>
         )}
-        <Button size="sm" onClick={() => applyProduct()} disabled={!isProductDirty} className="gap-1.5">
+        <Button size="sm" onClick={() => applyProducts()} disabled={!isProductDirty} className="gap-1.5">
           <Check className="h-4 w-4" />
           Aplicar
         </Button>
       </div>
+
+      {/* T-560: productos marcados (se quitan uno a uno) */}
+      {selectedProducts.length > 1 && (
+        <div className="flex w-full flex-wrap gap-1.5">
+          {selectedProducts.map((p) => (
+            <Badge key={p.id} variant="secondary" className="gap-1 font-normal">
+              <span className="max-w-[220px] truncate">{p.title}</span>
+              <button
+                type="button"
+                onClick={() => toggleProduct(p)}
+                aria-label={`Quitar ${p.title}`}
+                className="rounded-sm opacity-70 hover:opacity-100"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

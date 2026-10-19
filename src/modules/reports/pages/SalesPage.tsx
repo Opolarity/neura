@@ -36,28 +36,28 @@ export default function SalesPage() {
 
   const extraActiveCount =
     [
-      draft.branchId,
+      draft.branchIds,
       draft.countryId,
       draft.stateId,
       draft.cityId,
       draft.neighborhoodId,
-      draft.saleTypeId,
-      draft.paymentMethodId,
-      draft.priceListCode,
+      draft.saleTypeIds,
+      draft.paymentMethodIds,
+      draft.priceListCodes,
     ].filter((v) => v !== null && v !== undefined).length + (situationIsDefault ? 0 : 1);
 
   function handleClearExtra() {
     applyImmediate({
       ...draft,
-      branchId: null,
+      branchIds: null,
       countryId: null,
       stateId: null,
       cityId: null,
       neighborhoodId: null,
-      saleTypeId: null,
-      paymentMethodId: null,
+      saleTypeIds: null,
+      paymentMethodIds: null,
       situationIds: null,
-      priceListCode: null,
+      priceListCodes: null,
     });
   }
 
