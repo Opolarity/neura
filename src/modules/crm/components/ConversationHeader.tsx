@@ -15,6 +15,7 @@ import { cn } from "@/shared/utils/utils";
 import type { BotPauseState, Conversation, Situation } from "../types/crm.types";
 import { AssignMenu } from "./AssignMenu";
 import { BotPauseControl } from "./BotPauseControl";
+import { ConversationControlsHelp } from "./ConversationControlsHelp";
 
 interface Props {
   conversation: Conversation;
@@ -169,6 +170,8 @@ export const ConversationHeader = ({
             </Button>
           )}
         </ComponentPermission>
+
+        <ConversationControlsHelp />
       </div>
     </header>
   );
