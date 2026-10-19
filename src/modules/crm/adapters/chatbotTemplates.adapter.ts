@@ -1,4 +1,4 @@
-import type { ChatbotTemplate, ChatbotTemplateApi } from "../types/chatbotTemplates.types";
+import type { ChatbotTemplate, ChatbotTemplateApi, TemplateTestApi, TemplateTestResult } from "../types/chatbotTemplates.types";
 import { variableExample, variableKeyForLabel, variableLabel } from "./chatbotTemplateVariables";
 
 export const toChatbotTemplate = (t: ChatbotTemplateApi): ChatbotTemplate => ({
@@ -12,6 +12,8 @@ export const toChatbotTemplate = (t: ChatbotTemplateApi): ChatbotTemplate => ({
   locked: t.locked === true,
   rol: t.rol ?? null,
   saleSola: t.sale_sola !== false,
+  enObservacion: t.en_observacion === true,
+  createdAt: t.created_at ?? null,
   placeholders: t.placeholders ?? [],
   requiredPlaceholders: t.required_placeholders ?? [],
   updatedAt: t.updated_at,
@@ -127,3 +129,20 @@ export const rolLabel = (rol: string): string => {
   const s = rol.replace(/_/g, " ").trim();
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
+
+/** T-921: respuesta de la prueba del bot → modelo de la pantalla. */
+export const toTemplateTestResult = (api: TemplateTestApi): TemplateTestResult => ({
+  modoTenant: api.modo_tenant,
+  resultados: (api.resultados ?? []).map((r) => ({ ejemplo: r.ejemplo, hoy: r.hoy, conBorrador: r.con_borrador })),
+  parecidas: api.parecidas ?? [],
+});
+
+/** T-921 (punto 2): pedidos y pagos los resuelve el bot con herramientas. */
+export const OPERATION_TOPICS = new Set(["consultar_pedidos", "recibir_pago"]);
+const OPERATION_WORDS = /cambi|cancel|anul|pag|modific|direcci/i;
+
+/** Aviso cuando la plantilla parece una operación sobre un pedido (no bloquea el guardado). */
+export const operationWarning = (topic: string | null | undefined, examples: string[]): string | null =>
+  (topic && OPERATION_TOPICS.has(topic)) || examples.some((e) => OPERATION_WORDS.test(e))
+    ? "El bot ya resuelve pedidos y pagos con sus herramientas (consultar, cambiar dirección, cancelar, pagar). Una plantilla de pedidos o pagos nunca sale sola: el bot solo la usa como referencia."
+    : null;

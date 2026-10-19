@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   fromFriendlyText,
+  operationWarning,
   previewFriendlyText,
   rolLabel,
   templateVariables,
@@ -34,6 +35,7 @@ import type {
 } from "../../types/chatbotTemplates.types";
 import FormatToolbar, { type FormatAction } from "./FormatToolbar";
 import TagPicker from "./TagPicker";
+import TemplateTestPanel from "./TemplateTestPanel";
 import WhatsAppPreview from "./WhatsAppPreview";
 
 interface ChatbotTemplateFormDialogProps {
@@ -95,6 +97,9 @@ export default function ChatbotTemplateFormDialog({
   const [topic, setTopic] = useState<ChatbotTemplateTopic | "">("");
   const [tags, setTags] = useState<string[]>([]);
   const [saleSola, setSaleSola] = useState(true);
+  /** T-921: una plantilla nueva nace en observación (el bot no la manda hasta que se active). */
+  const [enObservacion, setEnObservacion] = useState(true);
+  const [ejemplos, setEjemplos] = useState<string[]>([]);
   const [touched, setTouched] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   /** Cuándo se abrió el editor: el interruptor ignora los clics de ese primer momento. */
@@ -112,6 +117,8 @@ export default function ChatbotTemplateFormDialog({
     setTopic(template?.topic ?? "");
     setTags(template?.tags ?? []);
     setSaleSola(template?.saleSola ?? true);
+    setEnObservacion(true);
+    setEjemplos([]);
     setTouched(false);
     abiertoEn.current = Date.now();
   }, [template, vars, creating]);
@@ -119,6 +126,9 @@ export default function ChatbotTemplateFormDialog({
   const textError = useMemo(() => validateFriendlyText(text, vars, fallbacks), [text, vars, fallbacks]);
   const metaError = tagsEditable ? validateMeta(creating, slug, topic, tags) : null;
   const error = metaError ?? textError;
+
+  /** T-921 (punto 2): pedidos y pagos los resuelve el bot con herramientas. */
+  const aviso = operationWarning(topic || null, ejemplos);
 
   if (!template && !creating) return null;
 
@@ -165,7 +175,7 @@ export default function ChatbotTemplateFormDialog({
     const content = fromFriendlyText(text, vars, fallbacks);
     const meta: ChatbotTemplateMeta | undefined = tagsEditable && topic ? { topic, tags } : undefined;
     const ok = creating
-      ? await onCreate({ name: name.trim(), content, ...(meta as ChatbotTemplateMeta) })
+      ? await onCreate({ name: name.trim(), content, ...(meta as ChatbotTemplateMeta), enObservacion })
       : await onSave(template!, content, meta, template!.locked ? undefined : saleSola);
     if (ok) onOpenChange(false);
   };
@@ -311,6 +321,25 @@ export default function ChatbotTemplateFormDialog({
           </div>
         )}
 
+        {tagsEditable && aviso && (
+          <p className="rounded-md bg-warning-soft p-3 text-xs text-warning-soft-foreground" role="status">
+            {aviso}
+          </p>
+        )}
+
+        {creating && (
+          <div className="flex items-start justify-between gap-4 rounded-md border p-3">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="tpl-observacion">Empezar en observación</Label>
+              <p className="text-xs text-muted-foreground">
+                El bot no la manda: anota en qué mensajes reales la habría usado. La activas desde la lista cuando lo
+                revises.
+              </p>
+            </div>
+            <Switch id="tpl-observacion" checked={enObservacion} onCheckedChange={setEnObservacion} />
+          </div>
+        )}
+
         <div className="grid gap-4 md:grid-cols-2">
           <div className="flex flex-col gap-2">
             <Label htmlFor="tpl-content" required>
@@ -368,6 +397,17 @@ export default function ChatbotTemplateFormDialog({
             />
           </div>
         ))}
+
+        {tagsEditable && (
+          <TemplateTestPanel
+            name={creating ? slug : template!.name}
+            content={textError ? "" : fromFriendlyText(text, vars, fallbacks)}
+            topic={topic}
+            tags={tags}
+            editing={creating ? null : template!.name}
+            onExamplesChange={setEjemplos}
+          />
+        )}
 
         <DialogFooter>
           <Button variant="outline" disabled={saving} onClick={() => onOpenChange(false)}>
