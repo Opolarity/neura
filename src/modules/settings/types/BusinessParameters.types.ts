@@ -106,9 +106,9 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
       },
       {
         key: "InvoiceLogoUrl",
-        label: "Logo del comprobante",
+        label: "Logo de documentos",
         control: "image",
-        help: "Se imprime en facturas, boletas, tickets de POS y etiquetas de envío.",
+        help: "Se imprime en facturas, boletas, la guía de remisión de ventas, tickets de POS y etiquetas de envío.",
       },
       {
         key: "InvoiceFooterMessage",
@@ -121,7 +121,7 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
   {
     id: "documents",
     title: "Documentos",
-    description: "Plantilla de impresión de boletas, facturas y notas.",
+    description: "Plantilla de impresión de boletas, facturas, notas y guías de remisión de ventas.",
     fields: [
       {
         key: "InvoicePrintFormat",
@@ -140,6 +140,26 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
         control: "boolean",
         defaultValue: "true",
         help: "Teléfono de la empresa. Razón social, RUC y domicilio fiscal se imprimen siempre.",
+      },
+      {
+        key: "RemisionGuideShowPhone",
+        label: "Mostrar teléfono en la guía de remisión",
+        control: "boolean",
+        defaultValue: "true",
+        help: "Teléfono de la empresa en la guía de remisión de ventas.",
+      },
+      {
+        key: "RemisionGuideShowEmail",
+        label: "Mostrar correo en la guía de remisión",
+        control: "boolean",
+        defaultValue: "true",
+        help: "Correo de la empresa en la guía de remisión de ventas.",
+      },
+      {
+        key: "RemisionGuideFooterMessage",
+        label: "Mensaje de pie de la guía de remisión",
+        control: "textarea",
+        help: "Texto al final de la guía de remisión de ventas. Vacío = sin pie.",
       },
     ],
   },

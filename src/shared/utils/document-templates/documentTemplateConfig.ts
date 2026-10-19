@@ -117,3 +117,63 @@ export const printedRepresentationLegend = (invoiceTypeCode: string): string | n
 /** Notas de crédito (3) y débito (4): llevan el documento que modifican. */
 export const isNoteType = (invoiceTypeCode: string): boolean =>
   ["3", "4"].includes(invoiceTypeCode.trim());
+
+// ── Guía de remisión (T-1013, fase 2) ───────────────────────────────────────
+
+export interface RemisionGuideTemplateConfig {
+  logoUrl: string;
+  footerMessage: string;
+  company: {
+    name: string;
+    documentNumber: string;
+    /** Domicilio fiscal (CompanyAddress). */
+    fiscalAddress: string;
+    phone: string;
+    email: string;
+    website: string;
+    /** Dirección de partida por defecto (CompanyDireccionPartida). */
+    departureAddress: string;
+  };
+  show: { companyPhone: boolean; companyEmail: boolean };
+}
+
+export const REMISION_GUIDE_TEMPLATE_PARAMETERS = [
+  "CompanyName",
+  "CompanyDocumentNumber",
+  "CompanyAddress",
+  "CompanyPhoneNumber",
+  "CompanyEmail",
+  "CompanyWebsite",
+  "CompanyDireccionPartida",
+  "InvoiceLogoUrl",
+  "RemisionGuideShowPhone",
+  "RemisionGuideShowEmail",
+  "RemisionGuideFooterMessage",
+];
+
+export const resolveRemisionGuideTemplateConfig = (
+  params: Record<string, string>,
+): RemisionGuideTemplateConfig => ({
+  logoUrl: params["InvoiceLogoUrl"] ?? "",
+  footerMessage: (params["RemisionGuideFooterMessage"] ?? "").trim(),
+  company: {
+    name: (params["CompanyName"] ?? "").trim(),
+    documentNumber: (params["CompanyDocumentNumber"] ?? "").trim(),
+    fiscalAddress: params["CompanyAddress"] ?? "",
+    phone: params["CompanyPhoneNumber"] ?? "",
+    email: params["CompanyEmail"] ?? "",
+    website: params["CompanyWebsite"] ?? "",
+    departureAddress: params["CompanyDireccionPartida"] ?? "",
+  },
+  show: {
+    companyPhone: isShown(params["RemisionGuideShowPhone"]),
+    companyEmail: isShown(params["RemisionGuideShowEmail"]),
+  },
+});
+
+/** Plantilla de la guía de remisión de ventas. */
+export const getRemisionGuideTemplateConfig = async (): Promise<RemisionGuideTemplateConfig> =>
+  resolveRemisionGuideTemplateConfig(await getParameters(REMISION_GUIDE_TEMPLATE_PARAMETERS));
+
+/** Aviso cuando la guía no se puede emitir por falta de datos del emisor. */
+export const MISSING_ISSUER_MESSAGE = "Configura razón social y RUC en Configuración > Negocio";
