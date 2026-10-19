@@ -81,14 +81,16 @@ export const ConversationHeader = ({
       })
     : null;
 
-  // Una sola fila: nombre a la izquierda, ventana y controles a la derecha.
+  // Una sola fila, sin saltos: nombre a la izquierda (se recorta si falta
+  // ancho) y ventana y controles a la derecha, siempre en el mismo renglón; en
+  // un panel angosto los controles se deslizan de costado en vez de saltar.
   // Sin pastilla de bot: si responde o no ya lo dicen "Tomar el control" y el
   // pie de la caja de respuesta, que también avisa quién tiene el control.
   return (
-    <header className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b px-4 py-2">
+    <header className="flex items-center gap-2 border-b px-4 py-2">
       {/* Nombre y datos en dos renglones: en uno solo competían por el ancho
           y el documento terminaba cortado. */}
-      <div className="min-w-[140px] flex-1">
+      <div className="min-w-[90px] flex-1">
         <h2 className="truncate text-[13px] font-semibold leading-tight">
           {conversation.displayName}
         </h2>
@@ -99,7 +101,7 @@ export const ConversationHeader = ({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto [&>*]:shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <Pill tone={conversation.windowOpen ? "neutral" : "warn"}>
           <Clock className="h-3 w-3" />
           {conversation.windowOpen ? `Vence ${windowLabel}` : "Ventana vencida"}
@@ -111,7 +113,7 @@ export const ConversationHeader = ({
             onValueChange={(value) => onSituationChange(Number(value))}
             disabled={busy}
           >
-            <SelectTrigger className="h-7 w-[170px] text-xs">
+            <SelectTrigger className="h-7 w-[150px] text-xs">
               <SelectValue placeholder="Sin etapa" />
             </SelectTrigger>
             <SelectContent>
