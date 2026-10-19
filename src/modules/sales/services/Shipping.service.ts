@@ -69,16 +69,30 @@ export async function getAllCities(): Promise<City[]> {
   return data ?? [];
 }
 
+// PostgREST devuelve como máximo 1000 filas por consulta y hay más distritos:
+// se piden por páginas y se juntan en un solo arreglo.
+const NEIGHBORHOODS_PAGE_SIZE = 1000;
+
 export async function getAllNeighborhoods(): Promise<Neighborhood[]> {
-  const { data, error } = await supabase
-    .from("neighborhoods")
-    .select("id, name, country_id, state_id, city_id")
-    .filter("name", "match", "\\S")
-    .order("name");
+  const all: Neighborhood[] = [];
 
-  if (error) throw error;
+  for (let from = 0; ; from += NEIGHBORHOODS_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("neighborhoods")
+      .select("id, name, country_id, state_id, city_id")
+      .filter("name", "match", "\\S")
+      .order("name")
+      .order("id")
+      .range(from, from + NEIGHBORHOODS_PAGE_SIZE - 1);
 
-  return data ?? [];
+    if (error) throw error;
+
+    all.push(...(data ?? []));
+
+    if (!data || data.length < NEIGHBORHOODS_PAGE_SIZE) break;
+  }
+
+  return all;
 }
 
 export async function getStatesByCountryIdApi(
