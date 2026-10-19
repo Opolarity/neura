@@ -132,7 +132,7 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
           { label: "Ticket 80 mm", value: "80mm" },
           { label: "A4", value: "A4" },
         ],
-        help: "Lo usa el botón Imprimir de la lista de Comprobantes. El punto de venta, los comprobantes de la venta y el envío por WhatsApp usan siempre el ticket de 80 mm.",
+        help: "El A4 solo aplica a los comprobantes internos (tipo Comprobante), que se imprimen desde la lista de Comprobantes. Boletas, facturas y notas, el punto de venta, los comprobantes de la venta y el envío por WhatsApp usan siempre el ticket de 80 mm.",
       },
       {
         key: "InvoiceShowPhone",

@@ -113,3 +113,7 @@ export const printedRepresentationLegend = (invoiceTypeCode: string): string | n
   const name = electronicDocumentName(invoiceTypeCode);
   return name ? `Representación impresa de la ${name}` : null;
 };
+
+/** Notas de crédito (3) y débito (4): llevan el documento que modifican. */
+export const isNoteType = (invoiceTypeCode: string): boolean =>
+  ["3", "4"].includes(invoiceTypeCode.trim());

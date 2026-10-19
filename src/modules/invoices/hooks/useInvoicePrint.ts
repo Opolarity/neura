@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import { formatDateTime } from "@/shared/utils/date";
 import {
   getInvoiceTemplateConfig,
+  isNoteType,
   printedRepresentationLegend,
   shouldShowCustomerDocument,
   type InvoiceTemplateConfig,
@@ -13,6 +14,7 @@ import { drawLogoInBox, loadDocumentLogo, resolveCompanyHeader } from "@/shared/
 import {
   CLOSING_MESSAGE,
   FOOTER_TITLE,
+  FREE_TRANSFER_LEGEND,
   renderInvoiceA4,
   type InvoicePrintData,
   type InvoicePrintExtraLine,
@@ -139,9 +141,9 @@ export async function loadInvoicePrintData(
 
   const typeCode = (invTypeRes.data?.code ?? "").trim();
 
-  // Nota de crédito: el A4 muestra el comprobante que modifica (no hay motivo guardado).
+  // Notas de crédito (3) y débito (4): muestran el comprobante que modifican (no hay motivo guardado).
   let modifiedDocument = "";
-  if (typeCode === "3" && invoice.vinculated_invoice_id) {
+  if (isNoteType(typeCode) && invoice.vinculated_invoice_id) {
     const { data: parent } = await supabase
       .from("invoices")
       .select("tax_serie, invoice_number")
@@ -247,11 +249,10 @@ export function renderInvoiceTicket(data: InvoicePrintData): jsPDF {
       y += 2;
     }
 
-    if (!logo) {
-      doc.setFontSize(fontSize.title); doc.setFont("helvetica", "bold");
-      for (const line of doc.splitTextToSize((company.name || "EMPRESA").toUpperCase(), contentWidth)) {
-        doc.text(line, pageWidth / 2, y, { align: "center" }); y += 3.5;
-      }
+    // Razón social: SUNAT la exige también cuando hay logo.
+    doc.setFontSize(fontSize.title); doc.setFont("helvetica", "bold");
+    for (const line of doc.splitTextToSize((company.name || "EMPRESA").toUpperCase(), contentWidth)) {
+      doc.text(line, pageWidth / 2, y, { align: "center" }); y += 3.5;
     }
     y += 0.5;
 
@@ -296,6 +297,10 @@ export function renderInvoiceTicket(data: InvoicePrintData): jsPDF {
       ...(data.customer.showDocument
         ? [[`${data.customer.documentTypeName || "Doc"}:`, data.customer.documentNumber]]
         : []),
+      ...(data.customer.showAddress && data.customer.address
+        ? [["DIRECCIÓN:", data.customer.address]]
+        : []),
+      ...(data.modifiedDocument ? [["DOC. QUE MODIFICA:", data.modifiedDocument]] : []),
     ] as [string, string][]) {
       doc.setFont("helvetica", "bold"); doc.text(label, margin, y);
       doc.setFont("helvetica", "normal");
@@ -307,9 +312,10 @@ export function renderInvoiceTicket(data: InvoicePrintData): jsPDF {
 
     y += 1; doc.setLineWidth(0.2); doc.line(margin, y, pageWidth - margin, y); y += 3;
 
-    const col = { cant: margin, desc: margin + 10, pu: pageWidth - margin - 14, dsct: pageWidth - margin };
+    // U.M. entre cantidad y descripción; la descripción envuelve en el ancho que le queda.
+    const col = { cant: margin, um: margin + 10, desc: margin + 18, pu: pageWidth - margin - 14, dsct: pageWidth - margin };
     doc.setFontSize(fontSize.small); doc.setFont("helvetica", "bold");
-    doc.text("CANT.", col.cant, y); doc.text("DESCRIPCIÓN", col.desc, y);
+    doc.text("CANT.", col.cant, y); doc.text("U.M.", col.um, y); doc.text("DESCRIPCIÓN", col.desc, y);
     doc.text("P.U.", col.pu, y, { align: "right" });
     doc.text("DESC.", col.dsct, y, { align: "right" });
     y += 2; doc.setLineWidth(0.1); doc.line(margin, y, pageWidth - margin, y); y += 2.5;
@@ -320,10 +326,12 @@ export function renderInvoiceTicket(data: InvoicePrintData): jsPDF {
       const dw = col.pu - col.desc - 14;
       const dLines = doc.splitTextToSize(item.description, dw > 0 ? dw : 30);
       for (let i = 0; i < dLines.length; i++) doc.text(dLines[i], col.desc, y + i * 2.5);
+      const uLines = item.unit ? doc.splitTextToSize(item.unit, col.desc - col.um - 1) : [];
+      for (let i = 0; i < uLines.length; i++) doc.text(uLines[i], col.um, y + i * 2.5);
       doc.text(item.unitPrice.toFixed(2), col.pu, y, { align: "right" });
       // Descuento de la linea completa (no por unidad): total = cant x P.U. - descuento.
       doc.text(item.discount ? item.discount.toFixed(2) : "—", col.dsct, y, { align: "right" });
-      y += Math.max(dLines.length * 2.5, 3) + 0.5;
+      y += Math.max(dLines.length * 2.5, uLines.length * 2.5, 3) + 0.5;
     }
 
     // Envío de comprobantes antiguos y descuentos del pedido.
@@ -342,6 +350,7 @@ export function renderInvoiceTicket(data: InvoicePrintData): jsPDF {
     for (const [label, value] of [
       ["TOTAL CANT.", totalQty % 1 === 0 ? String(totalQty) : totalQty.toFixed(2)],
       ...data.taxLines,
+      ...(data.freeAmount > 0 ? [["OP. GRATUITAS", `S/ ${data.freeAmount.toFixed(2)}`]] : []),
       ["IMPORTE TOTAL:", `S/ ${data.totalAmount.toFixed(2)}`],
     ] as [string, string][]) {
       const isTotal = label === "IMPORTE TOTAL:";
@@ -391,6 +400,13 @@ export function renderInvoiceTicket(data: InvoicePrintData): jsPDF {
       const qrSize = 35;
       doc.addImage(data.qrDataUrl, "PNG", (pageWidth - qrSize) / 2, y, qrSize, qrSize);
       y += qrSize + 2;
+    }
+
+    for (const legend of data.freeAmount > 0 ? [FREE_TRANSFER_LEGEND] : []) {
+      y += 1; doc.setFontSize(fontSize.tiny); doc.setFont("helvetica", "normal");
+      for (const line of doc.splitTextToSize(legend, contentWidth)) {
+        doc.text(line, pageWidth / 2, y, { align: "center" }); y += 2.8;
+      }
     }
 
     return y;
