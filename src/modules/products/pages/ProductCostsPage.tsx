@@ -15,6 +15,7 @@ import ProdutCostsFilterModal from "../components/product-costs/ProdutCostsFilte
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { ComponentPermission } from "@/shared/components/component-permission";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 
 const ProductCosts = () => {
   const {
@@ -98,10 +99,7 @@ const ProductCosts = () => {
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-1 w-full sm:w-[300px]"
               />
             </div>
-            <Button onClick={onOpenFilterModal} variant={hasActiveFilters ? "default" : "outline"} className="gap-2">
-              <ListFilter className="w-4 h-4" />
-              Filtrar
-            </Button>
+            <TooltipIconButton onClick={onOpenFilterModal} variant={hasActiveFilters ? "default" : "outline"} icon={<ListFilter className="w-4 h-4" />} label="Filtrar" />
 
             <Select
               value={filters.order || "none"}

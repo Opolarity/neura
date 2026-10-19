@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -7,6 +6,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ListFilter, Search, X } from "lucide-react";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 
 interface MovementsFilterBarProps {
   search: string;
@@ -40,10 +40,7 @@ export default function MovementsFilterBar({
         />
       </div>
 
-      <Button onClick={onOpenFilterModal} variant={hasActiveFilters ? "default" : "outline"} className="gap-2">
-        <ListFilter className="w-4 h-4" />
-        Filtros
-      </Button>
+      <TooltipIconButton onClick={onOpenFilterModal} variant={hasActiveFilters ? "default" : "outline"} icon={<ListFilter className="w-4 h-4" />} label="Filtros" />
 
 
       <Select

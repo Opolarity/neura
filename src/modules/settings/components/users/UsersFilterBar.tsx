@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { ListFilter, Search } from "lucide-react";
 import {
   Select,
@@ -7,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 
 interface UsersFilterBarProps {
   search: string;
@@ -38,10 +38,7 @@ const UsersFilterBar = ({
         />
       </div>
 
-      <Button className="gap-2" variant={hasActiveFilters ? "default" : "outline"} onClick={onFilterClick}>
-        <ListFilter className="w-4 h-4" />
-        Filtrar
-      </Button>
+      <TooltipIconButton variant={hasActiveFilters ? "default" : "outline"} onClick={onFilterClick} icon={<ListFilter className="w-4 h-4" />} label="Filtrar" />
 
       <Select value={order || "none"} onValueChange={onOrderChange}>
         <SelectTrigger className="w-auto">

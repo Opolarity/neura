@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ListFilter, Search, X } from "lucide-react";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 
 interface AuditLogFilterBarProps {
   search: string;
@@ -28,14 +29,12 @@ const AuditLogFilterBar = ({
       />
     </div>
 
-    <Button
+    <TooltipIconButton
       onClick={onOpenFilterModal}
       variant={hasActiveFilters ? "default" : "outline"}
-      className="gap-2"
-    >
-      <ListFilter className="w-4 h-4" />
-      Filtros
-    </Button>
+      icon={<ListFilter className="w-4 h-4" />}
+      label="Filtros"
+    />
 
     {hasActiveFilters && (
       <Button variant="ghost" onClick={onClearFilters} className="gap-2">

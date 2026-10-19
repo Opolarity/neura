@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ListFilter, Search } from "lucide-react";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 
 interface MaterialInventoryFilterBarProps {
   search: string;
@@ -48,14 +49,12 @@ const MaterialInventoryFilterBar = ({
         </Button>
       </div>
 
-      <Button
+      <TooltipIconButton
         onClick={onOpen}
         variant={hasActiveFilters ? "default" : "outline"}
-        className="gap-2"
-      >
-        <ListFilter className="w-4 h-4" />
-        Filtrar
-      </Button>
+        icon={<ListFilter className="w-4 h-4" />}
+        label="Filtrar"
+      />
 
       <Select
         value={order || "none"}

@@ -1,6 +1,6 @@
 import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ListFilter } from "lucide-react";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 
 interface BranchesFilterBarProps {
     search: string;
@@ -28,10 +28,7 @@ const BranchesFilterBar = ({
                 />
             </div>
             {onOpen && (
-                <Button onClick={onOpen} variant={hasActiveFilters ? "default" : "outline"} className="gap-2">
-                    <ListFilter className="w-4 h-4" />
-                    Filtrar
-                </Button>
+                <TooltipIconButton onClick={onOpen} variant={hasActiveFilters ? "default" : "outline"} icon={<ListFilter className="w-4 h-4" />} label="Filtrar" />
             )}
         </div>
     )

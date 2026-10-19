@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Search, ListFilter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 
 interface ProductionPlanFilterBarProps {
   search: string;
@@ -40,14 +41,12 @@ export const ProductionPlanFilterBar = ({
         </Button>
       </div>
 
-      <Button
+      <TooltipIconButton
         onClick={onOpen}
         variant={hasActiveFilters ? "default" : "outline"}
-        className="gap-2"
-      >
-        <ListFilter className="w-4 h-4" />
-        Filtrar
-      </Button>
+        icon={<ListFilter className="w-4 h-4" />}
+        label="Filtrar"
+      />
     </div>
   );
 };

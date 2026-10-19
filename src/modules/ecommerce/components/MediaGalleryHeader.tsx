@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
 import { SlidersHorizontal } from "lucide-react";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 
 interface MediaGalleryHeaderProps {
   onOpenFilters: () => void;
@@ -10,14 +10,12 @@ const MediaGalleryHeader = ({ onOpenFilters, hasActiveFilters }: MediaGalleryHea
   return (
     <div className="flex justify-between items-center">
       <h1 className="text-2xl font-bold text-foreground">Galería de medios</h1>
-      <Button
+      <TooltipIconButton
         variant={hasActiveFilters ? "default" : "outline"}
         onClick={onOpenFilters}
-        className="gap-2"
-      >
-        <SlidersHorizontal className="w-4 h-4" />
-        Filtros
-      </Button>
+        icon={<SlidersHorizontal className="w-4 h-4" />}
+        label="Filtros"
+      />
     </div>
   );
 };
