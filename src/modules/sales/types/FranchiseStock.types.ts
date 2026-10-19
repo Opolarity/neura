@@ -117,3 +117,25 @@ export interface FranchiseStockApiResponse {
     type_id?: number;
   };
 }
+
+// ── T-593: resumen valorizado y tope por franquiciado ───────────────────────
+
+/** Respuesta de get-franchise-stock-value (sp_rpt_franchise_stock_value). */
+export interface FranchiseStockValue {
+  tenant_reference: string;
+  units: number;
+  cost_value: number;
+  retail_value: number;
+  /** Unidades del franquiciado cuyo SKU no existe en el catálogo de Overtake. */
+  unmatched_units: number;
+  unmatched_skus: number;
+  /** Tope en S/ a costo (parameters.FranchiseStockLimit_<tenant>); null = sin tope. */
+  stock_limit: number | null;
+  /** Tope − valor a costo; null si no hay tope. */
+  available: number | null;
+  by_category: Array<{ category: string; units: number; cost_value: number }>;
+}
+
+/** Nombre del parámetro donde se guarda el tope de un franquiciado. */
+export const franchiseStockLimitParam = (tenantReference: string) =>
+  `FranchiseStockLimit_${tenantReference}`;

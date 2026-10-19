@@ -11,11 +11,12 @@ import FranchiseeEntryModal from "../components/franchise-stock/FranchiseeEntryM
 import FranchiseStockTable from "../components/franchise-stock/FranchiseStockTable";
 import FranchiseStockFilterBar from "../components/franchise-stock/FranchiseStockFilterBar";
 import FranchiseStockFilterModal from "../components/franchise-stock/FranchiseStockFilterModal";
+import FranchiseStockSummary from "../components/franchise-stock/FranchiseStockSummary";
 
 /**
  * Stock de franquicias (/stock/products/franchise).
  *
- * Solo lectura: muestra cuánta mercadería de marca Overtake le queda a un
+ * Muestra cuánta mercadería de marca Overtake le queda a un
  * franquiciado en cada uno de sus almacenes. El dato vive en el backend de
  * franquiciados y llega por la edge function puente get-franchise-stock.
  */
@@ -63,6 +64,9 @@ const FranchiseStock = () => {
       <h1 className="text-2xl font-bold text-foreground">
         Stock de franquicias
       </h1>
+
+      {/* T-593: unidades, valorización, tope y disponible del franquiciado */}
+      <FranchiseStockSummary tenantReference={tenantReference} />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="!p-4">
