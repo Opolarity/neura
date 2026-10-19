@@ -26,6 +26,7 @@ interface Branch {
   name: string;
   address: string;
   ubigeo: string | null;
+  warehouse_id: number | null;
 }
 
 export interface GuiaRemisionData {
@@ -57,7 +58,13 @@ export interface GuiaRemisionData {
 interface GuiaRemisionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  orderId: number;
+  /** Venta: pre-llena la llegada con la dirección del pedido y la partida con su sucursal. */
+  orderId?: number;
+  /**
+   * T-4: traslado entre almacenes (sin pedido). Partida y llegada salen de la
+   * sucursal de cada almacén (la que tiene ubigeo) y el motivo arranca en 04.
+   */
+  transfer?: { fromWarehouseId: number | null; toWarehouseId: number | null };
   onConfirm: (data: GuiaRemisionData) => Promise<void>;
 }
 
@@ -82,13 +89,14 @@ export default function GuiaRemisionModal({
   open,
   onOpenChange,
   orderId,
+  transfer,
   onConfirm,
 }: GuiaRemisionModalProps) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [branches, setBranches] = useState<Branch[]>([]);
 
-  const [motivoTraslado, setMotivoTraslado] = useState("01");
+  const [motivoTraslado, setMotivoTraslado] = useState(transfer ? "04" : "01");
   const [pesoBruto, setPesoBruto] = useState("");
   const [numeroBultos, setNumeroBultos] = useState("");
   const [tipoTransporte, setTipoTransporte] = useState("01");
@@ -111,13 +119,17 @@ export default function GuiaRemisionModal({
   useEffect(() => {
     if (!open) return;
     fetchOrderAndBranches();
-  }, [open, orderId]);
+  }, [open, orderId, transfer?.fromWarehouseId, transfer?.toWarehouseId]);
 
   const fetchOrderAndBranches = async () => {
+    if (!orderId) {
+      await fetchTransferBranches();
+      return;
+    }
     // Obtener datos del pedido para pre-llenar dirección de llegada y branch
     const [orderRes, branchesRes] = await Promise.all([
       supabase.from("orders").select("address, branch_id").eq("id", orderId).single(),
-      supabase.from("branches").select("id, name, address, ubigeo").eq("is_active", true).order("name"),
+      supabase.from("branches").select("id, name, address, ubigeo, warehouse_id").eq("is_active", true).order("name"),
     ]);
 
     if (orderRes.data?.address) {
@@ -135,6 +147,33 @@ export default function GuiaRemisionModal({
         setPartidaDireccion(defaultBranch.address || "");
         setPartidaUbigeo(defaultBranch.ubigeo || "");
       }
+    }
+  };
+
+  // T-4: traslado entre almacenes. Un almacén puede tener varias sucursales
+  // (Ventanilla está duplicada): se usa la que tiene ubigeo.
+  const fetchTransferBranches = async () => {
+    const { data } = await supabase
+      .from("branches")
+      .select("id, name, address, ubigeo, warehouse_id")
+      .eq("is_active", true)
+      .order("name");
+    const list = (data ?? []) as Branch[];
+    setBranches(list);
+    setMotivoTraslado("04");
+    const branchOf = (warehouseId: number | null | undefined) =>
+      list.find((b) => b.warehouse_id === warehouseId && !!b.ubigeo?.trim()) ??
+      list.find((b) => b.warehouse_id === warehouseId);
+    const from = branchOf(transfer?.fromWarehouseId);
+    const to = branchOf(transfer?.toWarehouseId);
+    if (from) {
+      setSelectedBranchId(String(from.id));
+      setPartidaDireccion(from.address || "");
+      setPartidaUbigeo(from.ubigeo || "");
+    }
+    if (to) {
+      setLlegadaDireccion(to.address || "");
+      setLlegadaUbigeo(to.ubigeo || "");
     }
   };
 

@@ -5,6 +5,7 @@ import { useEditMovementRequest } from "../hooks/useEditMovementRequest";
 import CRequestSummary from "../components/create-movement-request/CRequestSummary";
 import CRequestProductTable from "../components/create-movement-request/CRequestProductTable";
 import RequestSituationsHistory from "../components/edit-movement-request/RequestSituationsHistory";
+import RequestRemisionGuides from "../components/edit-movement-request/RequestRemisionGuides";
 import { PageLoader } from "@/shared/components/page-loader";
 
 const EditMovementRequest = () => {
@@ -46,6 +47,9 @@ const EditMovementRequest = () => {
     isReadOnly,
     isQuantityReadOnly,
     inWarehouseName,
+    currentSituationCode,
+    outWarehouseId,
+    inWarehouseId,
   } = useEditMovementRequest();
 
   if (loadingInitial) {
@@ -98,6 +102,23 @@ const EditMovementRequest = () => {
               onToggleDisapprove={toggleDisapprove}
               readOnly={isReadOnly}
               quantityReadOnly={isQuantityReadOnly}
+            />
+
+            {/* T-4: GRE electrónica; la genera quien envía con la solicitud en «Enviado» */}
+            <RequestRemisionGuides
+              requestId={Number(requestId)}
+              canGenerate={currentSituationCode === "ENV" && isSourceWarehouseUser}
+              fromWarehouseId={outWarehouseId}
+              toWarehouseId={inWarehouseId}
+              items={selectedProducts
+                .filter((p) => !p.disapproved && (p.quantity ?? 0) > 0)
+                .map((p) => {
+                  const terms = (p.terms ?? []).map((t) => t.name).filter(Boolean).join("-");
+                  return {
+                    description: terms ? `${p.productTitle} (${terms})` : p.productTitle,
+                    quantity: p.quantity ?? 0,
+                  };
+                })}
             />
 
             <RequestSituationsHistory
